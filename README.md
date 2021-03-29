@@ -5,6 +5,7 @@
 1. Install mkdocs package
 ```bash
 pip install mkdocs-material
+pip install mkdocs-pdf-export-plugin
 ```
 
 2. Start mkdocs server
