@@ -23,11 +23,16 @@ test-mkdocs:
   - master
 
 build-pages:
-  image: python:3.8-buster
-  stage: build
+  image: registry.hpc.ut.ee/mirror/python/python:3.8-buster
+  stage: deploy
   script:
+    # Ignore if `github_*` remote already exists
+    - git remote add github_opennode $GITHUB_OPENNODE_REPO_URL || true
+    - git remote add github_waldur $GITHUB_WALDUR_REPO_URL || true
+    - git remote -v
     - pip install -r requirements.txt
-    - mkdocs build --strict --verbose
+    - mkdocs gh-deploy --force -r github_opennode
+    - mkdocs github_waldur --force -r github_opennode
   artifacts:
     paths:
     - public
