@@ -2,10 +2,9 @@
 
 ## Local deployment
 
-1. Install mkdocs package
+1. Install mkdocs and plugins
 ```bash
-pip install mkdocs-material
-pip install mkdocs-pdf-export-plugin
+pip install -r requirements.txt
 ```
 
 2. Start mkdocs server

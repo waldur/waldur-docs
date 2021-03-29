@@ -9,3 +9,27 @@ include:
 variables:
   GITHUB_OPENNODE_REPO_URL: "git@github.com:opennode/waldur-docs.git"
   GITHUB_WALDUR_REPO_URL: "git@github.com:waldur/waldur-docs.git"
+
+test-mkdocs:
+  image: python:3.8-buster
+  stage: test
+  script:
+    - pip install -r requirements.txt
+    - mkdocs build --strict --verbose --site-dir test
+  artifacts:
+    paths:
+    - test
+  except:
+  - master
+
+build-pages:
+  image: python:3.8-buster
+  stage: build
+  script:
+    - pip install -r requirements.txt
+    - mkdocs build --strict --verbose
+  artifacts:
+    paths:
+    - public
+  only:
+  - master
