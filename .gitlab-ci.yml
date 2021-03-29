@@ -38,3 +38,13 @@ build-pages:
     - public
   only:
   - master
+  before_script:
+    - echo "[+] Adding ssh keys to the home directory"
+    - mkdir -p ~/.ssh
+    - cat $SSH_JENKINS_GITHUB_PRIVATE_KEY | tr -d '\r' > ~/.ssh/id_rsa
+    - cat $SSH_JENKINS_GITHUB_PUBLIC_KEY | tr -d '\r' > ~/.ssh/id_rsa.pub
+    - chmod 600 ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa.pub
+    - ssh-keygen -lf ~/.ssh/id_rsa.pub
+    - ssh-keyscan -H "github.com" >> ~/.ssh/known_hosts
+=
