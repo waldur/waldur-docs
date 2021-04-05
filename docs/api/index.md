@@ -1,1 +1,3 @@
 # Index
+
+- [Authentication](authentication.md)
