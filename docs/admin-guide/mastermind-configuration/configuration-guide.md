@@ -1,11 +1,14 @@
 | **Name** | **Type** | **Description** | **Default value** |
 | -------- | -------- | --------------- | ----------------- |
+| IPSTACK_ACCESS_KEY | Optional[str] | Unique authentication key used to gain access to the ipstack API. | None | 
+| WALDUR_CORE.AUTHENTICATION_METHODS | List[str] | List of enabled authentication methods. | ['LOCAL_SIGNIN'] | 
 | WALDUR_CORE.SITE_LOGO | Optional[str] | It is used in marketplace order header. | None | 
 | WALDUR_CORE.COUNTRIES | List[str] | It is used in organization creation dialog in order to limit country choices to predefined set. | ['EE', 'LV', 'LT'] | 
 | WALDUR_CORE.INVITATION_MAX_AGE | Optional[timedelta] | Max age of invitation token. It is used in approve and reject actions. | None | 
+| WALDUR_CORE.PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS | List[str] | List of authentication methods which are not allowed to update user details. | [] | 
+| WALDUR_CORE.SELLER_COUNTRY_CODE | Optional[str] | Specifies seller legal or effective country of registration or residence as an ISO 3166-1 alpha-2 country code. It is used for computing VAT charge rate. | None | 
 | WALDUR_CORE.EXTENSIONS_AUTOREGISTER | bool | Defines whether extensions should be automatically registered. | True | 
 | WALDUR_CORE.TOKEN_KEY | str | Header for token authentication. | x-auth-token | 
-| WALDUR_CORE.AUTHENTICATION_METHODS | list | List of enabled authentication methods. | ['LOCAL_SIGNIN'] | 
 | WALDUR_CORE.INVITATIONS_ENABLED | bool | Allows to disable invitations feature. | True | 
 | WALDUR_CORE.ALLOW_SIGNUP_WITHOUT_INVITATION | bool | Allow to signup without an invitation. | True | 
 | WALDUR_CORE.VALIDATE_INVITATION_EMAIL | bool | Ensure that invitation and user emails match. | False | 
@@ -33,10 +36,11 @@
 | WALDUR_CORE.ONLY_STAFF_CAN_INVITE_USERS | bool | Allow to limit invitation management to staff only. | False | 
 | WALDUR_CORE.INVITATION_CREATE_MISSING_USER | bool | Allow to create FreeIPA user using details specified in invitation if user does not exist yet. | False | 
 | WALDUR_CORE.INVITATION_DISABLE_MULTIPLE_ROLES | bool | Do not allow user to grant multiple roles in the same project or organization using invitation. | False | 
-| WALDUR_CORE.PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS | list | List of authentication methods which are not allowed to update user details. | [] | 
 | WALDUR_CORE.ATTACHMENT_LINK_MAX_AGE | timedelta | Max age of secure token for media download. | 1:00:00 | 
 | WALDUR_CORE.EMAIL_CHANGE_MAX_AGE | timedelta | Max age of change email request. | 1 day, 0:00:00 | 
 | WALDUR_CORE.HOMEPORT_URL | str | It is used for rendering callback URL in HomePort. | https://example.com/ | 
+| WALDUR_CORE.ENABLE_GEOIP | bool | Enable detection of coordinates of virtual machines. | True | 
+| WALDUR_CORE.SHOW_ALL_USERS | bool | Indicates whether user can see all other users in `api/users/` endpoint. | False | 
 | WALDUR_AUTH_SOCIAL.FACEBOOK_SECRET | str | Application secret key. |  | 
 | WALDUR_AUTH_SOCIAL.FACEBOOK_CLIENT_ID | str | ID of application used for OAuth authentication. |  | 
 | WALDUR_AUTH_SOCIAL.SMARTIDEE_SECRET | str | Application secret key. |  | 
@@ -60,7 +64,7 @@
 | WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_ACCESS_TOKEN | str | Token is used to authenticate against user info endpoint. |  | 
 | WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_USERINFO_URL | str | It allows to get user data based on userid aka CUID. |  | 
 | USE_PROTECTED_URL | bool | Protect media URLs using signed token. | False | 
-| VERIFY_WEBHOOK_REQUESTS | bool | Send verified request on webhook processing. | True | 
+| VERIFY_WEBHOOK_REQUESTS | bool | When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser. | True | 
+| DEFAULT_FROM_EMAIL | str | Default email address to use for automated correspondence from Waldur. | webmaster@localhost | 
 | CONVERT_MEDIA_URLS_TO_MASTERMIND_NETLOC | bool | None | False | 
-| IPSTACK_ACCESS_KEY | str | None |  | 
-| IMPORT_EXPORT_USE_TRANSACTIONS | bool | None | True | 
+| IMPORT_EXPORT_USE_TRANSACTIONS | bool | Controls if resource importing should use database transactions. Using transactions makes imports safer as a failure during import won’t import only part of the data set. | True | 
