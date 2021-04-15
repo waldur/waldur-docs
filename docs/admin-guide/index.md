@@ -16,3 +16,4 @@
 - [Cookie policy]()
 - [Marketplace architecture]()
 - [Marketplace plugins]()
+- [Kubernetes deployment](kubernetes-deployment/general.md)
