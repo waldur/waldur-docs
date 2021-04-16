@@ -61,8 +61,9 @@
 | WALDUR_AUTH_SOCIAL.EDUTEAMS_AUTH_URL | str | The authorization endpoint performs authentication of the end-user. This is done by redirecting the user agent to this endpoint. | https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization | 
 | WALDUR_AUTH_SOCIAL.EDUTEAMS_TOKEN_URL | str | The token endpoint is used to obtain tokens. | https://proxy.acc.eduteams.org/OIDC/token | 
 | WALDUR_AUTH_SOCIAL.EDUTEAMS_USERINFO_URL | str | The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token. | https://proxy.acc.eduteams.org/OIDC/userinfo | 
+| WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_TOKEN_URL | str | The token endpoint is used to obtain tokens. | https://proxy.acc.researcher-access.org/OIDC/token | 
 | WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_ACCESS_TOKEN | str | Token is used to authenticate against user info endpoint. |  | 
-| WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_USERINFO_URL | str | It allows to get user data based on userid aka CUID. |  | 
+| WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_USERINFO_URL | str | It allows to get user data based on userid aka CUID. | https://proxy.acc.researcher-access.org/api/userinfo | 
 | USE_PROTECTED_URL | bool | Protect media URLs using signed token. | False | 
 | VERIFY_WEBHOOK_REQUESTS | bool | When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser. | True | 
 | DEFAULT_FROM_EMAIL | str | Default email address to use for automated correspondence from Waldur. | webmaster@localhost | 
