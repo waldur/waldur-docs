@@ -1,9 +1,11 @@
 # Waldur Documentation
 
-Waldur is a platform for managing hybrid cloud resources. It is used to control both internal enterprise IT resources and for selling cloud services to the public. Waldur is composed of the following main components:
+Waldur is a platform for managing hybrid cloud resources. It is used to control both internal enterprise IT resources and
+for selling cloud services to the public. Waldur is composed of the following main components:
 
 - Waldur MasterMind - broker and orchestrator of cloud services. Responsible for technical service delivery and connected matters. Exposes REST API for management
 - Waldur HomePort - web-based self-service portal. Talks REST to MasterMind.
+
 Waldur is open-source, extendable and comes with a professional support provided by OpenNode.
 
 ## Outline
