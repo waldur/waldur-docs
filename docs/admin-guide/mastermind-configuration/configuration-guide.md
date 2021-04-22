@@ -1,6 +1,7 @@
 | **Name** | **Type** | **Description** | **Default value** |
 | -------- | -------- | --------------- | ----------------- |
 | IPSTACK_ACCESS_KEY | Optional[str] | Unique authentication key used to gain access to the ipstack API. | None | 
+| LANGUAGES | List[Tuple[str, str]] | The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese'). This specifies which languages are available for language selection. | (('en', 'English'), ('et', 'Eesti')) | 
 | WALDUR_CORE.AUTHENTICATION_METHODS | List[str] | List of enabled authentication methods. | ['LOCAL_SIGNIN'] | 
 | WALDUR_CORE.SITE_LOGO | Optional[str] | It is used in marketplace order header. | None | 
 | WALDUR_CORE.COUNTRIES | List[str] | It is used in organization creation dialog in order to limit country choices to predefined set. | ['EE', 'LV', 'LT'] | 
