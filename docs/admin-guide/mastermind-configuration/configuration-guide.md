@@ -65,6 +65,25 @@
 | WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_TOKEN_URL | str | The token endpoint is used to obtain tokens. | https://proxy.acc.researcher-access.org/OIDC/token | 
 | WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_ACCESS_TOKEN | str | Token is used to authenticate against user info endpoint. |  | 
 | WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_USERINFO_URL | str | It allows to get user data based on userid aka CUID. | https://proxy.acc.researcher-access.org/api/userinfo | 
+| WALDUR_FREEIPA.ENABLED | bool | Enable integration of identity provisioning in configured FreeIPA | False | 
+| WALDUR_FREEIPA.HOSTNAME | str | Hostname of FreeIPA server | ipa.example.com | 
+| WALDUR_FREEIPA.USERNAME | str | Username of FreeIPA user with administrative privileges | admin | 
+| WALDUR_FREEIPA.PASSWORD | str | Password of FreeIPA user with administrative privileges | secret | 
+| WALDUR_FREEIPA.VERIFY_SSL | bool | Validate TLS certificate of FreeIPA web interface / REST API | True | 
+| WALDUR_FREEIPA.USERNAME_PREFIX | str | Prefix to be appended to all usernames created in FreeIPA by Waldur | waldur_ | 
+| WALDUR_FREEIPA.GROUPNAME_PREFIX | str | Prefix to be appended to all group names created in FreeIPA by Waldur | waldur_ | 
+| WALDUR_FREEIPA.BLACKLISTED_USERNAMES | list | List of username that users are not allowed to select | ['root'] | 
+| WALDUR_FREEIPA.GROUP_SYNCHRONIZATION_ENABLED | bool | Optionally disable creation of user groups in FreeIPA matching Waldur structure | True | 
+| WALDUR_HPC.INTERNAL_AFFILIATIONS | List[str] | List of user affiliations (eduPersonScopedAffiliation fields) that define if the user belongs to internal organization. | [] | 
+| WALDUR_HPC.EXTERNAL_AFFILIATIONS | List[str] | List of user affiliations (eduPersonScopedAffiliation fields) that define if the user belongs to external organization. | [] | 
+| WALDUR_HPC.INTERNAL_EMAIL_PATTERNS | List[str] | List of user email patterns (as regex) that define if the user belongs to internal organization. | [] | 
+| WALDUR_HPC.EXTERNAL_EMAIL_PATTERNS | List[str] | List of user email patterns (as regex) that define if the user belongs to external organization. | [] | 
+| WALDUR_HPC.ENABLED | bool | Enable HPC-specific hooks in Waldur deployment | False | 
+| WALDUR_HPC.INTERNAL_CUSTOMER_UUID | str | UUID of a Waldur organization (aka customer) where new internal users would be added |  | 
+| WALDUR_HPC.EXTERNAL_CUSTOMER_UUID | str | UUID of a Waldur organization (aka customer) where new external users would be added |  | 
+| WALDUR_HPC.INTERNAL_LIMITS | dict | Overrided default values for SLURM offering to be created for users belonging to internal organization. | {} | 
+| WALDUR_HPC.OFFERING_UUID | str | UUID of a Waldur SLURM offering, which will be used for creating allocations for users |  | 
+| WALDUR_HPC.PLAN_UUID | str | UUID of a Waldur SLURM offering plan, which will be used for creating allocations for users |  | 
 | USE_PROTECTED_URL | bool | Protect media URLs using signed token. | False | 
 | VERIFY_WEBHOOK_REQUESTS | bool | When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser. | True | 
 | DEFAULT_FROM_EMAIL | str | Default email address to use for automated correspondence from Waldur. | webmaster@localhost | 

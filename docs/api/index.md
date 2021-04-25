@@ -1,3 +1,0 @@
-# Index
-
-- [Authentication](authentication.md)
