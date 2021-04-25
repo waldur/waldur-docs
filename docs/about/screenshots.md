@@ -1,6 +1,6 @@
 # Screenshots
 
-## Landing page
+## Login page
 
 [![Landing](img/login.png)](img/login.png)
 
