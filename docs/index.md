@@ -5,13 +5,6 @@ for selling cloud services. Waldur is composed of the following main components:
 connected matters. Exposes REST API for management
 - Waldur HomePort - web-based self-service portal. Talks REST to MasterMind.
 
-Waldur is open-source, extendable and comes with a professional support provided by OpenNode.
+Waldur is open-source, extendable and comes with a [professional support](about/support.md) provided by OpenNode.
 
-## Outline
-- [Administration Guide](admin-guide/index.md)
-- [User Guide](user-guide/index.md)
-- [API](api/index.md)
-- [Changelog](changelog/index.md)
-- [Project governance](project-governance/index.md)
-- [Contributing](contributing/index.md)
-- [Support](support/index.md)
+If you are interested in deploying, check the [getting started](getting-started.md) section!
