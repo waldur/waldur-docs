@@ -10,39 +10,32 @@ Ansible version 2.9 is supported; code in this repository may work with other An
 ## Quick setup
 
 1. Make sure that you have:
- - Folder containing managed-ansible Ansible installer (this one).
- - Folder containing deployment-specific settings.
-
+    - Folder containing managed-ansible Ansible installer (this one).
+    - Folder containing deployment-specific settings.
 2. Copy `setup_deployment.sh.example` to `setup_deployment.sh`, adjust:
- - INSTALLER_PATH - full path to current folder
- - DEPLOYMENT_CONFIG_PATH - full path to folder with deployment-specific information
- - DEPLOYMENT_IDS - list of deployment IDs you want to manage.
-
+    - INSTALLER_PATH - full path to current folder
+    - DEPLOYMENT_CONFIG_PATH - full path to folder with deployment-specific information
+    - DEPLOYMENT_IDS - list of deployment IDs you want to manage.
 3. Run ./setup_deployment.sh. This will create required symlinks.
-
 4. Run `ansible-playbook -DC <deployment_id.yml>` to check what installer will do.
-
 5. Run `ansible-playbook -D <deployment_id.yml>` to apply the installer.
 
 
 ## Upgrading installer
 
 1. Download a new archive into a separate folder and unpack.
-
-2. Check what has changed: `rsync --dry-run -avzh unpacked-folder-eg-ansible-3.2.3/ /path/to/installer/`
-
-3. Do the upgrade: `rsync -avzh unpacked-folder-eg-ansible-3.2.3/ /path/to/installer/`
+2. Check what has changed:
+    ```rsync --dry-run -avzh unpacked-folder-eg-ansible-3.2.3/ /path/to/installer/```
+3. Do the upgrade:
+    ```rsync -avzh unpacked-folder-eg-ansible-3.2.3/ /path/to/installer/```
 
 ## Upgrading Waldur
 
 Upgrading Waldur to a new version is achieved by following the checklist:
 
 1. Update deployment-specific variables for the new version in `groups_vars/<deployment_id>/vars` and `groups_vars/<deployment_id>/vault` (if setting is private).
-
-2. Update target version in `groups_vars/<deployment_id>/vars`: set `waldur_homeport_version` and `waldur_mastermind_version` to a new version of the release RPMs.
-
+2. Update target version in `groups_vars/<deployment_id>/vars`: set `waldur_homeport_version` and `waldur_mastermind_version` to a new version of the Waldur release.
 3. Run `ansible-playbook -DC <deployment_id.yml>` to check what installer will do during the upgrade.
-
 4. Run `ansible-playbook -D <deployment_id.yml>` to perform an upgrade.
 
 ## Add new deployment
@@ -72,10 +65,12 @@ Ansible (this repository):
 ## Managing Waldur deployed as Helm
 
 Requirements:
-1) Installed and running `kubernetes` system on a node (e. g. minikube)
-2) Installed `kubectl` on the node
+
+1. Installed and running `kubernetes` system on a node (e. g. minikube)
+2. Installed `kubectl` on the node
 
 Place all configuration files for release in next manner:
+
 - `values.yaml` -> `roles/waldur_helm/files/waldur_helm/waldur/`
 - `values.yaml` -> `roles/waldur_helm/files/waldur_helm/waldur/`
 - Files related to TLS -> `deployments/<deployment_id>/tls/`
@@ -85,6 +80,7 @@ Place all configuration files for release in next manner:
 - Files related to SAML2 -> `deployments/<deployment_id>/waldur_saml2/`
 
 More configuration info:
-1) [TLS](https://github.com/opennode/waldur-helm/blob/master/docs/tls-config.md)
-2) [White-labeling](https://github.com/opennode/waldur-helm/blob/master/docs/whitelabeling.md)
-3) [Mastermind templates](https://github.com/opennode/waldur-helm/blob/master/docs/mastermind-templates.md)
+
+- [TLS](https://github.com/opennode/waldur-helm/blob/master/docs/tls-config.md)
+- [White-labeling](https://github.com/opennode/waldur-helm/blob/master/docs/whitelabeling.md)
+- [Mastermind templates](https://github.com/opennode/waldur-helm/blob/master/docs/mastermind-templates.md)
