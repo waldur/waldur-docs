@@ -1,14 +1,34 @@
 # Hardware requirements
 
-## Waldur Mastermind
+## Docker-compose deployment (on a single server)
 
-### Celery workers
-By default 3 Celery workers and one Celery beat process are started.
+- Docker version: 1.13+
+- Minimal configuration: 4 vCPU, 8 GB RAM
 
-- Minimum requirements: 2 CPU, 2 GB RAM
+## Helm-based deployment
+
+- Kubernetes version: 1.18+
+- Minimal namespace limits: TODO
+
+## Component specific requirements
+
+### Waldur Mastermind (API)
+By default 4 uWSGI processes are started.
+- Minimum requirements: 1 CPU, 1GB RAM for every node
+- Recommended setup: 2 CPU or more, 2 GB RAM or more
+
+### Waldur Mastermind (Celery worker)
+By default a single worker with 10 threads is started.
+
+- Minimum requirements: 2 CPU, 1 GB RAM
 - Recommended setup: 4 CPU or more, 8 GB RAM or more
 
 **More memory should be added if more Celery worker processes are running on the same host (512 MB for each 4 Celery workers).**
+
+### Waldur Mastermind (Celery beat)
+A single Celery beat process is started.
+
+- Minimum and recommended requirements: 1 CPU, 1 GB RAM
 
 ### PostgreSQL
 - Minimum requirements: 1 CPU, 1 GB RAM
@@ -18,17 +38,5 @@ By default 3 Celery workers and one Celery beat process are started.
 - Minimum requirements: 1 CPU, 512 MB RAM
 - Recommended setup: 2 CPU or more, 1 GB RAM or more
 
-### uWSGI
-By default 4 uWSGI processes are started.
-- Minimum requirements: 1 CPU, 1GB RAM for every node
-- Recommended setup: 2 CPU or more, 2 GB RAM or more
-
-## Waldur HomePort
-Minimum web server capable to serve static files is enough. HomePort should work just fine with Nginx on 1 CPU and 512 MB RAM.
-
-## All-in-one
-It is possible to run Celery, PostgreSQL, Redis and uWSGI services on one machine. This setup is not recommended for production environments but can be useful for demonstration and evaluation purposes.
-
-- Recommended setup: 4 CPU, 10 GB RAM
-- Operating system: CentOS7 or RHEL7
-
+## Waldur HomePort (Nginx)
+- Minimum and recommended requirements: 1 CPU and 512MB RAM

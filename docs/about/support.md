@@ -1,6 +1,6 @@
 # Support
 
-Waldur is an open-source project co-developed by OpenNode and University of Tartu.
+Waldur is an open-source project co-developed by [OpenNode](https://opennodecloud.com) and [University of Tartu](https://hpc.ut.ee).
 
 ## Support and sponsored development
 
