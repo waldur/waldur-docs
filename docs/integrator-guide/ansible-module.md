@@ -1,0 +1,3 @@
+# Waldur Ansible module
+
+placeholder
