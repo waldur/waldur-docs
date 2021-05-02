@@ -84,6 +84,12 @@
 | WALDUR_HPC.INTERNAL_LIMITS | dict | Overrided default values for SLURM offering to be created for users belonging to internal organization. | {} | 
 | WALDUR_HPC.OFFERING_UUID | str | UUID of a Waldur SLURM offering, which will be used for creating allocations for users |  | 
 | WALDUR_HPC.PLAN_UUID | str | UUID of a Waldur SLURM offering plan, which will be used for creating allocations for users |  | 
+| WALDUR_SLURM.ENABLED | bool | Enable support for SLURM plugin in a deployment | False | 
+| WALDUR_SLURM.CUSTOMER_PREFIX | str | Prefix for SLURM account name corresponding to Waldur organization. | waldur_customer_ | 
+| WALDUR_SLURM.PROJECT_PREFIX | str | Prefix for SLURM account name corresponding to Waldur project. | waldur_project_ | 
+| WALDUR_SLURM.ALLOCATION_PREFIX | str | Prefix for SLURM account name corresponding to Waldur allocation | waldur_allocation_ | 
+| WALDUR_SLURM.PRIVATE_KEY_PATH | str | Path to private key file used as SSH identity file for accessing SLURM master. | /etc/waldur/id_rsa | 
+| WALDUR_SLURM.DEFAULT_LIMITS | dict | Default limits of account that are set when SLURM account is provisioned. | {'CPU': 16000, 'GPU': 400, 'RAM': 102400000} | 
 | USE_PROTECTED_URL | bool | Protect media URLs using signed token. | False | 
 | VERIFY_WEBHOOK_REQUESTS | bool | When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser. | True | 
 | DEFAULT_FROM_EMAIL | str | Default email address to use for automated correspondence from Waldur. | webmaster@localhost | 
