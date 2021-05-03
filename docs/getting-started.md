@@ -19,9 +19,8 @@ the [configuration guide](admin-guide/mastermind-configuration/configuration-gui
 The most typical aspects for configuration are:
 
 - [White-labelling](admin-guide/whitelabelling.md). Setting custom logos and terms of usage.
-- [Identity providers](admin-guide/identity-providers.md). Waldur supports a wide range of OIDC and SAML based IdPs.
-- [FreeIPA configuration](admin-guide/freeipa.md) for integrating Waldur users with external services.
-
+- Configuring [identity providers](admin-guide/identities/summary.md). Waldur supports a range of OIDC and SAML based IdPs.
+- [Adding offerings](admin-guide/providers/adding-an-offering.md) for sharing among Waldur users.
 
 !!! tip
     For easier management of Waldur deployments and configuration we 
