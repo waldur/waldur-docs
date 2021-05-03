@@ -1,97 +1,691 @@
-| **Name** | **Type** | **Description** | **Default value** |
-| -------- | -------- | --------------- | ----------------- |
-| IPSTACK_ACCESS_KEY | Optional[str] | Unique authentication key used to gain access to the ipstack API. | None | 
-| LANGUAGES | List[Tuple[str, str]] | The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese'). This specifies which languages are available for language selection. | (('en', 'English'), ('et', 'Eesti')) | 
-| WALDUR_CORE.AUTHENTICATION_METHODS | List[str] | List of enabled authentication methods. | ['LOCAL_SIGNIN'] | 
-| WALDUR_CORE.SITE_LOGO | Optional[str] | It is used in marketplace order header. | None | 
-| WALDUR_CORE.COUNTRIES | List[str] | It is used in organization creation dialog in order to limit country choices to predefined set. | ['EE', 'LV', 'LT'] | 
-| WALDUR_CORE.INVITATION_MAX_AGE | Optional[timedelta] | Max age of invitation token. It is used in approve and reject actions. | None | 
-| WALDUR_CORE.PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS | List[str] | List of authentication methods which are not allowed to update user details. | [] | 
-| WALDUR_CORE.SELLER_COUNTRY_CODE | Optional[str] | Specifies seller legal or effective country of registration or residence as an ISO 3166-1 alpha-2 country code. It is used for computing VAT charge rate. | None | 
-| WALDUR_CORE.EXTENSIONS_AUTOREGISTER | bool | Defines whether extensions should be automatically registered. | True | 
-| WALDUR_CORE.TOKEN_KEY | str | Header for token authentication. | x-auth-token | 
-| WALDUR_CORE.INVITATIONS_ENABLED | bool | Allows to disable invitations feature. | True | 
-| WALDUR_CORE.ALLOW_SIGNUP_WITHOUT_INVITATION | bool | Allow to signup without an invitation. | True | 
-| WALDUR_CORE.VALIDATE_INVITATION_EMAIL | bool | Ensure that invitation and user emails match. | False | 
-| WALDUR_CORE.TOKEN_LIFETIME | timedelta | Defines for how long user token should remain valid if there was no action from user. | 1:00:00 | 
-| WALDUR_CORE.INVITATION_LIFETIME | timedelta | Defines for how long invitation remains valid. | 7 days, 0:00:00 | 
-| WALDUR_CORE.OWNERS_CAN_MANAGE_OWNERS | bool | Enables organization owners to manage other organization owners. | False | 
-| WALDUR_CORE.OWNER_CAN_MANAGE_CUSTOMER | bool | Enables organization owners to create an organization. | False | 
-| WALDUR_CORE.BACKEND_FIELDS_EDITABLE | bool | Allows to control /admin writable fields. If this flag is disabled it is impossible to edit any field that corresponds to backend value via /admin. Such restriction allows to save information from corruption. | True | 
-| WALDUR_CORE.INITIAL_CUSTOMER_AGREEMENT_NUMBER | int | Allows to tweak initial value of agreement number. It is assumed that organization owner should accept terms of services when organization is registered via Waldur HomePort. | 4000 | 
-| WALDUR_CORE.CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION | bool | Enables generation of the first project on organization creation. | False | 
-| WALDUR_CORE.ONLY_STAFF_MANAGES_SERVICES | bool | Allows to restrict provider management only to staff users. | False | 
-| WALDUR_CORE.NATIVE_NAME_ENABLED | bool | Allows to render native name field in customer and user forms. | False | 
-| WALDUR_CORE.SITE_NAME | str | It is used in email notifications in order to refer to the current deployment in user-friendly way. | Waldur MasterMind | 
-| WALDUR_CORE.SITE_ADDRESS | str | It is used in marketplace order header. | Default address | 
-| WALDUR_CORE.SITE_EMAIL | str | It is used in marketplace order header. | Default email | 
-| WALDUR_CORE.SITE_PHONE | str | It is used in marketplace order header. | Default phone | 
-| WALDUR_CORE.CURRENCY_NAME | str | It is used in marketplace order details and invoices for currency formatting. | EUR | 
-| WALDUR_CORE.NOTIFICATIONS_PROFILE_CHANGES | dict | Allows enabling notifications about profile changes of organization owners. | {'ENABLED': True, 'FIELDS': ('email', 'phone_number', 'job_title')} | 
-| WALDUR_CORE.ENABLE_ACCOUNTING_START_DATE | bool | Allows to enable accounting for organizations using value of accounting_start_date field. | False | 
-| WALDUR_CORE.USE_ATOMIC_TRANSACTION | bool | Wrap action views in atomic transaction. | True | 
-| WALDUR_CORE.NOTIFICATION_SUBJECT | str | It is used as a subject of email emitted by event logging hook. | Notifications from Waldur | 
-| WALDUR_CORE.LOGGING_REPORT_DIRECTORY | str | Directory where log files are located. | /var/log/waldur | 
-| WALDUR_CORE.LOGGING_REPORT_INTERVAL | timedelta | Files older that specified interval are filtered out. | 7 days, 0:00:00 | 
-| WALDUR_CORE.HTTP_CHUNK_SIZE | int | Chunk size for resource fetching from backend API. It is needed in order to avoid too long HTTP request error. | 50 | 
-| WALDUR_CORE.ONLY_STAFF_CAN_INVITE_USERS | bool | Allow to limit invitation management to staff only. | False | 
-| WALDUR_CORE.INVITATION_CREATE_MISSING_USER | bool | Allow to create FreeIPA user using details specified in invitation if user does not exist yet. | False | 
-| WALDUR_CORE.INVITATION_DISABLE_MULTIPLE_ROLES | bool | Do not allow user to grant multiple roles in the same project or organization using invitation. | False | 
-| WALDUR_CORE.ATTACHMENT_LINK_MAX_AGE | timedelta | Max age of secure token for media download. | 1:00:00 | 
-| WALDUR_CORE.EMAIL_CHANGE_MAX_AGE | timedelta | Max age of change email request. | 1 day, 0:00:00 | 
-| WALDUR_CORE.HOMEPORT_URL | str | It is used for rendering callback URL in HomePort. | https://example.com/ | 
-| WALDUR_CORE.ENABLE_GEOIP | bool | Enable detection of coordinates of virtual machines. | True | 
-| WALDUR_CORE.SHOW_ALL_USERS | bool | Indicates whether user can see all other users in `api/users/` endpoint. | False | 
-| WALDUR_AUTH_SOCIAL.FACEBOOK_SECRET | str | Application secret key. |  | 
-| WALDUR_AUTH_SOCIAL.FACEBOOK_CLIENT_ID | str | ID of application used for OAuth authentication. |  | 
-| WALDUR_AUTH_SOCIAL.SMARTIDEE_SECRET | str | Application secret key. |  | 
-| WALDUR_AUTH_SOCIAL.SMARTIDEE_CLIENT_ID | str | ID of application used for OAuth authentication. |  | 
-| WALDUR_AUTH_SOCIAL.TARA_SECRET | str | Application secret key. |  | 
-| WALDUR_AUTH_SOCIAL.TARA_CLIENT_ID | str | ID of application used for OAuth authentication. |  | 
-| WALDUR_AUTH_SOCIAL.TARA_SANDBOX | bool | You should set it to False in order to switch to production mode. | True | 
-| WALDUR_AUTH_SOCIAL.TARA_LABEL | str | You may set it to eIDAS, SmartID or MobileID make it more clear to the user which exact identity provider is configured or preferred for service provider. | Riigi Autentimisteenus | 
-| WALDUR_AUTH_SOCIAL.KEYCLOAK_LABEL | str | Label is used by HomePort for rendering login button. | Keycloak | 
-| WALDUR_AUTH_SOCIAL.KEYCLOAK_CLIENT_ID | str | ID of application used for OAuth authentication. |  | 
-| WALDUR_AUTH_SOCIAL.KEYCLOAK_SECRET | str | Application secret key. |  | 
-| WALDUR_AUTH_SOCIAL.KEYCLOAK_AUTH_URL | str | The authorization endpoint performs authentication of the end-user. This is done by redirecting the user agent to this endpoint. |  | 
-| WALDUR_AUTH_SOCIAL.KEYCLOAK_TOKEN_URL | str | The token endpoint is used to obtain tokens. |  | 
-| WALDUR_AUTH_SOCIAL.KEYCLOAK_USERINFO_URL | str | The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token. |  | 
-| WALDUR_AUTH_SOCIAL.EDUTEAMS_LABEL | str | Label is used by HomePort for rendering login button. | Eduteams | 
-| WALDUR_AUTH_SOCIAL.EDUTEAMS_CLIENT_ID | str | ID of application used for OAuth authentication. |  | 
-| WALDUR_AUTH_SOCIAL.EDUTEAMS_SECRET | str | Application secret key. |  | 
-| WALDUR_AUTH_SOCIAL.EDUTEAMS_AUTH_URL | str | The authorization endpoint performs authentication of the end-user. This is done by redirecting the user agent to this endpoint. | https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization | 
-| WALDUR_AUTH_SOCIAL.EDUTEAMS_TOKEN_URL | str | The token endpoint is used to obtain tokens. | https://proxy.acc.eduteams.org/OIDC/token | 
-| WALDUR_AUTH_SOCIAL.EDUTEAMS_USERINFO_URL | str | The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token. | https://proxy.acc.eduteams.org/OIDC/userinfo | 
-| WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_TOKEN_URL | str | The token endpoint is used to obtain tokens. | https://proxy.acc.researcher-access.org/OIDC/token | 
-| WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_ACCESS_TOKEN | str | Token is used to authenticate against user info endpoint. |  | 
-| WALDUR_AUTH_SOCIAL.REMOTE_EDUTEAMS_USERINFO_URL | str | It allows to get user data based on userid aka CUID. | https://proxy.acc.researcher-access.org/api/userinfo | 
-| WALDUR_FREEIPA.ENABLED | bool | Enable integration of identity provisioning in configured FreeIPA | False | 
-| WALDUR_FREEIPA.HOSTNAME | str | Hostname of FreeIPA server | ipa.example.com | 
-| WALDUR_FREEIPA.USERNAME | str | Username of FreeIPA user with administrative privileges | admin | 
-| WALDUR_FREEIPA.PASSWORD | str | Password of FreeIPA user with administrative privileges | secret | 
-| WALDUR_FREEIPA.VERIFY_SSL | bool | Validate TLS certificate of FreeIPA web interface / REST API | True | 
-| WALDUR_FREEIPA.USERNAME_PREFIX | str | Prefix to be appended to all usernames created in FreeIPA by Waldur | waldur_ | 
-| WALDUR_FREEIPA.GROUPNAME_PREFIX | str | Prefix to be appended to all group names created in FreeIPA by Waldur | waldur_ | 
-| WALDUR_FREEIPA.BLACKLISTED_USERNAMES | list | List of username that users are not allowed to select | ['root'] | 
-| WALDUR_FREEIPA.GROUP_SYNCHRONIZATION_ENABLED | bool | Optionally disable creation of user groups in FreeIPA matching Waldur structure | True | 
-| WALDUR_HPC.INTERNAL_AFFILIATIONS | List[str] | List of user affiliations (eduPersonScopedAffiliation fields) that define if the user belongs to internal organization. | [] | 
-| WALDUR_HPC.EXTERNAL_AFFILIATIONS | List[str] | List of user affiliations (eduPersonScopedAffiliation fields) that define if the user belongs to external organization. | [] | 
-| WALDUR_HPC.INTERNAL_EMAIL_PATTERNS | List[str] | List of user email patterns (as regex) that define if the user belongs to internal organization. | [] | 
-| WALDUR_HPC.EXTERNAL_EMAIL_PATTERNS | List[str] | List of user email patterns (as regex) that define if the user belongs to external organization. | [] | 
-| WALDUR_HPC.ENABLED | bool | Enable HPC-specific hooks in Waldur deployment | False | 
-| WALDUR_HPC.INTERNAL_CUSTOMER_UUID | str | UUID of a Waldur organization (aka customer) where new internal users would be added |  | 
-| WALDUR_HPC.EXTERNAL_CUSTOMER_UUID | str | UUID of a Waldur organization (aka customer) where new external users would be added |  | 
-| WALDUR_HPC.INTERNAL_LIMITS | dict | Overrided default values for SLURM offering to be created for users belonging to internal organization. | {} | 
-| WALDUR_HPC.OFFERING_UUID | str | UUID of a Waldur SLURM offering, which will be used for creating allocations for users |  | 
-| WALDUR_HPC.PLAN_UUID | str | UUID of a Waldur SLURM offering plan, which will be used for creating allocations for users |  | 
-| WALDUR_SLURM.ENABLED | bool | Enable support for SLURM plugin in a deployment | False | 
-| WALDUR_SLURM.CUSTOMER_PREFIX | str | Prefix for SLURM account name corresponding to Waldur organization. | waldur_customer_ | 
-| WALDUR_SLURM.PROJECT_PREFIX | str | Prefix for SLURM account name corresponding to Waldur project. | waldur_project_ | 
-| WALDUR_SLURM.ALLOCATION_PREFIX | str | Prefix for SLURM account name corresponding to Waldur allocation | waldur_allocation_ | 
-| WALDUR_SLURM.PRIVATE_KEY_PATH | str | Path to private key file used as SSH identity file for accessing SLURM master. | /etc/waldur/id_rsa | 
-| WALDUR_SLURM.DEFAULT_LIMITS | dict | Default limits of account that are set when SLURM account is provisioned. | {'CPU': 16000, 'GPU': 400, 'RAM': 102400000} | 
-| USE_PROTECTED_URL | bool | Protect media URLs using signed token. | False | 
-| VERIFY_WEBHOOK_REQUESTS | bool | When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser. | True | 
-| DEFAULT_FROM_EMAIL | str | Default email address to use for automated correspondence from Waldur. | webmaster@localhost | 
-| CONVERT_MEDIA_URLS_TO_MASTERMIND_NETLOC | bool | None | False | 
-| IMPORT_EXPORT_USE_TRANSACTIONS | bool | Controls if resource importing should use database transactions. Using transactions makes imports safer as a failure during import won’t import only part of the data set. | True | 
+## WALDUR_AUTH_SOCIAL plugin
+
+Default value: 
+```python
+WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization',
+ 'EDUTEAMS_CLIENT_ID': '',
+ 'EDUTEAMS_LABEL': 'Eduteams',
+ 'EDUTEAMS_SECRET': '',
+ 'EDUTEAMS_TOKEN_URL': 'https://proxy.acc.eduteams.org/OIDC/token',
+ 'EDUTEAMS_USERINFO_URL': 'https://proxy.acc.eduteams.org/OIDC/userinfo',
+ 'FACEBOOK_CLIENT_ID': '',
+ 'FACEBOOK_SECRET': '',
+ 'KEYCLOAK_AUTH_URL': '',
+ 'KEYCLOAK_CLIENT_ID': '',
+ 'KEYCLOAK_LABEL': 'Keycloak',
+ 'KEYCLOAK_SECRET': '',
+ 'KEYCLOAK_TOKEN_URL': '',
+ 'KEYCLOAK_USERINFO_URL': '',
+ 'REMOTE_EDUTEAMS_ACCESS_TOKEN': '',
+ 'REMOTE_EDUTEAMS_TOKEN_URL': 'https://proxy.acc.researcher-access.org/OIDC/token',
+ 'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo',
+ 'SMARTIDEE_CLIENT_ID': '',
+ 'SMARTIDEE_SECRET': '',
+ 'TARA_CLIENT_ID': '',
+ 'TARA_LABEL': 'Riigi Autentimisteenus',
+ 'TARA_SANDBOX': True,
+ 'TARA_SECRET': ''}
+```
+
+** EDUTEAMS_AUTH_URL **
+
+Type: str
+
+The authorization endpoint performs authentication of the end-user. This is done by redirecting the user agent to this endpoint.
+
+** EDUTEAMS_CLIENT_ID **
+
+Type: str
+
+ID of application used for OAuth authentication.
+
+** EDUTEAMS_LABEL **
+
+Type: str
+
+Label is used by HomePort for rendering login button.
+
+** EDUTEAMS_SECRET **
+
+Type: str
+
+Application secret key.
+
+** EDUTEAMS_TOKEN_URL **
+
+Type: str
+
+The token endpoint is used to obtain tokens.
+
+** EDUTEAMS_USERINFO_URL **
+
+Type: str
+
+The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token.
+
+** FACEBOOK_CLIENT_ID **
+
+Type: str
+
+ID of application used for OAuth authentication.
+
+** FACEBOOK_SECRET **
+
+Type: str
+
+Application secret key.
+
+** KEYCLOAK_AUTH_URL **
+
+Type: str
+
+The authorization endpoint performs authentication of the end-user. This is done by redirecting the user agent to this endpoint.
+
+** KEYCLOAK_CLIENT_ID **
+
+Type: str
+
+ID of application used for OAuth authentication.
+
+** KEYCLOAK_LABEL **
+
+Type: str
+
+Label is used by HomePort for rendering login button.
+
+** KEYCLOAK_SECRET **
+
+Type: str
+
+Application secret key.
+
+** KEYCLOAK_TOKEN_URL **
+
+Type: str
+
+The token endpoint is used to obtain tokens.
+
+** KEYCLOAK_USERINFO_URL **
+
+Type: str
+
+The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token.
+
+** REMOTE_EDUTEAMS_ACCESS_TOKEN **
+
+Type: str
+
+Token is used to authenticate against user info endpoint.
+
+** REMOTE_EDUTEAMS_TOKEN_URL **
+
+Type: str
+
+The token endpoint is used to obtain tokens.
+
+** REMOTE_EDUTEAMS_USERINFO_URL **
+
+Type: str
+
+It allows to get user data based on userid aka CUID.
+
+** SMARTIDEE_CLIENT_ID **
+
+Type: str
+
+ID of application used for OAuth authentication.
+
+** SMARTIDEE_SECRET **
+
+Type: str
+
+Application secret key.
+
+** TARA_CLIENT_ID **
+
+Type: str
+
+ID of application used for OAuth authentication.
+
+** TARA_LABEL **
+
+Type: str
+
+You may set it to eIDAS, SmartID or MobileID make it more clear to the user which exact identity provider is configured or preferred for service provider.
+
+** TARA_SANDBOX **
+
+Type: bool
+
+You should set it to False in order to switch to production mode.
+
+** TARA_SECRET **
+
+Type: str
+
+Application secret key.
+
+## WALDUR_CORE plugin
+
+Default value: 
+```python
+WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
+ 'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
+ 'AUTHENTICATION_METHODS': ['LOCAL_SIGNIN'],
+ 'BACKEND_FIELDS_EDITABLE': True,
+ 'COUNTRIES': ['EE', 'LV', 'LT'],
+ 'CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION': False,
+ 'CURRENCY_NAME': 'EUR',
+ 'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
+ 'ENABLE_ACCOUNTING_START_DATE': False,
+ 'ENABLE_GEOIP': True,
+ 'EXTENSIONS_AUTOREGISTER': True,
+ 'HOMEPORT_URL': 'https://example.com/',
+ 'HTTP_CHUNK_SIZE': 50,
+ 'INITIAL_CUSTOMER_AGREEMENT_NUMBER': 4000,
+ 'INVITATIONS_ENABLED': True,
+ 'INVITATION_CREATE_MISSING_USER': False,
+ 'INVITATION_DISABLE_MULTIPLE_ROLES': False,
+ 'INVITATION_LIFETIME': datetime.timedelta(days=7),
+ 'INVITATION_MAX_AGE': None,
+ 'LOGGING_REPORT_DIRECTORY': '/var/log/waldur',
+ 'LOGGING_REPORT_INTERVAL': datetime.timedelta(days=7),
+ 'NATIVE_NAME_ENABLED': False,
+ 'NOTIFICATIONS_PROFILE_CHANGES': {'ENABLED': True,
+                                   'FIELDS': ('email',
+                                              'phone_number',
+                                              'job_title')},
+ 'NOTIFICATION_SUBJECT': 'Notifications from Waldur',
+ 'ONLY_STAFF_CAN_INVITE_USERS': False,
+ 'ONLY_STAFF_MANAGES_SERVICES': False,
+ 'OWNERS_CAN_MANAGE_OWNERS': False,
+ 'OWNER_CAN_MANAGE_CUSTOMER': False,
+ 'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
+ 'SELLER_COUNTRY_CODE': None,
+ 'SHOW_ALL_USERS': False,
+ 'SITE_ADDRESS': 'Default address',
+ 'SITE_EMAIL': 'Default email',
+ 'SITE_LOGO': None,
+ 'SITE_NAME': 'Waldur MasterMind',
+ 'SITE_PHONE': 'Default phone',
+ 'TOKEN_KEY': 'x-auth-token',
+ 'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
+ 'USE_ATOMIC_TRANSACTION': True,
+ 'VALIDATE_INVITATION_EMAIL': False}
+```
+
+** ALLOW_SIGNUP_WITHOUT_INVITATION **
+
+Type: bool
+
+Allow to signup without an invitation.
+
+** ATTACHMENT_LINK_MAX_AGE **
+
+Type: timedelta
+
+Max age of secure token for media download.
+
+** AUTHENTICATION_METHODS **
+
+Type: List[str]
+
+List of enabled authentication methods.
+
+** BACKEND_FIELDS_EDITABLE **
+
+Type: bool
+
+Allows to control /admin writable fields. If this flag is disabled it is impossible to edit any field that corresponds to backend value via /admin. Such restriction allows to save information from corruption.
+
+** COUNTRIES **
+
+Type: List[str]
+
+It is used in organization creation dialog in order to limit country choices to predefined set.
+
+** CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION **
+
+Type: bool
+
+Enables generation of the first project on organization creation.
+
+** CURRENCY_NAME **
+
+Type: str
+
+It is used in marketplace order details and invoices for currency formatting.
+
+** EMAIL_CHANGE_MAX_AGE **
+
+Type: timedelta
+
+Max age of change email request.
+
+** ENABLE_ACCOUNTING_START_DATE **
+
+Type: bool
+
+Allows to enable accounting for organizations using value of accounting_start_date field.
+
+** ENABLE_GEOIP **
+
+Type: bool
+
+Enable detection of coordinates of virtual machines.
+
+** EXTENSIONS_AUTOREGISTER **
+
+Type: bool
+
+Defines whether extensions should be automatically registered.
+
+** HOMEPORT_URL **
+
+Type: str
+
+It is used for rendering callback URL in HomePort.
+
+** HTTP_CHUNK_SIZE **
+
+Type: int
+
+Chunk size for resource fetching from backend API. It is needed in order to avoid too long HTTP request error.
+
+** INITIAL_CUSTOMER_AGREEMENT_NUMBER **
+
+Type: int
+
+Allows to tweak initial value of agreement number. It is assumed that organization owner should accept terms of services when organization is registered via Waldur HomePort.
+
+** INVITATIONS_ENABLED **
+
+Type: bool
+
+Allows to disable invitations feature.
+
+** INVITATION_CREATE_MISSING_USER **
+
+Type: bool
+
+Allow to create FreeIPA user using details specified in invitation if user does not exist yet.
+
+** INVITATION_DISABLE_MULTIPLE_ROLES **
+
+Type: bool
+
+Do not allow user to grant multiple roles in the same project or organization using invitation.
+
+** INVITATION_LIFETIME **
+
+Type: timedelta
+
+Defines for how long invitation remains valid.
+
+** INVITATION_MAX_AGE **
+
+Type: Optional[timedelta]
+
+Max age of invitation token. It is used in approve and reject actions.
+
+** LOGGING_REPORT_DIRECTORY **
+
+Type: str
+
+Directory where log files are located.
+
+** LOGGING_REPORT_INTERVAL **
+
+Type: timedelta
+
+Files older that specified interval are filtered out.
+
+** NATIVE_NAME_ENABLED **
+
+Type: bool
+
+Allows to render native name field in customer and user forms.
+
+** NOTIFICATIONS_PROFILE_CHANGES **
+
+Type: dict
+
+Allows enabling notifications about profile changes of organization owners.
+
+** NOTIFICATION_SUBJECT **
+
+Type: str
+
+It is used as a subject of email emitted by event logging hook.
+
+** ONLY_STAFF_CAN_INVITE_USERS **
+
+Type: bool
+
+Allow to limit invitation management to staff only.
+
+** ONLY_STAFF_MANAGES_SERVICES **
+
+Type: bool
+
+Allows to restrict provider management only to staff users.
+
+** OWNERS_CAN_MANAGE_OWNERS **
+
+Type: bool
+
+Enables organization owners to manage other organization owners.
+
+** OWNER_CAN_MANAGE_CUSTOMER **
+
+Type: bool
+
+Enables organization owners to create an organization.
+
+** PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS **
+
+Type: List[str]
+
+List of authentication methods which are not allowed to update user details.
+
+** SELLER_COUNTRY_CODE **
+
+Type: Optional[str]
+
+Specifies seller legal or effective country of registration or residence as an ISO 3166-1 alpha-2 country code. It is used for computing VAT charge rate.
+
+** SHOW_ALL_USERS **
+
+Type: bool
+
+Indicates whether user can see all other users in `api/users/` endpoint.
+
+** SITE_ADDRESS **
+
+Type: str
+
+It is used in marketplace order header.
+
+** SITE_EMAIL **
+
+Type: str
+
+It is used in marketplace order header.
+
+** SITE_LOGO **
+
+Type: Optional[str]
+
+It is used in marketplace order header.
+
+** SITE_NAME **
+
+Type: str
+
+It is used in email notifications in order to refer to the current deployment in user-friendly way.
+
+** SITE_PHONE **
+
+Type: str
+
+It is used in marketplace order header.
+
+** TOKEN_KEY **
+
+Type: str
+
+Header for token authentication.
+
+** TOKEN_LIFETIME **
+
+Type: timedelta
+
+Defines for how long user token should remain valid if there was no action from user.
+
+** USE_ATOMIC_TRANSACTION **
+
+Type: bool
+
+Wrap action views in atomic transaction.
+
+** VALIDATE_INVITATION_EMAIL **
+
+Type: bool
+
+Ensure that invitation and user emails match.
+
+## WALDUR_FREEIPA plugin
+
+Default value: 
+```python
+WALDUR_FREEIPA = {'BLACKLISTED_USERNAMES': ['root'],
+ 'ENABLED': False,
+ 'GROUPNAME_PREFIX': 'waldur_',
+ 'GROUP_SYNCHRONIZATION_ENABLED': True,
+ 'HOSTNAME': 'ipa.example.com',
+ 'PASSWORD': 'secret',
+ 'USERNAME': 'admin',
+ 'USERNAME_PREFIX': 'waldur_',
+ 'VERIFY_SSL': True}
+```
+
+** BLACKLISTED_USERNAMES **
+
+Type: list
+
+List of username that users are not allowed to select
+
+** ENABLED **
+
+Type: bool
+
+Enable integration of identity provisioning in configured FreeIPA
+
+** GROUPNAME_PREFIX **
+
+Type: str
+
+Prefix to be appended to all group names created in FreeIPA by Waldur
+
+** GROUP_SYNCHRONIZATION_ENABLED **
+
+Type: bool
+
+Optionally disable creation of user groups in FreeIPA matching Waldur structure
+
+** HOSTNAME **
+
+Type: str
+
+Hostname of FreeIPA server
+
+** PASSWORD **
+
+Type: str
+
+Password of FreeIPA user with administrative privileges
+
+** USERNAME **
+
+Type: str
+
+Username of FreeIPA user with administrative privileges
+
+** USERNAME_PREFIX **
+
+Type: str
+
+Prefix to be appended to all usernames created in FreeIPA by Waldur
+
+** VERIFY_SSL **
+
+Type: bool
+
+Validate TLS certificate of FreeIPA web interface / REST API
+
+## WALDUR_HPC plugin
+
+Default value: 
+```python
+WALDUR_HPC = {'ENABLED': False,
+ 'EXTERNAL_AFFILIATIONS': [],
+ 'EXTERNAL_CUSTOMER_UUID': '',
+ 'EXTERNAL_EMAIL_PATTERNS': [],
+ 'INTERNAL_AFFILIATIONS': [],
+ 'INTERNAL_CUSTOMER_UUID': '',
+ 'INTERNAL_EMAIL_PATTERNS': [],
+ 'INTERNAL_LIMITS': {},
+ 'OFFERING_UUID': '',
+ 'PLAN_UUID': ''}
+```
+
+** ENABLED **
+
+Type: bool
+
+Enable HPC-specific hooks in Waldur deployment
+
+** EXTERNAL_AFFILIATIONS **
+
+Type: List[str]
+
+List of user affiliations (eduPersonScopedAffiliation fields) that define if the user belongs to external organization.
+
+** EXTERNAL_CUSTOMER_UUID **
+
+Type: str
+
+UUID of a Waldur organization (aka customer) where new external users would be added
+
+** EXTERNAL_EMAIL_PATTERNS **
+
+Type: List[str]
+
+List of user email patterns (as regex) that define if the user belongs to external organization.
+
+** INTERNAL_AFFILIATIONS **
+
+Type: List[str]
+
+List of user affiliations (eduPersonScopedAffiliation fields) that define if the user belongs to internal organization.
+
+** INTERNAL_CUSTOMER_UUID **
+
+Type: str
+
+UUID of a Waldur organization (aka customer) where new internal users would be added
+
+** INTERNAL_EMAIL_PATTERNS **
+
+Type: List[str]
+
+List of user email patterns (as regex) that define if the user belongs to internal organization.
+
+** INTERNAL_LIMITS **
+
+Type: dict
+
+Overrided default values for SLURM offering to be created for users belonging to internal organization.
+
+** OFFERING_UUID **
+
+Type: str
+
+UUID of a Waldur SLURM offering, which will be used for creating allocations for users
+
+** PLAN_UUID **
+
+Type: str
+
+UUID of a Waldur SLURM offering plan, which will be used for creating allocations for users
+
+## WALDUR_SLURM plugin
+
+Default value: 
+```python
+WALDUR_SLURM = {'ALLOCATION_PREFIX': 'waldur_allocation_',
+ 'CUSTOMER_PREFIX': 'waldur_customer_',
+ 'DEFAULT_LIMITS': {'CPU': 16000, 'GPU': 400, 'RAM': 102400000},
+ 'ENABLED': False,
+ 'PRIVATE_KEY_PATH': '/etc/waldur/id_rsa',
+ 'PROJECT_PREFIX': 'waldur_project_'}
+```
+
+** ALLOCATION_PREFIX **
+
+Type: str
+
+Prefix for SLURM account name corresponding to Waldur allocation
+
+** CUSTOMER_PREFIX **
+
+Type: str
+
+Prefix for SLURM account name corresponding to Waldur organization.
+
+** DEFAULT_LIMITS **
+
+Type: dict
+
+Default limits of account that are set when SLURM account is provisioned.
+
+** ENABLED **
+
+Type: bool
+
+Enable support for SLURM plugin in a deployment
+
+** PRIVATE_KEY_PATH **
+
+Type: str
+
+Path to private key file used as SSH identity file for accessing SLURM master.
+
+** PROJECT_PREFIX **
+
+Type: str
+
+Prefix for SLURM account name corresponding to Waldur project.
+
+## Other variables
+
+** CONVERT_MEDIA_URLS_TO_MASTERMIND_NETLOC **
+
+Type: bool, default value: False
+
+** DEFAULT_FROM_EMAIL **
+
+Type: str, default value: webmaster@localhost
+
+Default email address to use for automated correspondence from Waldur.
+
+** IMPORT_EXPORT_USE_TRANSACTIONS **
+
+Type: bool, default value: True
+
+Controls if resource importing should use database transactions. Using transactions makes imports safer as a failure during import won’t import only part of the data set.
+
+** IPSTACK_ACCESS_KEY **
+
+Type: Optional[str]
+
+Unique authentication key used to gain access to the ipstack API.
+
+** LANGUAGES **
+
+Type: List[Tuple[str, str]], default value: (('en', 'English'), ('et', 'Eesti'))
+
+The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese'). This specifies which languages are available for language selection.
+
+** USE_PROTECTED_URL **
+
+Type: bool, default value: False
+
+Protect media URLs using signed token.
+
+** VERIFY_WEBHOOK_REQUESTS **
+
+Type: bool, default value: True
+
+When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser.
+
