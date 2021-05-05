@@ -39,81 +39,84 @@ have requested them. Domains are:
 
 | **Code** | **Description** | **Domain** |
 | -------- | -------- | --------------- |
-| WAL-4000 | Allow to limit visibility of Offering by service provider | Academia Commercial |
-| WAL-3999 | Support for customer credits  | Academia Commercial Government|
-| WAL-3997 | Add common limit management support to HomePort | Academia Commercial |
-| WAL-3987 | Extensions to SLURM module | Academia  |
-| WAL-3964 | Implement consolidated approach for remote user accounts management in marketplace offerings | Academia  |
-| WAL-3963 | Make order confirmation message a common functionality for all Marketplace | Academia Government |
-| WAL-3951 | Implement more fine grained storage of user name |   |
-| WAL-3943 | Shared Openstack Tenant provider phase I | Academia  |
-| WAL-3934 | Functionality specific to deployment of Waldur in Puhuri project as Core | Academia  |
-| WAL-3811 | Improvements to feedback collection | Government  |
-| WAL-3805 | Direct LDAP support for Linux identity | Academia  |
-| WAL-3793 | Tasks related to simplification of the invoice model | Government  |
-| WAL-3788 | Add ability to see popularity of an offering from the list |   |
-| WAL-3759 | Add support of versioning for core objects | Government  |
-| WAL-3744 | Add support for creating / managing projects and resources through API of external Waldur | Academia  |
-| WAL-3736 | Allow protecting resources from accidental deletion | Government  |
-| WAL-3689 | Expose list of connected VMs for each security group | Government  |
-| WAL-3626 | Add ability to generate API docs for select endpoints | Academia  |
-| WAL-3625 | Migrate from Issue types to Request types for Jira support backend | Government  |
-| WAL-3606 | Introduce Organization level service manager role | Government  |
-| WAL-3596 | Allow logins to Rancher via keycloak | Academia Government |
-| WAL-3595 | Expose port management for OpenStack tenant | Government  |
-| WAL-3589 | Expose Sankey diagram with costs and Service providers | Academia  |
-| WAL-3585 | Rancher access group management | Academia Government |
-| WAL-3582 | Allow editing of invoice data for staff users | Government  |
-| WAL-3563 | Tasks related for getting Puhuri Core to work | Academia  |
-| WAL-3524 | Add support for sending notifications to users | Commercial  |
-| WAL-3439 | Add support for bookmarking offerings as favourites | Academia  |
-| WAL-3400 | Tasks related to gitlab dev pipelines |   |
-| WAL-3339 | Offerings (Reporting) |   |
-| WAL-3334 | Introduce vault for storing secret configuration in Waldur |   |
-| WAL-3305 | Chart for creating overview of existing organizations |   |
-| WAL-3285 | "Some of the services suggest purchasing of connected offerings | To Do  |
-| WAL-3272 | Allow setting limit for the maximal size of the total volume type quota | Academia  |
-| WAL-3218 | Payment profiles (Phase III) |   |
-| WAL-3205 | UX stabilization (phase I) |   |
-| WAL-3195 | Improvements to the request-based item UX |   |
-| WAL-3136 | Marketplace Checklists (phase II) | Commercial  |
-| WAL-3135 | Support for auto-scalability of Waldur running on K8S |   |
-| WAL-3103 | Second phase of support for virtual routers in OpenStack. | Academia Government |
-| WAL-3076 | Extend current model with ability to attach VMs directly to external networks | Academia Commercial |
-| WAL-3072 | Support for operations on multiple objects | Commercial  |
-| WAL-3005 | Followup tasks for payment profiles | Government  |
-| WAL-2991 | Markeplace Scripts plugin phase I | Academia Commercial |
-| WAL-2965 | Enhancements to properly support virtual security gateway use-case | Government  |
-| WAL-2961 | Tasks related to Kubernetes ON service development and operation | Government  |
-| WAL-2922 | Tasks for exposing Offerings publicly | Academia  |
-| WAL-2921 | Extending Organization extended payment options | Government  |
-| WAL-2920 | Tasks related for extending Waldur with ability to assess compliancy of organizations |   |
-| WAL-2850 | Extending Rancher to support Helm charts | Government  |
-| WAL-2843 | Tasks related to building up monitoring for EOSC | Academia  |
-| WAL-2780 | Integration of PID services with Waldur models | Academia  |
-| WAL-2776 | A visual checklist for making sure that things are done for the project | Government  |
-| WAL-2749 | Tasks connected to improving security of Waldur  |   |
-| WAL-2748 | Collection of tasks aimed at improving UX of Waldur |   |
-| WAL-2747 | Operational tools for Waldur deployments |   |
-| WAL-2676 | System for lightweight offering management |   |
-| WAL-2637 | Support for creating Rancher clusters | Academia  |
-| WAL-2623 | Introduce license support for OpenStack | Commercial  |
-| WAL-2519 | Improvements to VMware plugin | Commercial  |
-| WAL-2401 | Implement device booking feature | Academia  |
-| WAL-2134 | Further developments of Marketplace |   |
-| WAL-1442 | Enhancements to Waldur for service provider visibility | Commercial  |
-| WAL-1309 | Implement backend and frontend support for managing JIRA as a provider and issues as resources |   |
-| WAL-1262 | Efforts for getting Waldur into Redhat container store |   |
-| WAL-1212 | Reanimate Zabbix plugin |   |
-| WAL-1056 | IPv6 support for OpenStack provider | Academia Commercial Government|
-| WAL-868 | Refactor cost tracking |   |
-| WAL-842 | On-demand demo environment from waldur.com |   |
-| WAL-791 | Stress testing & Profiling (vol 1) |   |
-| WAL-500 | Waldur-specifics for ISKE H audit | Government  |
-| WAL-198 | Resource retention management | Academia Commercial Government|
-| WAL-44 | Navigation FTS |   |
-| WAL-30 | Quick alerts |   |
-
+| WAL-4077 | Integrate external quality metrics of Data repositories with Offerings |    |
+| WAL-4074 | FAIR Offerings - background linking of offering PIDs with published articles | Academia   |
+| WAL-4073 | FAIR-services - add reminders for users about referrals of consumed resources via PIDs | Academia   |
+| WAL-4072 | Expose summaries of Offerings publicly | Academia   |
+| WAL-4000 | Allow to limit visibility of Offering by service provider | Academia Commercial  |
+| WAL-3999 | Support for customer credits  | Academia Commercial Government |
+| WAL-3997 | Add common limit management support to HomePort | Academia Commercial  |
+| WAL-3987 | Extensions to SLURM module | Academia   |
+| WAL-3964 | Implement consolidated approach for remote user accounts management in marketplace offerings | Academia   |
+| WAL-3963 | Make order confirmation message a common functionality for all Marketplace | Academia Government  |
+| WAL-3951 | Implement more fine grained storage of user name |    |
+| WAL-3943 | Shared Openstack Tenant provider phase I | Academia   |
+| WAL-3934 | Functionality specific to deployment of Waldur in Puhuri project as Core | Academia   |
+| WAL-3811 | Improvements to feedback collection | Government   |
+| WAL-3805 | Direct LDAP support for Linux identity | Academia   |
+| WAL-3793 | Tasks related to simplification of the invoice model | Government   |
+| WAL-3788 | Add ability to see popularity of an offering from the list |    |
+| WAL-3759 | Add support of versioning for core objects | Government   |
+| WAL-3744 | Add support for creating / managing projects and resources through API of external Waldur | Academia   |
+| WAL-3736 | Allow protecting resources from accidental deletion | Government   |
+| WAL-3689 | Expose list of connected VMs for each security group | Government   |
+| WAL-3626 | Add ability to generate API docs for select endpoints | Academia   |
+| WAL-3625 | Migrate from Issue types to Request types for Jira support backend | Government   |
+| WAL-3606 | Introduce Organization level service manager role | Government   |
+| WAL-3596 | Allow logins to Rancher via keycloak | Academia Government  |
+| WAL-3595 | Expose port management for OpenStack tenant | Government   |
+| WAL-3589 | Expose Sankey diagram with costs and Service providers | Academia   |
+| WAL-3585 | Rancher access group management | Academia Government  |
+| WAL-3582 | Allow editing of invoice data for staff users | Government   |
+| WAL-3563 | Tasks related for getting Puhuri Core to work | Academia   |
+| WAL-3524 | Add support for sending notifications to users | Commercial   |
+| WAL-3439 | Add support for bookmarking offerings as favourites | Academia   |
+| WAL-3400 | Tasks related to gitlab dev pipelines |    |
+| WAL-3339 | Offerings (Reporting) |    |
+| WAL-3334 | Introduce vault for storing secret configuration in Waldur |    |
+| WAL-3305 | Chart for creating overview of existing organizations |    |
+| WAL-3285 | "Some of the services suggest purchasing of connected offerings | To Do   |
+| WAL-3272 | Allow setting limit for the maximal size of the total volume type quota | Academia   |
+| WAL-3218 | Payment profiles (Phase III) |    |
+| WAL-3205 | UX stabilization (phase I) |    |
+| WAL-3195 | Improvements to the request-based item UX |    |
+| WAL-3136 | Marketplace Checklists (phase II) | Commercial   |
+| WAL-3135 | Support for auto-scalability of Waldur running on K8S |    |
+| WAL-3103 | Second phase of support for virtual routers in OpenStack. | Academia Government  |
+| WAL-3076 | Extend current model with ability to attach VMs directly to external networks | Academia Commercial  |
+| WAL-3072 | Support for operations on multiple objects | Commercial   |
+| WAL-3005 | Followup tasks for payment profiles | Government   |
+| WAL-2991 | Markeplace Scripts plugin phase I | Academia Commercial  |
+| WAL-2965 | Enhancements to properly support virtual security gateway use-case | Government   |
+| WAL-2961 | Tasks related to Kubernetes ON service development and operation | Government   |
+| WAL-2922 | Tasks for exposing Offerings publicly | Academia   |
+| WAL-2921 | Extending Organization extended payment options | Government   |
+| WAL-2920 | Tasks related for extending Waldur with ability to assess compliancy of organizations |    |
+| WAL-2850 | Extending Rancher to support Helm charts | Government   |
+| WAL-2843 | Tasks related to building up monitoring for EOSC | Academia   |
+| WAL-2780 | Integration of PID services with Waldur models | Academia   |
+| WAL-2776 | A visual checklist for making sure that things are done for the project | Government   |
+| WAL-2749 | Tasks connected to improving security of Waldur  |    |
+| WAL-2748 | Collection of tasks aimed at improving UX of Waldur |    |
+| WAL-2747 | Operational tools for Waldur deployments |    |
+| WAL-2676 | System for lightweight offering management |    |
+| WAL-2637 | Support for creating Rancher clusters | Academia   |
+| WAL-2623 | Introduce license support for OpenStack | Commercial   |
+| WAL-2519 | Improvements to VMware plugin | Commercial   |
+| WAL-2401 | Implement device booking feature | Academia   |
+| WAL-2134 | Further developments of Marketplace |    |
+| WAL-1442 | Enhancements to Waldur for service provider visibility | Commercial   |
+| WAL-1309 | Implement backend and frontend support for managing JIRA as a provider and issues as resources |    |
+| WAL-1262 | Efforts for getting Waldur into Redhat container store |    |
+| WAL-1212 | Reanimate Zabbix plugin |    |
+| WAL-1056 | IPv6 support for OpenStack provider | Academia Commercial Government |
+| WAL-868 | Refactor cost tracking |    |
+| WAL-842 | On-demand demo environment from waldur.com |    |
+| WAL-791 | Stress testing & Profiling (vol 1) |    |
+| WAL-500 | Waldur-specifics for ISKE H audit | Government   |
+| WAL-198 | Resource retention management | Academia Commercial Government |
+| WAL-44 | Navigation FTS |    |
+| WAL-30 | Quick alerts |    |
 
 ### Finished or discarded
 
