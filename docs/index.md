@@ -9,6 +9,8 @@ connected matters. Exposes REST API for management
 
 Waldur is open-source, extendable and comes with a [professional support](about/support.md) provided by OpenNode.
 
+To get a quick feeling what Waldur is, take a look at some [screenshots](about/screenshots.md).
+
 If you are interested in deploying, check the [getting started](getting-started.md) section!
 
 ![Overview](assets/waldur_overview.png)
