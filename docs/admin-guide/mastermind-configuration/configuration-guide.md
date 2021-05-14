@@ -8,6 +8,7 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'EDUTEAMS_SECRET': '',
  'EDUTEAMS_TOKEN_URL': 'https://proxy.acc.eduteams.org/OIDC/token',
  'EDUTEAMS_USERINFO_URL': 'https://proxy.acc.eduteams.org/OIDC/userinfo',
+ 'ENABLE_EDUTEAMS_SYNC': False,
  'FACEBOOK_CLIENT_ID': '',
  'FACEBOOK_SECRET': '',
  'KEYCLOAK_AUTH_URL': '',
@@ -62,6 +63,12 @@ The token endpoint is used to obtain tokens.
 Type: str
 
 The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token.
+
+** ENABLE_EDUTEAMS_SYNC **
+
+Type: bool
+
+Enable EduTeams synchronization with remote Waldur.
 
 ** FACEBOOK_CLIENT_ID **
 
