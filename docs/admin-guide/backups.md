@@ -9,11 +9,25 @@ Of these, only database needs to be backed up.
 
 A typical approach to a backup is:
 
-1. Create a database dump, e.g.
-```bash
-$ docker exec -t waldur-db pg_dump -U waldur waldur | gzip -9 > postgresql-backup/waldur-$(date +'%Y%m%dT%H%M%S').sql.gz
-```
+1. Create one of the following database dumps:
+    1. An entire db dump
+    ```bash
+    docker exec -t waldur-db pg_dump -U waldur waldur | gzip -9 > waldur-$(date +'%Y%m%dT%H%M%S').sql.gz
+    ```
+    2. An entire db dump with cleanup commands:
+    ```bash
+    docker exec -t waldur-db pg_dump --clean -U waldur waldur | gzip -9 > waldur-$(date +'%Y%m%dT%H%M%S').sql.gz
+    ```
+    3. A db dump containing only data
+    ```bash
+    docker exec -t waldur-db pg_dump -a -U waldur waldur | gzip -9 > waldur-$(date +'%Y%m%dT%H%M%S').sql.gz
+    ```
 
 2. Copy backup to a remote location.
+
+3. Restore the created backup:
+```bash
+cat waldur-backup.sql | docker exec -i waldur-db psql -U waldur
+```
 
 We suggest to make sure that backups are running regularly, e.g. using cron.
