@@ -741,10 +741,6 @@ Prefix for SLURM account name corresponding to Waldur project.
 
 ## Other variables
 
-#### CONVERT_MEDIA_URLS_TO_MASTERMIND_NETLOC
-
-Type: bool, default value: False
-
 #### DEFAULT_FROM_EMAIL
 
 Type: str, default value: webmaster@localhost
