@@ -606,6 +606,91 @@ Type: str
 
 UUID of a Waldur SLURM offering plan, which will be used for creating allocations for users
 
+## WALDUR_MARKETPLACE plugin
+
+Default value: 
+```python
+WALDUR_MARKETPLACE = {'ADMIN_CAN_APPROVE_ORDER': False,
+ 'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
+ 'DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE': True,
+ 'ENABLE_STALE_RESOURCE_NOTIFICATIONS': False,
+ 'MANAGER_CAN_APPROVE_ORDER': False,
+ 'NOTIFY_ABOUT_RESOURCE_CHANGE': True,
+ 'NOTIFY_STAFF_ABOUT_APPROVALS': False,
+ 'OWNER_CAN_APPROVE_ORDER': True,
+ 'OWNER_CAN_REGISTER_SERVICE_PROVIDER': False,
+ 'PLAN_TEMPLATE': 'Plan: {{ plan.name }}{% for component in components %}\n'
+                  '{{component.name}}; amount: {{component.amount}}; price: '
+                  '{{component.price|floatformat }};{% endfor %}',
+ 'THUMBNAIL_SIZE': (120, 120)}
+```
+
+** ADMIN_CAN_APPROVE_ORDER **
+
+Type: bool
+
+If true, orders for resource can be approved by admin of the customer project
+
+** ANONYMOUS_USER_CAN_VIEW_OFFERINGS **
+
+Type: bool
+
+Allow anonymous users to see shared offerings in active, paused and archived states
+
+** DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE **
+
+Type: bool
+
+Disable only resource update events.
+
+** ENABLE_STALE_RESOURCE_NOTIFICATIONS **
+
+Type: bool
+
+Enable reminders to owners about resources of shared offerings that have not generated any cost for the last 3 months.
+
+** MANAGER_CAN_APPROVE_ORDER **
+
+Type: bool
+
+If true, orders for resource can be approved by manager of the customer project
+
+** NOTIFY_ABOUT_RESOURCE_CHANGE **
+
+Type: bool
+
+If true, notify users about resource changes from Marketplace perspective. Can generate duplicate events if plugins also log
+
+** NOTIFY_STAFF_ABOUT_APPROVALS **
+
+Type: bool
+
+If true, users with staff role are notified when request for order approval is generated
+
+** OWNER_CAN_APPROVE_ORDER **
+
+Type: bool
+
+If true, orders for resource can be approved by custom organization owner.
+
+** OWNER_CAN_REGISTER_SERVICE_PROVIDER **
+
+Type: bool
+
+Allow organization owner to request or mark its organization as service provider
+
+** PLAN_TEMPLATE **
+
+Type: str
+
+Template for a plan field
+
+** THUMBNAIL_SIZE **
+
+Type: tuple
+
+Size of the thumbnail to generate when screenshot is uploaded for an offering.
+
 ## WALDUR_SLURM plugin
 
 Default value: 
