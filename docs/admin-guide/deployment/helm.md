@@ -65,7 +65,7 @@ Open waldur-mastermind-worker shell and execute the following command:
 ```
 
 ## Waldur Helm chart release upgrading
-Delete initdb job (if exitsts):
+Delete initdb job (if exists):
 ```bash
   kubectl delete job waldur-mastermind-initdb-job || true
 ```
