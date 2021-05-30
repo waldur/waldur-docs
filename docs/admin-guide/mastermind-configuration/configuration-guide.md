@@ -691,6 +691,24 @@ Type: tuple
 
 Size of the thumbnail to generate when screenshot is uploaded for an offering.
 
+## WALDUR_PID plugin
+
+Default value: 
+```python
+WALDUR_PID = {'DATACITE': {'API_URL': 'https://example.com',
+              'COLLECTION_DOI': '',
+              'PASSWORD': '',
+              'PREFIX': '',
+              'PUBLISHER': 'Waldur',
+              'REPOSITORY_ID': ''}}
+```
+
+#### DATACITE
+
+Type: dict
+
+Settings for integration of Waldur with Datacite PID service. Collection DOI is used to aggregate generated DOIs.
+
 ## WALDUR_SLURM plugin
 
 Default value: 
