@@ -19,7 +19,7 @@ If you see a term, which needs to be translated better, please submit a fix via 
 All contributions to Waldur can be accepted only you agree to license your contribution under the MIT license.
 Please make sure that you have the right to sign off code as MIT.
 
-# Code repositories
+## Code repositories
 
 | Repository  | Description                          |
 | ----------- | ------------------------------------ |
