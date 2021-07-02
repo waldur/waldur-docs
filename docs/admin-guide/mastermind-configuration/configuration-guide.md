@@ -619,9 +619,6 @@ WALDUR_MARKETPLACE = {'ADMIN_CAN_APPROVE_ORDER': False,
  'NOTIFY_STAFF_ABOUT_APPROVALS': False,
  'OWNER_CAN_APPROVE_ORDER': True,
  'OWNER_CAN_REGISTER_SERVICE_PROVIDER': False,
- 'PLAN_TEMPLATE': 'Plan: {{ plan.name }}{% for component in components %}\n'
-                  '{{component.name}}; amount: {{component.amount}}; price: '
-                  '{{component.price|floatformat }};{% endfor %}',
  'THUMBNAIL_SIZE': (120, 120)}
 ```
 
@@ -678,12 +675,6 @@ If true, orders for resource can be approved by custom organization owner.
 Type: bool
 
 Allow organization owner to request or mark its organization as service provider
-
-#### PLAN_TEMPLATE
-
-Type: str
-
-Template for a plan field
 
 #### THUMBNAIL_SIZE
 
