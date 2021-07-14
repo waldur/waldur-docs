@@ -7,7 +7,7 @@ Installing Waldur is a simple and straightforward process.
 There are 2 supported methods:
 
 - [Using docker-compose](admin-guide/deployment/docker-compose.md). Fastest but runs on a single server.
-- [Using Helm](admin-guide/deployment/kubernetes.md). For deploying on Kubernetes clusters.
+- [Using Helm](admin-guide/deployment/helm.md). For deploying on Kubernetes clusters.
 
 ## Configure Waldur
 
@@ -18,7 +18,6 @@ the [configuration guide](admin-guide/mastermind-configuration/configuration-gui
 
 The most typical aspects for configuration are:
 
-- [White-labelling](admin-guide/whitelabelling.md). Setting custom logos and terms of usage.
 - Configuring [identity providers](admin-guide/identities/summary.md). Waldur supports a range of OIDC and SAML based IdPs.
 - [Adding offerings](admin-guide/providers/adding-an-offering.md) for sharing among Waldur users.
 
