@@ -1,3 +1,233 @@
+## WALDUR_AUTH_SAML2 plugin
+
+Default value: 
+```python
+WALDUR_AUTH_SAML2 = {'ALLOW_TO_SELECT_IDENTITY_PROVIDER': True,
+ 'ATTRIBUTE_MAP_DIR': '',
+ 'AUTHN_REQUESTS_SIGNED': 'true',
+ 'BASE_URL': '',
+ 'CATEGORIES': ['http://www.geant.net/uri/dataprotection-code-of-conduct/v1'],
+ 'CERT_FILE': '',
+ 'DEBUG': False,
+ 'DEFAULT_BINDING': 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+ 'DESCRIPTION': 'Service provider description',
+ 'DIGEST_ALGORITHM': None,
+ 'DISCOVERY_SERVICE_LABEL': None,
+ 'DISCOVERY_SERVICE_URL': None,
+ 'DISPLAY_NAME': 'Service provider display name',
+ 'ENABLE_SINGLE_LOGOUT': False,
+ 'IDENTITY_PROVIDER_LABEL': None,
+ 'IDENTITY_PROVIDER_URL': None,
+ 'IDP_METADATA_LOCAL': [],
+ 'IDP_METADATA_REMOTE': [],
+ 'KEY_FILE': '',
+ 'LOGOUT_REQUESTS_SIGNED': 'true',
+ 'LOG_FILE': '',
+ 'LOG_LEVEL': 'INFO',
+ 'NAME': 'saml2',
+ 'NAMEID_FORMAT': None,
+ 'OPTIONAL_ATTRIBUTES': [],
+ 'ORGANIZATION': {},
+ 'PRIVACY_STATEMENT_URL': 'http://example.com/privacy-policy/',
+ 'REGISTRATION_AUTHORITY': 'http://example.com/registration-authority/',
+ 'REGISTRATION_INSTANT': '2017-01-01T00:00:00',
+ 'REGISTRATION_POLICY': 'http://example.com/registration-policy/',
+ 'REQUIRED_ATTRIBUTES': [],
+ 'SAML_ATTRIBUTE_MAPPING': {},
+ 'SIGNATURE_ALGORITHM': None,
+ 'XMLSEC_BINARY': '/usr/bin/xmlsec1'}
+```
+
+#### ALLOW_TO_SELECT_IDENTITY_PROVIDER
+
+Type: bool
+
+#### ATTRIBUTE_MAP_DIR
+
+Type: str
+
+Directory with attribute mapping
+
+#### AUTHN_REQUESTS_SIGNED
+
+Type: str
+
+Indicates if the authentication requests sent should be signed by default
+
+#### BASE_URL
+
+Type: str
+
+URL required for assertion consumer, single logout services and entity ID
+
+#### CATEGORIES
+
+Type: list
+
+Links to the entity categories
+
+#### CERT_FILE
+
+Type: str
+
+PEM formatted certificate chain file
+
+#### DEBUG
+
+Type: bool
+
+Set to True to output debugging information
+
+#### DEFAULT_BINDING
+
+Type: str
+
+#### DESCRIPTION
+
+Type: str
+
+Service provider description (required by CoC)
+
+#### DIGEST_ALGORITHM
+
+Type: Optional[str]
+
+Identifies the Message Digest algorithm URL according to the XML Signature specification (SHA1 is used by default)
+
+#### DISCOVERY_SERVICE_LABEL
+
+Type: Optional[str]
+
+#### DISCOVERY_SERVICE_URL
+
+Type: Optional[str]
+
+#### DISPLAY_NAME
+
+Type: str
+
+Service provider display name (required by CoC)
+
+#### ENABLE_SINGLE_LOGOUT
+
+Type: bool
+
+#### IDENTITY_PROVIDER_LABEL
+
+Type: Optional[str]
+
+#### IDENTITY_PROVIDER_URL
+
+Type: Optional[str]
+
+#### IDP_METADATA_LOCAL
+
+Type: list
+
+IdPs metadata XML files stored locally
+
+#### IDP_METADATA_REMOTE
+
+Type: list
+
+IdPs metadata XML files stored remotely
+
+#### KEY_FILE
+
+Type: str
+
+PEM formatted certificate key file
+
+#### LOGOUT_REQUESTS_SIGNED
+
+Type: str
+
+Indicates if the entity will sign the logout requests
+
+#### LOG_FILE
+
+Type: str
+
+Empty to disable logging SAML2-related stuff to file
+
+#### LOG_LEVEL
+
+Type: str
+
+Log level for SAML2
+
+#### NAME
+
+Type: str
+
+Name used for assigning the registration method to the user
+
+#### NAMEID_FORMAT
+
+Type: Optional[str]
+
+Identified NameID format to use. None means default, empty string ("") disables addition of entity
+
+#### OPTIONAL_ATTRIBUTES
+
+Type: list
+
+SAML attributes that may be useful to have but not required
+
+#### ORGANIZATION
+
+Type: dict
+
+Organization responsible for the service (you can set multilanguage information here)
+
+#### PRIVACY_STATEMENT_URL
+
+Type: str
+
+URL with privacy statement (required by CoC)
+
+#### REGISTRATION_AUTHORITY
+
+Type: str
+
+Registration authority required by mdpi
+
+#### REGISTRATION_INSTANT
+
+Type: str
+
+Registration instant time required by mdpi
+
+#### REGISTRATION_POLICY
+
+Type: str
+
+Registration policy required by mdpi
+
+#### REQUIRED_ATTRIBUTES
+
+Type: list
+
+SAML attributes that are required to identify a user
+
+#### SAML_ATTRIBUTE_MAPPING
+
+Type: dict
+
+Mapping between SAML attributes and User fields
+
+#### SIGNATURE_ALGORITHM
+
+Type: Optional[str]
+
+Identifies the Signature algorithm URL according to the XML Signature specification (SHA1 is used by default)
+
+#### XMLSEC_BINARY
+
+Type: str
+
+Full path to the xmlsec1 binary program
+
 ## WALDUR_AUTH_SOCIAL plugin
 
 Default value: 
