@@ -22,14 +22,13 @@ The most typical aspects for configuration are:
 - [Adding offerings](admin-guide/providers/adding-an-offering.md) for sharing among Waldur users.
 
 !!! tip
-    For easier management of Waldur deployments and configuration we 
-    provide [Ansible playbooks](admin-guide/managing-with-ansible.md). 
+    For easier management of Waldur deployments and configuration we
+    provide [Ansible playbooks](admin-guide/managing-with-ansible.md).
 
 ## Profit!
 
 You are done! If you are happy and want to support the project, make sure you check the [support page](about/support.md).
 
 !!! danger
-    Before going to production, make sure you have completed 
+    Before going to production, make sure you have completed
     the [go-live checklist](admin-guide/checklist-for-production.md).
-
