@@ -836,6 +836,61 @@ Type: str
 
 UUID of a Waldur SLURM offering plan, which will be used for creating allocations for users
 
+## WALDUR_KEYCLOAK plugin
+
+Default value: 
+```python
+WALDUR_KEYCLOAK = {'BASE_URL': 'http://localhost:8080/auth',
+ 'CLIENT_ID': 'waldur',
+ 'CLIENT_SECRET': 'UUID',
+ 'ENABLED': False,
+ 'PASSWORD': 'secret',
+ 'REALM': 'waldur',
+ 'USERNAME': 'admin'}
+```
+
+#### BASE_URL
+
+Type: str
+
+Base URL of Keycloak server
+
+#### CLIENT_ID
+
+Type: str
+
+Identification of Waldur client app
+
+#### CLIENT_SECRET
+
+Type: str
+
+Credentials are generated in Keycloak admin console
+
+#### ENABLED
+
+Type: bool
+
+Enable integration of group provisioning in configured Keycloak
+
+#### PASSWORD
+
+Type: str
+
+Password of Keycloak user with administrative privileges
+
+#### REALM
+
+Type: str
+
+Realm used by Waldur
+
+#### USERNAME
+
+Type: str
+
+Username of Keycloak user with administrative privileges
+
 ## WALDUR_MARKETPLACE plugin
 
 Default value: 
