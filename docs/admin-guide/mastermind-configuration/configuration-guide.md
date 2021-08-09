@@ -239,8 +239,6 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'EDUTEAMS_TOKEN_URL': 'https://proxy.acc.eduteams.org/OIDC/token',
  'EDUTEAMS_USERINFO_URL': 'https://proxy.acc.eduteams.org/OIDC/userinfo',
  'ENABLE_EDUTEAMS_SYNC': False,
- 'FACEBOOK_CLIENT_ID': '',
- 'FACEBOOK_SECRET': '',
  'KEYCLOAK_AUTH_URL': '',
  'KEYCLOAK_CLIENT_ID': '',
  'KEYCLOAK_LABEL': 'Keycloak',
@@ -299,18 +297,6 @@ The userinfo endpoint returns standard claims about the authenticated user, and 
 Type: bool
 
 Enable EduTeams synchronization with remote Waldur.
-
-#### FACEBOOK_CLIENT_ID
-
-Type: str
-
-ID of application used for OAuth authentication.
-
-#### FACEBOOK_SECRET
-
-Type: str
-
-Application secret key.
 
 #### KEYCLOAK_AUTH_URL
 
