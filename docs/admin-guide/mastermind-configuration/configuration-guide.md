@@ -427,9 +427,12 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'SELLER_COUNTRY_CODE': None,
  'SHOW_ALL_USERS': False,
  'SITE_ADDRESS': 'Default address',
+ 'SITE_DESCRIPTION': 'User-friendly platform for managing projects, teams and '
+                     'resources in a self-service manner. Fully digital '
+                     'delivery of service offerings to the customers.',
  'SITE_EMAIL': 'Default email',
  'SITE_LOGO': None,
- 'SITE_NAME': 'Waldur MasterMind',
+ 'SITE_NAME': 'Waldur',
  'SITE_PHONE': 'Default phone',
  'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
@@ -629,6 +632,12 @@ Type: str
 
 It is used in marketplace order header.
 
+#### SITE_DESCRIPTION
+
+Type: str
+
+Description of the Waldur deployment.
+
 #### SITE_EMAIL
 
 Type: str
@@ -645,7 +654,7 @@ It is used in marketplace order header.
 
 Type: str
 
-It is used in email notifications in order to refer to the current deployment in user-friendly way.
+Human-friendly name of the Waldur deployment.
 
 #### SITE_PHONE
 
