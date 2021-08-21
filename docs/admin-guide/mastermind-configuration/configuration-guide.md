@@ -436,6 +436,7 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'SITE_PHONE': 'Default phone',
  'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
+ 'TRANSLATION_DOMAIN': '',
  'USE_ATOMIC_TRANSACTION': True,
  'VALIDATE_INVITATION_EMAIL': False}
 ```
@@ -673,6 +674,12 @@ Header for token authentication.
 Type: timedelta
 
 Defines for how long user token should remain valid if there was no action from user.
+
+#### TRANSLATION_DOMAIN
+
+Type: str
+
+Identifier of translation domain applied to current deployment.
 
 #### USE_ATOMIC_TRANSACTION
 
