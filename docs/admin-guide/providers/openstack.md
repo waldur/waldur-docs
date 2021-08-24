@@ -15,12 +15,12 @@ To do that, please go to Waldur MasterMind Admin interface with a staff account.
 Go to Structure → Shared provider settings and select the one you want to update.
 
 Define specific customisation options. To add an option select append on item block under the object tree. Most typical are:
+
 - external_network_id – external network to connect to when creating a VPC from this provider.
 - access_url - a URL to access OpenStack Horizon dashboard from a public network. Typically a reverse proxy URL in production deployments.
 - flavor_exclude_regex - flavors matching this regex expression will not be pulled from the backend.
 - dns_nameservers - default value for new subnets DNS name servers. Should be defined as list.
 - create_ha_routers - create highly available Neutron routers when creating Tenants.
-
 
 ## Support for Organization specific OpenStack networks
 You can provide specific external network for all OpenStack Tenants created by Organiztion by providing external
