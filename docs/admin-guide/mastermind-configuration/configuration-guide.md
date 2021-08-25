@@ -403,6 +403,7 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'ENABLE_ACCOUNTING_START_DATE': False,
  'ENABLE_GEOIP': True,
  'EXTENSIONS_AUTOREGISTER': True,
+ 'GOOGLE_ANALYTICS_ID': '',
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
  'INITIAL_CUSTOMER_AGREEMENT_NUMBER': 4000,
@@ -421,6 +422,8 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'NOTIFICATION_SUBJECT': 'Notifications from Waldur',
  'ONLY_STAFF_CAN_INVITE_USERS': False,
  'ONLY_STAFF_MANAGES_SERVICES': False,
+ 'ORGANIZATION_DOMAIN_VISIBLE': False,
+ 'ORGANIZATION_SUBNETS_VISIBLE': False,
  'OWNERS_CAN_MANAGE_OWNERS': False,
  'OWNER_CAN_MANAGE_CUSTOMER': False,
  'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
@@ -506,6 +509,12 @@ Enable detection of coordinates of virtual machines.
 Type: bool
 
 Defines whether extensions should be automatically registered.
+
+#### GOOGLE_ANALYTICS_ID
+
+Type: str
+
+Identifier associated with your account and used by Google Analytics to collect the data.
 
 #### HOMEPORT_URL
 
@@ -597,6 +606,18 @@ Type: bool
 
 Allows to restrict provider management only to staff users.
 
+#### ORGANIZATION_DOMAIN_VISIBLE
+
+Type: bool
+
+Allows to hide domain field in organization detail.
+
+#### ORGANIZATION_SUBNETS_VISIBLE
+
+Type: bool
+
+Render list of subnets from where connection to self-service is allowed in organization details dialog.
+
 #### OWNERS_CAN_MANAGE_OWNERS
 
 Type: bool
@@ -643,7 +664,7 @@ Description of the Waldur deployment.
 
 Type: str
 
-It is used in marketplace order header.
+It is used in marketplace order header and UI footer.
 
 #### SITE_LOGO
 
@@ -661,7 +682,7 @@ Human-friendly name of the Waldur deployment.
 
 Type: str
 
-It is used in marketplace order header.
+It is used in marketplace order header and UI footer.
 
 #### TOKEN_KEY
 
@@ -1060,6 +1081,12 @@ Unique authentication key used to gain access to the ipstack API.
 Type: List[Tuple[str, str]], default value: (('en', 'English'), ('et', 'Eesti'))
 
 The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese'). This specifies which languages are available for language selection.
+
+#### LANGUAGE_CODE
+
+Type: str, default value: en
+
+Represents the name of a default language.
 
 #### USE_PROTECTED_URL
 
