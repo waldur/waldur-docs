@@ -399,10 +399,12 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'COUNTRIES': ['EE', 'LV', 'LT'],
  'CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION': False,
  'CURRENCY_NAME': 'EUR',
+ 'DOCS_URL': '',
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
  'ENABLE_GEOIP': True,
  'EXTENSIONS_AUTOREGISTER': True,
+ 'EXTERNAL_LINKS': [],
  'GOOGLE_ANALYTICS_ID': '',
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
@@ -437,6 +439,7 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'SITE_LOGO': None,
  'SITE_NAME': 'Waldur',
  'SITE_PHONE': 'Default phone',
+ 'SUPPORT_PORTAL_URL': '',
  'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
  'TRANSLATION_DOMAIN': '',
@@ -486,6 +489,12 @@ Type: str
 
 It is used in marketplace order details and invoices for currency formatting.
 
+#### DOCS_URL
+
+Type: str
+
+Renders link to docs in header
+
 #### EMAIL_CHANGE_MAX_AGE
 
 Type: timedelta
@@ -509,6 +518,12 @@ Enable detection of coordinates of virtual machines.
 Type: bool
 
 Defines whether extensions should be automatically registered.
+
+#### EXTERNAL_LINKS
+
+Type: List[ExternalLink]
+
+Render external links in dropdown in header. Each item should be object with label and url fields. For example: {"label": "Helpdesk", "url": "https://example.com/"}
 
 #### GOOGLE_ANALYTICS_ID
 
@@ -683,6 +698,12 @@ Human-friendly name of the Waldur deployment.
 Type: str
 
 It is used in marketplace order header and UI footer.
+
+#### SUPPORT_PORTAL_URL
+
+Type: str
+
+Support portal URL is rendered as a shortcut on dashboard
 
 #### TOKEN_KEY
 
