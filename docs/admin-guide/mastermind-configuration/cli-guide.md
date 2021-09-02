@@ -198,6 +198,21 @@ positional arguments:
   category  List of categories to load
 ```
 
+## load_features
+
+Import features in JSON format
+
+```
+usage: waldur load_features [--dry-run] features_file
+
+positional arguments:
+  features_file  Specifies location of features file.
+
+optional arguments:
+  --dry-run      Don't make any changes, instead show what objects would be
+                 created.
+```
+
 ## move_project
 
 Move Waldur project to a different organization.
