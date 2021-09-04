@@ -2,10 +2,6 @@
 
 Cleanup stale event types in all hooks.
 
-## clearquotashistory
-
-Delete quotas versions duplicates.
-
 ## copy_category
 
 Copy structure of categories for the Marketplace
