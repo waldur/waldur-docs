@@ -1,5 +1,3 @@
-## Features
-
 * **customer.billing**: Render billing menu in organization sidebar.
 
 * **customer.category_resources_list**: Render component usage charts in organization dashboard.
