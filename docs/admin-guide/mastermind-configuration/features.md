@@ -1,85 +1,171 @@
-* **customer.billing**: Render billing menu in organization sidebar.
+### customer.billing
 
-* **customer.category_resources_list**: Render component usage charts in organization dashboard.
+Render billing menu in organization sidebar.
 
-* **customer.events**: Enable audit log in organization workspace.
+### customer.category_resources_list
 
-* **customer.project_requests**: Render list of project creation requests in organization dashboard.
+Render component usage charts in organization dashboard.
 
-* **customer.resource_requests**: Render list of resource creation requests in organization dashboard.
+### customer.events
 
-* **customer.show_domain**: Allows to hide domain field in organization detail.
+Enable audit log in organization workspace.
 
-* **customer.show_subnets**: Render list of subnets from where connection to self-service is allowed in organization details dialog.
+### customer.project_requests
 
-* **customer.team**: Enable team management in organization workspace.
+Render list of project creation requests in organization dashboard.
 
-* **invitations.conceal_civil_number**: Conceal civil number in invitation creation dialog.
+### customer.resource_requests
 
-* **invitations.create_missing_user**: Allow to create FreeIPA user using details specified in invitation if user does not exist yet.
+Render list of resource creation requests in organization dashboard.
 
-* **invitations.disable_multiple_roles**: Do not allow user to grant multiple roles in the same project or organization using invitation.
+### customer.show_domain
 
-* **invoice.events**: Render list of events related to invoice item in modal dialog.
+Allows to hide domain field in organization detail.
 
-* **marketplace.conceal_prices**: Render prices in shopping cart and order details.
+### customer.show_subnets
 
-* **marketplace.flows**: Allow to submit organization, project and resource creation requests simultaneously.
+Render list of subnets from where connection to self-service is allowed in organization details dialog.
 
-* **marketplace.import_resources**: Allow to import resources from service provider to project.
+### customer.team
 
-* **marketplace.offering_document**: Allow to attach document to marketplace offering.
+Enable team management in organization workspace.
 
-* **marketplace.private_offerings**: Render list of private marketplace service providers in organization workspace.
+### invitations.conceal_civil_number
 
-* **marketplace.review**: Allow to write a review for marketplace offering.
+Conceal civil number in invitation creation dialog.
 
-* **marketplace.terms_of_service**: Render terms of service when offering is ordered.
+### invitations.create_missing_user
 
-* **openstack.volume_types**: Allow to select OpenStack volume type when instance or volume is provisioned.
+Allow to create FreeIPA user using details specified in invitation if user does not exist yet.
 
-* **project.estimated_cost**: Render estimated cost column in projects list.
+### invitations.disable_multiple_roles
 
-* **project.events**: Enable audit log in project workspace.
+Do not allow user to grant multiple roles in the same project or organization using invitation.
 
-* **project.member_role**: Allow to grant user a project member role.
+### invoice.events
 
-* **project.team**: Enable team management in project workspace.
+Render list of events related to invoice item in modal dialog.
 
-* **rancher.volume_mount_point**: Allow to select mount point for data volume when Rancher cluster is provisioned.
+### marketplace.conceal_prices
 
-* **slurm.jobs**: Render list of SLURM jobs as a separate tab in allocation details page.
+Render prices in shopping cart and order details.
 
-* **support.activity_stream**: Render list of recent comments in support dashboard.
+### marketplace.flows
 
-* **support.customers_list**: Render list of organizations in support workspace.
+Allow to submit organization, project and resource creation requests simultaneously.
 
-* **support.customers_requests**: Render list of organization creation requests in support workspace.
+### marketplace.import_resources
 
-* **support.flowmap**: Render service usage as a flowmap chart in support workspace.
+Allow to import resources from service provider to project.
 
-* **support.heatmap**: Render service usage as a heatmap chart in support workspace.
+### marketplace.offering_document
 
-* **support.offering_comments**: Render comments tab in request-based item details page.
+Allow to attach document to marketplace offering.
 
-* **support.pricelist**: Render marketplace plan components pricelist in support workspace.
+### marketplace.private_offerings
 
-* **support.resource_usage**: Enable resource usage overview charts in support workspace.
+Render list of private marketplace service providers in organization workspace.
 
-* **support.resources_treemap**: Render resource usage as a treemap chart in support workspace.
+### marketplace.review
 
-* **support.sankey_diagram**: Render service usage as a sankey chart in support workspace.
+Allow to write a review for marketplace offering.
 
-* **support.shared_providers**: Render overview of shared marketplace service providers in support workspace.
+### marketplace.terms_of_service
 
-* **support.users**: Render list of users in support workspace.
+Render terms of service when offering is ordered.
 
-* **support.vm_type_overview**: Enable VM type overview in support workspace.
+### openstack.volume_types
 
-* **user.competence**: Render competence column in users list.
+Allow to select OpenStack volume type when instance or volume is provisioned.
 
-* **user.notifications**: Enable email and webhook notifications management in user workspace.
+### project.estimated_cost
 
-* **user.preferred_language**: Render preferred language column in users list.
+Render estimated cost column in projects list.
 
-* **user.ssh_keys**: Enable SSH keys management in user workspace.
+### project.events
+
+Enable audit log in project workspace.
+
+### project.member_role
+
+Allow to grant user a project member role.
+
+### project.team
+
+Enable team management in project workspace.
+
+### rancher.volume_mount_point
+
+Allow to select mount point for data volume when Rancher cluster is provisioned.
+
+### slurm.jobs
+
+Render list of SLURM jobs as a separate tab in allocation details page.
+
+### support.activity_stream
+
+Render list of recent comments in support dashboard.
+
+### support.customers_list
+
+Render list of organizations in support workspace.
+
+### support.customers_requests
+
+Render list of organization creation requests in support workspace.
+
+### support.flowmap
+
+Render service usage as a flowmap chart in support workspace.
+
+### support.heatmap
+
+Render service usage as a heatmap chart in support workspace.
+
+### support.offering_comments
+
+Render comments tab in request-based item details page.
+
+### support.pricelist
+
+Render marketplace plan components pricelist in support workspace.
+
+### support.resource_usage
+
+Enable resource usage overview charts in support workspace.
+
+### support.resources_treemap
+
+Render resource usage as a treemap chart in support workspace.
+
+### support.sankey_diagram
+
+Render service usage as a sankey chart in support workspace.
+
+### support.shared_providers
+
+Render overview of shared marketplace service providers in support workspace.
+
+### support.users
+
+Render list of users in support workspace.
+
+### support.vm_type_overview
+
+Enable VM type overview in support workspace.
+
+### user.competence
+
+Render competence column in users list.
+
+### user.notifications
+
+Enable email and webhook notifications management in user workspace.
+
+### user.preferred_language
+
+Render preferred language column in users list.
+
+### user.ssh_keys
+
+Enable SSH keys management in user workspace.
