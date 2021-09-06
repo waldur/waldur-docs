@@ -21,13 +21,13 @@ It is possible to import into a Waldur offerings from a remote Waldur.
 - Select the remote organization and offering to be imported.
 - Review and activate the offering. 
 
-## EduTeams account SYNC
+## eduTEAMS account SYNC
 
 In case both local and remote Waldurs are relying on a common set of identities 
-from [EduTeams](../identities/eduTEAMS.md), it is possible to configure synchronisation of the identities as well,
+from [eduTEAMS](../identities/eduTEAMS.md), it is possible to configure synchronisation of the identities as well,
 i.e. when a resource is provisioned in a remote Waldur, local accounts from organization and project are pushed and
 mapped to the remote project.
 
 !!! note
-    For this to work, remote Waldur must be integrated with eduTeams registry and integration user must have
+    For this to work, remote Waldur must be integrated with eduTEAMS registry and integration user must have
     `identity_manager` role. 

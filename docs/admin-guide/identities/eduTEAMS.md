@@ -1,4 +1,4 @@
-# eduTeams
+# eduTEAMS
 
 Waldur supports integration with [eduTEAMS](http://keycloak.org/) identity service.
 
