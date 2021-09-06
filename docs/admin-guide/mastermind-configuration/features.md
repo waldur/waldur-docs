@@ -10,6 +10,10 @@ Render component usage charts in organization dashboard.
 
 Enable audit log in organization workspace.
 
+### customer.hide_organization_billing_step
+
+Hide billing step in organization creation wizard.
+
 ### customer.project_requests
 
 Render list of project creation requests in organization dashboard.
@@ -106,6 +110,10 @@ Render list of SLURM jobs as a separate tab in allocation details page.
 
 Render list of recent comments in support dashboard.
 
+### support.conceal_change_request
+
+Conceal "Change request" from a selection of issue types for non-staff/non-support users.
+
 ### support.customers_list
 
 Render list of organizations in support workspace.
@@ -169,3 +177,4 @@ Render preferred language column in users list.
 ### user.ssh_keys
 
 Enable SSH keys management in user workspace.
+
