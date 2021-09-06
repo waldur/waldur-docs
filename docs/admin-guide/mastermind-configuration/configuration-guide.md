@@ -405,6 +405,7 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'ENABLE_GEOIP': True,
  'EXTENSIONS_AUTOREGISTER': True,
  'EXTERNAL_LINKS': [],
+ 'FULL_PAGE_TITLE': 'Waldur | Cloud Service Management',
  'GOOGLE_ANALYTICS_ID': '',
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
@@ -424,12 +425,11 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'NOTIFICATION_SUBJECT': 'Notifications from Waldur',
  'ONLY_STAFF_CAN_INVITE_USERS': False,
  'ONLY_STAFF_MANAGES_SERVICES': False,
- 'ORGANIZATION_DOMAIN_VISIBLE': False,
- 'ORGANIZATION_SUBNETS_VISIBLE': False,
  'OWNERS_CAN_MANAGE_OWNERS': False,
  'OWNER_CAN_MANAGE_CUSTOMER': False,
  'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
  'SELLER_COUNTRY_CODE': None,
+ 'SHORT_PAGE_TITLE': 'Waldur',
  'SHOW_ALL_USERS': False,
  'SITE_ADDRESS': 'Default address',
  'SITE_DESCRIPTION': 'User-friendly platform for managing projects, teams and '
@@ -524,6 +524,10 @@ Defines whether extensions should be automatically registered.
 Type: List[ExternalLink]
 
 Render external links in dropdown in header. Each item should be object with label and url fields. For example: {"label": "Helpdesk", "url": "https://example.com/"}
+
+#### FULL_PAGE_TITLE
+
+Type: str
 
 #### GOOGLE_ANALYTICS_ID
 
@@ -621,18 +625,6 @@ Type: bool
 
 Allows to restrict provider management only to staff users.
 
-#### ORGANIZATION_DOMAIN_VISIBLE
-
-Type: bool
-
-Allows to hide domain field in organization detail.
-
-#### ORGANIZATION_SUBNETS_VISIBLE
-
-Type: bool
-
-Render list of subnets from where connection to self-service is allowed in organization details dialog.
-
 #### OWNERS_CAN_MANAGE_OWNERS
 
 Type: bool
@@ -656,6 +648,10 @@ List of authentication methods which are not allowed to update user details.
 Type: Optional[str]
 
 Specifies seller legal or effective country of registration or residence as an ISO 3166-1 alpha-2 country code. It is used for computing VAT charge rate.
+
+#### SHORT_PAGE_TITLE
+
+Type: str
 
 #### SHOW_ALL_USERS
 
