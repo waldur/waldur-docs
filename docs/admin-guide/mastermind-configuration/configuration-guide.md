@@ -407,16 +407,22 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'EXTERNAL_LINKS': [],
  'FULL_PAGE_TITLE': 'Waldur | Cloud Service Management',
  'GOOGLE_ANALYTICS_ID': '',
+ 'HOMEPORT_SENTRY_DSN': None,
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
  'INITIAL_CUSTOMER_AGREEMENT_NUMBER': 4000,
  'INVITATIONS_ENABLED': True,
+ 'INVITATION_CIVIL_NUMBER_HELP_TEXT': 'Must start with a country prefix ie '
+                                      'EE34501234215',
+ 'INVITATION_CIVIL_NUMBER_LABEL': '',
  'INVITATION_CREATE_MISSING_USER': False,
  'INVITATION_DISABLE_MULTIPLE_ROLES': False,
  'INVITATION_LIFETIME': datetime.timedelta(days=7),
  'INVITATION_MAX_AGE': None,
+ 'INVITATION_TAX_NUMBER_LABEL': '',
  'LOGGING_REPORT_DIRECTORY': '/var/log/waldur',
  'LOGGING_REPORT_INTERVAL': datetime.timedelta(days=7),
+ 'LOGIN_LOGO': None,
  'NATIVE_NAME_ENABLED': False,
  'NOTIFICATIONS_PROFILE_CHANGES': {'ENABLED': True,
                                    'FIELDS': ('email',
@@ -427,10 +433,12 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'ONLY_STAFF_MANAGES_SERVICES': False,
  'OWNERS_CAN_MANAGE_OWNERS': False,
  'OWNER_CAN_MANAGE_CUSTOMER': False,
+ 'POWERED_BY_LOGO': None,
  'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
  'SELLER_COUNTRY_CODE': None,
  'SHORT_PAGE_TITLE': 'Waldur',
  'SHOW_ALL_USERS': False,
+ 'SIDEBAR_LOGO': None,
  'SITE_ADDRESS': 'Default address',
  'SITE_DESCRIPTION': 'User-friendly platform for managing projects, teams and '
                      'resources in a self-service manner. Fully digital '
@@ -443,6 +451,11 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
  'TRANSLATION_DOMAIN': '',
+ 'USER_MANDATORY_FIELDS': ['full_name', 'email'],
+ 'USER_REGISTRATION_HIDDEN_FIELDS': ['registration_method',
+                                     'job_title',
+                                     'phone_number',
+                                     'organization'],
  'USE_ATOMIC_TRANSACTION': True,
  'VALIDATE_INVITATION_EMAIL': False}
 ```
@@ -529,11 +542,19 @@ Render external links in dropdown in header. Each item should be object with lab
 
 Type: str
 
+It is used as default page title if it's not specified explicitly.
+
 #### GOOGLE_ANALYTICS_ID
 
 Type: str
 
 Identifier associated with your account and used by Google Analytics to collect the data.
+
+#### HOMEPORT_SENTRY_DSN
+
+Type: Optional[str]
+
+Sentry Data Source Name for Waldur HomePort project.
 
 #### HOMEPORT_URL
 
@@ -559,6 +580,18 @@ Type: bool
 
 Allows to disable invitations feature.
 
+#### INVITATION_CIVIL_NUMBER_HELP_TEXT
+
+Type: str
+
+Help text for civil number field in invitation creation dialog.
+
+#### INVITATION_CIVIL_NUMBER_LABEL
+
+Type: str
+
+Custom label for civil number field in invitation creation dialog.
+
 #### INVITATION_CREATE_MISSING_USER
 
 Type: bool
@@ -583,6 +616,12 @@ Type: Optional[timedelta]
 
 Max age of invitation token. It is used in approve and reject actions.
 
+#### INVITATION_TAX_NUMBER_LABEL
+
+Type: str
+
+Custom label for tax number field in invitation creation dialog.
+
 #### LOGGING_REPORT_DIRECTORY
 
 Type: str
@@ -594,6 +633,12 @@ Directory where log files are located.
 Type: timedelta
 
 Files older that specified interval are filtered out.
+
+#### LOGIN_LOGO
+
+Type: Optional[str]
+
+Relative path to image rendered at the top of login page in HomePort.
 
 #### NATIVE_NAME_ENABLED
 
@@ -637,6 +682,12 @@ Type: bool
 
 Enables organization owners to create an organization.
 
+#### POWERED_BY_LOGO
+
+Type: Optional[str]
+
+Relative path to image rendered at the bottom of login menu in HomePort.
+
 #### PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS
 
 Type: List[str]
@@ -653,11 +704,19 @@ Specifies seller legal or effective country of registration or residence as an I
 
 Type: str
 
+it is used as prefix for page title.
+
 #### SHOW_ALL_USERS
 
 Type: bool
 
 Indicates whether user can see all other users in `api/users/` endpoint.
+
+#### SIDEBAR_LOGO
+
+Type: Optional[str]
+
+Relative path to image rendered at the top of sidebar menu in HomePort.
 
 #### SITE_ADDRESS
 
@@ -718,6 +777,18 @@ Defines for how long user token should remain valid if there was no action from 
 Type: str
 
 Identifier of translation domain applied to current deployment.
+
+#### USER_MANDATORY_FIELDS
+
+Type: List[str]
+
+List of user profile attributes that would be required for filling in HomePort. Note that backend will not be affected. If a mandatory field is missing in profile, a profile edit view will be forced upon user on any HomePort logged in action. Possible values are: description, email, full_name, job_title, organization, phone_number
+
+#### USER_REGISTRATION_HIDDEN_FIELDS
+
+Type: List[str]
+
+List of user profile attributes that would be concealed on registration form in HomePort. Possible values are: job_title, registration_method, phone_number
 
 #### USE_ATOMIC_TRANSACTION
 

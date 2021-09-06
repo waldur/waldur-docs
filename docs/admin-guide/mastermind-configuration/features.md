@@ -34,6 +34,10 @@ Render list of subnets from where connection to self-service is allowed in organ
 
 Enable team management in organization workspace.
 
+### invitations.civil_number_required
+
+Make civil number field mandatory in invitation creation form.
+
 ### invitations.conceal_civil_number
 
 Conceal civil number in invitation creation dialog.
@@ -45,6 +49,18 @@ Allow to create FreeIPA user using details specified in invitation if user does 
 ### invitations.disable_multiple_roles
 
 Do not allow user to grant multiple roles in the same project or organization using invitation.
+
+### invitations.require_user_details
+
+Render "Show user details" button in invitation creation form.
+
+### invitations.show_tax_number
+
+Show tax number field in invitation creation form.
+
+### invitations.tax_number_required
+
+Make tax number field mandatory in invitation creation form.
 
 ### invoice.events
 

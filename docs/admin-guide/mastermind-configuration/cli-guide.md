@@ -1,7 +1,3 @@
----
-title: CLI guide
----
-
 ## cleanup_stale_event_types
 
 Cleanup stale event types in all hooks.
