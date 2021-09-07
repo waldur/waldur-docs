@@ -246,6 +246,8 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'KEYCLOAK_TOKEN_URL': '',
  'KEYCLOAK_USERINFO_URL': '',
  'REMOTE_EDUTEAMS_ACCESS_TOKEN': '',
+ 'REMOTE_EDUTEAMS_CLIENT_ID': '',
+ 'REMOTE_EDUTEAMS_SECRET': '',
  'REMOTE_EDUTEAMS_TOKEN_URL': 'https://proxy.acc.researcher-access.org/OIDC/token',
  'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo',
  'SMARTIDEE_CLIENT_ID': '',
@@ -339,6 +341,18 @@ The userinfo endpoint returns standard claims about the authenticated user, and 
 Type: str
 
 Token is used to authenticate against user info endpoint.
+
+#### REMOTE_EDUTEAMS_CLIENT_ID
+
+Type: str
+
+ID of application used for OAuth authentication.
+
+#### REMOTE_EDUTEAMS_SECRET
+
+Type: str
+
+Application secret key.
 
 #### REMOTE_EDUTEAMS_TOKEN_URL
 
