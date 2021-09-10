@@ -10,21 +10,20 @@ variables:
   GITHUB_OPENNODE_REPO_URL: "git@github.com:opennode/waldur-docs.git"
   GITHUB_WALDUR_REPO_URL: "git@github.com:waldur/waldur-docs.git"
 
-test-mkdocs:
+Test mkdocs:
   image: registry.hpc.ut.ee/mirror/library/python:3.8-buster
   stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - pip install -r requirements.txt
     - mkdocs build --strict --verbose --site-dir test
-  artifacts:
-    paths:
-    - test
-  except:
-  - master
 
-build-pages:
+Build pages:
   image: registry.hpc.ut.ee/mirror/library/python:3.8-buster
   stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
   script:
     # Ignore if `github_*` remote already exists
     - git remote add github_opennode $GITHUB_OPENNODE_REPO_URL || true
@@ -33,8 +32,6 @@ build-pages:
     - pip install -r requirements.txt
     - export ENABLE_PDF_EXPORT=1
     - mkdocs gh-deploy --force -r github_opennode
-  only:
-  - master
   before_script:
     - echo "[+] Adding ssh keys to the home directory"
     - mkdir -p ~/.ssh
