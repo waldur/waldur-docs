@@ -1,0 +1,201 @@
+# Events
+
+## Customers
+
+- customer_creation_succeeded
+- customer_deletion_succeeded
+- customer_update_succeeded
+- invoice_canceled
+- invoice_created
+- invoice_paid
+- payment_added
+- payment_created
+- payment_removed
+- role_granted
+- role_revoked
+- role_updated
+
+## Invoices
+
+- invoice_canceled
+- invoice_created
+- invoice_creation_succeeded
+- invoice_deletion_succeeded
+- invoice_paid
+- invoice_update_succeeded
+- payment_created
+- payment_removed
+
+## Jira
+
+- comment_creation_succeeded
+- comment_deletion_succeeded
+- comment_update_succeeded
+- issue_creation_succeeded
+- issue_deletion_succeeded
+- issue_update_succeeded
+
+## Payments
+
+- payment_approval_succeeded
+- payment_cancel_succeeded
+- payment_creation_succeeded
+
+## Projects
+
+- project_creation_succeeded
+- project_deletion_succeeded
+- project_update_succeeded
+- role_granted
+- role_revoked
+- role_updated
+
+## Resources
+
+- openstack_floating_ip_attached
+- openstack_floating_ip_connected
+- openstack_floating_ip_detached
+- openstack_floating_ip_disconnected
+- openstack_network_cleaned
+- openstack_network_created
+- openstack_network_deleted
+- openstack_network_imported
+- openstack_network_pulled
+- openstack_network_updated
+- openstack_port_cleaned
+- openstack_port_created
+- openstack_port_deleted
+- openstack_port_imported
+- openstack_port_pulled
+- openstack_router_updated
+- openstack_security_group_cleaned
+- openstack_security_group_created
+- openstack_security_group_deleted
+- openstack_security_group_imported
+- openstack_security_group_pulled
+- openstack_security_group_rule_cleaned
+- openstack_security_group_rule_created
+- openstack_security_group_rule_deleted
+- openstack_security_group_rule_imported
+- openstack_security_group_rule_updated
+- openstack_security_group_updated
+- openstack_subnet_cleaned
+- openstack_subnet_created
+- openstack_subnet_deleted
+- openstack_subnet_imported
+- openstack_subnet_pulled
+- openstack_subnet_updated
+- openstack_tenant_quota_limit_updated
+- resource_assign_floating_ip_failed
+- resource_assign_floating_ip_scheduled
+- resource_assign_floating_ip_succeeded
+- resource_attach_failed
+- resource_attach_scheduled
+- resource_attach_succeeded
+- resource_backup_schedule_activated
+- resource_backup_schedule_cleaned_up
+- resource_backup_schedule_created
+- resource_backup_schedule_deactivated
+- resource_backup_schedule_deleted
+- resource_change_flavor_failed
+- resource_change_flavor_scheduled
+- resource_change_flavor_succeeded
+- resource_creation_failed
+- resource_creation_scheduled
+- resource_creation_succeeded
+- resource_deletion_failed
+- resource_deletion_scheduled
+- resource_deletion_succeeded
+- resource_detach_failed
+- resource_detach_scheduled
+- resource_detach_succeeded
+- resource_extend_failed
+- resource_extend_scheduled
+- resource_extend_succeeded
+- resource_extend_volume_failed
+- resource_extend_volume_scheduled
+- resource_extend_volume_succeeded
+- resource_import_succeeded
+- resource_pull_failed
+- resource_pull_scheduled
+- resource_pull_succeeded
+- resource_restart_failed
+- resource_restart_scheduled
+- resource_restart_succeeded
+- resource_retype_failed
+- resource_retype_scheduled
+- resource_retype_succeeded
+- resource_snapshot_schedule_activated
+- resource_snapshot_schedule_cleaned_up
+- resource_snapshot_schedule_created
+- resource_snapshot_schedule_deactivated
+- resource_snapshot_schedule_deleted
+- resource_start_failed
+- resource_start_scheduled
+- resource_start_succeeded
+- resource_stop_failed
+- resource_stop_scheduled
+- resource_stop_succeeded
+- resource_unassign_floating_ip_failed
+- resource_unassign_floating_ip_scheduled
+- resource_unassign_floating_ip_succeeded
+- resource_update_allowed_address_pairs_failed
+- resource_update_allowed_address_pairs_scheduled
+- resource_update_allowed_address_pairs_succeeded
+- resource_update_floating_ips_failed
+- resource_update_floating_ips_scheduled
+- resource_update_floating_ips_succeeded
+- resource_update_internal_ips_failed
+- resource_update_internal_ips_scheduled
+- resource_update_internal_ips_succeeded
+- resource_update_security_groups_failed
+- resource_update_security_groups_scheduled
+- resource_update_security_groups_succeeded
+- resource_update_succeeded
+
+## Ssh
+
+- ssh_key_creation_succeeded
+- ssh_key_deletion_succeeded
+
+## Support
+
+- attachment_created
+- attachment_deleted
+- attachment_updated
+- issue_creation_succeeded
+- issue_deletion_succeeded
+- issue_update_succeeded
+
+## Users
+
+- auth_logged_in_with_eduteams
+- auth_logged_in_with_keycloak
+- auth_logged_in_with_saml2
+- auth_logged_in_with_smartid_ee
+- auth_logged_in_with_tara
+- auth_logged_in_with_username
+- auth_logged_out
+- auth_logged_out_with_saml2
+- auth_login_failed_with_username
+- freeipa_profile_created
+- freeipa_profile_deleted
+- freeipa_profile_disabled
+- freeipa_profile_enabled
+- marketplace_offering_user_created
+- marketplace_offering_user_deleted
+- role_granted
+- role_revoked
+- role_updated
+- ssh_key_creation_succeeded
+- ssh_key_deletion_succeeded
+- user_activated
+- user_creation_succeeded
+- user_deactivated
+- user_deletion_succeeded
+- user_details_update_succeeded
+- user_password_updated
+- user_profile_changed
+- user_token_lifetime_updated
+- user_update_succeeded
+
