@@ -1,4 +1,4 @@
-## Waldur Helm
+# Waldur Helm
 
 Waldur publishes a Helm chart for easy deployment on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 
