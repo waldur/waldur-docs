@@ -1,6 +1,9 @@
+# Configuration guide
+
 ## WALDUR_AUTH_SAML2 plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_AUTH_SAML2 = {'ALLOW_TO_SELECT_IDENTITY_PROVIDER': True,
  'ATTRIBUTE_MAP_DIR': '',
@@ -230,7 +233,8 @@ Full path to the xmlsec1 binary program
 
 ## WALDUR_AUTH_SOCIAL plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization',
  'EDUTEAMS_CLIENT_ID': '',
@@ -404,7 +408,8 @@ Application secret key.
 
 ## WALDUR_CORE plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
@@ -818,7 +823,8 @@ Ensure that invitation and user emails match.
 
 ## WALDUR_FREEIPA plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_FREEIPA = {'BLACKLISTED_USERNAMES': ['root'],
  'ENABLED': False,
@@ -887,7 +893,8 @@ Validate TLS certificate of FreeIPA web interface / REST API
 
 ## WALDUR_HPC plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_HPC = {'ENABLED': False,
  'EXTERNAL_AFFILIATIONS': [],
@@ -963,7 +970,8 @@ UUID of a Waldur SLURM offering plan, which will be used for creating allocation
 
 ## WALDUR_KEYCLOAK plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_KEYCLOAK = {'BASE_URL': 'http://localhost:8080/auth',
  'CLIENT_ID': 'waldur',
@@ -1018,7 +1026,8 @@ Username of Keycloak user with administrative privileges
 
 ## WALDUR_MARKETPLACE plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_MARKETPLACE = {'ADMIN_CAN_APPROVE_ORDER': False,
  'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
@@ -1094,7 +1103,8 @@ Size of the thumbnail to generate when screenshot is uploaded for an offering.
 
 ## WALDUR_PID plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_PID = {'DATACITE': {'API_URL': 'https://example.com',
               'COLLECTION_DOI': '',
@@ -1112,7 +1122,8 @@ Settings for integration of Waldur with Datacite PID service. Collection DOI is 
 
 ## WALDUR_SLURM plugin
 
-Default value: 
+Default value:
+
 ```python
 WALDUR_SLURM = {'ALLOCATION_PREFIX': 'waldur_allocation_',
  'CUSTOMER_PREFIX': 'waldur_customer_',
