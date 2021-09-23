@@ -250,6 +250,10 @@ optional arguments:
   --path PATH, -p PATH  Path to dumped database.
 ```
 
+## print_templates
+
+
+
 ## pull_openstack_volume_metadata
 
 Pull OpenStack volumes metadata to marketplace.
