@@ -70,7 +70,7 @@ Render list of events related to invoice item in modal dialog.
 
 ## marketplace.conceal_prices
 
-Render prices in shopping cart and order details.
+Do not render prices in shopping cart and order details.
 
 ## marketplace.flows
 
