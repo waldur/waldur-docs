@@ -251,6 +251,7 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'KEYCLOAK_USERINFO_URL': '',
  'REMOTE_EDUTEAMS_ACCESS_TOKEN': '',
  'REMOTE_EDUTEAMS_CLIENT_ID': '',
+ 'REMOTE_EDUTEAMS_ENABLED': False,
  'REMOTE_EDUTEAMS_SECRET': '',
  'REMOTE_EDUTEAMS_TOKEN_URL': 'https://proxy.acc.researcher-access.org/OIDC/token',
  'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo',
@@ -302,7 +303,7 @@ The userinfo endpoint returns standard claims about the authenticated user, and 
 
 Type: bool
 
-Enable EduTeams synchronization with remote Waldur.
+Enable eduTEAMS synchronization with remote Waldur.
 
 #### KEYCLOAK_AUTH_URL
 
@@ -351,6 +352,12 @@ Token is used to authenticate against user info endpoint.
 Type: str
 
 ID of application used for OAuth authentication.
+
+#### REMOTE_EDUTEAMS_ENABLED
+
+Type: bool
+
+Enable remote eduTEAMS extension.
 
 #### REMOTE_EDUTEAMS_SECRET
 
