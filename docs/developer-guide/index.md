@@ -18,4 +18,3 @@
 - [Internationalization](i18n.md)
 - [Plugins](plugins/index.md)
 - [Events](events.md)
-- [Templates](templates.md)
