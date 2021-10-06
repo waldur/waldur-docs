@@ -8,7 +8,7 @@ Cleanup stale event types in all hooks.
 
 Copy structure of categories for the Marketplace
 
-```
+```bash
 usage: waldur copy_category source_category_uuid target_category_uuid
 
 positional arguments:
@@ -20,7 +20,7 @@ positional arguments:
 
 Create a user with a specified username and password. User will be created as staff.
 
-```
+```bash
 usage: waldur createstaffuser -u USERNAME -p PASSWORD -e EMAIL
 
 optional arguments:
@@ -33,7 +33,7 @@ optional arguments:
 
 Generate RST docs for DRF API
 
-```
+```bash
 usage: waldur drfdocs [--store PATH] [app_label [app_label ...]]
 
 positional arguments:
@@ -50,7 +50,7 @@ Drop leftover projects from remote OpenStack deployment.
   Leftovers are resources marked as terminated in Waldur but still present in the remote OpenStack.
   Such inconsistency may be caused by split brain problem in the distributed database.
 
-```
+```bash
 usage: waldur drop_leftover_openstack_projects [--offering OFFERING]
                                                [--dry-run] [--fuzzy-matching]
 
@@ -66,7 +66,7 @@ optional arguments:
 
 Dumps information about users, their organizations and projects.
 
-```
+```bash
 usage: waldur dumpusers [-o OUTPUT]
 
 optional arguments:
@@ -83,7 +83,7 @@ Export catalog of Amazon images.
 
 Export an offering from Waldur. Export data includes JSON file with an offering data and a thumbnail. Names of this files include offering ID.
 
-```
+```bash
 usage: waldur export_offering -o OFFERING -p PATH
 
 optional arguments:
@@ -97,7 +97,7 @@ optional arguments:
 
 Import catalog of Amazon images.
 
-```
+```bash
 usage: waldur import_ami_catalog [-y] FILE
 
 positional arguments:
@@ -111,7 +111,7 @@ optional arguments:
 
 Import Azure image
 
-```
+```bash
 usage: waldur import_azure_image [--sku SKU] [--publisher PUBLISHER]
                                  [--offer OFFER]
 
@@ -129,7 +129,7 @@ Create marketplace order for each resource if it does not yet exist.
 
 Import or update an offering in Waldur. You must define offering for updating or category and customer for creating.
 
-```
+```bash
 usage: waldur import_offering -p PATH [-c CUSTOMER] [-ct CATEGORY]
                               [-o OFFERING]
 
@@ -147,7 +147,7 @@ optional arguments:
 
 Import OpenStack tenant quotas to marketplace.
 
-```
+```bash
 usage: waldur import_tenant_quotas [--dry-run]
 
 optional arguments:
@@ -159,7 +159,7 @@ optional arguments:
 
 Import existing support offerings as marketplace resources.
 
-```
+```bash
 usage: waldur init_marketplace_support --category CATEGORY_UUID --customer
                                        CUSTOMER_UUID
 
@@ -178,7 +178,7 @@ Recalculate all quotas
 
 Add default security groups with given names to all tenants.
 
-```
+```bash
 usage: waldur initsecuritygroups names [names ...]
 
 positional arguments:
@@ -189,7 +189,7 @@ positional arguments:
 
 Loads a categories for the Marketplace
 
-```
+```bash
 usage: waldur load_categories category [category ...]
 
 positional arguments:
@@ -200,7 +200,7 @@ positional arguments:
 
 Import features in JSON format
 
-```
+```bash
 usage: waldur load_features [--dry-run] features_file
 
 positional arguments:
@@ -215,7 +215,7 @@ optional arguments:
 
 Move Waldur project to a different organization.
 
-```
+```bash
 usage: waldur move_project -p PROJECT_UUID -c CUSTOMER_UUID
 
 optional arguments:
@@ -229,7 +229,7 @@ optional arguments:
 
 Move a marketplace resource to a different project.
 
-```
+```bash
 usage: waldur move_resource -p PROJECT_UUID -r RESOURCE_UUID
 
 optional arguments:
@@ -243,22 +243,18 @@ optional arguments:
 
 Load data with disabled signals.
 
-```
+```bash
 usage: waldur pgmigrate [--path PATH]
 
 optional arguments:
   --path PATH, -p PATH  Path to dumped database.
 ```
 
-## print_templates
-
-
-
 ## pull_openstack_volume_metadata
 
 Pull OpenStack volumes metadata to marketplace.
 
-```
+```bash
 usage: waldur pull_openstack_volume_metadata [--dry-run]
 
 optional arguments:
@@ -278,7 +274,7 @@ Pull users from support backend.
 
 Push OpenStack tenant quotas from marketplace to backend.
 
-```
+```bash
 usage: waldur push_tenant_quotas [--dry-run]
 
 optional arguments:
@@ -302,7 +298,7 @@ Remove instances that have FK to stale content types.
 
 Check status of Waldur MasterMind configured services
 
-```
+```bash
 usage: waldur status [--check-api-endpoints-at BASE_URL]
 
 optional arguments:

@@ -2,7 +2,7 @@
 
 ## waldur_core.logging
 
-### email.html
+### email.html (waldur_core.logging)
 
 ``` html
 <html>
@@ -25,7 +25,7 @@
 
 ## waldur_core.structure
 
-### notifications_profile_changes.html
+### notifications_profile_changes.html (waldur_core.structure)
 
 ``` html
 Owner of
@@ -40,66 +40,66 @@ Owner of
 {% endfor %}
 ```
 
-### change_email_request_message.txt
+### change_email_request_message.txt (waldur_core.structure)
 
 ``` txt
 To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the {{ link }}.
 ```
 
-### change_email_request_message.html
+### change_email_request_message.html (waldur_core.structure)
 
 ``` html
 <p>To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the <a href="{{ link }}">link</a>.</p>
 ```
 
-### change_email_request_subject.txt
+### change_email_request_subject.txt (waldur_core.structure)
 
 ``` txt
 Verify new email address.
 ```
 
-### service_settings_description.html
+### service_settings_description.html (waldur_core.structure)
 
 ``` html
 {% for name, service in services %}
     <div id="id_{{ name }}" class="service-fields">
-	<h4>{{ name }}</h4>
+    <h4>{{ name }}</h4>
 
-	{% if service.fields.items %}
-		<p>Fields:</p>
-		<ul>
-			{% for name, field in service.fields.items %}
-				<li>
-					<code>{{ name }}</code>
-					{% if field.label or field.help_text %} — {% endif %}
-					{% if field.label %} {{ field.label }} {% endif %}
-					{% if field.help_text %} {{ field.help_text }} {% endif %}
-				</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
+    {% if service.fields.items %}
+        <p>Fields:</p>
+        <ul>
+            {% for name, field in service.fields.items %}
+                <li>
+                    <code>{{ name }}</code>
+                    {% if field.label or field.help_text %} — {% endif %}
+                    {% if field.label %} {{ field.label }} {% endif %}
+                    {% if field.help_text %} {{ field.help_text }} {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 
-	{% if service.extra_fields.items %}
-		<p>Options:</p>
-		<ul>
-			{% for name, field in service.extra_fields.items %}
-				<li>
-					<code>{{ name }}</code>
-					{% if field.label or field.help_text %} — {% endif %}
-					{% if not field.required %} (optional) {% endif %}
-					{% if field.label %} {{ field.label }} {% endif %}
-					{% if field.help_text %} {{ field.help_text }} {% endif %}
-				</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
+    {% if service.extra_fields.items %}
+        <p>Options:</p>
+        <ul>
+            {% for name, field in service.extra_fields.items %}
+                <li>
+                    <code>{{ name }}</code>
+                    {% if field.label or field.help_text %} — {% endif %}
+                    {% if not field.required %} (optional) {% endif %}
+                    {% if field.label %} {{ field.label }} {% endif %}
+                    {% if field.help_text %} {{ field.help_text }} {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     </div>
 {% endfor %}
 ```
 
 ## waldur_core.users
 
-### invitation_created_message.html
+### invitation_created_message.html (waldur_core.users)
 
 ``` html
 <html>
@@ -119,7 +119,7 @@ Verify new email address.
 </html>
 ```
 
-### invitation_rejected_message.txt
+### invitation_rejected_message.txt (waldur_core.users)
 
 ``` txt
 Hello!
@@ -133,19 +133,19 @@ Target: {{ name }} {{ type }}
 Role: {{ role|lower }}
 ```
 
-### invitation_created_subject.txt
+### invitation_created_subject.txt (waldur_core.users)
 
 ``` txt
 Invitation to {{ name }} {{ type }}
 ```
 
-### invitation_rejected_subject.txt
+### invitation_rejected_subject.txt (waldur_core.users)
 
 ``` txt
 Invitation has been rejected
 ```
 
-### invitation_rejected_message.html
+### invitation_rejected_message.html (waldur_core.users)
 
 ``` html
 <html>
@@ -176,7 +176,7 @@ Invitation has been rejected
 </html>
 ```
 
-### invitation_created_message.txt
+### invitation_created_message.txt (waldur_core.users)
 
 ``` txt
 Hello!
@@ -186,7 +186,7 @@ Please visit the link below to sign up and accept your invitation:
 {{ link }}
 ```
 
-### invitation_requested_message.html
+### invitation_requested_message.html (waldur_core.users)
 
 ``` html
 <html>
@@ -256,7 +256,7 @@ Please visit the link below to sign up and accept your invitation:
 </html>
 ```
 
-### invitation_approved_message.txt
+### invitation_approved_message.txt (waldur_core.users)
 
 ``` txt
 Hello!
@@ -272,13 +272,13 @@ Username is {{ username }}
 Your password is {{ password }}
 ```
 
-### invitation_approved_subject.txt
+### invitation_approved_subject.txt (waldur_core.users)
 
 ``` txt
 Account has been created
 ```
 
-### invitation_approved_message.html
+### invitation_approved_message.html (waldur_core.users)
 
 ``` html
 <html>
@@ -307,13 +307,13 @@ Account has been created
 </html>
 ```
 
-### invitation_requested_subject.txt
+### invitation_requested_subject.txt (waldur_core.users)
 
 ``` txt
 Invitation request
 ```
 
-### invitation_requested_message.txt
+### invitation_requested_message.txt (waldur_core.users)
 
 ``` txt
 Hello!
@@ -358,7 +358,7 @@ Alternatively, you may reject invitation: {{ reject_link }}
 
 ## waldur_auth_social
 
-### activation_email_message.html
+### activation_email_message.html (waldur_auth_social)
 
 ``` html
 <html>
@@ -383,7 +383,7 @@ Alternatively, you may reject invitation: {{ reject_link }}
 </html>
 ```
 
-### activation_email_message.txt
+### activation_email_message.txt (waldur_auth_social)
 
 ``` txt
 You're receiving this email because you created an account on Waldur.
@@ -395,7 +395,7 @@ Thanks for using our site!
 The Waldur team.
 ```
 
-### activation_email_subject.txt
+### activation_email_subject.txt (waldur_auth_social)
 
 ``` txt
 Account activation
@@ -403,7 +403,7 @@ Account activation
 
 ## waldur_mastermind.booking
 
-### notification_message.txt
+### notification_message.txt (waldur_mastermind.booking)
 
 ``` txt
 Hello!
@@ -414,13 +414,13 @@ Please do not forget about upcoming booking:
 {% endfor %}.
 ```
 
-### notification_subject.txt
+### notification_subject.txt (waldur_mastermind.booking)
 
 ``` txt
 Reminder about upcoming booking.
 ```
 
-### notification_message.html
+### notification_message.html (waldur_mastermind.booking)
 
 ``` html
 <html>
@@ -447,7 +447,7 @@ Reminder about upcoming booking.
 
 ## waldur_mastermind.invoices
 
-### notification_message.txt
+### notification_message.txt (waldur_mastermind.invoices)
 
 ``` txt
 Hello,
@@ -456,7 +456,7 @@ Please follow the link below to see {{ customer }}'s accounting information for 
 {{ link }}
 ```
 
-### invoice.html
+### invoice.html (waldur_mastermind.invoices)
 
 ``` html
 {% load i18n %}
@@ -577,13 +577,13 @@ Please follow the link below to see {{ customer }}'s accounting information for 
 </html>
 ```
 
-### report_body.txt
+### report_body.txt (waldur_mastermind.invoices)
 
 ``` txt
 Attached is an accounting report for {{ month }}/{{ year }}.
 ```
 
-### monthly_invoicing_reports.html
+### monthly_invoicing_reports.html (waldur_mastermind.invoices)
 
 ``` html
 {% load i18n %}
@@ -663,25 +663,25 @@ Attached is an accounting report for {{ month }}/{{ year }}.
 </html>
 ```
 
-### notification_subject.txt
+### notification_subject.txt (waldur_mastermind.invoices)
 
 ``` txt
 {{ customer }}'s invoice for {{ month }}/{{ year }}
 ```
 
-### report_subject.txt
+### report_subject.txt (waldur_mastermind.invoices)
 
 ``` txt
 Waldur accounting report for {{ month }}/{{ year }}
 ```
 
-### upcoming_ends_notification_subject.txt
+### upcoming_ends_notification_subject.txt (waldur_mastermind.invoices)
 
 ``` txt
 {{ organization_name }}'s fixed price contract {{ contract_number }} is coming to an end
 ```
 
-### upcoming_ends_notification_message.txt
+### upcoming_ends_notification_message.txt (waldur_mastermind.invoices)
 
 ``` txt
 Hello,
@@ -689,7 +689,7 @@ Hello,
 this is a reminder that {{ organization_name }}'s fixed price contract {{ contract_number }} is ending on {{ end }}.
 ```
 
-### upcoming_ends_notification_message.html
+### upcoming_ends_notification_message.html (waldur_mastermind.invoices)
 
 ``` html
 <html>
@@ -707,7 +707,7 @@ this is a reminder that {{ organization_name }}'s fixed price contract {{ contra
 </html>
 ```
 
-### notification_message.html
+### notification_message.html (waldur_mastermind.invoices)
 
 ``` html
 <html xmlns="http://www.w3.org/1999/html">
@@ -728,7 +728,7 @@ this is a reminder that {{ organization_name }}'s fixed price contract {{ contra
 
 ## waldur_mastermind.marketplace
 
-### notification_usages_message.txt
+### notification_usages_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -741,7 +741,7 @@ Please do not forget to add usage for the resources you provide:
 You can submit resource usage via API or do it manually at {{ public_resources_url }}.
 ```
 
-### marketplace_resource_update_limits_succeeded_message.html
+### marketplace_resource_update_limits_succeeded_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -760,7 +760,7 @@ You can submit resource usage via API or do it manually at {{ public_resources_u
 </html>
 ```
 
-### marketplace_resource_update_limits_succeeded_message.txt
+### marketplace_resource_update_limits_succeeded_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -768,7 +768,7 @@ Hello!
 Resource {{ resource_name }} limits have been updated.
 ```
 
-### marketplace_plan_template.txt
+### marketplace_plan_template.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Plan: {{ plan.name }}{% for component in components %}
@@ -776,13 +776,13 @@ Plan: {{ plan.name }}{% for component in components %}
 {% endfor %}
 ```
 
-### marketplace_resource_terminate_failed_subject.txt
+### marketplace_resource_terminate_failed_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} deletion has failed.
 ```
 
-### marketplace_resource_update_failed_message.html
+### marketplace_resource_update_failed_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -801,7 +801,7 @@ Resource {{ resource_name }} deletion has failed.
 </html>
 ```
 
-### notification_approval_message.html
+### notification_approval_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -820,7 +820,7 @@ Resource {{ resource_name }} deletion has failed.
 </html>
 ```
 
-### marketplace_resource_update_succeeded_message.html
+### marketplace_resource_update_succeeded_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -839,13 +839,13 @@ Resource {{ resource_name }} deletion has failed.
 </html>
 ```
 
-### marketplace_resource_create_failed_subject.txt
+### marketplace_resource_create_failed_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} creation has failed.
 ```
 
-### marketplace_resource_terminate_failed_message.txt
+### marketplace_resource_terminate_failed_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -853,7 +853,7 @@ Hello!
 Resource {{ resource_name }} deletion has failed.
 ```
 
-### notification_about_stale_resources_message.txt
+### notification_about_stale_resources_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -868,13 +868,13 @@ The resource names are:
 Thank you!
 ```
 
-### marketplace_resource_update_succeeded_subject.txt
+### marketplace_resource_update_succeeded_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} has been updated.
 ```
 
-### marketplace_resource_terminatate_scheduled_message.html
+### marketplace_resource_terminatate_scheduled_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -894,13 +894,13 @@ Resource {{ resource_name }} has been updated.
 </html>
 ```
 
-### marketplace_resource_update_limits_succeeded_subject.txt
+### marketplace_resource_update_limits_succeeded_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} limits have been updated.
 ```
 
-### marketplace_resource_create_succeeded_message.html
+### marketplace_resource_create_succeeded_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -919,13 +919,13 @@ Resource {{ resource_name }} limits have been updated.
 </html>
 ```
 
-### marketplace_resource_create_succeeded_subject.txt
+### marketplace_resource_create_succeeded_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} has been created.
 ```
 
-### notification_about_stale_resources_message.html
+### notification_about_stale_resources_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -953,13 +953,13 @@ Resource {{ resource_name }} has been created.
 </html>
 ```
 
-### marketplace_resource_update_failed_subject.txt
+### marketplace_resource_update_failed_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} update has failed.
 ```
 
-### marketplace_resource_create_succeeded_message.txt
+### marketplace_resource_create_succeeded_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -967,7 +967,7 @@ Hello!
 Resource {{ resource_name }} has been created.
 ```
 
-### marketplace_resource_update_failed_message.txt
+### marketplace_resource_update_failed_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -975,7 +975,7 @@ Hello!
 Resource {{ resource_name }} update has failed.
 ```
 
-### marketplace_resource_terminatate_scheduled_message.txt
+### marketplace_resource_terminatate_scheduled_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -983,13 +983,13 @@ Hello!
 The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
 ```
 
-### notification_about_stale_resources_subject.txt
+### notification_about_stale_resources_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Reminder about stale resources.
 ```
 
-### marketplace_resource_update_succeeded_message.txt
+### marketplace_resource_update_succeeded_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -997,7 +997,7 @@ Hello!
 Resource {{ resource_name }} has been updated.
 ```
 
-### marketplace_resource_update_limits_failed_message.txt
+### marketplace_resource_update_limits_failed_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -1005,13 +1005,13 @@ Hello!
 Resource {{ resource_name }} limits update has failed.
 ```
 
-### notification_approval_subject.txt
+### notification_approval_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 ```
 
-### order.html
+### order.html (waldur_mastermind.marketplace)
 
 ``` html
 {% load i18n %}
@@ -1188,13 +1188,13 @@ A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 </html>
 ```
 
-### marketplace_resource_update_limits_failed_subject.txt
+### marketplace_resource_update_limits_failed_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} limits update has failed.
 ```
 
-### marketplace_resource_create_failed_message.txt
+### marketplace_resource_create_failed_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -1202,7 +1202,7 @@ Hello!
 Resource {{ resource_name }} creation has failed.
 ```
 
-### marketplace_resource_terminate_failed_message.html
+### marketplace_resource_terminate_failed_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -1221,7 +1221,7 @@ Resource {{ resource_name }} creation has failed.
 </html>
 ```
 
-### marketplace_resource_update_limits_failed_message.html
+### marketplace_resource_update_limits_failed_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -1240,13 +1240,13 @@ Resource {{ resource_name }} creation has failed.
 </html>
 ```
 
-### marketplace_resource_terminatate_scheduled_subject.txt
+### marketplace_resource_terminatate_scheduled_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource.name }} terminatation has been scheduled.
 ```
 
-### marketplace_resource_terminate_succeeded_message.html
+### marketplace_resource_terminate_succeeded_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -1265,7 +1265,7 @@ Resource {{ resource.name }} terminatation has been scheduled.
 </html>
 ```
 
-### notification_approval_message.txt
+### notification_approval_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -1273,7 +1273,7 @@ Hello!
 A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 ```
 
-### marketplace_resource_terminate_succeeded_message.txt
+### marketplace_resource_terminate_succeeded_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
@@ -1281,19 +1281,19 @@ Hello!
 Resource {{ resource_name }} has been deleted.
 ```
 
-### marketplace_resource_terminate_succeeded_subject.txt
+### marketplace_resource_terminate_succeeded_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} has been deleted.
 ```
 
-### notification_usages_subject.txt
+### notification_usages_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Reminder about missing usage reports.
 ```
 
-### marketplace_resource_create_failed_message.html
+### marketplace_resource_create_failed_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -1312,7 +1312,7 @@ Reminder about missing usage reports.
 </html>
 ```
 
-### notification_usages_message.html
+### notification_usages_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
@@ -1342,7 +1342,7 @@ Reminder about missing usage reports.
 
 ## waldur_mastermind.marketplace_flows
 
-### flow_rejected_message.html
+### flow_rejected_message.html (waldur_mastermind.marketplace_flows)
 
 ``` html
 {% load i18n %}
@@ -1402,7 +1402,7 @@ Reminder about missing usage reports.
 {% endif %}
 ```
 
-### flow_submitted_message.txt
+### flow_submitted_message.txt (waldur_mastermind.marketplace_flows)
 
 ``` txt
 {% load i18n %}
@@ -1532,21 +1532,21 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 {% endif %}
 ```
 
-### flow_rejected_subject.txt
+### flow_rejected_subject.txt (waldur_mastermind.marketplace_flows)
 
 ``` txt
 {% load i18n %}
 {% trans 'Your submission has been rejected' %}
 ```
 
-### flow_submitted_subject.txt
+### flow_submitted_subject.txt (waldur_mastermind.marketplace_flows)
 
 ``` txt
 {% load i18n %}
 {% trans 'Resource creation request has been submitted' %}
 ```
 
-### flow_rejected_message.txt
+### flow_rejected_message.txt (waldur_mastermind.marketplace_flows)
 
 ``` txt
 {% if flow.customer_create_request.is_rejected %}
@@ -1605,7 +1605,7 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 {% endif %}
 ```
 
-### flow_submitted_message.html
+### flow_submitted_message.html (waldur_mastermind.marketplace_flows)
 
 ``` html
 {% load i18n %}
@@ -1769,7 +1769,7 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 
 ## waldur_mastermind.marketplace_support
 
-### update_limits_template.txt
+### update_limits_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
 [Update limits for resource {{order_item.resource.scope.name}}|{{request_url}}].
@@ -1778,7 +1778,7 @@ Old limits: {{ old_limits }}.
 New limits: {{ new_limits }}.
 ```
 
-### terminate_resource_template.txt
+### terminate_resource_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
 {% load waldur_marketplace %}[Terminate resource {{order_item.resource.scope.name}}|{{request_url}}].
@@ -1786,7 +1786,7 @@ New limits: {{ new_limits }}.
 Marketplace resource UUID: {{order_item.resource.uuid.hex}}
 ```
 
-### create_resource_template.txt
+### create_resource_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
 {% load waldur_marketplace %}[Order item|{{order_item_url}}].
@@ -1798,7 +1798,7 @@ Civil code:{{order_item.order.created_by.civil_number|default:"none"}}
 Email: {{order_item.order.created_by.email}}
 ```
 
-### update_resource_template.txt
+### update_resource_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
 [Switch plan for resource {{order_item.resource.scope.name}}|{{request_url}}].
@@ -1808,7 +1808,7 @@ Marketplace resource UUID: {{order_item.resource.uuid.hex}}
 
 ## waldur_mastermind.support
 
-### description.txt
+### description.txt (waldur_mastermind.support)
 
 ``` txt
 {{issue.description}}
@@ -1827,7 +1827,7 @@ Additional Info:
 {% endif %}
 ```
 
-### notification_comment_updated.txt
+### notification_comment_updated.txt (waldur_mastermind.support)
 
 ``` txt
 Hello!
@@ -1835,7 +1835,7 @@ Hello!
 The comment has been updated. Please go to {{issue_url}} to see it.
 ```
 
-### notification_issue_updated.txt
+### notification_issue_updated.txt (waldur_mastermind.support)
 
 ``` txt
 Hello!
@@ -1858,19 +1858,19 @@ Priority has been changed from {{ changed.priority }} to {{ issue.priority }}.
 Please go to {{issue_url}} to see it.
 ```
 
-### notification_issue_feedback_subject.txt
+### notification_issue_feedback_subject.txt (waldur_mastermind.support)
 
 ``` txt
 Please share your feedback: {{issue.key}} {{issue.summary}}
 ```
 
-### notification_comment_updated_subject.txt
+### notification_comment_updated_subject.txt (waldur_mastermind.support)
 
 ``` txt
 The comment has been updated
 ```
 
-### notification_issue_feedback.txt
+### notification_issue_feedback.txt (waldur_mastermind.support)
 
 ``` txt
 Hello, {{issue.caller.full_name}}!
@@ -1884,7 +1884,7 @@ Click on the evaluations below to provide the feedback.
 {% endfor %}
 ```
 
-### notification_comment_updated.html
+### notification_comment_updated.html (waldur_mastermind.support)
 
 ``` html
 <html>
@@ -1915,7 +1915,7 @@ Click on the evaluations below to provide the feedback.
 </html>
 ```
 
-### notification_comment_added.txt
+### notification_comment_added.txt (waldur_mastermind.support)
 
 ``` txt
 Hello!
@@ -1923,13 +1923,13 @@ Hello!
 The issue you have created has a new comment. Please go to {{issue_url}} to see it.
 ```
 
-### summary.txt
+### summary.txt (waldur_mastermind.support)
 
 ``` txt
 {% if issue.customer.abbreviation %}{{issue.customer.abbreviation}}: {% endif %}{{issue.summary}}
 ```
 
-### notification_issue_updated.html
+### notification_issue_updated.html (waldur_mastermind.support)
 
 ``` html
 <html>
@@ -1968,13 +1968,13 @@ The issue you have created has a new comment. Please go to {{issue_url}} to see 
 </html>
 ```
 
-### notification_issue_updated_subject.txt
+### notification_issue_updated_subject.txt (waldur_mastermind.support)
 
 ``` txt
 Updated issue: {{issue.key}} {{issue.summary}}
 ```
 
-### notification_issue_feedback.html
+### notification_issue_feedback.html (waldur_mastermind.support)
 
 ``` html
 <html>
@@ -2023,7 +2023,7 @@ Updated issue: {{issue.key}} {{issue.summary}}
 </html>
 ```
 
-### notification_comment_added.html
+### notification_comment_added.html (waldur_mastermind.support)
 
 ``` html
 <html>
@@ -2045,7 +2045,7 @@ Updated issue: {{issue.key}} {{issue.summary}}
 </html>
 ```
 
-### notification_comment_added_subject.txt
+### notification_comment_added_subject.txt (waldur_mastermind.support)
 
 ``` txt
 The issue you have created has a new comment
