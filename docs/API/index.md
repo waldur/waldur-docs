@@ -7,3 +7,4 @@ Summary:
 - [Organization](organization-api.md)
 - [Marketplace](marketplace-api.md)
 - [Reporting](reporting-api.md)
+- [Accounting](accounting-api.md)
