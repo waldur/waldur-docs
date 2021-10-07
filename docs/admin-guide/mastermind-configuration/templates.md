@@ -741,6 +741,12 @@ Please do not forget to add usage for the resources you provide:
 You can submit resource usage via API or do it manually at {{ public_resources_url }}.
 ```
 
+### marketplace_resource_terminatate_scheduled_staff_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource.name }} terminatation has been scheduled.
+```
+
 ### marketplace_resource_update_limits_succeeded_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -872,6 +878,26 @@ Thank you!
 
 ``` txt
 Resource {{ resource_name }} has been updated.
+```
+
+### marketplace_resource_terminatate_scheduled_staff_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource.name }} terminatation has been scheduled.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
+    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
+</p>
+</body>
+</html>
 ```
 
 ### marketplace_resource_terminatate_scheduled_message.html (waldur_mastermind.marketplace)
@@ -1291,6 +1317,14 @@ Resource {{ resource_name }} has been deleted.
 
 ``` txt
 Reminder about missing usage reports.
+```
+
+### marketplace_resource_terminatate_scheduled_staff_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
 ```
 
 ### marketplace_resource_create_failed_message.html (waldur_mastermind.marketplace)
