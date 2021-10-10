@@ -549,7 +549,7 @@ Please follow the link below to see {{ customer }}'s accounting information for 
                     </small>
                   </div>
                 </td>
-                <td>{{ item.get_factor }}</td>
+                <td>{{ item.quantity }}</td>
                 <td>{{ currency }} {{ item.unit_price | floatformat:2 | intcomma }}</td>
                 <td>{{ currency }} {{ item.total | floatformat:2 | intcomma }}</td>
               </tr>
