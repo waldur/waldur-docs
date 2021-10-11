@@ -7,6 +7,9 @@
 - customer_update_succeeded
 - invoice_canceled
 - invoice_created
+- invoice_item_created
+- invoice_item_deleted
+- invoice_item_updated
 - invoice_paid
 - payment_added
 - payment_created
@@ -21,6 +24,9 @@
 - invoice_created
 - invoice_creation_succeeded
 - invoice_deletion_succeeded
+- invoice_item_created
+- invoice_item_deleted
+- invoice_item_updated
 - invoice_paid
 - invoice_update_succeeded
 - payment_created
