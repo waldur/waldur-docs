@@ -1,11 +1,27 @@
 # Reporting
 
-For reporting, a user should use Waldur SDK: [installation guide](../waldur-sdk.md))
+For reporting, a user should use Waldur SDK: [installation guide](../waldur-sdk.md)
+
+## TL;DR: Waldur SDK installation
+
+```bash
+pip install git+<https://github.com/waldur/ansible-waldur-module.git@develop>
+```
+
+## Running the scripts
+
+You can run scripts using the following set of commands:
+
+```bash
+python <script-name>.py
+```
 
 ## Project reporting
 
 The first scenario is report generation about monthly cost of each project.
 For this, organisation and project info together with the cost should be fetched and saved to CSV files.
+
+The name of output file is `project-report.csv`
 
 Code example:
 
@@ -72,10 +88,22 @@ with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
             )
 ```
 
+Example of output file content:
+
+```csv
+Organization name,Organization abbreviation,Project name,Monthly cost of a project
+Org A,OA,Team1,10
+Org B,OB,Demo project,70
+Org B,OB,Industrial project,100
+Org C,OC,Lab1,110
+```
+
 ## OpenStack tenant reporting
 
 The second scenario is report generation about monthly cost of each OpenStack tenant.
 For this, tenant, organisation and project info together with the cost should be fetched and saved to CSV files.
+
+The name of output file is `openstack-report.csv`
 
 Code example:
 
@@ -152,4 +180,14 @@ with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
             except KeyError as e:
                 pprint(resource_uuid)
                 pprint(e)
+```
+
+Example of output file content:
+
+```csv
+Name of the OpenStack.Tenant resource,vCPU limit,RAM limit,Storage limit,Monthly cost of the resource,Project name,Organization name,Organization abbreviation
+HPC_resource,2.0,4096.0,61440.0,2.18,Team1,Org A,OA
+OpenStack Cloud for testing,1,1024,102400,5.17,Demo project,Org B,OB
+OpenStack Cloud,12,51200,614400,21.77,Industrial project,Org B,OB
+Private Cloud,1,1024,102400,5.17,Lab1,Org C,OC
 ```
