@@ -1,27 +1,23 @@
 # Reporting
-
-For reporting, a user should use Waldur SDK: [installation guide](../waldur-sdk.md)
-
-## TL;DR: Waldur SDK installation
-
-```bash
-pip install git+<https://github.com/waldur/ansible-waldur-module.git@develop>
-```
+Examples below show how it's possible to use Waldur SDK for generation of custom reports.
 
 ## Running the scripts
 
-You can run scripts using the following set of commands:
+All of the scripts below should be saved as files and executed in the environment with installed
+[Waldur SDK](./waldur-sdk.md). Please make sure that you have python3 and pip installed in your command line.
+
+Make sure that you update ``WALDUR_HOST`` and ``TOKEN`` with values that match your target Waldur deployment. 
+
 
 ```bash
-python <script-name>.py
+pip install git+https://github.com/waldur/ansible-waldur-module.git@develop
+python <reporting-script-name>.py
 ```
 
 ## Project reporting
 
-The first scenario is report generation about monthly cost of each project.
-For this, organisation and project info together with the cost should be fetched and saved to CSV files.
-
-The name of output file is `project-report.csv`
+The first scenario is report generation about monthly costs of each project.
+The name of the output file is `project-report.csv`.
 
 Code example:
 
@@ -31,8 +27,8 @@ import csv
 from collections import defaultdict
 
 # Your Waldur instance data
-WALDUR_HOST = 'abc.example.com'
-TOKEN = 'aaaabbbcccccdddddeeee'
+WALDUR_HOST = 'example.waldur.com'
+TOKEN = 'STAFF_USER_API_TOKEN'
 
 # Date-related constants
 CURRENT_YEAR = 2021
@@ -100,10 +96,9 @@ Org C,OC,Lab1,110
 
 ## OpenStack tenant reporting
 
-The second scenario is report generation about monthly cost of each OpenStack tenant.
-For this, tenant, organisation and project info together with the cost should be fetched and saved to CSV files.
+The second scenario is report generation about quotas and monthly costs of OpenStack tenants.
 
-The name of output file is `openstack-report.csv`
+The name of the output file is `openstack-report.csv`.
 
 Code example:
 
@@ -113,8 +108,8 @@ from pprint import pprint
 import csv
 
 # Your Waldur instance data
-WALDUR_HOST = 'abc.example.com'
-TOKEN = 'aaaabbbcccccdddddeeee'
+WALDUR_HOST = 'example.waldur.com'
+TOKEN = 'STAFF_USER_API_TOKEN'
 
 # Date-related constants
 CURRENT_YEAR = 2021
