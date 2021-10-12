@@ -4,15 +4,15 @@
 
 [eduGAIN](https://wiki.geant.org/display/eduGAIN/eduGAIN+Home) is a global federation of identity and service
 providers, based technically on SAML2.
- 
+
 In order to allow eduGAIN users to access Waldur, there are two steps:
 
 - Waldur deployment must be registered as a service provider in eduGAIN federation.
 - Waldur must get a list of identities that are trusted for authentication.
 
 !!! tip
-    SAML is a complicated and fragile technology. GEANT provides an alternative to direct integration of SAML - 
-    [eduTEAMS](eduTEAMS.md), which exposes an OpenID Connect protocol for service providers. 
+    SAML is a complicated and fragile technology. GEANT provides an alternative to direct integration of SAML -
+    [eduTEAMS](eduTEAMS.md), which exposes an OpenID Connect protocol for service providers.
 
 Waldur relies on [djangosaml2](https://djangosaml2.readthedocs.io/) for the heavylifting of SAML processing,
 so for fine tuning configuration, contact corresponding project documentation.
@@ -187,7 +187,7 @@ WALDUR_AUTH_SAML2 = {
 
 ## Adding trusted identity providers
 
-In order to configure Waldur to use SAML2 authentication you should specify identity provider metadata. 
+In order to configure Waldur to use SAML2 authentication you should specify identity provider metadata.
 
 - If metadata XML is stored locally, it is cached in the local SQL database. Usually metadata XML file is big, so it
   is necessary to use local cache in this case. But you should ensure that metadata XML file is refreshed via cron
@@ -210,6 +210,7 @@ and for production hub is [https://sarvik.taat.edu.ee/saml2/idp/metadata.php](ht
 Note, the certificate must correspond to the hub you want connect to.
 
 #### Using Janus
+
 [Janus](https://taeva.taat.edu.ee/module.php/janus/index.php) is a self-service for managing Service Provider records.
 
 - Create a new connection:
@@ -220,8 +221,8 @@ New connection ID must be equal to the base_url in saml.conf.py + /apu-auth/saml
 
 - Choose SAML 2.0 SP for connection type.
 - Click Create button
-- In connection tab select or create ARP. Fields that ARP include must be in the saml_attribute_mapping. 
-- Navigate to the Import metadata tab and paste same URL as in the first step. Click on the Get metadata. 
+- In connection tab select or create ARP. Fields that ARP include must be in the saml_attribute_mapping.
+- Navigate to the Import metadata tab and paste same URL as in the first step. Click on the Get metadata.
 - Navigate to the Validate tab and check whether all the tests pass. You can fix metadata in Metadata tab.
 
 ## HAKA configuration

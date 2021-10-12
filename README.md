@@ -3,11 +3,13 @@
 ## Local deployment
 
 1. Install mkdocs and plugins
+
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Start mkdocs server
+1. Start mkdocs server
+
 ```bash
 mkdocs serve
 ```

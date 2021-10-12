@@ -4,7 +4,7 @@ MOAB is a scheduling engine for HPC centers.
 
 !!! warning
     As adoption of MOAB has significantly reduced over the last years and there are no active users of Waldur with
-    MOAB requirements, we have deprecated and removed MOAB provider. 
+    MOAB requirements, we have deprecated and removed MOAB provider.
 
 ## Migration from MOAB to SLURM
 

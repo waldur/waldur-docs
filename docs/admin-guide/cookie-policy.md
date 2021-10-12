@@ -12,4 +12,4 @@ Waldur can save data about the user in a browser. Data type and policy depends o
 
 ## MasterMind
 
-- Saving authentication token (cookie) when a user logs into /admin management interface.  
+- Saving authentication token (cookie) when a user logs into /admin management interface.

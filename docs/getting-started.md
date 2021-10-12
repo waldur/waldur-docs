@@ -25,7 +25,7 @@ The most typical aspects for configuration are:
     For easier management of Waldur deployments and configuration we
     provide [Ansible playbooks](admin-guide/managing-with-ansible.md).
 
-## Profit!
+## Profit
 
 You are done! If you are happy and want to support the project, make sure you check the [support page](about/support.md).
 

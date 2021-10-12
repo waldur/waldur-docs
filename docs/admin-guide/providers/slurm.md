@@ -4,8 +4,8 @@ SLURM plugin enables sharing of access to a [SLURM](https://slurm.schedmd.com/) 
 SLURM is a scheduling system used typically for managing High-performance clusters. Waldur allows to
 share access by creating Slurm accounts and managing permission rights of users.
 
-
 ## Configure Waldur SLURM plugin
+
 By default, Waldur creates a hierarchical account structure in SLURM, where:
 
 - Organization gets an account under a default account, defined when configuring SLURM service offering;
@@ -13,7 +13,7 @@ By default, Waldur creates a hierarchical account structure in SLURM, where:
 - Each resource created in Waldur (aka SLURM Allocation) gets its own SLURM account with project account as a parent.
 
 These accounts get standard prefixes along with unique values and user provided input.
-It is possible to customize prefixes in Waldur configuration. Check WALDUR_SLURM variables in 
+It is possible to customize prefixes in Waldur configuration. Check WALDUR_SLURM variables in
 [Waldur configuration guide](../mastermind-configuration/configuration-guide.md).
 
 ## Add SLURM provider
@@ -43,6 +43,7 @@ The logic is as follows:
   from the organization owner of the external organization to be provisioned. Default limits of SLURM apply.
 
 ## Configure SLURM cluster
+
 Waldur might work out of the box with most of the reasonably modern deployments of SLURM, which have
 accounting enabled and limits enforced.
 
@@ -55,9 +56,10 @@ Please refer to SLURM documentation for details:
 We provide a snapshot of instructions for the convenience of the reader.
 
 ### Add SLURM cluster
+
 SLURM accounting plugin assumes that at least one cluster is configured. For example:
 
-```
+```bash
 sacctmgr add cluster linux
 ```
 
@@ -65,13 +67,13 @@ sacctmgr add cluster linux
 
 In order to enforce limits set on associations and QoS, please modify slurm.conf:
 
-```
+```bash
 AccountingStorageEnforce=limits
 ```
 
 Please note, that when AccountingStorageEnforce is changed, a restart of the slurmctld daemon is required (not just a ``scontrol reconfig``):
 
-```
+```bash
 systemctl restart slurmctld
 ```
 
@@ -79,14 +81,12 @@ systemctl restart slurmctld
 
 In order to enable ordering for the queue of jobs waiting to be scheduled, please modify slurm.conf:
 
-```
+```bash
 PriorityType=priority/multifactor
 ```
 
 When slurm.conf is changed, you should reload configuration:
 
-```
+```bash
 scontrol reconfig
 ```
-
-
