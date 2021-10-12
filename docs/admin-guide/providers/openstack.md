@@ -1,6 +1,7 @@
 # OpenStack (Tenant)
 
 ## Requirements for OpenStack (Tenant)
+
 In order to integrate an OpenStack-based cloud as a shared provider, the following data is required:
 
 - URL of Keystone's public endpoint (v3).
@@ -8,7 +9,8 @@ In order to integrate an OpenStack-based cloud as a shared provider, the followi
 - Admin credentials (username/password) as well as domain name (in case non-default domain is used).
 - External network UUID - the network will be by default connected to all created OpenStack Projects (Tenants).
 
-## Advanced settings 
+## Advanced settings
+
 It's possible to override some settings for OpenStack in MasterMind admin interface.
 To do that, please go to Waldur MasterMind Admin interface with a staff account.
 
@@ -23,8 +25,8 @@ Define specific customisation options. To add an option select append on item bl
 - create_ha_routers - create highly available Neutron routers when creating Tenants.
 
 ## Support for Organization specific OpenStack networks
+
 You can provide specific external network for all OpenStack Tenants created by Organiztion by providing external
 network UUIDs in Organization configuration in Waldur Mastermind admin portal.
 
 [![Organization specific OS networks](img/org-specific-os-network.png)](img/org-specific-os-network.png)
-

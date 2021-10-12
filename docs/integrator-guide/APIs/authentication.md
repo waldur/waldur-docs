@@ -2,16 +2,17 @@
 
 Outline:
 
-- [Authentication with username and password](#authentication-with-username-and-password)
-- [Authentication Token management](#authentication-token-management)
+- [Authentication](#authentication)
+  - [Authentication with username and password](#authentication-with-username-and-password)
+  - [Authentication Token management](#authentication-token-management)
 
 Waldur MasterMind exposes REST API for all of its operations. Below are examples of typical operations performed against APIs. To run the examples, we are using a [HTTPie](https://httpie.org/).
 
 Almost all of the operations with API require an authentication token. Below we list two methods on how to get it.
 
 ## Authentication with username and password
-If your account is allowed to use username/password and the method is enabled (e.g. in dev environment), you can get a new token by submitting a username/password as JSON to a specific endpoint.
 
+If your account is allowed to use username/password and the method is enabled (e.g. in dev environment), you can get a new token by submitting a username/password as JSON to a specific endpoint.
 
 ```bash
 $ http -v POST https://waldur.example.com/api-auth/password/ username=user password=password

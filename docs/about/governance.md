@@ -22,7 +22,7 @@ Waldur team tries to maintain a transparent process of development. In a team, e
 ## Workflow
 
 - Project manager communicates with customers, defines requirements for product owner.
-- Product owner analyses requirements from all projects and creates epics for technical features implementation. Epics 
+- Product owner analyses requirements from all projects and creates epics for technical features implementation. Epics
   are assigned to the architect.
 - Architect defines general development plan for features from product owner, adds description to the epic and creates
   separate tasks or stories for component owners.

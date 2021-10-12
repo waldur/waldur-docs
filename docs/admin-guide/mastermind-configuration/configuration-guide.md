@@ -598,7 +598,7 @@ Defines whether extensions should be automatically registered.
 
 Type: List[ExternalLink]
 
-Render external links in dropdown in header. Each item should be object with label and url fields. For example: {"label": "Helpdesk", "url": "https://example.com/"}
+Render external links in dropdown in header. Each item should be object with label and url fields. For example: {"label": "Helpdesk", "url": "`https://example.com/`"}
 
 ### FULL_PAGE_TITLE
 

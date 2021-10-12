@@ -2,13 +2,14 @@
 
 Outline:
 
-- [Introduction](#introduction)
-- [Waldur settings](#waldur-core-settings)
-- [Admin dashboard configuration](#admin-dashboard-configuration)
-- [Custom templates configuration](#custom-templates-configuration)
-- [Local time zone configuration](#local-time-zone-configuration)
+- [General Configuration](#general-configuration)
+  - [Introduction](#introduction)
+  - [Admin dashboard configuration](#admin-dashboard-configuration)
+  - [Custom templates configuration](#custom-templates-configuration)
+  - [Local time zone configuration](#local-time-zone-configuration)
 
 ## Introduction
+
 Waldur is a [Django](https://www.djangoproject.com)-based application, so configuration is done by modifying `settings.py` file.
 
 If you want to configure options related to Django, such as tune caches, database connection, configure custom logging, etc, please refer to [Django documentation](https://docs.djangoproject.com/en/2.2/).
@@ -16,11 +17,13 @@ If you want to configure options related to Django, such as tune caches, databas
 Please consult [configuration guide](configuration-guide.md) to learn more.
 
 ## Admin dashboard configuration
-An admin dashboard supports custom links on Quick access panel. For instance, a panel below was configured with one additional link to **https://waldur.com**:
+
+An admin dashboard supports custom links on Quick access panel. For instance, a panel below was configured with one additional link to **<https://waldur.com>**:
 
 ![admin example](img/admin-example.png)
 
 Configuration of custom links is stored under `FLUENT_DASHBOARD_QUICK_ACCESS_LINKS` settings key and for current example has following structure:
+
 ```python
 FLUENT_DASHBOARD_QUICK_ACCESS_LINKS = [
   {
@@ -32,6 +35,7 @@ FLUENT_DASHBOARD_QUICK_ACCESS_LINKS = [
   },
 ]
 ```
+
 Here is a short description of link parameters:
 
 | **Name** | **Type** | **Required** | **Description** |
@@ -52,7 +56,9 @@ FLUENT_DASHBOARD_QUICK_ACCESS_LINKS = [
 ```
 
 ## Custom templates configuration
+
 To overwrite default templates you should use [django-dbtemplates](https://github.com/jazzband/django-dbtemplates). It allows creation of templates through `/admin`.
 
 ## Local time zone configuration
+
 Set `TIME_ZONE` setting in `/etc/waldur/override.conf.py` to use local time zone. By default it is set to UTC. See the [list of time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for possible options.

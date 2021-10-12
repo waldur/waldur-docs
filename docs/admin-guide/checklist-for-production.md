@@ -14,7 +14,7 @@
 ## Backups
 
 - [ ] Make sure that configuration of Waldur is backed up and versioned.
-- [ ] Assure that DB backups are performed, i.e. backups are created when manually triggering. 
+- [ ] Assure that DB backups are performed, i.e. backups are created when manually triggering
 - [ ] Assure that DB backups files are on a persistent storage, preferably outside the storage used for Waldur's database.
 
 ## Air-gapped deployments
