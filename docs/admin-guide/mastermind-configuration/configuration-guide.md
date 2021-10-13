@@ -469,6 +469,7 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'EXTERNAL_LINKS': [],
  'FULL_PAGE_TITLE': 'Waldur | Cloud Service Management',
  'GOOGLE_ANALYTICS_ID': '',
+ 'GROUP_INVITATION_LIFETIME': datetime.timedelta(days=7),
  'HOMEPORT_SENTRY_DSN': None,
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
@@ -611,6 +612,12 @@ It is used as default page title if it's not specified explicitly.
 Type: str
 
 Identifier associated with your account and used by Google Analytics to collect the data.
+
+### GROUP_INVITATION_LIFETIME
+
+Type: timedelta
+
+Defines for how long group invitation remains valid.
 
 ### HOMEPORT_SENTRY_DSN
 

@@ -1859,6 +1859,8 @@ Additional Info:
     {% endif %}
     - Affected resource: {{issue.resource}}
 {% endif %}
+- Site name: {{ settings.WALDUR_CORE.SITE_NAME }}
+- Site URL: {{ settings.WALDUR_CORE.HOMEPORT_URL }}
 ```
 
 ### notification_comment_updated.txt (waldur_mastermind.support)
