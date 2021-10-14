@@ -1825,6 +1825,7 @@ Marketplace resource UUID: {{order_item.resource.uuid.hex}}
 ``` txt
 {% load waldur_marketplace %}[Order item|{{order_item_url}}].
 Provider: {{order_item.offering.customer.name}}
+Resource UUID: {{resource.uuid}}
 Plan details:
     {% plan_details order_item.plan %}
 Full name: {{order_item.order.created_by.full_name|default:"none"}}
