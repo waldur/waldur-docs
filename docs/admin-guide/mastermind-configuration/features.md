@@ -112,6 +112,10 @@ Enable audit log in project workspace.
 
 Allow to grant user a project member role.
 
+## project.oecd_fos_2007_code
+
+Enable OECD code.
+
 ## project.team
 
 Enable team management in project workspace.
