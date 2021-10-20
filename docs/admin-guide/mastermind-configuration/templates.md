@@ -112,7 +112,7 @@ Verify new email address.
     Hello!
 </p>
 <p>
-    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role|lower }} role.<br>
+    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
     Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
 </p>
 </body>
@@ -130,7 +130,7 @@ Full name: {{ invitation.full_name }}
 
 Target: {{ name }} {{ type }}
 
-Role: {{ role|lower }}
+Role: {{ role }}
 ```
 
 ### invitation_created_subject.txt (waldur_core.users)
@@ -170,7 +170,7 @@ Invitation has been rejected
 </p>
 
 <p>
-  Role: {{ role|lower }}
+  Role: {{ role }}
 </p>
 </body>
 </html>
@@ -181,7 +181,7 @@ Invitation has been rejected
 ``` txt
 Hello!
 
-{{ sender }} has invited you to join {{ name }} {{ type }} in {{ role|lower }} role.
+{{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
 Please visit the link below to sign up and accept your invitation:
 {{ link }}
 ```
@@ -200,7 +200,7 @@ Please visit the link below to sign up and accept your invitation:
 </p>
 <p>
   {{ sender }} has created invitation request for the following user
-  to join {{ name }} {{ type }} in {{ role|lower }} role.
+  to join {{ name }} {{ type }} in {{ role }} role.
 </p>
 
 {% if invitation.civil_number %}
@@ -261,7 +261,7 @@ Please visit the link below to sign up and accept your invitation:
 ``` txt
 Hello!
 
-{{ sender }} has invited you to join {{ name }} {{ type }} in {{ role|lower }} role.
+{{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
 Please visit the link below to sign up and accept your invitation:
 {{ link }}
 
@@ -291,7 +291,7 @@ Account has been created
     Hello!
 </p>
 <p>
-    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role|lower }} role.<br>
+    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
     Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
 </p>
 <p>
@@ -319,7 +319,7 @@ Invitation request
 Hello!
 
 {{ sender }} has created invitation request for the following user
-to join {{ name }} {{ type }} in {{ role|lower }} role.
+to join {{ name }} {{ type }} in {{ role }} role.
 
 {% if invitation.civil_number %}
 Civil number: {{ invitation.civil_number }}
