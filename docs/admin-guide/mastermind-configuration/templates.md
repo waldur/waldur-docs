@@ -46,10 +46,28 @@ Owner of
 To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the {{ link }}.
 ```
 
+### structure_role_granted_message.html (waldur_core.structure)
+
+``` html
+<p>Structure role {{ permission.role }}  for {{ structure }} has been granted.</p>
+```
+
 ### change_email_request_message.html (waldur_core.structure)
 
 ``` html
 <p>To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the <a href="{{ link }}">link</a>.</p>
+```
+
+### structure_role_granted_subject.txt (waldur_core.structure)
+
+``` txt
+Structure role granted.
+```
+
+### structure_role_granted_message.txt (waldur_core.structure)
+
+``` txt
+Structure role {{ permission.role }}  for {{ structure }} has been granted.
 ```
 
 ### change_email_request_subject.txt (waldur_core.structure)
