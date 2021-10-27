@@ -503,9 +503,8 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'SHOW_ALL_USERS': False,
  'SIDEBAR_LOGO': None,
  'SITE_ADDRESS': '',
- 'SITE_DESCRIPTION': 'User-friendly platform for managing projects, teams and '
-                     'resources in a self-service manner. Fully digital '
-                     'delivery of service offerings to the customers.',
+ 'SITE_DESCRIPTION': 'Your single pane of control for managing projects, teams '
+                     'and resources in a self-service manner.',
  'SITE_EMAIL': '',
  'SITE_LOGO': None,
  'SITE_NAME': 'Waldur',
