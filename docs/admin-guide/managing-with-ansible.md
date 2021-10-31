@@ -10,6 +10,7 @@ Ansible version 2.9 is supported; code in this repository may work with other An
 ## Quick setup
 
 1. Make sure that you have:
+
     - Folder containing managed-ansible Ansible installer (this one).
     - Folder containing deployment-specific settings.
 1. Copy `setup_deployment.sh.example` to `setup_deployment.sh`, adjust:
