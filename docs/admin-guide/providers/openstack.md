@@ -2,6 +2,15 @@
 
 ## Requirements for OpenStack (Tenant)
 
+OpenStack versions tested:
+
+- Queens
+- Rocky
+- Stein
+- Train
+- Ussuri
+- Victoria
+
 In order to integrate an OpenStack-based cloud as a shared provider, the following data is required:
 
 - URL of Keystone's public endpoint (v3).
