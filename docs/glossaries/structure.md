@@ -1,88 +1,83 @@
-# Customers, projects, services, resources and users
+# Users, Organizations and Projects
 
 Waldur is a service for sharing resources across projects. It is based
-on the delegation model where a customer can allocate certain users to
+on the delegation model where an organization can allocate certain users to
 perform technical or non-technical actions in the projects.
+
+The most common types of Waldur installations include:
+
+- **Cloud** - used in commercial or government sectors for providing access to cloud resources like virtual machines, storage and Kubernetes clusters.
+- **Academic** - used in research and education. Waldur is deployed for a single university, high school or research infrastructure.
+- **Academic Shared** - the same purpose as Academic, but is shared among several universities or infrastructures.
 
 ## Glossary
 
 ### User
 
-An account in Waldur belonging to a person or a robot. A user can
-belong to project or customer that can grant him different roles.
+An account in Waldur belonging to a person or a robot. A user can have roles in Organizations and Projects.
+Some users - mostly affiliated with Waldur operator - can have global roles, e.g. support or staff.
 
-### Customer
+### Organization
 
-A standalone entity. Represents a company or a department.
-It can belong to a domain, which is mentioned in `domain` field of `Customer` model.
+=== "Cloud"
 
-### Customer owner
+    A company or a department. Organization can be a customer, a service provider or both.
 
-A role of the user that allows her to represent a corresponding
-customer. In this role, a user can create new projects, register
-resources, as well as allocate them to the projects.
+=== "Academic"
 
-### Customer support
+    A faculty, department or an institute. Organization can be also a service provider, for example, an HPC center.
 
-A person who has read-only access to all users, projects and resources in a supported organization.
+=== "Academic Shared"
 
-### Customer service manager
-
-A person who can manage organization's offerings and approve or reject orders for resources.
-
-### Division
-
-A set of customers grouped by some type.
-Multiple divisions can organize a hierarchy.
-
-### Provider
-
-An entity that represents account in an external service provider.
-
-  Private providers - providers that are available and manageable within a specific organization.
-  Shared providers - global providers that are available for all organizations.
-
-### Resource
-
-An entity within a project and a provider. Represents cloud resource.
-Examples: instance in AWS, droplet in DigitalOcean.
-
-### Service settings
-
-Represents an account of particular cloud service, for example, AWS or
-OpenStack. Account credentials must provide full
-access to service API. It is possible to mark service settings as
-`shared` and they will be automatically connected to all customers.
-
-### Service property
-
-Represents any properties of cloud service usually used for a
-resource provisioning. For example: image and flavor in OpenStack.
-
-### General service property
-
-Represents any property of a service that is not connected to
-service settings.
+    In Academic Shared model, all organizations are service providers allocating resources to their users (research groups or classes) through their Projects.
 
 ### Project
 
-A project is an entity within a customer. Project
-aggregates and isolates resources. A customer owner can allow usage
-of certain clouds within a project - defining what resource pools
-project administrators can use.
+A project within an Organization. Used for organizing and isolating Resources and Users.
 
-### Project administrator
+### Service Provider
 
-A project role responsible for the day-to-day technical operations
-within a project. Limited access to project management and billing.
+Organization that provides services to other organizations.
 
-### Project manager
+### User types
 
-An optional non-technical role that a customer can use to delegate
-management of certain projects to selected users. Project manager
-can create new projects and manage administrators within a scope of
-a certain project.
+| | User | Support agent | Staff |
+| ---- | :----: | :----: | :----: |
+| Web and API access | :material-check: | :material-check: | :material-check: |
+| Can create support requests | :material-check:  | :material-check:  | :material-check:  |
+| Can provide user support | | :material-check: | :material-check: |
+| Can see all projects and resources | | :material-check: | :material-check: |
+| Can manage organizations | | | :material-check: |
+| Can access admin area | | | :material-check: |
 
-### Project member
+### User roles in Organization
 
-A person who has the right to consume the resources allocated to a project.
+=== "Cloud"
+
+    | | Owner | Service Manager | Project Manager | System Administrator |
+    | --- | :----: | :----: | :----: | :----: |
+    | Manage Team | :material-check: | | :material-check: (pre-approved users) | |
+    | Manage Projects | :material-check: | | | |
+    | Request and Manage Resources | :material-check: | | :material-check: | :material-check: |
+    | Approve/Reject Resource Orders | :material-check: | | :material-check: (configurable) | :material-check: |
+    | Manage Offerings (Service provider-specific) | :material-check: | :material-check: | | |
+
+=== "Academic"
+
+    | | PI | Service Manager | co-PI | Member |
+    | --- | :----: | :----: | :----: | :----: |
+    | Manage Team | :material-check:  | | :material-check: (pre-approved users) |
+    | Manage Projects | :material-check: | | |
+    | Request and Manage Resources | :material-check: | | :material-check: | :material-check: |
+    | Approve/Reject Resource Orders | :material-check: | | :material-check: (configurable) | :material-check: |
+    | Manage Offerings (Service provider-specific) | :material-check: | :material-check: | |
+
+=== "Academic Shared"
+
+    | | Resource allocator | Service Manager | PI | co-PI | Member |
+    | --- | :----: | :----: | :----: | :----: | :----: |
+    | Manage Team | :material-check:  | | :material-check: (pre-approved users) | | |
+    | Manage Projects | :material-check: | | | | |
+    | Request and Manage Resources | :material-check: | | :material-check: | :material-check: | |
+    | Approve/Reject Resource Orders | :material-check: | | :material-check: (configurable) | :material-check: | |
+    | Manage Offerings (Service provider-specific) | :material-check: | :material-check: | | | |

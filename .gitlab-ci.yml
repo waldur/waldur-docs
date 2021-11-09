@@ -4,12 +4,42 @@ include:
   - project: "waldur/waldur-pipelines"
     file: "/templates/test/check-merge-compatibility.yml"
   - project: "waldur/waldur-pipelines"
-    file: "/templates/test/lint-md-files.yml"
-  - project: "waldur/waldur-pipelines"
     file: "/templates/release/sync-to-github.yml"
 
 variables:
   GITHUB_WALDUR_REPO_URL: "git@github.com:waldur/waldur-docs.git"
+
+Lint MD links:
+  image:
+    name: registry.hpc.ut.ee/mirror/norberttech/md-link-linter:0.0.11
+    entrypoint: [""]
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "*.md"
+        - docs/**/*
+  script:
+    - /composer/vendor/bin/mdlinklint . -vv
+  before_script: []
+
+Lint MD files:
+  image: registry.gitlab.com/pipeline-components/markdownlint:latest
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "*.md"
+        - docs/**/*
+  script:
+    - echo "all" >> markdownlint-style.rb
+    - echo "exclude_rule 'MD013'" >> markdownlint-style.rb
+    - echo "exclude_rule 'MD033'" >> markdownlint-style.rb
+    - echo "exclude_rule 'MD041'" >> markdownlint-style.rb
+    - echo "exclude_rule 'MD046'" >> markdownlint-style.rb
+    - echo "rule 'MD024', :allow_different_nesting => true" >> markdownlint-style.rb
+    - mdl --style markdownlint-style.rb .
+  before_script: []
 
 Test mkdocs:
   image: registry.hpc.ut.ee/mirror/library/python:3.8-buster
