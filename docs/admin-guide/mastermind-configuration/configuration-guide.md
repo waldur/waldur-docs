@@ -238,7 +238,7 @@ Default value:
 ```python
 WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization',
  'EDUTEAMS_CLIENT_ID': '',
- 'EDUTEAMS_LABEL': 'Eduteams',
+ 'EDUTEAMS_LABEL': 'eduTEAMS',
  'EDUTEAMS_SECRET': '',
  'EDUTEAMS_TOKEN_URL': 'https://proxy.acc.eduteams.org/OIDC/token',
  'EDUTEAMS_USERINFO_URL': 'https://proxy.acc.eduteams.org/OIDC/userinfo',
@@ -418,10 +418,10 @@ Application secret key.
 Default value:
 
 ```python
-WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
- 'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
+WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'AUTHENTICATION_METHODS': ['LOCAL_SIGNIN'],
  'BACKEND_FIELDS_EDITABLE': True,
+ 'BRAND_COLOR': '#3a8500',
  'COUNTRIES': ['AL',
                'AT',
                'BA',
@@ -470,6 +470,9 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'FULL_PAGE_TITLE': 'Waldur | Cloud Service Management',
  'GOOGLE_ANALYTICS_ID': '',
  'GROUP_INVITATION_LIFETIME': datetime.timedelta(days=7),
+ 'HERO_IMAGE': None,
+ 'HERO_LINK_LABEL': None,
+ 'HERO_LINK_URL': None,
  'HOMEPORT_SENTRY_DSN': None,
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
@@ -522,12 +525,6 @@ WALDUR_CORE = {'ALLOW_SIGNUP_WITHOUT_INVITATION': True,
  'VALIDATE_INVITATION_EMAIL': False}
 ```
 
-### ALLOW_SIGNUP_WITHOUT_INVITATION
-
-Type: bool
-
-Allow to signup without an invitation.
-
 ### ATTACHMENT_LINK_MAX_AGE
 
 Type: timedelta
@@ -545,6 +542,12 @@ List of enabled authentication methods.
 Type: bool
 
 Allows to control /admin writable fields. If this flag is disabled it is impossible to edit any field that corresponds to backend value via /admin. Such restriction allows to save information from corruption.
+
+### BRAND_COLOR
+
+Type: Optional[str]
+
+Hex color definition is used in HomePort landing page for login button.
 
 ### COUNTRIES
 
@@ -617,6 +620,24 @@ Identifier associated with your account and used by Google Analytics to collect 
 Type: timedelta
 
 Defines for how long group invitation remains valid.
+
+### HERO_IMAGE
+
+Type: Optional[str]
+
+Relative path to image rendered at hero section of HomePort landing page.
+
+### HERO_LINK_LABEL
+
+Type: Optional[str]
+
+Label for link in hero section of HomePort landing page. It can be lead to support site or blog post.
+
+### HERO_LINK_URL
+
+Type: Optional[str]
+
+Link URL in hero section of HomePort landing page.
 
 ### HOMEPORT_SENTRY_DSN
 

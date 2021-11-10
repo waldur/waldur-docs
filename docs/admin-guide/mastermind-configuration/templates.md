@@ -374,51 +374,6 @@ Please visit the link below to approve invitation: {{ approve_link }}
 Alternatively, you may reject invitation: {{ reject_link }}
 ```
 
-## waldur_auth_social
-
-### activation_email_message.html (waldur_auth_social)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Account activation</title>
-</head>
-<body>
-<p>
-    You're receiving this email because you created an account on Waldur.
-</p>
-<p>
-    Please go to the following page to activate account: <a href="{{ activation_url }}">{{ activation_url }}</a>
-</p>
-<p>
-    Thanks for using our site!
-</p>
-<p>
-    The Waldur team.
-</p>
-</body>
-</html>
-```
-
-### activation_email_message.txt (waldur_auth_social)
-
-``` txt
-You're receiving this email because you created an account on Waldur.
-
-Please go to the following page to activate account: {{ activation_url }}
-
-Thanks for using our site!
-
-The Waldur team.
-```
-
-### activation_email_subject.txt (waldur_auth_social)
-
-``` txt
-Account activation
-```
-
 ## waldur_mastermind.booking
 
 ### notification_message.txt (waldur_mastermind.booking)
