@@ -488,7 +488,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'INVITATION_TAX_NUMBER_LABEL': '',
  'LOGGING_REPORT_DIRECTORY': '/var/log/waldur',
  'LOGGING_REPORT_INTERVAL': datetime.timedelta(days=7),
- 'LOGIN_LOGO': None,
  'NATIVE_NAME_ENABLED': False,
  'NOTIFICATIONS_PROFILE_CHANGES': {'ENABLED': True,
                                    'FIELDS': ('email',
@@ -722,12 +721,6 @@ Directory where log files are located.
 Type: timedelta
 
 Files older that specified interval are filtered out.
-
-### LOGIN_LOGO
-
-Type: Optional[str]
-
-Relative path to image rendered at the top of login page in HomePort.
 
 ### NATIVE_NAME_ENABLED
 
