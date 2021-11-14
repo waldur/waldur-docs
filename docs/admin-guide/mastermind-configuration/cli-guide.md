@@ -1,5 +1,9 @@
 # CLI guide
 
+## clean_settings_cache
+
+Clean API configuration settings cache.
+
 ## cleanup_stale_event_types
 
 Cleanup stale event types in all hooks.
