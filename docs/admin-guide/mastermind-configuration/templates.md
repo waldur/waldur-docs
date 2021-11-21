@@ -799,6 +799,18 @@ Resource {{ resource_name }} deletion has failed.
 </html>
 ```
 
+### notification_about_project_ending_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Dear {{ user.full_name }},
+
+Your project {{ project.name }} is ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}. End of the project will lead to termination of all resources in the project.
+If you are aware of that, then no actions are needed from your side.
+If you need to update project end date, please update it in project details {{ project_url }}.
+
+Thank you!
+```
+
 ### marketplace_resource_update_succeeded_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -830,6 +842,29 @@ Resource {{ resource_name }} creation has failed.
 Hello!
 
 Resource {{ resource_name }} deletion has failed.
+```
+
+### notification_about_project_ending_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Project {{ project.name }} will be deleted.</title>
+</head>
+<body>
+<p>Dear {{ user.full_name }},</p>
+
+<p>Your project {{ project.name }} is ending
+    {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
+    End of the project will lead to termination of all resources in the project. <br />
+    If you are aware of that, then no actions are needed from your side. <br />
+    If you need to update project end date, please update it in project details {{ project_url }}.
+</p>
+
+<p>Thank you!</p>
+</body>
+</html>
 ```
 
 ### notification_about_stale_resources_message.txt (waldur_mastermind.marketplace)
@@ -916,6 +951,12 @@ Resource {{ resource_name }} limits have been updated.
 </p>
 </body>
 </html>
+```
+
+### notification_about_project_ending_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Project {{ project.name }} will be deleted.
 ```
 
 ### marketplace_resource_create_succeeded_subject.txt (waldur_mastermind.marketplace)
