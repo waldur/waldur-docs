@@ -249,6 +249,7 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'KEYCLOAK_SECRET': '',
  'KEYCLOAK_TOKEN_URL': '',
  'KEYCLOAK_USERINFO_URL': '',
+ 'KEYCLOAK_VERIFY_SSL': True,
  'REMOTE_EDUTEAMS_CLIENT_ID': '',
  'REMOTE_EDUTEAMS_ENABLED': False,
  'REMOTE_EDUTEAMS_REFRESH_TOKEN': '',
@@ -340,6 +341,12 @@ The token endpoint is used to obtain tokens.
 Type: str
 
 The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token.
+
+### KEYCLOAK_VERIFY_SSL
+
+Type: bool
+
+Validate TLS certificate of Keycloak REST API
 
 ### REMOTE_EDUTEAMS_CLIENT_ID
 
