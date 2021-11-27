@@ -14,7 +14,7 @@ For Helm-based K8s deployments, please run:
 
 ### Creating a new user with token only authentication
 
-``python
+```python
 from rest_framework.authtoken.models import Token
 from waldur_core.core.models import User
 
@@ -30,4 +30,4 @@ user.save()
 
 token = Token.objects.get(user=user)
 print(token)
-``
+```
