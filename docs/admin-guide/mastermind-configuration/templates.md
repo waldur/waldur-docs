@@ -707,10 +707,10 @@ this is a reminder that {{ organization_name }}'s fixed price contract {{ contra
 Hello!
 
 Please do not forget to add usage for the resources you provide:
-{% for resource in resources %}
-    {{ resource.name }}{% if not forloop.last %}, {% endif %}
-{% endfor %}.
-
+{% regroup resources by offering as offering_list %}{% for offering in offering_list %}
+{{forloop.counter}}. {{ offering.grouper.name }}:{% for resource in offering.list %}
+    - {{ resource.name }}
+{% endfor %}{% endfor %}
 You can submit resource usage via API or do it manually at {{ public_resources_url }}.
 ```
 
@@ -1372,15 +1372,22 @@ The resource you have - {{ resource.name }} has not been used for the past 3 mon
 <p>
     Hello!
 </p>
-<p>
-    Please do not forget to add usage for the resources you provide: <br />
-    {% for resource in resources %}
-        {{ resource.name }}
-        {% if not forloop.last %}
-            <br />
-        {% endif %}
-    {% endfor %}
-</p>
+<p>Please do not forget to add usage for the resources you provide:</p>
+{% regroup resources by offering as offering_list %}
+
+<ol>
+{% for offering in offering_list %}
+    <li>
+        {{ offering.grouper.name }}:
+        <ul>
+            {% for resource in offering.list %}
+            <li>{{ resource.name }}</li>
+            {% endfor %}
+        </ul>
+    </li>
+{% endfor %}
+</ol>
+
 <p>
     You can submit resource usage via API or do it <a href='{{ public_resources_url }}'>manually</a>.
 </p>
