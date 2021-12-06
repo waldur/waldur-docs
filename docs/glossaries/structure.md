@@ -69,7 +69,7 @@ Organization that provides services to other organizations.
     | Manage Team | :material-check:  | | :material-check: (pre-approved users) |
     | Manage Projects | :material-check: | | |
     | Request and Manage Resources | :material-check: | | :material-check: | :material-check: |
-    | Approve/Reject Resource Orders | :material-check: | | :material-check: (configurable) | :material-check: |
+    | Approve/Reject Resource Orders | :material-check: | | :material-check: (configurable) | :material-check: (configurable) |
     | Manage Offerings (Service provider-specific) | :material-check: | :material-check: | |
 
 === "Academic Shared"
