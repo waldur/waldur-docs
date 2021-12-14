@@ -31,3 +31,11 @@ user.save()
 token = Token.objects.get(user=user)
 print(token)
 ```
+
+### Triggering pulling of usage data from remote Waldur
+
+```python
+from waldur_mastermind.marketplace_remote.tasks import UsageListPullTask
+
+UsageListPullTask().run()
+```
