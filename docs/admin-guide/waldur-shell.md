@@ -49,3 +49,22 @@ from waldur_hpc.handlers import handle_new_user
 for user in core_models.User.objects.filter(is_active=True, registration_method__iexact='saml2'):
     handle_new_user(None, user, created=True)
 ```
+
+### Cleanup leftover ports from OpenStack Project
+
+Lookup UUID of an OpenStack tenant (aka backend_id in Waldur).
+
+```python
+from waldur_openstack.openstack.models import Tenant
+
+t_uuid = 'UUID_OF_TENANT'
+t = Tenant.objects.get(backend_id=t_uuid)
+
+nc = t.get_backend().neutron_client
+all_ports = nc.list_ports()['ports']
+tenant_ports = [port for port in all_ports if port['tenant_id'] == t_uuid and port.get('status') == 'DOWN']
+
+for t in tenant_ports:
+    print(t['id'], t['fixed_ips'][0]['ip_address'])
+    nc.delete_port(t['id'])
+```
