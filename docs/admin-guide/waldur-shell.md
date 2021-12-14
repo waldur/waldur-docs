@@ -39,3 +39,13 @@ from waldur_mastermind.marketplace_remote.tasks import UsageListPullTask
 
 UsageListPullTask().run()
 ```
+
+### Apply changes in Waldur HPC plugin to existing users
+
+```python
+from waldur_core.core import models as core_models
+from waldur_hpc.handlers import handle_new_user
+
+for user in core_models.User.objects.filter(is_active=True, registration_method__iexact='saml2'):
+    handle_new_user(None, user, created=True)
+```
