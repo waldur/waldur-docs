@@ -51,6 +51,9 @@
 
 - project_creation_succeeded
 - project_deletion_succeeded
+- project_update_request_approved
+- project_update_request_created
+- project_update_request_rejected
 - project_update_succeeded
 - role_granted
 - role_revoked

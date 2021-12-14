@@ -374,51 +374,6 @@ Please visit the link below to approve invitation: {{ approve_link }}
 Alternatively, you may reject invitation: {{ reject_link }}
 ```
 
-## waldur_auth_social
-
-### activation_email_message.html (waldur_auth_social)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Account activation</title>
-</head>
-<body>
-<p>
-    You're receiving this email because you created an account on Waldur.
-</p>
-<p>
-    Please go to the following page to activate account: <a href="{{ activation_url }}">{{ activation_url }}</a>
-</p>
-<p>
-    Thanks for using our site!
-</p>
-<p>
-    The Waldur team.
-</p>
-</body>
-</html>
-```
-
-### activation_email_message.txt (waldur_auth_social)
-
-``` txt
-You're receiving this email because you created an account on Waldur.
-
-Please go to the following page to activate account: {{ activation_url }}
-
-Thanks for using our site!
-
-The Waldur team.
-```
-
-### activation_email_subject.txt (waldur_auth_social)
-
-``` txt
-Account activation
-```
-
 ## waldur_mastermind.booking
 
 ### notification_message.txt (waldur_mastermind.booking)
@@ -752,10 +707,10 @@ this is a reminder that {{ organization_name }}'s fixed price contract {{ contra
 Hello!
 
 Please do not forget to add usage for the resources you provide:
-{% for resource in resources %}
-    {{ resource.name }}{% if not forloop.last %}, {% endif %}
-{% endfor %}.
-
+{% regroup resources by offering as offering_list %}{% for offering in offering_list %}
+{{forloop.counter}}. {{ offering.grouper.name }}:{% for resource in offering.list %}
+    - {{ resource.name }}
+{% endfor %}{% endfor %}
 You can submit resource usage via API or do it manually at {{ public_resources_url }}.
 ```
 
@@ -844,6 +799,18 @@ Resource {{ resource_name }} deletion has failed.
 </html>
 ```
 
+### notification_about_project_ending_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Dear {{ user.full_name }},
+
+Your project {{ project.name }} is ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}. End of the project will lead to termination of all resources in the project.
+If you are aware of that, then no actions are needed from your side.
+If you need to update project end date, please update it in project details {{ project_url }}.
+
+Thank you!
+```
+
 ### marketplace_resource_update_succeeded_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -875,6 +842,29 @@ Resource {{ resource_name }} creation has failed.
 Hello!
 
 Resource {{ resource_name }} deletion has failed.
+```
+
+### notification_about_project_ending_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Project {{ project.name }} will be deleted.</title>
+</head>
+<body>
+<p>Dear {{ user.full_name }},</p>
+
+<p>Your project {{ project.name }} is ending
+    {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
+    End of the project will lead to termination of all resources in the project. <br />
+    If you are aware of that, then no actions are needed from your side. <br />
+    If you need to update project end date, please update it in project details {{ project_url }}.
+</p>
+
+<p>Thank you!</p>
+</body>
+</html>
 ```
 
 ### notification_about_stale_resources_message.txt (waldur_mastermind.marketplace)
@@ -961,6 +951,12 @@ Resource {{ resource_name }} limits have been updated.
 </p>
 </body>
 </html>
+```
+
+### notification_about_project_ending_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Project {{ project.name }} will be deleted.
 ```
 
 ### marketplace_resource_create_succeeded_subject.txt (waldur_mastermind.marketplace)
@@ -1376,15 +1372,22 @@ The resource you have - {{ resource.name }} has not been used for the past 3 mon
 <p>
     Hello!
 </p>
-<p>
-    Please do not forget to add usage for the resources you provide: <br />
-    {% for resource in resources %}
-        {{ resource.name }}
-        {% if not forloop.last %}
-            <br />
-        {% endif %}
-    {% endfor %}
-</p>
+<p>Please do not forget to add usage for the resources you provide:</p>
+{% regroup resources by offering as offering_list %}
+
+<ol>
+{% for offering in offering_list %}
+    <li>
+        {{ offering.grouper.name }}:
+        <ul>
+            {% for resource in offering.list %}
+            <li>{{ resource.name }}</li>
+            {% endfor %}
+        </ul>
+    </li>
+{% endfor %}
+</ol>
+
 <p>
     You can submit resource usage via API or do it <a href='{{ public_resources_url }}'>manually</a>.
 </p>
