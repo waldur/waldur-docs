@@ -68,3 +68,13 @@ for t in tenant_ports:
     print(t['id'], t['fixed_ips'][0]['ip_address'])
     nc.delete_port(t['id'])
 ```
+
+### Add affiliations to user
+
+```python
+from waldur_core.core import models as core_models
+
+user = core_models.User.objects.get(email='some.email@abc.example.com')
+user.affiliations = ['some.affiliation@domain.example.com']
+user.save()
+```
