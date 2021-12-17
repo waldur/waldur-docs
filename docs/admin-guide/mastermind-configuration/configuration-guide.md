@@ -1102,6 +1102,7 @@ Default value:
 WALDUR_MARKETPLACE = {'ADMIN_CAN_APPROVE_ORDER': False,
  'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
  'DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE': True,
+ 'ENABLE_RESOURCE_END_DATE': True,
  'ENABLE_STALE_RESOURCE_NOTIFICATIONS': False,
  'MANAGER_CAN_APPROVE_ORDER': False,
  'NOTIFY_ABOUT_RESOURCE_CHANGE': True,
@@ -1128,6 +1129,12 @@ Allow anonymous users to see shared offerings in active, paused and archived sta
 Type: bool
 
 Disable only resource update events.
+
+### ENABLE_RESOURCE_END_DATE
+
+Type: bool
+
+Allow to view and update resource end date.
 
 ### ENABLE_STALE_RESOURCE_NOTIFICATIONS
 
