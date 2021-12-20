@@ -59,7 +59,7 @@ vi src/waldur_core/server/settings.py
 
 ``` bash
 createdb waldur
-psql waldur -c "CREATE USER waldur WITH PASSWORD 'waldur'"
+createuser waldur
 poetry run waldur migrate --noinput
 ```
 
