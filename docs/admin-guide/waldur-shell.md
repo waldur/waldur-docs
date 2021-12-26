@@ -78,3 +78,22 @@ user = core_models.User.objects.get(email='some.email@abc.example.com')
 user.affiliations = ['some.affiliation@domain.example.com']
 user.save()
 ```
+
+### Create a service user for API access
+
+To create a service user - without valid access credntials and non-expiring Token, please run the
+following script.
+
+```python
+from waldur_core.core.models import User
+
+u = User.objects.create(username='waldur_demo_user', first_name='Demo',
+                        last_name='Waldur user', email='demo@example.com')
+
+# make sure that token doesn't time out
+u.token_lifetime = None
+u.save()
+
+# print user authentication token
+print(u.auth_token.key)
+```
