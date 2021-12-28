@@ -97,3 +97,20 @@ u.save()
 # print user authentication token
 print(u.auth_token.key)
 ```
+
+### Synchronise SLURM associations
+
+**Note**: `<allocation-uuid>` field can be found in an allocations's details page.
+
+`Select Organization -> Select project -> Select allocation -> Find 'UUID' field in the page.`
+
+```python
+from waldur_slurm import models as slurm_models
+
+allocation = slurm_models.Allocation.objects.get(uuid='<allocation-uuid>')
+backend = allocation.get_backend()
+
+backend.add_new_users(allocation) # Creates associations on SLURM level
+
+backend.pull_allocation(allocation) # Sync associations on Waldur level
+```
