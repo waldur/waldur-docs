@@ -114,3 +114,15 @@ backend.add_new_users(allocation) # Creates associations on SLURM level
 
 backend.pull_allocation(allocation) # Sync associations on Waldur level
 ```
+
+### Lookup user details from Eduteams
+
+**Note**: `USER_CUID` is a unique ID of user in Eduteams.
+
+```python
+from waldur_auth_social.utils import get_remote_eduteams_user_info
+
+USER_CUID='semi_secret@eduteams.org'
+
+get_remote_eduteams_user_info(USER_CUID)
+```
