@@ -8,7 +8,6 @@ Default value:
 WALDUR_AUTH_SAML2 = {'ALLOW_TO_SELECT_IDENTITY_PROVIDER': True,
  'ATTRIBUTE_MAP_DIR': '',
  'AUTHN_REQUESTS_SIGNED': 'true',
- 'BASE_URL': '',
  'CATEGORIES': ['http://www.geant.net/uri/dataprotection-code-of-conduct/v1'],
  'CERT_FILE': '',
  'DEBUG': False,
@@ -56,12 +55,6 @@ Directory with attribute mapping
 Type: str
 
 Indicates if the authentication requests sent should be signed by default
-
-### BASE_URL
-
-Type: str
-
-URL required for assertion consumer, single logout services and entity ID
 
 ### CATEGORIES
 
@@ -495,6 +488,7 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'INVITATION_TAX_NUMBER_LABEL': '',
  'LOGGING_REPORT_DIRECTORY': '/var/log/waldur',
  'LOGGING_REPORT_INTERVAL': datetime.timedelta(days=7),
+ 'MASTERMIND_URL': '',
  'NATIVE_NAME_ENABLED': False,
  'NOTIFICATIONS_PROFILE_CHANGES': {'ENABLED': True,
                                    'FIELDS': ('email',
@@ -728,6 +722,12 @@ Directory where log files are located.
 Type: timedelta
 
 Files older that specified interval are filtered out.
+
+### MASTERMIND_URL
+
+Type: str
+
+It is used for rendering callback URL in MasterMind.
 
 ### NATIVE_NAME_ENABLED
 
