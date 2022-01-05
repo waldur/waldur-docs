@@ -51,6 +51,7 @@
 
 - project_creation_succeeded
 - project_deletion_succeeded
+- project_deletion_triggered
 - project_update_request_approved
 - project_update_request_created
 - project_update_request_rejected
@@ -61,6 +62,28 @@
 
 ## Resources
 
+- marketplace_component_usage_created
+- marketplace_component_usage_updated
+- marketplace_order_approved
+- marketplace_order_completed
+- marketplace_order_created
+- marketplace_order_failed
+- marketplace_order_rejected
+- marketplace_order_terminated
+- marketplace_resource_create_canceled
+- marketplace_resource_create_failed
+- marketplace_resource_create_requested
+- marketplace_resource_create_succeeded
+- marketplace_resource_renamed
+- marketplace_resource_terminate_failed
+- marketplace_resource_terminate_requested
+- marketplace_resource_terminate_succeeded
+- marketplace_resource_update_end_date_succeeded
+- marketplace_resource_update_failed
+- marketplace_resource_update_limits_failed
+- marketplace_resource_update_limits_succeeded
+- marketplace_resource_update_requested
+- marketplace_resource_update_succeeded
 - openstack_floating_ip_attached
 - openstack_floating_ip_connected
 - openstack_floating_ip_detached
