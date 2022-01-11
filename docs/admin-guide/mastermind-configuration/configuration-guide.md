@@ -1254,6 +1254,12 @@ Type: str, default value: webmaster@localhost
 
 Default email address to use for automated correspondence from Waldur.
 
+### DEFAULT_REPLY_TO_EMAIL
+
+Type: str, default value: support@example.com
+
+Default email address to use for email replies.
+
 ### IMPORT_EXPORT_USE_TRANSACTIONS
 
 Type: bool, default value: True
