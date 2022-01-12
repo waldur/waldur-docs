@@ -1256,7 +1256,7 @@ Default email address to use for automated correspondence from Waldur.
 
 ### DEFAULT_REPLY_TO_EMAIL
 
-Type: str, default value: support@example.com
+Type: str
 
 Default email address to use for email replies.
 
