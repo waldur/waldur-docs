@@ -1178,6 +1178,69 @@ Type: tuple
 
 Size of the thumbnail to generate when screenshot is uploaded for an offering.
 
+## WALDUR_MARKETPLACE_SCRIPT plugin
+
+Default value:
+
+```python
+WALDUR_MARKETPLACE_SCRIPT = {'DOCKER_CLIENT': {'base_url': 'unix://var/run/docker.sock'},
+ 'DOCKER_IMAGES': {'python': 'python:3.8-alpine', 'shell': 'alpine:3'},
+ 'DOCKER_RUN_OPTIONS': {'mem_limit': '64m'},
+ 'DOCKER_SCRIPT_DIR': None,
+ 'K8S_CONFIG_PATH': '~/.kube/config',
+ 'K8S_JOB_TIMEOUT': 1800,
+ 'K8S_NAMESPACE': 'default',
+ 'SCRIPT_RUN_MODE': 'docker'}
+```
+
+### DOCKER_CLIENT
+
+Type: dict
+
+Options for docker client.  See also: https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient
+
+### DOCKER_IMAGES
+
+Type: dict
+
+Key is command to execute script, value is image name.
+
+### DOCKER_RUN_OPTIONS
+
+Type: dict
+
+Options for docker runtime. See also: https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.run
+
+### DOCKER_SCRIPT_DIR
+
+Type: Optional[str]
+
+Path to folder on executor machine where to create temporary submission scripts. If None uses OS-dependent location. OS X users, see https://github.com/docker/for-mac/issues/1532
+
+### K8S_CONFIG_PATH
+
+Type: str
+
+Path to Kubernetes configuration file
+
+### K8S_JOB_TIMEOUT
+
+Type: int
+
+Timeout for execution of one Kubernetes job in seconds
+
+### K8S_NAMESPACE
+
+Type: str
+
+Kubernetes namespace where jobs will be executed
+
+### SCRIPT_RUN_MODE
+
+Type: str
+
+Type of jobs deployment. Valid values: "docker" for simple docker deployment, "k8s" for Kubernetes-based one
+
 ## WALDUR_PID plugin
 
 Default value:
