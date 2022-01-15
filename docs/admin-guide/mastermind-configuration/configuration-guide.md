@@ -1241,6 +1241,126 @@ Type: str
 
 Type of jobs deployment. Valid values: "docker" for simple docker deployment, "k8s" for Kubernetes-based one
 
+## WALDUR_OPENSTACK plugin
+
+Default value:
+
+```python
+WALDUR_OPENSTACK = {'ADMIN_CAN_MANAGE_TENANTS': False,
+ 'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
+ 'DEFAULT_SECURITY_GROUPS': ({'description': 'Security group for any access',
+                              'name': 'allow-all',
+                              'rules': ({'cidr': '0.0.0.0/0',
+                                         'icmp_code': -1,
+                                         'icmp_type': -1,
+                                         'protocol': 'icmp'},
+                                        {'cidr': '0.0.0.0/0',
+                                         'from_port': 1,
+                                         'protocol': 'tcp',
+                                         'to_port': 65535})},
+                             {'description': 'Security group for secure shell '
+                                             'access',
+                              'name': 'ssh',
+                              'rules': ({'cidr': '0.0.0.0/0',
+                                         'from_port': 22,
+                                         'protocol': 'tcp',
+                                         'to_port': 22},)},
+                             {'description': 'Security group for ping',
+                              'name': 'ping',
+                              'rules': ({'cidr': '0.0.0.0/0',
+                                         'icmp_code': -1,
+                                         'icmp_type': -1,
+                                         'protocol': 'icmp'},)},
+                             {'description': 'Security group for remove '
+                                             'desktop access',
+                              'name': 'rdp',
+                              'rules': ({'cidr': '0.0.0.0/0',
+                                         'from_port': 3389,
+                                         'protocol': 'tcp',
+                                         'to_port': 3389},)},
+                             {'description': 'Security group for http and '
+                                             'https access',
+                              'name': 'web',
+                              'rules': ({'cidr': '0.0.0.0/0',
+                                         'from_port': 80,
+                                         'protocol': 'tcp',
+                                         'to_port': 80},
+                                        {'cidr': '0.0.0.0/0',
+                                         'from_port': 443,
+                                         'protocol': 'tcp',
+                                         'to_port': 443})}),
+ 'MANAGER_CAN_MANAGE_TENANTS': False,
+ 'SUBNET': {'ALLOCATION_POOL_END': '{first_octet}.{second_octet}.{third_octet}.200',
+            'ALLOCATION_POOL_START': '{first_octet}.{second_octet}.{third_octet}.10'},
+ 'TENANT_CREDENTIALS_VISIBLE': False}
+```
+
+### ADMIN_CAN_MANAGE_TENANTS
+
+Type: bool
+
+If true, admin can delete or change configuration of tenants.
+
+### DEFAULT_BLACKLISTED_USERNAMES
+
+Type: list
+
+Usernames that cannot be created by Waldur in OpenStack
+
+### DEFAULT_SECURITY_GROUPS
+
+Type: tuple
+
+Default security groups and rules created in each of the provisioned OpenStack tenants
+
+### MANAGER_CAN_MANAGE_TENANTS
+
+Type: bool
+
+If true, manager can delete or change configuration of tenants.
+
+### SUBNET
+
+Type: dict
+
+Default allocation pool for auto-created internal network
+
+### TENANT_CREDENTIALS_VISIBLE
+
+Type: bool
+
+If true, generated credentials of a tenant are exposed to project users
+
+## WALDUR_OPENSTACK_TENANT plugin
+
+Default value:
+
+```python
+WALDUR_OPENSTACK_TENANT = {'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
+ 'MAX_CONCURRENT_PROVISION': {'OpenStackTenant.Instance': 4,
+                              'OpenStackTenant.Snapshot': 4,
+                              'OpenStackTenant.Volume': 4},
+ 'REQUIRE_AVAILABILITY_ZONE': False}
+```
+
+### ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS
+
+Type: bool
+
+If true, customer users would be offered actions for accessing OpenStack Console
+
+### MAX_CONCURRENT_PROVISION
+
+Type: dict
+
+Maximum parallel executions of provisioning operations for OpenStackTenant resources
+
+### REQUIRE_AVAILABILITY_ZONE
+
+Type: bool
+
+If true, specification of availability zone during provisioning will become mandatory
+
 ## WALDUR_PID plugin
 
 Default value:
