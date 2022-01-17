@@ -1197,7 +1197,7 @@ WALDUR_MARKETPLACE_SCRIPT = {'DOCKER_CLIENT': {'base_url': 'unix://var/run/docke
 
 Type: dict
 
-Options for docker client.  See also: https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient
+Options for docker client.  See also: <https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient>
 
 ### DOCKER_IMAGES
 
@@ -1209,13 +1209,13 @@ Key is command to execute script, value is image name.
 
 Type: dict
 
-Options for docker runtime. See also: https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.run
+Options for docker runtime. See also: <https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.run>
 
 ### DOCKER_SCRIPT_DIR
 
 Type: Optional[str]
 
-Path to folder on executor machine where to create temporary submission scripts. If None uses OS-dependent location. OS X users, see https://github.com/docker/for-mac/issues/1532
+Path to folder on executor machine where to create temporary submission scripts. If None uses OS-dependent location. OS X users, see <https://github.com/docker/for-mac/issues/1532>
 
 ### K8S_CONFIG_PATH
 
@@ -1478,4 +1478,3 @@ Protect media URLs using signed token.
 Type: bool, default value: True
 
 When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser.
-
