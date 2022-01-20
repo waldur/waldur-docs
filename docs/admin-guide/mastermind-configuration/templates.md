@@ -780,6 +780,14 @@ Resource {{ resource_name }} deletion has failed.
 </html>
 ```
 
+### notification_service_provider_approval_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+```
+
 ### notification_approval_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -886,6 +894,12 @@ Thank you!
 
 ``` txt
 Resource {{ resource_name }} has been updated.
+```
+
+### notification_service_provider_approval_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 ```
 
 ### marketplace_resource_terminatate_scheduled_staff_message.html (waldur_mastermind.marketplace)
@@ -1232,6 +1246,25 @@ A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 
 ``` txt
 Resource {{ resource_name }} limits update has failed.
+```
+
+### notification_service_provider_approval_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Please visit <a href="{{ order_item_url }}">{{ site_name }}</a> to find out more details.
+</p>
+</body>
+</html>
 ```
 
 ### marketplace_resource_create_failed_message.txt (waldur_mastermind.marketplace)

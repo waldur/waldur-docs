@@ -100,6 +100,10 @@ Allow to write a review for marketplace offering.
 
 Render terms of service when offering is ordered.
 
+## openstack.server_groups
+
+Render server groups in OpenStack tenant details
+
 ## openstack.volume_types
 
 Allow to select OpenStack volume type when instance or volume is provisioned.
