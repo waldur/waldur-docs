@@ -733,8 +733,30 @@ Resource {{ resource.name }} terminatation has been scheduled.
     Hello!
 </p>
 <p>
-    Resource {{ resource_name }} limits have been updated.
+    Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:<br>
+    <blockquote>
+        {{ resource_old_limits }}
+    </blockquote>
+    to:
+    <blockquote>
+        {{ resource_limits }}
+    </blockquote>
 </p>
+{% if support_email or support_phone %}
+<p>
+    If you have any additional questions, please contact support.
+</p>
+{% if support_email %}
+<p>
+    Email: {{ support_email }}
+</p>
+{% endif %}
+{% if support_phone %}
+<p>
+    Phone: {{ support_phone }}
+</p>
+{% endif %}
+{% endif %}
 </body>
 </html>
 ```
@@ -744,7 +766,20 @@ Resource {{ resource.name }} terminatation has been scheduled.
 ``` txt
 Hello!
 
-Resource {{ resource_name }} limits have been updated.
+Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:
+    {{ resource_old_limits }}
+to:
+    {{ resource_limits }}.
+
+{% if support_email or support_phone %}
+If you have any additional questions, please contact support.
+{% if support_email %}
+Email: {{ support_email }}
+{% endif %}
+{% if support_phone %}
+Phone: {{ support_phone }}
+{% endif %}
+{% endif %}
 ```
 
 ### marketplace_plan_template.txt (waldur_mastermind.marketplace)
@@ -832,8 +867,28 @@ Thank you!
     Hello!
 </p>
 <p>
-    Resource {{ resource_name }} has been updated.
+    Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
 </p>
+{% if resource_old_plan %}
+<p>
+    The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
+</p>
+{% endif %}
+{% if support_email or support_phone %}
+<p>
+    If you have any additional questions, please contact support.
+</p>
+{% if support_email %}
+<p>
+    Email: {{ support_email }}
+</p>
+{% endif %}
+{% if support_phone %}
+<p>
+    Phone: {{ support_phone }}
+</p>
+{% endif %}
+{% endif %}
 </body>
 </html>
 ```
@@ -1048,7 +1103,21 @@ Reminder about stale resources.
 ``` txt
 Hello!
 
-Resource {{ resource_name }} has been updated.
+Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
+
+{% if resource_old_plan %}
+The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
+{% endif %}
+
+{% if support_email or support_phone %}
+If you have any additional questions, please contact support.
+{% if support_email %}
+Email: {{ support_email }}
+{% endif %}
+{% if support_phone %}
+Phone: {{ support_phone }}
+{% endif %}
+{% endif %}
 ```
 
 ### marketplace_resource_update_limits_failed_message.txt (waldur_mastermind.marketplace)
