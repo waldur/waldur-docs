@@ -111,6 +111,9 @@
 - openstack_security_group_rule_imported
 - openstack_security_group_rule_updated
 - openstack_security_group_updated
+- openstack_server_group_cleaned
+- openstack_server_group_imported
+- openstack_server_group_pulled
 - openstack_subnet_cleaned
 - openstack_subnet_created
 - openstack_subnet_deleted
