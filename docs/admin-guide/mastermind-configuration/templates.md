@@ -49,7 +49,7 @@ To confirm the change of email address from {{ request.user.email }} to {{ reque
 ### structure_role_granted_message.html (waldur_core.structure)
 
 ``` html
-<p>Structure role {{ permission.role }}  for {{ structure }} has been granted.</p>
+<p>Role {{ permission.role }}  for {{ structure }} has been granted.</p>
 ```
 
 ### change_email_request_message.html (waldur_core.structure)
@@ -61,13 +61,13 @@ To confirm the change of email address from {{ request.user.email }} to {{ reque
 ### structure_role_granted_subject.txt (waldur_core.structure)
 
 ``` txt
-Structure role granted.
+Role granted.
 ```
 
 ### structure_role_granted_message.txt (waldur_core.structure)
 
 ``` txt
-Structure role {{ permission.role }}  for {{ structure }} has been granted.
+Role {{ permission.role }}  for {{ structure }} has been granted.
 ```
 
 ### change_email_request_subject.txt (waldur_core.structure)
