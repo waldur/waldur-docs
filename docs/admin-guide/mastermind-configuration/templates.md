@@ -137,6 +137,28 @@ Verify new email address.
 </html>
 ```
 
+### permission_request_submitted_message.html (waldur_core.users)
+
+``` html
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>Permission request has been submitted.</title>
+</head>
+<body>
+<p>
+  Hello!
+</p>
+<p>
+  User {{ permission_request.created_by }} created permission request for {{ permission_request.invitation }}.
+</p>
+<p>
+  Please visit the <a href="{{ requests_link }}">link</a> to approve or reject permission request.
+</p>
+</body>
+</html>
+```
+
 ### invitation_rejected_message.txt (waldur_core.users)
 
 ``` txt
@@ -161,6 +183,16 @@ Invitation to {{ name }} {{ type }}
 
 ``` txt
 Invitation has been rejected
+```
+
+### permission_request_submitted_message.txt (waldur_core.users)
+
+``` txt
+Hello!
+
+User {{ permission_request.created_by }} created permission request for {{ permission_request.invitation }}.
+
+Please visit the link below to approve or reject permission request: {{ requests_link }}.
 ```
 
 ### invitation_rejected_message.html (waldur_core.users)
@@ -323,6 +355,12 @@ Account has been created
 </p>
 </body>
 </html>
+```
+
+### permission_request_submitted_subject.txt (waldur_core.users)
+
+``` txt
+Permission request has been submitted.
 ```
 
 ### invitation_requested_subject.txt (waldur_core.users)
