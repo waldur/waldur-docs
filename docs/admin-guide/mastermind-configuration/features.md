@@ -124,6 +124,10 @@ Allow to grant user a project member role.
 
 Enable OECD code.
 
+## project.show_industry_flag
+
+Show industry flag.
+
 ## project.team
 
 Enable team management in project workspace.
