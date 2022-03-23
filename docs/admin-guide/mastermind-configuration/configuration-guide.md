@@ -970,6 +970,7 @@ WALDUR_HPC = {'ENABLED': False,
  'EXTERNAL_AFFILIATIONS': [],
  'EXTERNAL_CUSTOMER_UUID': '',
  'EXTERNAL_EMAIL_PATTERNS': [],
+ 'EXTERNAL_LIMITS': {},
  'INTERNAL_AFFILIATIONS': [],
  'INTERNAL_CUSTOMER_UUID': '',
  'INTERNAL_EMAIL_PATTERNS': [],
@@ -1001,6 +1002,12 @@ UUID of a Waldur organization (aka customer) where new external users would be a
 Type: List[str]
 
 List of user email patterns (as regex) that define if the user belongs to external organization.
+
+### EXTERNAL_LIMITS
+
+Type: dict
+
+Overrided default values for SLURM offering to be created for users belonging to external organization.
 
 ### INTERNAL_AFFILIATIONS
 
