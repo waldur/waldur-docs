@@ -10,7 +10,7 @@ All of the scripts below should be saved as files and executed in the environmen
 Make sure that you update ``WALDUR_HOST`` and ``TOKEN`` with values that match your target Waldur deployment.
 
 ```bash
-pip install git+https://github.com/waldur/ansible-waldur-module.git@develop
+pip install https://github.com/waldur/python-waldur-client/archive/master.zip
 python <reporting-script-name>.py
 ```
 
