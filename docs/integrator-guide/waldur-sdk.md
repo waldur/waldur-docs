@@ -10,7 +10,7 @@ SDK is represented by Python module called `waldur_client.py` from `ansible-wald
 Due to frequent SDK updates, installation from the public GitHub repository is highly recommended:
 
 ```bash
-pip install https://github.com/waldur/ansible-waldur-module/archive/develop.zip
+pip install https://github.com/waldur/python-waldur-client/archive/master.zip
 ```
 
 In order to perform operations, a user needs to create an instance of `WaldurClient` class:
@@ -43,4 +43,40 @@ except WaldurClientException as e:
 # Max retries exceeded with url: /api/marketplace-resources/?page_size=200
 # (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x110636430>:
 # Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))")
+```
+
+## Disabling TLS validation (not recommended!)
+
+If you are running your commands against Waldur deployment with broken TLS certificates (e.g. in development),
+the trick below can be used to disable validation of certificates by SDK.
+
+```python
+import os
+import requests
+
+os.environ['CURL_CA_BUNDLE']=""
+session = requests.Session()
+session.verify = False
+
+...
+```
+
+## Air gapped installation
+
+If your machine from where you run SDK is not connected to the public Internet, you can use the following method
+to transfer required libraries.
+
+On the machine with access to the Internet:
+
+```shell
+echo "https://github.com/waldur/python-waldur-client/archive/master.zip" > requirements.txt
+mkdir dependencies
+pip3 download -r requirements.txt -d dependencies/
+```
+
+Now transfer content of the dependencies folder and requirements.txt to a machine without public Internet and
+run.
+
+```shell
+pip3 install --no-index --find-links dependencies/  -r requirements.txt
 ```
