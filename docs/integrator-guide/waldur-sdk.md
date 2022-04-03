@@ -10,7 +10,7 @@ SDK is represented by Python module called `waldur_client.py` from `ansible-wald
 Due to frequent SDK updates, installation from the public GitHub repository is highly recommended:
 
 ```bash
-pip install git+https://github.com/waldur/ansible-waldur-module.git@develop
+pip install https://github.com/waldur/ansible-waldur-module/archive/develop.zip
 ```
 
 In order to perform operations, a user needs to create an instance of `WaldurClient` class:
