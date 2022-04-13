@@ -505,6 +505,7 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'SHORT_PAGE_TITLE': 'Waldur',
  'SHOW_ALL_USERS': False,
  'SIDEBAR_LOGO': None,
+ 'SIDEBAR_LOGO_MOBILE': None,
  'SITE_ADDRESS': '',
  'SITE_DESCRIPTION': 'Your single pane of control for managing projects, teams '
                      'and resources in a self-service manner.',
@@ -806,6 +807,12 @@ Indicates whether user can see all other users in `api/users/` endpoint.
 Type: Optional[str]
 
 Relative path to image rendered at the top of sidebar menu in HomePort.
+
+### SIDEBAR_LOGO_MOBILE
+
+Type: Optional[str]
+
+Relative path to image rendered at the top of mobile sidebar menu in HomePort.
 
 ### SITE_ADDRESS
 
