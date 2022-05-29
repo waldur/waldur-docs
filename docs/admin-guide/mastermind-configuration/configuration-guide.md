@@ -26,6 +26,7 @@ WALDUR_AUTH_SAML2 = {'ALLOW_TO_SELECT_IDENTITY_PROVIDER': True,
  'LOGOUT_REQUESTS_SIGNED': 'true',
  'LOG_FILE': '',
  'LOG_LEVEL': 'INFO',
+ 'MANAGEMENT_URL': '',
  'NAME': 'saml2',
  'NAMEID_FORMAT': None,
  'OPTIONAL_ATTRIBUTES': [],
@@ -152,6 +153,12 @@ Type: str
 
 Log level for SAML2
 
+### MANAGEMENT_URL
+
+Type: str
+
+The endpoint for user details management.
+
 ### NAME
 
 Type: str
@@ -232,16 +239,20 @@ Default value:
 WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization',
  'EDUTEAMS_CLIENT_ID': '',
  'EDUTEAMS_LABEL': 'eduTEAMS',
+ 'EDUTEAMS_MANAGEMENT_URL': '',
  'EDUTEAMS_SECRET': '',
  'EDUTEAMS_TOKEN_URL': 'https://proxy.acc.eduteams.org/OIDC/token',
  'EDUTEAMS_USERINFO_URL': 'https://proxy.acc.eduteams.org/OIDC/userinfo',
+ 'EDUTEAMS_USER_PROTECTED_FIELDS': [],
  'ENABLE_EDUTEAMS_SYNC': False,
  'KEYCLOAK_AUTH_URL': '',
  'KEYCLOAK_CLIENT_ID': '',
  'KEYCLOAK_LABEL': 'Keycloak',
+ 'KEYCLOAK_MANAGEMENT_URL': 'http://localhost:8080/auth/realms/waldur/account/#/personal-info',
  'KEYCLOAK_SECRET': '',
  'KEYCLOAK_TOKEN_URL': '',
  'KEYCLOAK_USERINFO_URL': '',
+ 'KEYCLOAK_USER_PROTECTED_FIELDS': [],
  'KEYCLOAK_VERIFY_SSL': True,
  'REMOTE_EDUTEAMS_CLIENT_ID': '',
  'REMOTE_EDUTEAMS_ENABLED': False,
@@ -253,8 +264,10 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'SMARTIDEE_SECRET': '',
  'TARA_CLIENT_ID': '',
  'TARA_LABEL': 'Riigi Autentimisteenus',
+ 'TARA_MANAGEMENT_URL': '',
  'TARA_SANDBOX': True,
- 'TARA_SECRET': ''}
+ 'TARA_SECRET': '',
+ 'TARA_USER_PROTECTED_FIELDS': []}
 ```
 
 ### EDUTEAMS_AUTH_URL
@@ -275,6 +288,12 @@ Type: str
 
 Label is used by HomePort for rendering login button.
 
+### EDUTEAMS_MANAGEMENT_URL
+
+Type: str
+
+The endpoint for user details management.
+
 ### EDUTEAMS_SECRET
 
 Type: str
@@ -292,6 +311,12 @@ The token endpoint is used to obtain tokens.
 Type: str
 
 The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token.
+
+### EDUTEAMS_USER_PROTECTED_FIELDS
+
+Type: List[str]
+
+The list of protected fields for EDUTEAMS IdP.
 
 ### ENABLE_EDUTEAMS_SYNC
 
@@ -317,6 +342,12 @@ Type: str
 
 Label is used by HomePort for rendering login button.
 
+### KEYCLOAK_MANAGEMENT_URL
+
+Type: str
+
+The endpoint for user details management.
+
 ### KEYCLOAK_SECRET
 
 Type: str
@@ -334,6 +365,12 @@ The token endpoint is used to obtain tokens.
 Type: str
 
 The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token.
+
+### KEYCLOAK_USER_PROTECTED_FIELDS
+
+Type: List[str]
+
+The list of protected fields for Keycloak IdP.
 
 ### KEYCLOAK_VERIFY_SSL
 
@@ -401,6 +438,12 @@ Type: str
 
 You may set it to eIDAS, SmartID or MobileID make it more clear to the user which exact identity provider is configured or preferred for service provider.
 
+### TARA_MANAGEMENT_URL
+
+Type: str
+
+The endpoint for user details management.
+
 ### TARA_SANDBOX
 
 Type: bool
@@ -412,6 +455,12 @@ You should set it to False in order to switch to production mode.
 Type: str
 
 Application secret key.
+
+### TARA_USER_PROTECTED_FIELDS
+
+Type: List[str]
+
+The list of protected fields for TARA IdP.
 
 ## WALDUR_CORE plugin
 
@@ -486,6 +535,10 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'INVITATION_LIFETIME': datetime.timedelta(days=7),
  'INVITATION_MAX_AGE': None,
  'INVITATION_TAX_NUMBER_LABEL': '',
+ 'LOCAL_IDP_LABEL': 'Local DB',
+ 'LOCAL_IDP_MANAGEMENT_URL': '',
+ 'LOCAL_IDP_NAME': 'Local DB',
+ 'LOCAL_IDP_PROTECTED_FIELDS': [],
  'LOGGING_REPORT_DIRECTORY': '/var/log/waldur',
  'LOGGING_REPORT_INTERVAL': datetime.timedelta(days=7),
  'MASTERMIND_URL': '',
@@ -711,6 +764,30 @@ Max age of invitation token. It is used in approve and reject actions.
 Type: str
 
 Custom label for tax number field in invitation creation dialog.
+
+### LOCAL_IDP_LABEL
+
+Type: str
+
+The label of local auth.
+
+### LOCAL_IDP_MANAGEMENT_URL
+
+Type: str
+
+The URL for management of local user details.
+
+### LOCAL_IDP_NAME
+
+Type: str
+
+The name of local auth.
+
+### LOCAL_IDP_PROTECTED_FIELDS
+
+Type: List[str]
+
+The list of protected fields for local IdP.
 
 ### LOGGING_REPORT_DIRECTORY
 
