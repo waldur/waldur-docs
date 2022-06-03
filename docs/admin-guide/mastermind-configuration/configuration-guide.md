@@ -243,7 +243,7 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'EDUTEAMS_SECRET': '',
  'EDUTEAMS_TOKEN_URL': 'https://proxy.acc.eduteams.org/OIDC/token',
  'EDUTEAMS_USERINFO_URL': 'https://proxy.acc.eduteams.org/OIDC/userinfo',
- 'EDUTEAMS_USER_PROTECTED_FIELDS': [],
+ 'EDUTEAMS_USER_PROTECTED_FIELDS': ['full_name', 'email'],
  'ENABLE_EDUTEAMS_SYNC': False,
  'KEYCLOAK_AUTH_URL': '',
  'KEYCLOAK_CLIENT_ID': '',
@@ -252,7 +252,7 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'KEYCLOAK_SECRET': '',
  'KEYCLOAK_TOKEN_URL': '',
  'KEYCLOAK_USERINFO_URL': '',
- 'KEYCLOAK_USER_PROTECTED_FIELDS': [],
+ 'KEYCLOAK_USER_PROTECTED_FIELDS': ['full_name', 'email'],
  'KEYCLOAK_VERIFY_SSL': True,
  'REMOTE_EDUTEAMS_CLIENT_ID': '',
  'REMOTE_EDUTEAMS_ENABLED': False,
@@ -267,7 +267,7 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'TARA_MANAGEMENT_URL': '',
  'TARA_SANDBOX': True,
  'TARA_SECRET': '',
- 'TARA_USER_PROTECTED_FIELDS': []}
+ 'TARA_USER_PROTECTED_FIELDS': ['full_name']}
 ```
 
 ### EDUTEAMS_AUTH_URL
