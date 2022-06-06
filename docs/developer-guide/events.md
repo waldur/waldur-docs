@@ -1,5 +1,13 @@
 # Events
 
+## Auth
+
+- auth_logged_in_with_username
+- auth_logged_out
+- auth_login_failed_with_username
+- token_created
+- token_lifetime_updated
+
 ## Customers
 
 - customer_creation_succeeded
@@ -211,10 +219,7 @@
 - auth_logged_in_with_saml2
 - auth_logged_in_with_smartid_ee
 - auth_logged_in_with_tara
-- auth_logged_in_with_username
-- auth_logged_out
 - auth_logged_out_with_saml2
-- auth_login_failed_with_username
 - freeipa_profile_created
 - freeipa_profile_deleted
 - freeipa_profile_disabled
@@ -233,6 +238,5 @@
 - user_details_update_succeeded
 - user_password_updated
 - user_profile_changed
-- user_token_lifetime_updated
 - user_update_succeeded
 
