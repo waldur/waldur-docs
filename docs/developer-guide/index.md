@@ -19,4 +19,3 @@
 - [Plugins](plugins/index.md)
 - [Events](events.md)
 - [Templates](templates.md)
-- [Ad-hoc Scripts](ad-hoc-scripts.md)
