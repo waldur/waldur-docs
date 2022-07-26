@@ -25,55 +25,16 @@
 
 ## waldur_core.structure
 
-### notifications_profile_changes.html (waldur_core.structure)
-
-``` html
-Owner of
-{% for o in organizations %}
-    {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
-{% endfor %}
-
-{{user.full_name}} (id={{ user.id }}) has changed
-
-{% for f in fields %}
-    {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
-{% endfor %}
-```
-
 ### change_email_request_message.txt (waldur_core.structure)
 
 ``` txt
 To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the {{ link }}.
 ```
 
-### structure_role_granted_message.html (waldur_core.structure)
-
-``` html
-<p>Role {{ permission.role }}  for {{ structure }} has been granted.</p>
-```
-
-### change_email_request_message.html (waldur_core.structure)
-
-``` html
-<p>To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the <a href="{{ link }}">link</a>.</p>
-```
-
-### structure_role_granted_subject.txt (waldur_core.structure)
-
-``` txt
-Role granted.
-```
-
 ### structure_role_granted_message.txt (waldur_core.structure)
 
 ``` txt
 Role {{ permission.role }}  for {{ structure }} has been granted.
-```
-
-### change_email_request_subject.txt (waldur_core.structure)
-
-``` txt
-Verify new email address.
 ```
 
 ### service_settings_description.html (waldur_core.structure)
@@ -115,6 +76,45 @@ Verify new email address.
 {% endfor %}
 ```
 
+### structure_role_granted_subject.txt (waldur_core.structure)
+
+``` txt
+Role granted.
+```
+
+### change_email_request_subject.txt (waldur_core.structure)
+
+``` txt
+Verify new email address.
+```
+
+### change_email_request_message.html (waldur_core.structure)
+
+``` html
+<p>To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the <a href="{{ link }}">link</a>.</p>
+```
+
+### notifications_profile_changes.html (waldur_core.structure)
+
+``` html
+Owner of
+{% for o in organizations %}
+    {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
+{% endfor %}
+
+{{user.full_name}} (id={{ user.id }}) has changed
+
+{% for f in fields %}
+    {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
+{% endfor %}
+```
+
+### structure_role_granted_message.html (waldur_core.structure)
+
+``` html
+<p>Role {{ permission.role }}  for {{ structure }} has been granted.</p>
+```
+
 ## waldur_core.users
 
 ### invitation_created_message.html (waldur_core.users)
@@ -137,62 +137,53 @@ Verify new email address.
 </html>
 ```
 
-### permission_request_submitted_message.html (waldur_core.users)
-
-``` html
-<html>
-<head lang="en">
-  <meta charset="UTF-8">
-  <title>Permission request has been submitted.</title>
-</head>
-<body>
-<p>
-  Hello!
-</p>
-<p>
-  User {{ permission_request.created_by }} created permission request for {{ permission_request.invitation }}.
-</p>
-<p>
-  Please visit the <a href="{{ requests_link }}">link</a> to approve or reject permission request.
-</p>
-</body>
-</html>
-```
-
-### invitation_rejected_message.txt (waldur_core.users)
+### invitation_requested_message.txt (waldur_core.users)
 
 ``` txt
 Hello!
 
-The following invitation has been rejected.
+{{ sender }} has created invitation request for the following user
+to join {{ name }} {{ type }} in {{ role }} role.
 
+{% if invitation.civil_number %}
+Civil number: {{ invitation.civil_number }}
+{% endif %}
+
+{% if invitation.tax_number %}
+Tax number: {{ invitation.tax_number }}
+{% endif %}
+
+{% if invitation.phone_number %}
+Phone number: {{ invitation.phone_number }}
+{% endif %}
+
+E-mail: {{ invitation.email }}
+
+{% if invitation.full_name %}
 Full name: {{ invitation.full_name }}
+{% endif %}
 
-Target: {{ name }} {{ type }}
+{% if invitation.native_name %}
+Native name: {{ invitation.native_name }}
+{% endif %}
 
-Role: {{ role }}
+{% if invitation.organization %}
+Organization: {{ invitation.organization }}
+{% endif %}
+
+{% if invitation.job_title %}
+Job title: {{ invitation.job_title }}
+{% endif %}
+
+Please visit the link below to approve invitation: {{ approve_link }}
+
+Alternatively, you may reject invitation: {{ reject_link }}
 ```
 
-### invitation_created_subject.txt (waldur_core.users)
+### invitation_requested_subject.txt (waldur_core.users)
 
 ``` txt
-Invitation to {{ name }} {{ type }}
-```
-
-### invitation_rejected_subject.txt (waldur_core.users)
-
-``` txt
-Invitation has been rejected
-```
-
-### permission_request_submitted_message.txt (waldur_core.users)
-
-``` txt
-Hello!
-
-User {{ permission_request.created_by }} created permission request for {{ permission_request.invitation }}.
-
-Please visit the link below to approve or reject permission request: {{ requests_link }}.
+Invitation request
 ```
 
 ### invitation_rejected_message.html (waldur_core.users)
@@ -226,6 +217,64 @@ Please visit the link below to approve or reject permission request: {{ requests
 </html>
 ```
 
+### invitation_created_subject.txt (waldur_core.users)
+
+``` txt
+Invitation to {{ name }} {{ type }}
+```
+
+### invitation_rejected_subject.txt (waldur_core.users)
+
+``` txt
+Invitation has been rejected
+```
+
+### invitation_rejected_message.txt (waldur_core.users)
+
+``` txt
+Hello!
+
+The following invitation has been rejected.
+
+Full name: {{ invitation.full_name }}
+
+Target: {{ name }} {{ type }}
+
+Role: {{ role }}
+```
+
+### permission_request_submitted_message.txt (waldur_core.users)
+
+``` txt
+Hello!
+
+User {{ permission_request.created_by }} created permission request for {{ permission_request.invitation }}.
+
+Please visit the link below to approve or reject permission request: {{ requests_link }}.
+```
+
+### permission_request_submitted_message.html (waldur_core.users)
+
+``` html
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>Permission request has been submitted.</title>
+</head>
+<body>
+<p>
+  Hello!
+</p>
+<p>
+  User {{ permission_request.created_by }} created permission request for {{ permission_request.invitation }}.
+</p>
+<p>
+  Please visit the <a href="{{ requests_link }}">link</a> to approve or reject permission request.
+</p>
+</body>
+</html>
+```
+
 ### invitation_created_message.txt (waldur_core.users)
 
 ``` txt
@@ -234,6 +283,35 @@ Hello!
 {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
 Please visit the link below to sign up and accept your invitation:
 {{ link }}
+```
+
+### invitation_approved_message.html (waldur_core.users)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Account has been created</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
+    Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
+</p>
+<p>
+  Your credentials are as following.
+</p>
+<p>
+  Your username is {{ username }}
+</p>
+<p>
+  Your password is {{ password }}
+</p>
+</body>
+</html>
 ```
 
 ### invitation_requested_message.html (waldur_core.users)
@@ -306,6 +384,12 @@ Please visit the link below to sign up and accept your invitation:
 </html>
 ```
 
+### invitation_approved_subject.txt (waldur_core.users)
+
+``` txt
+Account has been created
+```
+
 ### invitation_approved_message.txt (waldur_core.users)
 
 ``` txt
@@ -322,108 +406,13 @@ Username is {{ username }}
 Your password is {{ password }}
 ```
 
-### invitation_approved_subject.txt (waldur_core.users)
-
-``` txt
-Account has been created
-```
-
-### invitation_approved_message.html (waldur_core.users)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Account has been created</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
-    Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
-</p>
-<p>
-  Your credentials are as following.
-</p>
-<p>
-  Your username is {{ username }}
-</p>
-<p>
-  Your password is {{ password }}
-</p>
-</body>
-</html>
-```
-
 ### permission_request_submitted_subject.txt (waldur_core.users)
 
 ``` txt
 Permission request has been submitted.
 ```
 
-### invitation_requested_subject.txt (waldur_core.users)
-
-``` txt
-Invitation request
-```
-
-### invitation_requested_message.txt (waldur_core.users)
-
-``` txt
-Hello!
-
-{{ sender }} has created invitation request for the following user
-to join {{ name }} {{ type }} in {{ role }} role.
-
-{% if invitation.civil_number %}
-Civil number: {{ invitation.civil_number }}
-{% endif %}
-
-{% if invitation.tax_number %}
-Tax number: {{ invitation.tax_number }}
-{% endif %}
-
-{% if invitation.phone_number %}
-Phone number: {{ invitation.phone_number }}
-{% endif %}
-
-E-mail: {{ invitation.email }}
-
-{% if invitation.full_name %}
-Full name: {{ invitation.full_name }}
-{% endif %}
-
-{% if invitation.native_name %}
-Native name: {{ invitation.native_name }}
-{% endif %}
-
-{% if invitation.organization %}
-Organization: {{ invitation.organization }}
-{% endif %}
-
-{% if invitation.job_title %}
-Job title: {{ invitation.job_title }}
-{% endif %}
-
-Please visit the link below to approve invitation: {{ approve_link }}
-
-Alternatively, you may reject invitation: {{ reject_link }}
-```
-
 ## waldur_mastermind.booking
-
-### notification_message.txt (waldur_mastermind.booking)
-
-``` txt
-Hello!
-
-Please do not forget about upcoming booking:
-{% for resource in resources %}
-    {{ resource.name }}{% if not forloop.last %}, {% endif %}
-{% endfor %}.
-```
 
 ### notification_subject.txt (waldur_mastermind.booking)
 
@@ -456,15 +445,135 @@ Reminder about upcoming booking.
 </html>
 ```
 
+### notification_message.txt (waldur_mastermind.booking)
+
+``` txt
+Hello!
+
+Please do not forget about upcoming booking:
+{% for resource in resources %}
+    {{ resource.name }}{% if not forloop.last %}, {% endif %}
+{% endfor %}.
+```
+
 ## waldur_mastermind.invoices
 
-### notification_message.txt (waldur_mastermind.invoices)
+### upcoming_ends_notification_message.txt (waldur_mastermind.invoices)
 
 ``` txt
 Hello,
 
-Please follow the link below to see {{ customer }}'s accounting information for {{ month }}/{{ year }}:
-{{ link }}
+this is a reminder that {{ organization_name }}'s fixed price contract {{ contract_number }} is ending on {{ end }}.
+```
+
+### report_subject.txt (waldur_mastermind.invoices)
+
+``` txt
+Waldur accounting report for {{ month }}/{{ year }}
+```
+
+### upcoming_ends_notification_subject.txt (waldur_mastermind.invoices)
+
+``` txt
+{{ organization_name }}'s fixed price contract {{ contract_number }} is coming to an end
+```
+
+### upcoming_ends_notification_message.html (waldur_mastermind.invoices)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>{{ organization_name }}'s fixed price contract {{ contract_number }} is coming to an end.</title>
+</head>
+<body>
+<p>
+    Hello,
+    <br/>
+    this is a reminder that {{ organization_name }}'s fixed price contract {{ contract_number }} is ending on {{ end }}.
+</p>
+</body>
+</html>
+```
+
+### monthly_invoicing_reports.html (waldur_mastermind.invoices)
+
+``` html
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style type="text/css">
+        {% include "./style.css" %}
+    </style>
+</head>
+<body>
+<h2>{% trans 'Fixed price contracts:' %}</h2>
+{% if contracts %}
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>{% trans 'Organization' %}</th>
+                <th>{% trans 'Contract end date' %}</th>
+                <th>{% trans 'Till the end of contract. [days]' %}</th>
+                <th>{% trans 'Contract sum' %}</th>
+                <th>{% trans 'Payment sum' %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for contract in contracts %}
+                <tr>
+                    <th>{{ forloop.counter }}</th>
+                    <td>{{ contract.name }}</td>
+                    <td>{{ contract.end|date:"Y-m-d"|default_if_none:"" }}</td>
+                    <td {% if contract.end_date_alarm %} class="text-danger" {% endif %}>{{ contract.till_end|default_if_none:"" }}</td>
+                    <td {% if contract.payments_alarm %} class="text-danger" {% endif %}>
+                        {{ contract.contract_sum|default_if_none:0|floatformat:"2"|intcomma }}
+                    </td>
+                    <td {% if contract.payments_alarm %} class="text-danger" {% endif %}>
+                        {{ contract.payments_sum|default_if_none:0|floatformat:"2"|intcomma }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>{% trans 'Contracts do not exist.' %}</p>
+{% endif %}
+
+<h2>{% blocktrans %}Invoices for month {{ month }}-{{ year }}:{% endblocktrans %}</h2>
+
+<table class="invoice-table">
+    <thead>
+        <tr>
+            <th></th>
+            <th>{% trans 'Organization' %}</th>
+            <th>{% trans 'Invoice date' %}</th>
+            <th>{% trans 'Invoice sum' %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for invoice in invoices %}
+            <tr>
+                <th>{{ forloop.counter }}</th>
+                <td>{% if invoice.customer.abbreviation %}
+                        {{ invoice.customer.abbreviation }}
+                    {% else %}
+                        {{ invoice.customer.name }}
+                    {% endif %}</td>
+                <td>{{ invoice.invoice_date|date:"Y-m-d" }}</td>
+                <td>{{ invoice.total|floatformat:"2"|intcomma }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>
 ```
 
 ### invoice.html (waldur_mastermind.invoices)
@@ -588,134 +697,10 @@ Please follow the link below to see {{ customer }}'s accounting information for 
 </html>
 ```
 
-### report_body.txt (waldur_mastermind.invoices)
-
-``` txt
-Attached is an accounting report for {{ month }}/{{ year }}.
-```
-
-### monthly_invoicing_reports.html (waldur_mastermind.invoices)
-
-``` html
-{% load i18n %}
-{% load static %}
-{% load humanize %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <style type="text/css">
-        {% include "./style.css" %}
-    </style>
-</head>
-<body>
-<h2>{% trans 'Fixed price contracts:' %}</h2>
-{% if contracts %}
-    <table class="invoice-table">
-        <thead>
-            <tr>
-                <th></th>
-                <th>{% trans 'Organization' %}</th>
-                <th>{% trans 'Contract end date' %}</th>
-                <th>{% trans 'Till the end of contract. [days]' %}</th>
-                <th>{% trans 'Contract sum' %}</th>
-                <th>{% trans 'Payment sum' %}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for contract in contracts %}
-                <tr>
-                    <th>{{ forloop.counter }}</th>
-                    <td>{{ contract.name }}</td>
-                    <td>{{ contract.end|date:"Y-m-d"|default_if_none:"" }}</td>
-                    <td {% if contract.end_date_alarm %} class="text-danger" {% endif %}>{{ contract.till_end|default_if_none:"" }}</td>
-                    <td {% if contract.payments_alarm %} class="text-danger" {% endif %}>
-                        {{ contract.contract_sum|default_if_none:0|floatformat:"2"|intcomma }}
-                    </td>
-                    <td {% if contract.payments_alarm %} class="text-danger" {% endif %}>
-                        {{ contract.payments_sum|default_if_none:0|floatformat:"2"|intcomma }}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>{% trans 'Contracts do not exist.' %}</p>
-{% endif %}
-
-<h2>{% blocktrans %}Invoices for month {{ month }}-{{ year }}:{% endblocktrans %}</h2>
-
-<table class="invoice-table">
-    <thead>
-        <tr>
-            <th></th>
-            <th>{% trans 'Organization' %}</th>
-            <th>{% trans 'Invoice date' %}</th>
-            <th>{% trans 'Invoice sum' %}</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for invoice in invoices %}
-            <tr>
-                <th>{{ forloop.counter }}</th>
-                <td>{% if invoice.customer.abbreviation %}
-                        {{ invoice.customer.abbreviation }}
-                    {% else %}
-                        {{ invoice.customer.name }}
-                    {% endif %}</td>
-                <td>{{ invoice.invoice_date|date:"Y-m-d" }}</td>
-                <td>{{ invoice.total|floatformat:"2"|intcomma }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-</body>
-</html>
-```
-
 ### notification_subject.txt (waldur_mastermind.invoices)
 
 ``` txt
 {{ customer }}'s invoice for {{ month }}/{{ year }}
-```
-
-### report_subject.txt (waldur_mastermind.invoices)
-
-``` txt
-Waldur accounting report for {{ month }}/{{ year }}
-```
-
-### upcoming_ends_notification_subject.txt (waldur_mastermind.invoices)
-
-``` txt
-{{ organization_name }}'s fixed price contract {{ contract_number }} is coming to an end
-```
-
-### upcoming_ends_notification_message.txt (waldur_mastermind.invoices)
-
-``` txt
-Hello,
-
-this is a reminder that {{ organization_name }}'s fixed price contract {{ contract_number }} is ending on {{ end }}.
-```
-
-### upcoming_ends_notification_message.html (waldur_mastermind.invoices)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>{{ organization_name }}'s fixed price contract {{ contract_number }} is coming to an end.</title>
-</head>
-<body>
-<p>
-    Hello,
-    <br/>
-    this is a reminder that {{ organization_name }}'s fixed price contract {{ contract_number }} is ending on {{ end }}.
-</p>
-</body>
-</html>
 ```
 
 ### notification_message.html (waldur_mastermind.invoices)
@@ -737,128 +722,75 @@ this is a reminder that {{ organization_name }}'s fixed price contract {{ contra
 </html>
 ```
 
+### report_body.txt (waldur_mastermind.invoices)
+
+``` txt
+Attached is an accounting report for {{ month }}/{{ year }}.
+```
+
+### notification_message.txt (waldur_mastermind.invoices)
+
+``` txt
+Hello,
+
+Please follow the link below to see {{ customer }}'s accounting information for {{ month }}/{{ year }}:
+{{ link }}
+```
+
 ## waldur_mastermind.marketplace
 
-### notification_usages_message.txt (waldur_mastermind.marketplace)
+### marketplace_resource_create_succeeded_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource_name }} has been created.
+```
+
+### marketplace_resource_update_limits_succeeded_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource_name }} limits have been updated.
+```
+
+### marketplace_resource_update_limits_failed_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
 
-Please do not forget to add usage for the resources you provide:
-{% regroup resources by offering as offering_list %}{% for offering in offering_list %}
-{{forloop.counter}}. {{ offering.grouper.name }}:{% for resource in offering.list %}
-    - {{ resource.name }}
-{% endfor %}{% endfor %}
-You can submit resource usage via API or do it manually at {{ public_resources_url }}.
+Resource {{ resource_name }} limits update has failed.
 ```
 
-### marketplace_resource_terminatate_scheduled_staff_subject.txt (waldur_mastermind.marketplace)
+### notification_service_provider_approval_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Resource {{ resource.name }} terminatation has been scheduled.
-```
-
-### marketplace_resource_update_limits_succeeded_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Resource {{ resource_name }} limits have been updated.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:<br>
-    <blockquote>
-        {{ resource_old_limits }}
-    </blockquote>
-    to:
-    <blockquote>
-        {{ resource_limits }}
-    </blockquote>
-</p>
-{% if support_email or support_phone %}
-<p>
-    If you have any additional questions, please contact support.
-</p>
-{% if support_email %}
-<p>
-    Email: {{ support_email }}
-</p>
-{% endif %}
-{% if support_phone %}
-<p>
-    Phone: {{ support_phone }}
-</p>
-{% endif %}
-{% endif %}
-</body>
-</html>
-```
-
-### marketplace_resource_update_limits_succeeded_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:
-    {{ resource_old_limits }}
-to:
-    {{ resource_limits }}.
-
-{% if support_email or support_phone %}
-If you have any additional questions, please contact support.
-{% if support_email %}
-Email: {{ support_email }}
-{% endif %}
-{% if support_phone %}
-Phone: {{ support_phone }}
-{% endif %}
-{% endif %}
-```
-
-### marketplace_plan_template.txt (waldur_mastermind.marketplace)
-
-``` txt
-Plan: {{ plan.name }}{% for component in components %}
-{{component.name}}; amount: {{component.amount}}; price: {{component.price|floatformat }};
-{% endfor %}
-```
-
-### marketplace_resource_terminate_failed_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Resource {{ resource_name }} deletion has failed.
-```
-
-### marketplace_resource_update_failed_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Resource {{ resource_name }} update has failed.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    Resource {{ resource_name }} update has failed.
-</p>
-</body>
-</html>
-```
-
-### notification_service_provider_approval_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
 A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+```
+
+### notification_about_stale_resources_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Reminder about stale resources.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    We noticed that you have stale resources that have not cost you anything for the last 3 months. <br />
+    Perhaps some of them are not needed any more?<br />
+
+    The resource names are:
+    <ul>
+        {% for resource in resources %}
+            <li><a href='{{ resource.resource_url }}'>{{ resource.resource.name }}</a></li>
+        {% endfor %}
+    </ul>
+    Thank you!
+</p>
+</body>
+</html>
 ```
 
 ### notification_approval_message.html (waldur_mastermind.marketplace)
@@ -880,16 +812,106 @@ A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 </html>
 ```
 
-### notification_about_project_ending_message.txt (waldur_mastermind.marketplace)
+### notification_service_provider_approval_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Dear {{ user.full_name }},
+Hello!
 
-Your project {{ project.name }} is ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}. End of the project will lead to termination of all resources in the project.
-If you are aware of that, then no actions are needed from your side.
-If you need to update project end date, please update it in project details {{ project_url }}.
+A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+```
 
-Thank you!
+### marketplace_resource_create_failed_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+Resource {{ resource_name }} creation has failed.
+```
+
+### marketplace_resource_update_failed_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+Resource {{ resource_name }} update has failed.
+```
+
+### marketplace_resource_create_failed_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource_name }} creation has failed.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Resource {{ resource_name }} creation has failed.
+</p>
+</body>
+</html>
+```
+
+### marketplace_resource_terminatate_scheduled_staff_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
+```
+
+### marketplace_resource_terminatate_scheduled_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
+```
+
+### marketplace_resource_terminate_succeeded_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+Resource {{ resource_name }} has been deleted.
+```
+
+### notification_usages_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Reminder about missing usage reports.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>Please do not forget to add usage for the resources you provide:</p>
+{% regroup resources by offering as offering_list %}
+
+<ol>
+{% for offering in offering_list %}
+    <li>
+        {{ offering.grouper.name }}:
+        <ul>
+            {% for resource in offering.list %}
+            <li>{{ resource.name }}</li>
+            {% endfor %}
+        </ul>
+    </li>
+{% endfor %}
+</ol>
+
+<p>
+    You can submit resource usage via API or do it <a href='{{ public_resources_url }}'>manually</a>.
+</p>
+</body>
+</html>
 ```
 
 ### marketplace_resource_update_succeeded_message.html (waldur_mastermind.marketplace)
@@ -931,114 +953,108 @@ Thank you!
 </html>
 ```
 
-### marketplace_resource_create_failed_subject.txt (waldur_mastermind.marketplace)
+### marketplace_resource_update_failed_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Resource {{ resource_name }} creation has failed.
+Resource {{ resource_name }} update has failed.
 ```
 
-### marketplace_resource_terminate_failed_message.txt (waldur_mastermind.marketplace)
+### marketplace_resource_update_limits_failed_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource_name }} limits update has failed.
+```
+
+### marketplace_resource_update_failed_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource_name }} update has failed.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Resource {{ resource_name }} update has failed.
+</p>
+</body>
+</html>
+```
+
+### marketplace_resource_terminate_failed_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource_name }} deletion has failed.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Resource {{ resource_name }} deletion has failed.
+</p>
+</body>
+</html>
+```
+
+### marketplace_resource_update_limits_succeeded_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
 
+Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:
+    {{ resource_old_limits }}
+to:
+    {{ resource_limits }}.
+
+{% if support_email or support_phone %}
+If you have any additional questions, please contact support.
+{% if support_email %}
+Email: {{ support_email }}
+{% endif %}
+{% if support_phone %}
+Phone: {{ support_phone }}
+{% endif %}
+{% endif %}
+```
+
+### marketplace_resource_terminate_succeeded_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource_name }} has been deleted.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Resource {{ resource_name }} has been deleted.
+</p>
+</body>
+</html>
+```
+
+### marketplace_resource_terminate_failed_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
 Resource {{ resource_name }} deletion has failed.
 ```
 
-### notification_about_project_ending_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Project {{ project.name }} will be deleted.</title>
-</head>
-<body>
-<p>Dear {{ user.full_name }},</p>
-
-<p>Your project {{ project.name }} is ending
-    {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
-    End of the project will lead to termination of all resources in the project. <br />
-    If you are aware of that, then no actions are needed from your side. <br />
-    If you need to update project end date, please update it in project details {{ project_url }}.
-</p>
-
-<p>Thank you!</p>
-</body>
-</html>
-```
-
-### notification_about_stale_resources_message.txt (waldur_mastermind.marketplace)
+### marketplace_plan_template.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Hello!
-
-We noticed that you have stale resources that have not cost you anything for the last 3 months.
-Perhaps some of them are not needed any more?
-
-The resource names are:
-{% for resource in resources %}
-    {{ resource.resource.name }} {{ resource.resource_url }}
+Plan: {{ plan.name }}{% for component in components %}
+{{component.name}}; amount: {{component.amount}}; price: {{component.price|floatformat }};
 {% endfor %}
-Thank you!
-```
-
-### marketplace_resource_update_succeeded_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Resource {{ resource_name }} has been updated.
-```
-
-### notification_service_provider_approval_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-```
-
-### marketplace_resource_terminatate_scheduled_staff_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Resource {{ resource.name }} terminatation has been scheduled.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
-    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
-</p>
-</body>
-</html>
-```
-
-### marketplace_resource_terminatate_scheduled_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Resource {{ resource.name }} terminatation has been scheduled.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
-    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
-</p>
-</body>
-</html>
-```
-
-### marketplace_resource_update_limits_succeeded_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Resource {{ resource_name }} limits have been updated.
 ```
 
 ### marketplace_resource_create_succeeded_message.html (waldur_mastermind.marketplace)
@@ -1066,110 +1082,44 @@ Resource {{ resource_name }} limits have been updated.
 Project {{ project.name }} will be deleted.
 ```
 
-### marketplace_resource_create_succeeded_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Resource {{ resource_name }} has been created.
-```
-
-### notification_about_stale_resources_message.html (waldur_mastermind.marketplace)
+### marketplace_resource_terminatate_scheduled_staff_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Reminder about stale resources.</title>
+    <title>Resource {{ resource.name }} terminatation has been scheduled.</title>
 </head>
 <body>
 <p>
     Hello!
 </p>
 <p>
-    We noticed that you have stale resources that have not cost you anything for the last 3 months. <br />
-    Perhaps some of them are not needed any more?<br />
-
-    The resource names are:
-    <ul>
-        {% for resource in resources %}
-            <li><a href='{{ resource.resource_url }}'>{{ resource.resource.name }}</a></li>
-        {% endfor %}
-    </ul>
-    Thank you!
+    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
+    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
 </p>
 </body>
 </html>
 ```
 
-### marketplace_resource_update_failed_subject.txt (waldur_mastermind.marketplace)
+### marketplace_resource_terminatate_scheduled_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Resource {{ resource_name }} update has failed.
+Resource {{ resource.name }} terminatation has been scheduled.
 ```
 
-### marketplace_resource_create_succeeded_message.txt (waldur_mastermind.marketplace)
+### notification_approval_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
 
-Resource {{ resource_name }} has been created.
-```
-
-### marketplace_resource_update_failed_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-Resource {{ resource_name }} update has failed.
-```
-
-### marketplace_resource_terminatate_scheduled_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
-```
-
-### notification_about_stale_resources_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Reminder about stale resources.
-```
-
-### marketplace_resource_update_succeeded_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
-
-{% if resource_old_plan %}
-The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
-{% endif %}
-
-{% if support_email or support_phone %}
-If you have any additional questions, please contact support.
-{% if support_email %}
-Email: {{ support_email }}
-{% endif %}
-{% if support_phone %}
-Phone: {{ support_phone }}
-{% endif %}
-{% endif %}
-```
-
-### marketplace_resource_update_limits_failed_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-Resource {{ resource_name }} limits update has failed.
-```
-
-### notification_approval_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
 A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+```
+
+### marketplace_resource_terminatate_scheduled_staff_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource.name }} terminatation has been scheduled.
 ```
 
 ### order.html (waldur_mastermind.marketplace)
@@ -1349,10 +1299,28 @@ A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 </html>
 ```
 
-### marketplace_resource_update_limits_failed_subject.txt (waldur_mastermind.marketplace)
+### notification_about_stale_resources_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Resource {{ resource_name }} limits update has failed.
+Reminder about stale resources.
+```
+
+### marketplace_resource_terminate_succeeded_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource_name }} has been deleted.
+```
+
+### notification_about_project_ending_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Dear {{ user.full_name }},
+
+Your project {{ project.name }} is ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}. End of the project will lead to termination of all resources in the project.
+If you are aware of that, then no actions are needed from your side.
+If you need to update project end date, please update it in project details {{ project_url }}.
+
+Thank you!
 ```
 
 ### notification_service_provider_approval_message.html (waldur_mastermind.marketplace)
@@ -1374,31 +1342,141 @@ Resource {{ resource_name }} limits update has failed.
 </html>
 ```
 
-### marketplace_resource_create_failed_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-Resource {{ resource_name }} creation has failed.
-```
-
-### marketplace_resource_terminate_failed_message.html (waldur_mastermind.marketplace)
+### marketplace_resource_terminatate_scheduled_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Resource {{ resource_name }} deletion has failed.</title>
+    <title>Resource {{ resource.name }} terminatation has been scheduled.</title>
 </head>
 <body>
 <p>
     Hello!
 </p>
 <p>
-    Resource {{ resource_name }} deletion has failed.
+    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
+    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
 </p>
 </body>
 </html>
+```
+
+### marketplace_resource_update_succeeded_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
+
+{% if resource_old_plan %}
+The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
+{% endif %}
+
+{% if support_email or support_phone %}
+If you have any additional questions, please contact support.
+{% if support_email %}
+Email: {{ support_email }}
+{% endif %}
+{% if support_phone %}
+Phone: {{ support_phone }}
+{% endif %}
+{% endif %}
+```
+
+### notification_usages_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Reminder about missing usage reports.
+```
+
+### notification_approval_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+```
+
+### marketplace_resource_terminate_failed_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+Resource {{ resource_name }} deletion has failed.
+```
+
+### notification_usages_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+Please do not forget to add usage for the resources you provide:
+{% regroup resources by offering as offering_list %}{% for offering in offering_list %}
+{{forloop.counter}}. {{ offering.grouper.name }}:{% for resource in offering.list %}
+    - {{ resource.name }}
+{% endfor %}{% endfor %}
+You can submit resource usage via API or do it manually at {{ public_resources_url }}.
+```
+
+### notification_about_stale_resources_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+We noticed that you have stale resources that have not cost you anything for the last 3 months.
+Perhaps some of them are not needed any more?
+
+The resource names are:
+{% for resource in resources %}
+    {{ resource.resource.name }} {{ resource.resource_url }}
+{% endfor %}
+Thank you!
+```
+
+### marketplace_resource_update_limits_succeeded_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource_name }} limits have been updated.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:<br>
+    <blockquote>
+        {{ resource_old_limits }}
+    </blockquote>
+    to:
+    <blockquote>
+        {{ resource_limits }}
+    </blockquote>
+</p>
+{% if support_email or support_phone %}
+<p>
+    If you have any additional questions, please contact support.
+</p>
+{% if support_email %}
+<p>
+    Email: {{ support_email }}
+</p>
+{% endif %}
+{% if support_phone %}
+<p>
+    Phone: {{ support_phone }}
+</p>
+{% endif %}
+{% endif %}
+</body>
+</html>
+```
+
+### marketplace_resource_update_succeeded_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource_name }} has been updated.
 ```
 
 ### marketplace_resource_update_limits_failed_message.html (waldur_mastermind.marketplace)
@@ -1420,117 +1498,39 @@ Resource {{ resource_name }} creation has failed.
 </html>
 ```
 
-### marketplace_resource_terminatate_scheduled_subject.txt (waldur_mastermind.marketplace)
+### marketplace_resource_create_failed_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Resource {{ resource.name }} terminatation has been scheduled.
+Resource {{ resource_name }} creation has failed.
 ```
 
-### marketplace_resource_terminate_succeeded_message.html (waldur_mastermind.marketplace)
+### marketplace_resource_create_succeeded_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+Resource {{ resource_name }} has been created.
+```
+
+### notification_about_project_ending_message.html (waldur_mastermind.marketplace)
 
 ``` html
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Resource {{ resource_name }} has been deleted.</title>
+    <title>Project {{ project.name }} will be deleted.</title>
 </head>
 <body>
-<p>
-    Hello!
+<p>Dear {{ user.full_name }},</p>
+
+<p>Your project {{ project.name }} is ending
+    {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
+    End of the project will lead to termination of all resources in the project. <br />
+    If you are aware of that, then no actions are needed from your side. <br />
+    If you need to update project end date, please update it in project details {{ project_url }}.
 </p>
-<p>
-    Resource {{ resource_name }} has been deleted.
-</p>
-</body>
-</html>
-```
 
-### notification_approval_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-```
-
-### marketplace_resource_terminate_succeeded_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-Resource {{ resource_name }} has been deleted.
-```
-
-### marketplace_resource_terminate_succeeded_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Resource {{ resource_name }} has been deleted.
-```
-
-### notification_usages_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Reminder about missing usage reports.
-```
-
-### marketplace_resource_terminatate_scheduled_staff_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
-```
-
-### marketplace_resource_create_failed_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Resource {{ resource_name }} creation has failed.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    Resource {{ resource_name }} creation has failed.
-</p>
-</body>
-</html>
-```
-
-### notification_usages_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Reminder about missing usage reports.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>Please do not forget to add usage for the resources you provide:</p>
-{% regroup resources by offering as offering_list %}
-
-<ol>
-{% for offering in offering_list %}
-    <li>
-        {{ offering.grouper.name }}:
-        <ul>
-            {% for resource in offering.list %}
-            <li>{{ resource.name }}</li>
-            {% endfor %}
-        </ul>
-    </li>
-{% endfor %}
-</ol>
-
-<p>
-    You can submit resource usage via API or do it <a href='{{ public_resources_url }}'>manually</a>.
-</p>
+<p>Thank you!</p>
 </body>
 </html>
 ```
@@ -1725,20 +1725,6 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 {% endfor %}
 
 {% endif %}
-```
-
-### flow_rejected_subject.txt (waldur_mastermind.marketplace_flows)
-
-``` txt
-{% load i18n %}
-{% trans 'Your submission has been rejected' %}
-```
-
-### flow_submitted_subject.txt (waldur_mastermind.marketplace_flows)
-
-``` txt
-{% load i18n %}
-{% trans 'Resource creation request has been submitted' %}
 ```
 
 ### flow_rejected_message.txt (waldur_mastermind.marketplace_flows)
@@ -1962,24 +1948,21 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 </html>
 ```
 
+### flow_rejected_subject.txt (waldur_mastermind.marketplace_flows)
+
+``` txt
+{% load i18n %}
+{% trans 'Your submission has been rejected' %}
+```
+
+### flow_submitted_subject.txt (waldur_mastermind.marketplace_flows)
+
+``` txt
+{% load i18n %}
+{% trans 'Resource creation request has been submitted' %}
+```
+
 ## waldur_mastermind.marketplace_support
-
-### update_limits_template.txt (waldur_mastermind.marketplace_support)
-
-``` txt
-[Update limits for resource {{order_item.resource.scope.name}}|{{request_url}}].
-Marketplace resource UUID: {{order_item.resource.uuid.hex}}
-Old limits: {{ old_limits }}.
-New limits: {{ new_limits }}.
-```
-
-### terminate_resource_template.txt (waldur_mastermind.marketplace_support)
-
-``` txt
-{% load waldur_marketplace %}[Terminate resource {{order_item.resource.scope.name}}|{{request_url}}].
-{% plan_details order_item.resource.plan %}
-Marketplace resource UUID: {{order_item.resource.uuid.hex}}
-```
 
 ### create_resource_template.txt (waldur_mastermind.marketplace_support)
 
@@ -2002,36 +1985,24 @@ Switch from {{order_item.resource.plan.name}} plan to {{order_item.plan.name}}.
 Marketplace resource UUID: {{order_item.resource.uuid.hex}}
 ```
 
+### update_limits_template.txt (waldur_mastermind.marketplace_support)
+
+``` txt
+[Update limits for resource {{order_item.resource.scope.name}}|{{request_url}}].
+Marketplace resource UUID: {{order_item.resource.uuid.hex}}
+Old limits: {{ old_limits }}.
+New limits: {{ new_limits }}.
+```
+
+### terminate_resource_template.txt (waldur_mastermind.marketplace_support)
+
+``` txt
+{% load waldur_marketplace %}[Terminate resource {{order_item.resource.scope.name}}|{{request_url}}].
+{% plan_details order_item.resource.plan %}
+Marketplace resource UUID: {{order_item.resource.uuid.hex}}
+```
+
 ## waldur_mastermind.support
-
-### description.txt (waldur_mastermind.support)
-
-``` txt
-{{issue.description}}
-
----
-Additional Info:
-{% if issue.customer %}- Organization: {{issue.customer.name}}{% endif %}
-{% if issue.project %}- Project: {{issue.project.name}}{% endif %}
-{% if issue.resource %}
-    {% if issue.resource.service_settings %}
-        {% if issue.resource.service_settings.type %}- Service type: {{issue.resource.service_settings.type}}{% endif %}
-        - Offering name: {{ issue.resource.service_settings.name }}
-        - Offering provided by: {{ issue.resource.service_settings.customer.name }}
-    {% endif %}
-    - Affected resource: {{issue.resource}}
-{% endif %}
-- Site name: {{ settings.WALDUR_CORE.SITE_NAME }}
-- Site URL: {{ settings.WALDUR_CORE.HOMEPORT_URL }}
-```
-
-### notification_comment_updated.txt (waldur_mastermind.support)
-
-``` txt
-Hello!
-
-The comment has been updated. Please go to {{issue_url}} to see it.
-```
 
 ### notification_issue_updated.txt (waldur_mastermind.support)
 
@@ -2056,75 +2027,31 @@ Priority has been changed from {{ changed.priority }} to {{ issue.priority }}.
 Please go to {{issue_url}} to see it.
 ```
 
+### description.txt (waldur_mastermind.support)
+
+``` txt
+{{issue.description}}
+
+---
+Additional Info:
+{% if issue.customer %}- Organization: {{issue.customer.name}}{% endif %}
+{% if issue.project %}- Project: {{issue.project.name}}{% endif %}
+{% if issue.resource %}
+    {% if issue.resource.service_settings %}
+        {% if issue.resource.service_settings.type %}- Service type: {{issue.resource.service_settings.type}}{% endif %}
+        - Offering name: {{ issue.resource.service_settings.name }}
+        - Offering provided by: {{ issue.resource.service_settings.customer.name }}
+    {% endif %}
+    - Affected resource: {{issue.resource}}
+{% endif %}
+- Site name: {{ settings.WALDUR_CORE.SITE_NAME }}
+- Site URL: {{ settings.WALDUR_CORE.HOMEPORT_URL }}
+```
+
 ### notification_issue_feedback_subject.txt (waldur_mastermind.support)
 
 ``` txt
 Please share your feedback: {{issue.key}} {{issue.summary}}
-```
-
-### notification_comment_updated_subject.txt (waldur_mastermind.support)
-
-``` txt
-The comment has been updated
-```
-
-### notification_issue_feedback.txt (waldur_mastermind.support)
-
-``` txt
-Hello, {{issue.caller.full_name}}!
-
-We would like to hear your feedback regarding your recent experience with support for {{issue_url}}.
-
-Click on the evaluations below to provide the feedback.
-
-{% for link in feedback_links%}
-    {{link.label}}: {{link.link}}
-{% endfor %}
-```
-
-### notification_comment_updated.html (waldur_mastermind.support)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>The comment has been updated ({{ issue.key }})</title>
-</head>
-<body>
-<p>
-    {{ comment.author.name }} updated comment.
-</p>
-<p>
-    <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
-</p>
-<p>
-    Old comment:
-</p>
-<p>
-    {{ old_description }}
-</p>
-<p>
-    New comment:
-</p>
-<p>
-    {{ comment.description }}
-</p>
-</body>
-</html>
-```
-
-### notification_comment_added.txt (waldur_mastermind.support)
-
-``` txt
-Hello!
-
-The issue you have created has a new comment. Please go to {{issue_url}} to see it.
-```
-
-### summary.txt (waldur_mastermind.support)
-
-``` txt
-{% if issue.customer.abbreviation %}{{issue.customer.abbreviation}}: {% endif %}{{issue.summary}}
 ```
 
 ### notification_issue_updated.html (waldur_mastermind.support)
@@ -2164,12 +2091,6 @@ The issue you have created has a new comment. Please go to {{issue_url}} to see 
 </p>
 </body>
 </html>
-```
-
-### notification_issue_updated_subject.txt (waldur_mastermind.support)
-
-``` txt
-Updated issue: {{issue.key}} {{issue.summary}}
 ```
 
 ### notification_issue_feedback.html (waldur_mastermind.support)
@@ -2221,6 +2142,71 @@ Updated issue: {{issue.key}} {{issue.summary}}
 </html>
 ```
 
+### notification_issue_updated_subject.txt (waldur_mastermind.support)
+
+``` txt
+Updated issue: {{issue.key}} {{issue.summary}}
+```
+
+### notification_comment_updated.txt (waldur_mastermind.support)
+
+``` txt
+Hello!
+
+The comment has been updated. Please go to {{issue_url}} to see it.
+```
+
+### notification_comment_updated_subject.txt (waldur_mastermind.support)
+
+``` txt
+The comment has been updated
+```
+
+### notification_comment_added.txt (waldur_mastermind.support)
+
+``` txt
+Hello!
+
+The issue you have created has a new comment. Please go to {{issue_url}} to see it.
+```
+
+### notification_comment_updated.html (waldur_mastermind.support)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>The comment has been updated ({{ issue.key }})</title>
+</head>
+<body>
+<p>
+    {{ comment.author.name }} updated comment.
+</p>
+<p>
+    <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
+</p>
+<p>
+    Old comment:
+</p>
+<p>
+    {{ old_description }}
+</p>
+<p>
+    New comment:
+</p>
+<p>
+    {{ comment.description }}
+</p>
+</body>
+</html>
+```
+
+### notification_comment_added_subject.txt (waldur_mastermind.support)
+
+``` txt
+The issue you have created has a new comment
+```
+
 ### notification_comment_added.html (waldur_mastermind.support)
 
 ``` html
@@ -2243,9 +2229,23 @@ Updated issue: {{issue.key}} {{issue.summary}}
 </html>
 ```
 
-### notification_comment_added_subject.txt (waldur_mastermind.support)
+### summary.txt (waldur_mastermind.support)
 
 ``` txt
-The issue you have created has a new comment
+{% if issue.customer.abbreviation %}{{issue.customer.abbreviation}}: {% endif %}{{issue.summary}}
+```
+
+### notification_issue_feedback.txt (waldur_mastermind.support)
+
+``` txt
+Hello, {{issue.caller.full_name}}!
+
+We would like to hear your feedback regarding your recent experience with support for {{issue_url}}.
+
+Click on the evaluations below to provide the feedback.
+
+{% for link in feedback_links%}
+    {{link.label}}: {{link.link}}
+{% endfor %}
 ```
 
