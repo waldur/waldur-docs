@@ -129,6 +129,7 @@ get_remote_eduteams_user_info(USER_CUID)
 
 ### Generate report for list of projects and their details
 
+```python
 import sys
 import csv
 
@@ -147,3 +148,4 @@ for project in projects:
             project.customer.country,
         ]
     )
+```
