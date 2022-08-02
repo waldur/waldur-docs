@@ -126,3 +126,23 @@ USER_CUID='semi_secret@eduteams.org'
 
 get_remote_eduteams_user_info(USER_CUID)
 ```
+
+### Generate report for list of projects and their details
+
+import sys
+import csv
+
+from waldur_core.structure import models as structure_models
+
+projects = structure_models.Project.objects.filter(created__lte='2022-05-31')
+writer = csv.writer(sys.stdout)
+for project in projects:
+    owner = project.customer.get_owners().first()
+    writer.writerow(
+        [
+            project.name,
+            owner and owner.full_name,
+            project.oecd_fos_2007_code,
+            project.customer.country,
+        ]
+    )
