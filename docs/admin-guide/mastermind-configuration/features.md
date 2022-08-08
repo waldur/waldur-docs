@@ -164,6 +164,10 @@ Render service usage as a flowmap chart in support workspace.
 
 Render service usage as a heatmap chart in support workspace.
 
+## support.next_branch
+
+Render "Try out new version" link in toolbar.
+
 ## support.offering_comments
 
 Render comments tab in request-based item details page.
