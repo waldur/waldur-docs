@@ -6,7 +6,7 @@ Default value:
 
 ```python
 WALDUR_AUTH_SAML2 = {'ALLOW_TO_SELECT_IDENTITY_PROVIDER': True,
- 'ATTRIBUTE_MAP_DIR': '',
+ 'ATTRIBUTE_MAP_DIR': '/etc/waldur/saml2/attributemaps',
  'AUTHN_REQUESTS_SIGNED': 'true',
  'CATEGORIES': ['http://www.geant.net/uri/dataprotection-code-of-conduct/v1'],
  'CERT_FILE': '',
