@@ -1428,6 +1428,7 @@ Default value:
 
 ```python
 WALDUR_OPENSTACK_TENANT = {'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
+ 'ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION': False,
  'MAX_CONCURRENT_PROVISION': {'OpenStackTenant.Instance': 4,
                               'OpenStackTenant.Snapshot': 4,
                               'OpenStackTenant.Volume': 4},
@@ -1439,6 +1440,12 @@ WALDUR_OPENSTACK_TENANT = {'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True
 Type: bool
 
 If true, customer users would be offered actions for accessing OpenStack Console
+
+### ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION
+
+Type: bool
+
+If true, allow connecting of Instances directly to external networks
 
 ### MAX_CONCURRENT_PROVISION
 
