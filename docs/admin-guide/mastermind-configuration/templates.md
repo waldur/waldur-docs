@@ -37,6 +37,21 @@ To confirm the change of email address from {{ request.user.email }} to {{ reque
 Role {{ permission.role }}  for {{ structure }} has been granted.
 ```
 
+### notifications_profile_changes_operator_message.txt (waldur_core.structure)
+
+``` txt
+Owner of
+{% for o in organizations %}
+    {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
+{% endfor %}
+
+{{user.full_name}} (id={{ user.id }}) has changed
+
+{% for f in fields %}
+    {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
+{% endfor %}
+```
+
 ### service_settings_description.html (waldur_core.structure)
 
 ``` html
@@ -76,6 +91,12 @@ Role {{ permission.role }}  for {{ structure }} has been granted.
 {% endfor %}
 ```
 
+### notifications_profile_changes_operator_subject.txt (waldur_core.structure)
+
+``` txt
+Owner details have been updated
+```
+
 ### structure_role_granted_subject.txt (waldur_core.structure)
 
 ``` txt
@@ -95,6 +116,16 @@ Verify new email address.
 ```
 
 ### notifications_profile_changes.html (waldur_core.structure)
+
+``` html
+User {{user.full_name}} (id={{ user.id }}) profile has been updated:
+
+{% for f in fields %}
+    {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
+{% endfor %}
+```
+
+### notifications_profile_changes_operator_message.html (waldur_core.structure)
 
 ``` html
 Owner of

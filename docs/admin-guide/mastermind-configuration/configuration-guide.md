@@ -543,10 +543,11 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'LOGGING_REPORT_INTERVAL': datetime.timedelta(days=7),
  'MASTERMIND_URL': '',
  'NATIVE_NAME_ENABLED': False,
- 'NOTIFICATIONS_PROFILE_CHANGES': {'ENABLED': True,
+ 'NOTIFICATIONS_PROFILE_CHANGES': {'ENABLE_OPERATOR_OWNER_NOTIFICATIONS': False,
                                    'FIELDS': ('email',
                                               'phone_number',
-                                              'job_title')},
+                                              'job_title'),
+                                   'OPERATOR_NOTIFICATION_EMAILS': []},
  'NOTIFICATION_SUBJECT': 'Notifications from Waldur',
  'ONLY_STAFF_CAN_INVITE_USERS': False,
  'ONLY_STAFF_MANAGES_SERVICES': False,
@@ -817,7 +818,7 @@ Allows to render native name field in customer and user forms.
 
 Type: dict
 
-Allows enabling notifications about profile changes of organization owners.
+Configure notifications about profile changes of organization owners.
 
 ### NOTIFICATION_SUBJECT
 
