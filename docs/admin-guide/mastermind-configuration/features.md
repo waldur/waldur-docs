@@ -96,6 +96,10 @@ Render list of private marketplace service providers in organization workspace.
 
 Allow to write a review for marketplace offering.
 
+## marketplace.show_experimental_ui_components
+
+Enabled display of experimental or mocked components in marketplace.
+
 ## marketplace.terms_of_service
 
 Render terms of service when offering is ordered.
