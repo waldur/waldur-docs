@@ -1,0 +1,130 @@
+- name: Setup RKE2 node
+  hosts: rke2_hosts
+  become: true
+  vars_files:
+    - rke2_vars
+  tasks:
+    # Container disk setup
+    - name: Create a mount directory for containers
+      file:
+        path: "{{ containers_directory }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create File System for containers
+      filesystem:
+        fstype: ext4
+        dev: "{{ containers_mount_point }}"
+
+    - name: Get UUID for containers disk
+      command: blkid -s UUID -o value "{{ containers_mount_point }}"
+      register: cont_disk_blkid
+
+    - name: Mount up device by UUID
+      mount:
+        path: "{{ containers_directory }}"
+        src: 'UUID={{ cont_disk_blkid.stdout | quote }}'
+        fstype: ext4
+        opts: noatime
+        state: mounted
+
+    # Storage disk setup
+    - name: Create a mount directory for data storage
+      file:
+        path: "{{ storage_directory }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create File System for data storage dir
+      filesystem:
+        fstype: ext4
+        dev: "{{ storage_mount_point }}"
+
+    - name: Get UUID for containers disk
+      command: blkid -s UUID -o value "{{ storage_mount_point }}"
+      register: storage_disk_blkid
+
+    - name: Mount up device by UUID
+      mount:
+        path: "{{ storage_directory }}"
+        src: 'UUID={{ storage_disk_blkid.stdout | quote }}'
+        fstype: ext4
+        opts: noatime
+        state: mounted
+
+    # RKE2 server setup
+    - name: Add first server IP to hosts
+      lineinfile:
+        path: /etc/hosts
+        state: present
+        line: "{{ rke2_first_server_ip  }}    {{ rke2_first_server_hostname }}"
+      when:
+        - inventory_hostname != 'rke2_node_0'
+
+    - name: Setup network manager
+      blockinfile:
+        path: /etc/NetworkManager/conf.d/rke2-canal.conf
+        create: yes
+        state: present
+        block: |
+          [keyfile]
+          unmanaged-devices=interface-name:cali*;interface-name:flannel*
+
+    - name: Reload Network manager
+      systemd:
+        service: NetworkManager
+        state: reloaded
+
+    - name: Disable FireWall
+      systemd:
+        service: firewalld
+        enabled: false
+
+    - name: Stop FireWall
+      systemd:
+        service: firewalld
+        state: stopped
+
+    - name: Upload RKE2 installer
+      copy:
+        src: rke2-install.sh
+        dest: /tmp/rke2-install.sh
+
+    - name: Run installer
+      command: sh /tmp/rke2-install.sh
+
+    - name: Create config file for first server
+      lineinfile:
+        path: /etc/rancher/rke2/config.yaml
+        create: yes
+        state: present
+        line: "token: {{ rke2_shared_token }}"
+      when:
+        - inventory_hostname == 'rke2_node_01'
+
+    - name: Create config file for other servers
+      blockinfile:
+        path: /etc/rancher/rke2/config.yaml
+        create: yes
+        state: present
+        block: |
+          server: https://{{ rke2_first_server_hostname }}:9345
+          token: {{ rke2_shared_token }}
+      when:
+        - inventory_hostname != 'rke2_node_01'
+
+    - name: Enable RKE2 server
+      systemd:
+        service: rke2-server.service
+        enabled: yes
+
+    - name: Start RKE2 server
+      systemd:
+        service: rke2-server.service
+        state: started
+
+    - name: Link kubectl binary
+      file:
+        src: /var/lib/rancher/rke2/bin/kubectl
+        dest: /bin/kubectl
+        state: link
