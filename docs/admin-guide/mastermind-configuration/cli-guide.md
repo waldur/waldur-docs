@@ -215,6 +215,18 @@ optional arguments:
                  created.
 ```
 
+## load_user_agreements
+
+Imports privacy policy and terms of service into DB
+
+```bash
+usage: waldur load_user_agreements [-tos TOS] [-pp PP]
+
+optional arguments:
+  -tos TOS, --tos TOS  Path to a Terms of service file
+  -pp PP, --pp PP      Path to a Privacy policy file
+```
+
 ## move_project
 
 Move Waldur project to a different organization.
