@@ -1,0 +1,16 @@
+- name: Add k8s dashboard repository
+  kubernetes.core.helm_repository:
+    repo_name: kubernetes-dashboard
+    repo_url: https://kubernetes.github.io/dashboard/
+    repo_state: present
+
+- name: Install k8s dashboard release
+  kubernetes.core.helm:
+    chart_ref: kubernetes-dashboard/kubernetes-dashboard
+    chart_version: 5.10.0
+    release_name: kubernetes-dashboard
+    state: present
+    namespace: kubernetes-dashboard
+    update_repo_cache: true
+    create_namespace: true
+    kubeconfig: /etc/rancher/rke2/rke2.yaml
