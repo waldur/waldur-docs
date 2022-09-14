@@ -6,6 +6,9 @@
     line: "{{ rke2_initial_server_ip  }}    {{ rke2_initial_server_hostname }}"
   when: not (initial_server | default(false) | bool)
 
+- name: Gather service facts
+  service_facts:
+
 - name: Setup network manager
   blockinfile:
     path: /etc/NetworkManager/conf.d/rke2-canal.conf
@@ -19,12 +22,14 @@
   systemd:
     service: NetworkManager
     state: reloaded
+  when: ansible_facts.services['NetworkManager.service'] is defined
 
 - name: Stop FireWall
   systemd:
     service: firewalld
     enabled: false
     state: stopped
+  when: ansible_facts.services['firewalld.service'] is defined
 
 # RKE2 server setup
 - name: Upload RKE2 installer
