@@ -20,14 +20,10 @@
     service: NetworkManager
     state: reloaded
 
-- name: Disable FireWall
-  systemd:
-    service: firewalld
-    enabled: false
-
 - name: Stop FireWall
   systemd:
     service: firewalld
+    enabled: false
     state: stopped
 
 # RKE2 server setup
@@ -75,3 +71,8 @@
     service: rke2-server.service
     state: started
   when: not (initial_server | default(false) | bool)
+
+- name: Copy custom NGINX controller config
+  copy:
+    src: nginx-helm-chart-config.yaml
+    dest: /var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml
