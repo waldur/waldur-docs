@@ -17,7 +17,9 @@ Instructions below are aimed to provide a basic configuration of Keycloak, pleas
  [![Add client](img/keycloak-add-client.png)](img/keycloak-add-client.png)
 1. Change client's access type to "confidential".
  [![Set access type](img/keycloak-client-access-type.png)](img/keycloak-client-access-type.png)
-1. You can get secret code for the client configuratio
+1. Change client's Valid redirect URIs to "*".
+ [![Valid redirect URIs](img/keycloak-client-redirect.png)](img/keycloak-client-redirect.png)
+1. You can get secret code for the client configuration
  [![Secret code](img/keycloak-client-secret.png)](img/keycloak-client-secret.png)
 1. You can find the settings required for configuration of Waldur under the following path on your Keycloak deployment (change `test-waldur` to the realm that you are using):  `/auth/realms/test-waldur/.well-known/openid-configuration`
 
