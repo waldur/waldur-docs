@@ -4,18 +4,15 @@
     path: "{{ storage_directory }}"
     state: directory
     mode: '0755'
-  when: storage_setup | default(false) | bool
 
 - name: Create file system for data storage dir
   filesystem:
     fstype: ext4
     dev: "{{ storage_device_path }}"
-  when: storage_setup | default(false) | bool
 
 - name: Get UUID for storage disk
   command: blkid -s UUID -o value "{{ storage_device_path }}"
   register: storage_disk_blkid
-  when: storage_setup | default(false) | bool
 
 - name: Mount up device by UUID
   mount:
@@ -24,4 +21,3 @@
     fstype: ext4
     opts: noatime
     state: mounted
-  when: storage_setup | default(false) | bool

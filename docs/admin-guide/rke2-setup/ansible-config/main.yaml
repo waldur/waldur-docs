@@ -4,9 +4,26 @@
   vars_files:
     - rke2_vars
   tasks:
-    - import_tasks: disk-setup.yaml
-    - import_tasks: rke2-setup.yaml
-    - import_tasks: longhorn-setup.yaml
-    - import_tasks: k8s-dashboard-setup.yaml
-    - import_tasks: waldur-installation.yaml
-      when: install_waldur | default(false)
+    - name: Setup disk for storage
+      import_tasks: task-files/disk-setup.yaml
+      when: setup_storage | default(true)
+
+    - name: Setup RKE2
+      import_tasks: task-files/rke2-setup.yaml
+      when: setup_rke2 | default(true)
+
+    - name: Setup Helm
+      import_tasks: task-files/helm-installation.yaml
+      when: setup_helm | default(true)
+
+    - name: Setup Longhorn
+      import_tasks: task-files/longhorn-setup.yaml
+      when: setup_longhorn | default(true)
+
+    - name: Setup k8s dashboard
+      import_tasks: task-files/k8s-dashboard-setup.yaml
+      when: setup_k8s_dashboard | default(true)
+
+    - name: Setup Waldur
+      import_tasks: task-files/waldur-installation.yaml
+      when: setup_waldur | default(true)

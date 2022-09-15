@@ -3,7 +3,7 @@
   lineinfile:
     path: /etc/hosts
     state: present
-    line: "{{ rke2_initial_server_ip  }}    {{ rke2_initial_server_hostname }}"
+    line: "{{ rke2_initial_server_ip }}    {{ rke2_initial_server_hostname }}"
   when: not (initial_server | default(false) | bool)
 
 - name: Gather service facts
@@ -34,7 +34,7 @@
 # RKE2 server setup
 - name: Upload RKE2 installer
   copy:
-    src: rke2-install.sh
+    src: rke2/rke2-install.sh
     dest: /tmp/rke2-install.sh
 
 - name: Run installer
@@ -77,7 +77,25 @@
     state: started
   when: not (initial_server | default(false) | bool)
 
+- name: Link kubectl binary
+  file:
+    src: /var/lib/rancher/rke2/bin/kubectl
+    dest: /bin/kubectl
+    state: link
+
+- name: Check status of the cluster nodes
+  command: kubectl get nodes
+  register: nodes_status
+  environment:
+    KUBECONFIG: "/etc/rancher/rke2/rke2.yaml"
+  run_once: true
+
+- name: View k8s nodes
+  debug:
+    msg: "{{ nodes_status.stdout }}"
+  run_once: true
+
 - name: Copy custom NGINX controller config
   copy:
-    src: nginx-helm-chart-config.yaml
+    src: rke2/nginx-helm-chart-config.yaml
     dest: /var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml
