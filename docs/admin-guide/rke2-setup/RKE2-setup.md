@@ -37,5 +37,5 @@ For basic installation of [RKE2](https://docs.rke2.io/), an user needs to:
 
     ```bash
     cd ansible-config
-    ansible-playbook -D -i rke2_inventory.ini rke2-setup.yaml
+    ansible-playbook -D -i rke2_inventory rke2-setup.yaml
     ```
