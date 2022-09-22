@@ -25,23 +25,21 @@
     - "'waldur/waldur-chart.zip' is file"
     - initial_server | default(false) | bool
 
-- name: Create target dir for Waldur Helm
-  file:
-    path: waldur_helm
-    state: directory
-  when:
-    - "'waldur/waldur-chart.zip' is file"
-    - initial_server | default(false) | bool
-
 - name: Unarchive Waldur Helm chart
   unarchive:
     src: waldur/waldur-chart.zip
-    dest: waldur_helm/
+    dest: "."
   when:
     - "'waldur/waldur-chart.zip' is file"
     - initial_server | default(false) | bool
 
-- name: Create empty file for custom Waldur values
+- name: Rename target Waldur Helm direcroty
+  command: mv waldur-helm-master waldur_helm
+  when:
+    - "'waldur/waldur-chart.zip' is file"
+    - initial_server | default(false) | bool
+
+- name: Create an empty file for custom Waldur values
   copy:
     content: ""
     dest: waldur_helm/waldur/custom-values.yaml
@@ -49,18 +47,20 @@
   when:
     - initial_server | default(false) | bool
 
-- name: Template custom waldur chart values
-  template:
-    src: waldur/waldur-values.yaml
+- name: Copy custom Waldur chart values
+  copy:
+    src: waldur/values.yaml
     dest: waldur_helm/waldur/custom-values.yaml
   when:
-    - "'waldur/waldur-values.yaml' is file"
+    - "'waldur/values.yaml' is file"
     - initial_server | default(false) | bool
 
 - name: Find custom config directories
   find:
-    paths: deployment/
+    paths: waldur/
     file_type: directory
+  delegate_to: localhost
+  become: no
   register: find_result
   when: initial_server | default(false) | bool
 

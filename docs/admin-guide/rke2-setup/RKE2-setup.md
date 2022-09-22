@@ -1,6 +1,6 @@
 # RKE2 installation and setup
 
-For basic installation of [RKE2](https://docs.rke2.io/), an user needs to:
+To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
 1. Install [Ansible](https://docs.ansible.com/ansible/2.9/) with version >= 2.9.
 1. Download the [playbook archive](rke2-setup.tar.gz)
