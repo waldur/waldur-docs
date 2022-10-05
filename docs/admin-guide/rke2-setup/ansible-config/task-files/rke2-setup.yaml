@@ -4,7 +4,9 @@
     path: /etc/hosts
     state: present
     line: "{{ rke2_initial_server_ip }}    {{ rke2_initial_server_hostname }}"
-  when: not (initial_server | default(false) | bool)
+  when:
+    - setup_hosts_file | default(true) | bool
+    - not (initial_server | default(false) | bool)
 
 - name: Gather service facts
   service_facts:
