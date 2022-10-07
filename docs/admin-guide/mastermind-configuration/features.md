@@ -56,10 +56,6 @@ Do not allow user to grant multiple roles in the same project or organization us
 
 Render "Show user details" button in invitation creation form.
 
-## invitations.show_group_invitations
-
-Render elements supporting group invitation management.
-
 ## invitations.show_tax_number
 
 Show tax number field in invitation creation form.
