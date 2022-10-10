@@ -4,6 +4,16 @@
   vars_files:
     - rke2_vars
   tasks:
+    - name: Get environment
+      shell: env
+      environment: "{{ proxy_env | default({}) }}"
+      register: env
+
+    - name: Print environment
+      run_once: true
+      ansible.builtin.debug:
+        msg: "{{ env.stdout }}"
+
     - name: Setup disk for storage
       import_tasks: task-files/disk-setup.yaml
       when: setup_storage | default(true)
