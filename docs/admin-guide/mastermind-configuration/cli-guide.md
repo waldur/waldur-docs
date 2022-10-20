@@ -215,6 +215,17 @@ optional arguments:
                  created.
 ```
 
+## load_notifications
+
+Import notifications to DB
+
+```bash
+usage: waldur load_notifications notifications_file
+
+positional arguments:
+  notifications_file  Specifies location of notifications file.
+```
+
 ## load_user_agreements
 
 Imports privacy policy and terms of service into DB
@@ -265,6 +276,10 @@ usage: waldur pgmigrate [--path PATH]
 optional arguments:
   --path PATH, -p PATH  Path to dumped database.
 ```
+
+## print_notifications
+
+
 
 ## pull_openstack_volume_metadata
 

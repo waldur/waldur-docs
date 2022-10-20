@@ -843,6 +843,12 @@ A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 </html>
 ```
 
+### marketplace_resource_termination_scheduled_staff_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource.name }} termination has been scheduled.
+```
+
 ### notification_service_provider_approval_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -886,20 +892,24 @@ Resource {{ resource_name }} update has failed.
 </html>
 ```
 
-### marketplace_resource_terminatate_scheduled_staff_message.txt (waldur_mastermind.marketplace)
+### marketplace_resource_termination_scheduled_message.html (waldur_mastermind.marketplace)
 
-``` txt
-Hello!
-
-The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
-```
-
-### marketplace_resource_terminatate_scheduled_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource.name }} termination has been scheduled.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
+    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
+</p>
+</body>
+</html>
 ```
 
 ### marketplace_resource_terminate_succeeded_message.txt (waldur_mastermind.marketplace)
@@ -1080,6 +1090,26 @@ Phone: {{ support_phone }}
 Resource {{ resource_name }} deletion has failed.
 ```
 
+### marketplace_resource_termination_scheduled_staff_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource.name }} termination has been scheduled.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
+    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
+</p>
+</body>
+</html>
+```
+
 ### marketplace_plan_template.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -1113,44 +1143,12 @@ Plan: {{ plan.name }}{% for component in components %}
 Project {{ project.name }} will be deleted.
 ```
 
-### marketplace_resource_terminatate_scheduled_staff_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Resource {{ resource.name }} terminatation has been scheduled.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
-    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
-</p>
-</body>
-</html>
-```
-
-### marketplace_resource_terminatate_scheduled_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Resource {{ resource.name }} terminatation has been scheduled.
-```
-
 ### notification_approval_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Hello!
 
 A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-```
-
-### marketplace_resource_terminatate_scheduled_staff_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-Resource {{ resource.name }} terminatation has been scheduled.
 ```
 
 ### order.html (waldur_mastermind.marketplace)
@@ -1373,26 +1371,6 @@ Thank you!
 </html>
 ```
 
-### marketplace_resource_terminatate_scheduled_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Resource {{ resource.name }} terminatation has been scheduled.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
-    If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
-</p>
-</body>
-</html>
-```
-
 ### marketplace_resource_update_succeeded_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -1435,6 +1413,12 @@ Hello!
 Resource {{ resource_name }} deletion has failed.
 ```
 
+### marketplace_resource_termination_scheduled_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource.name }} termination has been scheduled.
+```
+
 ### notification_usages_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -1461,6 +1445,14 @@ The resource names are:
     {{ resource.resource.name }} {{ resource.resource_url }}
 {% endfor %}
 Thank you!
+```
+
+### marketplace_resource_termination_scheduled_staff_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
 ```
 
 ### marketplace_resource_update_limits_succeeded_message.html (waldur_mastermind.marketplace)
@@ -1541,6 +1533,14 @@ Resource {{ resource_name }} creation has failed.
 Hello!
 
 Resource {{ resource_name }} has been created.
+```
+
+### marketplace_resource_termination_scheduled_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
 ```
 
 ### notification_about_project_ending_message.html (waldur_mastermind.marketplace)
@@ -1632,6 +1632,7 @@ Resource {{ resource_name }} has been created.
 
 ``` txt
 {% load i18n %}
+{% load waldur_core %}
 
 {% trans 'Resource creation request has been submitted.' %}
 
@@ -1761,6 +1762,8 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 ### flow_rejected_message.txt (waldur_mastermind.marketplace_flows)
 
 ``` txt
+{% load i18n %}
+
 {% if flow.customer_create_request.is_rejected %}
 {% trans 'Customer creation request has been rejected.' %}
 
@@ -1821,6 +1824,8 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 
 ``` html
 {% load i18n %}
+{% load waldur_core %}
+
 <!DOCTYPE html>
 <html>
 
