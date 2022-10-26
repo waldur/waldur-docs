@@ -3,12 +3,8 @@
 To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
 1. Install [Ansible](https://docs.ansible.com/ansible/2.9/) with version >= 2.9.
-1. Download the [playbook archive](rke2-setup.tar.gz)
-1. Unarchive it
 
-    ```bash
-    tar xvfz rke2-setup.tar.gz
-    ```
+1. Download this repository
 
 1. Install `kubernetes.core` collection from ansible galaxy and download installation files.
 
@@ -43,5 +39,5 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
     ```bash
     cd ansible-config
-    ansible-playbook -D -i rke2_inventory rke2-setup.yaml
+    ansible-playbook -D -i rke2_inventory main.yaml
     ```
