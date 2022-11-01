@@ -2,7 +2,7 @@
 
 To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
-1. Install [Ansible](https://docs.ansible.com/ansible/2.9/) with version >= 2.9.
+1. Install [Ansible](https://docs.ansible.com/ansible/2.10/) with version >= 2.10 and ensure python3 is installed.
 
 1. Download this repository
 
@@ -19,7 +19,7 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
     curl -o rke2/rke2-install.sh --create-dirs https://get.rke2.io
 
-    curl -fsSL -o helm/get_helm.sh --create-dirs https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    curl -fsSL -o helm/get-helm.sh --create-dirs https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
     ```
 
 1. Download Helm chart archives if your target machines don't have internet access
@@ -39,5 +39,5 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
     ```bash
     cd ansible-config
-    ansible-playbook -D -i rke2_inventory main.yaml
+    ansible-playbook -D -i rke2_inventory install.yaml
     ```
