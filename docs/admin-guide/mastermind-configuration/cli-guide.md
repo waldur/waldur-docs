@@ -266,6 +266,22 @@ optional arguments:
                         UUID of a marketplace resource to move.
 ```
 
+## override_templates
+
+Override templates
+
+```bash
+usage: waldur override_templates [-c CLEAN] templates_file
+
+positional arguments:
+  templates_file        Specifies location of templates file.
+
+optional arguments:
+  -c CLEAN, --clean CLEAN
+                        This flag means total synchronization with the
+                        template file you pass.
+```
+
 ## pgmigrate
 
 Load data with disabled signals.
