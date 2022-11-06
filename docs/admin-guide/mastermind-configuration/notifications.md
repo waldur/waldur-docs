@@ -53,7 +53,6 @@ A notification about upcoming bookings
 
     ```
 
-
 ## WALDUR_MASTERMIND.INVOICES
 
 ### invoices.notification
@@ -99,7 +98,6 @@ A notification of invoice
 
     ```
 
-
 ### invoices.upcoming_ends_notification
 
 A notification about upcoming ends
@@ -140,7 +138,6 @@ A notification about upcoming ends
     </html>
 
     ```
-
 
 ## WALDUR_MASTERMIND.MARKETPLACE
 
@@ -186,7 +183,6 @@ A notification of a failed resource creation
 
     ```
 
-
 ### marketplace.marketplace_resource_create_succeeded
 
 A notification of a successful resource creation
@@ -228,7 +224,6 @@ A notification of a successful resource creation
     </html>
 
     ```
-
 
 ### marketplace.marketplace_resource_terminate_failed
 
@@ -272,7 +267,6 @@ A notification of a failed resource termination
 
     ```
 
-
 ### marketplace.marketplace_resource_terminate_succeeded
 
 A notification of a successful resource termination
@@ -314,7 +308,6 @@ A notification of a successful resource termination
     </html>
 
     ```
-
 
 ### marketplace.marketplace_resource_termination_scheduled
 
@@ -359,7 +352,6 @@ A notification of a scheduled resource termination
 
     ```
 
-
 ### marketplace.marketplace_resource_termination_scheduled_staff
 
 A notification of a resource termination
@@ -403,7 +395,6 @@ A notification of a resource termination
 
     ```
 
-
 ### marketplace.marketplace_resource_update_failed
 
 A notification of failed resource update
@@ -446,7 +437,6 @@ A notification of failed resource update
 
     ```
 
-
 ### marketplace.marketplace_resource_update_limits_failed
 
 A notification of failed resource limits update
@@ -488,7 +478,6 @@ A notification of failed resource limits update
     </html>
 
     ```
-
 
 ### marketplace.marketplace_resource_update_limits_succeeded
 
@@ -567,7 +556,6 @@ A notification of a successful resource limit update
 
     ```
 
-
 ### marketplace.marketplace_resource_update_succeeded
 
 A notification of a successful resource update
@@ -644,7 +632,6 @@ A notification of a successful resource update
 
     ```
 
-
 ### marketplace.notification_about_project_ending
 
 A notification about project ending
@@ -694,7 +681,6 @@ A notification about project ending
     </html>
 
     ```
-
 
 ### marketplace.notification_about_stale_resources
 
@@ -754,7 +740,6 @@ A notification about stale resources
 
     ```
 
-
 ### marketplace.notification_approval
 
 A notification of order approval
@@ -797,7 +782,6 @@ A notification of order approval
 
     ```
 
-
 ### marketplace.notification_service_provider_approval
 
 A notification to provider about pending order item approval
@@ -839,7 +823,6 @@ A notification to provider about pending order item approval
     </html>
 
     ```
-
 
 ### marketplace.notification_usages
 
@@ -903,7 +886,6 @@ A notification about usages
     </html>
 
     ```
-
 
 ## WALDUR_MASTERMIND.MARKETPLACE_FLOWS
 
@@ -1043,7 +1025,6 @@ A notification for a rejected marketplace flow
     {% endif %}
 
     ```
-
 
 ### marketplace_flows.flow_submitted
 
@@ -1356,7 +1337,6 @@ A notification for a submitted marketplace flow
 
     ```
 
-
 ## WALDUR_RANCHER
 
 ### rancher.notification_create_user
@@ -1403,7 +1383,6 @@ A notification for created rancher user
 
     ```
 
-
 ## WALDUR_CORE.STRUCTURE
 
 ### structure.change_email_request
@@ -1432,7 +1411,6 @@ A notification of an email change request
     <p>To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the <a href="{{ link }}">link</a>.</p>
 
     ```
-
 
 ### structure.notifications_profile_changes_operator
 
@@ -1479,7 +1457,6 @@ A notification of changing a profile
 
     ```
 
-
 ### structure.structure_role_granted
 
 A notification of a granted role
@@ -1506,7 +1483,6 @@ A notification of a granted role
     <p>Role {{ permission.role }}  for {{ structure }} has been granted.</p>
 
     ```
-
 
 ## WALDUR_CORE.USERS
 
@@ -1570,7 +1546,6 @@ A notification of invitation approval
 
     ```
 
-
 ### users.invitation_created
 
 A notification of invitation creation
@@ -1615,7 +1590,6 @@ A notification of invitation creation
     </html>
 
     ```
-
 
 ### users.invitation_rejected
 
@@ -1676,7 +1650,6 @@ A notification of invitation rejection
     </html>
 
     ```
-
 
 ### users.invitation_requested
 
@@ -1806,7 +1779,6 @@ A notification of invitation request
 
     ```
 
-
 ### users.permission_request_submitted
 
 A notification of a submitted invitation request
@@ -1853,5 +1825,4 @@ A notification of a submitted invitation request
     </html>
 
     ```
-
 
