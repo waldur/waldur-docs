@@ -1193,6 +1193,7 @@ Default value:
 ```python
 WALDUR_MARKETPLACE = {'ADMIN_CAN_APPROVE_ORDER': False,
  'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
+ 'ANONYMOUS_USER_CAN_VIEW_PLANS': True,
  'DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE': True,
  'ENABLE_RESOURCE_END_DATE': True,
  'ENABLE_STALE_RESOURCE_NOTIFICATIONS': False,
@@ -1215,6 +1216,12 @@ If true, orders for resource can be approved by admin of the customer project
 Type: bool
 
 Allow anonymous users to see shared offerings in active, paused and archived states
+
+### ANONYMOUS_USER_CAN_VIEW_PLANS
+
+Type: bool
+
+Allow anonymous users to see plans
 
 ### DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE
 
