@@ -46,10 +46,20 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
 ## Add admin ssh keys
 
-1. Setup `admin_keys` and `revoked_admin_keys` vars in `ansible-config/rke2_vars` file
+1. Setup `admin_keys` and `revoked_admin_keys` vars in the `ansible-config/rke2_vars` file
 1. Run the corresponding playbook
 
     ```bash
     cd ansible-config
     ansible-playbook -D -i rke2_inventory add-ssh-keys.yml
+    ```
+
+## Add haproxy load balancer
+
+1. Setup `haproxy_stats_password` var in the `ansible-config/rke2_vars` file
+1. Run the corresponding playbook
+
+    ```bash
+    cd ansible-config
+    ansible-playbook -D -i rke2_inventory add-haproxy-host.yml
     ```
