@@ -295,8 +295,6 @@ optional arguments:
 
 ## print_notifications
 
-
-
 ## pull_openstack_volume_metadata
 
 Pull OpenStack volumes metadata to marketplace.
