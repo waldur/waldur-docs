@@ -1585,6 +1585,7 @@ A notification of invitation creation
     <p>
         {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
         Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
+        Please note: this invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}!
     </p>
     </body>
     </html>
