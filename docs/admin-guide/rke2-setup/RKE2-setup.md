@@ -63,3 +63,50 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
     cd ansible-config
     ansible-playbook -D -i rke2_inventory add-haproxy-host.yml
     ```
+
+## Recover data from DB backup
+
+In order to apply an existing backup to database, a corresponding playbook exists.
+
+**NB:**
+
+- **This operation drops an existing database, creates an empty one and applies the pre-created backup**
+- **During restoration process, the site will be unavailable**
+
+During execution, you will be asked about backup name. You should input it in a correct way. Example of running playbook:
+
+```log
+TASK [List backups] ****************************************************************************************************************************************
+ok: [csl-stg-kubs01] => {}
+
+MSG:
+
+[+] LOCAL_PG_BACKUPS_DIR :
+[+] MINIO_PG_BACKUPS_DIR : pg/data/backups/postgres
+[+] Setting up the postgres alias for minio server (http://minio.default.svc.cluster.local:9000)
+[+] Last 5 backups
+[2022-12-01 05:00:02 UTC]  91KiB backup-2022-12-01-05-00.sql.gz
+[2022-11-30 05:00:02 UTC]  91KiB backup-2022-11-30-05-00.sql.gz
+[2022-11-29 05:00:02 UTC]  91KiB backup-2022-11-29-05-00.sql.gz
+[2022-11-28 16:30:37 UTC]  91KiB backup-2022-11-28-16-30.sql.gz
+[2022-11-28 16:28:27 UTC]  91KiB backup-2022-11-28-16-28.sql.gz
+[+] Finished
+[Choose backup]
+Please enter backup's name:
+```
+
+After this, you should input one of the following lines:
+
+- backup-2022-12-01-05-00.sql.gz
+- backup-2022-11-30-05-00.sql.gz
+- backup-2022-11-29-05-00.sql.gz
+- backup-2022-11-28-16-30.sql.gz
+- backup-2022-11-28-16-28.sql.gz
+
+Otherwise, the entire process will fail, but the site and database with old data will be still available.
+
+To start the process, please, execute the following line in the machine connected to RKE2 nodes:
+
+```bash
+ansible-playbook -D -i rke2_inventory restore-data.yaml
+```
