@@ -1798,7 +1798,7 @@ A notification of a submitted invitation request
     ```
     Hello!
 
-    User {{ permission_request.created_by }} created permission request for {{ permission_request.invitation }}.
+    User {{ permission_request.created_by }} with email {{ permission_request.created_by.email }} created permission request for {{ permission_request.invitation }}.
 
     Please visit the link below to approve or reject permission request: {{ requests_link }}.
 
@@ -1817,7 +1817,7 @@ A notification of a submitted invitation request
       Hello!
     </p>
     <p>
-      User {{ permission_request.created_by }} created permission request for {{ permission_request.invitation }}.
+      User {{ permission_request.created_by }} with email {{ permission_request.created_by.email }} created permission request for {{ permission_request.invitation }}.
     </p>
     <p>
       Please visit the <a href="{{ requests_link }}">link</a> to approve or reject permission request.
