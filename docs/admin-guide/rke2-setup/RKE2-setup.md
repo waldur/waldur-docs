@@ -44,6 +44,18 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
     ansible-playbook -D -i rke2_inventory install.yaml
     ```
 
+You can check Waldur release installation with the following steps:
+
+1. ssh to a node from inventory with `initial_server=true` mark
+2. check all the pods from namespace:
+
+    ```bash
+    export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+    kubectl get pods -n default
+    ```
+
+If you run Waldur in a different namespace, please adjust the value of the `-n` option in the last command above.
+
 ## Add admin ssh keys
 
 1. Setup `admin_keys` and `revoked_admin_keys` vars in the `ansible-config/rke2_vars` file
@@ -63,6 +75,22 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
     cd ansible-config
     ansible-playbook -D -i rke2_inventory add-haproxy-host.yml
     ```
+
+## Update of Waldur
+
+To update Waldur user needs to execute the corresponding playbook:
+
+```bash
+cd ansible-config
+ansible-playbook -D -i rke2_inventory update.yaml
+```
+
+## Update SSL certificates
+
+To update the SSL certificates, please do the following steps:
+
+1. Copy the certificates and keys to the `ansible-config/waldur/tls` directory. **NB: key must be named `tls.key` and cert itself - `tls.crt`**
+2. [Update Waldur release](#update-of-waldur)
 
 ## Recover data from DB backup
 
