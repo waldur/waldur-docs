@@ -85,6 +85,34 @@ cd ansible-config
 ansible-playbook -D -i rke2_inventory update.yaml
 ```
 
+## Update of Waldur dependencies
+
+To update Waldur dependencies, a user should:
+
+1. Setup the desired components for update in `ansible-config/rke2_vars` file, e.g. set `setup_postgresql` to `yes` in case of PostgreSQL Helm chart update. **NB: please, don't change chart versions manually, it can cause failure of Waldur application**
+2. Run the corresponding playbook:
+
+    ```bash
+    cd ansible-config
+    ansible-playbook -D -i rke2_inventory update-dependencies.yaml
+    ```
+
+Example of changes in `ansible-config/rke2_vars` file:
+
+```yaml
+# Waldur dependency setup
+setup_postgresql: yes # User can skip PostgreSQL setup
+postgresql_version: 11.9.1 # Version of PostgreSQL Helm chart
+
+setup_rabbitmq: no # User can skip RabbitMQ setup
+rabbitmq_version: 10.3.5 # Version of RabbitMQ Helm chart
+
+setup_minio: no # User can skip MinIO setup
+minio_version: 11.10.16 # Version of MinIO Helm chart
+```
+
+With this setup, the playbook will update PostgreSQL release only. If the user wants to update RabbitMQ too, they should set `setup_rabbitmq: yes`
+
 ## Update SSL certificates
 
 To update the SSL certificates, please do the following steps:
