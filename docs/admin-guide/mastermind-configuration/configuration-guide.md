@@ -525,7 +525,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'HOMEPORT_SENTRY_DSN': None,
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
- 'INITIAL_CUSTOMER_AGREEMENT_NUMBER': 4000,
  'INVITATIONS_ENABLED': True,
  'INVITATION_CIVIL_NUMBER_HELP_TEXT': 'Must start with a country prefix ie '
                                       'EE34501234215',
@@ -711,12 +710,6 @@ It is used for rendering callback URL in HomePort.
 Type: int
 
 Chunk size for resource fetching from backend API. It is needed in order to avoid too long HTTP request error.
-
-### INITIAL_CUSTOMER_AGREEMENT_NUMBER
-
-Type: int
-
-Allows to tweak initial value of agreement number. It is assumed that organization owner should accept terms of services when organization is registered via Waldur HomePort.
 
 ### INVITATIONS_ENABLED
 
