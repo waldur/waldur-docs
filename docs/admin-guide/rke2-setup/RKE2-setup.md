@@ -113,6 +113,36 @@ minio_version: 11.10.16 # Version of MinIO Helm chart
 
 With this setup, the playbook will update PostgreSQL release only. If the user wants to update RabbitMQ too, they should set `setup_rabbitmq: yes`
 
+## Waldur log fetching
+
+To get logs from Waldur containers, a users needs to connect to one of the RKE2 nodes:
+
+```bash
+ssh <node-ip>
+```
+
+A node IP should be chosen from the inventory file (e.g. `rke2_inventory`).
+
+In the node's shell, the user should run the following to setup Kubernetes client:
+
+```bash
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+```
+
+After this, the user can get Waldur API logs:
+
+```bash
+kubectl logs --tail 100 -l app=waldur-mastermind-api -n default
+```
+
+Same works for Celery worker:
+
+```bash
+kubectl logs --tail 100 -l app=waldur-mastermind-worker -n default
+```
+
+**Note: if you use a non-default namespace for Waldur release, please change the value for `-n` option in the aforementioned**
+
 ## Update SSL certificates
 
 To update the SSL certificates, please do the following steps:
