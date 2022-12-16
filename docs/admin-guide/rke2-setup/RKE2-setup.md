@@ -76,6 +76,12 @@ If you run Waldur in a different namespace, please adjust the value of the `-n` 
     ansible-playbook -D -i rke2_inventory add-haproxy-host.yml
     ```
 
+## Waldur Helm configuration
+
+A user can override default settings for Waldur Helm. The `ansible-config/waldur/values.yaml` is the main settings file. Additional configuration features files (e.g. for SAML2, whitelabeling, bootstrapping, etc.) can be included by placing into corresponding subdirectories of `ansible-config/waldur/` folder. The paths to the subdirectories should be specified in `ansible-config/waldur/values.yaml`, e.g. `waldur.saml2.dir` value.
+
+Waldur Helm configuration is described in [the public docs](https://docs.waldur.com/admin-guide/deployment/helm/); example `values.yaml` file: [link](https://github.com/waldur/waldur-helm/blob/master/waldur/values.yaml), example additional files: [link](https://github.com/waldur/waldur-helm/tree/master/waldur/test).
+
 ## Update of Waldur
 
 To update Waldur user needs to execute the corresponding playbook:
@@ -141,7 +147,7 @@ Same works for Celery worker:
 kubectl logs --tail 100 -l app=waldur-mastermind-worker -n default
 ```
 
-**Note: if you use a non-default namespace for Waldur release, please change the value for `-n` option in the aforementioned**
+**Note: if you use a non-default namespace for Waldur release, please change the value for `-n` option in the aforementioned command**
 
 ## Update SSL certificates
 
