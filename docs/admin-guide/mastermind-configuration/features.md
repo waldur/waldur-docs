@@ -16,6 +16,10 @@ Enable audit log in organization workspace.
 
 Hide billing step in organization creation wizard.
 
+## customer.payments_for_staff_only
+
+Make payments menu visible for staff users only.
+
 ## customer.project_requests
 
 Render list of project creation requests in organization dashboard.
