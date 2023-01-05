@@ -8,46 +8,36 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
 1. Download this repository
 
-1. Install `kubernetes.core` collection from ansible galaxy and download installation files.
+1. Install `kubernetes.core` collection from ansible galaxy.
 
     ```bash
     ansible-galaxy collection install kubernetes.core
+    ansible-galaxy collection install ansible.posix
     # or
-    curl -o ansible-galaxy/kubernetes-core-2.3.2.tar.gz --create-dirs https://galaxy.ansible.com/download/kubernetes-core-2.3.2.tar.gz
+    curl -L -o ansible-galaxy/kubernetes-core-2.3.2.tar.gz --create-dirs https://galaxy.ansible.com/download/kubernetes-core-2.3.2.tar.gz
     ansible-galaxy collection install ansible-galaxy/kubernetes-core-2.3.2.tar.gz
-
-
-    cd ansible-config/
-
-    curl -o rke2/rke2-install.sh --create-dirs https://get.rke2.io
-
-    curl -fsSL -o helm/get-helm.sh --create-dirs https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+   
+    curl -L -o ansible-galaxy/ansible-posix-1.4.0.tar.gz https://galaxy.ansible.com/download/ansible-posix-1.4.0.tar.gz
+    ansible-galaxy collection install ansible-galaxy/ansible-posix-1.4.0.tar.gz
     ```
-
-1. Download Helm chart archives if your target machines don't have internet access
-
-    ```bash
-    cd ansible-config/
-    curl -o longhorn/longhorn-1.3.1.tgz --create-dirs https://github.com/longhorn/charts/releases/download/longhorn-1.3.1/longhorn-1.3.1.tgz
-    curl -o kubernetes-dashboard/k8s-dashboard-5.10.0.tar.gz --create-dirs https://kubernetes.github.io/dashboard/kubernetes-dashboard-5.10.0.tgz
-    curl -s -o bitnami/postgresql-11.9.1.tgz --create-dirs https://charts.bitnami.com/bitnami/postgresql-11.9.1.tgz
-    curl -s -o bitnami/rabbitmq-10.3.5.tgz --create-dirs https://charts.bitnami.com/bitnami/rabbitmq-10.3.5.tgz
-    curl -sL -o waldur/waldur-chart.zip --create-dirs https://github.com/waldur/waldur-helm/archive/refs/heads/master.zip
-    ```
-
 1. Adjust variables in `ansible-config/rke2_vars` file
 
-1. Run the playbook
+1. (Optional) Run the playbook to setup infrastructure (Kubernetes and Longhorn):
 
     ```bash
     cd ansible-config
-    ansible-playbook -D -i rke2_inventory install.yaml
+    ansible-playbook -D -i rke2_inventory install-infrastructure.yaml
+
+1. Run the playbook to install Waldur and dependencies:
+
+    ```bash
+    cd ansible-config
+    ansible-playbook -D -i rke2_inventory install-applications.yaml
     ```
 
 You can check Waldur release installation with the following steps:
 
-1. ssh to a node from inventory with `initial_server=true` mark
-2. check all the pods from namespace:
+1. ssh to a node from inventory with `initial_server=true` and check all the pods from the default namespace:
 
     ```bash
     export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
@@ -88,7 +78,7 @@ To update Waldur user needs to execute the corresponding playbook:
 
 ```bash
 cd ansible-config
-ansible-playbook -D -i rke2_inventory update.yaml
+ansible-playbook -D -i rke2_inventory update-waldur.yaml
 ```
 
 ## Update of Waldur dependencies
@@ -155,6 +145,20 @@ To update the SSL certificates, please do the following steps:
 
 1. Copy the certificates and keys to the `ansible-config/waldur/tls` directory. **NB: key must be named `tls.key` and cert itself - `tls.crt`**
 2. [Update Waldur release](#update-of-waldur)
+
+## Enable K8s dashboard
+
+Make sure that K8s dashboard is deployed. Login to one of the K8s nodes.
+
+```
+# create / renew token for admin user
+kubectl -n kubernetes-dashboard create token admin-user
+
+# setup kubectl port fortward to k8s-dashboard service
+kubectl port-forward -n kubernetes-dashboard service/kubernetes-dashboard --address 0.0.0.0 8001:443
+```
+
+K8s dashboard should now be accessible on port 8001 in that node -- or load balancer node on port 8001 if configured.
 
 ## Recover data from DB backup
 
