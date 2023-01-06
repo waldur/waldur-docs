@@ -16,10 +16,11 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
     # or
     curl -L -o ansible-galaxy/kubernetes-core-2.3.2.tar.gz --create-dirs https://galaxy.ansible.com/download/kubernetes-core-2.3.2.tar.gz
     ansible-galaxy collection install ansible-galaxy/kubernetes-core-2.3.2.tar.gz
-   
+
     curl -L -o ansible-galaxy/ansible-posix-1.4.0.tar.gz https://galaxy.ansible.com/download/ansible-posix-1.4.0.tar.gz
     ansible-galaxy collection install ansible-galaxy/ansible-posix-1.4.0.tar.gz
     ```
+
 1. Adjust variables in `ansible-config/rke2_vars` file
 
 1. (Optional) Run the playbook to setup infrastructure (Kubernetes and Longhorn):
@@ -27,6 +28,7 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
     ```bash
     cd ansible-config
     ansible-playbook -D -i rke2_inventory install-infrastructure.yaml
+    ```
 
 1. Run the playbook to install Waldur and dependencies:
 
@@ -86,7 +88,7 @@ ansible-playbook -D -i rke2_inventory update-waldur.yaml
 To update Waldur dependencies, a user should:
 
 1. Setup the desired components for update in `ansible-config/rke2_vars` file, e.g. set `setup_postgresql` to `yes` in case of PostgreSQL Helm chart update. **NB: please, don't change chart versions manually, it can cause failure of Waldur application**
-2. Run the corresponding playbook:
+1. Run the corresponding playbook:
 
     ```bash
     cd ansible-config
@@ -137,20 +139,20 @@ Same works for Celery worker:
 kubectl logs --tail 100 -l app=waldur-mastermind-worker -n default
 ```
 
-**Note: if you use a non-default namespace for Waldur release, please change the value for `-n` option in the aforementioned command**
+**Note**: if you use a non-default namespace for Waldur release, please change the value for `-n` option in the aforementioned command
 
 ## Update SSL certificates
 
 To update the SSL certificates, please do the following steps:
 
 1. Copy the certificates and keys to the `ansible-config/waldur/tls` directory. **NB: key must be named `tls.key` and cert itself - `tls.crt`**
-2. [Update Waldur release](#update-of-waldur)
+1. [Update Waldur release](#update-of-waldur)
 
 ## Enable K8s dashboard
 
 Make sure that K8s dashboard is deployed. Login to one of the K8s nodes.
 
-```
+```bash
 # create / renew token for admin user
 kubectl -n kubernetes-dashboard create token admin-user
 
