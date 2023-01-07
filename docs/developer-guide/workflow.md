@@ -1,8 +1,8 @@
 # Development guidelines
 
 1. Follow [PEP8](https://python.org/dev/peps/pep-0008/)
-2. Use [git flow](https://github.com/nvie/gitflow)
-3. Write docstrings
+1. Use [git flow](https://github.com/nvie/gitflow)
+1. Write docstrings
 
 ## Flow for feature tasks
 
