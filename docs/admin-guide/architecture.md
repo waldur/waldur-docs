@@ -11,4 +11,3 @@ Waldur is composed of a several components.
 - RabbitMQ - Tasks queue and result store for Celery (Kubernetes deployment only)
 
 ![diagram](../assets/components.svg)
-

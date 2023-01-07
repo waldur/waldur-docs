@@ -66,7 +66,7 @@ that need to be verified in FreeIPA:
 
 1. Ensure that admins and support groups exist in LDAP server. You may do it using FreeIPA admin UI.
     [![FreeIPA groups](img/freeipa-groups.png)](img/freeipa-groups.png)
-1. If user is assigned to admins group in LDAP, he becomes staff in Waldur.
+2. If user is assigned to admins group in LDAP, he becomes staff in Waldur.
     If user is assigned to support group in LDAP, he becomes support user in Waldur.
     For example, consider the manager user which belong to both groups:
 

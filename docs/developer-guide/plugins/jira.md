@@ -62,11 +62,11 @@ Step by step guide:
 
 1. Log in to JIRA as administrator
 
-1. Click on a cogwheel in the upper right corner and pick 'System'.
+2. Click on a cogwheel in the upper right corner and pick 'System'.
 
-1. Scroll down to the lower left corner and find a "WebHook" option under the Advanced tab.
+3. Scroll down to the lower left corner and find a "WebHook" option under the Advanced tab.
 
-1. Now click on "Create a Web Hook" You will be presented with a web
+4. Now click on "Create a Web Hook" You will be presented with a web
     hook creation view. There are only 3 mandatory fields - Name, Status and URL.
 
     4.1 Name your hook
