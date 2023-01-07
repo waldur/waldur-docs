@@ -241,4 +241,3 @@
 - user_password_updated
 - user_profile_changed
 - user_update_succeeded
-

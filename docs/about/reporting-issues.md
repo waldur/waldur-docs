@@ -9,7 +9,7 @@ From **HomePort**:
     - [What is HAR](https://www.keycdn.com/support/what-is-a-har-file)
     - [Zendesk instructions for generating a HAR](https://support.zendesk.com/hc/en-us/articles/204410413-Generating-a-HAR-file-for-troubleshooting)
     - [Box instructions for generating a HAR](https://support.box.com/hc/en-us/articles/360043696054-How-to-Generate-Network-Captures-for-Troubleshooting)
-1. Screenshot of the error in a high enough resolution.
+2. Screenshot of the error in a high enough resolution.
 
 From **MasterMind**:
 
