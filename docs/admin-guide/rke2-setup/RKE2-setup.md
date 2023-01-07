@@ -6,9 +6,17 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
 1. Install [Ansible](https://docs.ansible.com/ansible/2.10/) with version >= 2.10 and ensure python3 is installed.
 
-1. Download this repository
+2. Download this repository
 
-1. Install `kubernetes.core` collection from ansible galaxy.
+3. At least 3 nodes with minimal requirements for Kubernetes nodes
+
+    ```bash
+    8GB RAM
+    4 vCPU
+    30GB for system volume and a dedicated 60GB for storage (Longhorn)
+    ```
+
+4. Install `kubernetes.core` collection from ansible galaxy.
 
     ```bash
     ansible-galaxy collection install kubernetes.core
@@ -21,16 +29,16 @@ To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
     ansible-galaxy collection install ansible-galaxy/ansible-posix-1.4.0.tar.gz
     ```
 
-1. Adjust variables in `ansible-config/rke2_vars` file
+5. Adjust variables in `ansible-config/rke2_vars` file
 
-1. (Optional) Run the playbook to setup infrastructure (Kubernetes and Longhorn):
+6. (Optional) Run the playbook to setup infrastructure (Kubernetes and Longhorn):
 
     ```bash
     cd ansible-config
     ansible-playbook -D -i rke2_inventory install-infrastructure.yaml
     ```
 
-1. Run the playbook to install Waldur and dependencies:
+7. Run the playbook to install Waldur and dependencies:
 
     ```bash
     cd ansible-config
@@ -51,7 +59,7 @@ If you run Waldur in a different namespace, please adjust the value of the `-n` 
 ## Add admin ssh keys
 
 1. Setup `admin_keys` and `revoked_admin_keys` vars in the `ansible-config/rke2_vars` file
-1. Run the corresponding playbook
+2. Run the corresponding playbook
 
     ```bash
     cd ansible-config
@@ -61,7 +69,7 @@ If you run Waldur in a different namespace, please adjust the value of the `-n` 
 ## Add haproxy load balancer
 
 1. Setup `haproxy_stats_password` var in the `ansible-config/rke2_vars` file
-1. Run the corresponding playbook
+2. Run the corresponding playbook
 
     ```bash
     cd ansible-config
@@ -88,7 +96,7 @@ ansible-playbook -D -i rke2_inventory update-waldur.yaml
 To update Waldur dependencies, a user should:
 
 1. Setup the desired components for update in `ansible-config/rke2_vars` file, e.g. set `setup_postgresql` to `yes` in case of PostgreSQL Helm chart update. **NB: please, don't change chart versions manually, it can cause failure of Waldur application**
-1. Run the corresponding playbook:
+2. Run the corresponding playbook:
 
     ```bash
     cd ansible-config
@@ -146,7 +154,7 @@ kubectl logs --tail 100 -l app=waldur-mastermind-worker -n default
 To update the SSL certificates, please do the following steps:
 
 1. Copy the certificates and keys to the `ansible-config/waldur/tls` directory. **NB: key must be named `tls.key` and cert itself - `tls.crt`**
-1. [Update Waldur release](#update-of-waldur)
+2. [Update Waldur release](#update-of-waldur)
 
 ## Enable K8s dashboard
 
