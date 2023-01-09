@@ -298,7 +298,7 @@ optional arguments:
 
 ## print_notifications
 
-
+Prints Mastermind notifications with a description and templates
 
 ## pull_openstack_volume_metadata
 

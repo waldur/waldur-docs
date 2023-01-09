@@ -10,14 +10,14 @@ A notification about upcoming bookings
 
 === "booking/notification_subject.txt"
 
-    ```
+```txt
     Reminder about upcoming booking.
 
-    ```
+```
 
 === "booking/notification_message.txt"
 
-    ```
+```txt
     Hello!
 
     Please do not forget about upcoming booking:
@@ -25,11 +25,11 @@ A notification about upcoming bookings
         {{ resource.name }}{% if not forloop.last %}, {% endif %}
     {% endfor %}.
 
-    ```
+```
 
 === "booking/notification_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -51,7 +51,7 @@ A notification about upcoming bookings
     </body>
     </html>
 
-    ```
+```
 
 ## WALDUR_MASTERMIND.INVOICES
 
@@ -63,24 +63,24 @@ A notification of invoice
 
 === "invoices/notification_subject.txt"
 
-    ```
+```txt
     {{ customer }}'s invoice for {{ month }}/{{ year }}
 
-    ```
+```
 
 === "invoices/notification_message.txt"
 
-    ```
+```txt
     Hello,
 
     Please follow the link below to see {{ customer }}'s accounting information for {{ month }}/{{ year }}:
     {{ link }}
 
-    ```
+```
 
 === "invoices/notification_message.html"
 
-    ```
+```txt
     <html xmlns="http://www.w3.org/1999/html">
     <head lang="en">
         <meta charset="UTF-8">
@@ -96,7 +96,7 @@ A notification of invoice
     </body>
     </html>
 
-    ```
+```
 
 ### invoices.upcoming_ends_notification
 
@@ -106,23 +106,23 @@ A notification about upcoming ends
 
 === "invoices/upcoming_ends_notification_subject.txt"
 
-    ```
+```txt
     {{ organization_name }}'s fixed price contract {{ contract_number }} is coming to an end
 
-    ```
+```
 
 === "invoices/upcoming_ends_notification_message.txt"
 
-    ```
+```txt
     Hello,
 
     this is a reminder that {{ organization_name }}'s fixed price contract {{ contract_number }} is ending on {{ end }}.
 
-    ```
+```
 
 === "invoices/upcoming_ends_notification_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -137,7 +137,7 @@ A notification about upcoming ends
     </body>
     </html>
 
-    ```
+```
 
 ## WALDUR_MASTERMIND.MARKETPLACE
 
@@ -149,23 +149,23 @@ A notification of a failed resource creation
 
 === "marketplace/marketplace_resource_create_failed_subject.txt"
 
-    ```
+```txt
     Resource {{ resource_name }} creation has failed.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_create_failed_message.txt"
 
-    ```
+```txt
     Hello!
 
     Resource {{ resource_name }} creation has failed.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_create_failed_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -181,7 +181,7 @@ A notification of a failed resource creation
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_create_succeeded
 
@@ -191,23 +191,23 @@ A notification of a successful resource creation
 
 === "marketplace/marketplace_resource_create_succeeded_subject.txt"
 
-    ```
+```txt
     Resource {{ resource_name }} has been created.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_create_succeeded_message.txt"
 
-    ```
+```txt
     Hello!
 
     Resource {{ resource_name }} has been created.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_create_succeeded_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -223,7 +223,7 @@ A notification of a successful resource creation
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_terminate_failed
 
@@ -233,23 +233,23 @@ A notification of a failed resource termination
 
 === "marketplace/marketplace_resource_terminate_failed_subject.txt"
 
-    ```
+```txt
     Resource {{ resource_name }} deletion has failed.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_terminate_failed_message.txt"
 
-    ```
+```txt
     Hello!
 
     Resource {{ resource_name }} deletion has failed.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_terminate_failed_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -265,7 +265,7 @@ A notification of a failed resource termination
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_terminate_succeeded
 
@@ -275,23 +275,23 @@ A notification of a successful resource termination
 
 === "marketplace/marketplace_resource_terminate_succeeded_subject.txt"
 
-    ```
+```txt
     Resource {{ resource_name }} has been deleted.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_terminate_succeeded_message.txt"
 
-    ```
+```txt
     Hello!
 
     Resource {{ resource_name }} has been deleted.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_terminate_succeeded_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -307,7 +307,7 @@ A notification of a successful resource termination
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_termination_scheduled
 
@@ -317,23 +317,23 @@ A notification of a scheduled resource termination
 
 === "marketplace/marketplace_resource_termination_scheduled_subject.txt"
 
-    ```
+```txt
     Resource {{ resource.name }} termination has been scheduled.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_termination_scheduled_message.txt"
 
-    ```
+```txt
     Hello!
 
     The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_termination_scheduled_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -350,7 +350,7 @@ A notification of a scheduled resource termination
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_termination_scheduled_staff
 
@@ -360,23 +360,23 @@ A notification of a resource termination
 
 === "marketplace/marketplace_resource_termination_scheduled_staff_subject.txt"
 
-    ```
+```txt
     Resource {{ resource.name }} termination has been scheduled.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_termination_scheduled_staff_message.txt"
 
-    ```
+```txt
     Hello!
 
     The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_termination_scheduled_staff_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -393,7 +393,7 @@ A notification of a resource termination
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_update_failed
 
@@ -403,23 +403,23 @@ A notification of failed resource update
 
 === "marketplace/marketplace_resource_update_failed_subject.txt"
 
-    ```
+```txt
     Resource {{ resource_name }} update has failed.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_update_failed_message.txt"
 
-    ```
+```txt
     Hello!
 
     Resource {{ resource_name }} update has failed.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_update_failed_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -435,7 +435,7 @@ A notification of failed resource update
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_update_limits_failed
 
@@ -445,23 +445,23 @@ A notification of failed resource limits update
 
 === "marketplace/marketplace_resource_update_limits_failed_subject.txt"
 
-    ```
+```txt
     Resource {{ resource_name }} limits update has failed.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_update_limits_failed_message.txt"
 
-    ```
+```txt
     Hello!
 
     Resource {{ resource_name }} limits update has failed.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_update_limits_failed_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -477,7 +477,7 @@ A notification of failed resource limits update
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_update_limits_succeeded
 
@@ -487,14 +487,14 @@ A notification of a successful resource limit update
 
 === "marketplace/marketplace_resource_update_limits_succeeded_subject.txt"
 
-    ```
+```txt
     Resource {{ resource_name }} limits have been updated.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_update_limits_succeeded_message.txt"
 
-    ```
+```txt
     Hello!
 
     Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:
@@ -512,11 +512,11 @@ A notification of a successful resource limit update
     {% endif %}
     {% endif %}
 
-    ```
+```
 
 === "marketplace/marketplace_resource_update_limits_succeeded_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -554,7 +554,7 @@ A notification of a successful resource limit update
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.marketplace_resource_update_succeeded
 
@@ -564,14 +564,14 @@ A notification of a successful resource update
 
 === "marketplace/marketplace_resource_update_succeeded_subject.txt"
 
-    ```
+```txt
     Resource {{ resource_name }} has been updated.
 
-    ```
+```
 
 === "marketplace/marketplace_resource_update_succeeded_message.txt"
 
-    ```
+```txt
     Hello!
 
     Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
@@ -590,11 +590,11 @@ A notification of a successful resource update
     {% endif %}
     {% endif %}
 
-    ```
+```
 
 === "marketplace/marketplace_resource_update_succeeded_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -630,7 +630,7 @@ A notification of a successful resource update
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.notification_about_project_ending
 
@@ -640,14 +640,14 @@ A notification about project ending
 
 === "marketplace/notification_about_project_ending_subject.txt"
 
-    ```
+```txt
     Project {{ project.name }} will be deleted.
 
-    ```
+```
 
 === "marketplace/notification_about_project_ending_message.txt"
 
-    ```
+```txt
     Dear {{ user.full_name }},
 
     Your project {{ project.name }} is ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}. End of the project will lead to termination of all resources in the project.
@@ -656,11 +656,11 @@ A notification about project ending
 
     Thank you!
 
-    ```
+```
 
 === "marketplace/notification_about_project_ending_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -680,7 +680,7 @@ A notification about project ending
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.notification_about_stale_resources
 
@@ -690,14 +690,14 @@ A notification about stale resources
 
 === "marketplace/notification_about_stale_resources_subject.txt"
 
-    ```
+```txt
     Reminder about stale resources.
 
-    ```
+```
 
 === "marketplace/notification_about_stale_resources_message.txt"
 
-    ```
+```txt
     Hello!
 
     We noticed that you have stale resources that have not cost you anything for the last 3 months.
@@ -709,11 +709,11 @@ A notification about stale resources
     {% endfor %}
     Thank you!
 
-    ```
+```
 
 === "marketplace/notification_about_stale_resources_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -738,7 +738,7 @@ A notification about stale resources
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.notification_approval
 
@@ -748,23 +748,23 @@ A notification of order approval
 
 === "marketplace/notification_approval_subject.txt"
 
-    ```
+```txt
     A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 
-    ```
+```
 
 === "marketplace/notification_approval_message.txt"
 
-    ```
+```txt
     Hello!
 
     A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 
-    ```
+```
 
 === "marketplace/notification_approval_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -780,7 +780,7 @@ A notification of order approval
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.notification_service_provider_approval
 
@@ -790,23 +790,23 @@ A notification to provider about pending order item approval
 
 === "marketplace/notification_service_provider_approval_subject.txt"
 
-    ```
+```txt
     A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 
-    ```
+```
 
 === "marketplace/notification_service_provider_approval_message.txt"
 
-    ```
+```txt
     Hello!
 
     A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 
-    ```
+```
 
 === "marketplace/notification_service_provider_approval_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -822,7 +822,7 @@ A notification to provider about pending order item approval
     </body>
     </html>
 
-    ```
+```
 
 ### marketplace.notification_usages
 
@@ -832,14 +832,14 @@ A notification about usages
 
 === "marketplace/notification_usages_subject.txt"
 
-    ```
+```txt
     Reminder about missing usage reports.
 
-    ```
+```
 
 === "marketplace/notification_usages_message.txt"
 
-    ```
+```txt
     Hello!
 
     Please do not forget to add usage for the resources you provide:
@@ -849,11 +849,11 @@ A notification about usages
     {% endfor %}{% endfor %}
     You can submit resource usage via API or do it manually at {{ public_resources_url }}.
 
-    ```
+```
 
 === "marketplace/notification_usages_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -885,7 +885,7 @@ A notification about usages
     </body>
     </html>
 
-    ```
+```
 
 ## WALDUR_MASTERMIND.MARKETPLACE_FLOWS
 
@@ -897,15 +897,15 @@ A notification for a rejected marketplace flow
 
 === "marketplace_flows/flow_rejected_subject.txt"
 
-    ```
+```txt
     {% load i18n %}
     {% trans 'Your submission has been rejected' %}
 
-    ```
+```
 
 === "marketplace_flows/flow_rejected_message.txt"
 
-    ```
+```txt
     {% load i18n %}
 
     {% if flow.customer_create_request.is_rejected %}
@@ -963,11 +963,11 @@ A notification for a rejected marketplace flow
     {% endif %}
     {% endif %}
 
-    ```
+```
 
 === "marketplace_flows/flow_rejected_message.html"
 
-    ```
+```txt
     {% load i18n %}
     {% if flow.customer_create_request.is_rejected %}
     <p>{% trans 'Customer creation request has been rejected.' %}</p>
@@ -1024,7 +1024,7 @@ A notification for a rejected marketplace flow
     {% endif %}
     {% endif %}
 
-    ```
+```
 
 ### marketplace_flows.flow_submitted
 
@@ -1034,15 +1034,15 @@ A notification for a submitted marketplace flow
 
 === "marketplace_flows/flow_submitted_subject.txt"
 
-    ```
+```txt
     {% load i18n %}
     {% trans 'Resource creation request has been submitted' %}
 
-    ```
+```
 
 === "marketplace_flows/flow_submitted_message.txt"
 
-    ```
+```txt
     {% load i18n %}
     {% load waldur_core %}
 
@@ -1170,11 +1170,11 @@ A notification for a submitted marketplace flow
 
     {% endif %}
 
-    ```
+```
 
 === "marketplace_flows/flow_submitted_message.html"
 
-    ```
+```txt
     {% load i18n %}
     {% load waldur_core %}
 
@@ -1335,7 +1335,7 @@ A notification for a submitted marketplace flow
     </body>
     </html>
 
-    ```
+```
 
 ## WALDUR_RANCHER
 
@@ -1347,24 +1347,24 @@ A notification for created rancher user
 
 === "rancher/notification_create_user_subject.txt"
 
-    ```
+```txt
     New account has been created.
 
-    ```
+```
 
 === "rancher/notification_create_user_message.txt"
 
-    ```
+```txt
     Hello!
 
     User with login {{ user.username }} and temporary password {{ password }} has been created.
     Please go to management console {{ rancher_url }} to change the password.
 
-    ```
+```
 
 === "rancher/notification_create_user_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -1381,7 +1381,7 @@ A notification for created rancher user
     </body>
     </html>
 
-    ```
+```
 
 ## WALDUR_CORE.STRUCTURE
 
@@ -1393,24 +1393,24 @@ A notification of an email change request
 
 === "structure/change_email_request_subject.txt"
 
-    ```
+```txt
     Verify new email address.
 
-    ```
+```
 
 === "structure/change_email_request_message.txt"
 
-    ```
+```txt
     To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the {{ link }}.
 
-    ```
+```
 
 === "structure/change_email_request_message.html"
 
-    ```
+```txt
     <p>To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the <a href="{{ link }}">link</a>.</p>
 
-    ```
+```
 
 ### structure.notifications_profile_changes_operator
 
@@ -1420,14 +1420,14 @@ A notification of changing a profile
 
 === "structure/notifications_profile_changes_operator_subject.txt"
 
-    ```
+```txt
     Owner details have been updated
 
-    ```
+```
 
 === "structure/notifications_profile_changes_operator_message.txt"
 
-    ```
+```txt
     Owner of
     {% for o in organizations %}
         {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
@@ -1439,11 +1439,11 @@ A notification of changing a profile
         {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
     {% endfor %}
 
-    ```
+```
 
 === "structure/notifications_profile_changes_operator_message.html"
 
-    ```
+```txt
     Owner of
     {% for o in organizations %}
         {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
@@ -1455,7 +1455,7 @@ A notification of changing a profile
         {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
     {% endfor %}
 
-    ```
+```
 
 ### structure.structure_role_granted
 
@@ -1465,24 +1465,24 @@ A notification of a granted role
 
 === "structure/structure_role_granted_subject.txt"
 
-    ```
+```txt
     Role granted.
 
-    ```
+```
 
 === "structure/structure_role_granted_message.txt"
 
-    ```
+```txt
     Role {{ permission.role }}  for {{ structure }} has been granted.
 
-    ```
+```
 
 === "structure/structure_role_granted_message.html"
 
-    ```
+```txt
     <p>Role {{ permission.role }}  for {{ structure }} has been granted.</p>
 
-    ```
+```
 
 ## WALDUR_CORE.USERS
 
@@ -1494,14 +1494,14 @@ A notification of invitation approval
 
 === "users/invitation_approved_subject.txt"
 
-    ```
+```txt
     Account has been created
 
-    ```
+```
 
 === "users/invitation_approved_message.txt"
 
-    ```
+```txt
     Hello!
 
     {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
@@ -1514,11 +1514,11 @@ A notification of invitation approval
 
     Your password is {{ password }}
 
-    ```
+```
 
 === "users/invitation_approved_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -1544,7 +1544,7 @@ A notification of invitation approval
     </body>
     </html>
 
-    ```
+```
 
 ### users.invitation_created
 
@@ -1554,25 +1554,25 @@ A notification of invitation creation
 
 === "users/invitation_created_subject.txt"
 
-    ```
+```txt
     Invitation to {{ name }} {{ type }}
 
-    ```
+```
 
 === "users/invitation_created_message.txt"
 
-    ```
+```txt
     Hello!
 
     {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
     Please visit the link below to sign up and accept your invitation:
     {{ link }}
 
-    ```
+```
 
 === "users/invitation_created_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -1590,7 +1590,7 @@ A notification of invitation creation
     </body>
     </html>
 
-    ```
+```
 
 ### users.invitation_rejected
 
@@ -1600,14 +1600,14 @@ A notification of invitation rejection
 
 === "users/invitation_rejected_subject.txt"
 
-    ```
+```txt
     Invitation has been rejected
 
-    ```
+```
 
 === "users/invitation_rejected_message.txt"
 
-    ```
+```txt
     Hello!
 
     The following invitation has been rejected.
@@ -1618,11 +1618,11 @@ A notification of invitation rejection
 
     Role: {{ role }}
 
-    ```
+```
 
 === "users/invitation_rejected_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
         <meta charset="UTF-8">
@@ -1650,7 +1650,7 @@ A notification of invitation rejection
     </body>
     </html>
 
-    ```
+```
 
 ### users.invitation_requested
 
@@ -1660,14 +1660,14 @@ A notification of invitation request
 
 === "users/invitation_requested_subject.txt"
 
-    ```
+```txt
     Invitation request
 
-    ```
+```
 
 === "users/invitation_requested_message.txt"
 
-    ```
+```txt
     Hello!
 
     {{ sender }} has created invitation request for the following user
@@ -1707,11 +1707,11 @@ A notification of invitation request
 
     Alternatively, you may reject invitation: {{ reject_link }}
 
-    ```
+```
 
 === "users/invitation_requested_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
       <meta charset="UTF-8">
@@ -1778,7 +1778,7 @@ A notification of invitation request
     </body>
     </html>
 
-    ```
+```
 
 ### users.permission_request_submitted
 
@@ -1788,25 +1788,25 @@ A notification of a submitted invitation request
 
 === "users/permission_request_submitted_subject.txt"
 
-    ```
+```txt
     Permission request has been submitted.
 
-    ```
+```
 
 === "users/permission_request_submitted_message.txt"
 
-    ```
+```txt
     Hello!
 
     User {{ permission_request.created_by }} with email {{ permission_request.created_by.email }} created permission request for {{ permission_request.invitation }}.
 
     Please visit the link below to approve or reject permission request: {{ requests_link }}.
 
-    ```
+```
 
 === "users/permission_request_submitted_message.html"
 
-    ```
+```txt
     <html>
     <head lang="en">
       <meta charset="UTF-8">
@@ -1825,5 +1825,5 @@ A notification of a submitted invitation request
     </body>
     </html>
 
-    ```
+```
 
