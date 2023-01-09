@@ -20,6 +20,8 @@ If a user needs to prolong an expired project with remote resources, [this scrip
 2. approve the requests
 3. set state OK for terminating resources both in a local Waldur and remote one
 
+**Note:** the script must be executed in a local Waldur instance
+
 ### Wipe tenants and all related resources from OpenStack
 
 If a user needs to remove a tenant with all related objects (instances, volumes, backups, etc.) manually, [this script](scripts/wipe-tenants.py) should be used. It removes all the tenants with names from `tenant_names` list using an OpenStack administrator project. Please, replace `<main-tenant-uuid>` (line 13) with the corresponding UUID of the admin tenant in Waldur.
