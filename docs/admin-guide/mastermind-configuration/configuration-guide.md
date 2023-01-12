@@ -523,6 +523,7 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'HERO_LINK_LABEL': None,
  'HERO_LINK_URL': None,
  'HOMEPORT_SENTRY_DSN': None,
+ 'HOMEPORT_SENTRY_ENVIRONMENT': 'waldur-production',
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
  'INVITATIONS_ENABLED': True,
@@ -698,6 +699,12 @@ Link URL in hero section of HomePort landing page.
 Type: Optional[str]
 
 Sentry Data Source Name for Waldur HomePort project.
+
+### HOMEPORT_SENTRY_ENVIRONMENT
+
+Type: str
+
+Sentry environment name for Waldur Homeport.
 
 ### HOMEPORT_URL
 
