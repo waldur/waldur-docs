@@ -1337,6 +1337,62 @@ A notification for a submitted marketplace flow
 
 ```
 
+## WALDUR_MASTERMIND.MARKETPLACE_REMOTE
+
+### marketplace_remote.notification_about_pending_project_updates
+
+A notification about pending project updates
+
+#### Templates
+
+=== "marketplace_remote/notification_about_pending_project_updates_subject.txt"
+
+```txt
+    Reminder about pending project updates.
+
+```
+
+=== "marketplace_remote/notification_about_pending_project_updates_message.txt"
+
+```txt
+    Hello!
+
+    We noticed that you have pending project update requests.
+    Perhaps you would like to have a look at them?
+
+    The project is:
+        {{ project_update_request.project.name }} {{ project_url }}
+    Thank you!
+
+```
+
+=== "marketplace_remote/notification_about_pending_project_updates_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Reminder about pending project updates.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        We noticed that you have pending project update requests.<br />
+        Perhaps you would like to have a look at them?<br />
+
+        The project is:
+        <ul>
+            <li><a href='{{ project_url }}'>{{ project_update_request.project.name }}</a></li>
+        </ul>
+        Thank you!
+    </p>
+    </body>
+    </html>
+
+```
+
 ## WALDUR_RANCHER
 
 ### rancher.notification_create_user

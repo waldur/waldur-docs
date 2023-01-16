@@ -1999,6 +1999,53 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 {% trans 'Resource creation request has been submitted' %}
 ```
 
+## waldur_mastermind.marketplace_remote
+
+### notification_about_pending_project_updates_message.html (waldur_mastermind.marketplace_remote)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Reminder about pending project updates.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    We noticed that you have pending project update requests.<br />
+    Perhaps you would like to have a look at them?<br />
+
+    The project is:
+    <ul>
+        <li><a href='{{ project_url }}'>{{ project_update_request.project.name }}</a></li>
+    </ul>
+    Thank you!
+</p>
+</body>
+</html>
+```
+
+### notification_about_pending_project_updates_subject.txt (waldur_mastermind.marketplace_remote)
+
+``` txt
+Reminder about pending project updates.
+```
+
+### notification_about_pending_project_updates_message.txt (waldur_mastermind.marketplace_remote)
+
+``` txt
+Hello!
+
+We noticed that you have pending project update requests.
+Perhaps you would like to have a look at them?
+
+The project is:
+    {{ project_update_request.project.name }} {{ project_url }}
+Thank you!
+```
+
 ## waldur_mastermind.marketplace_support
 
 ### create_resource_template.txt (waldur_mastermind.marketplace_support)

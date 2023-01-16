@@ -524,6 +524,7 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'HERO_LINK_URL': None,
  'HOMEPORT_SENTRY_DSN': None,
  'HOMEPORT_SENTRY_ENVIRONMENT': 'waldur-production',
+ 'HOMEPORT_SENTRY_TRACES_SAMPLE_RATE': 0.2,
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
  'INVITATIONS_ENABLED': True,
@@ -705,6 +706,12 @@ Sentry Data Source Name for Waldur HomePort project.
 Type: str
 
 Sentry environment name for Waldur Homeport.
+
+### HOMEPORT_SENTRY_TRACES_SAMPLE_RATE
+
+Type: float
+
+Percentage of transactions sent to Sentry for tracing.
 
 ### HOMEPORT_URL
 
