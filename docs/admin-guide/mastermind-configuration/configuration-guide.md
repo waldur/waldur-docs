@@ -470,7 +470,6 @@ Default value:
 WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'AUTHENTICATION_METHODS': ['LOCAL_SIGNIN'],
  'BACKEND_FIELDS_EDITABLE': True,
- 'BRAND_COLOR': '#3a8500',
  'COUNTRIES': ['AL',
                'AT',
                'BA',
@@ -509,19 +508,13 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
                'SI',
                'UA'],
  'CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION': False,
- 'CURRENCY_NAME': 'EUR',
- 'DOCS_URL': '',
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
  'ENABLE_GEOIP': True,
  'EXTENSIONS_AUTOREGISTER': True,
  'EXTERNAL_LINKS': [],
- 'FULL_PAGE_TITLE': 'Waldur | Cloud Service Management',
  'GOOGLE_ANALYTICS_ID': '',
  'GROUP_INVITATION_LIFETIME': datetime.timedelta(days=7),
- 'HERO_IMAGE': None,
- 'HERO_LINK_LABEL': None,
- 'HERO_LINK_URL': None,
  'HOMEPORT_SENTRY_DSN': None,
  'HOMEPORT_SENTRY_ENVIRONMENT': 'waldur-production',
  'HOMEPORT_SENTRY_TRACES_SAMPLE_RATE': 0.2,
@@ -554,20 +547,9 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'ONLY_STAFF_MANAGES_SERVICES': False,
  'OWNERS_CAN_MANAGE_OWNERS': False,
  'OWNER_CAN_MANAGE_CUSTOMER': False,
- 'POWERED_BY_LOGO': None,
  'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
  'SELLER_COUNTRY_CODE': None,
- 'SHORT_PAGE_TITLE': 'Waldur',
  'SHOW_ALL_USERS': False,
- 'SIDEBAR_LOGO': None,
- 'SIDEBAR_LOGO_MOBILE': None,
- 'SITE_ADDRESS': '',
- 'SITE_DESCRIPTION': 'Your single pane of control for managing projects, teams '
-                     'and resources in a self-service manner.',
- 'SITE_EMAIL': '',
- 'SITE_LOGO': None,
- 'SITE_NAME': 'Waldur',
- 'SITE_PHONE': '',
  'SUPPORT_PORTAL_URL': '',
  'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
@@ -599,12 +581,6 @@ Type: bool
 
 Allows to control /admin writable fields. If this flag is disabled it is impossible to edit any field that corresponds to backend value via /admin. Such restriction allows to save information from corruption.
 
-### BRAND_COLOR
-
-Type: Optional[str]
-
-Hex color definition is used in HomePort landing page for login button.
-
 ### COUNTRIES
 
 Type: List[str]
@@ -616,18 +592,6 @@ It is used in organization creation dialog in order to limit country choices to 
 Type: bool
 
 Enables generation of the first project on organization creation.
-
-### CURRENCY_NAME
-
-Type: str
-
-It is used in marketplace order details and invoices for currency formatting.
-
-### DOCS_URL
-
-Type: str
-
-Renders link to docs in header
 
 ### EMAIL_CHANGE_MAX_AGE
 
@@ -659,12 +623,6 @@ Type: List[ExternalLink]
 
 Render external links in dropdown in header. Each item should be object with label and url fields. For example: {"label": "Helpdesk", "url": "`https://example.com/`"}
 
-### FULL_PAGE_TITLE
-
-Type: str
-
-It is used as default page title if it's not specified explicitly.
-
 ### GOOGLE_ANALYTICS_ID
 
 Type: str
@@ -676,24 +634,6 @@ Identifier associated with your account and used by Google Analytics to collect 
 Type: timedelta
 
 Defines for how long group invitation remains valid.
-
-### HERO_IMAGE
-
-Type: Optional[str]
-
-Relative path to image rendered at hero section of HomePort landing page.
-
-### HERO_LINK_LABEL
-
-Type: Optional[str]
-
-Label for link in hero section of HomePort landing page. It can be lead to support site or blog post.
-
-### HERO_LINK_URL
-
-Type: Optional[str]
-
-Link URL in hero section of HomePort landing page.
 
 ### HOMEPORT_SENTRY_DSN
 
@@ -857,12 +797,6 @@ Type: bool
 
 Enables organization owners to create an organization.
 
-### POWERED_BY_LOGO
-
-Type: Optional[str]
-
-Relative path to image rendered at the bottom of login menu in HomePort.
-
 ### PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS
 
 Type: List[str]
@@ -875,65 +809,11 @@ Type: Optional[str]
 
 Specifies seller legal or effective country of registration or residence as an ISO 3166-1 alpha-2 country code. It is used for computing VAT charge rate.
 
-### SHORT_PAGE_TITLE
-
-Type: str
-
-it is used as prefix for page title.
-
 ### SHOW_ALL_USERS
 
 Type: bool
 
 Indicates whether user can see all other users in `api/users/` endpoint.
-
-### SIDEBAR_LOGO
-
-Type: Optional[str]
-
-Relative path to image rendered at the top of sidebar menu in HomePort.
-
-### SIDEBAR_LOGO_MOBILE
-
-Type: Optional[str]
-
-Relative path to image rendered at the top of mobile sidebar menu in HomePort.
-
-### SITE_ADDRESS
-
-Type: str
-
-It is used in marketplace order header.
-
-### SITE_DESCRIPTION
-
-Type: str
-
-Description of the Waldur deployment.
-
-### SITE_EMAIL
-
-Type: str
-
-It is used in marketplace order header and UI footer.
-
-### SITE_LOGO
-
-Type: Optional[str]
-
-It is used in marketplace order header.
-
-### SITE_NAME
-
-Type: str
-
-Human-friendly name of the Waldur deployment.
-
-### SITE_PHONE
-
-Type: str
-
-It is used in marketplace order header and UI footer.
 
 ### SUPPORT_PORTAL_URL
 
