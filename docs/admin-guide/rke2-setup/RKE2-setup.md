@@ -100,7 +100,7 @@ To update Waldur dependencies, a user should:
 
     ```bash
     cd ansible-config
-    ansible-playbook -D -i rke2_inventory update-dependencies.yaml
+    ansible-playbook -D -i rke2_inventory install-applications.yaml
     ```
 
 Example of changes in `ansible-config/rke2_vars` file:
