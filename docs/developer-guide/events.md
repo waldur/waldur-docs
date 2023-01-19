@@ -70,8 +70,6 @@
 
 ## Resources
 
-- marketplace_component_usage_created
-- marketplace_component_usage_updated
 - marketplace_order_approved
 - marketplace_order_completed
 - marketplace_order_created
