@@ -1,5 +1,449 @@
 # Notifications
 
+## WALDUR_CORE.STRUCTURE
+
+### structure.change_email_request
+
+A notification of an email change request
+
+#### Templates
+
+=== "structure/change_email_request_subject.txt"
+
+```txt
+    Verify new email address.
+
+```
+
+=== "structure/change_email_request_message.txt"
+
+```txt
+    To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the {{ link }}.
+
+```
+
+=== "structure/change_email_request_message.html"
+
+```txt
+    <p>To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the <a href="{{ link }}">link</a>.</p>
+
+```
+
+### structure.notifications_profile_changes_operator
+
+A notification of changing a profile
+
+#### Templates
+
+=== "structure/notifications_profile_changes_operator_subject.txt"
+
+```txt
+    Owner details have been updated
+
+```
+
+=== "structure/notifications_profile_changes_operator_message.txt"
+
+```txt
+    Owner of
+    {% for o in organizations %}
+        {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+
+    {{user.full_name}} (id={{ user.id }}) has changed
+
+    {% for f in fields %}
+        {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
+    {% endfor %}
+
+```
+
+=== "structure/notifications_profile_changes_operator_message.html"
+
+```txt
+    Owner of
+    {% for o in organizations %}
+        {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+
+    {{user.full_name}} (id={{ user.id }}) has changed
+
+    {% for f in fields %}
+        {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
+    {% endfor %}
+
+```
+
+### structure.structure_role_granted
+
+A notification of a granted role
+
+#### Templates
+
+=== "structure/structure_role_granted_subject.txt"
+
+```txt
+    Role granted.
+
+```
+
+=== "structure/structure_role_granted_message.txt"
+
+```txt
+    Role {{ permission.role }}  for {{ structure }} has been granted.
+
+```
+
+=== "structure/structure_role_granted_message.html"
+
+```txt
+    <p>Role {{ permission.role }}  for {{ structure }} has been granted.</p>
+
+```
+
+## WALDUR_CORE.USERS
+
+### users.invitation_approved
+
+A notification of invitation approval
+
+#### Templates
+
+=== "users/invitation_approved_subject.txt"
+
+```txt
+    Account has been created
+
+```
+
+=== "users/invitation_approved_message.txt"
+
+```txt
+    Hello!
+
+    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
+    Please visit the link below to sign up and accept your invitation:
+    {{ link }}
+
+    Your credentials are as following.
+
+    Username is {{ username }}
+
+    Your password is {{ password }}
+
+```
+
+=== "users/invitation_approved_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Account has been created</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
+        Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
+    </p>
+    <p>
+      Your credentials are as following.
+    </p>
+    <p>
+      Your username is {{ username }}
+    </p>
+    <p>
+      Your password is {{ password }}
+    </p>
+    </body>
+    </html>
+
+```
+
+### users.invitation_created
+
+A notification of invitation creation
+
+#### Templates
+
+=== "users/invitation_created_subject.txt"
+
+```txt
+    Invitation to {{ name }} {{ type }}
+
+```
+
+=== "users/invitation_created_message.txt"
+
+```txt
+    Hello!
+
+    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
+    Please visit the link below to sign up and accept your invitation:
+    {{ link }}
+
+```
+
+=== "users/invitation_created_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Invitation to {{ name }} {{ type }}</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
+        Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
+        Please note: this invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}!
+    </p>
+    </body>
+    </html>
+
+```
+
+### users.invitation_rejected
+
+A notification of invitation rejection
+
+#### Templates
+
+=== "users/invitation_rejected_subject.txt"
+
+```txt
+    Invitation has been rejected
+
+```
+
+=== "users/invitation_rejected_message.txt"
+
+```txt
+    Hello!
+
+    The following invitation has been rejected.
+
+    Full name: {{ invitation.full_name }}
+
+    Target: {{ name }} {{ type }}
+
+    Role: {{ role }}
+
+```
+
+=== "users/invitation_rejected_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Invitation to {{ name }} {{ type }}</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+      The following invitation has been rejected.
+    </p>
+
+    <p>
+      Full name: {{ invitation.full_name }}
+    </p>
+
+    <p>
+      Target: {{ name }} {{ type }}
+    </p>
+
+    <p>
+      Role: {{ role }}
+    </p>
+    </body>
+    </html>
+
+```
+
+### users.invitation_requested
+
+A notification of invitation request
+
+#### Templates
+
+=== "users/invitation_requested_subject.txt"
+
+```txt
+    Invitation request
+
+```
+
+=== "users/invitation_requested_message.txt"
+
+```txt
+    Hello!
+
+    {{ sender }} has created invitation request for the following user
+    to join {{ name }} {{ type }} in {{ role }} role.
+
+    {% if invitation.civil_number %}
+    Civil number: {{ invitation.civil_number }}
+    {% endif %}
+
+    {% if invitation.tax_number %}
+    Tax number: {{ invitation.tax_number }}
+    {% endif %}
+
+    {% if invitation.phone_number %}
+    Phone number: {{ invitation.phone_number }}
+    {% endif %}
+
+    E-mail: {{ invitation.email }}
+
+    {% if invitation.full_name %}
+    Full name: {{ invitation.full_name }}
+    {% endif %}
+
+    {% if invitation.native_name %}
+    Native name: {{ invitation.native_name }}
+    {% endif %}
+
+    {% if invitation.organization %}
+    Organization: {{ invitation.organization }}
+    {% endif %}
+
+    {% if invitation.job_title %}
+    Job title: {{ invitation.job_title }}
+    {% endif %}
+
+    Please visit the link below to approve invitation: {{ approve_link }}
+
+    Alternatively, you may reject invitation: {{ reject_link }}
+
+```
+
+=== "users/invitation_requested_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+      <meta charset="UTF-8">
+      <title>Invitation request</title>
+    </head>
+    <body>
+    <p>
+      Hello!
+    </p>
+    <p>
+      {{ sender }} has created invitation request for the following user
+      to join {{ name }} {{ type }} in {{ role }} role.
+    </p>
+
+    {% if invitation.civil_number %}
+      <p>
+        Civil number: {{ invitation.civil_number }}
+      </p>
+    {% endif %}
+
+    {% if invitation.tax_number %}
+      <p>
+        Tax number: {{ invitation.tax_number }}
+      </p>
+    {% endif %}
+
+    {% if invitation.phone_number %}
+      <p>
+        Phone number: {{ invitation.phone_number }}
+      </p>
+    {% endif %}
+
+    <p>
+      E-mail: {{ invitation.email }}
+    </p>
+
+    {% if invitation.full_name %}
+      <p>
+        Full name: {{ invitation.full_name }}
+      </p>
+    {% endif %}
+
+    {% if invitation.native_name %}
+      <p>
+        Native name: {{ invitation.native_name }}
+      </p>
+    {% endif %}
+
+    {% if invitation.organization %}
+      <p>
+        Organization: {{ invitation.organization }}
+      </p>
+    {% endif %}
+
+    {% if invitation.job_title %}
+      <p>
+        Job title: {{ invitation.job_title }}
+      </p>
+    {% endif %}
+
+    <p>
+      Please <a href="{{ approve_link }}">approve</a> or <a href="{{ reject_link }}">reject</a> invitation.
+    </p>
+    </body>
+    </html>
+
+```
+
+### users.permission_request_submitted
+
+A notification of a submitted invitation request
+
+#### Templates
+
+=== "users/permission_request_submitted_subject.txt"
+
+```txt
+    Permission request has been submitted.
+
+```
+
+=== "users/permission_request_submitted_message.txt"
+
+```txt
+    Hello!
+
+    User {{ permission_request.created_by }} with email {{ permission_request.created_by.email }} created permission request for {{ permission_request.invitation }}.
+
+    Please visit the link below to approve or reject permission request: {{ requests_link }}.
+
+```
+
+=== "users/permission_request_submitted_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+      <meta charset="UTF-8">
+      <title>Permission request has been submitted.</title>
+    </head>
+    <body>
+    <p>
+      Hello!
+    </p>
+    <p>
+      User {{ permission_request.created_by }} with email {{ permission_request.created_by.email }} created permission request for {{ permission_request.invitation }}.
+    </p>
+    <p>
+      Please visit the <a href="{{ requests_link }}">link</a> to approve or reject permission request.
+    </p>
+    </body>
+    </html>
+
+```
+
 ## WALDUR_MASTERMIND.BOOKING
 
 ### booking.notification
@@ -1337,6 +1781,52 @@ A notification for a submitted marketplace flow
 
 ```
 
+## WALDUR_RANCHER
+
+### rancher.notification_create_user
+
+A notification for created rancher user
+
+#### Templates
+
+=== "rancher/notification_create_user_subject.txt"
+
+```txt
+    New account has been created.
+
+```
+
+=== "rancher/notification_create_user_message.txt"
+
+```txt
+    Hello!
+
+    User with login {{ user.username }} and temporary password {{ password }} has been created.
+    Please go to management console {{ rancher_url }} to change the password.
+
+```
+
+=== "rancher/notification_create_user_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>A new user account has been created for you.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        User with login {{ user.username }} and temporary password {{ password }} has been created.<br />
+        Please go to <a href="{{ rancher_url }}">management console</a> to change the password.
+    </p>
+    </body>
+    </html>
+
+```
+
 ## WALDUR_MASTERMIND.MARKETPLACE_REMOTE
 
 ### marketplace_remote.notification_about_pending_project_updates
@@ -1387,496 +1877,6 @@ A notification about pending project updates
             <li><a href='{{ project_url }}'>{{ project_update_request.project.name }}</a></li>
         </ul>
         Thank you!
-    </p>
-    </body>
-    </html>
-
-```
-
-## WALDUR_RANCHER
-
-### rancher.notification_create_user
-
-A notification for created rancher user
-
-#### Templates
-
-=== "rancher/notification_create_user_subject.txt"
-
-```txt
-    New account has been created.
-
-```
-
-=== "rancher/notification_create_user_message.txt"
-
-```txt
-    Hello!
-
-    User with login {{ user.username }} and temporary password {{ password }} has been created.
-    Please go to management console {{ rancher_url }} to change the password.
-
-```
-
-=== "rancher/notification_create_user_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>A new user account has been created for you.</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>
-        User with login {{ user.username }} and temporary password {{ password }} has been created.<br />
-        Please go to <a href="{{ rancher_url }}">management console</a> to change the password.
-    </p>
-    </body>
-    </html>
-
-```
-
-## WALDUR_CORE.STRUCTURE
-
-### structure.change_email_request
-
-A notification of an email change request
-
-#### Templates
-
-=== "structure/change_email_request_subject.txt"
-
-```txt
-    Verify new email address.
-
-```
-
-=== "structure/change_email_request_message.txt"
-
-```txt
-    To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the {{ link }}.
-
-```
-
-=== "structure/change_email_request_message.html"
-
-```txt
-    <p>To confirm the change of email address from {{ request.user.email }} to {{ request.email }}, follow the <a href="{{ link }}">link</a>.</p>
-
-```
-
-### structure.notifications_profile_changes_operator
-
-A notification of changing a profile
-
-#### Templates
-
-=== "structure/notifications_profile_changes_operator_subject.txt"
-
-```txt
-    Owner details have been updated
-
-```
-
-=== "structure/notifications_profile_changes_operator_message.txt"
-
-```txt
-    Owner of
-    {% for o in organizations %}
-        {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
-    {% endfor %}
-
-    {{user.full_name}} (id={{ user.id }}) has changed
-
-    {% for f in fields %}
-        {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
-    {% endfor %}
-
-```
-
-=== "structure/notifications_profile_changes_operator_message.html"
-
-```txt
-    Owner of
-    {% for o in organizations %}
-        {{ o.name }} {% if o.abbreviation %} ({{ o.abbreviation }}){% endif %}{% if not forloop.last %}, {% endif %}
-    {% endfor %}
-
-    {{user.full_name}} (id={{ user.id }}) has changed
-
-    {% for f in fields %}
-        {{ f.name }} from {{ f.old_value }} to {{ f.new_value }}{% if not forloop.last %}, {% else %}.{% endif %}
-    {% endfor %}
-
-```
-
-### structure.structure_role_granted
-
-A notification of a granted role
-
-#### Templates
-
-=== "structure/structure_role_granted_subject.txt"
-
-```txt
-    Role granted.
-
-```
-
-=== "structure/structure_role_granted_message.txt"
-
-```txt
-    Role {{ permission.role }}  for {{ structure }} has been granted.
-
-```
-
-=== "structure/structure_role_granted_message.html"
-
-```txt
-    <p>Role {{ permission.role }}  for {{ structure }} has been granted.</p>
-
-```
-
-## WALDUR_CORE.USERS
-
-### users.invitation_approved
-
-A notification of invitation approval
-
-#### Templates
-
-=== "users/invitation_approved_subject.txt"
-
-```txt
-    Account has been created
-
-```
-
-=== "users/invitation_approved_message.txt"
-
-```txt
-    Hello!
-
-    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
-    Please visit the link below to sign up and accept your invitation:
-    {{ link }}
-
-    Your credentials are as following.
-
-    Username is {{ username }}
-
-    Your password is {{ password }}
-
-```
-
-=== "users/invitation_approved_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>Account has been created</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>
-        {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
-        Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
-    </p>
-    <p>
-      Your credentials are as following.
-    </p>
-    <p>
-      Your username is {{ username }}
-    </p>
-    <p>
-      Your password is {{ password }}
-    </p>
-    </body>
-    </html>
-
-```
-
-### users.invitation_created
-
-A notification of invitation creation
-
-#### Templates
-
-=== "users/invitation_created_subject.txt"
-
-```txt
-    Invitation to {{ name }} {{ type }}
-
-```
-
-=== "users/invitation_created_message.txt"
-
-```txt
-    Hello!
-
-    {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
-    Please visit the link below to sign up and accept your invitation:
-    {{ link }}
-
-```
-
-=== "users/invitation_created_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>Invitation to {{ name }} {{ type }}</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>
-        {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.<br>
-        Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
-        Please note: this invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}!
-    </p>
-    </body>
-    </html>
-
-```
-
-### users.invitation_rejected
-
-A notification of invitation rejection
-
-#### Templates
-
-=== "users/invitation_rejected_subject.txt"
-
-```txt
-    Invitation has been rejected
-
-```
-
-=== "users/invitation_rejected_message.txt"
-
-```txt
-    Hello!
-
-    The following invitation has been rejected.
-
-    Full name: {{ invitation.full_name }}
-
-    Target: {{ name }} {{ type }}
-
-    Role: {{ role }}
-
-```
-
-=== "users/invitation_rejected_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>Invitation to {{ name }} {{ type }}</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>
-      The following invitation has been rejected.
-    </p>
-
-    <p>
-      Full name: {{ invitation.full_name }}
-    </p>
-
-    <p>
-      Target: {{ name }} {{ type }}
-    </p>
-
-    <p>
-      Role: {{ role }}
-    </p>
-    </body>
-    </html>
-
-```
-
-### users.invitation_requested
-
-A notification of invitation request
-
-#### Templates
-
-=== "users/invitation_requested_subject.txt"
-
-```txt
-    Invitation request
-
-```
-
-=== "users/invitation_requested_message.txt"
-
-```txt
-    Hello!
-
-    {{ sender }} has created invitation request for the following user
-    to join {{ name }} {{ type }} in {{ role }} role.
-
-    {% if invitation.civil_number %}
-    Civil number: {{ invitation.civil_number }}
-    {% endif %}
-
-    {% if invitation.tax_number %}
-    Tax number: {{ invitation.tax_number }}
-    {% endif %}
-
-    {% if invitation.phone_number %}
-    Phone number: {{ invitation.phone_number }}
-    {% endif %}
-
-    E-mail: {{ invitation.email }}
-
-    {% if invitation.full_name %}
-    Full name: {{ invitation.full_name }}
-    {% endif %}
-
-    {% if invitation.native_name %}
-    Native name: {{ invitation.native_name }}
-    {% endif %}
-
-    {% if invitation.organization %}
-    Organization: {{ invitation.organization }}
-    {% endif %}
-
-    {% if invitation.job_title %}
-    Job title: {{ invitation.job_title }}
-    {% endif %}
-
-    Please visit the link below to approve invitation: {{ approve_link }}
-
-    Alternatively, you may reject invitation: {{ reject_link }}
-
-```
-
-=== "users/invitation_requested_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-      <meta charset="UTF-8">
-      <title>Invitation request</title>
-    </head>
-    <body>
-    <p>
-      Hello!
-    </p>
-    <p>
-      {{ sender }} has created invitation request for the following user
-      to join {{ name }} {{ type }} in {{ role }} role.
-    </p>
-
-    {% if invitation.civil_number %}
-      <p>
-        Civil number: {{ invitation.civil_number }}
-      </p>
-    {% endif %}
-
-    {% if invitation.tax_number %}
-      <p>
-        Tax number: {{ invitation.tax_number }}
-      </p>
-    {% endif %}
-
-    {% if invitation.phone_number %}
-      <p>
-        Phone number: {{ invitation.phone_number }}
-      </p>
-    {% endif %}
-
-    <p>
-      E-mail: {{ invitation.email }}
-    </p>
-
-    {% if invitation.full_name %}
-      <p>
-        Full name: {{ invitation.full_name }}
-      </p>
-    {% endif %}
-
-    {% if invitation.native_name %}
-      <p>
-        Native name: {{ invitation.native_name }}
-      </p>
-    {% endif %}
-
-    {% if invitation.organization %}
-      <p>
-        Organization: {{ invitation.organization }}
-      </p>
-    {% endif %}
-
-    {% if invitation.job_title %}
-      <p>
-        Job title: {{ invitation.job_title }}
-      </p>
-    {% endif %}
-
-    <p>
-      Please <a href="{{ approve_link }}">approve</a> or <a href="{{ reject_link }}">reject</a> invitation.
-    </p>
-    </body>
-    </html>
-
-```
-
-### users.permission_request_submitted
-
-A notification of a submitted invitation request
-
-#### Templates
-
-=== "users/permission_request_submitted_subject.txt"
-
-```txt
-    Permission request has been submitted.
-
-```
-
-=== "users/permission_request_submitted_message.txt"
-
-```txt
-    Hello!
-
-    User {{ permission_request.created_by }} with email {{ permission_request.created_by.email }} created permission request for {{ permission_request.invitation }}.
-
-    Please visit the link below to approve or reject permission request: {{ requests_link }}.
-
-```
-
-=== "users/permission_request_submitted_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-      <meta charset="UTF-8">
-      <title>Permission request has been submitted.</title>
-    </head>
-    <body>
-    <p>
-      Hello!
-    </p>
-    <p>
-      User {{ permission_request.created_by }} with email {{ permission_request.created_by.email }} created permission request for {{ permission_request.invitation }}.
-    </p>
-    <p>
-      Please visit the <a href="{{ requests_link }}">link</a> to approve or reject permission request.
     </p>
     </body>
     </html>
