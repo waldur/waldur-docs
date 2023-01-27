@@ -30,7 +30,6 @@ for customer in sm.Customer.objects.filter(archived=False):
                 project,
             )
             continue
-
         logger.info('Approving the prolongation request for %s', project)
         request = prolongation_requests[0]
         request.approve(system_robot)
