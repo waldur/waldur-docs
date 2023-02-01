@@ -27,7 +27,7 @@ Create a user with a specified username and password. User will be created as st
 ```bash
 usage: waldur createstaffuser -u USERNAME -p PASSWORD -e EMAIL
 
-options:
+optional arguments:
   -u USERNAME, --username USERNAME
   -p PASSWORD, --password PASSWORD
   -e EMAIL, --email EMAIL
@@ -38,12 +38,12 @@ options:
 Generate RST docs for DRF API
 
 ```bash
-usage: waldur drfdocs [--store PATH] [app_label ...]
+usage: waldur drfdocs [--store PATH] [app_label [app_label ...]]
 
 positional arguments:
   app_label             Application label.
 
-options:
+optional arguments:
   --store PATH, -s PATH
                         Where to store docs.
 ```
@@ -58,7 +58,7 @@ Drop leftover projects from remote OpenStack deployment.
 usage: waldur drop_leftover_openstack_projects [--offering OFFERING]
                                                [--dry-run] [--fuzzy-matching]
 
-options:
+optional arguments:
   --offering OFFERING  Target marketplace offering name where leftover
                        projects are located.
   --dry-run            Don't make any changes, instead show what projects
@@ -73,7 +73,7 @@ Dumps information about users, their organizations and projects.
 ```bash
 usage: waldur dumpusers [-o OUTPUT]
 
-options:
+optional arguments:
   -o OUTPUT, --output OUTPUT
                         Specifies file to which the output is written. The
                         output will be printed to stdout by default.
@@ -90,7 +90,7 @@ Export an offering from Waldur. Export data includes JSON file with an offering 
 ```bash
 usage: waldur export_offering -o OFFERING -p PATH
 
-options:
+optional arguments:
   -o OFFERING, --offering OFFERING
                         An offering UUID.
   -p PATH, --path PATH  Path to the folder where the export data will be
@@ -107,7 +107,7 @@ usage: waldur import_ami_catalog [-y] FILE
 positional arguments:
   FILE       AMI catalog file.
 
-options:
+optional arguments:
   -y, --yes  The answer to any question which would be asked will be yes.
 ```
 
@@ -119,7 +119,7 @@ Import Azure image
 usage: waldur import_azure_image [--sku SKU] [--publisher PUBLISHER]
                                  [--offer OFFER]
 
-options:
+optional arguments:
   --sku SKU
   --publisher PUBLISHER
   --offer OFFER
@@ -137,7 +137,7 @@ Import or update an offering in Waldur. You must define offering for updating or
 usage: waldur import_offering -p PATH [-c CUSTOMER] [-ct CATEGORY]
                               [-o OFFERING]
 
-options:
+optional arguments:
   -p PATH, --path PATH  File path to offering data.
   -c CUSTOMER, --customer CUSTOMER
                         Customer UUID.
@@ -154,7 +154,7 @@ Import OpenStack tenant quotas to marketplace.
 ```bash
 usage: waldur import_tenant_quotas [--dry-run]
 
-options:
+optional arguments:
   --dry-run  Don't make any changes, instead show what objects would be
              created.
 ```
@@ -167,7 +167,7 @@ Import existing support offerings as marketplace resources.
 usage: waldur init_marketplace_support --category CATEGORY_UUID --customer
                                        CUSTOMER_UUID
 
-options:
+optional arguments:
   --category CATEGORY_UUID
                         Specify a category to create offerings.
   --customer CUSTOMER_UUID
@@ -210,7 +210,7 @@ usage: waldur load_features [--dry-run] features_file
 positional arguments:
   features_file  Specifies location of features file.
 
-options:
+optional arguments:
   --dry-run      Don't make any changes, instead show what objects would be
                  created.
 ```
@@ -233,7 +233,7 @@ Imports privacy policy and terms of service into DB
 ```bash
 usage: waldur load_user_agreements [-tos TOS] [-pp PP] [-f FORCE]
 
-options:
+optional arguments:
   -tos TOS, --tos TOS   Path to a Terms of service file
   -pp PP, --pp PP       Path to a Privacy policy file
   -f FORCE, --force FORCE
@@ -248,7 +248,7 @@ Move Waldur project to a different organization.
 ```bash
 usage: waldur move_project -p PROJECT_UUID -c CUSTOMER_UUID
 
-options:
+optional arguments:
   -p PROJECT_UUID, --project PROJECT_UUID
                         UUID of a project to move.
   -c CUSTOMER_UUID, --customer CUSTOMER_UUID
@@ -262,7 +262,7 @@ Move a marketplace resource to a different project.
 ```bash
 usage: waldur move_resource -p PROJECT_UUID -r RESOURCE_UUID
 
-options:
+optional arguments:
   -p PROJECT_UUID, --project PROJECT_UUID
                         Target project UUID
   -r RESOURCE_UUID, --resource RESOURCE_UUID
@@ -279,7 +279,7 @@ usage: waldur override_templates [-c CLEAN] templates_file
 positional arguments:
   templates_file        Specifies location of templates file.
 
-options:
+optional arguments:
   -c CLEAN, --clean CLEAN
                         This flag means total synchronization with the
                         template file you pass.
@@ -292,7 +292,7 @@ Load data with disabled signals.
 ```bash
 usage: waldur pgmigrate [--path PATH]
 
-options:
+optional arguments:
   --path PATH, -p PATH  Path to dumped database.
 ```
 
@@ -307,7 +307,7 @@ Pull OpenStack volumes metadata to marketplace.
 ```bash
 usage: waldur pull_openstack_volume_metadata [--dry-run]
 
-options:
+optional arguments:
   --dry-run  Don't make any changes, instead show what objects would be
              created.
 ```
@@ -327,7 +327,7 @@ Push OpenStack tenant quotas from marketplace to backend.
 ```bash
 usage: waldur push_tenant_quotas [--dry-run]
 
-options:
+optional arguments:
   --dry-run  Don't make any changes, instead show what objects would be
              created.
 ```
@@ -351,7 +351,7 @@ Check status of Waldur MasterMind configured services
 ```bash
 usage: waldur status [--check-api-endpoints-at BASE_URL]
 
-options:
+optional arguments:
   --check-api-endpoints-at BASE_URL
                         Runs API endpoints check at specified base URL (i.e.
                         http://example.com). If this argument is not provided,
