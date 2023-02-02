@@ -149,12 +149,31 @@ kubectl logs --tail 100 -l app=waldur-mastermind-worker -n default
 
 **Note**: if you use a non-default namespace for Waldur release, please change the value for `-n` option in the aforementioned command
 
-## Update SSL certificates
+## Setup SSL certificates
 
-To update the SSL certificates, please do the following steps:
+*NB*: do not forget to set `apiScheme` ans `homeportScheme` to `https` in `ansible-config/waldur/values.yaml`
 
-1. Copy the certificates and keys to the `ansible-config/waldur/tls` directory. **NB: key must be named `tls.key` and cert itself - `tls.crt`**
-2. [Update Waldur release](#update-of-waldur)
+### Custom certificates
+
+To setup the SSL certificates, please do the following steps:
+
+1. Copy the certificate and key to the `ansible-config/waldur/tls` directory. **NB: key must be named `tls.key` and cert itself - `tls.crt`**
+2. In `ansible-config/waldur/values.yaml`, set `ingress.tls.source` to `secret`
+3. [Update Waldur release](#update-of-waldur)
+
+### Let's Encrypt
+
+To setup SSL certificates using Let's Encrypt, please do the following steps:
+
+1. In `ansible-config/rke2_vars`, set `setup_lets_encrypt` to `yes`
+2. In `ansible-config/waldur/values.yaml`, set `ingress.tls.source` to `letsEncrypt`
+3. Install Let's Encrypt via `install-applications.yaml` playbook
+
+   ```bash
+   ansible-playbook -D -i rke2_inventory -e "setup_k8s_dashboard=no setup_loki_prom_grafana=no setup_postgresql=no setup_rabbitmq=no setup_minio=no" install-applications.yaml
+   ```
+
+4. [Update Waldur release](#update-of-waldur)
 
 ## Enable K8s dashboard
 
