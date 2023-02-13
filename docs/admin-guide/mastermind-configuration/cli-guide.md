@@ -344,6 +344,18 @@ Recalculate all quotas
 
 Remove instances that have FK to stale content types.
 
+## set_constance_image
+
+A custom command to set Constance image configs with CLI
+
+```bash
+usage: waldur set_constance_image KEY PATH
+
+positional arguments:
+  KEY   Constance settings key
+  PATH  Path to a logo
+```
+
 ## status
 
 Check status of Waldur MasterMind configured services
