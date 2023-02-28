@@ -1164,6 +1164,20 @@ Type: tuple
 
 Size of the thumbnail to generate when screenshot is uploaded for an offering.
 
+## WALDUR_MARKETPLACE_REMOTE_SLURM plugin
+
+Default value:
+
+```python
+WALDUR_MARKETPLACE_REMOTE_SLURM = {'USE_WALDUR_USERNAMES': True}
+```
+
+### USE_WALDUR_USERNAMES
+
+Type: bool
+
+Fetch usernames from Waldur rather then FreeIPA profiles.
+
 ## WALDUR_MARKETPLACE_SCRIPT plugin
 
 Default value:
@@ -1421,6 +1435,41 @@ Path to private key file used as SSH identity file for accessing SLURM master.
 Type: str
 
 Prefix for SLURM account name corresponding to Waldur project.
+
+## WALDUR_ZAMMAD plugin
+
+Default value:
+
+```python
+WALDUR_ZAMMAD = {'ZAMMAD_API_URL': '',
+ 'ZAMMAD_ARTICLE_TYPE': 'fax',
+ 'ZAMMAD_GROUP': '',
+ 'ZAMMAD_TOKEN': ''}
+```
+
+### ZAMMAD_API_URL
+
+Type: str
+
+Address of Zammad server. For example http://localhost:8080
+
+### ZAMMAD_ARTICLE_TYPE
+
+Type: str
+
+Type of a comment.Default is fax because it allows to separate Waldur comments from other commentshttps://docs.zammad.org/en/latest/api/ticket/articles.html#articles
+
+### ZAMMAD_GROUP
+
+Type: str
+
+The name of the group to which the ticket will be added. If not specified, the first group will be used.
+
+### ZAMMAD_TOKEN
+
+Type: str
+
+Authorization token.
 
 ## Other variables
 
