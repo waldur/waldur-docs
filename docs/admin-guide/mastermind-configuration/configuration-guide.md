@@ -1441,11 +1441,18 @@ Prefix for SLURM account name corresponding to Waldur project.
 Default value:
 
 ```python
-WALDUR_ZAMMAD = {'ZAMMAD_API_URL': '',
+WALDUR_ZAMMAD = {'COMMENT_COOLDOWN_DURATION': 5,
+ 'ZAMMAD_API_URL': '',
  'ZAMMAD_ARTICLE_TYPE': 'fax',
  'ZAMMAD_GROUP': '',
  'ZAMMAD_TOKEN': ''}
 ```
+
+### COMMENT_COOLDOWN_DURATION
+
+Type: int
+
+Time in minutes.Time in minutes while comment deletion is availablehttps://github.com/zammad/zammad/issues/2687, https://github.com/zammad/zammad/issues/3086
 
 ### ZAMMAD_API_URL
 
