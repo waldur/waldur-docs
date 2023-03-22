@@ -69,7 +69,21 @@ Build pages:
     - ssh-keygen -lf ~/.ssh/id_rsa.pub
     - ssh-keyscan -H "github.com" >> ~/.ssh/known_hosts
 
-Tag Mastermind and Homeport repositories:
+Test Docker Compose deployment before tagging:
+  stage: test
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+  trigger:
+    waldur/waldur-docker-compose
+
+Test Helm deployment before tagging:
+  stage: test
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+  trigger:
+    waldur/waldur-helm
+
+Tag Mastermind, Homeport and Helm repositories:
   image:
     name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
   stage: deploy
@@ -86,4 +100,14 @@ Tag Mastermind and Homeport repositories:
     - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-homeport.git"
     - cd waldur-homeport/
     - git tag -a $CI_COMMIT_TAG -m "Homeport $CI_COMMIT_TAG"
+    - git push origin $CI_COMMIT_TAG
+    - cd ../
+    - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-helm.git"
+    - cd waldur-helm/
+    - git tag -a $CI_COMMIT_TAG -m "Waldur Helm $CI_COMMIT_TAG"
+    - git push origin $CI_COMMIT_TAG
+    - cd ../
+    - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-docker-compose.git"
+    - cd waldur-docker-compose/
+    - git tag -a $CI_COMMIT_TAG -m "Waldur Docker Compose $CI_COMMIT_TAG"
     - git push origin $CI_COMMIT_TAG
