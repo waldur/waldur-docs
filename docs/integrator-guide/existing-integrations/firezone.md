@@ -1,6 +1,6 @@
 # VPNaaS custom script - Provisioning VPN as a Service based on Firezone
 
-![Firezone login screen](/preview.png "Login Screen")
+![Firezone login screen](preview.png "Login Screen")
 
 This python script provisions VPN as a Service based on [Firezone](https://github.com/firezone/firezone) in OpenStack in Waldur.
 It uses [Flatcar Linux](https://www.flatcar.org/) and a butane binary that the user needs to provide inside a Docker container used for running Waldur custom scripts.
