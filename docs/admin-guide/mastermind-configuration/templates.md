@@ -165,6 +165,9 @@ Owner of
     Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
     Please note: this invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}!
 </p>
+<p>
+    {{ extra_invitation_text }}
+</p>
 </body>
 </html>
 ```
@@ -315,6 +318,7 @@ Hello!
 {{ sender }} has invited you to join {{ name }} {{ type }} in {{ role }} role.
 Please visit the link below to sign up and accept your invitation:
 {{ link }}
+{{ extra_invitation_text }}
 ```
 
 ### invitation_approved_message.html (waldur_core.users)
