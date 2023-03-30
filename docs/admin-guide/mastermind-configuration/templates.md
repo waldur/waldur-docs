@@ -1828,6 +1828,70 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 
 ## waldur_mastermind.marketplace_remote
 
+### notification_about_project_details_update_message.html (waldur_mastermind.marketplace_remote)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>A notification about project details update.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    We would like to notify you about recent updates in project details.<br />
+    Perhaps you would like to have a look at them?<br />
+
+    The project is:
+    <ul>
+        <li><a href='{{ project_url }}'>{{ new_name }}</a></li>
+    </ul>
+
+    <div>
+        Details after the update are below:
+        <ul>
+            {% if new_description %}
+                <li>Old description: {{ old_description }}</li>
+                <li>New description: {{ new_description }}</li>
+            {% endif %}
+
+            {% if new_name %}
+                <li>Old name: {{ old_name }}</li>
+                <li>New name: {{ new_name }}</li>
+            {% endif %}
+
+            {% if new_end_date %}
+                <li>Old end date: {{ old_end_date }}</li>
+                <li>New end date: {{ new_end_date }}</li>
+            {% endif %}
+
+            {% if new_oecd_fos_2007_code %}
+                <li>Old OECD FOS 2007 code: {{ old_oecd_fos_2007_code }}</li>
+                <li>New OECD FOS 2007 code: {{ new_oecd_fos_2007_code }}</li>
+            {% endif %}
+
+            {% if new_is_industry %}
+                <li>Old is_industry: {{ old_is_industry }}</li>
+                <li>New is_industry: {{ new_is_industry }}</li>
+            {% endif %}
+            <li>Reviewed by: {{ reviewed_by }}</li>
+        </ul>
+
+    </div>
+    Thank you!
+</p>
+</body>
+</html>
+```
+
+### notification_about_project_details_update_subject.txt (waldur_mastermind.marketplace_remote)
+
+``` txt
+A notification about project details update.
+```
+
 ### notification_about_pending_project_updates_message.html (waldur_mastermind.marketplace_remote)
 
 ``` html
@@ -1852,6 +1916,47 @@ It has been requested by user {{ flow.requested_by.full_name }} with email {{ fl
 </p>
 </body>
 </html>
+```
+
+### notification_about_project_details_update_message.txt (waldur_mastermind.marketplace_remote)
+
+``` txt
+Hello!
+
+We would like to notify you about recent updates in project details.
+Perhaps you would like to have a look at them?
+
+The project is:
+    {{ new_name }} {{ project_url }}
+
+    Details after the update are below:
+        {% if new_description %}
+            Old description: {{ old_description }}
+            New description: {{ new_description }}
+        {% endif %}
+
+        {% if new_name %}
+            Old name: {{ old_name }}
+            New name: {{ new_name }}
+        {% endif %}
+
+        {% if new_end_date %}
+           Old end date: {{ old_end_date }}
+           New end date: {{ new_end_date }}
+        {% endif %}
+
+        {% if new_oecd_fos_2007_code %}
+           Old OECD FOS 2007 code: {{ old_oecd_fos_2007_code }}
+           New OECD FOS 2007 code: {{ new_oecd_fos_2007_code }}
+        {% endif %}
+
+        {% if new_is_industry %}
+           Old is_industry: {{ old_is_industry }}
+           New is_industry: {{ new_is_industry }}
+        {% endif %}
+
+    Reviewed by: {{ reviewed_by }}
+Thank you!
 ```
 
 ### notification_about_pending_project_updates_subject.txt (waldur_mastermind.marketplace_remote)
