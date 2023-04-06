@@ -1452,19 +1452,19 @@ WALDUR_ZAMMAD = {'COMMENT_COOLDOWN_DURATION': 5,
 
 Type: int
 
-Time in minutes.Time in minutes while comment deletion is availablehttps://github.com/zammad/zammad/issues/2687, https://github.com/zammad/zammad/issues/3086
+Time in minutes. Time in minutes while comment deletion is available <https://github.com/zammad/zammad/issues/2687/>, <https://github.com/zammad/zammad/issues/3086/>
 
 ### ZAMMAD_API_URL
 
 Type: str
 
-Address of Zammad server. For example http://localhost:8080
+Address of Zammad server. For example <http://localhost:8080/>
 
 ### ZAMMAD_ARTICLE_TYPE
 
 Type: str
 
-Type of a comment.Default is fax because it allows to separate Waldur comments from other commentshttps://docs.zammad.org/en/latest/api/ticket/articles.html#articles
+Type of a comment. Default is fax because it allows to separate Waldur comments from other comments <https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
 
 ### ZAMMAD_GROUP
 
