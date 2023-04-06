@@ -20,22 +20,22 @@ Firezone VM needs Internet connection for Let's Encrypt certificate generation a
 ## Setup guide
 
 1. Prepare waldur custom script runner container to have [Butane](https://coreos.github.io/butane/) and [required Python packages](https://raw.githubusercontent.com/waldur/waldur-custom-offerings/main/firezone/custom-scripts/requirements.txt)
-1. Paste the create.py into the creation script and terminate.py into the termination script
-1. Populate environment variables
-1. Add user input field with internal name "tenant" and type - "Select OpenStack tenant", make it a required field
+2. Paste the create.py into the creation script and terminate.py into the termination script
+3. Populate environment variables
+4. Add user input field with internal name "tenant" and type - "Select OpenStack tenant", make it a required field
 
 ## Environment Variables
 
 The following environment variables need to be provided in the Waldur custom script:
 
-- `WALDUR_API_URL` - API URL of Waldur that holds OpenStack
-- `WALDUR_API_TOKEN` - Waldur API token
-- `KEYCLOAK_URL` - Keycloak address for creating OpenID connect clients
-- `KEYCLOAK_USERNAME` - Keycloak admin username
-- `KEYCLOAK_PASSWORD` - Keycloak admin password
-- `KEYCLOAK_REALM` - Keycloak realm
-- `CREATOR_EMAIL` - Email of the user, that created the VPN instance
-- `IMAGE` - OpenStack image
-- `FLAVOR` - OpenStack flavor
-- `SYSTEM_VOLUME_SIZE` - Size of the system volume for OpenStack VM
-- `RUN_BUTANE_IN_DOCKER` - When set to True - run butane in docker container instead of just binary
+* `WALDUR_API_URL` - API URL of Waldur that holds OpenStack
+* `WALDUR_API_TOKEN` - Waldur API token
+* `KEYCLOAK_URL` - Keycloak address for creating OpenID connect clients
+* `KEYCLOAK_USERNAME` - Keycloak admin username
+* `KEYCLOAK_PASSWORD` - Keycloak admin password
+* `KEYCLOAK_REALM` - Keycloak realm
+* `CREATOR_EMAIL` - Email of the user, that created the VPN instance
+* `IMAGE` - OpenStack image
+* `FLAVOR` - OpenStack flavor
+* `SYSTEM_VOLUME_SIZE` - Size of the system volume for OpenStack VM
+* `RUN_BUTANE_IN_DOCKER` - When set to True - run butane in docker container instead of just binary
