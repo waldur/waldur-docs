@@ -111,3 +111,19 @@ Tag Mastermind, Homeport and Helm repositories:
     - cd waldur-docker-compose/
     - git tag -a $CI_COMMIT_TAG -m "Waldur Docker Compose $CI_COMMIT_TAG"
     - git push origin $CI_COMMIT_TAG
+    - cd $CI_PROJECT_DIR
+    - git remote set-url origin "https://gitlab-ci-token:${GITLAB_TOKEN}@${CI_SERVER_HOST}/waldur/waldur-docs.git"
+    - git remote -v
+    - |
+      sed -i -E -e "s/^Version: ('.*'|.*)$/Version: $VERSION/" docs/CHANGELOG.md
+    - STR=$(cat docs/CHANGELOG.md | grep "tag diff" | head -1)
+    - STR=$(echo ${STR##*...})
+    - PREV_TAG=${STR%)*}
+    - sed -i -E -e "s/v('.*'|.*)...$PREV_TAG/$PREV_TAG...$CI_COMMIT_TAG/g" docs/CHANGELOG.md
+    - |
+      sed -E -e "s/^Date: .*$/Date: $(date)/" docs/CHANGELOG.md
+    - git --no-pager diff
+    - git add docs/CHANGELOG.md
+    - git commit -m "Create changelog for $CI_COMMIT_TAG"
+    - git --no-pager show
+    - git push origin master
