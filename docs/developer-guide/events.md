@@ -170,6 +170,9 @@
 - resource_retype_failed
 - resource_retype_scheduled
 - resource_retype_succeeded
+- resource_robot_account_created
+- resource_robot_account_deleted
+- resource_robot_account_updated
 - resource_snapshot_schedule_activated
 - resource_snapshot_schedule_cleaned_up
 - resource_snapshot_schedule_created
