@@ -255,7 +255,26 @@ Invitation request
 ### invitation_created_subject.txt (waldur_core.users)
 
 ``` txt
+{% if reminder %}
+REMINDER: Invitation to {{ name }} {{ type }}
+{% else %}
 Invitation to {{ name }} {{ type }}
+{% endif %}
+```
+
+### invitation_expired_message.txt (waldur_core.users)
+
+``` txt
+Hello!
+
+An invitation to {{ invitation.email }} has expired.
+This invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}.
+```
+
+### invitation_expired_subject.txt (waldur_core.users)
+
+``` txt
+Invitation has expired
 ```
 
 ### invitation_rejected_subject.txt (waldur_core.users)
@@ -345,6 +364,27 @@ Please visit the link below to sign up and accept your invitation:
 </p>
 <p>
   Your password is {{ password }}
+</p>
+</body>
+</html>
+```
+
+### invitation_expired_message.html (waldur_core.users)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Invitation to {{ invitation.email }} has expired</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    An invitation to {{ invitation.email }} has expired <br>
+    An invitation to {{ invitation.email }} has expired at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}.
+
 </p>
 </body>
 </html>

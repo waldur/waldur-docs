@@ -172,7 +172,11 @@ A notification of invitation creation
 === "users/invitation_created_subject.txt"
 
 ```txt
+    {% if reminder %}
+    REMINDER: Invitation to {{ name }} {{ type }}
+    {% else %}
     Invitation to {{ name }} {{ type }}
+    {% endif %}
 
 ```
 
@@ -207,6 +211,51 @@ A notification of invitation creation
     </p>
     <p>
         {{ extra_invitation_text }}
+    </p>
+    </body>
+    </html>
+
+```
+
+### users.invitation_expired
+
+A notification of expired invitation
+
+#### Templates
+
+=== "users/invitation_expired_subject.txt"
+
+```txt
+    Invitation has expired
+
+```
+
+=== "users/invitation_expired_message.txt"
+
+```txt
+    Hello!
+
+    An invitation to {{ invitation.email }} has expired.
+    This invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}.
+
+```
+
+=== "users/invitation_expired_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Invitation to {{ invitation.email }} has expired</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        An invitation to {{ invitation.email }} has expired <br>
+        An invitation to {{ invitation.email }} has expired at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}.
+
     </p>
     </body>
     </html>
