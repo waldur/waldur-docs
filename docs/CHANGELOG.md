@@ -1,8 +1,8 @@
 # Changelog
 
-Version: 5.8.0
+## 5.8.0
 
-Notes: 
+Notes:
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.7.9...v5.8.0)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.7.9...v5.8.0)

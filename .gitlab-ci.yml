@@ -83,6 +83,40 @@ Test Helm deployment before tagging:
   trigger:
     waldur/waldur-helm
 
+Test changelog generation:
+  image:
+    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  variables:
+    CI_COMMIT_TAG_MESSAGE: "Tag message"
+    CI_RELEASE_DESCRIPTION: "Release description"
+    CI_COMMIT_TAG: "v10.0.0"
+  script:
+    - export VERSION=${CI_COMMIT_TAG#v}
+    - echo $CI_COMMIT_TAG_MESSAGE
+    - echo $CI_RELEASE_DESCRIPTION
+    - export TIMESTAMP=$(date)
+    - PREV_TAG=$(cat docs/CHANGELOG.md| grep "##" | head | sed "s/## //" )
+    - echo $PREV_TAG
+    - sed -i -E -e "s/# Changelog//" docs/CHANGELOG.md
+    - |
+      echo "# Changelog
+
+      ## $VERSION
+
+      Notes: $CI_RELEASE_DESCRIPTION
+
+      * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/$PREV_TAG...$CI_COMMIT_TAG)
+
+      Date: $TIMESTAMP" | cat - docs/CHANGELOG.md > tmp
+    - cat tmp
+    - mv -f tmp docs/CHANGELOG.md
+
 Tag Mastermind, Homeport and Helm repositories:
   image:
     name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
@@ -99,21 +133,30 @@ Tag Mastermind, Homeport and Helm repositories:
     - export VERSION=${CI_COMMIT_TAG#v}
     - echo $CI_COMMIT_TAG_MESSAGE
     - echo $CI_RELEASE_DESCRIPTION
+    - export TIMESTAMP=$(date)
+    - PREV_TAG=$(cat docs/CHANGELOG.md| grep "##" | head | sed "s/## //" )
+    - echo $PREV_TAG
+    - sed -i -E -e "s/# Changelog//" docs/CHANGELOG.md
     - |
-      sed -i -E -e "s/^Version: ('.*'|.*)$/Version: $VERSION/" docs/CHANGELOG.md
-    - |
-      sed -i -E -e "s/^Notes: ('.*'|.*)$/Notes: $CI_RELEASE_DESCRIPTION/" docs/CHANGELOG.md
-    - STR=$(cat docs/CHANGELOG.md | grep "tag diff" | head -1)
-    - STR=$(echo ${STR##*...})
-    - PREV_TAG=${STR%)*}
-    - sed -i -E -e "s/v('.*'|.*)...$PREV_TAG/$PREV_TAG...$CI_COMMIT_TAG/g" docs/CHANGELOG.md
-    - |
-      sed -E -e "s/^Date: .*$/Date: $(date)/" docs/CHANGELOG.md
+      echo "# Changelog
+
+      ## $VERSION
+
+      Notes: $CI_RELEASE_DESCRIPTION
+
+      * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/$PREV_TAG...$CI_COMMIT_TAG)
+
+      Date: $TIMESTAMP" | cat - docs/CHANGELOG.md > tmp
+    - cat tmp
+    - mv -f tmp docs/CHANGELOG.md
     - git --no-pager diff
     - git add docs/CHANGELOG.md
-    - git commit -m "Create changelog for $CI_COMMIT_TAG"
+    - git commit -m "Update changelog for $CI_COMMIT_TAG"
     - git --no-pager show
-    - git push origin master -o ci.skip
+    - git push origin master
   script:
     - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-mastermind.git"
     - cd waldur-mastermind/
