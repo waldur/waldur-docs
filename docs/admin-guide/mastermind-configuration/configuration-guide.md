@@ -1089,6 +1089,9 @@ WALDUR_MARKETPLACE = {'ADMIN_CAN_APPROVE_ORDER': False,
  'NOTIFY_STAFF_ABOUT_APPROVALS': False,
  'OWNER_CAN_APPROVE_ORDER': True,
  'OWNER_CAN_REGISTER_SERVICE_PROVIDER': False,
+ 'TELEMETRY_ENABLED': True,
+ 'TELEMETRY_URL': 'https://telemetry.waldur.com/',
+ 'TELEMETRY_VERSION': 1,
  'THUMBNAIL_SIZE': (120, 120)}
 ```
 
@@ -1157,6 +1160,24 @@ If true, orders for resource can be approved by custom organization owner.
 Type: bool
 
 Allow organization owner to request or mark its organization as service provider
+
+### TELEMETRY_ENABLED
+
+Type: bool
+
+Enable telemetry.
+
+### TELEMETRY_URL
+
+Type: str
+
+URL for sending telemetry data.
+
+### TELEMETRY_VERSION
+
+Type: int
+
+Telemetry service version.
 
 ### THUMBNAIL_SIZE
 
@@ -1443,7 +1464,7 @@ Default value:
 ```python
 WALDUR_ZAMMAD = {'COMMENT_COOLDOWN_DURATION': 5,
  'ZAMMAD_API_URL': '',
- 'ZAMMAD_ARTICLE_TYPE': 'fax',
+ 'ZAMMAD_ARTICLE_TYPE': 'email',
  'ZAMMAD_GROUP': '',
  'ZAMMAD_TOKEN': ''}
 ```
@@ -1464,7 +1485,7 @@ Address of Zammad server. For example <http://localhost:8080/>
 
 Type: str
 
-Type of a comment. Default is fax because it allows to separate Waldur comments from other comments <https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
+Type of a comment. Default is email because it allows support to reply to tickets directly in Zammad<https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
 
 ### ZAMMAD_GROUP
 
