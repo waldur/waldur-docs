@@ -1465,6 +1465,7 @@ Default value:
 WALDUR_ZAMMAD = {'COMMENT_COOLDOWN_DURATION': 5,
  'ZAMMAD_API_URL': '',
  'ZAMMAD_ARTICLE_TYPE': 'email',
+ 'ZAMMAD_COMMENT_MARKER': 'Created by Waldur',
  'ZAMMAD_GROUP': '',
  'ZAMMAD_TOKEN': ''}
 ```
@@ -1485,7 +1486,13 @@ Address of Zammad server. For example <http://localhost:8080/>
 
 Type: str
 
-Type of a comment. Default is email because it allows support to reply to tickets directly in Zammad<https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
+Type of a comment.Default is email because it allows support to reply to tickets directly in Zammad<https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
+
+### ZAMMAD_COMMENT_MARKER
+
+Type: str
+
+Marker for comment.Used for separating comments made via Waldur from natively added comments.
 
 ### ZAMMAD_GROUP
 
