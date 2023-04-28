@@ -134,15 +134,16 @@ Tag Mastermind, Homeport and Helm repositories:
     - echo $CI_COMMIT_TAG_MESSAGE
     - echo $CI_RELEASE_DESCRIPTION
     - export TIMESTAMP=$(date)
-    - PREV_TAG=$(cat docs/CHANGELOG.md| grep "##" | head | sed "s/## //" )
+    - PREV_TAG=$(cat docs/CHANGELOG.md| grep "##" | head -n 1 | sed "s/## //" )
     - echo $PREV_TAG
-    - sed -i -E -e "s/# Changelog//" docs/CHANGELOG.md
+    # Drop first 2 lines from the changelog
+    - sed -i '1,2d' docs/CHANGELOG.md
     - |
       echo "# Changelog
 
       ## $VERSION
 
-      Notes: $CI_RELEASE_DESCRIPTION
+      Notes: $CI_COMMIT_TAG_MESSAGE
 
       * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v$PREV_TAG...$CI_COMMIT_TAG)
       * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v$PREV_TAG...$CI_COMMIT_TAG)
@@ -160,20 +161,20 @@ Tag Mastermind, Homeport and Helm repositories:
   script:
     - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-mastermind.git"
     - cd waldur-mastermind/
-    - git tag -a $CI_COMMIT_TAG -m "Mastermind $CI_COMMIT_TAG" # TODO: consider $CI_RELEASE_DESCRIPTION
+    - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
     - cd ../
     - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-homeport.git"
     - cd waldur-homeport/
-    - git tag -a $CI_COMMIT_TAG -m "Homeport $CI_COMMIT_TAG"
+    - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
     - cd ../
     - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-helm.git"
     - cd waldur-helm/
-    - git tag -a $CI_COMMIT_TAG -m "Waldur Helm $CI_COMMIT_TAG"
+    - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
     - cd ../
     - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-docker-compose.git"
     - cd waldur-docker-compose/
-    - git tag -a $CI_COMMIT_TAG -m "Waldur Docker Compose $CI_COMMIT_TAG"
+    - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG

@@ -2,23 +2,18 @@
 
 ## 5.8.2
 
-Notes: 
+Notes: Fix migrations broken in 5.8.1
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.1
-5.8.0...v5.8.2)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.1
-5.8.0...v5.8.2)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.1
-5.8.0...v5.8.2)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.8.1
-5.8.0...v5.8.2)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.1...v5.8.2)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.1...v5.8.2)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.1...v5.8.2)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.8.1...v5.8.2)
 
 Date: Fri Apr 28 08:46:24 UTC 2023
 
-
 ## 5.8.1
 
-Notes: 
+Notes:
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.0...v5.8.1)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.0...v5.8.1)
@@ -26,7 +21,6 @@ Notes:
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.8.0...v5.8.1)
 
 Date: Thu Apr 27 11:09:24 UTC 2023
-
 
 ## 5.8.0
 
