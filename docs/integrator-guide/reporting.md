@@ -186,3 +186,106 @@ OpenStack Cloud for testing,1,1024,102400,5.17,Demo project,Org B,OB
 OpenStack Cloud,12,51200,614400,21.77,Industrial project,Org B,OB
 Private Cloud,1,1024,102400,5.17,Lab1,Org C,OC
 ```
+
+## Reporting by provider
+
+To get CSV summary of consumption by provider, the following script can be useful. Output
+will be a file per provider with a short summary of invoice items for the defined period.
+
+```python
+import csv
+from collections import defaultdict
+import unicodedata
+import re
+from decimal import Decimal
+
+from waldur_client import WaldurClient, ObjectDoesNotExist
+
+# Your Waldur instance data
+WALDUR_HOST = 'example.waldur.com'
+TOKEN = 'SUPPORT_STAFF_SECRET_TOKEN'
+
+# Date-related constants
+CURRENT_YEAR = 2023
+CURRENT_MONTH = 4
+
+
+def slugify(value, allow_unicode=False):
+    """
+    Taken from https://github.com/django/django/blob/master/django/utils/text.py
+    Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
+    dashes to single dashes. Remove characters that aren't alphanumerics,
+    underscores, or hyphens. Convert to lowercase. Also strip leading and
+    trailing whitespace, dashes, and underscores.
+    """
+    value = str(value)
+    if allow_unicode:
+        value = unicodedata.normalize('NFKC', value)
+    else:
+        value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+    value = re.sub(r'[^\w\s-]', '', value.lower())
+    return re.sub(r'[-\s]+', '-', value).strip('-_')
+
+# WaldurClient instance initialisation
+client = WaldurClient(
+    f'https://{WALDUR_HOST}/api/', TOKEN
+)
+
+# Organisations data fetching
+customers_data = client.list_customers()
+
+sp = {}
+
+for customer_data in customers_data:
+    try:
+        # Invoices data fetching
+        invoice_data = client.get_invoice_for_customer(
+            customer_data['uuid'], CURRENT_YEAR, CURRENT_MONTH
+        )
+    # If customer doesn't have any projects or created after the requested month
+    except ObjectDoesNotExist:
+        continue
+
+    invoice_items = [item for item in invoice_data['items']]
+
+    for item in invoice_items:
+        # allocate to SP
+        if 'service_provider_name' in item['details']:
+            if item['details']['service_provider_name'] in sp:
+                sp[item['details']['service_provider_name']].append((item, customer_data['name']))
+            else:
+                sp[item['details']['service_provider_name']] = [(item, customer_data['name'])]
+
+for provider in sp.keys():
+    filename = f'{slugify(provider)}_{CURRENT_YEAR}_{CURRENT_MONTH}.csv'
+    print('Generating', filename)
+    with open(filename, 'w', encoding='UTF8') as out_file:
+        writer = csv.writer(out_file)
+        HEADER = [
+            'Kood',
+            'Nimetus',
+            'Klient',
+            'Kogus',
+            'Hind',
+            'Summa',
+        ]
+        writer.writerow(HEADER)
+        for inv, customer_name in sp[provider]:
+            code = inv['article_code']
+            try:
+                code = inv['article_code'].split('_')[0]
+            except:
+                # failed to parse custom logic
+                pass
+            writer.writerow(
+                [
+                    code,
+                    inv['name'],
+                    customer_name,
+                    int(Decimal(inv['quantity'])),
+                    inv['unit_price'],
+                    inv['price'],
+                ]
+            )
+
+```
