@@ -1,5 +1,132 @@
 # Configuration guide
 
+## WALDUR_ATLASSIAN plugin
+
+Default value:
+
+```python
+WALDUR_ATLASSIAN = {'DEFAULT_OFFERING_ISSUE_TYPE': 'Service Request',
+ 'EMAIL': '',
+ 'EXCLUDED_ATTACHMENT_TYPES': [],
+ 'ISSUE': {'caller_field': 'Caller',
+           'impact_field': 'Impact',
+           'reporter_field': 'Original Reporter',
+           'request_feedback': 'Request feedback',
+           'satisfaction_field': 'Customer satisfaction',
+           'sla_field': 'Time to first response',
+           'type_of_linked_issue': 'Relates',
+           'types': ['Informational',
+                     'Service Request',
+                     'Change Request',
+                     'Incident']},
+ 'MAP_WALDUR_USERS_TO_SERVICEDESK_AGENTS': False,
+ 'PASSWORD': 'PASSWORD',
+ 'PROJECT': {'key': 'PROJECT'},
+ 'PULL_PRIORITIES': True,
+ 'SERVER': 'http://example.com/',
+ 'STRANGE_SETTING': 1,
+ 'TOKEN': '',
+ 'USERNAME': 'USERNAME',
+ 'USE_AUTOMATIC_REQUEST_MAPPING': True,
+ 'USE_OLD_API': False,
+ 'USE_TEENAGE_API': False,
+ 'VERIFY_SSL': False}
+```
+
+### DEFAULT_OFFERING_ISSUE_TYPE
+
+Type: str
+
+Issue type
+
+### EMAIL
+
+Type: str
+
+Email for access user
+
+### EXCLUDED_ATTACHMENT_TYPES
+
+Type: list
+
+List of attachment types
+
+### ISSUE
+
+Type: dict
+
+Issue-related settings
+
+### MAP_WALDUR_USERS_TO_SERVICEDESK_AGENTS
+
+Type: bool
+
+Toggler for mapping between waldur user and service desk agents
+
+### PASSWORD
+
+Type: str
+
+Password for access user
+
+### PROJECT
+
+Type: dict
+
+Project-related settings
+
+### PULL_PRIORITIES
+
+Type: bool
+
+Pull priorities
+
+### SERVER
+
+Type: str
+
+Atlassian server URL
+
+### STRANGE_SETTING
+
+Type: int
+
+### TOKEN
+
+Type: str
+
+Token for access user
+
+### USERNAME
+
+Type: str
+
+Username for access user
+
+### USE_AUTOMATIC_REQUEST_MAPPING
+
+Type: bool
+
+Toggler for automatic request mapping
+
+### USE_OLD_API
+
+Type: bool
+
+Toggler for legacy API usage
+
+### USE_TEENAGE_API
+
+Type: bool
+
+Toggler for teenage API usage
+
+### VERIFY_SSL
+
+Type: bool
+
+Toggler for SSL verification
+
 ## WALDUR_AUTH_SAML2 plugin
 
 Default value:
@@ -1456,6 +1583,34 @@ Path to private key file used as SSH identity file for accessing SLURM master.
 Type: str
 
 Prefix for SLURM account name corresponding to Waldur project.
+
+## WALDUR_SUPPORT plugin
+
+Default value:
+
+```python
+WALDUR_SUPPORT = {'ACTIVE_BACKEND_TYPE': 'atlassian',
+ 'DISPLAY_REQUEST_TYPE': True,
+ 'ENABLED': False}
+```
+
+### ACTIVE_BACKEND_TYPE
+
+Type: str
+
+Type of support backend. Possible values: atlassian, zammad
+
+### DISPLAY_REQUEST_TYPE
+
+Type: bool
+
+Toggler for request type displaying
+
+### ENABLED
+
+Type: bool
+
+Toggler for Support plugin
 
 ## WALDUR_ZAMMAD plugin
 
