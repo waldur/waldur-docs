@@ -98,11 +98,11 @@ Test changelog generation:
     - echo $CI_COMMIT_TAG_MESSAGE
     - echo $CI_RELEASE_DESCRIPTION
     - export TIMESTAMP=$(date)
-    - PREV_TAG=$(cat docs/CHANGELOG.md| grep "##" | head | sed "s/## //" )
+    - PREV_TAG=$(cat docs/CHANGELOG.md| grep "##" | head -n 1 | sed "s/## //" )
     - echo $PREV_TAG
     - sed -i -E -e "s/# Changelog//" docs/CHANGELOG.md
     - |
-      echo "# Changelog
+      echo -e "# Changelog
 
       ## $VERSION
 
@@ -113,7 +113,7 @@ Test changelog generation:
       * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/$PREV_TAG...$CI_COMMIT_TAG)
       * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/$PREV_TAG...$CI_COMMIT_TAG)
 
-      Date: $TIMESTAMP" | cat - docs/CHANGELOG.md > tmp
+      Date: $TIMESTAMP\n" | cat - docs/CHANGELOG.md > tmp
     - cat tmp
     - mv -f tmp docs/CHANGELOG.md
 
@@ -139,7 +139,7 @@ Tag Mastermind, Homeport and Helm repositories:
     # Drop first 2 lines from the changelog
     - sed -i '1,2d' docs/CHANGELOG.md
     - |
-      echo "# Changelog
+      echo -e "# Changelog
 
       ## $VERSION
 
@@ -150,7 +150,7 @@ Tag Mastermind, Homeport and Helm repositories:
       * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v$PREV_TAG...$CI_COMMIT_TAG)
       * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v$PREV_TAG...$CI_COMMIT_TAG)
 
-      Date: $TIMESTAMP" | cat - docs/CHANGELOG.md > tmp
+      Date: $TIMESTAMP\n" | cat - docs/CHANGELOG.md > tmp
     - cat tmp
     - mv -f tmp docs/CHANGELOG.md
     - git --no-pager diff
