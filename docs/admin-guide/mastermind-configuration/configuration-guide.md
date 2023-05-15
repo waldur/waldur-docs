@@ -1621,6 +1621,7 @@ WALDUR_ZAMMAD = {'COMMENT_COOLDOWN_DURATION': 5,
  'ZAMMAD_API_URL': '',
  'ZAMMAD_ARTICLE_TYPE': 'email',
  'ZAMMAD_COMMENT_MARKER': 'Created by Waldur',
+ 'ZAMMAD_COMMENT_PREFIX': 'User: {name}',
  'ZAMMAD_GROUP': '',
  'ZAMMAD_TOKEN': ''}
 ```
@@ -1648,6 +1649,12 @@ Type of a comment.Default is email because it allows support to reply to tickets
 Type: str
 
 Marker for comment.Used for separating comments made via Waldur from natively added comments.
+
+### ZAMMAD_COMMENT_PREFIX
+
+Type: str
+
+Comment prefix with user info.
 
 ### ZAMMAD_GROUP
 
