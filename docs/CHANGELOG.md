@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.8.6
+
+Notes: 
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.5...5.8.6)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.5...5.8.6)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.5...5.8.6)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.8.5...5.8.6)
+
+Date: Mon May 15 16:03:07 UTC 2023
+
 ## 5.8.5
 
 Notes: Bugfixes
