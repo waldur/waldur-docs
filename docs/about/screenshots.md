@@ -12,6 +12,7 @@
 
 [![Resource list](img/project-resource-list.png)](img/project-resource-list.png)
 [![OpenStack details](img/project-openstack-details.png)](img/project-openstack-details.png)
+[![SLURM details](img/slurm-resource.png)](img/slurm-resource.png)
 
 ## Provider reporting and support dashboard
 
