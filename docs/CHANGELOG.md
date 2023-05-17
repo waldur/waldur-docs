@@ -13,7 +13,7 @@ Date: Mon May 15 20:34:08 UTC 2023
 
 ## 5.8.6
 
-Notes: 
+Notes:
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.5...5.8.6)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.5...5.8.6)
