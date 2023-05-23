@@ -648,8 +648,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
  'INVITATIONS_ENABLED': True,
- 'INVITATION_CIVIL_NUMBER_HELP_TEXT': 'Must start with a country prefix ie '
-                                      'EE34501234215',
  'INVITATION_CIVIL_NUMBER_LABEL': '',
  'INVITATION_CREATE_MISSING_USER': False,
  'INVITATION_DISABLE_MULTIPLE_ROLES': False,
@@ -797,12 +795,6 @@ Chunk size for resource fetching from backend API. It is needed in order to avoi
 Type: bool
 
 Allows to disable invitations feature.
-
-### INVITATION_CIVIL_NUMBER_HELP_TEXT
-
-Type: str
-
-Help text for civil number field in invitation creation dialog.
 
 ### INVITATION_CIVIL_NUMBER_LABEL
 
