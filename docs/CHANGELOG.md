@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.9.1
+
+Notes: Introduce service_catalogue translation domain
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.0...5.9.1)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.0...5.9.1)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.0...5.9.1)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.0...5.9.1)
+
+Date: Tue May 23 18:06:21 UTC 2023
+
 ## 5.9.0
 
 Notes: Bugfix, reverting public plan changes
