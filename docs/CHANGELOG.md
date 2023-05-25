@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.9.2
+
+Notes: Fixed redirects for group invititations
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.1...5.9.2)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.1...5.9.2)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.1...5.9.2)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.1...5.9.2)
+
+Date: Thu May 25 17:12:33 UTC 2023
+
 ## 5.9.1
 
 Notes: Introduce service_catalogue translation domain
