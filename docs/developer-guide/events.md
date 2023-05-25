@@ -68,6 +68,27 @@
 - role_revoked
 - role_updated
 
+## Providers
+
+- marketplace_resource_create_canceled
+- marketplace_resource_create_failed
+- marketplace_resource_create_requested
+- marketplace_resource_create_succeeded
+- marketplace_resource_renamed
+- marketplace_resource_terminate_failed
+- marketplace_resource_terminate_requested
+- marketplace_resource_terminate_succeeded
+- marketplace_resource_update_failed
+- marketplace_resource_update_limits_failed
+- marketplace_resource_update_limits_succeeded
+- marketplace_resource_update_requested
+- resource_robot_account_created
+- resource_robot_account_deleted
+- resource_robot_account_updated
+- role_granted
+- role_revoked
+- role_updated
+
 ## Resources
 
 - marketplace_order_approved
