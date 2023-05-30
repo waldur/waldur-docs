@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.9.3
+
+Notes: 
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.2...5.9.3)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.2...5.9.3)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.2...5.9.3)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.2...5.9.3)
+
+Date: Tue May 30 12:12:05 UTC 2023
+
 ## 5.9.2
 
 Notes: Fixed redirects for group invititations
