@@ -6,7 +6,7 @@ Custom Keycloak client mapper for Waldur OfferingUser usernames.
 
 Custom mapper setup includes the following steps:
 
-1. Download the jar file to your machine, e.g. from [this release](https://code.opennodecloud.com/waldur/waldur-keycloak-mapper/-/releases/v1.0.1)
+1. Download the jar file to your machine, e.g. one of [these releases](https://code.opennodecloud.com/waldur/waldur-keycloak-mapper/-/releases/)
 
 2. Add the jar file to the providers directory. Given a Keycloak server is running in a Docker container via Docker Compose, you can mount the file as a volume:
 
