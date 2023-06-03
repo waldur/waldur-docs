@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.9.4
+
+Notes: Switch to new UI by default
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.3...5.9.4)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.3...5.9.4)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.3...5.9.4)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.3...5.9.4)
+
+Date: Sat Jun  3 14:36:05 UTC 2023
+
 ## 5.9.3
 
 Notes: 
