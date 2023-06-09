@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.9.7
+
+Notes: 
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.6...5.9.7)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.6...5.9.7)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.6...5.9.7)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.6...5.9.7)
+
+Date: Fri Jun  9 17:11:05 UTC 2023
+
 ## 5.9.6
 
 Notes: Fix remote orders
