@@ -1,5 +1,57 @@
 # CLI guide
 
+## axes_list_attempts
+
+List access attempts
+
+## axes_reset
+
+Reset all access attempts and lockouts
+
+## axes_reset_failure_logs
+
+Reset access failure log records older than given days.
+
+```bash
+usage: waldur axes_reset_failure_logs [--age AGE]
+
+optional arguments:
+  --age AGE  Maximum age for records to keep in days
+```
+
+## axes_reset_ip
+
+Reset all access attempts and lockouts for given IP addresses
+
+```bash
+usage: waldur axes_reset_ip ip [ip ...]
+
+positional arguments:
+  ip
+```
+
+## axes_reset_logs
+
+Reset access log records older than given days.
+
+```bash
+usage: waldur axes_reset_logs [--age AGE]
+
+optional arguments:
+  --age AGE  Maximum age for records to keep in days
+```
+
+## axes_reset_username
+
+Reset all access attempts and lockouts for given usernames
+
+```bash
+usage: waldur axes_reset_username username [username ...]
+
+positional arguments:
+  username
+```
+
 ## clean_settings_cache
 
 Clean API configuration settings cache.
