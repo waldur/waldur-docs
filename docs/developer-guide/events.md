@@ -115,6 +115,7 @@
 - openstack_flavor_deleted
 - openstack_floating_ip_attached
 - openstack_floating_ip_connected
+- openstack_floating_ip_description_updated
 - openstack_floating_ip_detached
 - openstack_floating_ip_disconnected
 - openstack_network_cleaned
