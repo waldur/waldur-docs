@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.0.2
+
+Notes: Bugfix release
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v6.0.1...6.0.2)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v6.0.1...6.0.2)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v6.0.1...6.0.2)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v6.0.1...6.0.2)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/v6.0.1...6.0.2)
+
+Date: Mon Jun 26 19:39:40 UTC 2023
+
 ## 6.0.1
 
 Notes: 
