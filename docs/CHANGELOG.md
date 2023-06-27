@@ -4,11 +4,11 @@
 
 Notes: Bugfix release
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v6.0.2...6.0.3)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v6.0.2...6.0.3)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v6.0.2...6.0.3)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v6.0.2...6.0.3)
-* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/v6.0.2...6.0.3)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.2...6.0.3)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.2...6.0.3)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.0.2...6.0.3)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.0.2...6.0.3)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.0.2...6.0.3)
 
 Date: Tue Jun 27 15:23:14 UTC 2023
 
@@ -16,11 +16,11 @@ Date: Tue Jun 27 15:23:14 UTC 2023
 
 Notes: Bugfix release
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v6.0.1...6.0.2)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v6.0.1...6.0.2)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v6.0.1...6.0.2)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v6.0.1...6.0.2)
-* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/v6.0.1...6.0.2)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.1...6.0.2)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.1...6.0.2)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.0.1...6.0.2)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.0.1...6.0.2)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.0.1...6.0.2)
 
 Date: Mon Jun 26 19:39:40 UTC 2023
 
@@ -28,11 +28,11 @@ Date: Mon Jun 26 19:39:40 UTC 2023
 
 Notes: 
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v6.0.0...6.0.1)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v6.0.0...6.0.1)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v6.0.0...6.0.1)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v6.0.0...6.0.1)
-* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/v6.0.0...6.0.1)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.0...6.0.1)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.0...6.0.1)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.0.0...6.0.1)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.0.0...6.0.1)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.0.0...6.0.1)
 
 Date: Mon Jun 26 17:02:47 UTC 2023
 
@@ -40,11 +40,11 @@ Date: Mon Jun 26 17:02:47 UTC 2023
 
 Notes: 
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.9...6.0.0)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.9...6.0.0)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.9...6.0.0)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.9...6.0.0)
-* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/v5.9.9...6.0.0)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.9...6.0.0)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.9...6.0.0)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.9...6.0.0)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.9...6.0.0)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/5.9.9...6.0.0)
 
 Date: Fri Jun 23 15:50:18 UTC 2023
 
@@ -52,10 +52,10 @@ Date: Fri Jun 23 15:50:18 UTC 2023
 
 Notes: 
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.8...5.9.9)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.8...5.9.9)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.8...5.9.9)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.8...5.9.9)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.8...5.9.9)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.8...5.9.9)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.8...5.9.9)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.8...5.9.9)
 
 Date: Sat Jun 17 05:19:49 UTC 2023
 
@@ -63,10 +63,10 @@ Date: Sat Jun 17 05:19:49 UTC 2023
 
 Notes: 
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.7...5.9.8)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.7...5.9.8)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.7...5.9.8)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.7...5.9.8)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.7...5.9.8)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.7...5.9.8)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.7...5.9.8)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.7...5.9.8)
 
 Date: Fri Jun  9 19:24:43 UTC 2023
 
@@ -74,10 +74,10 @@ Date: Fri Jun  9 19:24:43 UTC 2023
 
 Notes: 
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.6...5.9.7)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.6...5.9.7)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.6...5.9.7)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.6...5.9.7)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.6...5.9.7)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.6...5.9.7)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.6...5.9.7)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.6...5.9.7)
 
 Date: Fri Jun  9 17:11:05 UTC 2023
 
@@ -85,10 +85,10 @@ Date: Fri Jun  9 17:11:05 UTC 2023
 
 Notes: Fix remote orders
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.5...5.9.6)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.5...5.9.6)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.5...5.9.6)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.5...5.9.6)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.5...5.9.6)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.5...5.9.6)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.5...5.9.6)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.5...5.9.6)
 
 Date: Tue Jun  6 20:05:16 UTC 2023
 
@@ -96,10 +96,10 @@ Date: Tue Jun  6 20:05:16 UTC 2023
 
 Notes: Bugfixes
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.4...5.9.5)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.4...5.9.5)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.4...5.9.5)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.4...5.9.5)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.4...5.9.5)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.4...5.9.5)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.4...5.9.5)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.4...5.9.5)
 
 Date: Mon Jun  5 09:43:52 UTC 2023
 
@@ -107,10 +107,10 @@ Date: Mon Jun  5 09:43:52 UTC 2023
 
 Notes: Switch to new UI by default
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.3...5.9.4)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.3...5.9.4)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.3...5.9.4)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.3...5.9.4)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.3...5.9.4)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.3...5.9.4)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.3...5.9.4)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.3...5.9.4)
 
 Date: Sat Jun  3 14:36:05 UTC 2023
 
@@ -118,10 +118,10 @@ Date: Sat Jun  3 14:36:05 UTC 2023
 
 Notes: 
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.2...5.9.3)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.2...5.9.3)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.2...5.9.3)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.2...5.9.3)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.2...5.9.3)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.2...5.9.3)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.2...5.9.3)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.2...5.9.3)
 
 Date: Tue May 30 12:12:05 UTC 2023
 
@@ -129,10 +129,10 @@ Date: Tue May 30 12:12:05 UTC 2023
 
 Notes: Fixed redirects for group invititations
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.1...5.9.2)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.1...5.9.2)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.1...5.9.2)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.1...5.9.2)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.1...5.9.2)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.1...5.9.2)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.1...5.9.2)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.1...5.9.2)
 
 Date: Thu May 25 17:12:33 UTC 2023
 
@@ -140,10 +140,10 @@ Date: Thu May 25 17:12:33 UTC 2023
 
 Notes: Introduce service_catalogue translation domain
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.9.0...5.9.1)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.9.0...5.9.1)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.9.0...5.9.1)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.9.0...5.9.1)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.0...5.9.1)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.0...5.9.1)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.0...5.9.1)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.9.0...5.9.1)
 
 Date: Tue May 23 18:06:21 UTC 2023
 
@@ -151,10 +151,10 @@ Date: Tue May 23 18:06:21 UTC 2023
 
 Notes: Bugfix, reverting public plan changes
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.9...5.9.0)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.9...5.9.0)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.9...5.9.0)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.8.9...5.9.0)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.8.9...5.9.0)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.8.9...5.9.0)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.8.9...5.9.0)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.8.9...5.9.0)
 
 Date: Mon May 22 14:26:55 UTC 2023
 
@@ -162,10 +162,10 @@ Date: Mon May 22 14:26:55 UTC 2023
 
 Notes: Bugfixes
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.7...5.8.9)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.7...5.8.9)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.7...5.8.9)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.8.7...5.8.9)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.8.7...5.8.9)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.8.7...5.8.9)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.8.7...5.8.9)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.8.7...5.8.9)
 
 Date: Sun May 21 11:53:09 UTC 2023
 
@@ -174,9 +174,9 @@ Date: Sun May 21 11:53:09 UTC 2023
 Notes: Project selector bugfixes
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.6...5.8.7)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.6...5.8.7)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.6...5.8.7)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.8.6...5.8.7)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.8.6...5.8.7)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.8.6...5.8.7)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.8.6...5.8.7)
 
 Date: Mon May 15 20:34:08 UTC 2023
 
@@ -184,10 +184,10 @@ Date: Mon May 15 20:34:08 UTC 2023
 
 Notes:
 
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.5...5.8.6)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.5...5.8.6)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.5...5.8.6)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/v5.8.5...5.8.6)
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.8.5...5.8.6)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.8.5...5.8.6)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.8.5...5.8.6)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/5.8.5...5.8.6)
 
 Date: Mon May 15 16:03:07 UTC 2023
 
