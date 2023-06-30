@@ -1324,7 +1324,9 @@ Default value:
 
 ```python
 WALDUR_MARKETPLACE_SCRIPT = {'DOCKER_CLIENT': {'base_url': 'unix://var/run/docker.sock'},
- 'DOCKER_IMAGES': {'python': 'python:3.8-alpine', 'shell': 'alpine:3'},
+ 'DOCKER_IMAGES': {'python': {'command': 'python',
+                              'image': 'python:3.8-alpine'},
+                   'shell': {'command': 'sh', 'image': 'alpine:3'}},
  'DOCKER_RUN_OPTIONS': {'mem_limit': '64m'},
  'DOCKER_SCRIPT_DIR': None,
  'K8S_CONFIG_PATH': '~/.kube/config',
@@ -1343,7 +1345,7 @@ Options for docker client. See also: <https://docker-py.readthedocs.io/en/stable
 
 Type: dict
 
-Key is command to execute script, value is image name.
+Key is command to execute script, value is a dictionary of image name and command.
 
 ### DOCKER_RUN_OPTIONS
 

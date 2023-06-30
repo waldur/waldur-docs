@@ -2050,3 +2050,44 @@ A notification about project details update
 
 ```
 
+### marketplace_policy.notification_about_project_cost_exceeded_limit
+
+Notification about project cost exceeded limit.
+
+#### Templates
+
+=== "marketplace_policy/notification_about_project_cost_exceeded_limit_subject.txt"
+
+```txt
+    Project {{ project_name }} cost has exceeded the limit.
+
+```
+
+=== "marketplace_policy/notification_about_project_cost_exceeded_limit_message.txt"
+
+```txt
+    Hello!
+    Project {{ project_name }} ({{ project_url }}) cost has exceeded the limit of {{ limit }}.
+
+```
+
+=== "marketplace_policy/notification_about_project_cost_exceeded_limit_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Project {{ project_name }} cost has exceeded the limit.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        Project <a href='{{ project_url }}'>{{ project_name }}</a> cost has exceeded the limit of {{ limit }}.
+    </p>
+    </body>
+    </html>
+
+```
+
