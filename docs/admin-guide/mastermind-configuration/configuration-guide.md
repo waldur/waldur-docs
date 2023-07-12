@@ -1327,7 +1327,7 @@ WALDUR_MARKETPLACE_SCRIPT = {'DOCKER_CLIENT': {'base_url': 'unix://var/run/docke
  'DOCKER_IMAGES': {'python': {'command': 'python',
                               'image': 'python:3.8-alpine'},
                    'shell': {'command': 'sh', 'image': 'alpine:3'}},
- 'DOCKER_RUN_OPTIONS': {'mem_limit': '64m'},
+ 'DOCKER_RUN_OPTIONS': {'mem_limit': '512m'},
  'DOCKER_SCRIPT_DIR': None,
  'K8S_CONFIG_PATH': '~/.kube/config',
  'K8S_JOB_TIMEOUT': 1800,
