@@ -1327,6 +1327,7 @@ WALDUR_MARKETPLACE_SCRIPT = {'DOCKER_CLIENT': {'base_url': 'unix://var/run/docke
  'DOCKER_IMAGES': {'python': {'command': 'python',
                               'image': 'python:3.8-alpine'},
                    'shell': {'command': 'sh', 'image': 'alpine:3'}},
+ 'DOCKER_REMOVE_CONTAINER': True,
  'DOCKER_RUN_OPTIONS': {'mem_limit': '512m'},
  'DOCKER_SCRIPT_DIR': None,
  'K8S_CONFIG_PATH': '~/.kube/config',
@@ -1346,6 +1347,12 @@ Options for docker client. See also: <https://docker-py.readthedocs.io/en/stable
 Type: dict
 
 Key is command to execute script, value is a dictionary of image name and command.
+
+### DOCKER_REMOVE_CONTAINER
+
+Type: bool
+
+Remove Docker container after script execution
 
 ### DOCKER_RUN_OPTIONS
 
