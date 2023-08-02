@@ -387,8 +387,6 @@ WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2
  'REMOTE_EDUTEAMS_SECRET': '',
  'REMOTE_EDUTEAMS_TOKEN_URL': 'https://proxy.acc.researcher-access.org/OIDC/token',
  'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo',
- 'SMARTIDEE_CLIENT_ID': '',
- 'SMARTIDEE_SECRET': '',
  'TARA_CLIENT_ID': '',
  'TARA_LABEL': 'Riigi Autentimisteenus',
  'TARA_MANAGEMENT_URL': '',
@@ -540,18 +538,6 @@ The token endpoint is used to obtain tokens.
 Type: str
 
 It allows to get user data based on userid aka CUID.
-
-### SMARTIDEE_CLIENT_ID
-
-Type: str
-
-ID of application used for OAuth authentication.
-
-### SMARTIDEE_SECRET
-
-Type: str
-
-Application secret key.
 
 ### TARA_CLIENT_ID
 
