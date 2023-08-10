@@ -135,6 +135,19 @@ options:
 
 Export catalog of Amazon images.
 
+## export_auth_social
+
+Export OIDC auth configuration as YAML format
+
+```bash
+usage: waldur export_auth_social [-o OUTPUT]
+
+options:
+  -o OUTPUT, --output OUTPUT
+                        Specifies file to which the output is written. The
+                        output will be printed to stdout by default.
+```
+
 ## export_offering
 
 Export an offering from Waldur. Export data includes JSON file with an offering data and a thumbnail. Names of this files include offering ID.
@@ -161,6 +174,17 @@ positional arguments:
 
 options:
   -y, --yes  The answer to any question which would be asked will be yes.
+```
+
+## import_auth_social
+
+Import OIDC auth configuration in YAML format
+
+```bash
+usage: waldur import_auth_social auth_file
+
+positional arguments:
+  auth_file  Specifies location of auth configuration file.
 ```
 
 ## import_azure_image

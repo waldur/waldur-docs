@@ -240,10 +240,8 @@
 
 ## Users
 
-- auth_logged_in_with_eduteams
-- auth_logged_in_with_keycloak
+- auth_logged_in_with_oauth
 - auth_logged_in_with_saml2
-- auth_logged_in_with_tara
 - auth_logged_out_with_saml2
 - freeipa_profile_created
 - freeipa_profile_deleted

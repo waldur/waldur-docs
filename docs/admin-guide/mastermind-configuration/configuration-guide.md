@@ -363,145 +363,20 @@ Full path to the xmlsec1 binary program
 Default value:
 
 ```python
-WALDUR_AUTH_SOCIAL = {'EDUTEAMS_AUTH_URL': 'https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization',
- 'EDUTEAMS_CLIENT_ID': '',
- 'EDUTEAMS_LABEL': 'eduTEAMS',
- 'EDUTEAMS_MANAGEMENT_URL': '',
- 'EDUTEAMS_SECRET': '',
- 'EDUTEAMS_TOKEN_URL': 'https://proxy.acc.eduteams.org/OIDC/token',
- 'EDUTEAMS_USERINFO_URL': 'https://proxy.acc.eduteams.org/OIDC/userinfo',
- 'EDUTEAMS_USER_PROTECTED_FIELDS': ['full_name', 'email'],
- 'ENABLE_EDUTEAMS_SYNC': False,
- 'KEYCLOAK_AUTH_URL': '',
- 'KEYCLOAK_CLIENT_ID': '',
- 'KEYCLOAK_LABEL': 'Keycloak',
- 'KEYCLOAK_MANAGEMENT_URL': 'http://localhost:8080/auth/realms/waldur/account/#/personal-info',
- 'KEYCLOAK_SECRET': '',
- 'KEYCLOAK_TOKEN_URL': '',
- 'KEYCLOAK_USERINFO_URL': '',
- 'KEYCLOAK_USER_PROTECTED_FIELDS': ['full_name', 'email'],
- 'KEYCLOAK_VERIFY_SSL': True,
+WALDUR_AUTH_SOCIAL = {'ENABLE_EDUTEAMS_SYNC': False,
  'REMOTE_EDUTEAMS_CLIENT_ID': '',
  'REMOTE_EDUTEAMS_ENABLED': False,
  'REMOTE_EDUTEAMS_REFRESH_TOKEN': '',
  'REMOTE_EDUTEAMS_SECRET': '',
  'REMOTE_EDUTEAMS_TOKEN_URL': 'https://proxy.acc.researcher-access.org/OIDC/token',
- 'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo',
- 'TARA_CLIENT_ID': '',
- 'TARA_LABEL': 'Riigi Autentimisteenus',
- 'TARA_MANAGEMENT_URL': '',
- 'TARA_SANDBOX': True,
- 'TARA_SECRET': '',
- 'TARA_USER_PROTECTED_FIELDS': ['full_name']}
+ 'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo'}
 ```
-
-### EDUTEAMS_AUTH_URL
-
-Type: str
-
-The authorization endpoint performs authentication of the end-user. This is done by redirecting the user agent to this endpoint.
-
-### EDUTEAMS_CLIENT_ID
-
-Type: str
-
-ID of application used for OAuth authentication.
-
-### EDUTEAMS_LABEL
-
-Type: str
-
-Label is used by HomePort for rendering login button.
-
-### EDUTEAMS_MANAGEMENT_URL
-
-Type: str
-
-The endpoint for user details management.
-
-### EDUTEAMS_SECRET
-
-Type: str
-
-Application secret key.
-
-### EDUTEAMS_TOKEN_URL
-
-Type: str
-
-The token endpoint is used to obtain tokens.
-
-### EDUTEAMS_USERINFO_URL
-
-Type: str
-
-The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token.
-
-### EDUTEAMS_USER_PROTECTED_FIELDS
-
-Type: List[str]
-
-The list of protected fields for EDUTEAMS IdP.
 
 ### ENABLE_EDUTEAMS_SYNC
 
 Type: bool
 
 Enable eduTEAMS synchronization with remote Waldur.
-
-### KEYCLOAK_AUTH_URL
-
-Type: str
-
-The authorization endpoint performs authentication of the end-user. This is done by redirecting the user agent to this endpoint.
-
-### KEYCLOAK_CLIENT_ID
-
-Type: str
-
-ID of application used for OAuth authentication.
-
-### KEYCLOAK_LABEL
-
-Type: str
-
-Label is used by HomePort for rendering login button.
-
-### KEYCLOAK_MANAGEMENT_URL
-
-Type: str
-
-The endpoint for user details management.
-
-### KEYCLOAK_SECRET
-
-Type: str
-
-Application secret key.
-
-### KEYCLOAK_TOKEN_URL
-
-Type: str
-
-The token endpoint is used to obtain tokens.
-
-### KEYCLOAK_USERINFO_URL
-
-Type: str
-
-The userinfo endpoint returns standard claims about the authenticated user, and is protected by a bearer token.
-
-### KEYCLOAK_USER_PROTECTED_FIELDS
-
-Type: List[str]
-
-The list of protected fields for Keycloak IdP.
-
-### KEYCLOAK_VERIFY_SSL
-
-Type: bool
-
-Validate TLS certificate of Keycloak REST API
 
 ### REMOTE_EDUTEAMS_CLIENT_ID
 
@@ -538,42 +413,6 @@ The token endpoint is used to obtain tokens.
 Type: str
 
 It allows to get user data based on userid aka CUID.
-
-### TARA_CLIENT_ID
-
-Type: str
-
-ID of application used for OAuth authentication.
-
-### TARA_LABEL
-
-Type: str
-
-You may set it to eIDAS, SmartID or MobileID make it more clear to the user which exact identity provider is configured or preferred for service provider.
-
-### TARA_MANAGEMENT_URL
-
-Type: str
-
-The endpoint for user details management.
-
-### TARA_SANDBOX
-
-Type: bool
-
-You should set it to False in order to switch to production mode.
-
-### TARA_SECRET
-
-Type: str
-
-Application secret key.
-
-### TARA_USER_PROTECTED_FIELDS
-
-Type: List[str]
-
-The list of protected fields for TARA IdP.
 
 ## WALDUR_CORE plugin
 
