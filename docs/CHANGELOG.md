@@ -2,8 +2,6 @@
 
 ## 6.1.0
 
-Notes: 
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.9...6.1.0)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.9...6.1.0)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.0.9...6.1.0)
@@ -13,8 +11,6 @@ Notes:
 Date: Sun Aug  6 07:07:27 UTC 2023
 
 ## 6.0.9
-
-Notes: 
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.8...6.0.9)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.8...6.0.9)
@@ -26,8 +22,6 @@ Date: Sat Aug  5 20:11:10 UTC 2023
 
 ## 6.0.8
 
-Notes: 
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.7...6.0.8)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.7...6.0.8)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.0.7...6.0.8)
@@ -38,8 +32,6 @@ Date: Sun Jul 30 19:22:29 UTC 2023
 
 ## 6.0.7
 
-Notes: 
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.6...6.0.7)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.6...6.0.7)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.0.6...6.0.7)
@@ -49,8 +41,6 @@ Notes:
 Date: Wed Jul 26 17:02:07 UTC 2023
 
 ## 6.0.6
-
-Notes: 
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.5...6.0.6)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.5...6.0.6)
@@ -73,8 +63,6 @@ Notes: Bugfixes, reporting dashboard
 Date: Wed Jul  5 15:37:38 UTC 2023
 
 ## 6.0.4
-
-Notes: 
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.3...6.0.4)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.3...6.0.4)
@@ -110,8 +98,6 @@ Date: Mon Jun 26 19:39:40 UTC 2023
 
 ## 6.0.1
 
-Notes: 
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.0...6.0.1)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.0.0...6.0.1)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.0.0...6.0.1)
@@ -121,8 +107,6 @@ Notes:
 Date: Mon Jun 26 17:02:47 UTC 2023
 
 ## 6.0.0
-
-Notes: 
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.9...6.0.0)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.9...6.0.0)
@@ -134,8 +118,6 @@ Date: Fri Jun 23 15:50:18 UTC 2023
 
 ## 5.9.9
 
-Notes: 
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.8...5.9.9)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.8...5.9.9)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.8...5.9.9)
@@ -145,8 +127,6 @@ Date: Sat Jun 17 05:19:49 UTC 2023
 
 ## 5.9.8
 
-Notes: 
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.7...5.9.8)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.7...5.9.8)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.9.7...5.9.8)
@@ -155,8 +135,6 @@ Notes:
 Date: Fri Jun  9 19:24:43 UTC 2023
 
 ## 5.9.7
-
-Notes: 
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.6...5.9.7)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.6...5.9.7)
@@ -199,8 +177,6 @@ Notes: Switch to new UI by default
 Date: Sat Jun  3 14:36:05 UTC 2023
 
 ## 5.9.3
-
-Notes: 
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.9.2...5.9.3)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.9.2...5.9.3)
@@ -266,8 +242,6 @@ Date: Mon May 15 20:34:08 UTC 2023
 
 ## 5.8.6
 
-Notes:
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/5.8.5...5.8.6)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/5.8.5...5.8.6)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/5.8.5...5.8.6)
@@ -299,8 +273,6 @@ Date: Wed May 10 16:16:11 UTC 2023
 
 ## 5.8.3
 
-Notes:
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.2...v5.8.3)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.2...v5.8.3)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.2...v5.8.3)
@@ -321,8 +293,6 @@ Date: Fri Apr 28 08:46:24 UTC 2023
 
 ## 5.8.1
 
-Notes:
-
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.8.0...v5.8.1)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.8.0...v5.8.1)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/v5.8.0...v5.8.1)
@@ -331,8 +301,6 @@ Notes:
 Date: Thu Apr 27 11:09:24 UTC 2023
 
 ## 5.8.0
-
-Notes:
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/v5.7.9...v5.8.0)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/v5.7.9...v5.8.0)
