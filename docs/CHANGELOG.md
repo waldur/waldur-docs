@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.1.1
+
+Notes: Move OIDC configuration to DB
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.1.0...6.1.1)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.1.0...6.1.1)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.1.0...6.1.1)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.1.0...6.1.1)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.1.0...6.1.1)
+
+Date: Sun Aug 13 05:18:12 UTC 2023
+
 ## 6.1.0
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.0.9...6.1.0)
