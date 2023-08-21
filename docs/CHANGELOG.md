@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.1.3
+
+Notes: Improvements to offering sync and Helm packaging.
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.1.2...6.1.3)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.1.2...6.1.3)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.1.2...6.1.3)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.1.2...6.1.3)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.1.2...6.1.3)
+
+Date: Mon Aug 21 09:10:34 UTC 2023
+
 ## 6.1.2
 
 Notes: Fix OIDC authentication flow
