@@ -223,6 +223,17 @@ options:
                         Updated offering UUID.
 ```
 
+## import_roles
+
+Import roles configuration in YAML format
+
+```bash
+usage: waldur import_roles roles_file
+
+positional arguments:
+  roles_file  Specifies location of roles configuration file.
+```
+
 ## import_tenant_quotas
 
 Import OpenStack tenant quotas to marketplace.

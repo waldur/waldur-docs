@@ -1022,28 +1022,19 @@ Username of Keycloak user with administrative privileges
 Default value:
 
 ```python
-WALDUR_MARKETPLACE = {'ADMIN_CAN_APPROVE_ORDER': False,
- 'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
+WALDUR_MARKETPLACE = {'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
  'ANONYMOUS_USER_CAN_VIEW_PLANS': True,
  'DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE': True,
  'ENABLE_RESOURCE_END_DATE': True,
  'ENABLE_STALE_RESOURCE_NOTIFICATIONS': False,
- 'MANAGER_CAN_APPROVE_ORDER': False,
  'NOTIFY_ABOUT_RESOURCE_CHANGE': True,
  'NOTIFY_STAFF_ABOUT_APPROVALS': False,
- 'OWNER_CAN_APPROVE_ORDER': True,
  'OWNER_CAN_REGISTER_SERVICE_PROVIDER': False,
  'TELEMETRY_ENABLED': True,
  'TELEMETRY_URL': 'https://telemetry.waldur.com/',
  'TELEMETRY_VERSION': 1,
  'THUMBNAIL_SIZE': (120, 120)}
 ```
-
-### ADMIN_CAN_APPROVE_ORDER
-
-Type: bool
-
-If true, orders for resource can be approved by admin of the customer project
 
 ### ANONYMOUS_USER_CAN_VIEW_OFFERINGS
 
@@ -1075,12 +1066,6 @@ Type: bool
 
 Enable reminders to owners about resources of shared offerings that have not generated any cost for the last 3 months.
 
-### MANAGER_CAN_APPROVE_ORDER
-
-Type: bool
-
-If true, orders for resource can be approved by manager of the customer project
-
 ### NOTIFY_ABOUT_RESOURCE_CHANGE
 
 Type: bool
@@ -1092,12 +1077,6 @@ If true, notify users about resource changes from Marketplace perspective. Can g
 Type: bool
 
 If true, users with staff role are notified when request for order approval is generated
-
-### OWNER_CAN_APPROVE_ORDER
-
-Type: bool
-
-If true, orders for resource can be approved by custom organization owner.
 
 ### OWNER_CAN_REGISTER_SERVICE_PROVIDER
 
@@ -1220,8 +1199,7 @@ Type of jobs deployment. Valid values: "docker" for simple docker deployment, "k
 Default value:
 
 ```python
-WALDUR_OPENSTACK = {'ADMIN_CAN_MANAGE_TENANTS': False,
- 'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
+WALDUR_OPENSTACK = {'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
  'DEFAULT_SECURITY_GROUPS': ({'description': 'Security group for any access',
                               'name': 'allow-all',
                               'rules': ({'cidr': '0.0.0.0/0',
@@ -1263,17 +1241,10 @@ WALDUR_OPENSTACK = {'ADMIN_CAN_MANAGE_TENANTS': False,
                                          'from_port': 443,
                                          'protocol': 'tcp',
                                          'to_port': 443})}),
- 'MANAGER_CAN_MANAGE_TENANTS': False,
  'SUBNET': {'ALLOCATION_POOL_END': '{first_octet}.{second_octet}.{third_octet}.200',
             'ALLOCATION_POOL_START': '{first_octet}.{second_octet}.{third_octet}.10'},
  'TENANT_CREDENTIALS_VISIBLE': False}
 ```
-
-### ADMIN_CAN_MANAGE_TENANTS
-
-Type: bool
-
-If true, admin can delete or change configuration of tenants.
 
 ### DEFAULT_BLACKLISTED_USERNAMES
 
@@ -1286,12 +1257,6 @@ Usernames that cannot be created by Waldur in OpenStack
 Type: tuple
 
 Default security groups and rules created in each of the provisioned OpenStack tenants
-
-### MANAGER_CAN_MANAGE_TENANTS
-
-Type: bool
-
-If true, manager can delete or change configuration of tenants.
 
 ### SUBNET
 
