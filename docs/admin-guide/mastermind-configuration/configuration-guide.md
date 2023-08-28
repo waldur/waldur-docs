@@ -1029,7 +1029,6 @@ WALDUR_MARKETPLACE = {'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
  'ENABLE_STALE_RESOURCE_NOTIFICATIONS': False,
  'NOTIFY_ABOUT_RESOURCE_CHANGE': True,
  'NOTIFY_STAFF_ABOUT_APPROVALS': False,
- 'OWNER_CAN_REGISTER_SERVICE_PROVIDER': False,
  'TELEMETRY_ENABLED': True,
  'TELEMETRY_URL': 'https://telemetry.waldur.com/',
  'TELEMETRY_VERSION': 1,
@@ -1077,12 +1076,6 @@ If true, notify users about resource changes from Marketplace perspective. Can g
 Type: bool
 
 If true, users with staff role are notified when request for order approval is generated
-
-### OWNER_CAN_REGISTER_SERVICE_PROVIDER
-
-Type: bool
-
-Allow organization owner to request or mark its organization as service provider
 
 ### TELEMETRY_ENABLED
 
