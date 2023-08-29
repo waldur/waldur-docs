@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.1.4
+
+Notes: Introduce custom roles
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.1.3...6.1.4)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.1.3...6.1.4)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.1.3...6.1.4)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.1.3...6.1.4)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.1.3...6.1.4)
+
+Date: Tue Aug 29 11:12:27 UTC 2023
+
 ## 6.1.3
 
 Notes: Improvements to offering sync and Helm packaging.
