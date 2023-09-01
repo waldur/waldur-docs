@@ -1482,7 +1482,13 @@ Unique authentication key used to gain access to the ipstack API.
 
 Type: List[Tuple[str, str]], default value: (('en', 'English'), ('et', 'Eesti'))
 
-The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese'). This specifies which languages are available for language selection.
+The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese').
+
+### LANGUAGE_CHOICES
+
+Type: List[str], default value: ['en']
+
+This specifies which languages are available for language selection.
 
 ### LANGUAGE_CODE
 
