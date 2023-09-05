@@ -4,7 +4,6 @@ From this section, you can find useful and practical action for completing the m
 
 Please note that the user guide preparation work is in progress, and we will add new instructions continuously.
 
-
 Practical guides:
 
 * [Interface overview](interface.md)
@@ -13,7 +12,6 @@ Practical guides:
 * [Marketplace](marketplace.md)
 * [Accounting and reporting](usage_reports.md)
 * [Projects removal by admin](projects-removal-admin.md)
-
 
 For the old user interface, you can check the [old version](https://opennode.atlassian.net/wiki/spaces/WD/pages/22976598/User+Guide),
 but keep in mind that some parts are outdated.
