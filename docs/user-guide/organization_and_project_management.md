@@ -12,7 +12,7 @@ This can mean for example research group, institution, department or working gro
 
 1. Click on "Dashboard" and then “Add organization” in the organization selection window.<br><br>
 
-   ![Select organization](../img/add-org.jpg)<br><br>
+   ![Select organization](img/add-org.jpg)<br><br>
 
 2. Fill the form and click "Create organization":
 
@@ -23,7 +23,7 @@ This can mean for example research group, institution, department or working gro
     - Website URL - url of the organization (optional)
     - Logo - logo of the organization (optional)<br><br>
 
-   ![Select organization](../img/add-org-2.jpg)
+   ![Select organization](img/add-org-2.jpg)
 
 ## Creation of projects
 
