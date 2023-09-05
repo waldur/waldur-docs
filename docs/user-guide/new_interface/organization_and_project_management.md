@@ -10,17 +10,20 @@ This can mean for example research group, institution, department or working gro
 
 ## Create a new organization
 
-
 1. Click on "Dashboard" and then “Add organization” in the organization selection window.<br><br>
-![Select organization](../img/add-org.jpg)<br><br>
+
+   ![Select organization](../img/add-org.jpg)<br><br>
+
 2. Fill the form and click "Create organization":
+
     - Name - Name of the organization
-    - Organization group - 
+    - Organization group - Divisions within organization
     - Contact email - email of the person, who is responsible for the organization
     - Contact phone - contact person’s phone (optional)
     - Website URL - url of the organization (optional)
     - Logo - logo of the organization (optional)<br><br>
-![Select organization](../img/add-org-2.jpg)
+
+   ![Select organization](../img/add-org-2.jpg)
 
 
 ## Creation of projects
@@ -33,6 +36,7 @@ Prerequisites for creating projects:
 1. Select your home organization.
 2. Click on "Add project".
 3. Fill the necessary fields (fields marked with * are mandatory).
+
     - Project name - The original title of the project.
     - Project description - A brief description about the project.
     - OECD FoS code - OECD science field code ([more info](https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about))
