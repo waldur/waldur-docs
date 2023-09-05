@@ -8,7 +8,7 @@ Custom mapper setup includes the following steps:
 
 1. Download the jar file to your machine, e.g. one of [these releases](https://github.com/waldur/waldur-keycloak-mapper/releases/).
 
-2. Add the jar file to the [providers](https://www.keycloak.org/server/configuration-provider#_installing_and_uninstalling_a_provider) directory. 
+2. Add the jar file to the [providers](https://www.keycloak.org/server/configuration-provider#_installing_and_uninstalling_a_provider) directory.
    If a Keycloak server is running in a Docker container via Docker Compose, you can mount the file as a volume:
 
     ```yaml
