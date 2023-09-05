@@ -1,4 +1,4 @@
-# Introduction
+# Marketplace introduction
 
 Marketplace is a central module for provisioning of Waldur resources. Marketplace contains Offerings that
 belong to a special type of Organizations - Service Providers. Marketplace provides common functionality
@@ -22,7 +22,7 @@ To create a new Offering in the Marketplace, you need to:
 Pick or create an organization that will be used as a service provider. Mark it a such in the Management tab of the
 organization using "Register as service provider":
 
-![Mark as service provider](img/org-mgmt-service-provider.png)
+![Mark as service provider](img/serviceprovider_reg.jpg)
 
 ### Creating Marketplace categories
 
@@ -64,14 +64,14 @@ Open waldur-mastermind-worker shell and execute the following command:
 
 Once you have a service provider and at least one category defined, you can add a new service offering.
 
-- Go to Public services -> Public offerings:
+- Go to Provider -> Marketplace -> Offerings and click Add new offering.
 
-![List offerings](img/list-offerings.png)
+![List offerings](img/add_offering.jpg)
 
-- Fill in details of the offerings.
+- Fill in the name, category and type of the offering.
 
-![Add offering](img/add-offering.png)
+![Add offering](img/add_offering_2.jpg)
 
-- Activate an offering (requires staff account) to make it visible in the Marketplace.
+- Fill in additional information and click on Activate. After that, the offering is visible in the Marketplace.
 
-![Activate offering](img/activate-offering.png)
+![Activate offering](img/add_offering_3.jpg)
