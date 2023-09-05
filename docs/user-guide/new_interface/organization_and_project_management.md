@@ -25,12 +25,12 @@ This can mean for example research group, institution, department or working gro
 
    ![Select organization](../img/add-org-2.jpg)
 
-
 ## Creation of projects
 
 Project creation is allowed for organization owners in their organizations and staff users.
 
 Prerequisites for creating projects:
+
     - User must have an account in Waldur instance.
 
 1. Select your home organization.
