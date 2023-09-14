@@ -8,7 +8,10 @@ For docker-compose deployments, please run:
 
 For Helm-based K8s deployments, please run:
 
-``kubectl exec --stdin --tty waldur-mastermind-worker-POD-ID -- waldur shell``
+```
+kubectl get pods -A | grep waldur-mastermind-worker  # to find POD id
+kubectl exec --stdin --tty waldur-mastermind-worker-POD-ID -- waldur shell
+```
 
 ## Examples
 
