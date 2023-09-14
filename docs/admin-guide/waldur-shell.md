@@ -149,3 +149,64 @@ for project in projects:
         ]
     )
 ```
+
+### Generate report for OpenStack resources across projects
+
+```python
+import csv
+import sys
+
+from waldur_openstack.openstack.models import Tenant
+from waldur_openstack.openstack_tenant.models import Instance, Volume
+from waldur_core.structure.models import ServiceSettings
+
+RAM_LIMIT_NAME = 'ram'
+STORAGE_LIMIT_NAME = 'storage'
+
+writer = csv.writer(sys.stdout)
+
+
+def generate_report():
+    tenants = Tenant.objects.filter(state=3)
+    writer.writerow(
+        [
+            'Organisation',
+            'Abbreviation',
+            'Project',
+            'VPC',
+            'RAM limit',
+            'RAM usage',
+            'Storage limit',
+            'Storage usage',
+            'Number of VMs',
+            'Big VM count',
+            'Big volume count',
+        ]
+    )
+    for tenant in tenants:
+        number_of_vms = tenant.quotas.get(name='instances').usage
+        ram_limit = tenant.quotas.get(name='ram').limit / 1024
+        ram_usage = tenant.quotas.get(name='ram').usage / 1024
+        storage_limit = tenant.quotas.get(name='storage').limit / 1024
+        storage_usage = tenant.quotas.get(name='storage').usage / 1024
+        ss = ServiceSettings.objects.get(scope=tenant)
+        # RAM > 16 GB
+        big_vm_count = Instance.objects.filter(service_settings=ss, ram__gt=16 * 1024).count()
+        # Disk > 256 GB
+        big_storage_count = Volume.objects.filter(service_settings=ss, size__gt=256 * 1024).count()
+        writer.writerow(
+            [
+                tenant.project.customer.name,
+                tenant.project.customer.abbreviation,
+                tenant.project.name,
+                tenant,
+                ram_limit,
+                ram_usage,
+                storage_limit,
+                storage_usage,
+                number_of_vms,
+                big_vm_count,
+                big_storage_count,
+            ]
+        )
+```
