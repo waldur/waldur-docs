@@ -72,6 +72,18 @@ positional arguments:
   target_category_uuid  UUID of a category to copy metadata to
 ```
 
+## create_provider
+
+Create a service provider with a linked customer and load categories
+
+```bash
+usage: waldur create_provider [-n N] [-c C [C ...]]
+
+options:
+  -n N          Customer name
+  -c C [C ...]  List of categories to load
+```
+
 ## createstaffuser
 
 Create a user with a specified username and password. User will be created as staff.
