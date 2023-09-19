@@ -237,7 +237,7 @@ from waldur_client import WaldurClient
 client = WaldurClient(WALDUR_API_URL, WALDUR_API_TOKEN)
 tenants = client.list_tenants({'customer_uuid': CUSTOMER_UUID})
 
-for tenant in marketplace_resource_uuid:
+for tenant in tenants:
     client.marketplace_resource_update_limits_order(
         resource_uuid=tenant['marketplace_resource_uuid'],
         limits=TENANT_LIMITS,
