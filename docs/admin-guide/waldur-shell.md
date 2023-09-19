@@ -8,7 +8,7 @@ For docker-compose deployments, please run:
 
 For Helm-based K8s deployments, please run:
 
-```
+```bash
 kubectl get pods -A | grep waldur-mastermind-worker  # to find POD id
 kubectl exec --stdin --tty waldur-mastermind-worker-POD-ID -- waldur shell
 ```
@@ -212,4 +212,34 @@ def generate_report():
                 big_storage_count,
             ]
         )
+```
+
+### Update limits for all tenants in a specific organization
+
+```python
+
+WALDUR_API_URL = '<CHANGEME>'
+WALDUR_API_TOKEN = '<CHANGEME>'
+CUSTOMER_UUID = '<CHANGEME>'
+
+CORES_LIMIT = 1
+RAM_GB_LIMIT = 10
+STORAGE_GB_LIMIT = 100
+
+TENANT_LIMITS = {
+    'cores': CORES_LIMIT,
+    'ram': RAM_GB_LIMIT * 1024,
+    'storage': STORAGE_GB_LIMIT * 1024
+}
+
+from waldur_client import WaldurClient
+
+client = WaldurClient(WALDUR_API_URL, WALDUR_API_TOKEN)
+tenants = client.list_tenants({'customer_uuid': CUSTOMER_UUID})
+
+for tenant in marketplace_resource_uuid:
+    client.marketplace_resource_update_limits_order(
+        resource_uuid=tenant['marketplace_resource_uuid'],
+        limits=TENANT_LIMITS,
+    )
 ```
