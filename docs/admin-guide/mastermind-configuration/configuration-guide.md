@@ -493,6 +493,7 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
                                               'job_title'),
                                    'OPERATOR_NOTIFICATION_EMAILS': []},
  'NOTIFICATION_SUBJECT': 'Notifications from Waldur',
+ 'OECD_FOS_2007_CODE_MANDATORY': False,
  'ONLY_STAFF_CAN_INVITE_USERS': False,
  'ONLY_STAFF_MANAGES_SERVICES': False,
  'OWNERS_CAN_MANAGE_OWNERS': False,
@@ -716,6 +717,12 @@ Configure notifications about profile changes of organization owners.
 Type: str
 
 It is used as a subject of email emitted by event logging hook.
+
+### OECD_FOS_2007_CODE_MANDATORY
+
+Type: bool
+
+Field oecd_fos_2007_code must be required for project.
 
 ### ONLY_STAFF_CAN_INVITE_USERS
 
