@@ -496,7 +496,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'OECD_FOS_2007_CODE_MANDATORY': False,
  'ONLY_STAFF_CAN_INVITE_USERS': False,
  'ONLY_STAFF_MANAGES_SERVICES': False,
- 'OWNERS_CAN_MANAGE_OWNERS': False,
  'OWNER_CAN_MANAGE_CUSTOMER': False,
  'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
  'SELLER_COUNTRY_CODE': None,
@@ -735,12 +734,6 @@ Allow to limit invitation management to staff only.
 Type: bool
 
 Allows to restrict provider management only to staff users.
-
-### OWNERS_CAN_MANAGE_OWNERS
-
-Type: bool
-
-Enables organization owners to manage other organization owners.
 
 ### OWNER_CAN_MANAGE_CUSTOMER
 
@@ -1472,6 +1465,12 @@ Default email address to use for automated correspondence from Waldur.
 Type: str
 
 Default email address to use for email replies.
+
+### EMAIL_HOOK_FROM_EMAIL
+
+Type: str
+
+Alternative email address to use for email hooks.
 
 ### IMPORT_EXPORT_USE_TRANSACTIONS
 

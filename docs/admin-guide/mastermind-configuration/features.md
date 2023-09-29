@@ -116,10 +116,6 @@ Render estimated cost column in projects list.
 
 Enable audit log in project workspace.
 
-## project.member_role
-
-Allow to grant user a project member role.
-
 ## project.oecd_fos_2007_code
 
 Enable OECD code.
