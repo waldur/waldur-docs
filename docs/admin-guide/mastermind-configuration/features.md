@@ -104,10 +104,6 @@ Enabled display of experimental or mocked components in marketplace.
 
 Render terms of service when offering is ordered.
 
-## openstack.volume_types
-
-Allow to select OpenStack volume type when instance or volume is provisioned.
-
 ## project.estimated_cost
 
 Render estimated cost column in projects list.
