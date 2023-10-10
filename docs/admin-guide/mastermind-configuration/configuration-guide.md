@@ -368,6 +368,9 @@ WALDUR_AUTH_SOCIAL = {'ENABLE_EDUTEAMS_SYNC': False,
  'REMOTE_EDUTEAMS_ENABLED': False,
  'REMOTE_EDUTEAMS_REFRESH_TOKEN': '',
  'REMOTE_EDUTEAMS_SECRET': '',
+ 'REMOTE_EDUTEAMS_SSH_API_PASSWORD': '',
+ 'REMOTE_EDUTEAMS_SSH_API_URL': '',
+ 'REMOTE_EDUTEAMS_SSH_API_USERNAME': '',
  'REMOTE_EDUTEAMS_TOKEN_URL': 'https://proxy.acc.researcher-access.org/OIDC/token',
  'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo'}
 ```
@@ -401,6 +404,24 @@ Token is used to authenticate against user info endpoint.
 Type: str
 
 Application secret key.
+
+### REMOTE_EDUTEAMS_SSH_API_PASSWORD
+
+Type: str
+
+Password for SSH API URL
+
+### REMOTE_EDUTEAMS_SSH_API_URL
+
+Type: str
+
+API URL SSH keys
+
+### REMOTE_EDUTEAMS_SSH_API_USERNAME
+
+Type: str
+
+Username for SSH API URL
 
 ### REMOTE_EDUTEAMS_TOKEN_URL
 
