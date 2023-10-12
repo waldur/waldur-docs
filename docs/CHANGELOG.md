@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.1.9
+
+Notes: Bugfix
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.1.8...6.1.9)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.1.8...6.1.9)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.1.8...6.1.9)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.1.8...6.1.9)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.1.8...6.1.9)
+
+Date: Thu Oct 12 18:05:21 UTC 2023
+
 ## 6.1.8
 
 Notes: Fixed VM form validation, bugfixes
