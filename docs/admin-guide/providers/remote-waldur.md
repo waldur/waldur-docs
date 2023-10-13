@@ -31,3 +31,9 @@ mapped to the remote project.
 !!! note
     For this to work, remote Waldur must be integrated with eduTEAMS registry and integration user must have
     `identity_manager` role.
+
+## Remote offering actions
+
+Remote offering actions are available in the integration section of the offering edit page.
+
+[![Remote Offering Actions](img/remote-offering-actions.png)](img/remote-offering-actions.png)
