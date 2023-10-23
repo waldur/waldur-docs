@@ -82,7 +82,14 @@ Response example:
 ]
 ```
 
-This can alternatively be done through Waldur UI by visiting resource details
+_Note: A LEXIS link can be in one of the following states:_
+
+1. _Pending_
+2. _Executing_
+3. _OK_
+4. _Erred_
+
+Listing LEXIS links can alternatively be done through Waldur UI by visiting resource details
 
 ![img.png](images/resourcedetails.png)
 
