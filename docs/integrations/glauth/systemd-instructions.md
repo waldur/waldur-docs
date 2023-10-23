@@ -4,7 +4,6 @@ Prerequisites:
 
 1. Ensure wget is installed to a target machine as refreshing script uses it;
 2. Install glauth binary to `/usr/bin/glauth` upon staring glauth service, e.g.
-
 [glauth v2.3.0](https://github.com/glauth/glauth/releases/download/v2.3.0/glauth-linux-amd64).
 
 ## Refresher service
