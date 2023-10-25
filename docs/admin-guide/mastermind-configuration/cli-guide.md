@@ -273,10 +273,6 @@ options:
                         Specify a customer to create offerings.
 ```
 
-## initglobalquotashistory
-
-Recalculate all quotas
-
 ## initsecuritygroups
 
 Add default security groups with given names to all tenants.
