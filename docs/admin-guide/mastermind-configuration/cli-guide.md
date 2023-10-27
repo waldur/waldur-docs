@@ -395,10 +395,6 @@ options:
 
 Prints Mastermind notifications with a description and templates
 
-## print_permission_enums
-
-Export permissions enums for HomePort
-
 ## pull_openstack_volume_metadata
 
 Pull OpenStack volumes metadata to marketplace.
