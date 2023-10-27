@@ -23,6 +23,8 @@
 </html>
 ```
 
+## waldur_core.permissions
+
 ## waldur_core.structure
 
 ### notifications_profile_changes_operator_subject.txt (waldur_core.structure)
