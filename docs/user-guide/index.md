@@ -10,5 +10,6 @@ Practical guides:
 * [Organization and project management](organization_and_project_management.md)
 * [Project membership management](project_membership_management.md)
 * [Marketplace](marketplace.md)
+* [Resource management](resource_management.md)
 * [Accounting and reporting](usage_reports.md)
 * [Projects removal by admin](projects-removal-admin.md)
