@@ -100,6 +100,5 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 
 ![VM ready](img/VM_ready.jpg)
 
-
 !!! Info
     VM access over SSH or RDP should be permitted by ’Security Groups’ linked to VM.
