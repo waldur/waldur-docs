@@ -1,5 +1,20 @@
 # Changelog
 
+## 6.2.4
+
+Notes: - Bugfixes
+- Assurance existence of Markeptlace.Resource after approval of order
+- Added broadcast template management
+- Expose user notifications for admin
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.2.3...6.2.4)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.2.3...6.2.4)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.2.3...6.2.4)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.2.3...6.2.4)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.2.3...6.2.4)
+
+Date: Fri Nov  3 20:01:00 UTC 2023
+
 ## 6.2.3
 
 Notes: More bugixes
