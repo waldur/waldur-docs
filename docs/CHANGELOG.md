@@ -2,10 +2,12 @@
 
 ## 6.2.4
 
-Notes: - Bugfixes
-- Assurance existence of Markeptlace.Resource after approval of order
-- Added broadcast template management
-- Expose user notifications for admin
+Notes:
+
+1. Bugfixes
+2. Assurance existence of Marketplace.Resource after approval of order
+3. Added broadcast template management
+4. Expose user notifications for admin
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.2.3...6.2.4)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.2.3...6.2.4)
