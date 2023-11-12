@@ -9,6 +9,7 @@ For docker-compose deployments, please run:
 For Helm-based K8s deployments, please run:
 
 ```bash
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml  # if running from RKE2 node
 kubectl get pods -A | grep waldur-mastermind-worker  # to find POD id
 kubectl exec --stdin --tty waldur-mastermind-worker-POD-ID -- waldur shell
 ```
@@ -241,5 +242,30 @@ for tenant in tenants:
     client.marketplace_resource_update_limits_order(
         resource_uuid=tenant['marketplace_resource_uuid'],
         limits=TENANT_LIMITS,
+    )
+```
+
+### Generate cost report for a specific organization by month
+
+```python
+import sys
+import csv
+
+from waldur_core.structure import models as structure_models
+from waldur_mastermind.invoices import models as invoice_models
+
+customer = structure_models.Customer.objects.get(abbreviation='Ada')
+invoices = invoice_models.Invoice.objects.filter(customer=customer).order_by('year', 'month')
+writer = csv.writer(sys.stdout)
+for invoice in invoices:
+    writer.writerow(
+        [
+            invoice.year,
+            invoice.month,
+            invoice.state,
+            invoice.price,
+            invoice.tax,
+            invoice.total,
+        ]
     )
 ```
