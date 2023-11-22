@@ -1214,17 +1214,7 @@ Default value:
 
 ```python
 WALDUR_OPENSTACK = {'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
- 'DEFAULT_SECURITY_GROUPS': ({'description': 'Security group for any access',
-                              'name': 'allow-all',
-                              'rules': ({'cidr': '0.0.0.0/0',
-                                         'icmp_code': -1,
-                                         'icmp_type': -1,
-                                         'protocol': 'icmp'},
-                                        {'cidr': '0.0.0.0/0',
-                                         'from_port': 1,
-                                         'protocol': 'tcp',
-                                         'to_port': 65535})},
-                             {'description': 'Security group for secure shell '
+ 'DEFAULT_SECURITY_GROUPS': ({'description': 'Security group for secure shell '
                                              'access',
                               'name': 'ssh',
                               'rules': ({'cidr': '0.0.0.0/0',
