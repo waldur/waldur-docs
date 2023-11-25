@@ -391,6 +391,10 @@ options:
   --path PATH, -p PATH  Path to dumped database.
 ```
 
+## print_events_enums
+
+
+
 ## print_notifications
 
 Prints Mastermind notifications with a description and templates
