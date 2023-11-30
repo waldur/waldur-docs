@@ -1,8 +1,8 @@
 # Governance
 
-Waldur is a project developed primarily by [OpenNode](https://opennodecloud.com) with contributions from different
-organizations. To make sure that the project is delivering a sound product, OpenNode maintains control over the
-authoritative source code and covers Product owner and Architect roles (see below).
+Waldur is a project co-developed by [OpenNode](https://opennodecloud.com) and [University of Tartu](https://hpc.ut.ee/)
+with contributions from different organizations. To make sure that the project is delivering a sound product,
+OpenNode maintains control over the authoritative source code and covers Product owner and Architect roles (see below).
 
 Waldur and all of its components are released under MIT license to be as friendly towards ecosystem as possible.
 
