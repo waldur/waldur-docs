@@ -190,7 +190,17 @@ options:
 
 ## import_auth_social
 
-Import OIDC auth configuration in YAML format
+Import OIDC auth configuration in YAML format. The example of auth.yaml:
+
+    - provider: "keycloak"   # OIDC identity provider in string format. Valid values are: "tara", "eduteams", "keycloak".
+      label: "Keycloak"    # Human-readable IdP name.
+      client_id: "waldur"   # A string used in OIDC requests for client identification.
+      client_secret: OIDC_CLIENT_SECRET
+      discovery_url: "http://localhost/auth/realms/YOUR_KEYCLOAK_REALM/.well-known/openid-configuration" # OIDC discovery endpoint.
+      management_url: ""   # Endpoint for user details management.
+      protected_fields:    # User fields that are imported from IdP.
+        - "full_name"
+        - "email"
 
 ```bash
 usage: waldur import_auth_social auth_file
