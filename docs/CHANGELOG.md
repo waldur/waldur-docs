@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.3.2
+
+Notes: Fix header of initial data for new user on-boarding
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.3.1...6.3.2)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.3.1...6.3.2)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.3.1...6.3.2)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.3.1...6.3.2)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.3.1...6.3.2)
+
+Date: Tue Dec  5 13:39:49 UTC 2023
+
 ## 6.3.1
 
 Notes: Bugfix in permission set of organization owner
