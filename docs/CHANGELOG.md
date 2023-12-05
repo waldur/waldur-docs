@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.3.1
+
+Notes: Bugfix in permission set of organization owner
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.3.0...6.3.1)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.3.0...6.3.1)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.3.0...6.3.1)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.3.0...6.3.1)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.3.0...6.3.1)
+
+Date: Tue Dec  5 08:43:03 UTC 2023
+
 ## 6.3.0
 
 Notes: Bug fixes from the previous release.
