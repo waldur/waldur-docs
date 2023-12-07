@@ -994,7 +994,7 @@ A notification of a successful resource limit update
 ```txt
     Hello!
 
-    Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:
+    Following request from {{ order_user }}, resource {{ resource_name }} limits have been updated from:
         {{ resource_old_limits }}
     to:
         {{ resource_limits }}.
@@ -1024,7 +1024,7 @@ A notification of a successful resource limit update
         Hello!
     </p>
     <p>
-        Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:<br>
+        Following request from {{ order_user }}, resource {{ resource_name }} limits have been updated from:<br>
         <blockquote>
             {{ resource_old_limits }}
         </blockquote>
@@ -1071,7 +1071,7 @@ A notification of a successful resource update
 ```txt
     Hello!
 
-    Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
+    Following request from {{ order_user }}, resource {{ resource_name }} has been updated.
 
     {% if resource_old_plan %}
     The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
@@ -1102,7 +1102,7 @@ A notification of a successful resource update
         Hello!
     </p>
     <p>
-        Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
+        Following request from {{ order_user }}, resource {{ resource_name }} has been updated.
     </p>
     {% if resource_old_plan %}
     <p>
@@ -1237,90 +1237,6 @@ A notification about stale resources
 
 ```
 
-### marketplace.notification_approval
-
-A notification of order approval
-
-#### Templates
-
-=== "marketplace/notification_approval_subject.txt"
-
-```txt
-    A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-
-```
-
-=== "marketplace/notification_approval_message.txt"
-
-```txt
-    Hello!
-
-    A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-
-```
-
-=== "marketplace/notification_approval_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>
-        Please visit <a href="{{ order_url }}">{{ site_name }}</a> to find out more details.
-    </p>
-    </body>
-    </html>
-
-```
-
-### marketplace.notification_service_provider_approval
-
-A notification to provider about pending order item approval
-
-#### Templates
-
-=== "marketplace/notification_service_provider_approval_subject.txt"
-
-```txt
-    A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-
-```
-
-=== "marketplace/notification_service_provider_approval_message.txt"
-
-```txt
-    Hello!
-
-    A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-
-```
-
-=== "marketplace/notification_service_provider_approval_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>
-        Please visit <a href="{{ order_item_url }}">{{ site_name }}</a> to find out more details.
-    </p>
-    </body>
-    </html>
-
-```
-
 ### marketplace.notification_usages
 
 A notification about usages
@@ -1378,6 +1294,90 @@ A notification about usages
 
     <p>
         You can submit resource usage via API or do it <a href='{{ public_resources_url }}'>manually</a>.
+    </p>
+    </body>
+    </html>
+
+```
+
+### marketplace.notify_consumer_about_pending_order
+
+A notification for consumer about pending order
+
+#### Templates
+
+=== "marketplace/notify_consumer_about_pending_order_subject.txt"
+
+```txt
+    A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+
+```
+
+=== "marketplace/notify_consumer_about_pending_order_message.txt"
+
+```txt
+    Hello!
+
+    A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+
+```
+
+=== "marketplace/notify_consumer_about_pending_order_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        Please visit <a href="{{ order_link }}">{{ site_name }}</a> to find out more details.
+    </p>
+    </body>
+    </html>
+
+```
+
+### marketplace.notify_provider_about_pending_order
+
+A notification for provider about pending order
+
+#### Templates
+
+=== "marketplace/notify_provider_about_pending_order_subject.txt"
+
+```txt
+    A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+
+```
+
+=== "marketplace/notify_provider_about_pending_order_message.txt"
+
+```txt
+    Hello!
+
+    A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+
+```
+
+=== "marketplace/notify_provider_about_pending_order_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        Please visit <a href="{{ order_url }}">{{ site_name }}</a> to find out more details.
     </p>
     </body>
     </html>

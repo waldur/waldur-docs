@@ -826,7 +826,7 @@ Project {{ project.name }} will be deleted.
 ``` txt
 Hello!
 
-Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:
+Following request from {{ order_user }}, resource {{ resource_name }} limits have been updated from:
     {{ resource_old_limits }}
 to:
     {{ resource_limits }}.
@@ -840,12 +840,6 @@ Email: {{ support_email }}
 Phone: {{ support_phone }}
 {% endif %}
 {% endif %}
-```
-
-### notification_approval_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 ```
 
 ### marketplace_resource_update_limits_succeeded_subject.txt (waldur_mastermind.marketplace)
@@ -890,6 +884,12 @@ Please do not forget to add usage for the resources you provide:
 You can submit resource usage via API or do it manually at {{ public_resources_url }}.
 ```
 
+### notify_consumer_about_pending_order_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+```
+
 ### marketplace_resource_termination_scheduled_staff_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -923,7 +923,7 @@ You can submit resource usage via API or do it manually at {{ public_resources_u
     Hello!
 </p>
 <p>
-    Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
+    Following request from {{ order_user }}, resource {{ resource_name }} has been updated.
 </p>
 {% if resource_old_plan %}
 <p>
@@ -949,18 +949,29 @@ You can submit resource usage via API or do it manually at {{ public_resources_u
 </html>
 ```
 
-### notification_approval_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-```
-
 ### marketplace_resource_update_failed_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
 Resource {{ resource_name }} update has failed.
+```
+
+### notify_provider_about_pending_order_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Please visit <a href="{{ order_url }}">{{ site_name }}</a> to find out more details.
+</p>
+</body>
+</html>
 ```
 
 ### marketplace_resource_terminate_failed_subject.txt (waldur_mastermind.marketplace)
@@ -974,7 +985,7 @@ Resource {{ resource_name }} deletion has failed.
 ``` txt
 Hello!
 
-Following request from {{ order_item_user }}, resource {{ resource_name }} has been updated.
+Following request from {{ order_user }}, resource {{ resource_name }} has been updated.
 
 {% if resource_old_plan %}
 The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
@@ -1046,6 +1057,14 @@ Resource {{ resource_name }} update has failed.
 </html>
 ```
 
+### notify_consumer_about_pending_order_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+```
+
 ### marketplace_resource_create_succeeded_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -1097,7 +1116,7 @@ Resource {{ resource_name }} update has failed.
     Hello!
 </p>
 <p>
-    Following request from {{ order_item_user }}, resource {{ resource_name }} limits have been updated from:<br>
+    Following request from {{ order_user }}, resource {{ resource_name }} limits have been updated from:<br>
     <blockquote>
         {{ resource_old_limits }}
     </blockquote>
@@ -1252,25 +1271,6 @@ Resource {{ resource_name }} limits update has failed.
 </html>
 ```
 
-### notification_service_provider_approval_message.html (waldur_mastermind.marketplace)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    Please visit <a href="{{ order_item_url }}">{{ site_name }}</a> to find out more details.
-</p>
-</body>
-</html>
-```
-
 ### marketplace_resource_termination_scheduled_staff_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -1281,6 +1281,12 @@ Resource {{ resource.name }} termination has been scheduled.
 
 ``` txt
 Reminder about stale resources.
+```
+
+### notify_provider_about_pending_order_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 ```
 
 ### marketplace_resource_terminate_succeeded_subject.txt (waldur_mastermind.marketplace)
@@ -1329,6 +1335,25 @@ Resource {{ resource_name }} limits update has failed.
 Resource {{ resource.name }} termination has been scheduled.
 ```
 
+### notify_consumer_about_pending_order_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Please visit <a href="{{ order_link }}">{{ site_name }}</a> to find out more details.
+</p>
+</body>
+</html>
+```
+
 ### marketplace_resource_terminate_failed_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -1355,20 +1380,6 @@ Resource {{ resource_name }} deletion has failed.
 </p>
 </body>
 </html>
-```
-
-### notification_service_provider_approval_message.txt (waldur_mastermind.marketplace)
-
-``` txt
-Hello!
-
-A new order by {{ order.created_by.get_full_name }} is waiting for approval.
-```
-
-### notification_service_provider_approval_subject.txt (waldur_mastermind.marketplace)
-
-``` txt
-A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 ```
 
 ### marketplace_resource_create_failed_message.txt (waldur_mastermind.marketplace)
@@ -1401,23 +1412,12 @@ Hello!
 Resource {{ resource_name }} has been deleted.
 ```
 
-### notification_approval_message.html (waldur_mastermind.marketplace)
+### notify_provider_about_pending_order_message.txt (waldur_mastermind.marketplace)
 
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>A new order by {{ order.created_by.get_full_name }} is waiting for approval.</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-<p>
-    Please visit <a href="{{ order_url }}">{{ site_name }}</a> to find out more details.
-</p>
-</body>
-</html>
+``` txt
+Hello!
+
+A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 ```
 
 ### marketplace_resource_create_succeeded_message.txt (waldur_mastermind.marketplace)
@@ -2023,37 +2023,37 @@ A notification about project details update.
 ### terminate_resource_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
-{% load waldur_marketplace %}[Terminate resource {{order_item.resource.scope.name}}|{{request_url}}].
-{% plan_details order_item.resource.plan %}
-Marketplace resource UUID: {{order_item.resource.uuid.hex}}
+{% load waldur_marketplace %}[Terminate resource {{order.resource.scope.name}}|{{request_url}}].
+{% plan_details order.resource.plan %}
+Marketplace resource UUID: {{order.resource.uuid.hex}}
 ```
 
 ### update_resource_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
-[Switch plan for resource {{order_item.resource.scope.name}}|{{request_url}}].
-Switch from {{order_item.resource.plan.name}} plan to {{order_item.plan.name}}.
-Marketplace resource UUID: {{order_item.resource.uuid.hex}}
+[Switch plan for resource {{order.resource.scope.name}}|{{request_url}}].
+Switch from {{order.resource.plan.name}} plan to {{order.plan.name}}.
+Marketplace resource UUID: {{order.resource.uuid.hex}}
 ```
 
 ### create_resource_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
-{% load waldur_marketplace %}[Order item|{{order_item_url}}].
-Provider: {{order_item.offering.customer.name}}
+{% load waldur_marketplace %}[Order|{{order_url}}].
+Provider: {{order.offering.customer.name}}
 Resource UUID: {{resource.uuid}}
 Plan details:
-    {% plan_details order_item.plan %}
-Full name: {{order_item.order.created_by.full_name|default:"none"}}
-Civil code:{{order_item.order.created_by.civil_number|default:"none"}}
-Email: {{order_item.order.created_by.email}}
+    {% plan_details order.plan %}
+Full name: {{order.created_by.full_name|default:"none"}}
+Civil code:{{order.created_by.civil_number|default:"none"}}
+Email: {{order.created_by.email}}
 ```
 
 ### update_limits_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
-[Update limits for resource {{order_item.resource.scope.name}}|{{request_url}}].
-Marketplace resource UUID: {{order_item.resource.uuid.hex}}
+[Update limits for resource {{order.resource.scope.name}}|{{request_url}}].
+Marketplace resource UUID: {{order.resource.uuid.hex}}
 Old limits: {{ old_limits }}.
 New limits: {{ new_limits }}.
 ```
