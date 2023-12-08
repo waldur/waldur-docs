@@ -445,10 +445,6 @@ options:
 
 Create or update price estimates based on invoices.
 
-## recalculatequotas
-
-Recalculate all quotas
-
 ## removestalect
 
 Remove instances that have FK to stale content types.
