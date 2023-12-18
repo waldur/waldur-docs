@@ -269,3 +269,177 @@ for invoice in invoices:
         ]
     )
 ```
+
+### Migrate users to a new Keycloak instance
+
+#### Intorduction
+
+There are 3 scripts involved:
+
+1. [export-keycloak-user-permissions.py](#export-keycloak-user-permissions): exports Keycloak user data to a `.yaml` file in the following format:
+
+    ```yaml
+    - username: johndoe
+      email: johndoe@example.com
+      full_name: John Doe
+      permissions:
+        - type: project
+          project_uuid: bed45d99e83d4c17a5bf5908ad70554e
+          role_uuid: e4130fde02474571a5166bb6742dc2d0
+          project_name: "Project 01"
+          role_name: "PROJECT.MANAGER"
+        - type: customer
+          customer_uuid: 1aaec6489ea7492cbe0401997de13653
+          role_uuid: 16ec8cf8874d467d9a2c7a0c822c6b3e
+          customer_name: "Organization 01"
+          role_name: "CUSTOMER.OWNER"
+    ```
+
+2. [delete-keycloak-users.py](#delete-keycloak-users): removes data about all the users from an old Keycloak instance
+
+3. [invite-keycloak-users.py](#invite-keycloak-users): creates and sends invitations to the user emails based on their roles in project and organizations
+
+When you are ready to migrate users to the new Keyaloak instance:
+
+1. copy the script file to the `waldur-mastermind-api` container using `docker cp` or `kubectl cp` commands;
+2. connect to the container shell using `docker exec` or `kubectl exec`;
+3. execute the scripts sequentially using `waldur shell`:
+
+```bash
+root@waldur-mastermind-api$ waldur shell < export-keycloak-user-permissions.py
+root@waldur-mastermind-api$ waldur shell < delete-keycloak-users.py
+root@waldur-mastermind-api$ waldur shell < invite-keycloak-users.py
+```
+
+#### export-keycloak-user-permissions
+
+```python
+from waldur_core.core import models as core_models
+from waldur_core.structure import models as structure_models
+from waldur_core.permissions.models import UserRole
+from django.contrib.contenttypes.models import ContentType
+import yaml
+
+users = core_models.User.objects.filter(is_active=True, registration_method="keycloak")
+
+project_content_type = ContentType.objects.get_for_model(structure_models.Project)
+customer_content_type = ContentType.objects.get_for_model(structure_models.Customer)
+roles = []
+
+for user in users:
+    entry = {
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.get_full_name(),
+        "permissions": [],
+    }
+    perms = UserRole.objects.filter(user=user, is_active=True)
+
+    for permission in perms:
+        if permission.content_type == project_content_type:
+            project = permission.scope
+            entry["permissions"].append(
+                {
+                    "type": "project",
+                    "project_uuid": project.uuid.hex,
+                    "role_uuid": permission.role.uuid.hex,
+                    "project_name": project.name,
+                    "role_name": permission.role.name
+                }
+            )
+
+        if permission.content_type == customer_content_type:
+            customer = permission.scope
+            entry["permissions"].append(
+                {
+                    "type": "customer",
+                    "customer_uuid": customer.uuid.hex,
+                    "role_uuid": permission.role.uuid.hex,
+                    "customer_name": customer.name,
+                    "role_name": permission.role.name
+                }
+            )
+
+    roles.append(entry)
+
+with open("roles.yaml", "w+") as output:
+    yaml.dump(roles, output)
+
+```
+
+#### delete-keycloak-users
+
+```python
+from waldur_core.core import models as core_models
+
+users = core_models.User.objects.filter(is_active=True, registration_method="keycloak")
+users.delete()
+```
+
+#### invite-keycloak-users
+
+```python
+from waldur_core.structure import models as structure_models
+from waldur_core.permissions import models as permission_models
+from waldur_core.users import models as user_models
+from waldur_core.core.utils import get_system_robot
+from waldur_core.users import tasks as user_tasks
+import yaml
+
+system_robot = get_system_robot()
+
+user_roles = []
+
+with open("roles.yaml", "r") as roles_file:
+    user_roles = yaml.safe_load(roles_file)
+
+for user_role in user_roles:
+    email = user_role["email"]
+    full_name = user_role["full_name"]
+
+    for perm in user_role["permissions"]:
+        role_name = permission_models.Role.objects.get(uuid=perm["role_uuid"]).name
+        role_name_suffix = role_name.split(".")[1].lower()
+
+        if perm["type"] == "project":
+            project = structure_models.Project.objects.get(uuid=perm["project_uuid"])
+
+            invitation, created = user_models.Invitation.objects.get_or_create(
+                email=email,
+                full_name=full_name,
+                project=project,
+                project_role=role_name_suffix,
+                created_by=system_robot,
+            )
+
+            if not created:
+                continue
+
+            print(
+                f"Inviting user {full_name} ({email}) to project {project} as {role_name_suffix}"
+            )
+            user_tasks.send_invitation_created(
+                invitation.uuid.hex, system_robot.full_name
+            )
+
+        if perm["type"] == "customer":
+            customer = structure_models.Customer.objects.get(uuid=perm["customer_uuid"])
+
+            invitation, created = user_models.Invitation.objects.get_or_create(
+                email=email,
+                full_name=full_name,
+                customer=customer,
+                customer_role=role_name_suffix,
+                created_by=system_robot,
+            )
+
+            if not created:
+                continue
+
+            print(
+                f"Inviting user {full_name} ({email}) to customer {customer} as {role_name_suffix}"
+            )
+            user_tasks.send_invitation_created(
+                invitation.uuid.hex, system_robot.full_name
+            )
+```
