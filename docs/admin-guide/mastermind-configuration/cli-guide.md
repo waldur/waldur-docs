@@ -403,6 +403,8 @@ options:
 
 ## print_events_enums
 
+
+
 ## print_notifications
 
 Prints Mastermind notifications with a description and templates
