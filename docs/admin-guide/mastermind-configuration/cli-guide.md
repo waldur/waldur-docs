@@ -403,7 +403,7 @@ options:
 
 ## print_events_enums
 
-
+Prints all event types as typescript enums in prettify format.
 
 ## print_notifications
 
