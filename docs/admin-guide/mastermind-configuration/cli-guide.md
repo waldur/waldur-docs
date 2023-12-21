@@ -374,6 +374,28 @@ options:
                         UUID of a marketplace resource to move.
 ```
 
+## override_roles
+
+Override roles configuration in YAML format. The example of roles-override.yaml:
+
+    - role: CUSTOMER.OWNER
+     description: "Custom owner role"
+     is_active: True
+     add_permissions:
+      - OFFERING.CREATE
+      - OFFERING.DELETE
+      - OFFERING.UPDATE
+     drop_permissions:
+      - OFFERING.UPDATE_THUMBNAIL
+      - OFFERING.UPDATE_ATTRIBUTES
+
+```bash
+usage: waldur override_roles roles_file
+
+positional arguments:
+  roles_file  Specifies location of roles configuration file.
+```
+
 ## override_templates
 
 Override templates
