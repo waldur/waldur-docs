@@ -1379,6 +1379,41 @@ Type: str
 
 Prefix for SLURM account name corresponding to Waldur project.
 
+## WALDUR_SMAX plugin
+
+Default value:
+
+```python
+WALDUR_SMAX = {'SMAX_API_URL': '',
+ 'SMAX_LOGIN': '',
+ 'SMAX_PASSWORD': '',
+ 'SMAX_TENANT_ID': ''}
+```
+
+### SMAX_API_URL
+
+Type: str
+
+Address of SMAX server. For example <http://localhost:8080/>
+
+### SMAX_LOGIN
+
+Type: str
+
+Authorization login.
+
+### SMAX_PASSWORD
+
+Type: str
+
+Authorization password.
+
+### SMAX_TENANT_ID
+
+Type: str
+
+User tenant ID.
+
 ## WALDUR_SUPPORT plugin
 
 Default value:
