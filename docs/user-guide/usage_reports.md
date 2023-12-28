@@ -1,6 +1,6 @@
-# Usage reports
+# Accounting and usage reports
 
-Currently, in Waldur you are able to see monthly usage reports. Resource components (i.e. CPU, GPU and storage) are displayed on separate charts.
+To view the usage information within a project:
 
 1. Open your project in Waldur.
 

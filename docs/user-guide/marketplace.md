@@ -68,7 +68,7 @@ Once you have a service provider and at least one category defined, you can add 
 
 ![List offerings](img/add_offering.jpg)
 
-- Fill in the name, category and type of the offering.
+- Fill in the name, category and type of the offering. By default, Waldur supports several types out of the box (incl SLURM, OpenStack, VMware, Azure, custom scripts etc)
 
 ![Add offering](img/add_offering_2.jpg)
 

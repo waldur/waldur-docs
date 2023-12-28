@@ -102,3 +102,7 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 
 !!! Info
     VM access over SSH or RDP should be permitted by ’Security Groups’ linked to VM.
+
+## Resource components update
+
+If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.
