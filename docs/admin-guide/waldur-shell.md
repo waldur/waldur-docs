@@ -272,7 +272,7 @@ for invoice in invoices:
 
 ### Migrate users to a new Keycloak instance
 
-#### Intorduction
+#### Introduction
 
 There are 3 scripts involved:
 
