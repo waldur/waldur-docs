@@ -374,6 +374,26 @@ options:
                         UUID of a marketplace resource to move.
 ```
 
+## override_constance_settings
+
+Override settings stored in django-constance.The example of .yaml file:
+    -  WALDUR_SUPPORT_ENABLED: true # Enables support plugin
+      WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'zammad' # Specifies zammad as service desk plugin
+      ZAMMAD_API_URL: "https://zammad.example.com/api/" # Specifies zammad API URL
+      ZAMMAD_TOKEN: "1282361723491" # Specifies zammad token
+      ZAMMAD_GROUP: "default-group" # Specifies zammad group
+      ZAMMAD_ARTICLE_TYPE: "email" # Specifies zammad article type
+      ZAMMAD_COMMENT_COOLDOWN_DURATION: 7 # Specifies zammad comment cooldown duration
+
+```bash
+usage: waldur override_constance_settings constance_settings_file
+
+positional arguments:
+  constance_settings_file
+                        Specifies location of file in YAML format containing
+                        new settings
+```
+
 ## override_roles
 
 Override roles configuration in YAML format. The example of roles-override.yaml:
