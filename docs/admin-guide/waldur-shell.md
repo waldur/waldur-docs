@@ -407,6 +407,7 @@ for user_role in user_roles:
             invitation, created = user_models.Invitation.objects.get_or_create(
                 email=email,
                 full_name=full_name,
+                customer=project.customer,
                 project=project,
                 project_role=role_name_suffix,
                 created_by=system_robot,
