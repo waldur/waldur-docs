@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.3.6
+
+Notes: Bugfixes and new checkout flow
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.3.5...6.3.6)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.3.5...6.3.6)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.3.5...6.3.6)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.3.5...6.3.6)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.3.5...6.3.6)
+
+Date: Thu Jan 11 22:53:44 UTC 2024
+
 ## 6.3.5
 
 Notes: Optimisation for remote order lookups
