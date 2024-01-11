@@ -97,21 +97,6 @@ options:
   -e EMAIL, --email EMAIL
 ```
 
-## drfdocs
-
-Generate RST docs for DRF API
-
-```bash
-usage: waldur drfdocs [--store PATH] [app_label ...]
-
-positional arguments:
-  app_label             Application label.
-
-options:
-  --store PATH, -s PATH
-                        Where to store docs.
-```
-
 ## drop_leftover_openstack_projects
 
 Drop leftover projects from remote OpenStack deployment.

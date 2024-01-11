@@ -1286,7 +1286,7 @@ Unique authentication key used to gain access to the ipstack API.
 
 ### LANGUAGES
 
-Type: List[Tuple[str, str]], default value: (('en', 'English'), ('et', 'Eesti'))
+Type: List[tuple[str, str]], default value: (('en', 'English'), ('et', 'Eesti'))
 
 The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese').
 
