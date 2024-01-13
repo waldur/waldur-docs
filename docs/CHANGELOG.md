@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.3.8
+
+Notes: Bugfix release
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.3.7...6.3.8)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.3.7...6.3.8)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.3.7...6.3.8)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.3.7...6.3.8)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.3.7...6.3.8)
+
+Date: Sat Jan 13 11:47:57 UTC 2024
+
 ## 6.3.7
 
 Notes: Bugfix in remote usage sync module
