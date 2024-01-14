@@ -1016,7 +1016,7 @@ Default value:
 ```python
 WALDUR_MARKETPLACE_SCRIPT = {'DOCKER_CLIENT': {'base_url': 'unix://var/run/docker.sock'},
  'DOCKER_IMAGES': {'python': {'command': 'python',
-                              'image': 'python:3.8-alpine'},
+                              'image': 'python:3.11-alpine'},
                    'shell': {'command': 'sh', 'image': 'alpine:3'}},
  'DOCKER_REMOVE_CONTAINER': True,
  'DOCKER_RUN_OPTIONS': {'mem_limit': '512m'},
