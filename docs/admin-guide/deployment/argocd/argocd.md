@@ -51,7 +51,7 @@ argocd app list
 
 ```bash
 kubectl create namespace longhorn-system
-# TODO
+argocd app create -f applications/longhorn/application.yaml
 argocd app sync argocd/longhorn
 ```
 
@@ -59,14 +59,24 @@ argocd app sync argocd/longhorn
 
 ```bash
 kubectl create namespace postgres-operator-system
-# TODO
+argocd app create -f applications/postgresql-operator/application.yaml
 argocd app sync argocd/postgres-operator
 ```
 
-### RabbitMQ
+### Waldur
 
 ```bash
 kubectl create namespace waldur
-# TODO
-argocd app sync argocd/rabbitmq
+```
+
+```bash
+argocd app create -f applications/waldur-postgresql/application.yaml
+argocd app sync argocd/waldur-postgresql
+```
+
+*NB*: RabbitMQ included
+
+```bash
+argocd app create -f applications/waldur/application.yaml
+argocd app sync argocd/waldur
 ```
