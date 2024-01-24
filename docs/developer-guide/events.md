@@ -102,6 +102,7 @@
 - marketplace_resource_create_requested
 - marketplace_resource_create_succeeded
 - marketplace_resource_downscaled
+- marketplace_resource_erred_on_backend
 - marketplace_resource_renamed
 - marketplace_resource_terminate_canceled
 - marketplace_resource_terminate_failed
