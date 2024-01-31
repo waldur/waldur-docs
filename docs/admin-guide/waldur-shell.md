@@ -16,6 +16,19 @@ kubectl exec --stdin --tty waldur-mastermind-worker-POD-ID -- waldur shell
 
 ## Examples
 
+### Setting/removing staff permissions for a user
+
+```python
+from waldur_core.core.models import User
+
+user = User.objects.get(
+    username="example_user",
+)
+user.set_password("somesecretpassword")
+user.is_staff = True  # set to False if you want to remove permission
+user.save()
+```
+
 ### Creating a new user with token only authentication
 
 ```python
