@@ -97,6 +97,110 @@ or use administration menu if you are a staff user
 
 ![img.png](images/stafflexis.png)
 
+## Listing resources supporting LEXIS links
+
+To list all resources supporting LEXIS links, the following API request can be used:
+
+```bash
+http GET https://waldur.example.com/api/marketplace-resources/?lexis_links_supported=true Authorization:"Token 154f2c6984b5992928b62f87950ac529f1f906ca"
+```
+
+The main filter is `lexis_links_supported` parameter.
+
+The example response:
+
+```json
+HTTP/1.1 200 OK
+Allow: GET, POST, HEAD, OPTIONS
+Content-Language: en
+Content-Length: 4825
+Content-Type: application/json
+Date: Wed, 31 Jan 2024 13:48:54 GMT
+Link: <https://waldur.example.com/api/marketplace-resources/?lexis_links_supported=true>; rel="first", <https://waldur.example.com/api/marketplace-resources/?lexis_links_supported=true>; rel="last"
+Server: WSGIServer/0.2 CPython/3.11.5
+Vary: Accept, Accept-Language, Cookie, Origin
+X-Frame-Options: DENY
+X-Result-Count: 2
+
+[
+    {
+        "attributes": {
+            "name": "br1"
+        },
+        "available_actions": [
+            "LEXIS_LINK.CREATE"
+        ],
+        "backend_id": "project_000003",
+        "backend_metadata": {},
+        "can_terminate": true,
+        "category_icon": "https://waldur.example.com/api/media-download/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3IiOiIzYzY0ODg5ZjE2OTQ0MmQ2ODc0OTBhZGRjMmE5ZGUzMCIsImN0IjoibWFya2V0cGxhY2UuY2F0ZWdvcnkiLCJpZCI6IjQ3NDZjYWY4NTk0NzQwYjlhNWM4Y2I3OWE1ZGZkNThjIiwiZmllbGQiOiJpY29uIiwiZXhwIjoxNzA2NzEyNTM0fQ.d1oe4Yn5DcB2nEqHjWp-TQzYt0f2gmkJwO_SS3ArJms/",
+        "category_title": "HPC",
+        "category_uuid": "4746caf8594740b9a5c8cb79a5dfd58c",
+        "created": "2022-12-15T20:35:48.855341Z",
+        "current_usages": {},
+        "customer_name": "Remote project",
+        "customer_uuid": "b559b279ee9f47a788f64ac4b86d1c56",
+        "description": "",
+        "effective_id": "",
+        "end_date": null,
+        "end_date_requested_by": null,
+        "endpoints": [],
+        "error_message": "",
+        "error_traceback": "",
+        "is_limit_based": false,
+        "is_usage_based": false,
+        "limit_usage": null,
+        "limits": {
+          "gb_k_hours": 30,
+          "cpu_k_hours": 1,
+          "gpu_k_hours": 20
+        },
+        "modified": "2023-10-09T11:17:30.214126Z",
+        "name": "br1",
+        "offering": "https://waldur.example.com/api/marketplace-public-offerings/765868848dd943e0baeefdac9a78aeac/",
+        "offering_billable": true,
+        "offering_customer_uuid": "b559b279ee9f47a788f64ac4b86d1c56",
+        "offering_description": "",
+        "offering_image": null,
+        "offering_name": "Basic",
+        "offering_plugin_options": {
+            "heappe_cluster_id": 1,
+            "heappe_local_base_path": "~/",
+            "heappe_url": "https://heappe-1.cloud.ut.ee",
+            "heappe_username": "admin"
+        },
+        "offering_shared": true,
+        "offering_terms_of_service": "",
+        "offering_thumbnail": null,
+        "offering_type": "Marketplace.Basic",
+        "offering_uuid": "765868848dd943e0baeefdac9a78aeac",
+        "options": null,
+        "plan": "https://waldur.example.com/api/marketplace-public-offerings/765868848dd943e0baeefdac9a78aeac/plans/6e08a30d481b4d62a17a2c145d744d9e/",
+        "plan_description": "",
+        "plan_name": "asd plan",
+        "plan_unit": "month",
+        "plan_uuid": "6e08a30d481b4d62a17a2c145d744d9e",
+        "project": "https://waldur.example.com/api/projects/dcc1e4456ba94f2498cf85dace03d1f4/",
+        "project_description": "",
+        "project_end_date": null,
+        "project_end_date_requested_by": null,
+        "project_name": "Local project / Local project 14",
+        "project_uuid": "dcc1e4456ba94f2498cf85dace03d1f4",
+        "provider_name": "Remote project",
+        "provider_uuid": "b559b279ee9f47a788f64ac4b86d1c56",
+        "report": null,
+        "requested_downscaling": false,
+        "resource_type": null,
+        "resource_uuid": null,
+        "scope": null,
+        "state": "OK",
+        "url": "https://waldur.example.com/api/marketplace-resources/f70a26bf348348a085d7b1276b473bcc/",
+        "username": null,
+        "uuid": "f70a26bf348348a085d7b1276b473bcc"
+    }
+]
+```
+
 ## Deleting LEXIS links
 
 To delete a LEXIS link the API request shown below can be sent.
