@@ -68,6 +68,11 @@
 - role_revoked
 - role_updated
 
+## Proposal
+
+- call_proposal_document_added
+- call_proposal_document_removed
+
 ## Providers
 
 - marketplace_resource_create_canceled
