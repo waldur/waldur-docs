@@ -84,6 +84,10 @@ Allow to submit organization, project and resource creation requests simultaneou
 
 Allow to import resources from service provider to project.
 
+## marketplace.lexis_links
+
+Enabled LEXIS link integrations for offerings.
+
 ## marketplace.offering_document
 
 Allow to attach document to marketplace offering.
