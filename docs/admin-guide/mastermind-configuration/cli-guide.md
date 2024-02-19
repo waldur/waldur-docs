@@ -253,21 +253,6 @@ options:
              created.
 ```
 
-## init_marketplace_support
-
-Import existing support offerings as marketplace resources.
-
-```bash
-usage: waldur init_marketplace_support --category CATEGORY_UUID --customer
-                                       CUSTOMER_UUID
-
-options:
-  --category CATEGORY_UUID
-                        Specify a category to create offerings.
-  --customer CUSTOMER_UUID
-                        Specify a customer to create offerings.
-```
-
 ## initsecuritygroups
 
 Add default security groups with given names to all tenants.
