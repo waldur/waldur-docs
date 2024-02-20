@@ -4,7 +4,7 @@
 
 ### structure.change_email_request
 
-A notification of an email change request
+A notification sent out when an email change is requested. Recipient is the old email address.
 
 #### Templates
 
@@ -31,7 +31,7 @@ A notification of an email change request
 
 ### structure.notifications_profile_changes_operator
 
-A notification of changing a profile
+A notification sent out to notify about profile changes. The recipients are Waldur operators.
 
 #### Templates
 
@@ -76,7 +76,7 @@ A notification of changing a profile
 
 ### structure.structure_role_granted
 
-A notification of a granted role
+A notification sent out when a role is granted. The recipient is the user who received the role.
 
 #### Templates
 
@@ -105,7 +105,7 @@ A notification of a granted role
 
 ### users.invitation_approved
 
-A notification of invitation approval
+A notification sent to notify the user that his invitation has been approved. The recipient is the user who's being invited.
 
 #### Templates
 
@@ -165,7 +165,7 @@ A notification of invitation approval
 
 ### users.invitation_created
 
-A notification of invitation creation
+A notification sent to the user so that he can accept it and receive permissions. The recipient is the user who's being invited.
 
 #### Templates
 
@@ -219,7 +219,7 @@ A notification of invitation creation
 
 ### users.invitation_expired
 
-A notification of expired invitation
+A notification sent out to notify the user that his invitation has expired. The recipient is the user who's being invited.
 
 #### Templates
 
@@ -264,7 +264,7 @@ A notification of expired invitation
 
 ### users.invitation_rejected
 
-A notification of invitation rejection
+A notification sent to notify the user that his invitation has been rejected. The recipient is the user who's being invited.
 
 #### Templates
 
@@ -324,7 +324,7 @@ A notification of invitation rejection
 
 ### users.invitation_requested
 
-A notification of invitation request
+A notification sent to staff users so that they can approve or reject invitation. The recipients are active staff users.
 
 #### Templates
 
@@ -452,7 +452,7 @@ A notification of invitation request
 
 ### users.permission_request_submitted
 
-A notification of a submitted invitation request
+A notification sent out to notify about submitted permission request. The recipients are active staff users or customer owners.
 
 #### Templates
 
@@ -501,7 +501,7 @@ A notification of a submitted invitation request
 
 ### booking.notification
 
-A notification about upcoming bookings
+A notification sent out to notify about upcoming bookings. The recipients are users who have upcoming bookings.
 
 #### Templates
 
@@ -554,7 +554,7 @@ A notification about upcoming bookings
 
 ### invoices.notification
 
-A notification of invoice
+A notification of invoice. The recipients are organization owners.
 
 #### Templates
 
@@ -597,7 +597,7 @@ A notification of invoice
 
 ### invoices.upcoming_ends_notification
 
-A notification about upcoming ends
+A notification about upcoming contract ending. The recipients are organization owners.
 
 #### Templates
 
@@ -808,7 +808,7 @@ A notification of a successful resource termination
 
 ### marketplace.marketplace_resource_termination_scheduled
 
-A notification of a scheduled resource termination
+A notification of a scheduled resource termination. The recipients are project administrators and managers
 
 #### Templates
 
@@ -851,7 +851,7 @@ A notification of a scheduled resource termination
 
 ### marketplace.marketplace_resource_termination_scheduled_staff
 
-A notification of a resource termination
+A notification of a resource termination. The recipients are project administrators and managers.
 
 #### Templates
 
@@ -978,7 +978,7 @@ A notification of failed resource limits update
 
 ### marketplace.marketplace_resource_update_limits_succeeded
 
-A notification of a successful resource limit update
+A notification of a successful resource limit update. The recipients are all the users in the project.
 
 #### Templates
 
@@ -1055,7 +1055,7 @@ A notification of a successful resource limit update
 
 ### marketplace.marketplace_resource_update_succeeded
 
-A notification of a successful resource update
+A notification of a successful resource update. The recipients are all the users in the project.
 
 #### Templates
 
@@ -1131,7 +1131,7 @@ A notification of a successful resource update
 
 ### marketplace.notification_about_project_ending
 
-A notification about project ending
+A notification about project ending. The recipients are project managers and customer owners.
 
 #### Templates
 
@@ -1181,7 +1181,7 @@ A notification about project ending
 
 ### marketplace.notification_about_stale_resources
 
-A notification about stale resources
+A notification about stale resources. The recipients are organization owners.
 
 #### Templates
 
@@ -1239,7 +1239,7 @@ A notification about stale resources
 
 ### marketplace.notification_usages
 
-A notification about usages
+A notification about usages. The recipients are organization owners.
 
 #### Templates
 
@@ -1302,7 +1302,7 @@ A notification about usages
 
 ### marketplace.notify_consumer_about_pending_order
 
-A notification for consumer about pending order
+A notification for consumer about pending order. The recipients are users that have permissions to approve the order.
 
 #### Templates
 
@@ -1344,7 +1344,7 @@ A notification for consumer about pending order
 
 ### marketplace.notify_provider_about_pending_order
 
-A notification for provider about pending order
+A notification for provider about pending order. The recipients are users that have permissions to approve the order.
 
 #### Templates
 
@@ -1388,7 +1388,7 @@ A notification for provider about pending order
 
 ### marketplace_flows.flow_rejected
 
-A notification for a rejected marketplace flow
+A notification for a rejected marketplace flow. The recipient is the user who requested the flow.
 
 #### Templates
 
@@ -1525,7 +1525,7 @@ A notification for a rejected marketplace flow
 
 ### marketplace_flows.flow_submitted
 
-A notification for a submitted marketplace flow
+A notification for a submitted marketplace flow. The recipients are customer owners.
 
 #### Templates
 
@@ -1838,7 +1838,7 @@ A notification for a submitted marketplace flow
 
 ### rancher.notification_create_user
 
-A notification for created rancher user
+A notification for created rancher user. The recipients is the user who requested the creation.
 
 #### Templates
 
@@ -1884,7 +1884,7 @@ A notification for created rancher user
 
 ### marketplace_remote.notification_about_pending_project_updates
 
-A notification about pending project updates
+A notification about pending project updates. The recipients are customer owners
 
 #### Templates
 
@@ -1938,7 +1938,7 @@ A notification about pending project updates
 
 ### marketplace_remote.notification_about_project_details_update
 
-A notification about project details update
+A notification about project details update. The recipients the user who requested project details update and the user that reviewed it.
 
 #### Templates
 
@@ -2052,7 +2052,7 @@ A notification about project details update
 
 ### marketplace_policy.notification_about_project_cost_exceeded_limit
 
-Notification about project cost exceeded limit.
+Notification about project cost exceeded limit. The recipients are all customer owners of the project.
 
 #### Templates
 

@@ -2132,7 +2132,7 @@ Updated issue: {{issue.key}} {{issue.summary}}
     <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
 </p>
 <pre>
-    {{ comment.description }}
+    {{ description }}
 </pre>
 </body>
 </html>
@@ -2155,9 +2155,9 @@ Updated issue: {{issue.key}} {{issue.summary}}
     Status has been changed from <strong>{{ changed.status }}</strong> to <strong>{{ issue.status }}</strong>.
 </p>
 {% endif %}
-{% if changed.description %}
+{% if old_description %}
 <p>
-    Description has been changed from <strong>{{ changed.description }}</strong> to <strong>{{ issue.description }}</strong>.
+    Description has been changed from <strong>{{ old_description }}</strong> to <strong>{{ description }}</strong>.
 </p>
 {% endif %}
 {% if changed.summary %}
@@ -2243,7 +2243,7 @@ Please share your feedback: {{issue.key}} {{issue.summary}}
 ### notification_comment_added_subject.txt (waldur_mastermind.support)
 
 ``` txt
-The issue you have created has a new comment
+The issue ({{ issue.key }}) you have created has a new comment
 ```
 
 ### notification_issue_updated.txt (waldur_mastermind.support)
@@ -2294,7 +2294,7 @@ Please go to {{issue_url}} to see it.
     New comment:
 </p>
 <p>
-    {{ comment.description }}
+    {{ description }}
 </p>
 </body>
 </html>
@@ -2303,6 +2303,6 @@ Please go to {{issue_url}} to see it.
 ### notification_comment_updated_subject.txt (waldur_mastermind.support)
 
 ``` txt
-The comment has been updated
+Issue {{ issue.key }}. The comment has been updated
 ```
 
