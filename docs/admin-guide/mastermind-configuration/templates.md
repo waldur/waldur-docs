@@ -2131,9 +2131,9 @@ Updated issue: {{issue.key}} {{issue.summary}}
 <p>
     <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
 </p>
-<pre>
-    {{ description }}
-</pre>
+<div>
+    {{ description|safe }}
+</div>
 </body>
 </html>
 ```
@@ -2288,13 +2288,13 @@ Please go to {{issue_url}} to see it.
     Old comment:
 </p>
 <p>
-    {{ old_description }}
+    {{ old_description|safe }}
 </p>
 <p>
     New comment:
 </p>
 <p>
-    {{ description }}
+    {{ description|safe }}
 </p>
 </body>
 </html>
