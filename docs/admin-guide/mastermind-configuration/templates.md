@@ -2126,7 +2126,11 @@ Updated issue: {{issue.key}} {{issue.summary}}
 </head>
 <body>
 <p>
-    {{ comment.author.name }} added a new comment.
+    {% if is_system_comment %}
+        Added a new comment.
+    {% else %}
+        {{ comment.author.name }} added a new comment.
+    {% endif %}
 </p>
 <p>
     <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
