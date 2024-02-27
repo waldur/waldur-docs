@@ -22,9 +22,6 @@
 - payment_added
 - payment_created
 - payment_removed
-- role_granted
-- role_revoked
-- role_updated
 
 ## Invoices
 
@@ -55,6 +52,12 @@
 - payment_cancel_succeeded
 - payment_creation_succeeded
 
+## Permissions
+
+- role_granted
+- role_revoked
+- role_updated
+
 ## Projects
 
 - project_creation_succeeded
@@ -64,9 +67,6 @@
 - project_update_request_created
 - project_update_request_rejected
 - project_update_succeeded
-- role_granted
-- role_revoked
-- role_updated
 
 ## Proposal
 
@@ -90,9 +90,6 @@
 - resource_robot_account_created
 - resource_robot_account_deleted
 - resource_robot_account_updated
-- role_granted
-- role_revoked
-- role_updated
 
 ## Resources
 
@@ -257,9 +254,6 @@
 - freeipa_profile_enabled
 - marketplace_offering_user_created
 - marketplace_offering_user_deleted
-- role_granted
-- role_revoked
-- role_updated
 - ssh_key_creation_succeeded
 - ssh_key_deletion_succeeded
 - user_activated
