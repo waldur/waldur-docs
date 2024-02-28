@@ -2087,7 +2087,6 @@ Click on the evaluations below to provide the feedback.
 ``` txt
 {{issue.description}}
 
----
 Additional Info:
 {% if issue.customer %}- Organization: {{issue.customer.name}}{% endif %}
 {% if issue.project %}- Project: {{issue.project.name}}{% endif %}
@@ -2161,7 +2160,7 @@ Updated issue: {{issue.key}} {{issue.summary}}
 {% endif %}
 {% if old_description %}
 <p>
-    Description has been changed from <strong>{{ old_description }}</strong> to <strong>{{ description }}</strong>.
+    Description has been changed from <strong>{{ old_description|safe }}</strong> to <strong>{{ description|safe }}</strong>.
 </p>
 {% endif %}
 {% if changed.summary %}
