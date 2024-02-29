@@ -2091,3 +2091,304 @@ Notification about project cost exceeded limit. The recipients are all customer 
 
 ```
 
+## WALDUR_MASTERMIND.SUPPORT
+
+### support.description
+
+A notification used for issue creation.
+
+#### Templates
+
+=== "support/description.txt"
+
+```txt
+    {{issue.description}}
+
+    Additional Info:
+    {% if issue.customer %}- Organization: {{issue.customer.name}}{% endif %}
+    {% if issue.project %}- Project: {{issue.project.name}}{% endif %}
+    {% if issue.resource %}
+        {% if issue.resource.service_settings %}
+            {% if issue.resource.service_settings.type %}- Service type: {{issue.resource.service_settings.type}}{% endif %}
+            - Offering name: {{ issue.resource.service_settings.name }}
+            - Offering provided by: {{ issue.resource.service_settings.customer.name }}
+        {% endif %}
+        - Affected resource: {{issue.resource}}
+        - Backend ID: {{issue.resource.backend_id}}
+    {% endif %}
+    - Site name: {{ settings.WALDUR_CORE.SITE_NAME }}
+    - Site URL: {{ settings.WALDUR_CORE.HOMEPORT_URL }}
+
+```
+
+### support.notification_comment_added
+
+Notification about a new comment in the issue. The recipient is issue caller.
+
+#### Templates
+
+=== "support/notification_comment_added.txt"
+
+```txt
+    Hello!
+
+    The issue you have created has a new comment. Please go to {{issue_url}} to see it.
+
+```
+
+=== "support/notification_comment_added.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>The issue you have created ({{ issue.key }}) has a new comment</title>
+    </head>
+    <body>
+    <p>
+        {% if is_system_comment %}
+            Added a new comment.
+        {% else %}
+            {{ comment.author.name }} added a new comment.
+        {% endif %}
+    </p>
+    <p>
+        <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
+    </p>
+    <div>
+        {{ description|safe }}
+    </div>
+    </body>
+    </html>
+
+```
+
+=== "support/notification_comment_added_subject.txt"
+
+```txt
+    The issue ({{ issue.key }}) you have created has a new comment
+
+```
+
+### support.notification_comment_updated
+
+Notification about an update in the issue comment. The recipient is issue caller.
+
+#### Templates
+
+=== "support/notification_comment_updated.txt"
+
+```txt
+    Hello!
+
+    The comment has been updated. Please go to {{issue_url}} to see it.
+
+```
+
+=== "support/notification_comment_updated.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>The comment has been updated ({{ issue.key }})</title>
+    </head>
+    <body>
+    <p>
+        {{ comment.author.name }} updated comment.
+    </p>
+    <p>
+        <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
+    </p>
+    <p>
+        Old comment:
+    </p>
+    <p>
+        {{ old_description|safe }}
+    </p>
+    <p>
+        New comment:
+    </p>
+    <p>
+        {{ description|safe }}
+    </p>
+    </body>
+    </html>
+
+```
+
+=== "support/notification_comment_updated_subject.txt"
+
+```txt
+    Issue {{ issue.key }}. The comment has been updated
+
+```
+
+### support.notification_issue_feedback
+
+Notification about a feedback related to the issue. The recipient is issue caller.
+
+#### Templates
+
+=== "support/notification_issue_feedback.txt"
+
+```txt
+    Hello, {{issue.caller.full_name}}!
+
+    We would like to hear your feedback regarding your recent experience with support for {{issue_url}}.
+
+    Click on the evaluations below to provide the feedback.
+
+    {% for link in feedback_links%}
+        {{link.label}}: {{link.link}}
+    {% endfor %}
+
+```
+
+=== "support/notification_issue_feedback.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>The issue you have ({{ issue.key }}) has been updated</title>
+
+        <style>
+            * {
+              font-family: sans-serif;
+            }
+            .rating {
+              unicode-bidi: bidi-override;
+              direction: rtl;
+              width: 500px;
+            }
+            .rating > a {
+              display: inline-block;
+              position: relative;
+              width: 1.1em;
+              text-decoration: none;
+              font-size: xx-large;
+              color: rgba(180, 179, 178, 1);
+            }
+            .rating > a:hover:before,
+            .rating > a:hover ~ a:before {
+               content: "\2605";
+               position: absolute;
+               color: rgba(224, 194, 75, 1);
+            }
+        </style>
+
+    </head>
+    <body>
+    <p>Hello, {{issue.caller.full_name}}!</p>
+    <p>We would like to hear your feedback regarding your recent experience with support for
+        <a href='{{issue_url}}'>{{ issue.summary }}</a>.
+    </p>
+    <p>Click the stars below to provide your feedback:</p>
+    <div class="rating">
+        {% for link in feedback_links reversed %}
+            <a href='{{link.link}}'>☆</a>
+        {% endfor %}
+    </div>
+    </body>
+    </html>
+
+```
+
+=== "support/notification_issue_feedback_subject.txt"
+
+```txt
+    Please share your feedback: {{issue.key}} {{issue.summary}}
+
+```
+
+### support.notification_issue_updated
+
+Notification about an update in the issue. The recipient is issue caller.
+
+#### Templates
+
+=== "support/notification_issue_updated.txt"
+
+```txt
+    Hello!
+
+    The issue you have has been updated.
+
+    {% if changed.status %}
+    Status has been changed from {{ changed.status }} to {{ issue.status }}.
+    {% endif %}
+    {% if changed.description %}
+    Description has been changed from {{ changed.description }} to {{ issue.description }}.
+    {% endif %}
+    {% if changed.summary %}
+    Summary has been changed from {{ changed.summary }} to {{ issue.summary }}.
+    {% endif %}
+    {% if changed.priority %}
+    Priority has been changed from {{ changed.priority }} to {{ issue.priority }}.
+    {% endif %}
+
+    Please go to {{issue_url}} to see it.
+
+```
+
+=== "support/notification_issue_updated.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>The issue you have ({{ issue.key }}) has been updated</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    {% if changed.status %}
+    <p>
+        Status has been changed from <strong>{{ changed.status }}</strong> to <strong>{{ issue.status }}</strong>.
+    </p>
+    {% endif %}
+    {% if old_description %}
+    <p>
+        Description has been changed from <strong>{{ old_description|safe }}</strong> to <strong>{{ description|safe }}</strong>.
+    </p>
+    {% endif %}
+    {% if changed.summary %}
+    <p>
+        Summary has been changed from <strong>{{ changed.summary }}</strong> to <strong>{{ issue.summary }}</strong>.
+    </p>
+    {% endif %}
+    {% if changed.priority %}
+    <p>
+        Priority has been changed from <strong>{{ changed.priority }}</strong> to <strong>{{ issue.priority }}</strong>.
+    </p>
+    {% endif %}
+    <p>
+        Please visit <a href="{{ issue_url }}">{{ site_name }}</a> to find out more details.
+    </p>
+    </body>
+    </html>
+
+```
+
+=== "support/notification_issue_updated_subject.txt"
+
+```txt
+    Updated issue: {{issue.key}} {{issue.summary}}
+
+```
+
+### support.summary
+
+A notification used for issue creation.
+
+#### Templates
+
+=== "support/summary.txt"
+
+```txt
+    {% if issue.customer.abbreviation %}{{issue.customer.abbreviation}}: {% endif %}{{issue.summary}}
+
+```
+
