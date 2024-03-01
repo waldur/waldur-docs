@@ -230,6 +230,27 @@ options:
                         Updated offering UUID.
 ```
 
+## import_reppu_usages
+
+Import component usages from Reppu for a specified year and month.
+
+```bash
+usage: waldur import_reppu_usages [-m MONTH] [-y YEAR]
+                                  [--reppu-api-url REPPU_API_URL]
+                                  [--reppu-api-token REPPU_API_TOKEN]
+                                  [--dry-run DRY_RUN]
+
+options:
+  -m MONTH, --month MONTH
+                        Month for which data is imported.
+  -y YEAR, --year YEAR  Year for which data is imported.
+  --reppu-api-url REPPU_API_URL
+                        Reppu API URL.
+  --reppu-api-token REPPU_API_TOKEN
+                        Reppu API Token.
+  --dry-run DRY_RUN     Dry run mode.
+```
+
 ## import_roles
 
 Import roles configuration in YAML format
