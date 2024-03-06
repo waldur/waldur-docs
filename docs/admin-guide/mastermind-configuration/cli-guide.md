@@ -238,7 +238,7 @@ Import component usages from Reppu for a specified year and month.
 usage: waldur import_reppu_usages [-m MONTH] [-y YEAR]
                                   [--reppu-api-url REPPU_API_URL]
                                   [--reppu-api-token REPPU_API_TOKEN]
-                                  [--dry-run DRY_RUN]
+                                  [--dry-run | --no-dry-run]
 
 options:
   -m MONTH, --month MONTH
@@ -248,7 +248,8 @@ options:
                         Reppu API URL.
   --reppu-api-token REPPU_API_TOKEN
                         Reppu API Token.
-  --dry-run DRY_RUN     Dry run mode.
+  --dry-run, --no-dry-run
+                        Dry run mode.
 ```
 
 ## import_roles
