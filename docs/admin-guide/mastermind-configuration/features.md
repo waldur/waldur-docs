@@ -176,10 +176,6 @@ Render marketplace plan components pricelist in support workspace.
 
 Enable resource usage overview charts in support workspace.
 
-## support.resources_treemap
-
-Render resource usage as a treemap chart in support workspace.
-
 ## support.sankey_diagram
 
 Render service usage as a sankey chart in support workspace.
