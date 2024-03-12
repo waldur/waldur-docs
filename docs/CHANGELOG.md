@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.5.5
+
+Notes: Openstack caching bugfix
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.5.4...6.5.5)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.5.4...6.5.5)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.5.4...6.5.5)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.5.4...6.5.5)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.5.4...6.5.5)
+
+Date: Tue Mar 12 19:31:25 UTC 2024
+
 ## 6.5.4
 
 Notes: Bugfix
