@@ -148,10 +148,6 @@ Render list of recent comments in support dashboard.
 
 Conceal "Change request" from a selection of issue types for non-staff/non-support users.
 
-## support.customers_list
-
-Render list of organizations in support workspace.
-
 ## support.customers_requests
 
 Render list of organization creation requests in support workspace.
