@@ -1100,7 +1100,7 @@ WALDUR_OPENSTACK = {'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
                                          'icmp_code': -1,
                                          'icmp_type': -1,
                                          'protocol': 'icmp'},)},
-                             {'description': 'Security group for remove '
+                             {'description': 'Security group for remote '
                                              'desktop access',
                               'name': 'rdp',
                               'rules': ({'cidr': '0.0.0.0/0',
