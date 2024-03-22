@@ -8,6 +8,11 @@
 - token_created
 - token_lifetime_updated
 
+## Call
+
+- call_document_added
+- call_document_removed
+
 ## Customers
 
 - customer_creation_succeeded
@@ -70,8 +75,6 @@
 
 ## Proposal
 
-- call_proposal_document_added
-- call_proposal_document_removed
 - proposal_document_added
 - proposal_document_removed
 
