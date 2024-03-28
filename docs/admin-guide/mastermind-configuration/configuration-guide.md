@@ -390,7 +390,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'OECD_FOS_2007_CODE_MANDATORY': False,
  'ONLY_STAFF_CAN_INVITE_USERS': False,
  'ONLY_STAFF_MANAGES_SERVICES': False,
- 'OWNER_CAN_MANAGE_CUSTOMER': False,
  'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
  'SELLER_COUNTRY_CODE': None,
  'SHOW_ALL_USERS': False,
@@ -628,12 +627,6 @@ Allow to limit invitation management to staff only.
 Type: bool
 
 Allows to restrict provider management only to staff users.
-
-### OWNER_CAN_MANAGE_CUSTOMER
-
-Type: bool
-
-Enables organization owners to create an organization.
 
 ### PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS
 
