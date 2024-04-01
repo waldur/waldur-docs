@@ -4,10 +4,6 @@
 
 Render component usage charts in organization dashboard.
 
-## customer.events
-
-Enable audit log in organization workspace.
-
 ## customer.hide_organization_billing_step
 
 Hide billing step in organization creation wizard.
@@ -16,25 +12,9 @@ Hide billing step in organization creation wizard.
 
 Make payments menu visible for staff users only.
 
-## customer.project_requests
-
-Render list of project creation requests in organization dashboard.
-
-## customer.resource_requests
-
-Render list of resource creation requests in organization dashboard.
-
 ## customer.show_domain
 
 Allows to hide domain field in organization detail.
-
-## customer.show_subnets
-
-Render list of subnets from where connection to self-service is allowed in organization details dialog.
-
-## customer.team
-
-Enable team management in organization workspace.
 
 ## invitations.civil_number_required
 
@@ -43,14 +23,6 @@ Make civil number field mandatory in invitation creation form.
 ## invitations.conceal_civil_number
 
 Conceal civil number in invitation creation dialog.
-
-## invitations.create_missing_user
-
-Allow to create FreeIPA user using details specified in invitation if user does not exist yet.
-
-## invitations.disable_multiple_roles
-
-Do not allow user to grant multiple roles in the same project or organization using invitation.
 
 ## invitations.require_user_details
 
@@ -64,10 +36,6 @@ Show tax number field in invitation creation form.
 
 Make tax number field mandatory in invitation creation form.
 
-## invoice.events
-
-Render list of events related to invoice item in modal dialog.
-
 ## marketplace.conceal_prices
 
 Do not render prices in shopping cart and order details.
@@ -80,18 +48,6 @@ Allow to import resources from service provider to project.
 
 Enabled LEXIS link integrations for offerings.
 
-## marketplace.offering_document
-
-Allow to attach document to marketplace offering.
-
-## marketplace.private_offerings
-
-Render list of private marketplace service providers in organization workspace.
-
-## marketplace.review
-
-Allow to write a review for marketplace offering.
-
 ## marketplace.show_call_management_functionality
 
 Enabled display of call management functionality.
@@ -99,10 +55,6 @@ Enabled display of call management functionality.
 ## marketplace.show_experimental_ui_components
 
 Enabled display of experimental or mocked components in marketplace.
-
-## marketplace.terms_of_service
-
-Render terms of service when offering is ordered.
 
 ## openstack.hide_volume_type_selector
 
@@ -112,10 +64,6 @@ Allow to hide OpenStack volume type selector when instance or volume is provisio
 
 Render estimated cost column in projects list.
 
-## project.events
-
-Enable audit log in project workspace.
-
 ## project.oecd_fos_2007_code
 
 Enable OECD code.
@@ -123,10 +71,6 @@ Enable OECD code.
 ## project.show_industry_flag
 
 Show industry flag.
-
-## project.team
-
-Enable team management in project workspace.
 
 ## rancher.volume_mount_point
 
