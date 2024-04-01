@@ -442,6 +442,14 @@ options:
 
 Prints all event types as typescript enums in prettify format.
 
+## print_features_docs
+
+
+
+## print_features_enums
+
+
+
 ## print_notifications
 
 Prints Mastermind notifications with a description and templates

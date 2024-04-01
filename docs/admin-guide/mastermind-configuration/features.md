@@ -1,9 +1,5 @@
 # Features
 
-## customer.billing
-
-Render billing menu in organization sidebar.
-
 ## customer.category_resources_list
 
 Render component usage charts in organization dashboard.
@@ -76,10 +72,6 @@ Render list of events related to invoice item in modal dialog.
 
 Do not render prices in shopping cart and order details.
 
-## marketplace.flows
-
-Allow to submit organization, project and resource creation requests simultaneously.
-
 ## marketplace.import_resources
 
 Allow to import resources from service provider to project.
@@ -112,6 +104,10 @@ Enabled display of experimental or mocked components in marketplace.
 
 Render terms of service when offering is ordered.
 
+## openstack.hide_volume_type_selector
+
+Allow to hide OpenStack volume type selector when instance or volume is provisioned.
+
 ## project.estimated_cost
 
 Render estimated cost column in projects list.
@@ -140,41 +136,13 @@ Allow to select mount point for data volume when Rancher cluster is provisioned.
 
 Render list of SLURM jobs as a separate tab in allocation details page.
 
-## support.activity_stream
-
-Render list of recent comments in support dashboard.
-
 ## support.conceal_change_request
 
 Conceal "Change request" from a selection of issue types for non-staff/non-support users.
 
-## support.customers_requests
-
-Render list of organization creation requests in support workspace.
-
-## support.flowmap
-
-Render service usage as a flowmap chart in support workspace.
-
-## support.heatmap
-
-Render service usage as a heatmap chart in support workspace.
-
-## support.offering_comments
-
-Render comments tab in request-based item details page.
-
 ## support.pricelist
 
 Render marketplace plan components pricelist in support workspace.
-
-## support.resource_usage
-
-Enable resource usage overview charts in support workspace.
-
-## support.sankey_diagram
-
-Render service usage as a sankey chart in support workspace.
 
 ## support.shared_providers
 
