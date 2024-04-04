@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.6.3
+
+Notes: Add support for Matomo user tracking
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.6.2...6.6.3)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.6.2...6.6.3)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.6.2...6.6.3)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.6.2...6.6.3)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.6.2...6.6.3)
+
+Date: Thu Apr  4 17:29:13 UTC 2024
+
 ## 6.6.2
 
 Notes: Bugfix release
