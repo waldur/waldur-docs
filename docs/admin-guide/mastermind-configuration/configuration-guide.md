@@ -359,7 +359,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'ENABLE_GEOIP': True,
  'EXTENSIONS_AUTOREGISTER': True,
  'EXTERNAL_LINKS': [],
- 'GOOGLE_ANALYTICS_ID': '',
  'GROUP_INVITATION_LIFETIME': datetime.timedelta(days=7),
  'HOMEPORT_SENTRY_DSN': None,
  'HOMEPORT_SENTRY_ENVIRONMENT': 'waldur-production',
@@ -380,6 +379,8 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'LOGGING_REPORT_DIRECTORY': '/var/log/waldur',
  'LOGGING_REPORT_INTERVAL': datetime.timedelta(days=7),
  'MASTERMIND_URL': '',
+ 'MATOMO_SITE_ID': None,
+ 'MATOMO_URL_BASE': None,
  'NATIVE_NAME_ENABLED': False,
  'NOTIFICATIONS_PROFILE_CHANGES': {'ENABLE_OPERATOR_OWNER_NOTIFICATIONS': False,
                                    'FIELDS': ('email',
@@ -465,12 +466,6 @@ Defines whether extensions should be automatically registered.
 Type: List[ExternalLink]
 
 Render external links in dropdown in header. Each item should be object with label and url fields. For example: {"label": "Helpdesk", "url": "`https://example.com/`"}
-
-### GOOGLE_ANALYTICS_ID
-
-Type: str
-
-Identifier associated with your account and used by Google Analytics to collect the data.
 
 ### GROUP_INVITATION_LIFETIME
 
@@ -591,6 +586,18 @@ Files older that specified interval are filtered out.
 Type: str
 
 It is used for rendering callback URL in MasterMind.
+
+### MATOMO_SITE_ID
+
+Type: Optional[int]
+
+Site ID is used by Matomo analytics application.
+
+### MATOMO_URL_BASE
+
+Type: Optional[str]
+
+URL base is used by Matomo analytics application.
 
 ### NATIVE_NAME_ENABLED
 

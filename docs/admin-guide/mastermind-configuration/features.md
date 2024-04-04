@@ -4,10 +4,6 @@
 
 Render component usage charts in organization dashboard.
 
-## customer.hide_organization_billing_step
-
-Hide billing step in organization creation wizard.
-
 ## customer.payments_for_staff_only
 
 Make payments menu visible for staff users only.
