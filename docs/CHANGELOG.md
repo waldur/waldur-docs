@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.6.4
+
+Notes: Volume type selector bugfix
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.6.3...6.6.4)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.6.3...6.6.4)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.6.3...6.6.4)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.6.3...6.6.4)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.6.3...6.6.4)
+
+Date: Sun Apr  7 08:45:51 UTC 2024
+
 ## 6.6.3
 
 Notes: Add support for Matomo user tracking
