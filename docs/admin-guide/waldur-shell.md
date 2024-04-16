@@ -283,6 +283,96 @@ for invoice in invoices:
     )
 ```
 
+### Generate a report for VMs created within a specific tenant offering
+
+Upon running the script, please change `year` and `offering_uuid` variables.
+
+```python
+from waldur_mastermind.marketplace import models as mm
+from urllib.parse import urlparse
+from waldur_openstack.openstack_tenant import models as otm
+import csv
+
+year = 2024
+offering_uuid = "changeme"
+
+tenant_offering = mm.Offering.objects.get(uuid=offering_uuid)
+
+vm_orders = mm.Order.objects.filter(
+    offering__parent=tenant_offering,
+    state=mm.Order.States.DONE,
+    type=mm.Order.Types.CREATE,
+    resource__created__year=year,
+).order_by("created")
+
+report = []
+
+for order in vm_orders:
+    resource = order.resource
+    flavor_url = resource.attributes.get("flavor")
+
+    if flavor_url is None:
+        print("flavor_url is missing for order %s" % order)
+        continue
+
+    flavor_parsed_url = urlparse(flavor_url)
+    flavor_url_parts = flavor_parsed_url.path.split("/")
+    flavor_uuid = flavor_url_parts[-2]
+    flavor = otm.Flavor.objects.filter(uuid=flavor_uuid).first()
+
+    if flavor is None:
+        print("There is no flavor for order %s" % order)
+        continue
+
+    system_volume_size = order.attributes["system_volume_size"]
+    data_volume_size = resource.attributes.get("data_volume_size", 0)
+
+    vm_terminated = ""
+    if resource.state == mm.Resource.States.TERMINATED:
+        termination_order = mm.Order.objects.filter(
+            resource=resource, state=mm.Order.States.DONE, type=mm.Order.Types.TERMINATE
+        ).first()
+
+        if termination_order is None:
+            print("Termination order for resource %s does not exist" % resource)
+        else:
+            vm_terminated = termination_order.consumer_reviewed_at.isoformat()
+
+    report.append(
+        {
+            "vm_name": resource.name,
+            "vm_created": resource.created.isoformat(),
+            "vm_terminated": vm_terminated,
+            "project_name": resource.project.name,
+            "flavor_name": flavor.name,
+            "flavor_cores": flavor.cores,
+            "flavor_ram": flavor.ram,
+            "flavor_disk": flavor.disk,
+            "system_volume_size": system_volume_size,
+            "data_volume_size": data_volume_size,
+        }
+    )
+
+report_path = f"vm-report-{year}.csv"
+
+with open(report_path, mode="w") as file:
+    fieldnames = [
+        "vm_name",
+        "vm_created",
+        "vm_terminated",
+        "project_name",
+        "flavor_name",
+        "flavor_cores",
+        "flavor_ram",
+        "flavor_disk",
+        "system_volume_size",
+        "data_volume_size",
+    ]
+    writer = csv.DictWriter(file, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(report)
+```
+
 ### Migrate users to a new Keycloak instance
 
 #### Introduction
