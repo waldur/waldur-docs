@@ -440,11 +440,15 @@ options:
 
 ## print_events_enums
 
-Prints all event types as typescript enums in prettify format.
+Prints all event types as typescript enums.
 
 ## print_features_docs
 
+Prints all Waldur feature toggles in markdown format.
+
 ## print_features_enums
+
+Prints all Waldur feature toggles as typescript enums.
 
 ## print_notifications
 
@@ -488,7 +492,7 @@ Create or update price estimates based on invoices.
 
 ## removestalect
 
-Remove instances that have FK to stale content types.
+Remove Django event log records with stale content types.
 
 ## set_constance_image
 
