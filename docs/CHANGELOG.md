@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.6.5
+
+Notes: None
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.6.4...6.6.5)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.6.4...6.6.5)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.6.4...6.6.5)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.6.4...6.6.5)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.6.4...6.6.5)
+
+Date: Fri Apr 19 11:05:01 UTC 2024
+
 ## 6.6.4
 
 Notes: Volume type selector bugfix
