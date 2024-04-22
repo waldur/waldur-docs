@@ -923,7 +923,6 @@ WALDUR_MARKETPLACE = {'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
  'ENABLE_STALE_RESOURCE_NOTIFICATIONS': False,
  'NOTIFY_ABOUT_RESOURCE_CHANGE': True,
  'NOTIFY_STAFF_ABOUT_APPROVALS': False,
- 'TELEMETRY_ENABLED': True,
  'TELEMETRY_URL': 'https://telemetry.waldur.com/',
  'TELEMETRY_VERSION': 1,
  'THUMBNAIL_SIZE': (120, 120)}
@@ -970,12 +969,6 @@ If true, notify users about resource changes from Marketplace perspective. Can g
 Type: bool
 
 If true, users with staff role are notified when request for order approval is generated
-
-### TELEMETRY_ENABLED
-
-Type: bool
-
-Enable telemetry.
 
 ### TELEMETRY_URL
 
