@@ -96,6 +96,10 @@ Render list of users in support workspace.
 
 Enable VM type overview in support workspace.
 
+## telemetry.send_metrics
+
+Send telemetry metrics.
+
 ## user.competence
 
 Render competence column in users list.
