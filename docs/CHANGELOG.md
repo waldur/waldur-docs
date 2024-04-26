@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.6.7
+
+Notes: Bugfixes
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.6.6...6.6.7)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.6.6...6.6.7)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.6.6...6.6.7)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.6.6...6.6.7)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.6.6...6.6.7)
+
+Date: Fri Apr 26 15:11:26 UTC 2024
+
 ## 6.6.6
 
 Notes: Fix user management permissions.
