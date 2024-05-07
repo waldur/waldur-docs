@@ -30,7 +30,7 @@ Instructions below are aimed to provide a basic configuration of Keycloak, pleas
     ```python
     WALDUR_AUTH_SOCIAL.update({'KEYCLOAK_AUTH_URL': 'https://KEYCLOAK_ADDRESS:8080/auth/realms/test-waldur/.well-known/openid-configuration',
      'KEYCLOAK_CLIENT_ID': 'CLIENT_ID',
-     'KEYCLOAK_SECRET': 'SECRET'
+     'KEYCLOAK_SECRET': 'SECRET',
      'KEYCLOAK_TOKEN_URL': 'https://KEYCLOAK_ADDRESS:8080/auth/realms/test-waldur/protocol/openid-connect/token',
      'KEYCLOAK_USERINFO_URL': 'https://KEYCLOAK_ADDRESS:8080/auth/realms/test-waldur/protocol/openid-connect/userinfo'
     })
