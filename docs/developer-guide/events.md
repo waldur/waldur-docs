@@ -1,5 +1,11 @@
 # Events
 
+## Access_subnets
+
+- access_subnet_creation_succeeded
+- access_subnet_deletion_succeeded
+- access_subnet_update_succeeded
+
 ## Auth
 
 - auth_logged_in_with_username
