@@ -9,20 +9,20 @@
 
 - Kubernetes version: 1.18+
 - Minimal namespace limits:
-  - CPU: **6750m**
-    - Waldur: 2750m
+  - CPU: **8000m**
+    - Waldur: 4000m
     - PostgreSQL: 4000m
-  - RAM: **9500Mi**
-    - Waldur: 5500Mi
+  - RAM: **10000Mi**
+    - Waldur: 6000Mi
     - PostgreSQL: 4000Mi
   - Storage: **20Gi** (PostgreSQL DB)
 - Recommended namespace limits:
-  - CPU: **10850m**
-    - Waldur: 2750m
-    - PostgreSQL: 4000m
-  - RAM: **13700Mi**
-    - Waldur: 5500Mi
-    - PostgreSQL: 4000Mi
+  - CPU: **12000m**
+    - Waldur: 6000m
+    - PostgreSQL: 6000m
+  - RAM: **14000Mi**
+    - Waldur: 8000Mi
+    - PostgreSQL: 6000Mi
   - Storage: **40Gi** (PostgreSQL DB)
 
 ## Component specific requirements
