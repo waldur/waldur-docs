@@ -1,9 +1,5 @@
 # Features
 
-## customer.category_resources_list
-
-Render component usage charts in organization dashboard.
-
 ## customer.payments_for_staff_only
 
 Make payments menu visible for staff users only.
