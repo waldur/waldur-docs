@@ -392,6 +392,8 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'ONLY_STAFF_CAN_INVITE_USERS': False,
  'ONLY_STAFF_MANAGES_SERVICES': False,
  'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
+ 'REQUEST_HEADER_IMPERSONATED_USER_UUID': 'HTTP_X_IMPERSONATED_USER_UUID',
+ 'RESPONSE_HEADER_IMPERSONATOR_UUID': 'X-impersonator-uuid',
  'SELLER_COUNTRY_CODE': None,
  'SHOW_ALL_USERS': False,
  'SUPPORT_PORTAL_URL': '',
@@ -640,6 +642,18 @@ Allows to restrict provider management only to staff users.
 Type: List[str]
 
 List of authentication methods which are not allowed to update user details.
+
+### REQUEST_HEADER_IMPERSONATED_USER_UUID
+
+Type: str
+
+The request header, which contains the user UUID of the user to be impersonated.
+
+### RESPONSE_HEADER_IMPERSONATOR_UUID
+
+Type: str
+
+The response header, which contains the UUID of the user who requested the impersonation.
 
 ### SELLER_COUNTRY_CODE
 
