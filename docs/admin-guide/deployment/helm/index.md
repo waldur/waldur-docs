@@ -17,32 +17,27 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 
 ## Installing the chart
 
-1. Clone [waldur-helm repository](https://github.com/waldur/waldur-helm)
+1. Add the Helm repository
 
 ```bash
-  git clone https://github.com/waldur/waldur-helm.git
-  cd waldur-helm
+  helm repo add waldur-charts https://waldur.github.io/waldur-helm/
 ```
 
-1. Add the stable repository
+2. Install dependencies or enable them in Helm values
+
+   Setup database using one of:
+    - Single PostgreSQL DB: [instructions](docs/postgres-db.md) or
+    - PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
+    - Integrate with external DB: [instructions](docs/external-db-integration.md)
+
+    Install minio (for database backups): [instructions](docs/minio.md)
+
+    Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
+
+3. Install the Helm chart
 
 ```bash
-  helm repo add stable https://charts.helm.sh/stable
-```
-
-1. Setup database:
-    3.1 Setup single PostgreSQL DB: [instructions](docs/postgres-db.md) or
-    3.2 Setup PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
-    3.3 Integrate with external DB: [instructions](docs/external-db-integration.md)
-
-    **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
-
-2. Install minio (for database backups): [instructions](docs/minio.md)
-3. Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
-4. Install Helm package:
-
-```bash
-  helm install waldur waldur
+  helm install my-waldur waldur-charts/waldur -f path/to/values.yml
 ```
 
 **NB** After this command, Waldur release will run in `default` namespace.
