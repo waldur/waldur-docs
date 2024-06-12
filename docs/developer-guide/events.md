@@ -81,6 +81,7 @@
 
 ## Proposal
 
+- proposal_canceled
 - proposal_document_added
 - proposal_document_removed
 
