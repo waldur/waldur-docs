@@ -161,26 +161,48 @@ Tag Mastermind, Homeport and Helm repositories:
     - git --no-pager show
     - git push origin master
   script:
-    - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-mastermind.git"
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-mastermind.git"
     - cd waldur-mastermind/
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
     - cd ../
-    - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-homeport.git"
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-homeport.git"
     - cd waldur-homeport/
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
     - cd ../
-    - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-helm.git"
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-helm.git"
     - cd waldur-helm/
+    # Add new tag to Chart.yaml and values.yaml
+    - |
+      sed -i -E -e "s/^version: ('.*'|.*)$/version: $CI_COMMIT_TAG/" waldur/Chart.yaml
+    - |
+      sed -i -E -e "s/^appVersion: ('.*'|.*)$/appVersion: \"$CI_COMMIT_TAG\"/" waldur/Chart.yaml
+    - |
+      sed -i -E -e "s/^  imageTag: ('.*'|.*)$/  imageTag: \"$CI_COMMIT_TAG\"/" waldur/values.yaml
+    - git status
+    - git diff
+    - git add waldur/Chart.yaml waldur/values.yaml
+    - git commit -m "Set target version to ${CI_COMMIT_TAG}"
+    - git push -o "ci.skip"
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
     - cd ../
-    - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-docker-compose.git"
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-docker-compose.git"
     - cd waldur-docker-compose/
+    # Add new tag to .env.example
+    - |
+      sed -i -E -e "s/^WALDUR_MASTERMIND_IMAGE_TAG=('.*'|.*)$/WALDUR_MASTERMIND_IMAGE_TAG=$CI_COMMIT_TAG/" .env.example
+    - |
+      sed -i -E -e "s/^WALDUR_HOMEPORT_IMAGE_TAG=('.*'|.*)$/WALDUR_MASTERMIND_IMAGE_TAG=$CI_COMMIT_TAG/" .env.example
+    - git status
+    - git diff
+    - git add .env.example
+    - git commit -m "Set target version to ${CI_COMMIT_TAG}"
+    - git push -o "ci.skip"
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
-    - git clone "https://$GROUP_LOCALIZE_TOKEN_NAME:$GROUP_LOCALIZE_TOKEN_PASSWORD@$CI_SERVER_HOST/waldur/waldur-prometheus-exporter.git"
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-prometheus-exporter.git"
     - cd waldur-prometheus-exporter/
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
