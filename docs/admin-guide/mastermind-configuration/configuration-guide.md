@@ -375,6 +375,8 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'INVITATION_LIFETIME': datetime.timedelta(days=7),
  'INVITATION_MAX_AGE': None,
  'INVITATION_TAX_NUMBER_LABEL': '',
+ 'INVITATION_USE_WEBHOOKS': False,
+ 'INVITATION_WEBHOOK_URL': '',
  'LOCAL_IDP_LABEL': 'Local DB',
  'LOCAL_IDP_MANAGEMENT_URL': '',
  'LOCAL_IDP_NAME': 'Local DB',
@@ -555,6 +557,18 @@ Max age of invitation token. It is used in approve and reject actions.
 Type: str
 
 Custom label for tax number field in invitation creation dialog.
+
+### INVITATION_USE_WEBHOOKS
+
+Type: bool
+
+Allow sending of webhooks instead of sending of emails.
+
+### INVITATION_WEBHOOK_URL
+
+Type: str
+
+Webhook URL for sending invitations.
 
 ### LOCAL_IDP_LABEL
 
