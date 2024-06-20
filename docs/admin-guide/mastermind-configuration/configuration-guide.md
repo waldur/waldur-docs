@@ -356,6 +356,7 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
                'SK',
                'UA'],
  'CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION': False,
+ 'DEFAULT_IDP': '',
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
  'ENABLE_GEOIP': True,
@@ -443,6 +444,12 @@ It is used in organization creation dialog in order to limit country choices to 
 Type: bool
 
 Enables generation of the first project on organization creation.
+
+### DEFAULT_IDP
+
+Type: str
+
+Triggers authentication flow at once.
 
 ### EMAIL_CHANGE_MAX_AGE
 
