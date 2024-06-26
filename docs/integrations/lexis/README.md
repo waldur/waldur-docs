@@ -23,7 +23,10 @@ Access-Control-Expose-Headers: x-result-count, Link
 
 Alternatively this can be done through UI of Waldur as shown below.
 
-**Note: To be able to create a LEXIS link for a resource using Waldur UI, the related to the resource offering has to have `plugin_options` set.**
+**Note:** To be able to create a LEXIS link for a resource using Waldur UI:
+
+1. the offering related to the resource has to have `plugin_options` set;
+2. the feature `Enabled LEXIS link integrations for offerings.` should be enabled in Waldur site settings.
 
 Namely:
 
@@ -32,8 +35,15 @@ Namely:
 * heappe_cluster_id
 * heappe_local_base_path
 
-![img.png](images/lexisstep1.png)
-![img.png](images/lexisstep2.png)
+You can set these settings via UI:
+
+![Offering edit page](images/lexis-offering-edit01.png)
+![LEXIS settings edit](images/lexis-offering-edit02.png)
+
+After offering setup, you can create a LEXIS link for an existing resource:
+
+![LEXIS link create](images/lexis-link-create01.png)
+![LEXIS link creation submit](images/lexis-link-create02.png)
 
 ## Listing all LEXIS links
 
@@ -91,11 +101,11 @@ _Note: A LEXIS link can be in one of the following states:_
 
 Listing LEXIS links can alternatively be done through Waldur UI by visiting resource details
 
-![img.png](images/resourcedetails.png)
+![LEXIS link view on the resource page](images/lexis-link-view01.png)
 
 or use administration menu if you are a staff user
 
-![img.png](images/stafflexis.png)
+![LEXIS links view on the admin page](images/lexis-link-view02.png)
 
 ## Listing resources supporting LEXIS links
 
@@ -221,5 +231,6 @@ Access-Control-Allow-Origin: *
 Access-Control-Expose-Headers: x-result-count, Link
 ```
 
-This can alternatively be done using Waldur UI as shown below:
-![img.png](images/lexisdelete.png)
+This can alternatively be done using Waldur UI:
+![LEXIS link delete](images/lexis-link-delete01.png)
+![LEXIS link deletion submit](images/lexis-link-delete02.png)
