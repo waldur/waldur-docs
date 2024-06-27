@@ -377,6 +377,9 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'INVITATION_MAX_AGE': None,
  'INVITATION_TAX_NUMBER_LABEL': '',
  'INVITATION_USE_WEBHOOKS': False,
+ 'INVITATION_WEBHOOK_TOKEN_CLIENT_ID': '',
+ 'INVITATION_WEBHOOK_TOKEN_SECRET': '',
+ 'INVITATION_WEBHOOK_TOKEN_URL': '',
  'INVITATION_WEBHOOK_URL': '',
  'LOCAL_IDP_LABEL': 'Local DB',
  'LOCAL_IDP_MANAGEMENT_URL': '',
@@ -570,6 +573,24 @@ Custom label for tax number field in invitation creation dialog.
 Type: bool
 
 Allow sending of webhooks instead of sending of emails.
+
+### INVITATION_WEBHOOK_TOKEN_CLIENT_ID
+
+Type: str
+
+Client ID to get access token from Keycloak.
+
+### INVITATION_WEBHOOK_TOKEN_SECRET
+
+Type: str
+
+Client secret to get access token from Keycloak.
+
+### INVITATION_WEBHOOK_TOKEN_URL
+
+Type: str
+
+Keycloak URL to get access token.
 
 ### INVITATION_WEBHOOK_URL
 
