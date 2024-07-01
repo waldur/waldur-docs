@@ -273,7 +273,9 @@
 - user_deactivated
 - user_deletion_succeeded
 - user_details_update_succeeded
+- user_has_been_created_by_staff
 - user_password_updated
+- user_password_updated_by_staff
 - user_profile_changed
 - user_update_succeeded
 
