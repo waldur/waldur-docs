@@ -692,7 +692,7 @@ Allows to restrict provider management only to staff users.
 
 Type: List[str]
 
-List of authentication methods which are not allowed to update user details.
+List of authentication methods for which a manual update of user details is not allowed.
 
 ### REQUEST_HEADER_IMPERSONATED_USER_UUID
 
