@@ -14,7 +14,7 @@ In addition to previously mentioned integration towards resource providers, Wald
 
 * EduGAIN - Support for federated academical identity provider EduGAIN. Waldur supports full integration as a EduGAIN Service Provider including CoCo extensions for higher security guarantees. [More information](https://docs.waldur.com/admin-guide/identities/eduGAIN/)
 * LDAP - Support for taking identities from an external LDAP-server, e.g. FreeIPA, OpenLDAP or AD. Simple configuration for LDAP schema allows to connect your existing profiles with Waldur. [More information](https://docs.waldur.com/admin-guide/identities/LDAP/)
-* MyAccessID - Support for integrating with GEANT's MyAccessID service. Full integration along with support for additional Puhuri-specific APIs.
+* MyAccessID - Support for integrating with GEANT's MyAccessID service. Full integration along with support for additional Puhuri-specific APIs. [More information](https://docs.waldur.com/admin-guide/identities/MyAccessID/)
 * Keycloak - Support for integrating with Keycloak identity servers. Waldur is also able to maintain a list of groups in Keycloak that match Waldur's internal structure. [More information](https://docs.waldur.com/admin-guide/identities/keycloak/)
 * SAML2 - Support for federated identity providers over SAML-based protocols. Automated account creation and update based on information from SAML-attributes.
 * Waldur DB - Support for user profiles managed within local Waldur database. Does not require any additional configuration or setup. Fields of the profile can be tuned to match specifics of deployment (e.g. exposing additional names in national languages).
