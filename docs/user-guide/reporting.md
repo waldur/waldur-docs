@@ -1,10 +1,5 @@
 # Reporting
 
-Marketplace is a central module for provisioning of Waldur resources. Marketplace contains Offerings that
-belong to a special type of Organizations - Service Providers. Marketplace provides common functionality
-for resource lifecycle management, accounting and invoicing. Specifics are implemented in the Marketplace plugins
-(e.g. for OpenStack, SLURM, Rancher, etc).
-
 ## HomePort reports
 
 Waldur HomePort includes a number of built-in reports based on the user activity. Reports can be accessed by
