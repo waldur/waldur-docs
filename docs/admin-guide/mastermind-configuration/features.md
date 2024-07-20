@@ -96,10 +96,6 @@ Enable VM type overview in support workspace.
 
 Send telemetry metrics.
 
-## user.competence
-
-Render competence column in users list.
-
 ## user.notifications
 
 Enable email and webhook notifications management in user workspace.
