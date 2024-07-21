@@ -1,5 +1,18 @@
 # Changelog
 
+## 6.7.8
+
+Notes: - Bugfix
+- Extended SSH key hashes with sha256 and sha512
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.7.7...6.7.8)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.7.7...6.7.8)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.7.7...6.7.8)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.7.7...6.7.8)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.7.7...6.7.8)
+
+Date: Sun Jul 21 18:05:27 UTC 2024
+
 ## 6.7.7
 
 Notes: Bugfix
