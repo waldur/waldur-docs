@@ -1372,13 +1372,17 @@ When webook is processed, requests verifies SSL certificates for HTTPS requests,
 
 ### SITE_NAME
 
-**Type:** str, default value:** Waldur
+**Type:** str
+
+**Default value**: Waldur
 
 Human-friendly name of the Waldur deployment.
 
 ### SITE_DESCRIPTION
 
-**Type:** str, default value:** Your single pane of control for managing projects, teams and resources in a self-service manner.
+**Type:** str
+
+**Default value**: Your single pane of control for managing projects, teams and resources in a self-service manner.
 
 Description of the Waldur deployment.
 
@@ -1402,7 +1406,9 @@ It is used in marketplace order header and UI footer.
 
 ### CURRENCY_NAME
 
-**Type:** str, default value:** EUR
+**Type:** str
+
+**Default value**: EUR
 
 It is used in marketplace order details and invoices for currency formatting.
 
@@ -1414,25 +1420,33 @@ Renders link to docs in header
 
 ### SHORT_PAGE_TITLE
 
-**Type:** str, default value:** Waldur
+**Type:** str
+
+**Default value**: Waldur
 
 It is used as prefix for page title.
 
 ### FULL_PAGE_TITLE
 
-**Type:** str, default value:** Waldur | Cloud Service Management
+**Type:** str
+
+**Default value**: Waldur | Cloud Service Management
 
 It is used as default page title if it's not specified explicitly.
 
 ### BRAND_COLOR
 
-**Type:** str, default value:** #3a8500
+**Type:** str
+
+**Default value**: #3a8500
 
 Hex color definition is used in HomePort landing page for login button.
 
 ### BRAND_LABEL_COLOR
 
-**Type:** str, default value:** #000000
+**Type:** str
+
+**Default value**: #000000
 
 Hex color definition is used in HomePort landing page for font color of login button.
 
@@ -1468,7 +1482,9 @@ Common footer in html format for all emails.
 
 ### LANGUAGE_CHOICES
 
-**Type:** str, default value:** en,et,lt,lv,ru,it,de,da,sv,es,fr,nb,ar,cs
+**Type:** str
+
+**Default value**: en,et,lt,lv,ru,it,de,da,sv,es,fr,nb,ar,cs
 
 List of enabled languages
 
@@ -1506,7 +1522,9 @@ The image rendered at the top of sidebar menu in dark mode.
 
 ### SIDEBAR_STYLE
 
-**Type:** str, default value:** dark
+**Type:** str
+
+**Default value**: dark
 
 Style of sidebar. Possible values: dark, light, accent.
 
@@ -1544,19 +1562,25 @@ Default logo for offering
 
 ### WALDUR_SUPPORT_ENABLED
 
-**Type:** bool, default value:** True
+**Type:** bool
+
+**Default value**: True
 
 Toggler for support plugin.
 
 ### WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE
 
-**Type:** str, default value:** atlassian
+**Type:** str
+
+**Default value**: atlassian
 
 Type of support backend. Possible values: atlassian, zammad.
 
 ### WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE
 
-**Type:** bool, default value:** True
+**Type:** bool
+
+**Default value**: True
 
 Toggler for request type displaying
 
@@ -1576,7 +1600,9 @@ Toggler for teenage API usage.
 
 ### ATLASSIAN_USE_AUTOMATIC_REQUEST_MAPPING
 
-**Type:** bool, default value:** True
+**Type:** bool
+
+**Default value**: True
 
 Toggler for automatic request mapping.
 
@@ -1588,25 +1614,33 @@ Toggler for mapping between waldur user and service desk agents.
 
 ### ATLASSIAN_STRANGE_SETTING
 
-**Type:** int, default value:** 1
+**Type:** int
+
+**Default value**: 1
 
 
 
 ### ATLASSIAN_API_URL
 
-**Type:** str, default value:** http://example.com/
+**Type:** str
+
+**Default value**: http://example.com/
 
 Atlassian server URL
 
 ### ATLASSIAN_USERNAME
 
-**Type:** str, default value:** USERNAME
+**Type:** str
+
+**Default value**: USERNAME
 
 Username for access user
 
 ### ATLASSIAN_PASSWORD
 
-**Type:** str, default value:** PASSWORD
+**Type:** str
+
+**Default value**: PASSWORD
 
 Password for access user
 
@@ -1636,7 +1670,9 @@ Project-related settings
 
 ### ATLASSIAN_DEFAULT_OFFERING_ISSUE_TYPE
 
-**Type:** str, default value:** Service Request
+**Type:** str
+
+**Default value**: Service Request
 
 Issue type
 
@@ -1648,13 +1684,17 @@ List of attachment types
 
 ### ATLASSIAN_PULL_PRIORITIES
 
-**Type:** bool, default value:** True
+**Type:** bool
+
+**Default value**: True
 
 Pull priorities
 
 ### ATLASSIAN_ISSUE_TYPES
 
-**Type:** str, default value:** Informational, Service Request, Change Request, Incident
+**Type:** str
+
+**Default value**: Informational, Service Request, Change Request, Incident
 
 Issue-related settings; Issue types
 
@@ -1678,7 +1718,9 @@ Summary
 
 ### ATLASSIAN_IMPACT_FIELD
 
-**Type:** str, default value:** Impact
+**Type:** str
+
+**Default value**: Impact
 
 Impact field
 
@@ -1702,37 +1744,49 @@ Project field
 
 ### ATLASSIAN_REPORTER_FIELD
 
-**Type:** str, default value:** Original Reporter
+**Type:** str
+
+**Default value**: Original Reporter
 
 Reporter field
 
 ### ATLASSIAN_CALLER_FIELD
 
-**Type:** str, default value:** Caller
+**Type:** str
+
+**Default value**: Caller
 
 Caller field
 
 ### ATLASSIAN_SLA_FIELD
 
-**Type:** str, default value:** Time to first response
+**Type:** str
+
+**Default value**: Time to first response
 
 SLA field
 
 ### ATLASSIAN_LINKED_ISSUE_TYPE
 
-**Type:** str, default value:** Relates
+**Type:** str
+
+**Default value**: Relates
 
 Type of linked issue
 
 ### ATLASSIAN_SATISFACTION_FIELD
 
-**Type:** str, default value:** Customer satisfaction
+**Type:** str
+
+**Default value**: Customer satisfaction
 
 Satisfaction field
 
 ### ATLASSIAN_REQUEST_FEEDBACK_FIELD
 
-**Type:** str, default value:** Request feedback
+**Type:** str
+
+**Default value**: Request feedback
 
 Issue request feedback
 
@@ -1744,7 +1798,9 @@ Template field
 
 ### ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED
 
-**Type:** bool, default value:** True
+**Type:** bool
+
+**Default value**: True
 
 Should extra issue field mappings be applied
 
@@ -1776,25 +1832,33 @@ The name of the group to which the ticket will be added. If not specified, the f
 
 ### ZAMMAD_ARTICLE_TYPE
 
-**Type:** str, default value:** email
+**Type:** str
+
+**Default value**: email
 
 Type of a comment.Default is email because it allows support to reply to tickets directly in Zammad<https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
 
 ### ZAMMAD_COMMENT_MARKER
 
-**Type:** str, default value:** Created by Waldur
+**Type:** str
+
+**Default value**: Created by Waldur
 
 Marker for comment.Used for separating comments made via Waldur from natively added comments.
 
 ### ZAMMAD_COMMENT_PREFIX
 
-**Type:** str, default value:** User: {name}
+**Type:** str
+
+**Default value**: User: {name}
 
 Comment prefix with user info.
 
 ### ZAMMAD_COMMENT_COOLDOWN_DURATION
 
-**Type:** int, default value:** 5
+**Type:** int
+
+**Default value**: 5
 
 Time in minutes. Time in minutes while comment deletion is available <https://github.com/zammad/zammad/issues/2687/>, <https://github.com/zammad/zammad/issues/3086/>
 
@@ -1850,13 +1914,17 @@ Requests offering code for all issues.
 
 ### SMAX_SECONDS_TO_WAIT
 
-**Type:** int, default value:** 1
+**Type:** int
+
+**Default value**: 1
 
 Duration of delay between server pull attempts.
 
 ### SMAX_TIMES_TO_PULL
 
-**Type:** int, default value:** 10
+**Type:** int
+
+**Default value**: 10
 
 Times to pulling from backend.
 
@@ -1868,7 +1936,9 @@ Creation source name.
 
 ### SMAX_VERIFY_SSL
 
-**Type:** bool, default value:** True
+**Type:** bool
+
+**Default value**: True
 
 Toggler for SSL verification
 
@@ -1876,7 +1946,9 @@ Toggler for SSL verification
 
 ### PROPOSAL_REVIEW_DURATION
 
-**Type:** int, default value:** 7
+**Type:** int
+
+**Default value**: 7
 
 Review duration in days.
 
