@@ -1,4 +1,4 @@
-# Configuration guide
+# Configuration guide for static options
 
 ## WALDUR_AUTH_SAML2 plugin
 
@@ -1365,4 +1365,527 @@ Protect media URLs using signed token.
 Type: bool, default value: True
 
 When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser.
+
+# Configuration guide for dynamic options
+
+## Whitelabeling settings (text, links, etc)
+
+### SITE_NAME
+
+**Type:** str, default value:** Waldur
+
+Human-friendly name of the Waldur deployment.
+
+### SITE_DESCRIPTION
+
+**Type:** str, default value:** Your single pane of control for managing projects, teams and resources in a self-service manner.
+
+Description of the Waldur deployment.
+
+### SITE_ADDRESS
+
+**Type:** str
+
+It is used in marketplace order header.
+
+### SITE_EMAIL
+
+**Type:** str
+
+It is used in marketplace order header and UI footer.
+
+### SITE_PHONE
+
+**Type:** str
+
+It is used in marketplace order header and UI footer.
+
+### CURRENCY_NAME
+
+**Type:** str, default value:** EUR
+
+It is used in marketplace order details and invoices for currency formatting.
+
+### DOCS_URL
+
+**Type:** str
+
+Renders link to docs in header
+
+### SHORT_PAGE_TITLE
+
+**Type:** str, default value:** Waldur
+
+It is used as prefix for page title.
+
+### FULL_PAGE_TITLE
+
+**Type:** str, default value:** Waldur | Cloud Service Management
+
+It is used as default page title if it's not specified explicitly.
+
+### BRAND_COLOR
+
+**Type:** str, default value:** #3a8500
+
+Hex color definition is used in HomePort landing page for login button.
+
+### BRAND_LABEL_COLOR
+
+**Type:** str, default value:** #000000
+
+Hex color definition is used in HomePort landing page for font color of login button.
+
+### HERO_LINK_LABEL
+
+**Type:** str
+
+Label for link in hero section of HomePort landing page. It can be lead to support site or blog post.
+
+### HERO_LINK_URL
+
+**Type:** str
+
+Link URL in hero section of HomePort landing page.
+
+### SUPPORT_PORTAL_URL
+
+**Type:** str
+
+Link URL to support portal. Rendered as a shortcut on dashboard
+
+### COMMON_FOOTER_TEXT
+
+**Type:** str
+
+Common footer in txt format for all emails.
+
+### COMMON_FOOTER_HTML
+
+**Type:** str
+
+Common footer in html format for all emails.
+
+### LANGUAGE_CHOICES
+
+**Type:** str, default value:** en,et,lt,lv,ru,it,de,da,sv,es,fr,nb,ar,cs
+
+List of enabled languages
+
+### DISABLE_DARK_THEME
+
+**Type:** bool
+
+Toggler for dark theme.
+
+## Whitelabeling settings (logos, images, favicons)
+
+### SITE_LOGO
+
+**Type:** image_field
+
+The image used in marketplace order header.
+
+### SIDEBAR_LOGO
+
+**Type:** image_field
+
+The image rendered at the top of sidebar menu in HomePort.
+
+### SIDEBAR_LOGO_MOBILE
+
+**Type:** image_field
+
+The image rendered at the top of mobile sidebar menu in HomePort.
+
+### SIDEBAR_LOGO_DARK
+
+**Type:** image_field
+
+The image rendered at the top of sidebar menu in dark mode.
+
+### SIDEBAR_STYLE
+
+**Type:** str, default value:** dark
+
+Style of sidebar. Possible values: dark, light, accent.
+
+### POWERED_BY_LOGO
+
+**Type:** image_field
+
+The image rendered at the bottom of login menu in HomePort.
+
+### HERO_IMAGE
+
+**Type:** image_field
+
+The image rendered at hero section of HomePort landing page.
+
+### LOGIN_LOGO
+
+**Type:** image_field
+
+A custom .png image file for login page
+
+### FAVICON
+
+**Type:** image_field
+
+A custom favicon .png image file
+
+### OFFERING_LOGO_PLACEHOLDER
+
+**Type:** image_field
+
+Default logo for offering
+
+## Service desk integration settings
+
+### WALDUR_SUPPORT_ENABLED
+
+**Type:** bool, default value:** True
+
+Toggler for support plugin.
+
+### WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE
+
+**Type:** str, default value:** atlassian
+
+Type of support backend. Possible values: atlassian, zammad.
+
+### WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE
+
+**Type:** bool, default value:** True
+
+Toggler for request type displaying
+
+## Atlassian settings
+
+### ATLASSIAN_USE_OLD_API
+
+**Type:** bool
+
+Toggler for legacy API usage.
+
+### ATLASSIAN_USE_TEENAGE_API
+
+**Type:** bool
+
+Toggler for teenage API usage.
+
+### ATLASSIAN_USE_AUTOMATIC_REQUEST_MAPPING
+
+**Type:** bool, default value:** True
+
+Toggler for automatic request mapping.
+
+### ATLASSIAN_MAP_WALDUR_USERS_TO_SERVICEDESK_AGENTS
+
+**Type:** bool
+
+Toggler for mapping between waldur user and service desk agents.
+
+### ATLASSIAN_STRANGE_SETTING
+
+**Type:** int, default value:** 1
+
+
+
+### ATLASSIAN_API_URL
+
+**Type:** str, default value:** http://example.com/
+
+Atlassian server URL
+
+### ATLASSIAN_USERNAME
+
+**Type:** str, default value:** USERNAME
+
+Username for access user
+
+### ATLASSIAN_PASSWORD
+
+**Type:** str, default value:** PASSWORD
+
+Password for access user
+
+### ATLASSIAN_EMAIL
+
+**Type:** email_field
+
+Email for access user
+
+### ATLASSIAN_TOKEN
+
+**Type:** str
+
+Token for access user
+
+### ATLASSIAN_VERIFY_SSL
+
+**Type:** bool
+
+Toggler for SSL verification
+
+### ATLASSIAN_PROJECT_ID
+
+**Type:** str
+
+Project-related settings
+
+### ATLASSIAN_DEFAULT_OFFERING_ISSUE_TYPE
+
+**Type:** str, default value:** Service Request
+
+Issue type
+
+### ATLASSIAN_EXCLUDED_ATTACHMENT_TYPES
+
+**Type:** str
+
+List of attachment types
+
+### ATLASSIAN_PULL_PRIORITIES
+
+**Type:** bool, default value:** True
+
+Pull priorities
+
+### ATLASSIAN_ISSUE_TYPES
+
+**Type:** str, default value:** Informational, Service Request, Change Request, Incident
+
+Issue-related settings; Issue types
+
+### ATLASSIAN_AFFECTED_RESOURCE_FIELD
+
+**Type:** str
+
+Affected resource field
+
+### ATLASSIAN_DESCRIPTION_TEMPLATE
+
+**Type:** str
+
+Description
+
+### ATLASSIAN_SUMMARY_TEMPLATE
+
+**Type:** str
+
+Summary
+
+### ATLASSIAN_IMPACT_FIELD
+
+**Type:** str, default value:** Impact
+
+Impact field
+
+### ATLASSIAN_ORGANISATION_FIELD
+
+**Type:** str
+
+Organisation field
+
+### ATLASSIAN_RESOLUTION_SLA_FIELD
+
+**Type:** str
+
+Resolution SLA field
+
+### ATLASSIAN_PROJECT_FIELD
+
+**Type:** str
+
+Project field
+
+### ATLASSIAN_REPORTER_FIELD
+
+**Type:** str, default value:** Original Reporter
+
+Reporter field
+
+### ATLASSIAN_CALLER_FIELD
+
+**Type:** str, default value:** Caller
+
+Caller field
+
+### ATLASSIAN_SLA_FIELD
+
+**Type:** str, default value:** Time to first response
+
+SLA field
+
+### ATLASSIAN_LINKED_ISSUE_TYPE
+
+**Type:** str, default value:** Relates
+
+Type of linked issue
+
+### ATLASSIAN_SATISFACTION_FIELD
+
+**Type:** str, default value:** Customer satisfaction
+
+Satisfaction field
+
+### ATLASSIAN_REQUEST_FEEDBACK_FIELD
+
+**Type:** str, default value:** Request feedback
+
+Issue request feedback
+
+### ATLASSIAN_TEMPLATE_FIELD
+
+**Type:** str
+
+Template field
+
+### ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED
+
+**Type:** bool, default value:** True
+
+Should extra issue field mappings be applied
+
+### ATLASSIAN_SHARED_USERNAME
+
+**Type:** bool
+
+Is Service Desk username the same as in Waldur
+
+## Zammad settings
+
+### ZAMMAD_API_URL
+
+**Type:** str
+
+Address of Zammad server. For example <http://localhost:8080/>
+
+### ZAMMAD_TOKEN
+
+**Type:** str
+
+Authorization token.
+
+### ZAMMAD_GROUP
+
+**Type:** str
+
+The name of the group to which the ticket will be added. If not specified, the first group will be used.
+
+### ZAMMAD_ARTICLE_TYPE
+
+**Type:** str, default value:** email
+
+Type of a comment.Default is email because it allows support to reply to tickets directly in Zammad<https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
+
+### ZAMMAD_COMMENT_MARKER
+
+**Type:** str, default value:** Created by Waldur
+
+Marker for comment.Used for separating comments made via Waldur from natively added comments.
+
+### ZAMMAD_COMMENT_PREFIX
+
+**Type:** str, default value:** User: {name}
+
+Comment prefix with user info.
+
+### ZAMMAD_COMMENT_COOLDOWN_DURATION
+
+**Type:** int, default value:** 5
+
+Time in minutes. Time in minutes while comment deletion is available <https://github.com/zammad/zammad/issues/2687/>, <https://github.com/zammad/zammad/issues/3086/>
+
+## SMAX settings
+
+### SMAX_API_URL
+
+**Type:** str
+
+Address of SMAX server. For example <http://localhost:8080/>
+
+### SMAX_TENANT_ID
+
+**Type:** str
+
+User tenant ID.
+
+### SMAX_LOGIN
+
+**Type:** str
+
+Authorization login.
+
+### SMAX_PASSWORD
+
+**Type:** str
+
+Authorization password.
+
+### SMAX_ORGANISATION_FIELD
+
+**Type:** str
+
+Organisation field.
+
+### SMAX_PROJECT_FIELD
+
+**Type:** str
+
+Project field.
+
+### SMAX_AFFECTED_RESOURCE_FIELD
+
+**Type:** str
+
+Resource field.
+
+### SMAX_REQUESTS_OFFERING
+
+**Type:** str
+
+Requests offering code for all issues.
+
+### SMAX_SECONDS_TO_WAIT
+
+**Type:** int, default value:** 1
+
+Duration of delay between server pull attempts.
+
+### SMAX_TIMES_TO_PULL
+
+**Type:** int, default value:** 10
+
+Times to pulling from backend.
+
+### SMAX_CREATION_SOURCE_NAME
+
+**Type:** str
+
+Creation source name.
+
+### SMAX_VERIFY_SSL
+
+**Type:** bool, default value:** True
+
+Toggler for SSL verification
+
+## Proposal settings
+
+### PROPOSAL_REVIEW_DURATION
+
+**Type:** int, default value:** 7
+
+Review duration in days.
+
+## Table settings
+
+### USER_TABLE_COLUMNS
+
+**Type:** str
+
+Comma-separated list of columns for users table.
+
 
