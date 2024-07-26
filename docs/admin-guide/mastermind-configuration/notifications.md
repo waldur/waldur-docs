@@ -1609,7 +1609,7 @@ Notification about project cost exceeded limit. The recipients are all customer 
 === "marketplace_policy/notification_about_project_cost_exceeded_limit_subject.txt"
 
 ```txt
-    Project {{ project_name }} cost has exceeded the limit.
+    {{ scope_class }} {{ scope_name }} cost has exceeded the limit.
 
 ```
 
@@ -1617,7 +1617,7 @@ Notification about project cost exceeded limit. The recipients are all customer 
 
 ```txt
     Hello!
-    Project {{ project_name }} ({{ project_url }}) cost has exceeded the limit of {{ limit }}.
+    {{ scope_class }} {{ scope_name }} ({{ scope_url }}) cost has exceeded the limit of {{ limit }}.
 
 ```
 
@@ -1627,14 +1627,14 @@ Notification about project cost exceeded limit. The recipients are all customer 
     <html>
     <head lang="en">
         <meta charset="UTF-8">
-        <title>Project {{ project_name }} cost has exceeded the limit.</title>
+        <title>{{ scope_class }} {{ scope_name }} cost has exceeded the limit.</title>
     </head>
     <body>
     <p>
         Hello!
     </p>
     <p>
-        Project <a href='{{ project_url }}'>{{ project_name }}</a> cost has exceeded the limit of {{ limit }}.
+        {{ scope_class }} <a href='{{ scope_url }}'>{{ scope_name }}</a> cost has exceeded the limit of {{ limit }}.
     </p>
     </body>
     </html>
