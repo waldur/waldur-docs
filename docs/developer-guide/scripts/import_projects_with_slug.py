@@ -15,10 +15,12 @@ def create_project(project_info):
     project_id = project_info["id"]
     valid_from = datetime.datetime.strptime("25/2/2024", "%d/%m/%Y").date()
     valid_to = datetime.datetime.strptime(project_info["valid_to"], "%d/%m/%Y").date()
+    description = project_info.get("description", "")
     project, created = structure_models.Project.objects.update_or_create(
         name=project_id,
         defaults={
             "created": valid_from,
+            "description": description,
             "end_date": valid_to,
             "slug": project_id,
         },
