@@ -1,6 +1,6 @@
-# Configuration guide
+# Configuration options
 
-## Configuration guide for static options
+## Static options
 
 ### WALDUR_AUTH_SAML2 plugin
 
@@ -43,191 +43,191 @@ WALDUR_AUTH_SAML2 = {'ALLOW_TO_SELECT_IDENTITY_PROVIDER': True,
  'XMLSEC_BINARY': '/usr/bin/xmlsec1'}
 ```
 
-#### ALLOW_TO_SELECT_IDENTITY_PROVIDER
+### ALLOW_TO_SELECT_IDENTITY_PROVIDER
 
 Type: bool
 
-#### ATTRIBUTE_MAP_DIR
+### ATTRIBUTE_MAP_DIR
 
 Type: str
 
 Directory with attribute mapping
 
-#### AUTHN_REQUESTS_SIGNED
+### AUTHN_REQUESTS_SIGNED
 
 Type: str
 
 Indicates if the authentication requests sent should be signed by default
 
-#### CATEGORIES
+### CATEGORIES
 
 Type: list
 
 Links to the entity categories
 
-#### CERT_FILE
+### CERT_FILE
 
 Type: str
 
 PEM formatted certificate chain file
 
-#### DEBUG
+### DEBUG
 
 Type: bool
 
 Set to True to output debugging information
 
-#### DEFAULT_BINDING
+### DEFAULT_BINDING
 
 Type: str
 
-#### DESCRIPTION
+### DESCRIPTION
 
 Type: str
 
 Service provider description (required by CoC)
 
-#### DIGEST_ALGORITHM
+### DIGEST_ALGORITHM
 
 Type: Optional[str]
 
 Identifies the Message Digest algorithm URL according to the XML Signature specification (SHA1 is used by default)
 
-#### DISCOVERY_SERVICE_LABEL
+### DISCOVERY_SERVICE_LABEL
 
 Type: Optional[str]
 
-#### DISCOVERY_SERVICE_URL
+### DISCOVERY_SERVICE_URL
 
 Type: Optional[str]
 
-#### DISPLAY_NAME
+### DISPLAY_NAME
 
 Type: str
 
 Service provider display name (required by CoC)
 
-#### ENABLE_SINGLE_LOGOUT
+### ENABLE_SINGLE_LOGOUT
 
 Type: bool
 
-#### IDENTITY_PROVIDER_LABEL
+### IDENTITY_PROVIDER_LABEL
 
 Type: Optional[str]
 
-#### IDENTITY_PROVIDER_URL
+### IDENTITY_PROVIDER_URL
 
 Type: Optional[str]
 
-#### IDP_METADATA_LOCAL
+### IDP_METADATA_LOCAL
 
 Type: list
 
 IdPs metadata XML files stored locally
 
-#### IDP_METADATA_REMOTE
+### IDP_METADATA_REMOTE
 
 Type: list
 
 IdPs metadata XML files stored remotely
 
-#### KEY_FILE
+### KEY_FILE
 
 Type: str
 
 PEM formatted certificate key file
 
-#### LOGOUT_REQUESTS_SIGNED
+### LOGOUT_REQUESTS_SIGNED
 
 Type: str
 
 Indicates if the entity will sign the logout requests
 
-#### LOG_FILE
+### LOG_FILE
 
 Type: str
 
 Empty to disable logging SAML2-related stuff to file
 
-#### LOG_LEVEL
+### LOG_LEVEL
 
 Type: str
 
 Log level for SAML2
 
-#### MANAGEMENT_URL
+### MANAGEMENT_URL
 
 Type: str
 
 The endpoint for user details management.
 
-#### NAME
+### NAME
 
 Type: str
 
 Name used for assigning the registration method to the user
 
-#### NAMEID_FORMAT
+### NAMEID_FORMAT
 
 Type: Optional[str]
 
 Identified NameID format to use. None means default, empty string ("") disables addition of entity
 
-#### OPTIONAL_ATTRIBUTES
+### OPTIONAL_ATTRIBUTES
 
 Type: list
 
 SAML attributes that may be useful to have but not required
 
-#### ORGANIZATION
+### ORGANIZATION
 
 Type: dict
 
 Organization responsible for the service (you can set multilanguage information here)
 
-#### PRIVACY_STATEMENT_URL
+### PRIVACY_STATEMENT_URL
 
 Type: str
 
 URL with privacy statement (required by CoC)
 
-#### REGISTRATION_AUTHORITY
+### REGISTRATION_AUTHORITY
 
 Type: str
 
 Registration authority required by mdpi
 
-#### REGISTRATION_INSTANT
+### REGISTRATION_INSTANT
 
 Type: str
 
 Registration instant time required by mdpi
 
-#### REGISTRATION_POLICY
+### REGISTRATION_POLICY
 
 Type: str
 
 Registration policy required by mdpi
 
-#### REQUIRED_ATTRIBUTES
+### REQUIRED_ATTRIBUTES
 
 Type: list
 
 SAML attributes that are required to identify a user
 
-#### SAML_ATTRIBUTE_MAPPING
+### SAML_ATTRIBUTE_MAPPING
 
 Type: dict
 
 Mapping between SAML attributes and User fields
 
-#### SIGNATURE_ALGORITHM
+### SIGNATURE_ALGORITHM
 
 Type: Optional[str]
 
 Identifies the Signature algorithm URL according to the XML Signature specification (SHA1 is used by default)
 
-#### XMLSEC_BINARY
+### XMLSEC_BINARY
 
 Type: str
 
@@ -250,61 +250,61 @@ WALDUR_AUTH_SOCIAL = {'ENABLE_EDUTEAMS_SYNC': False,
  'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo'}
 ```
 
-#### ENABLE_EDUTEAMS_SYNC
+### ENABLE_EDUTEAMS_SYNC
 
 Type: bool
 
 Enable eduTEAMS synchronization with remote Waldur.
 
-#### REMOTE_EDUTEAMS_CLIENT_ID
+### REMOTE_EDUTEAMS_CLIENT_ID
 
 Type: str
 
 ID of application used for OAuth authentication.
 
-#### REMOTE_EDUTEAMS_ENABLED
+### REMOTE_EDUTEAMS_ENABLED
 
 Type: bool
 
 Enable remote eduTEAMS extension.
 
-#### REMOTE_EDUTEAMS_REFRESH_TOKEN
+### REMOTE_EDUTEAMS_REFRESH_TOKEN
 
 Type: str
 
 Token is used to authenticate against user info endpoint.
 
-#### REMOTE_EDUTEAMS_SECRET
+### REMOTE_EDUTEAMS_SECRET
 
 Type: str
 
 Application secret key.
 
-#### REMOTE_EDUTEAMS_SSH_API_PASSWORD
+### REMOTE_EDUTEAMS_SSH_API_PASSWORD
 
 Type: str
 
 Password for SSH API URL
 
-#### REMOTE_EDUTEAMS_SSH_API_URL
+### REMOTE_EDUTEAMS_SSH_API_URL
 
 Type: str
 
 API URL SSH keys
 
-#### REMOTE_EDUTEAMS_SSH_API_USERNAME
+### REMOTE_EDUTEAMS_SSH_API_USERNAME
 
 Type: str
 
 Username for SSH API URL
 
-#### REMOTE_EDUTEAMS_TOKEN_URL
+### REMOTE_EDUTEAMS_TOKEN_URL
 
 Type: str
 
 The token endpoint is used to obtain tokens.
 
-#### REMOTE_EDUTEAMS_USERINFO_URL
+### REMOTE_EDUTEAMS_USERINFO_URL
 
 Type: str
 
@@ -420,349 +420,349 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'VALIDATE_INVITATION_EMAIL': False}
 ```
 
-#### ATTACHMENT_LINK_MAX_AGE
+### ATTACHMENT_LINK_MAX_AGE
 
 Type: timedelta
 
 Max age of secure token for media download.
 
-#### AUTHENTICATION_METHODS
+### AUTHENTICATION_METHODS
 
 Type: List[str]
 
 List of enabled authentication methods.
 
-#### BACKEND_FIELDS_EDITABLE
+### BACKEND_FIELDS_EDITABLE
 
 Type: bool
 
 Allows to control /admin writable fields. If this flag is disabled it is impossible to edit any field that corresponds to backend value via /admin. Such restriction allows to save information from corruption.
 
-#### COUNTRIES
+### COUNTRIES
 
 Type: List[str]
 
 It is used in organization creation dialog in order to limit country choices to predefined set.
 
-#### CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION
+### CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION
 
 Type: bool
 
 Enables generation of the first project on organization creation.
 
-#### DEFAULT_IDP
+### DEFAULT_IDP
 
 Type: str
 
 Triggers authentication flow at once.
 
-#### EMAIL_CHANGE_MAX_AGE
+### EMAIL_CHANGE_MAX_AGE
 
 Type: timedelta
 
 Max age of change email request.
 
-#### ENABLE_ACCOUNTING_START_DATE
+### ENABLE_ACCOUNTING_START_DATE
 
 Type: bool
 
 Allows to enable accounting for organizations using value of accounting_start_date field.
 
-#### ENABLE_GEOIP
+### ENABLE_GEOIP
 
 Type: bool
 
 Enable detection of coordinates of virtual machines.
 
-#### ENABLE_STRICT_CHECK_ACCEPTING_INVITATION
+### ENABLE_STRICT_CHECK_ACCEPTING_INVITATION
 
 Type: bool
 
 If this is true and user email is pre-validated then accepting invitation to only do that if user’s email and email of the invitation fully match.
 
-#### EXTENSIONS_AUTOREGISTER
+### EXTENSIONS_AUTOREGISTER
 
 Type: bool
 
 Defines whether extensions should be automatically registered.
 
-#### EXTERNAL_LINKS
+### EXTERNAL_LINKS
 
 Type: List[ExternalLink]
 
 Render external links in dropdown in header. Each item should be object with label and url fields. For example: {"label": "Helpdesk", "url": "`https://example.com/`"}
 
-#### GROUP_INVITATION_LIFETIME
+### GROUP_INVITATION_LIFETIME
 
 Type: timedelta
 
 Defines for how long group invitation remains valid.
 
-#### HOMEPORT_SENTRY_DSN
+### HOMEPORT_SENTRY_DSN
 
 Type: Optional[str]
 
 Sentry Data Source Name for Waldur HomePort project.
 
-#### HOMEPORT_SENTRY_ENVIRONMENT
+### HOMEPORT_SENTRY_ENVIRONMENT
 
 Type: str
 
 Sentry environment name for Waldur Homeport.
 
-#### HOMEPORT_SENTRY_TRACES_SAMPLE_RATE
+### HOMEPORT_SENTRY_TRACES_SAMPLE_RATE
 
 Type: float
 
 Percentage of transactions sent to Sentry for tracing.
 
-#### HOMEPORT_URL
+### HOMEPORT_URL
 
 Type: str
 
 It is used for rendering callback URL in HomePort.
 
-#### HTTP_CHUNK_SIZE
+### HTTP_CHUNK_SIZE
 
 Type: int
 
 Chunk size for resource fetching from backend API. It is needed in order to avoid too long HTTP request error.
 
-#### INVITATIONS_ENABLED
+### INVITATIONS_ENABLED
 
 Type: bool
 
 Allows to disable invitations feature.
 
-#### INVITATION_CIVIL_NUMBER_LABEL
+### INVITATION_CIVIL_NUMBER_LABEL
 
 Type: str
 
 Custom label for civil number field in invitation creation dialog.
 
-#### INVITATION_CREATE_MISSING_USER
+### INVITATION_CREATE_MISSING_USER
 
 Type: bool
 
 Allow to create FreeIPA user using details specified in invitation if user does not exist yet.
 
-#### INVITATION_DISABLE_MULTIPLE_ROLES
+### INVITATION_DISABLE_MULTIPLE_ROLES
 
 Type: bool
 
 Do not allow user to grant multiple roles in the same project or organization using invitation.
 
-#### INVITATION_LIFETIME
+### INVITATION_LIFETIME
 
 Type: timedelta
 
 Defines for how long invitation remains valid.
 
-#### INVITATION_MAX_AGE
+### INVITATION_MAX_AGE
 
 Type: Optional[timedelta]
 
 Max age of invitation token. It is used in approve and reject actions.
 
-#### INVITATION_TAX_NUMBER_LABEL
+### INVITATION_TAX_NUMBER_LABEL
 
 Type: str
 
 Custom label for tax number field in invitation creation dialog.
 
-#### INVITATION_USE_WEBHOOKS
+### INVITATION_USE_WEBHOOKS
 
 Type: bool
 
 Allow sending of webhooks instead of sending of emails.
 
-#### INVITATION_WEBHOOK_TOKEN_CLIENT_ID
+### INVITATION_WEBHOOK_TOKEN_CLIENT_ID
 
 Type: str
 
 Client ID to get access token from Keycloak.
 
-#### INVITATION_WEBHOOK_TOKEN_SECRET
+### INVITATION_WEBHOOK_TOKEN_SECRET
 
 Type: str
 
 Client secret to get access token from Keycloak.
 
-#### INVITATION_WEBHOOK_TOKEN_URL
+### INVITATION_WEBHOOK_TOKEN_URL
 
 Type: str
 
 Keycloak URL to get access token.
 
-#### INVITATION_WEBHOOK_URL
+### INVITATION_WEBHOOK_URL
 
 Type: str
 
 Webhook URL for sending invitations.
 
-#### LOCAL_IDP_LABEL
+### LOCAL_IDP_LABEL
 
 Type: str
 
 The label of local auth.
 
-#### LOCAL_IDP_MANAGEMENT_URL
+### LOCAL_IDP_MANAGEMENT_URL
 
 Type: str
 
 The URL for management of local user details.
 
-#### LOCAL_IDP_NAME
+### LOCAL_IDP_NAME
 
 Type: str
 
 The name of local auth.
 
-#### LOCAL_IDP_PROTECTED_FIELDS
+### LOCAL_IDP_PROTECTED_FIELDS
 
 Type: List[str]
 
 The list of protected fields for local IdP.
 
-#### LOGGING_REPORT_DIRECTORY
+### LOGGING_REPORT_DIRECTORY
 
 Type: str
 
 Directory where log files are located.
 
-#### LOGGING_REPORT_INTERVAL
+### LOGGING_REPORT_INTERVAL
 
 Type: timedelta
 
 Files older that specified interval are filtered out.
 
-#### MASTERMIND_URL
+### MASTERMIND_URL
 
 Type: str
 
 It is used for rendering callback URL in MasterMind.
 
-#### MATOMO_SITE_ID
+### MATOMO_SITE_ID
 
 Type: Optional[int]
 
 Site ID is used by Matomo analytics application.
 
-#### MATOMO_URL_BASE
+### MATOMO_URL_BASE
 
 Type: Optional[str]
 
 URL base is used by Matomo analytics application.
 
-#### NATIVE_NAME_ENABLED
+### NATIVE_NAME_ENABLED
 
 Type: bool
 
 Allows to render native name field in customer and user forms.
 
-#### NOTIFICATIONS_PROFILE_CHANGES
+### NOTIFICATIONS_PROFILE_CHANGES
 
 Type: dict
 
 Configure notifications about profile changes of organization owners.
 
-#### NOTIFICATION_SUBJECT
+### NOTIFICATION_SUBJECT
 
 Type: str
 
 It is used as a subject of email emitted by event logging hook.
 
-#### OECD_FOS_2007_CODE_MANDATORY
+### OECD_FOS_2007_CODE_MANDATORY
 
 Type: bool
 
 Field oecd_fos_2007_code must be required for project.
 
-#### ONLY_STAFF_CAN_INVITE_USERS
+### ONLY_STAFF_CAN_INVITE_USERS
 
 Type: bool
 
 Allow to limit invitation management to staff only.
 
-#### ONLY_STAFF_MANAGES_SERVICES
+### ONLY_STAFF_MANAGES_SERVICES
 
 Type: bool
 
 Allows to restrict provider management only to staff users.
 
-#### PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS
+### PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS
 
 Type: List[str]
 
 List of authentication methods for which a manual update of user details is not allowed.
 
-#### REQUEST_HEADER_IMPERSONATED_USER_UUID
+### REQUEST_HEADER_IMPERSONATED_USER_UUID
 
 Type: str
 
 The request header, which contains the user UUID of the user to be impersonated.
 
-#### RESPONSE_HEADER_IMPERSONATOR_UUID
+### RESPONSE_HEADER_IMPERSONATOR_UUID
 
 Type: str
 
 The response header, which contains the UUID of the user who requested the impersonation.
 
-#### SELLER_COUNTRY_CODE
+### SELLER_COUNTRY_CODE
 
 Type: Optional[str]
 
 Specifies seller legal or effective country of registration or residence as an ISO 3166-1 alpha-2 country code. It is used for computing VAT charge rate.
 
-#### SHOW_ALL_USERS
+### SHOW_ALL_USERS
 
 Type: bool
 
 Indicates whether user can see all other users in `api/users/` endpoint.
 
-#### SUPPORT_PORTAL_URL
+### SUPPORT_PORTAL_URL
 
 Type: str
 
 Support portal URL is rendered as a shortcut on dashboard
 
-#### TOKEN_KEY
+### TOKEN_KEY
 
 Type: str
 
 Header for token authentication.
 
-#### TOKEN_LIFETIME
+### TOKEN_LIFETIME
 
 Type: timedelta
 
 Defines for how long user token should remain valid if there was no action from user.
 
-#### TRANSLATION_DOMAIN
+### TRANSLATION_DOMAIN
 
 Type: str
 
 Identifier of translation domain applied to current deployment.
 
-#### USER_MANDATORY_FIELDS
+### USER_MANDATORY_FIELDS
 
 Type: List[str]
 
 List of user profile attributes that would be required for filling in HomePort. Note that backend will not be affected. If a mandatory field is missing in profile, a profile edit view will be forced upon user on any HomePort logged in action. Possible values are: description, email, full_name, job_title, organization, phone_number
 
-#### USER_REGISTRATION_HIDDEN_FIELDS
+### USER_REGISTRATION_HIDDEN_FIELDS
 
 Type: List[str]
 
 List of user profile attributes that would be concealed on registration form in HomePort. Possible values are: job_title, registration_method, phone_number
 
-#### USE_ATOMIC_TRANSACTION
+### USE_ATOMIC_TRANSACTION
 
 Type: bool
 
 Wrap action views in atomic transaction.
 
-#### VALIDATE_INVITATION_EMAIL
+### VALIDATE_INVITATION_EMAIL
 
 Type: bool
 
@@ -784,55 +784,55 @@ WALDUR_FREEIPA = {'BLACKLISTED_USERNAMES': ['root'],
  'VERIFY_SSL': True}
 ```
 
-#### BLACKLISTED_USERNAMES
+### BLACKLISTED_USERNAMES
 
 Type: list
 
 List of username that users are not allowed to select
 
-#### ENABLED
+### ENABLED
 
 Type: bool
 
 Enable integration of identity provisioning in configured FreeIPA
 
-#### GROUPNAME_PREFIX
+### GROUPNAME_PREFIX
 
 Type: str
 
 Prefix to be appended to all group names created in FreeIPA by Waldur
 
-#### GROUP_SYNCHRONIZATION_ENABLED
+### GROUP_SYNCHRONIZATION_ENABLED
 
 Type: bool
 
 Optionally disable creation of user groups in FreeIPA matching Waldur structure
 
-#### HOSTNAME
+### HOSTNAME
 
 Type: str
 
 Hostname of FreeIPA server
 
-#### PASSWORD
+### PASSWORD
 
 Type: str
 
 Password of FreeIPA user with administrative privileges
 
-#### USERNAME
+### USERNAME
 
 Type: str
 
 Username of FreeIPA user with administrative privileges
 
-#### USERNAME_PREFIX
+### USERNAME_PREFIX
 
 Type: str
 
 Prefix to be appended to all usernames created in FreeIPA by Waldur
 
-#### VERIFY_SSL
+### VERIFY_SSL
 
 Type: bool
 
@@ -856,67 +856,67 @@ WALDUR_HPC = {'ENABLED': False,
  'PLAN_UUID': ''}
 ```
 
-#### ENABLED
+### ENABLED
 
 Type: bool
 
 Enable HPC-specific hooks in Waldur deployment
 
-#### EXTERNAL_AFFILIATIONS
+### EXTERNAL_AFFILIATIONS
 
 Type: List[str]
 
 List of user affiliations (eduPersonScopedAffiliation fields) that define if the user belongs to external organization.
 
-#### EXTERNAL_CUSTOMER_UUID
+### EXTERNAL_CUSTOMER_UUID
 
 Type: str
 
 UUID of a Waldur organization (aka customer) where new external users would be added
 
-#### EXTERNAL_EMAIL_PATTERNS
+### EXTERNAL_EMAIL_PATTERNS
 
 Type: List[str]
 
 List of user email patterns (as regex) that define if the user belongs to external organization.
 
-#### EXTERNAL_LIMITS
+### EXTERNAL_LIMITS
 
 Type: dict
 
 Overrided default values for SLURM offering to be created for users belonging to external organization.
 
-#### INTERNAL_AFFILIATIONS
+### INTERNAL_AFFILIATIONS
 
 Type: List[str]
 
 List of user affiliations (eduPersonScopedAffiliation fields) that define if the user belongs to internal organization.
 
-#### INTERNAL_CUSTOMER_UUID
+### INTERNAL_CUSTOMER_UUID
 
 Type: str
 
 UUID of a Waldur organization (aka customer) where new internal users would be added
 
-#### INTERNAL_EMAIL_PATTERNS
+### INTERNAL_EMAIL_PATTERNS
 
 Type: List[str]
 
 List of user email patterns (as regex) that define if the user belongs to internal organization.
 
-#### INTERNAL_LIMITS
+### INTERNAL_LIMITS
 
 Type: dict
 
 Overrided default values for SLURM offering to be created for users belonging to internal organization.
 
-#### OFFERING_UUID
+### OFFERING_UUID
 
 Type: str
 
 UUID of a Waldur SLURM offering, which will be used for creating allocations for users
 
-#### PLAN_UUID
+### PLAN_UUID
 
 Type: str
 
@@ -936,43 +936,43 @@ WALDUR_KEYCLOAK = {'BASE_URL': 'http://localhost:8080/auth',
  'USERNAME': 'admin'}
 ```
 
-#### BASE_URL
+### BASE_URL
 
 Type: str
 
 Base URL of Keycloak server
 
-#### CLIENT_ID
+### CLIENT_ID
 
 Type: str
 
 Identification of Waldur client app
 
-#### CLIENT_SECRET
+### CLIENT_SECRET
 
 Type: str
 
 Credentials are generated in Keycloak admin console
 
-#### ENABLED
+### ENABLED
 
 Type: bool
 
 Enable integration of group provisioning in configured Keycloak
 
-#### PASSWORD
+### PASSWORD
 
 Type: str
 
 Password of Keycloak user with administrative privileges
 
-#### REALM
+### REALM
 
 Type: str
 
 Realm used by Waldur
 
-#### USERNAME
+### USERNAME
 
 Type: str
 
@@ -995,61 +995,61 @@ WALDUR_MARKETPLACE = {'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
  'THUMBNAIL_SIZE': (120, 120)}
 ```
 
-#### ANONYMOUS_USER_CAN_VIEW_OFFERINGS
+### ANONYMOUS_USER_CAN_VIEW_OFFERINGS
 
 Type: bool
 
 Allow anonymous users to see shared offerings in active, paused and archived states
 
-#### ANONYMOUS_USER_CAN_VIEW_PLANS
+### ANONYMOUS_USER_CAN_VIEW_PLANS
 
 Type: bool
 
 Allow anonymous users to see plans
 
-#### DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE
+### DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE
 
 Type: bool
 
 Disable only resource update events.
 
-#### ENABLE_RESOURCE_END_DATE
+### ENABLE_RESOURCE_END_DATE
 
 Type: bool
 
 Allow to view and update resource end date.
 
-#### ENABLE_STALE_RESOURCE_NOTIFICATIONS
+### ENABLE_STALE_RESOURCE_NOTIFICATIONS
 
 Type: bool
 
 Enable reminders to owners about resources of shared offerings that have not generated any cost for the last 3 months.
 
-#### NOTIFY_ABOUT_RESOURCE_CHANGE
+### NOTIFY_ABOUT_RESOURCE_CHANGE
 
 Type: bool
 
 If true, notify users about resource changes from Marketplace perspective. Can generate duplicate events if plugins also log
 
-#### NOTIFY_STAFF_ABOUT_APPROVALS
+### NOTIFY_STAFF_ABOUT_APPROVALS
 
 Type: bool
 
 If true, users with staff role are notified when request for order approval is generated
 
-#### TELEMETRY_URL
+### TELEMETRY_URL
 
 Type: str
 
 URL for sending telemetry data.
 
-#### TELEMETRY_VERSION
+### TELEMETRY_VERSION
 
 Type: int
 
 Telemetry service version.
 
-#### THUMBNAIL_SIZE
+### THUMBNAIL_SIZE
 
 Type: tuple
 
@@ -1063,7 +1063,7 @@ Default value:
 WALDUR_MARKETPLACE_REMOTE_SLURM = {'USE_WALDUR_USERNAMES': True}
 ```
 
-#### USE_WALDUR_USERNAMES
+### USE_WALDUR_USERNAMES
 
 Type: bool
 
@@ -1087,55 +1087,55 @@ WALDUR_MARKETPLACE_SCRIPT = {'DOCKER_CLIENT': {'base_url': 'unix://var/run/docke
  'SCRIPT_RUN_MODE': 'docker'}
 ```
 
-#### DOCKER_CLIENT
+### DOCKER_CLIENT
 
 Type: dict
 
 Options for docker client. See also: <https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient>
 
-#### DOCKER_IMAGES
+### DOCKER_IMAGES
 
 Type: dict
 
 Key is command to execute script, value is a dictionary of image name and command.
 
-#### DOCKER_REMOVE_CONTAINER
+### DOCKER_REMOVE_CONTAINER
 
 Type: bool
 
 Remove Docker container after script execution
 
-#### DOCKER_RUN_OPTIONS
+### DOCKER_RUN_OPTIONS
 
 Type: dict
 
 Options for docker runtime. See also: <https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.run>
 
-#### DOCKER_SCRIPT_DIR
+### DOCKER_SCRIPT_DIR
 
 Type: Optional[str]
 
 Path to folder on executor machine where to create temporary submission scripts. If None uses OS-dependent location. OS X users, see <https://github.com/docker/for-mac/issues/1532>
 
-#### K8S_CONFIG_PATH
+### K8S_CONFIG_PATH
 
 Type: str
 
 Path to Kubernetes configuration file
 
-#### K8S_JOB_TIMEOUT
+### K8S_JOB_TIMEOUT
 
 Type: int
 
 Timeout for execution of one Kubernetes job in seconds
 
-#### K8S_NAMESPACE
+### K8S_NAMESPACE
 
 Type: str
 
 Kubernetes namespace where jobs will be executed
 
-#### SCRIPT_RUN_MODE
+### SCRIPT_RUN_MODE
 
 Type: str
 
@@ -1183,25 +1183,25 @@ WALDUR_OPENSTACK = {'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
  'TENANT_CREDENTIALS_VISIBLE': False}
 ```
 
-#### DEFAULT_BLACKLISTED_USERNAMES
+### DEFAULT_BLACKLISTED_USERNAMES
 
 Type: list
 
 Usernames that cannot be created by Waldur in OpenStack
 
-#### DEFAULT_SECURITY_GROUPS
+### DEFAULT_SECURITY_GROUPS
 
 Type: tuple
 
 Default security groups and rules created in each of the provisioned OpenStack tenants
 
-#### SUBNET
+### SUBNET
 
 Type: dict
 
 Default allocation pool for auto-created internal network
 
-#### TENANT_CREDENTIALS_VISIBLE
+### TENANT_CREDENTIALS_VISIBLE
 
 Type: bool
 
@@ -1220,25 +1220,25 @@ WALDUR_OPENSTACK_TENANT = {'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True
  'REQUIRE_AVAILABILITY_ZONE': False}
 ```
 
-#### ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS
+### ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS
 
 Type: bool
 
 If true, customer users would be offered actions for accessing OpenStack Console
 
-#### ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION
+### ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION
 
 Type: bool
 
 If true, allow connecting of Instances directly to external networks
 
-#### MAX_CONCURRENT_PROVISION
+### MAX_CONCURRENT_PROVISION
 
 Type: dict
 
 Maximum parallel executions of provisioning operations for OpenStackTenant resources
 
-#### REQUIRE_AVAILABILITY_ZONE
+### REQUIRE_AVAILABILITY_ZONE
 
 Type: bool
 
@@ -1257,7 +1257,7 @@ WALDUR_PID = {'DATACITE': {'API_URL': 'https://example.com',
               'REPOSITORY_ID': ''}}
 ```
 
-#### DATACITE
+### DATACITE
 
 Type: dict
 
@@ -1276,37 +1276,37 @@ WALDUR_SLURM = {'ALLOCATION_PREFIX': 'waldur_allocation_',
  'PROJECT_PREFIX': 'waldur_project_'}
 ```
 
-#### ALLOCATION_PREFIX
+### ALLOCATION_PREFIX
 
 Type: str
 
 Prefix for SLURM account name corresponding to Waldur allocation
 
-#### CUSTOMER_PREFIX
+### CUSTOMER_PREFIX
 
 Type: str
 
 Prefix for SLURM account name corresponding to Waldur organization.
 
-#### DEFAULT_LIMITS
+### DEFAULT_LIMITS
 
 Type: dict
 
 Default limits of account that are set when SLURM account is provisioned.
 
-#### ENABLED
+### ENABLED
 
 Type: bool
 
 Enable support for SLURM plugin in a deployment
 
-#### PRIVATE_KEY_PATH
+### PRIVATE_KEY_PATH
 
 Type: str
 
 Path to private key file used as SSH identity file for accessing SLURM master.
 
-#### PROJECT_PREFIX
+### PROJECT_PREFIX
 
 Type: str
 
@@ -1314,61 +1314,61 @@ Prefix for SLURM account name corresponding to Waldur project.
 
 ### Other variables
 
-#### DEFAULT_FROM_EMAIL
+### DEFAULT_FROM_EMAIL
 
 Type: str, default value: webmaster@localhost
 
 Default email address to use for automated correspondence from Waldur.
 
-#### DEFAULT_REPLY_TO_EMAIL
+### DEFAULT_REPLY_TO_EMAIL
 
 Type: str
 
 Default email address to use for email replies.
 
-#### EMAIL_HOOK_FROM_EMAIL
+### EMAIL_HOOK_FROM_EMAIL
 
 Type: str
 
 Alternative email address to use for email hooks.
 
-#### IMPORT_EXPORT_USE_TRANSACTIONS
+### IMPORT_EXPORT_USE_TRANSACTIONS
 
 Type: bool, default value: True
 
 Controls if resource importing should use database transactions. Using transactions makes imports safer as a failure during import won’t import only part of the data set.
 
-#### IPSTACK_ACCESS_KEY
+### IPSTACK_ACCESS_KEY
 
 Type: Optional[str]
 
 Unique authentication key used to gain access to the ipstack API.
 
-#### LANGUAGES
+### LANGUAGES
 
 Type: List[tuple[str, str]], default value: (('en', 'English'), ('et', 'Eesti'))
 
 The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese').
 
-#### LANGUAGE_CODE
+### LANGUAGE_CODE
 
 Type: str, default value: en
 
 Represents the name of a default language.
 
-#### USE_PROTECTED_URL
+### USE_PROTECTED_URL
 
 Type: bool, default value: False
 
 Protect media URLs using signed token.
 
-#### VERIFY_WEBHOOK_REQUESTS
+### VERIFY_WEBHOOK_REQUESTS
 
 Type: bool, default value: True
 
 When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser.
 
-## Configuration guide for dynamic options
+## Dynamic options
 
 ### Whitelabeling settings (text, links, etc)
 
@@ -1619,6 +1619,8 @@ Toggler for mapping between waldur user and service desk agents.
 **Type:** int
 
 **Default value**: 1
+
+A constant in the API path, sometimes differs
 
 #### ATLASSIAN_API_URL
 
