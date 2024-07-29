@@ -7,7 +7,7 @@ Prerequisites:
 
 ## Refresher service
 
-Copy the files from this repository to a corresponding paths on the target host:
+Copy the files from [this repository](https://github.com/waldur/glauth) to a corresponding paths on the target host:
 
 ```bash
 mkdir /etc/glauth
@@ -16,6 +16,8 @@ cp systemd-conf/refresher/refresher.env /etc/glauth/refresher.env
 cp systemd-conf/refresher/refresh-glauth-config.sh /usr/sbin/refresh-glauth-config.sh
 cp systemd-conf/refresher/refresh-glauth-config.service /etc/systemd/system/refresh-glauth-config.service
 ```
+
+Update `.env` file for the refresher service, i.e. `/etc/glauth/refresher.env`:
 
 ```env
 WALDUR_URL=https://waldur.example.com/api/
@@ -45,6 +47,6 @@ Ensure glauth binary is installed in `/usr/bin/glauth` and perform the same step
 ```bash
 cp systemd-conf/glauth/glauth.service /etc/systemd/system/glauth.service
 systemctl daemon-reload
-systemctl start refresh-glauth-config
-systemctl enable refresh-glauth-config
+systemctl start glauth
+systemctl enable glauth
 ```
