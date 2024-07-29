@@ -25,3 +25,15 @@ If a user needs to prolong an expired project with remote resources, [this scrip
 ### Wipe tenants and all related resources from OpenStack
 
 If a user needs to remove a tenant with all related objects (instances, volumes, backups, etc.) manually, [this script](scripts/wipe-tenants.py) should be used. It removes all the tenants with names from `tenant_names` list using an OpenStack administrator project. Please, replace `<main-tenant-uuid>` (line 13) with the corresponding UUID of the admin tenant in Waldur.
+
+### Import projects with slug info
+
+A CSV-file with the following format is required:
+
+```csv
+"id","unix_gid","valid_from","valid_to","accessible_from","accessible_to"
+"abc","10000","01/1/2024","31/3/2024","05/1/2024","28/3/2024"
+```
+
+Put this file to the `/tmp/projects-info.csv` location and
+execute [this script](scripts/import_projects_with_slug.py) with your Waldur shell.

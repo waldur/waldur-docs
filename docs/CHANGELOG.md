@@ -2,8 +2,10 @@
 
 ## 6.7.9
 
-Notes: - Add slugs for main objects
-- Bugfixes
+Notes:
+
+* Add slugs for main objects
+* Bugfixes
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.7.8...6.7.9)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.7.8...6.7.9)
@@ -15,8 +17,10 @@ Date: Thu Jul 25 08:33:49 UTC 2024
 
 ## 6.7.8
 
-Notes: - Bugfix
-- Extended SSH key hashes with sha256 and sha512
+Notes:
+
+* Bugfix
+* Extended SSH key hashes with sha256 and sha512
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.7.7...6.7.8)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.7.7...6.7.8)
