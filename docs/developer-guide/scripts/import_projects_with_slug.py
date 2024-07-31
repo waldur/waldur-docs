@@ -11,9 +11,9 @@ import datetime
 from waldur_core.structure import models as structure_models
 
 
-def create_project(project_info):
+def import_project(project_info):
     project_id = project_info["id"]
-    valid_from = datetime.datetime.strptime("25/2/2024", "%d/%m/%Y").date()
+    valid_from = datetime.datetime.strptime(project_info["valid_from"], "%d/%m/%Y").date()
     valid_to = datetime.datetime.strptime(project_info["valid_to"], "%d/%m/%Y").date()
     description = project_info.get("description", "")
     project, created = structure_models.Project.objects.update_or_create(
