@@ -30,7 +30,7 @@ Make tax number field mandatory in invitation creation form.
 
 ## marketplace.conceal_prices
 
-Do not render prices in shopping cart and order details.
+Do not render prices in order details.
 
 ## marketplace.import_resources
 
