@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.8.1
+
+Notes: Fix resource name suggestion button
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.8.0...6.8.1)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.8.0...6.8.1)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.8.0...6.8.1)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.8.0...6.8.1)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.8.0...6.8.1)
+
+Date: Thu Aug  1 19:14:05 UTC 2024
+
 ## 6.8.0
 
 Notes: Bugfixes
