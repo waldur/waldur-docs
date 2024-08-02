@@ -442,6 +442,10 @@ options:
 
 Prints all event types as typescript enums.
 
+## print_features_description
+
+Prints all Waldur feature description as typescript code.
+
 ## print_features_docs
 
 Prints all Waldur feature toggles in markdown format.
