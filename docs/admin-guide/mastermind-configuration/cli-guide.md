@@ -458,6 +458,10 @@ Prints all Waldur feature toggles as typescript enums.
 
 Prints Mastermind notifications with a description and templates
 
+## print_settings_description
+
+Prints all Waldur feature description as typescript code.
+
 ## pull_openstack_volume_metadata
 
 Pull OpenStack volumes metadata to marketplace.

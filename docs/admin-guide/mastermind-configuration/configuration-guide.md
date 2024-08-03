@@ -1370,7 +1370,7 @@ When webook is processed, requests verifies SSL certificates for HTTPS requests,
 
 ## Dynamic options
 
-### Whitelabeling settings (text, links, etc)
+### Branding
 
 #### SITE_NAME
 
@@ -1380,6 +1380,22 @@ When webook is processed, requests verifies SSL certificates for HTTPS requests,
 
 Human-friendly name of the Waldur deployment.
 
+#### SHORT_PAGE_TITLE
+
+**Type:** str
+
+**Default value**: Waldur
+
+It is used as prefix for page title.
+
+#### FULL_PAGE_TITLE
+
+**Type:** str
+
+**Default value**: Waldur | Cloud Service Management
+
+It is used as default page title if it's not specified explicitly.
+
 #### SITE_DESCRIPTION
 
 **Type:** str
@@ -1387,6 +1403,8 @@ Human-friendly name of the Waldur deployment.
 **Default value**: Your single pane of control for managing projects, teams and resources in a self-service manner.
 
 Description of the Waldur deployment.
+
+### Marketplace
 
 #### SITE_ADDRESS
 
@@ -1414,43 +1432,27 @@ It is used in marketplace order header and UI footer.
 
 It is used in marketplace order details and invoices for currency formatting.
 
+### Notifications
+
+#### COMMON_FOOTER_TEXT
+
+**Type:** str
+
+Common footer in txt format for all emails.
+
+#### COMMON_FOOTER_HTML
+
+**Type:** str
+
+Common footer in html format for all emails.
+
+### Links
+
 #### DOCS_URL
 
 **Type:** str
 
 Renders link to docs in header
-
-#### SHORT_PAGE_TITLE
-
-**Type:** str
-
-**Default value**: Waldur
-
-It is used as prefix for page title.
-
-#### FULL_PAGE_TITLE
-
-**Type:** str
-
-**Default value**: Waldur | Cloud Service Management
-
-It is used as default page title if it's not specified explicitly.
-
-#### BRAND_COLOR
-
-**Type:** str
-
-**Default value**: #3a8500
-
-Hex color definition is used in HomePort landing page for login button.
-
-#### BRAND_LABEL_COLOR
-
-**Type:** str
-
-**Default value**: #000000
-
-Hex color definition is used in HomePort landing page for font color of login button.
 
 #### HERO_LINK_LABEL
 
@@ -1470,25 +1472,31 @@ Link URL in hero section of HomePort landing page.
 
 Link URL to support portal. Rendered as a shortcut on dashboard
 
-#### COMMON_FOOTER_TEXT
+### Theme
+
+#### SIDEBAR_STYLE
 
 **Type:** str
 
-Common footer in txt format for all emails.
+**Default value**: dark
 
-#### COMMON_FOOTER_HTML
+Style of sidebar. Possible values: dark, light, accent.
 
-**Type:** str
-
-Common footer in html format for all emails.
-
-#### LANGUAGE_CHOICES
+#### BRAND_COLOR
 
 **Type:** str
 
-**Default value**: en,et,lt,lv,ru,it,de,da,sv,es,fr,nb,ar,cs
+**Default value**: #3a8500
 
-List of enabled languages
+Hex color definition is used in HomePort landing page for login button.
+
+#### BRAND_LABEL_COLOR
+
+**Type:** str
+
+**Default value**: #000000
+
+Hex color definition is used in HomePort landing page for font color of login button.
 
 #### DISABLE_DARK_THEME
 
@@ -1496,7 +1504,7 @@ List of enabled languages
 
 Toggler for dark theme.
 
-### Whitelabeling settings (logos, images, favicons)
+### Images
 
 #### SITE_LOGO
 
@@ -1521,14 +1529,6 @@ The image rendered at the top of mobile sidebar menu in HomePort.
 **Type:** image_field
 
 The image rendered at the top of sidebar menu in dark mode.
-
-#### SIDEBAR_STYLE
-
-**Type:** str
-
-**Default value**: dark
-
-Style of sidebar. Possible values: dark, light, accent.
 
 #### POWERED_BY_LOGO
 
