@@ -1436,13 +1436,13 @@ It is used in marketplace order details and invoices for currency formatting.
 
 #### COMMON_FOOTER_TEXT
 
-**Type:** str
+**Type:** text_field
 
 Common footer in txt format for all emails.
 
 #### COMMON_FOOTER_HTML
 
-**Type:** str
+**Type:** html_field
 
 Common footer in html format for all emails.
 
@@ -1450,7 +1450,7 @@ Common footer in html format for all emails.
 
 #### DOCS_URL
 
-**Type:** str
+**Type:** url_field
 
 Renders link to docs in header
 
@@ -1462,13 +1462,13 @@ Label for link in hero section of HomePort landing page. It can be lead to suppo
 
 #### HERO_LINK_URL
 
-**Type:** str
+**Type:** url_field
 
 Link URL in hero section of HomePort landing page.
 
 #### SUPPORT_PORTAL_URL
 
-**Type:** str
+**Type:** url_field
 
 Link URL to support portal. Rendered as a shortcut on dashboard
 
@@ -1484,7 +1484,7 @@ Style of sidebar. Possible values: dark, light, accent.
 
 #### BRAND_COLOR
 
-**Type:** str
+**Type:** color_field
 
 **Default value**: #3a8500
 
@@ -1492,7 +1492,7 @@ Hex color definition is used in HomePort landing page for login button.
 
 #### BRAND_LABEL_COLOR
 
-**Type:** str
+**Type:** color_field
 
 **Default value**: #000000
 
@@ -1624,11 +1624,11 @@ A constant in the API path, sometimes differs
 
 #### ATLASSIAN_API_URL
 
-**Type:** str
+**Type:** url_field
 
 **Default value**: http://example.com/
 
-Atlassian server URL
+Atlassian API server URL
 
 #### ATLASSIAN_USERNAME
 
@@ -1816,9 +1816,9 @@ Is Service Desk username the same as in Waldur
 
 #### ZAMMAD_API_URL
 
-**Type:** str
+**Type:** url_field
 
-Address of Zammad server. For example <http://localhost:8080/>
+Zammad API server URL. For example <http://localhost:8080/>
 
 #### ZAMMAD_TOKEN
 
@@ -1868,7 +1868,7 @@ Time in minutes. Time in minutes while comment deletion is available <https://gi
 
 #### SMAX_API_URL
 
-**Type:** str
+**Type:** url_field
 
 SMAX API server URL. For example <http://localhost:8080/>
 
