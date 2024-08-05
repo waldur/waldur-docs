@@ -1576,7 +1576,7 @@ Toggler for support plugin.
 
 **Default value**: atlassian
 
-Type of support backend. Possible values: atlassian, zammad.
+Type of support backend. Possible values: atlassian, zammad, smax.
 
 #### WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE
 
@@ -1668,7 +1668,7 @@ Toggler for SSL verification
 
 **Type:** str
 
-Project-related settings
+Service desk ID or key
 
 #### ATLASSIAN_DEFAULT_OFFERING_ISSUE_TYPE
 
@@ -1676,13 +1676,13 @@ Project-related settings
 
 **Default value**: Service Request
 
-Issue type
+Issue type used for request-based item processing.
 
 #### ATLASSIAN_EXCLUDED_ATTACHMENT_TYPES
 
 **Type:** str
 
-List of attachment types
+Comma-separated list of file extenstions not allowed for attachment.
 
 #### ATLASSIAN_PULL_PRIORITIES
 
@@ -1690,7 +1690,7 @@ List of attachment types
 
 **Default value**: True
 
-Pull priorities
+Toggler for pulling priorities from backend
 
 #### ATLASSIAN_ISSUE_TYPES
 
@@ -1698,25 +1698,25 @@ Pull priorities
 
 **Default value**: Informational, Service Request, Change Request, Incident
 
-Issue-related settings; Issue types
+Comma-separated list of enabled issue types. First type is the default one.
 
 #### ATLASSIAN_AFFECTED_RESOURCE_FIELD
 
 **Type:** str
 
-Affected resource field
+Affected resource field name
 
 #### ATLASSIAN_DESCRIPTION_TEMPLATE
 
 **Type:** str
 
-Description
+Template for issue description
 
 #### ATLASSIAN_SUMMARY_TEMPLATE
 
 **Type:** str
 
-Summary
+Template for issue summary
 
 #### ATLASSIAN_IMPACT_FIELD
 
@@ -1724,25 +1724,25 @@ Summary
 
 **Default value**: Impact
 
-Impact field
+Impact field name
 
 #### ATLASSIAN_ORGANISATION_FIELD
 
 **Type:** str
 
-Organisation field
+Organisation field name
 
 #### ATLASSIAN_RESOLUTION_SLA_FIELD
 
 **Type:** str
 
-Resolution SLA field
+Resolution SLA field name
 
 #### ATLASSIAN_PROJECT_FIELD
 
 **Type:** str
 
-Project field
+Project field name
 
 #### ATLASSIAN_REPORTER_FIELD
 
@@ -1750,7 +1750,7 @@ Project field
 
 **Default value**: Original Reporter
 
-Reporter field
+Reporter field name
 
 #### ATLASSIAN_CALLER_FIELD
 
@@ -1758,7 +1758,7 @@ Reporter field
 
 **Default value**: Caller
 
-Caller field
+Caller field name
 
 #### ATLASSIAN_SLA_FIELD
 
@@ -1766,7 +1766,7 @@ Caller field
 
 **Default value**: Time to first response
 
-SLA field
+SLA field name
 
 #### ATLASSIAN_LINKED_ISSUE_TYPE
 
@@ -1774,7 +1774,7 @@ SLA field
 
 **Default value**: Relates
 
-Type of linked issue
+Type of linked issue field name
 
 #### ATLASSIAN_SATISFACTION_FIELD
 
@@ -1782,7 +1782,7 @@ Type of linked issue
 
 **Default value**: Customer satisfaction
 
-Satisfaction field
+Customer satisfaction field name
 
 #### ATLASSIAN_REQUEST_FEEDBACK_FIELD
 
@@ -1790,13 +1790,13 @@ Satisfaction field
 
 **Default value**: Request feedback
 
-Issue request feedback
+Request feedback field name
 
 #### ATLASSIAN_TEMPLATE_FIELD
 
 **Type:** str
 
-Template field
+Template field name
 
 #### ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED
 
@@ -1838,7 +1838,7 @@ The name of the group to which the ticket will be added. If not specified, the f
 
 **Default value**: email
 
-Type of a comment.Default is email because it allows support to reply to tickets directly in Zammad<https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
+Type of a comment. Default is email because it allows support to reply to tickets directly in Zammad<https://docs.zammad.org/en/latest/api/ticket/articles.html#articles/>
 
 #### ZAMMAD_COMMENT_MARKER
 
@@ -1846,7 +1846,7 @@ Type of a comment.Default is email because it allows support to reply to tickets
 
 **Default value**: Created by Waldur
 
-Marker for comment.Used for separating comments made via Waldur from natively added comments.
+Marker for comment. Used for separating comments made via Waldur from natively added comments.
 
 #### ZAMMAD_COMMENT_PREFIX
 
@@ -1870,7 +1870,7 @@ Time in minutes. Time in minutes while comment deletion is available <https://gi
 
 **Type:** str
 
-Address of SMAX server. For example <http://localhost:8080/>
+SMAX API server URL. For example <http://localhost:8080/>
 
 #### SMAX_TENANT_ID
 
@@ -1894,19 +1894,19 @@ Authorization password.
 
 **Type:** str
 
-Organisation field.
+Organisation field name.
 
 #### SMAX_PROJECT_FIELD
 
 **Type:** str
 
-Project field.
+Project field name.
 
 #### SMAX_AFFECTED_RESOURCE_FIELD
 
 **Type:** str
 
-Resource field.
+Resource field name.
 
 #### SMAX_REQUESTS_OFFERING
 
@@ -1920,7 +1920,7 @@ Requests offering code for all issues.
 
 **Default value**: 1
 
-Duration of delay between server pull attempts.
+Duration in seconds of delay between pull user attempts.
 
 #### SMAX_TIMES_TO_PULL
 
@@ -1928,7 +1928,7 @@ Duration of delay between server pull attempts.
 
 **Default value**: 10
 
-Times to pulling from backend.
+The maximum number of attempts to pull user from backend.
 
 #### SMAX_CREATION_SOURCE_NAME
 
