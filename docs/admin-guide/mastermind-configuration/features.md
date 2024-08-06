@@ -60,9 +60,25 @@ Render estimated cost column in projects list.
 
 Enable OECD code.
 
+## project.show_description_in_create_dialog
+
+Show description field in project create dialog.
+
+## project.show_end_date_in_create_dialog
+
+Show end date field in project create dialog.
+
+## project.show_image_in_create_dialog
+
+Show image field in project create dialog.
+
 ## project.show_industry_flag
 
 Show industry flag.
+
+## project.show_type_in_create_dialog
+
+Show type field in project create dialog.
 
 ## rancher.volume_mount_point
 
