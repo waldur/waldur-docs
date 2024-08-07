@@ -241,6 +241,10 @@
 - resource_update_security_groups_succeeded
 - resource_update_succeeded
 
+## Review
+
+- review_canceled
+
 ## Ssh
 
 - ssh_key_creation_succeeded
