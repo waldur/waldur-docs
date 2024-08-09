@@ -1588,40 +1588,6 @@ Toggler for request type displaying
 
 ### Atlassian settings
 
-#### ATLASSIAN_USE_OLD_API
-
-**Type:** bool
-
-Toggler for legacy API usage.
-
-#### ATLASSIAN_USE_TEENAGE_API
-
-**Type:** bool
-
-Toggler for teenage API usage.
-
-#### ATLASSIAN_USE_AUTOMATIC_REQUEST_MAPPING
-
-**Type:** bool
-
-**Default value**: True
-
-Toggler for automatic request mapping.
-
-#### ATLASSIAN_MAP_WALDUR_USERS_TO_SERVICEDESK_AGENTS
-
-**Type:** bool
-
-Toggler for mapping between waldur user and service desk agents.
-
-#### ATLASSIAN_STRANGE_SETTING
-
-**Type:** int
-
-**Default value**: 1
-
-A constant in the API path, sometimes differs
-
 #### ATLASSIAN_API_URL
 
 **Type:** url_field
@@ -1640,7 +1606,7 @@ Username for access user
 
 #### ATLASSIAN_PASSWORD
 
-**Type:** str
+**Type:** secret_field
 
 **Default value**: PASSWORD
 
@@ -1654,15 +1620,9 @@ Email for access user
 
 #### ATLASSIAN_TOKEN
 
-**Type:** str
+**Type:** secret_field
 
 Token for access user
-
-#### ATLASSIAN_VERIFY_SSL
-
-**Type:** bool
-
-Toggler for SSL verification
 
 #### ATLASSIAN_PROJECT_ID
 
@@ -1683,14 +1643,6 @@ Issue type used for request-based item processing.
 **Type:** str
 
 Comma-separated list of file extenstions not allowed for attachment.
-
-#### ATLASSIAN_PULL_PRIORITIES
-
-**Type:** bool
-
-**Default value**: True
-
-Toggler for pulling priorities from backend
 
 #### ATLASSIAN_ISSUE_TYPES
 
@@ -1812,6 +1764,54 @@ Should extra issue field mappings be applied
 
 Is Service Desk username the same as in Waldur
 
+#### ATLASSIAN_VERIFY_SSL
+
+**Type:** bool
+
+Toggler for SSL verification
+
+#### ATLASSIAN_USE_OLD_API
+
+**Type:** bool
+
+Toggler for legacy API usage.
+
+#### ATLASSIAN_USE_TEENAGE_API
+
+**Type:** bool
+
+Toggler for teenage API usage.
+
+#### ATLASSIAN_USE_AUTOMATIC_REQUEST_MAPPING
+
+**Type:** bool
+
+**Default value**: True
+
+Toggler for automatic request mapping.
+
+#### ATLASSIAN_MAP_WALDUR_USERS_TO_SERVICEDESK_AGENTS
+
+**Type:** bool
+
+Toggler for mapping between waldur user and service desk agents.
+
+#### ATLASSIAN_STRANGE_SETTING
+
+**Type:** int
+
+**Default value**: 1
+
+A constant in the API path, sometimes differs
+
+#### ATLASSIAN_PULL_PRIORITIES
+
+**Type:** bool
+
+**Default value**: True
+
+Toggler for pulling priorities from backend
+
 ### Zammad settings
 
 #### ZAMMAD_API_URL
@@ -1822,7 +1822,7 @@ Zammad API server URL. For example <http://localhost:8080/>
 
 #### ZAMMAD_TOKEN
 
-**Type:** str
+**Type:** secret_field
 
 Authorization token.
 
@@ -1886,7 +1886,7 @@ Authorization login.
 
 #### SMAX_PASSWORD
 
-**Type:** str
+**Type:** secret_field
 
 Authorization password.
 
