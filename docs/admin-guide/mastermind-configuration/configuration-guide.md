@@ -1962,4 +1962,22 @@ Review duration in days.
 
 Comma-separated list of columns for users table.
 
+### Localization
+
+#### LANGUAGE_CHOICES
+
+**Type:** str
+
+**Default value**: en,et,lt,lv,ru,it,de,da,sv,es,fr,nb,ar,cs
+
+List of enabled languages
+
+### User settings
+
+#### AUTO_APPROVE_USER_TOS
+
+**Type:** bool
+
+Configure whether a user needs to approve TOS.
+
 

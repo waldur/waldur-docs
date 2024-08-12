@@ -76,6 +76,10 @@ Show image field in project create dialog.
 
 Show industry flag.
 
+## project.show_start_date_in_create_dialog
+
+Show start date field in project create dialog.
+
 ## project.show_type_in_create_dialog
 
 Show type field in project create dialog.
