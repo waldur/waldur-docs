@@ -34,4 +34,4 @@ def import_project(project_info):
 with open("/tmp/projects-info.csv") as csvfile:
     reader = csv.DictReader(csvfile)
     for project_data in reader:
-        create_project(project_data)
+        import_project(project_data)
