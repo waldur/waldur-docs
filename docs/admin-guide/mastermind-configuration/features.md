@@ -116,6 +116,10 @@ Enable VM type overview in support workspace.
 
 Send telemetry metrics.
 
+## user.disable_user_termination
+
+Disable user termination in user workspace.
+
 ## user.notifications
 
 Enable email and webhook notifications management in user workspace.

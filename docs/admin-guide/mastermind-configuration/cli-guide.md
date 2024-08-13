@@ -458,6 +458,10 @@ Prints all Waldur feature toggles as typescript enums.
 
 Prints Mastermind notifications with a description and templates
 
+## print_permissions_description
+
+Prints all Waldur permissions description as typescript code.
+
 ## print_settings_description
 
 Prints all Waldur feature description as typescript code.
