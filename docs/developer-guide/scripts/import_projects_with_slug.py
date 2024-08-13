@@ -10,6 +10,8 @@ import datetime
 
 from waldur_core.structure import models as structure_models
 
+customer_uuid = "<customer_uuid>"
+customer = structure_models.Customer.objects.get(uuid=customer_uuid)
 
 def import_project(project_info):
     project_id = project_info["id"]
@@ -23,6 +25,7 @@ def import_project(project_info):
             "description": description,
             "end_date": valid_to,
             "slug": project_id,
+            "customer": customer,
         },
     )
     if created:
