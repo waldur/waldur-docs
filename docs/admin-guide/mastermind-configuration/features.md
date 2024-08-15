@@ -128,6 +128,10 @@ Enable email and webhook notifications management in user workspace.
 
 Render preferred language column in users list.
 
+## user.show_slug
+
+Enable display of slug field in user summary.
+
 ## user.ssh_keys
 
 Enable SSH keys management in user workspace.
