@@ -4,6 +4,18 @@
 
 Notes: Allow exposing external IPs for Openstack deployments
 
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.8.7...6.8.7)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.8.7...6.8.7)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.8.7...6.8.7)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.8.7...6.8.7)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.8.7...6.8.7)
+
+Date: Sat Aug 17 08:03:59 UTC 2024
+
+## 6.8.7
+
+Notes: Allow exposing external IPs for Openstack deployments
+
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.8.6...6.8.7)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.8.6...6.8.7)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.8.6...6.8.7)
