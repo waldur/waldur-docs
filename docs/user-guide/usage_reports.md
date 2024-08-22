@@ -22,9 +22,28 @@ Invoices’ information can be downloaded in different formats as well.
 Estimated cost of a running month can be seen from the same view as invoices. By default, it shows top 4 projects with the highest cost. By clicking “Details”, you are able to see all projects with estimated costs.
    ![Estimated cost](img/Estimated_cost.jpg)
 
-## Usage of a resource
+## Usage of a resources
+
+To see overall usage information of resources, please select "Reporting" from the left-side menu and then "Usage reports" on the top menu.
+
+It is possible to filter te results by organization, project, offering and export results.
+
+   ![Usage reports](img/Usage_filter.png)
 
 To view the usage information within a project:
+
+### Private clouds
+
+To view the usage information within a project:
+
+1. Open your project in Waldur.
+
+2. Select the private cloud resource that usage report you would like to see.
+
+3. Now private cloud resource dashboard provides the overview of limits and used quotas.
+   ![Private cloud) usage](img/Private_cloud_usage.jpg)
+
+### HPC
 
 1. Open your project in Waldur.
 
