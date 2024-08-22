@@ -1,13 +1,66 @@
-# Service provider registration and offering creation
+# Marketplace and offering creation
 
-## Register organization as service provider
+Marketplace is a central module for provisioning of Waldur resources. Marketplace contains Offerings that
+belong to a special type of Organizations - Service Providers. Marketplace provides common functionality
+for resource lifecycle management, accounting and invoicing. Specifics are implemented in the Marketplace plugins
+(e.g. for OpenStack, SLURM, Rancher, etc).
+
+## Diagram of concepts
+
+![Diagram of marketplace concepts](img/marketplace-structure.png)
+
+## Adding a new Offering
+
+To create a new Offering in the Marketplace, you need to:
+
+- Assure that categories are configured in the Marketplace.
+- Create at least one service provider.
+- Create and activate a public offering.
+
+### Creating Marketplace categories
+
+To create a category, either use administrative interface of Waldur, hosted under ```/admin`` (can be accessed by staff users)
+or use management command for loading the pre-defined categories.
+
+- With Docker-compose deployment:
+
+```bash
+  docker exec -t waldur-mastermind-worker waldur load_categories  # vpc vm storage ...
+```
+
+- With Helm deployment
+
+Open waldur-mastermind-worker shell and execute the following command:
+
+1. Get waldur-mastermind-worker pod name
+
+```bash
+  # Example:
+  kubectl get pods -A | grep waldur-mastermind-worker # -->
+  # default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s
+```
+
+1. Connect to pod via shell
+
+```bash
+  # Example:
+  kubectl exec -it waldur-mastermind-worker-6d98cd98bd-wps8n -- /bin/bash
+```
+
+1. Execute command to see available or add a category
+
+```bash
+  waldur load_categories  # vpc vm storage ...
+```
+
+### Service provider registration
 
 In Waldur, only organizations registered as service providers can create offerings and provide the service to users.
 
 To register organization as service provider:
 
 1. Open organization dashboard, click on "Edit" and select "Service provider" from the top menu.
-    ![Service provider registration](img/sp_reg.jpg)
+   ![Service provider registration](img/sp_reg.jpg)
 
 2. Click on "Register as service provider" on the right.
    ![Service provider registration](img/sp_reg2.jpg)
@@ -17,7 +70,7 @@ To register organization as service provider:
 
 4. Make sure that service provider organization category group is also set.
 
-## Adding an offering
+### Offering creation
 
 Waldur supports a number of different types of service providers when creating a shared offering. A common way of
 creating an offering is through a HomePort.
