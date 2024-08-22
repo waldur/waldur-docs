@@ -1,12 +1,20 @@
 # Grafana and Prometheus Metrics
 
-- Export Waldur metrics with [waldur-prometheus-exporter](https://github.com/waldur/waldur-prometheus-exporter)
-- Import [grafana dashboard json](grafana-dashboard.json) into Grafana
+Waldur Homeport includes a number of reports, but for cases when additional custom reports need to be created,
+it is possible to setup a time-series database, for example, Prometheus, and setup business metrics exporter
+for Waldur.
+
+This would allow to create live dashboards exposing, for example, growth of adoption of the platform in terms
+of users and offerings, aggregated costs of resource on a daily or weekly basis, total active provisioned resources
+on an hourly basis and so on.
+
+To achieve that, [waldur-prometheus-exporter](https://github.com/waldur/waldur-prometheus-exporter) needs to be setup.
+In addition, we provide example [Grafana dashboard json](grafana-dashboard.json) for visualising the metrics.
 
 ## Prometheus metrics
 
 Prometheus exporter allows to setup export of business metrics and reporting information at the fine-grained
-granularity, for example, every 5 minutes or an hour. Collected information can then be visualized in Grafana or
+granularity, for example, every 5 minutes or daily. Collected information can then be visualized in Grafana or
 other visualisation solutions.
 
 Currently, the following metrics are supported:
