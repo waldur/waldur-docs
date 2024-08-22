@@ -19,7 +19,7 @@ the [configuration guide](admin-guide/mastermind-configuration/configuration-gui
 The most typical aspects for configuration are:
 
 - Configuring [identity providers](admin-guide/identities/summary.md). Waldur supports a range of OIDC and SAML based IdPs.
-- [Adding offerings](admin-guide/providers/adding-an-offering.md) for sharing among Waldur users.
+- [Adding offerings](user-guide/adding-an-offering.md) for sharing among Waldur users.
 
 !!! tip
     For easier management of Waldur deployments and configuration we
