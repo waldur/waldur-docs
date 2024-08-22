@@ -10,20 +10,16 @@ This can mean for example research group, institution, department or working gro
 
 ## Create a new organization
 
-1. Click on "Dashboard" and then “Add organization” in the organization selection window.<br><br>
-
-   ![Select organization](img/add-org.jpg)<br><br>
+1. Login to Waldur and select "Organizations" from the left-side menu and then select "Add" from the right.
+   ![Select organization](img/Create_org.jpg)
 
 2. Fill the form and click "Create organization":
 
     - Name - Name of the organization
-    - Organization group - Divisions within organization
     - Contact email - email of the person, who is responsible for the organization
-    - Contact phone - contact person’s phone (optional)
-    - Website URL - url of the organization (optional)
-    - Logo - logo of the organization (optional)<br><br>
 
-   ![Select organization](img/add-org-2.jpg)
+3. Organization edit page opens, where it is possible to add additional information, like policies, contact information. It is beneficial to assign a predefined category group (like private company, university, government, individial person etc) to organization.
+   ![Edit organization](img/Org_edit.jpg)
 
 ## Creation of projects
 
