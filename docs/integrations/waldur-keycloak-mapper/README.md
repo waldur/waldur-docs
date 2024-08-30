@@ -1,6 +1,22 @@
 # Waldur Keycloak mapper
 
+## Waldur OfferingUser username mapper
+
 Custom Keycloak client mapper for Waldur OfferingUser usernames.
+
+## Waldur Offering access mapper
+
+Custom Keycloak client mapper for Waldur groups.
+
+## Waldur MinIO mapper
+
+Custom Keycloak client mapper for MinIO.
+This mapper adds `policy` claim to a JSON token with a list of user permissions on a specified scope in Waldur.
+For now, only `customer` and `project` are supported as a scope types for user permissions.
+For example, if a user is an owner in customers C1, C2 and a manager in projects P1 and P2, the result would be:
+
+1. For scope `customer`: `policy=<C1_UUID>,<C2_UUID>`
+2. For scope `project`: `policy=<P1_UUID>,<P2_UUID>`
 
 ## Installation and setup
 
