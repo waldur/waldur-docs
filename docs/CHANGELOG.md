@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.9.2
+
+Notes: Bugfixes, start of merging of Openstack applications.
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.9.1...6.9.2)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.9.1...6.9.2)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.9.1...6.9.2)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.9.1...6.9.2)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.9.1...6.9.2)
+
+Date: Thu Sep  5 13:40:32 UTC 2024
+
 ## 6.9.1
 
 Notes: Bugfix release
