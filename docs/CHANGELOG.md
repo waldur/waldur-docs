@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.9.4
+
+Notes: Fix initialization of resource options
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.9.3...6.9.4)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.9.3...6.9.4)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.9.3...6.9.4)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.9.3...6.9.4)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.9.3...6.9.4)
+
+Date: Tue Sep 10 07:29:29 UTC 2024
+
 ## 6.9.3
 
 Notes: Fix docker executor issue due to a conflict with requests
