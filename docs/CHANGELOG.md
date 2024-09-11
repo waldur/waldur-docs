@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.9.5
+
+Notes: Bugfix release
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.9.4...6.9.5)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.9.4...6.9.5)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.9.4...6.9.5)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.9.4...6.9.5)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.9.4...6.9.5)
+
+Date: Wed Sep 11 10:11:47 UTC 2024
+
 ## 6.9.4
 
 Notes: Fix initialization of resource options
