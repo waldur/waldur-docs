@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.9.8
+
+Notes: Bugfixes
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/6.9.7...6.9.8)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/6.9.7...6.9.8)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/6.9.7...6.9.8)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/6.9.7...6.9.8)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/6.9.7...6.9.8)
+
+Date: Tue Sep 17 21:37:59 UTC 2024
+
 ## 6.9.7
 
 Notes: Improved username display in team tabs, bugfixes.
