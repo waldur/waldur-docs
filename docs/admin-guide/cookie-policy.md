@@ -35,7 +35,7 @@ Types of offering:
     Waldur.RemoteOffering
     Marketplace.Booking
     Marketplace.Rancher
-    OpenStackTenant.Volume
+    OpenStack.Volume
     VMware.VirtualMachine
     Marketplace.Basic
 Version: 6.6.5+3.g6491c9dab.dirty

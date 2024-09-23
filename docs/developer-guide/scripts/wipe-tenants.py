@@ -124,5 +124,5 @@ for tenant_name in tenant_names:
     tenant = models.Tenant.objects.get(name=tenant_name)
     tenant.state = models.Tenant.States.DELETING
     tenant.save(update_fields=['state'])
-    executors.OpenStackTenantCleanupExecutor().execute(tenant.project, is_async=False)
+    executors.OpenStackCleanupExecutor().execute(tenant.project, is_async=False)
     wipe_dangling_tenant_objects(tenant)
