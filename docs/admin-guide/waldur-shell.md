@@ -72,7 +72,7 @@ for user in core_models.User.objects.filter(is_active=True, registration_method_
 Lookup UUID of an OpenStack tenant (aka backend_id in Waldur).
 
 ```python
-from waldur_openstack.openstack.models import Tenant
+from waldur_openstack.models import Tenant
 
 t_uuid = 'UUID_OF_TENANT'
 t = Tenant.objects.get(backend_id=t_uuid)
@@ -173,8 +173,7 @@ for project in projects:
 import csv
 import sys
 
-from waldur_openstack.openstack.models import Tenant
-from waldur_openstack.openstack_tenant.models import Instance, Volume
+from waldur_openstack.models import Tenant, Instance, Volume
 from waldur_core.structure.models import ServiceSettings
 
 RAM_LIMIT_NAME = 'ram'
@@ -206,11 +205,10 @@ def generate_report():
         ram_usage = tenant.quotas.get(name='ram').usage / 1024
         storage_limit = tenant.quotas.get(name='storage').limit / 1024
         storage_usage = tenant.quotas.get(name='storage').usage / 1024
-        ss = ServiceSettings.objects.get(scope=tenant)
         # RAM > 16 GB
-        big_vm_count = Instance.objects.filter(service_settings=ss, ram__gt=16 * 1024).count()
+        big_vm_count = Instance.objects.filter(tenant=tenant, ram__gt=16 * 1024).count()
         # Disk > 256 GB
-        big_storage_count = Volume.objects.filter(service_settings=ss, size__gt=256 * 1024).count()
+        big_storage_count = Volume.objects.filter(tenant=tenant, size__gt=256 * 1024).count()
         writer.writerow(
             [
                 tenant.project.customer.name,
@@ -290,7 +288,7 @@ Upon running the script, please change `year` and `offering_uuid` variables.
 ```python
 from waldur_mastermind.marketplace import models as mm
 from urllib.parse import urlparse
-from waldur_openstack.openstack_tenant import models as otm
+from waldur_openstack import models as otm
 import csv
 
 year = 2024

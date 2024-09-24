@@ -1,8 +1,5 @@
-from waldur_core.structure import models as sm
-from waldur_openstack.openstack import models as om
-from waldur_openstack.openstack.backend import OpenStackBackend
-from waldur_openstack.openstack_tenant import models as otm
-from waldur_openstack.openstack_tenant import executors as ote
+from waldur_openstack import models, executors
+from waldur_openstack.backend import OpenStackBackend
 
 import logging
 
@@ -10,13 +7,11 @@ logger = logging.getLogger(__name__)
 
 tenant_names = []
 
-main_tenant: om.Tenant = om.Tenant.objects.get(uuid='<main-tenant-uuid>')
+main_tenant = models.Tenant.objects.get(uuid='<main-tenant-uuid>')
 backend: OpenStackBackend = main_tenant.get_backend()
 
 
 def wipe_dangling_tenant_objects(tenant):
-    service_settings = sm.ServiceSettings.objects.get(scope=tenant)
-
     try:
         backend.delete_tenant_floating_ips(tenant)
     except Exception as exc:
@@ -72,7 +67,7 @@ def wipe_dangling_tenant_objects(tenant):
         input('Continue?')
     else:
         logger.info('delete_tenant_snapshots')
-    otm.Snapshot.objects.filter(service_settings=service_settings).delete()
+    models.Snapshot.objects.filter(tenant=tenant).delete()
 
     backend.are_all_tenant_snapshots_deleted(tenant)
 
@@ -83,7 +78,7 @@ def wipe_dangling_tenant_objects(tenant):
         input('Continue?')
     else:
         logger.info('delete_tenant_instances')
-    otm.Instance.objects.filter(service_settings=service_settings).delete()
+    models.Instance.objects.filter(tenant=tenant).delete()
 
     backend.are_all_tenant_instances_deleted(tenant)
 
@@ -94,7 +89,7 @@ def wipe_dangling_tenant_objects(tenant):
         input('Continue?')
     else:
         logger.info('delete_tenant_volumes')
-    otm.Volume.objects.filter(service_settings=service_settings).delete()
+    models.Volume.objects.filter(tenant=tenant).delete()
 
     backend.are_all_tenant_volumes_deleted(tenant)
 
@@ -105,7 +100,7 @@ def wipe_dangling_tenant_objects(tenant):
         input('Continue?')
     else:
         logger.info('delete_tenant_server_groups')
-    otm.ServerGroup.objects.filter(service_settings=service_settings).delete()
+    models.ServerGroup.objects.filter(tenant=tenant).delete()
 
     try:
         backend.delete_tenant_user(tenant)
@@ -126,8 +121,8 @@ def wipe_dangling_tenant_objects(tenant):
 
 
 for tenant_name in tenant_names:
-    tenant = om.Tenant.objects.get(name=tenant_name)
-    tenant.state = om.Tenant.States.DELETING
+    tenant = models.Tenant.objects.get(name=tenant_name)
+    tenant.state = models.Tenant.States.DELETING
     tenant.save(update_fields=['state'])
-    ote.OpenStackTenantCleanupExecutor().execute(tenant.project, is_async=False)
+    executors.OpenStackCleanupExecutor().execute(tenant.project, is_async=False)
     wipe_dangling_tenant_objects(tenant)
