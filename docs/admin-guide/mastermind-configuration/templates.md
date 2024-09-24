@@ -101,45 +101,6 @@ Owner of
 {% endfor %}
 ```
 
-### service_settings_description.html (waldur_core.structure)
-
-``` html
-{% for name, service in services %}
-    <div id="id_{{ name }}" class="service-fields">
-    <h4>{{ name }}</h4>
-
-    {% if service.fields.items %}
-        <p>Fields:</p>
-        <ul>
-            {% for name, field in service.fields.items %}
-                <li>
-                    <code>{{ name }}</code>
-                    {% if field.label or field.help_text %} — {% endif %}
-                    {% if field.label %} {{ field.label }} {% endif %}
-                    {% if field.help_text %} {{ field.help_text }} {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    {% if service.extra_fields.items %}
-        <p>Options:</p>
-        <ul>
-            {% for name, field in service.extra_fields.items %}
-                <li>
-                    <code>{{ name }}</code>
-                    {% if field.label or field.help_text %} — {% endif %}
-                    {% if not field.required %} (optional) {% endif %}
-                    {% if field.label %} {{ field.label }} {% endif %}
-                    {% if field.help_text %} {{ field.help_text }} {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    </div>
-{% endfor %}
-```
-
 ### structure_role_granted_message.html (waldur_core.structure)
 
 ``` html

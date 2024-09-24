@@ -922,62 +922,6 @@ Type: str
 
 UUID of a Waldur SLURM offering plan, which will be used for creating allocations for users
 
-### WALDUR_KEYCLOAK plugin
-
-Default value:
-
-```python
-WALDUR_KEYCLOAK = {'BASE_URL': 'http://localhost:8080/auth',
- 'CLIENT_ID': 'waldur',
- 'CLIENT_SECRET': 'UUID',
- 'ENABLED': False,
- 'PASSWORD': 'secret',
- 'REALM': 'waldur',
- 'USERNAME': 'admin'}
-```
-
-#### BASE_URL
-
-Type: str
-
-Base URL of Keycloak server
-
-#### CLIENT_ID
-
-Type: str
-
-Identification of Waldur client app
-
-#### CLIENT_SECRET
-
-Type: str
-
-Credentials are generated in Keycloak admin console
-
-#### ENABLED
-
-Type: bool
-
-Enable integration of group provisioning in configured Keycloak
-
-#### PASSWORD
-
-Type: str
-
-Password of Keycloak user with administrative privileges
-
-#### REALM
-
-Type: str
-
-Realm used by Waldur
-
-#### USERNAME
-
-Type: str
-
-Username of Keycloak user with administrative privileges
-
 ### WALDUR_MARKETPLACE plugin
 
 Default value:
@@ -1146,7 +1090,9 @@ Type of jobs deployment. Valid values: "docker" for simple docker deployment, "k
 Default value:
 
 ```python
-WALDUR_OPENSTACK = {'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
+WALDUR_OPENSTACK = {'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
+ 'ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION': False,
+ 'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
  'DEFAULT_SECURITY_GROUPS': ({'description': 'Security group for secure shell '
                                              'access',
                               'name': 'ssh',
@@ -1178,10 +1124,26 @@ WALDUR_OPENSTACK = {'DEFAULT_BLACKLISTED_USERNAMES': ['admin', 'service'],
                                          'from_port': 443,
                                          'protocol': 'tcp',
                                          'to_port': 443})}),
+ 'MAX_CONCURRENT_PROVISION': {'OpenStack.Instance': 4,
+                              'OpenStack.Snapshot': 4,
+                              'OpenStack.Volume': 4},
+ 'REQUIRE_AVAILABILITY_ZONE': False,
  'SUBNET': {'ALLOCATION_POOL_END': '{first_octet}.{second_octet}.{third_octet}.200',
             'ALLOCATION_POOL_START': '{first_octet}.{second_octet}.{third_octet}.10'},
  'TENANT_CREDENTIALS_VISIBLE': False}
 ```
+
+#### ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS
+
+Type: bool
+
+If true, customer users would be offered actions for accessing OpenStack console
+
+#### ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION
+
+Type: bool
+
+If true, allow connecting of instances directly to external networks
 
 #### DEFAULT_BLACKLISTED_USERNAMES
 
@@ -1195,6 +1157,18 @@ Type: tuple
 
 Default security groups and rules created in each of the provisioned OpenStack tenants
 
+#### MAX_CONCURRENT_PROVISION
+
+Type: dict
+
+Maximum parallel executions of provisioning operations for OpenStack resources
+
+#### REQUIRE_AVAILABILITY_ZONE
+
+Type: bool
+
+If true, specification of availability zone during provisioning will become mandatory
+
 #### SUBNET
 
 Type: dict
@@ -1206,43 +1180,6 @@ Default allocation pool for auto-created internal network
 Type: bool
 
 If true, generated credentials of a tenant are exposed to project users
-
-### WALDUR_OPENSTACK_TENANT plugin
-
-Default value:
-
-```python
-WALDUR_OPENSTACK_TENANT = {'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
- 'ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION': False,
- 'MAX_CONCURRENT_PROVISION': {'OpenStackTenant.Instance': 4,
-                              'OpenStackTenant.Snapshot': 4,
-                              'OpenStackTenant.Volume': 4},
- 'REQUIRE_AVAILABILITY_ZONE': False}
-```
-
-#### ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS
-
-Type: bool
-
-If true, customer users would be offered actions for accessing OpenStack Console
-
-#### ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION
-
-Type: bool
-
-If true, allow connecting of Instances directly to external networks
-
-#### MAX_CONCURRENT_PROVISION
-
-Type: dict
-
-Maximum parallel executions of provisioning operations for OpenStackTenant resources
-
-#### REQUIRE_AVAILABILITY_ZONE
-
-Type: bool
-
-If true, specification of availability zone during provisioning will become mandatory
 
 ### WALDUR_PID plugin
 
