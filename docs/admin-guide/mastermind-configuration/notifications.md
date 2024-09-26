@@ -1179,6 +1179,56 @@ A notification about project ending. The recipients are project managers and cus
 
 ```
 
+### marketplace.notification_about_resource_ending
+
+A notification about resource ending. The recipients are project managers and customer owners.
+
+#### Templates
+
+=== "marketplace/notification_about_resource_ending_subject.txt"
+
+```txt
+    Resource {{ resource.name }} will be deleted.
+
+```
+
+=== "marketplace/notification_about_resource_ending_message.txt"
+
+```txt
+    Dear {{ user.full_name }},
+
+    Termination date of your {{ resource.name }} is approaching and it will be deleted{% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
+    If you are aware of that, then no actions are needed from your side.
+    If you need to update resource end date, please update it in resource details {{ resource_url }}.
+
+    Thank you!
+
+```
+
+=== "marketplace/notification_about_resource_ending_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Resource {{ resource.name }} will be deleted.</title>
+    </head>
+    <body>
+    <p>Dear {{ user.full_name }},</p>
+
+    <p>
+        Termination date of your {{ resource.name }} is approaching and it will be
+        deleted{% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.<br />
+        If you are aware of that, then no actions are needed from your side. <br />
+        If you need to update resource end date, please update it in resource details {{ resource_url }}.
+    </p>
+
+    <p>Thank you!</p>
+    </body>
+    </html>
+
+```
+
 ### marketplace.notification_about_stale_resources
 
 A notification about stale resources. The recipients are organization owners.

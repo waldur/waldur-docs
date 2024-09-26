@@ -1124,6 +1124,18 @@ A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 </html>
 ```
 
+### notification_about_resource_ending_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Dear {{ user.full_name }},
+
+Termination date of your {{ resource.name }} is approaching and it will be deleted{% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
+If you are aware of that, then no actions are needed from your side.
+If you need to update resource end date, please update it in resource details {{ resource_url }}.
+
+Thank you!
+```
+
 ### notification_about_project_ending_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -1264,6 +1276,29 @@ Hello!
 The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
 ```
 
+### notification_about_resource_ending_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Resource {{ resource.name }} will be deleted.</title>
+</head>
+<body>
+<p>Dear {{ user.full_name }},</p>
+
+<p>
+    Termination date of your {{ resource.name }} is approaching and it will be
+    deleted{% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.<br />
+    If you are aware of that, then no actions are needed from your side. <br />
+    If you need to update resource end date, please update it in resource details {{ resource_url }}.
+</p>
+
+<p>Thank you!</p>
+</body>
+</html>
+```
+
 ### notification_about_project_ending_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -1274,6 +1309,12 @@ If you are aware of that, then no actions are needed from your side.
 If you need to update project end date, please update it in project details {{ project_url }}.
 
 Thank you!
+```
+
+### notification_about_resource_ending_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Resource {{ resource.name }} will be deleted.
 ```
 
 ### marketplace_resource_update_succeeded_subject.txt (waldur_mastermind.marketplace)
