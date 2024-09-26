@@ -3,7 +3,7 @@
 ## Docker-compose deployment (on a single server)
 
 - Docker version: 1.13+
-- Minimal configuration: 4 vCPU, 8 GB RAM
+- Minimal configuration: 4 vCPU, 12 GB RAM
 
 ## Helm-based deployment
 
