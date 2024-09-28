@@ -1,8 +1,7 @@
 # User Guide
 
-From this section, you can find useful and practical action for completing the most common tasks.
-
-Please note that the user guide preparation work is in progress, and we will add new instructions continuously.
+This section contains instructions to typical operations done with Waldur. The section can be used as a basis
+for deployment-specific documentation.
 
 Practical guides:
 

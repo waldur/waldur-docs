@@ -1,5 +1,10 @@
 # Roadmap
 
+!!! warning
+
+    The roadmap page is currently deprecated. We are working towards opening up a development process to
+    enable more transparent and up-to-date roadmap display.
+
 ## Disclaimer
 
 This document is a living document and is used for planning. Plans for the unreleased features can change without

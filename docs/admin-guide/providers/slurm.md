@@ -18,7 +18,7 @@ It is possible to customize prefixes in Waldur configuration. Check WALDUR_SLURM
 
 ## Add SLURM provider
 
-To add SLURM as a [provider](/docs/user-guide/adding-an-offering.md) to Waldur, you will need the following information:
+To add SLURM as a [provider](../../user-guide/adding-an-offering.md) to Waldur, you will need the following information:
 
 - SSH host address to a node, from where SLURM commands could be executed.
 - Username that has Slurm [operator role](https://slurm.schedmd.com/user_permissions.html).

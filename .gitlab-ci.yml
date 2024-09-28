@@ -100,9 +100,9 @@ Test changelog generation:
     - echo $CI_COMMIT_TAG_MESSAGE
     - echo $CI_RELEASE_DESCRIPTION
     - export TIMESTAMP=$(date)
-    - PREV_TAG=$(cat docs/CHANGELOG.md| grep "##" | head -n 1 | sed "s/## //" )
+    - PREV_TAG=$(cat docs/about/CHANGELOG.md| grep "##" | head -n 1 | sed "s/## //" )
     - echo $PREV_TAG
-    - sed -i -E -e "s/# Changelog//" docs/CHANGELOG.md
+    - sed -i -E -e "s/# Changelog//" docs/about/CHANGELOG.md
     - |
       echo -e "# Changelog
 
@@ -115,9 +115,9 @@ Test changelog generation:
       * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/$PREV_TAG...$CI_COMMIT_TAG)
       * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/$PREV_TAG...$CI_COMMIT_TAG)
 
-      Date: $TIMESTAMP\n" | cat - docs/CHANGELOG.md > tmp
+      Date: $TIMESTAMP\n" | cat - docs/about/CHANGELOG.md > tmp
     - cat tmp
-    - mv -f tmp docs/CHANGELOG.md
+    - mv -f tmp docs/about/CHANGELOG.md
 
 Tag Mastermind, Homeport and Helm repositories:
   image:
@@ -140,7 +140,7 @@ Tag Mastermind, Homeport and Helm repositories:
     - PREV_TAG=$(cat docs/CHANGELOG.md| grep "##" | head -n 1 | sed "s/## //" )
     - echo $PREV_TAG
     # Drop first 2 lines from the changelog
-    - sed -i '1,2d' docs/CHANGELOG.md
+    - sed -i '1,2d' docs/about/CHANGELOG.md
     - |
       echo -e "# Changelog
 
@@ -154,11 +154,11 @@ Tag Mastermind, Homeport and Helm repositories:
       * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/$PREV_TAG...$CI_COMMIT_TAG)
       * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/$PREV_TAG...$CI_COMMIT_TAG)
 
-      Date: $TIMESTAMP\n" | cat - docs/CHANGELOG.md > tmp
+      Date: $TIMESTAMP\n" | cat - docs/about/CHANGELOG.md > tmp
     - cat tmp
-    - mv -f tmp docs/CHANGELOG.md
+    - mv -f tmp docs/about/CHANGELOG.md
     - git --no-pager diff
-    - git add docs/CHANGELOG.md
+    - git add docs/about/CHANGELOG.md
     - git commit -m "Update changelog for $CI_COMMIT_TAG"
     - git --no-pager show
     - git push origin master
