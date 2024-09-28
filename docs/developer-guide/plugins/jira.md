@@ -1,5 +1,55 @@
 # JIRA plugin
 
+## Configuration
+
+1. Define active backend.
+
+    ``` python
+    # For Service Desk
+    WALDUR_SUPPORT.update({
+        'ACTIVE_BACKEND': 'waldur_mastermind.support.backend.atlassian:ServiceDeskBackend',
+    })
+    # For JIRA
+    WALDUR_SUPPORT.update({
+        'ACTIVE_BACKEND': 'waldur_mastermind.support.backend.atlassian:JiraBackend',
+    })
+    ```
+
+2. Setup connection. Define server URL and user details to connect JIRA
+    or Service Desk to Waldur:
+
+    ``` python
+    WALDUR_SUPPORT['CREDENTIALS'].update({
+        'server': <server URL>,
+        'username': <Atlassian user username>,
+        'password': <Atlassian user password>,
+    })
+    ```
+
+3. Project setup. Define project key.
+
+    ``` python
+    WALDUR_SUPPORT['PROJECT'].update({
+        'key': <project key>,
+    })
+    ```
+
+4. Project issues setup.
+
+    4.1. Make sure that selected project supports registered types of issues: `WALDUR_SUPPORT['ISSUE']['types']`.
+
+    4.2. Make sure that project issues have fields that corresponds to
+    `impact_field`, `reporter_field`, `caller_field`. It is
+    possible to override default field names:
+
+> ``` python
+> WALDUR_SUPPORT['ISSUE'].update({
+>     'impact_field': <issue impact field name in JIRA or Service desk>,
+>     'reporter_field': <issue reporter field name in JIRA or Service desk>,
+>     'caller_field': <issue caller field name in JIRA or Service desk>,
+> })
+> ```
+
 ## Web hook installation
 
 It's possible to track updates of JIRA issues and apply them to Waldur
