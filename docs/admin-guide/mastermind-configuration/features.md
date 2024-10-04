@@ -28,6 +28,10 @@ Show tax number field in invitation creation form.
 
 Make tax number field mandatory in invitation creation form.
 
+## invoice.display_credit_management
+
+Display credit management.
+
 ## marketplace.conceal_prices
 
 Do not render prices in order details.
