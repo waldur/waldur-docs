@@ -33,6 +33,7 @@
 - payment_added
 - payment_created
 - payment_removed
+- reduction_of_credit_due_to_minimal_consumption
 
 ## Invoices
 
