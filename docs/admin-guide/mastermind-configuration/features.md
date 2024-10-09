@@ -52,6 +52,10 @@ Enabled display of experimental or mocked components in marketplace.
 
 Allow to hide OpenStack volume type selector when instance or volume is provisioned.
 
+## openstack.show_migrations
+
+Show OpenStack tenant migrations action and tab
+
 ## project.estimated_cost
 
 Render estimated cost column in projects list.
