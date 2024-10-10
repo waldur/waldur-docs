@@ -9,5 +9,5 @@ from within Waldur.
 Currently supported service desk solutions:
 
 - [Atlassian ServiceDesk](https://www.atlassian.com/software/jira/service-management) (on-prem and cloud);
-- [Zammad](zammad.com/en);
+- [Zammad](https://zammad.com/en);
 - [Microfocus SMAX](https://www.microfocus.com/en-us/smax/predictable-it-service-management).

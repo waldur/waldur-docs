@@ -11,15 +11,16 @@ This can mean for example research group, institution, department or working gro
 ## Create a new organization
 
 1. Login to Waldur and select "Organizations" from the left-side menu and then select "Add" from the right.
-   ![Select organization](img/Create_org.jpg)
-
 2. Fill the form and click "Create organization":
 
     - Name - Name of the organization
     - Contact email - email of the person, who is responsible for the organization
 
 3. Organization edit page opens, where it is possible to add additional information, like policies, contact information. It is beneficial to assign a predefined category group (like private company, university, government, individial person etc) to organization.
-   ![Edit organization](img/Org_edit.jpg)
+
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/create_organization.mp4" type="video/mp4">
+</video>
 
 ## Creation of projects
 
@@ -38,3 +39,7 @@ Prerequisites for creating projects:
     - OECD FoS code - OECD science field code ([more info](https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about))
     - End date - this is the end date for using the computational resources.
     - Project image - Profile picture for the project (optional).
+
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/create_project.mp4" type="video/mp4">
+</video>

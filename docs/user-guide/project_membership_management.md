@@ -25,17 +25,12 @@ Please see [this page](https://docs.waldur.com/glossaries/structure/#user-roles-
 
 1. Open project in Waldur.<br><br>
 2. Select "Team" from top menu and click on "Invitations".<br><br>
-
-    ![Invite user](img/invitation-1.jpg)<br><br>
-
 3. By clicking "Invite user" open "Invite by email" window.<br><br>
-
-    ![Invite user](img/invitation-2.jpg)<br><br>
-
 4. Insert user's email and set the role for the new user and continue.<br><br>
 5. Fill in your custom message on the right side of the window and send the invitation.<br><br>
-
-    ![Invite user](img/invitation-3.jpg)<br><br>
-
 6. User now will get invitation email with the acceptance link.
+
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/send_invitation.mp4" type="video/mp4">
+</video>
 
