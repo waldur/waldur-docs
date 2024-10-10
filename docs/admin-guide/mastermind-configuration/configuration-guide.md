@@ -401,7 +401,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'NOTIFICATION_SUBJECT': 'Notifications from Waldur',
  'OECD_FOS_2007_CODE_MANDATORY': False,
  'ONLY_STAFF_CAN_INVITE_USERS': False,
- 'ONLY_STAFF_MANAGES_SERVICES': False,
  'PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS': [],
  'REQUEST_HEADER_IMPERSONATED_USER_UUID': 'HTTP_X_IMPERSONATED_USER_UUID',
  'RESPONSE_HEADER_IMPERSONATOR_UUID': 'X-impersonator-uuid',
@@ -683,12 +682,6 @@ Field oecd_fos_2007_code must be required for project.
 Type: bool
 
 Allow to limit invitation management to staff only.
-
-#### ONLY_STAFF_MANAGES_SERVICES
-
-Type: bool
-
-Allows to restrict provider management only to staff users.
 
 #### PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS
 

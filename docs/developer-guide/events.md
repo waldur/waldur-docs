@@ -21,6 +21,7 @@
 
 ## Customers
 
+- create_of_credit_by_staff
 - customer_creation_succeeded
 - customer_deletion_succeeded
 - customer_update_succeeded
@@ -33,10 +34,14 @@
 - payment_added
 - payment_created
 - payment_removed
+- reduction_of_credit
 - reduction_of_credit_due_to_minimal_consumption
+- set_to_zero_overdue_credit
+- update_of_credit_by_staff
 
 ## Invoices
 
+- create_of_credit_by_staff
 - invoice_canceled
 - invoice_created
 - invoice_creation_succeeded
@@ -48,6 +53,10 @@
 - invoice_update_succeeded
 - payment_created
 - payment_removed
+- reduction_of_credit
+- reduction_of_credit_due_to_minimal_consumption
+- set_to_zero_overdue_credit
+- update_of_credit_by_staff
 
 ## Jira
 
