@@ -22,5 +22,4 @@ To get a quick feeling what Waldur is, take a look at some [screenshots](about/s
 
 If you are interested in deploying, check the [getting started](about/getting-started.md) section!
 
-
 ![Overview](assets/waldur_overview.png)

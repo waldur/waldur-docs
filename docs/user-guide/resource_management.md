@@ -38,6 +38,10 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 !!! Info
     Provisioned VPC resource package will be automatically enabled for the project as a VM provider. For other projects it can be enabled by the organization owner under Provider management within organization workspace.
 
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/approval.mp4" type="video/mp4">
+</video>
+
 ## VM management
 
 !!! Info
@@ -103,6 +107,22 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 !!! Info
     VM access over SSH or RDP should be permitted by ’Security Groups’ linked to VM.
 
+## HPC resource management
+
+- HPC resources can be added by clicking to ´Marketplace´.
+- Select organization and project (if not filled in yet) from the upper right corner.
+- selecting ´HPC´ category or some other option which represent HPC resources.
+- Select desired resource and click 'Deploy'.
+- Fill in request form fields and click 'Create' on the right.
+
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/how_to_add_resource.mp4" type="video/mp4">
+</video>
+
 ## Resource components update
 
 If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.
+
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/allocation_update.mp4" type="video/mp4">
+</video>
