@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../assets/waldur-logo.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -6881,6 +6881,16 @@ Some users - mostly affiliated with Waldur operator - can have global roles, e.g
 </div>
 </div>
 </div></section><h1 class='nav-section-title-end'>Ended: Glossaries</h1><section class="print-page" id="about-changelog"><h1 id="about-changelog-changelog">Changelog</h1>
+<h2 id="about-changelog-702">7.0.2</h2>
+<p>Notes: Initial version of migration</p>
+<ul>
+<li>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.0.1...7.0.2">tag diff</a></li>
+<li>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.0.1...7.0.2">tag diff</a></li>
+<li>Waldur Helm: <a href="https://github.com/waldur/waldur-helm/compare/7.0.1...7.0.2">tag diff</a></li>
+<li>Waldur Docker Compose: <a href="https://github.com/waldur/waldur-docker-compose/compare/7.0.1...7.0.2">tag diff</a></li>
+<li>Waldur Prometheus Exporter: <a href="https://github.com/waldur/waldur-prometheus-exporter/compare/7.0.1...7.0.2">tag diff</a></li>
+</ul>
+<p>Date: Fri Oct 11 20:32:54 UTC 2024</p>
 <h2 id="about-changelog-701">7.0.1</h2>
 <p>Notes: Bugfix release</p>
 <ul>
@@ -8920,72 +8930,69 @@ on a Kubernetes cluster using the <a href="https://helm.sh">Helm</a> package man
 </ol>
 <h2 id="admin-guide-deployment-helm-installing-the-chart">Installing the chart</h2>
 <ol>
-<li>Clone <a href="https://github.com/waldur/waldur-helm">waldur-helm repository</a></li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/waldur/waldur-helm.git
-<span class="w">  </span><span class="nb">cd</span><span class="w"> </span>waldur-helm
-</code></pre></div></td></tr></table></div>
-<ol>
-<li>Add the stable repository</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>stable<span class="w"> </span>https://charts.helm.sh/stable
-</code></pre></div></td></tr></table></div>
-<ol>
 <li>
-<p>Setup database:
-    3.1 Setup single PostgreSQL DB: <a href="#admin-guide-deployment-helm-docs-postgres-db">instructions</a> or
-    3.2 Setup PostgreSQL HA DB: <a href="#admin-guide-deployment-helm-docs-postgres-db-ha">instructions</a> or
-    3.3 Integrate with external DB: <a href="#admin-guide-deployment-helm-docs-external-db-integration">instructions</a></p>
-<p><strong>NB</strong> Only one of these two options should be used. Otherwise, DB will be unavailable.</p>
+<p>Add the Waldur Helm repository</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>waldur-charts<span class="w"> </span>https://waldur.github.io/waldur-helm/
+</code></pre></div></td></tr></table></div>
 </li>
 <li>
-<p>Install minio (for database backups): <a href="#admin-guide-deployment-helm-docs-minio">instructions</a></p>
+<p>Install dependencies or enable them in Helm values</p>
+<p>Setup database using one of:
+- Simple PostgreSQL DB: <a href="#admin-guide-deployment-helm-docs-postgres-db">instructions</a> or
+- PostgreSQL HA DB: <a href="#admin-guide-deployment-helm-docs-postgres-db-ha">instructions</a> or
+- Integrate with external DB: <a href="#admin-guide-deployment-helm-docs-external-db-integration">instructions</a></p>
+<p>Install MinIO (for database backups): <a href="#admin-guide-deployment-helm-docs-minio">instructions</a></p>
+<p>Install RabbitMQ for task queue: <a href="#admin-guide-deployment-helm-docs-rabbitmq">instructions</a></p>
 </li>
-<li>Install RabbitMQ for task queue: <a href="#admin-guide-deployment-helm-docs-rabbitmq">instructions</a></li>
-<li>Install Helm package:</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>waldur<span class="w"> </span>waldur
+<li>
+<p>Install the Helm chart</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>my-waldur<span class="w"> </span>waldur-charts/waldur<span class="w"> </span>-f<span class="w"> </span>path/to/values.yml
 </code></pre></div></td></tr></table></div>
+</li>
+</ol>
 <p><strong>NB</strong> After this command, Waldur release will run in <code>default</code> namespace.
 Please, pay attention in which namespace which release is running.</p>
 <p>For instance, you can install Waldur release
 in <code>test</code> namespace in the following way:</p>
 <ol>
-<li>Create <code>test</code> namespace:</li>
-</ol>
+<li>
+<p>Create <code>test</code> namespace:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>kubectl<span class="w"> </span>create<span class="w"> </span>namespace<span class="w"> </span><span class="nb">test</span>
 </code></pre></div></td></tr></table></div>
-<ol>
-<li>Install release:</li>
-</ol>
+</li>
+<li>
+<p>Install release:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>waldur<span class="w"> </span>waldur<span class="w"> </span>--namespace<span class="w"> </span><span class="nb">test</span>
 </code></pre></div></td></tr></table></div>
+</li>
+</ol>
 <p>However, postgresql release and waldur should be installed
 in the same namespace in order to share a common secret with DB credentials.</p>
 <h2 id="admin-guide-deployment-helm-adding-admin-user">Adding admin user</h2>
 <p>Open waldur-mastermind-worker shell and execute the following command:</p>
 <ol>
-<li>Get waldur-mastermind-worker pod name</li>
-</ol>
+<li>
+<p>Get waldur-mastermind-worker pod name</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
 <span class="w">  </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-A<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span><span class="c1"># --&gt;</span>
 <span class="w">  </span><span class="c1"># default waldur-mastermind-worker-6d98cd98bd-wps8n 1/1 Running 0 9m9s</span>
 </code></pre></div></td></tr></table></div>
-<ol>
-<li>Connect to pod via shell</li>
-</ol>
+</li>
+<li>
+<p>Connect to pod via shell</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
 <span class="w">  </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>deployment/waldur-mastermind-worker<span class="w"> </span>--<span class="w"> </span>/bin/bash
 </code></pre></div></td></tr></table></div>
-<ol>
-<li>Execute command to add admin user</li>
-</ol>
+</li>
+<li>
+<p>Execute command to add admin user</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>waldur<span class="w"> </span>createstaffuser<span class="w"> </span>-u<span class="w"> </span>user<span class="w"> </span>-p<span class="w"> </span>password<span class="w"> </span>-e<span class="w"> </span>admin@example.com
 </code></pre></div></td></tr></table></div>
+</li>
+</ol>
 <h2 id="admin-guide-deployment-helm-waldur-helm-chart-release-upgrading">Waldur Helm chart release upgrading</h2>
 <p>Delete init-whitelabeling job (if exists):</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>kubectl<span class="w"> </span>delete<span class="w"> </span>job<span class="w"> </span>waldur-mastermind-init-whitelabeling-job<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
@@ -11503,8 +11510,7 @@ options:
 <span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">WALDUR_CORE</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ATTACHMENT_LINK_MAX_AGE&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">3600</span><span class="p">),</span>
+<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">WALDUR_CORE</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ATTACHMENT_LINK_MAX_AGE&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">3600</span><span class="p">),</span>
  <span class="s1">&#39;AUTHENTICATION_METHODS&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;LOCAL_SIGNIN&#39;</span><span class="p">],</span>
  <span class="s1">&#39;BACKEND_FIELDS_EDITABLE&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
  <span class="s1">&#39;COUNTRIES&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;AL&#39;</span><span class="p">,</span>
@@ -11590,7 +11596,6 @@ options:
  <span class="s1">&#39;NOTIFICATION_SUBJECT&#39;</span><span class="p">:</span> <span class="s1">&#39;Notifications from Waldur&#39;</span><span class="p">,</span>
  <span class="s1">&#39;OECD_FOS_2007_CODE_MANDATORY&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
  <span class="s1">&#39;ONLY_STAFF_CAN_INVITE_USERS&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
- <span class="s1">&#39;ONLY_STAFF_MANAGES_SERVICES&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
  <span class="s1">&#39;PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS&#39;</span><span class="p">:</span> <span class="p">[],</span>
  <span class="s1">&#39;REQUEST_HEADER_IMPERSONATED_USER_UUID&#39;</span><span class="p">:</span> <span class="s1">&#39;HTTP_X_IMPERSONATED_USER_UUID&#39;</span><span class="p">,</span>
  <span class="s1">&#39;RESPONSE_HEADER_IMPERSONATOR_UUID&#39;</span><span class="p">:</span> <span class="s1">&#39;X-impersonator-uuid&#39;</span><span class="p">,</span>
@@ -11740,9 +11745,6 @@ options:
 <h4 id="admin-guide-mastermind-configuration-configuration-guide-only_staff_can_invite_users">ONLY_STAFF_CAN_INVITE_USERS</h4>
 <p>Type: bool</p>
 <p>Allow to limit invitation management to staff only.</p>
-<h4 id="admin-guide-mastermind-configuration-configuration-guide-only_staff_manages_services">ONLY_STAFF_MANAGES_SERVICES</h4>
-<p>Type: bool</p>
-<p>Allows to restrict provider management only to staff users.</p>
 <h4 id="admin-guide-mastermind-configuration-configuration-guide-protect_user_details_for_registration_methods">PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS</h4>
 <p>Type: List[str]</p>
 <p>List of authentication methods for which a manual update of user details is not allowed.</p>
@@ -19111,6 +19113,7 @@ state.</p>
 </ul>
 <h2 id="developer-guide-events-customers">Customers</h2>
 <ul>
+<li>create_of_credit_by_staff</li>
 <li>customer_creation_succeeded</li>
 <li>customer_deletion_succeeded</li>
 <li>customer_update_succeeded</li>
@@ -19123,10 +19126,14 @@ state.</p>
 <li>payment_added</li>
 <li>payment_created</li>
 <li>payment_removed</li>
+<li>reduction_of_credit</li>
 <li>reduction_of_credit_due_to_minimal_consumption</li>
+<li>set_to_zero_overdue_credit</li>
+<li>update_of_credit_by_staff</li>
 </ul>
 <h2 id="developer-guide-events-invoices">Invoices</h2>
 <ul>
+<li>create_of_credit_by_staff</li>
 <li>invoice_canceled</li>
 <li>invoice_created</li>
 <li>invoice_creation_succeeded</li>
@@ -19138,6 +19145,10 @@ state.</p>
 <li>invoice_update_succeeded</li>
 <li>payment_created</li>
 <li>payment_removed</li>
+<li>reduction_of_credit</li>
+<li>reduction_of_credit_due_to_minimal_consumption</li>
+<li>set_to_zero_overdue_credit</li>
+<li>update_of_credit_by_staff</li>
 </ul>
 <h2 id="developer-guide-events-jira">Jira</h2>
 <ul>
@@ -20990,7 +21001,7 @@ opening of an SSH client if configured for the browser. Out of the box works on 
 <li>By clicking Support you can find User Documentation, or reach us by using support email address and also create support request by going to "Issues" window.</li>
 </ul>
 <video controls width="100%" autoplay="true" muted loop >
-  <source src="../img/interface_basics_wo_logo.mp4" type="video/mp4">
+  <source src="../img/interface_basics.mp4" type="video/mp4">
 </video></section><section class="print-page" id="user-guide-organization_and_project_management"><h1 id="user-guide-organization_and_project_management-organization-and-project-management">Organization and project management</h1>
 <h2 id="user-guide-organization_and_project_management-user-guide-for-adding-organizations">User guide for adding organizations</h2>
 <div class="admonition note">
@@ -21001,10 +21012,7 @@ opening of an SSH client if configured for the browser. Out of the box works on 
 This can mean for example research group, institution, department or working group. Organization has an owner who can manage the organization, projects and users connected to that project.</p>
 <h2 id="user-guide-organization_and_project_management-create-a-new-organization">Create a new organization</h2>
 <ol>
-<li>
-<p>Login to Waldur and select "Organizations" from the left-side menu and then select "Add" from the right.
-   <a class="glightbox" href="../user-guide/img/Create_org.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Select organization" src="../user-guide/img/Create_org.jpg" /></a></p>
-</li>
+<li>Login to Waldur and select "Organizations" from the left-side menu and then select "Add" from the right.</li>
 <li>
 <p>Fill the form and click "Create organization":</p>
 <ul>
@@ -21013,10 +21021,13 @@ This can mean for example research group, institution, department or working gro
 </ul>
 </li>
 <li>
-<p>Organization edit page opens, where it is possible to add additional information, like policies, contact information. It is beneficial to assign a predefined category group (like private company, university, government, individial person etc) to organization.
-   <a class="glightbox" href="../user-guide/img/Org_edit.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Edit organization" src="../user-guide/img/Org_edit.jpg" /></a></p>
+<p>Organization edit page opens, where it is possible to add additional information, like policies, contact information. It is beneficial to assign a predefined category group (like private company, university, government, individial person etc) to organization.</p>
 </li>
 </ol>
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/create_organization.mp4" type="video/mp4">
+</video>
+
 <h2 id="user-guide-organization_and_project_management-creation-of-projects">Creation of projects</h2>
 <p>Project creation is allowed for organization owners in their organizations and staff users.</p>
 <p>Prerequisites for creating projects:</p>
@@ -21035,7 +21046,10 @@ This can mean for example research group, institution, department or working gro
 <li>Project image - Profile picture for the project (optional).</li>
 </ul>
 </li>
-</ol></section><section class="print-page" id="user-guide-project_membership_management"><h1 id="user-guide-project_membership_management-project-membership-management">Project membership management</h1>
+</ol>
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/create_project.mp4" type="video/mp4">
+</video></section><section class="print-page" id="user-guide-project_membership_management"><h1 id="user-guide-project_membership_management-project-membership-management">Project membership management</h1>
 <p>Project team contains users with different roles.</p>
 <p>Please see <a href="https://docs.waldur.com/glossaries/structure/#user-roles-in-organization">this page</a> for User Rights based on Roles in the Organization.</p>
 <h2 id="user-guide-project_membership_management-adding-project-members">Adding project members</h2>
@@ -21059,25 +21073,15 @@ This can mean for example research group, institution, department or working gro
 <h3 id="user-guide-project_membership_management-new-user-dont-have-a-account-in-current-waldur-instance">New user don't have a account in current Waldur instance</h3>
 <ol>
 <li>Open project in Waldur.<br><br></li>
-<li>
-<p>Select "Team" from top menu and click on "Invitations".<br><br></p>
-<p><a class="glightbox" href="../user-guide/img/invitation-1.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Invite user" src="../user-guide/img/invitation-1.jpg" /></a><br><br></p>
-</li>
-<li>
-<p>By clicking "Invite user" open "Invite by email" window.<br><br></p>
-<p><a class="glightbox" href="../user-guide/img/invitation-2.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Invite user" src="../user-guide/img/invitation-2.jpg" /></a><br><br></p>
-</li>
-<li>
-<p>Insert user's email and set the role for the new user and continue.<br><br></p>
-</li>
-<li>
-<p>Fill in your custom message on the right side of the window and send the invitation.<br><br></p>
-<p><a class="glightbox" href="../user-guide/img/invitation-3.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Invite user" src="../user-guide/img/invitation-3.jpg" /></a><br><br></p>
-</li>
-<li>
-<p>User now will get invitation email with the acceptance link.</p>
-</li>
-</ol></section><section class="print-page" id="user-guide-projects-removal-admin"><h1 id="user-guide-projects-removal-admin-multiple-projects-removal-via-admin-panel">Multiple projects removal via admin panel</h1>
+<li>Select "Team" from top menu and click on "Invitations".<br><br></li>
+<li>By clicking "Invite user" open "Invite by email" window.<br><br></li>
+<li>Insert user's email and set the role for the new user and continue.<br><br></li>
+<li>Fill in your custom message on the right side of the window and send the invitation.<br><br></li>
+<li>User now will get invitation email with the acceptance link.</li>
+</ol>
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/send_invitation.mp4" type="video/mp4">
+</video></section><section class="print-page" id="user-guide-projects-removal-admin"><h1 id="user-guide-projects-removal-admin-multiple-projects-removal-via-admin-panel">Multiple projects removal via admin panel</h1>
 <p>An admin can remove projects with all related resources with the following sequence of actions:</p>
 <ol>
 <li>Go to admin panel (e.g. <code>http://localhost:8080/admin/</code>)</li>
@@ -21138,6 +21142,10 @@ You need to provision at least one VPC package from a suitable provider in order
 <p class="admonition-title">Info</p>
 <p>Provisioned VPC resource package will be automatically enabled for the project as a VM provider. For other projects it can be enabled by the organization owner under Provider management within organization workspace.</p>
 </div>
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/approval.mp4" type="video/mp4">
+</video>
+
 <h2 id="user-guide-resource_management-vm-management">VM management</h2>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
@@ -21212,8 +21220,23 @@ You need to provision at least one VPC package from a suitable provider in order
 <p class="admonition-title">Info</p>
 <p>VM access over SSH or RDP should be permitted by ’Security Groups’ linked to VM.</p>
 </div>
+<h2 id="user-guide-resource_management-hpc-resource-management">HPC resource management</h2>
+<ul>
+<li>HPC resources can be added by clicking to ´Marketplace´.</li>
+<li>Select organization and project (if not filled in yet) from the upper right corner.</li>
+<li>selecting ´HPC´ category or some other option which represent HPC resources.</li>
+<li>Select desired resource and click 'Deploy'.</li>
+<li>Fill in request form fields and click 'Create' on the right.</li>
+</ul>
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/how_to_add_resource.mp4" type="video/mp4">
+</video>
+
 <h2 id="user-guide-resource_management-resource-components-update">Resource components update</h2>
-<p>If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.</p></section><section class="print-page" id="user-guide-usage_reports"><h1 id="user-guide-usage_reports-accounting-and-usage-reports">Accounting and usage reports</h1>
+<p>If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.</p>
+<video controls width="100%" autoplay="true" muted loop >
+  <source src="../img/allocation_update.mp4" type="video/mp4">
+</video></section><section class="print-page" id="user-guide-usage_reports"><h1 id="user-guide-usage_reports-accounting-and-usage-reports">Accounting and usage reports</h1>
 <h2 id="user-guide-usage_reports-accounting">Accounting</h2>
 <h3 id="user-guide-usage_reports-service-provider-revenue">Service provider revenue</h3>
 <p>If the organization is service provider, then it is possible to check the amount of revenue of a running month. To do that, open the organization dashboard, choose "Service provider" view and then dashboard opens. There you will see the total amount of estimated revenue and also 11 previous months.</p>
@@ -21885,7 +21908,7 @@ from within Waldur.</p>
 <p>Currently supported service desk solutions:</p>
 <ul>
 <li><a href="https://www.atlassian.com/software/jira/service-management">Atlassian ServiceDesk</a> (on-prem and cloud);</li>
-<li><a href="#integrations-service-desk-service-desk-integrations-zammad.com-en">Zammad</a>;</li>
+<li><a href="https://zammad.com/en">Zammad</a>;</li>
 <li><a href="https://www.microfocus.com/en-us/smax/predictable-it-service-management">Microfocus SMAX</a>.</li>
 </ul></section><h1 class='nav-section-title-end'>Ended: Service desk</h1>
                         <h2 class='nav-section-title' id='section-waldur-keycloak-mapper'>
