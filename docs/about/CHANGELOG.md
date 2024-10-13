@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.0.3
+
+Notes: Expose set usage action in provider resource view
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.0.2...7.0.3)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.0.2...7.0.3)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.0.2...7.0.3)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.0.2...7.0.3)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.0.2...7.0.3)
+
+Date: Sun Oct 13 10:51:03 UTC 2024
+
 ## 7.0.2
 
 Notes: Initial version of migration
