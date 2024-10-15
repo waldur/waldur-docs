@@ -1286,12 +1286,6 @@ Type: str, default value: en
 
 Represents the name of a default language.
 
-#### USE_PROTECTED_URL
-
-Type: bool, default value: False
-
-Protect media URLs using signed token.
-
 #### VERIFY_WEBHOOK_REQUESTS
 
 Type: bool, default value: True
