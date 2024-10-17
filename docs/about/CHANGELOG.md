@@ -1,17 +1,5 @@
 # Changelog
 
-## 7.0.4
-
-Notes: Bugfix release
-
-* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.0.3...7.0.4)
-* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.0.3...7.0.4)
-* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.0.3...7.0.4)
-* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.0.3...7.0.4)
-* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.0.3...7.0.4)
-
-Date: Thu Oct 17 05:54:51 UTC 2024
-
 ## 7.0.3
 
 Notes: Expose set usage action in provider resource view
