@@ -30,6 +30,18 @@ positional arguments:
   ip
 ```
 
+## axes_reset_ip_username
+
+Reset all access attempts and lockouts for a given IP address and username
+
+```bash
+usage: waldur axes_reset_ip_username ip username
+
+positional arguments:
+  ip
+  username
+```
+
 ## axes_reset_logs
 
 Reset access log records older than given days.
