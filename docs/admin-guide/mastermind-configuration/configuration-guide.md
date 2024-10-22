@@ -405,7 +405,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'REQUEST_HEADER_IMPERSONATED_USER_UUID': 'HTTP_X_IMPERSONATED_USER_UUID',
  'RESPONSE_HEADER_IMPERSONATOR_UUID': 'X-impersonator-uuid',
  'SELLER_COUNTRY_CODE': None,
- 'SHOW_ALL_USERS': False,
  'SUPPORT_PORTAL_URL': '',
  'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
@@ -706,12 +705,6 @@ The response header, which contains the UUID of the user who requested the imper
 Type: Optional[str]
 
 Specifies seller legal or effective country of registration or residence as an ISO 3166-1 alpha-2 country code. It is used for computing VAT charge rate.
-
-#### SHOW_ALL_USERS
-
-Type: bool
-
-Indicates whether user can see all other users in `api/users/` endpoint.
 
 #### SUPPORT_PORTAL_URL
 
