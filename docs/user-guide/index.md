@@ -12,4 +12,5 @@ Practical guides:
 * [Resource management](resource_management.md)
 * [Accounting and reporting](usage_reports.md)
 * [Cost and usage policies](cost-and-usage-policies.md)
+* [Credit management](credit-management.md)
 * [Projects removal by admin](projects-removal-admin.md)
