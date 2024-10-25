@@ -1,6 +1,7 @@
 # Credit management
 
-Credit management establishes credit limits for organizations and projects, allowing them to utilize specific offerings without requiring additional confirmation.
+Credit management stablishes credit limits for organizations that can be used for purchasing eligible services.
+The credit can optional be sub-allocated to projects and used in [cost policies](cost-and-usage-policies.md).
 
 ## Credit management configuration for staff
 
