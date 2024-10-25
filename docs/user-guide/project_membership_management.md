@@ -31,6 +31,6 @@ Please see [this page](https://docs.waldur.com/glossaries/structure/#user-roles-
 6. User now will get invitation email with the acceptance link.
 
 <video controls width="100%" autoplay="true" muted loop >
-  <source src="../img/send_invitation.mp4" type="video/mp4">
+  <source src="./img/send_invitation.mp4" type="video/mp4">
 </video>
 

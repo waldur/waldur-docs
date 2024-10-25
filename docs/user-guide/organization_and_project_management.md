@@ -19,7 +19,7 @@ This can mean for example research group, institution, department or working gro
 3. Organization edit page opens, where it is possible to add additional information, like policies, contact information. It is beneficial to assign a predefined category group (like private company, university, government, individial person etc) to organization.
 
 <video controls width="100%" autoplay="true" muted loop >
-  <source src="../img/create_organization.mp4" type="video/mp4">
+  <source src="./img/create_organization.mp4" type="video/mp4">
 </video>
 
 ## Creation of projects
@@ -41,5 +41,5 @@ Prerequisites for creating projects:
     - Project image - Profile picture for the project (optional).
 
 <video controls width="100%" autoplay="true" muted loop >
-  <source src="../img/create_project.mp4" type="video/mp4">
+  <source src="./img/create_project.mp4" type="video/mp4">
 </video>
