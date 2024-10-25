@@ -15,8 +15,8 @@ This page provides an overview of already assigned credit policies. To create a 
 
 1. Select an organization to which you would like to assign credits.
 2. Select an offering for which credits can be used.
-3. Set the credit value. This is the maximum value.
-4. Consumption logic defines, how credits are used:
+3. Set the credit value. This is the total value that the organization will be able to spent.
+4. Minimal consumption logic defines, how minimal monthly consumption is calculated:
 
     - Fixed means that it is possible to define minimal monthly value and overall credit will be reduced by the monthly value, even if the usage has been less than minimal consumption.
     - Linear means that by setting the end date, the total value of the credit will be divided evenly across the period until the end date and the overall value will be reduced monthly by the calculated value even if the consumption is less than the calculated value.
@@ -25,7 +25,7 @@ This page provides an overview of already assigned credit policies. To create a 
 
 ## Credit management for organization owners
 
-Organization owners can distribute allocated credits to projects. Projects can use credits for specific resource, overused resource is invoiced according to the pricing plan. Organization owners can use credit management together with the [cost and usage policies](cost-and-usage-policies.md) not to allow overconsumption.
+Organization owners can distribute allocated credits to projects. Projects can use credits for specific resource, overused resource is invoiced according to the pricing plan. Organization owners can use credit management together with the [cost and usage policies](cost-and-usage-policies.md) to handle overconsumption.
 
 To see current credit management policies, open the organization dashboard and then Accounting -> Credit management from the top menu.
 
