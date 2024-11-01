@@ -8,4 +8,4 @@ Unit tests are written in the `.spec.ts` files.
 
 Integration tests are implemented using [Cypress framework](https://www.cypress.io/).
 In order to run all integration tests, execute command `yarn ci:test`.
-If you already have Webpack server running, it's better to execute command `yarn cypress open`.
+If you already have dev server running, it's better to execute command `yarn cypress open`.
