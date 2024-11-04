@@ -11,6 +11,21 @@ on an hourly basis and so on.
 To achieve that, [waldur-prometheus-exporter](https://github.com/waldur/waldur-prometheus-exporter) needs to be setup.
 In addition, we provide example [Grafana dashboard json](grafana-dashboard.json) for visualising the metrics.
 
+## Creating a database user with restricted permissions
+
+When integrating Grafana with Waldur's database, we will create a dedicated database user with restricted permissions. For this, run the following commands using `psql` under your Waldur database user:
+
+```sql
+CREATE USER postgres_stats WITH PASSWORD 'password';
+
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO postgres_stats;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO postgres_stats;
+
+```
+
+When setting up Grafana, use the postgres_stats user to connect to your database with the appropriate permissions.
+
 ## Prometheus metrics
 
 Prometheus exporter allows to setup export of business metrics and reporting information at the fine-grained
