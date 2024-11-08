@@ -23,6 +23,8 @@ Test mkdocs:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
+    - pip install poetry
+    - poetry config virtualenvs.create false
     - poetry install
     - mkdocs build --strict --verbose --site-dir test
 
@@ -35,6 +37,8 @@ Build pages:
     # Ignore if `github_*` remote already exists
     - git remote add github_waldur git@github.com:waldur/waldur-docs.git || true
     - git remote -v
+    - pip install poetry
+    - poetry config virtualenvs.create false
     - poetry install
     - cd $CI_PROJECT_DIR
     - export ENABLE_PDF_EXPORT=1
