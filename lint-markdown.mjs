@@ -1,8 +1,3 @@
-/**
- * Run markdownlint via the API in order to add custom rules for our needs.
- */
-import fs from "fs";
-import path from "path";
 import markdownlint from "markdownlint";
 import { globby } from "globby";
 import relativeLinksRule from "markdownlint-rule-relative-links";
@@ -53,30 +48,6 @@ const result = markdownlint.sync({
   },
   customRules: [
     relativeLinksRule,
-    {
-      names: ["video-file-exists"],
-      description: "Check that video files referenced in <video> tags exist",
-      tags: ["video", "files", "links"],
-      function: function customRule(params, onError) {
-        params.tokens.forEach((token) => {
-          if (token.type === "html_block" && token.content.includes("<video")) {
-            const srcMatch = token.content.match(/src="(.+?)"/);
-            if (srcMatch) {
-              const filePath = path.resolve(
-                path.dirname(params.name),
-                srcMatch[1]
-              );
-              if (!fs.existsSync(filePath)) {
-                onError({
-                  lineNumber: token.lineNumber,
-                  detail: `Video file "${srcMatch[1]}" does not exist.`,
-                });
-              }
-            }
-          }
-        });
-      },
-    },
   ],
   files,
   resultVersion: 1,

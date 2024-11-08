@@ -18,12 +18,12 @@ Lint MD files:
     - node lint-markdown.mjs
 
 Test mkdocs:
-  image: registry.hpc.ut.ee/mirror/library/python:3.8-buster
+  image: registry.hpc.ut.ee/mirror/library/python:3.11-bullseye
   stage: test
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
-    - pip install -r requirements.txt
+    - poetry install
     - mkdocs build --strict --verbose --site-dir test
 
 Build pages:
@@ -35,7 +35,7 @@ Build pages:
     # Ignore if `github_*` remote already exists
     - git remote add github_waldur git@github.com:waldur/waldur-docs.git || true
     - git remote -v
-    - pip install -r requirements.txt
+    - poetry install
     - cd $CI_PROJECT_DIR
     - export ENABLE_PDF_EXPORT=1
     - mkdocs gh-deploy --force -r github_waldur

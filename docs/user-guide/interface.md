@@ -46,6 +46,4 @@
 
 - By clicking Support you can find User Documentation, or reach us by using support email address and also create support request by going to "Issues" window.
 
-<video controls width="100%" autoplay="true" muted loop >
-  <source src="./img/interface_basics.mp4" type="video/mp4">
-</video>
+![type:video](img/interface_basics.mp4)

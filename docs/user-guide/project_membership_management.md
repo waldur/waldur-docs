@@ -30,7 +30,5 @@ Please see [this page](https://docs.waldur.com/glossaries/structure/#user-roles-
 5. Fill in your custom message on the right side of the window and send the invitation.<br><br>
 6. User now will get invitation email with the acceptance link.
 
-<video controls width="100%" autoplay="true" muted loop >
-  <source src="./img/send_invitation.mp4" type="video/mp4">
-</video>
+![type:video](img/send_invitation.mp4)
 
