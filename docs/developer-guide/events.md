@@ -21,6 +21,7 @@
 
 ## Customers
 
+- allowed_offerings_have_been_updated
 - create_of_credit_by_staff
 - customer_creation_succeeded
 - customer_deletion_succeeded
@@ -43,6 +44,7 @@
 
 ## Invoices
 
+- allowed_offerings_have_been_updated
 - create_of_credit_by_staff
 - invoice_canceled
 - invoice_created
