@@ -28,33 +28,45 @@ Test mkdocs:
     - poetry install
     - mkdocs build --strict --verbose --site-dir test
 
-Build pages:
+.build_before_script: &build_before_script
+  - echo "[+] Adding SSH keys to the home directory"
+  - mkdir -p ~/.ssh
+  - echo "$SSH_JENKINS_GITHUB_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+  - echo "$SSH_JENKINS_GITHUB_PUBLIC_KEY" | tr -d '\r' > ~/.ssh/id_rsa.pub
+  - chmod 600 ~/.ssh/id_rsa
+  - ssh-keygen -lf ~/.ssh/id_rsa.pub
+  - ssh-keyscan -H "github.com" >> ~/.ssh/known_hosts
+
+.build_script_steps: &build_script_steps
+  - git remote add github_waldur git@github.com:waldur/waldur-docs.git || true
+  - git remote -v
+  - pip install poetry
+  - poetry config virtualenvs.create false
+  - poetry install
+  - cd $CI_PROJECT_DIR
+  - export ENABLE_PDF_EXPORT=1
+  - git branch -D gh-pages || true
+  - git fetch github_waldur
+
+Build latest pages:
   image: registry.hpc.ut.ee/mirror/library/python:3.12
   stage: deploy
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
-    # Ignore if `github_*` remote already exists
-    - git remote add github_waldur git@github.com:waldur/waldur-docs.git || true
-    - git remote -v
-    - pip install poetry
-    - poetry config virtualenvs.create false
-    - poetry install
-    - cd $CI_PROJECT_DIR
-    - export ENABLE_PDF_EXPORT=1
-    # cleanup potential local cache
-    - git branch -D gh-pages
-    - git fetch github_waldur
+    - *build_script_steps
     - mike deploy latest -p -r github_waldur -b gh-pages
-  before_script:
-    - echo "[+] Adding ssh keys to the home directory"
-    - mkdir -p ~/.ssh
-    - cat $SSH_JENKINS_GITHUB_PRIVATE_KEY | tr -d '\r' > ~/.ssh/id_rsa
-    - cat $SSH_JENKINS_GITHUB_PUBLIC_KEY | tr -d '\r' > ~/.ssh/id_rsa.pub
-    - chmod 600 ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa.pub
-    - ssh-keygen -lf ~/.ssh/id_rsa.pub
-    - ssh-keyscan -H "github.com" >> ~/.ssh/known_hosts
+  before_script: *build_before_script
+
+Build tagged pages:
+  image: registry.hpc.ut.ee/mirror/library/python:3.12
+  stage: postdeploy
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+  script:
+    - *build_script_steps
+    - mike deploy $CI_COMMIT_TAG -p -r github_waldur -b gh-pages
+  before_script: *build_before_script
 
 Test Docker Compose deployment before tagging:
   stage: test
