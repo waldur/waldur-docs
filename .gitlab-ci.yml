@@ -31,9 +31,10 @@ Test mkdocs:
 .build_before_script: &build_before_script
   - echo "[+] Adding SSH keys to the home directory"
   - mkdir -p ~/.ssh
-  - echo "$SSH_JENKINS_GITHUB_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-  - echo "$SSH_JENKINS_GITHUB_PUBLIC_KEY" | tr -d '\r' > ~/.ssh/id_rsa.pub
+  - cat "$SSH_JENKINS_GITHUB_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+  - cat "$SSH_JENKINS_GITHUB_PUBLIC_KEY" | tr -d '\r' > ~/.ssh/id_rsa.pub
   - chmod 600 ~/.ssh/id_rsa
+  - chmod 600 ~/.ssh/id_rsa.pub
   - ssh-keygen -lf ~/.ssh/id_rsa.pub
   - ssh-keyscan -H "github.com" >> ~/.ssh/known_hosts
 
