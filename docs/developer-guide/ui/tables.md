@@ -5,8 +5,9 @@
 
 ```ts
 import { translate } from '@waldur/i18n';
-import { Table, createFetcher } from '@waldur/table';
-import { useTable } from '@waldur/table';
+import Table from '@waldur/table/Table';
+import { createFetcher } from '@waldur/table/api';
+import { useTable } from '@waldur/table/useTable';
 
 export const RolesList = () => {
   const tableProps = useTable({
