@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.1.4
+
+Notes: Bugfixes
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.1.3...7.1.4)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.1.3...7.1.4)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.1.3...7.1.4)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.1.3...7.1.4)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.1.3...7.1.4)
+
+Date: Tue Nov 19 21:56:14 UTC 2024
+
 ## 7.1.3
 
 Notes: Bugfixes
