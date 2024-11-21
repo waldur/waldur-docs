@@ -4,6 +4,11 @@ SLURM plugin enables sharing of access to a [SLURM](https://slurm.schedmd.com/) 
 SLURM is a scheduling system used typically for managing High-performance clusters. Waldur allows to
 share access by creating Slurm accounts and managing permission rights of users.
 
+## Important note
+
+This page describes the legacy marketplace plugin for SLURM.
+For the new SLURM plugin, we recommend to check [this page](waldur-site-agent.md)
+
 ## Configure Waldur SLURM plugin
 
 By default, Waldur creates a hierarchical account structure in SLURM, where:
