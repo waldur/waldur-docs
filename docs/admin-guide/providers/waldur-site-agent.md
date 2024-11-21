@@ -97,12 +97,26 @@ As a service provider owner, you should create an offering in the marketplace:
 - Input a name, choose a category, select `SLURM remote allocation`
   from the drop-down list on the bottom and click `Create` button
 
-![offering-uuid](img/remote-slurm-offering.png)
+![offering-creation](img/remote-slurm-offering.png)
 
-- Open the offering page and create a plan in the `Accounting`
-  section: click `Add plan` and input the necessary details
-- Go to `Integration` section, click `Show integration steps`
-  and ensure they are completed within your SLURM/MOAB cluster.
+- Open the offering page, choose `Edit` tab, click `Accounting` section,
+  choose `Accounting plans` from the drop-down list and create a plan:
+  click `Add plan` and input the necessary details;
+
+![offering-plan](img/offering-plan.png)
+
+- In the same page, click `Integration` section choose `User management`
+  from the drop-down list and set the
+  `Service provider can create offering user` option to `Yes`;
+
+![offering-user-management](img/offering-user-management.png)
+
+- Activate the offering using the big green button `Activate`.
+
+**Note**: You will need to set the offering UUID in the agent config file.
+For this, you can copy the UUID from the `Integration -> Credentials`
+section on the same page:
+[offering-uuid](img/offering-uuid.png)
 
 ### Setup
 
@@ -194,8 +208,9 @@ offerings: # Settings for offerings
       project_prefix: "hpc_" # Prefix for project's accounts.
       allocation_prefix: "hpc_" # Prefix used for allocation's accounts.
         # created by the agent.
-      qos_downscaled: "limited" # The qos set to an account after downscaling
-      qos_paused: "paused" # The qos set to an account after pausing
+      qos_downscaled: "limited" # The QoS set to an account after downscaling
+      qos_paused: "paused" # The QoS set to an account after pausing
+      qos_default: "normal" # The default QoS for account in the SLURM cluster
       enable_user_homedir_account_creation: true # Whether to create home directories
         # for users associated to accounts.
       homedir_umask: "0700" # A umask for created homedirs
