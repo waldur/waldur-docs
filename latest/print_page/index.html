@@ -18856,13 +18856,26 @@ As a service provider owner, you should create an offering in the marketplace:</
 <li>Input a name, choose a category, select <code>SLURM remote allocation</code>
   from the drop-down list on the bottom and click <code>Create</code> button</li>
 </ul>
-<p><a class="glightbox" href="../admin-guide/providers/img/remote-slurm-offering.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-uuid" src="../admin-guide/providers/img/remote-slurm-offering.png"></a></p>
+<p><a class="glightbox" href="../admin-guide/providers/img/remote-slurm-offering.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-creation" src="../admin-guide/providers/img/remote-slurm-offering.png"></a></p>
 <ul>
-<li>Open the offering page and create a plan in the <code>Accounting</code>
-  section: click <code>Add plan</code> and input the necessary details</li>
-<li>Go to <code>Integration</code> section, click <code>Show integration steps</code>
-  and ensure they are completed within your SLURM/MOAB cluster.</li>
+<li>Open the offering page, choose <code>Edit</code> tab, click <code>Accounting</code> section,
+  choose <code>Accounting plans</code> from the drop-down list and create a plan:
+  click <code>Add plan</code> and input the necessary details;</li>
 </ul>
+<p><a class="glightbox" href="../admin-guide/providers/img/offering-plan.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-plan" src="../admin-guide/providers/img/offering-plan.png"></a></p>
+<ul>
+<li>In the same page, click <code>Integration</code> section choose <code>User management</code>
+  from the drop-down list and set the
+  <code>Service provider can create offering user</code> option to <code>Yes</code>;</li>
+</ul>
+<p><a class="glightbox" href="../admin-guide/providers/img/offering-user-management.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-user-management" src="../admin-guide/providers/img/offering-user-management.png"></a></p>
+<ul>
+<li>Activate the offering using the big green button <code>Activate</code>.</li>
+</ul>
+<p><strong>Note</strong>: You will need to set the offering UUID in the agent config file.
+For this, you can copy the UUID from the <code>Integration -&gt; Credentials</code>
+section on the same page:
+<a href="../admin-guide/providers/img/offering-uuid.png">offering-uuid</a></p>
 <h3 id="admin-guide-providers-waldur-site-agent-setup">Setup</h3>
 <p>Firstly, install the <code>waldur-site-agent</code> module:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>waldur-site-agent
@@ -18992,7 +19005,8 @@ cp<span class="w"> </span>systemd-conf/agent-membership-sync/agent-legacy.servic
 <span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
-<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">sentry_dsn</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># Data Source Name for Sentry (more info https://docs.sentry.io/product/sentry-basics/dsn-explainer/).</span>
+<span class="normal">52</span>
+<span class="normal">53</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">sentry_dsn</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># Data Source Name for Sentry (more info https://docs.sentry.io/product/sentry-basics/dsn-explainer/).</span>
 <span class="nt">offerings</span><span class="p">:</span><span class="w"> </span><span class="c1"># Settings for offerings</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Example</span><span class="nv"> </span><span class="s">SLURM</span><span class="nv"> </span><span class="s">Offering"</span><span class="w"> </span><span class="c1"># offering name</span>
 <span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:8081/api/"</span><span class="w"> </span><span class="c1"># URL of Waldur API (e.g. http://localhost:8081/api/).</span>
@@ -19006,8 +19020,9 @@ cp<span class="w"> </span>systemd-conf/agent-membership-sync/agent-legacy.servic
 <span class="w">      </span><span class="nt">project_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"hpc_"</span><span class="w"> </span><span class="c1"># Prefix for project's accounts.</span>
 <span class="w">      </span><span class="nt">allocation_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"hpc_"</span><span class="w"> </span><span class="c1"># Prefix used for allocation's accounts.</span>
 <span class="w">        </span><span class="c1"># created by the agent.</span>
-<span class="w">      </span><span class="nt">qos_downscaled</span><span class="p">:</span><span class="w"> </span><span class="s">"limited"</span><span class="w"> </span><span class="c1"># The qos set to an account after downscaling</span>
-<span class="w">      </span><span class="nt">qos_paused</span><span class="p">:</span><span class="w"> </span><span class="s">"paused"</span><span class="w"> </span><span class="c1"># The qos set to an account after pausing</span>
+<span class="w">      </span><span class="nt">qos_downscaled</span><span class="p">:</span><span class="w"> </span><span class="s">"limited"</span><span class="w"> </span><span class="c1"># The QoS set to an account after downscaling</span>
+<span class="w">      </span><span class="nt">qos_paused</span><span class="p">:</span><span class="w"> </span><span class="s">"paused"</span><span class="w"> </span><span class="c1"># The QoS set to an account after pausing</span>
+<span class="w">      </span><span class="nt">qos_default</span><span class="p">:</span><span class="w"> </span><span class="s">"normal"</span><span class="w"> </span><span class="c1"># The default QoS for account in the SLURM cluster</span>
 <span class="w">      </span><span class="nt">enable_user_homedir_account_creation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># Whether to create home directories</span>
 <span class="w">        </span><span class="c1"># for users associated to accounts.</span>
 <span class="w">      </span><span class="nt">homedir_umask</span><span class="p">:</span><span class="w"> </span><span class="s">"0700"</span><span class="w"> </span><span class="c1"># A umask for created homedirs</span>
