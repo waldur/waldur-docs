@@ -7,9 +7,29 @@
     <meta http-equiv="refresh" content="1; url=latest/" />
   </noscript>
   <script>
-    window.location.replace(
-      "latest/" + window.location.search + window.location.hash
-    );
+    fetch('/versions.json')
+  .then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then((versions) => {
+    // Find the "latest" version from the list
+    const latestVersion = versions.find((v) => v.version === 'latest');
+    if (latestVersion) {
+      // Redirect to the latest version's page
+      window.location.href = `/${latestVersion.version}/`;
+    } else {
+      console.error('No "latest" version found in versions.json');
+      window.location.href = '/404/'; // Fallback if "latest" isn't found
+    }
+  })
+  .catch((error) => {
+    console.error('Failed to fetch versions.json:', error);
+    window.location.href = '/404/'; // Fallback in case of an error
+  });
+
   </script>
 </head>
 <body>
