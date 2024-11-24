@@ -1,0 +1,36 @@
+<script>
+    // Check if the current path is versioned, if not, redirect to the default versioned path
+    const defaultVersion = "latest"
+    const basePath = ""
+    const targetRedirectPath = "404" // path to redirect to, relative to basePath
+
+    fetch('/versions.json')
+     .then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return response.json();
+    })
+    .then((versions) => {
+      let foundVersion = false
+      versions.forEach(version => {
+        const versionedPath = `${basePath}/${version}`;
+        if (window.location.pathname.startsWith(versionedPath)) {
+             // we need this foundVersion guard because the browser is fast and
+             // will keep the executing code below until the redirect happens
+            foundVersion = true;
+            window.location.href = `${versionedPath}/${targetRedirectPath}`
+        }
+    });
+    // if path doesn't start with any version, redirect to defaultVersion
+    // Replace it in href, so we keep hashes and query params
+    // Only replace first occurence of basePath
+    if (!foundVersion){
+        window.location.href = 'latest/' + window.location.pathname;
+    }
+  })
+  .catch((error) => {
+    console.error('Failed to fetch versions.json:', error);
+    window.location.href = '/404/'; // Fallback in case of an error
+  });
+</script>
