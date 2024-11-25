@@ -20986,7 +20986,7 @@ increased only for a stopped VM.</p></div></section><h1 class='nav-section-title
 <li>State management is done via <code>useTable</code> React hook.</li>
 <li>Table rendering is done using <code>Table</code> component.</li>
 </ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<p></p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
 <span class="normal"> 4</span>
@@ -21048,8 +21048,382 @@ increased only for a stopped VM.</p></div></section><h1 class='nav-section-title
 <span class="w">  </span><span class="p">);</span>
 <span class="p">};</span>
 </code></pre></div></td></tr></table></div>
-<p>Column definition consists of two mandatory fields: <code>title</code> and <code>render</code>.
-In order to be able to make column optional, please specify <code>hasOptionalColumns</code> property for table and ensure that <code>key</code> property is defined for columns.</p></div></section><section class="print-page" id="developer-guide-ui-terminology_policy"><div><h1 id="terminology-policy">Terminology policy</h1>
+Column definition consists of two mandatory fields: <code>title</code> and <code>render</code>.
+<h2 id="developer-guide-ui-tables-fetchdata-property">fetchData property</h2>
+<p>The fetchData property is a function that retrieves data for the table. It should return a promise that resolves to an object containing rows and resultCount. The <code>fetchData</code> function can be customized to fetch data from any API endpoint and transform it as needed before passing it to the table.</p>
+<p>Example:
+</p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">getById</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@waldur/core/api'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useCallback</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">ExampleTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">resourceScope</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">fetchData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useCallback</span><span class="p">(</span>
+<span class="w">    </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">      </span><span class="nx">getById</span><span class="p">(</span><span class="s1">'/api/resource/'</span><span class="p">,</span><span class="w"> </span><span class="nx">resourceScope</span><span class="p">.</span><span class="nx">uuid</span><span class="p">).</span><span class="nx">then</span><span class="p">((</span><span class="nx">resource</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">        </span><span class="nx">rows</span><span class="o">:</span><span class="w"> </span><span class="kt">resource.items</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">resultCount</span><span class="o">:</span><span class="w"> </span><span class="kt">resource.items.length</span><span class="p">,</span>
+<span class="w">      </span><span class="p">})),</span>
+<span class="w">    </span><span class="p">[</span><span class="nx">resourceScope</span><span class="p">],</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-ui-tables-export-feature">Export feature</h2>
+<p>Table component supports data export functionality. To enable it:</p>
+<ol>
+<li>Add <code>enableExport</code> prop to the Table component</li>
+<li>Configure export options in column definitions:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s1">'Name'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="w">  </span><span class="k">export</span><span class="o">:</span><span class="w"> </span><span class="s1">'name'</span><span class="w"> </span><span class="c1">// Use field directly</span>
+<span class="p">}</span>
+
+<span class="p">{</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s1">'Status'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">export</span><span class="o">:</span><span class="w"> </span><span class="kt">row</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">formatStatus</span><span class="p">(</span><span class="nx">row</span><span class="p">.</span><span class="nx">status</span><span class="p">)</span><span class="w"> </span><span class="c1">// Custom formatter</span>
+<span class="p">}</span>
+
+<span class="p">{</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s1">'Actions'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">Button</span><span class="o">/&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">export</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="w"> </span><span class="c1">// Exclude from export</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Optionally, specify <code>exportTitle</code> property for columns to customize the header in the exported file:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s1">'Name'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="w">  </span><span class="k">export</span><span class="o">:</span><span class="w"> </span><span class="s1">'name'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">exportTitle</span><span class="o">:</span><span class="w"> </span><span class="s1">'User Name'</span><span class="w"> </span><span class="c1">// Custom header for export</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-ui-tables-optional-columns">Optional columns</h2>
+<p>Table component supports optional columns that can be toggled by users. Optional columns allow users to customize their view by showing/hiding specific columns.</p>
+<ol>
+<li>Add <code>hasOptionalColumns</code> prop to enable optional columns functionality</li>
+<li>Configure columns with:</li>
+<li><code>id</code> - unique column identifier </li>
+<li><code>keys</code> - defines which fields should be requested from API (allows optimization by fetching only needed fields)</li>
+<li><code>optional</code> - mark column as optional to allow toggling</li>
+<li>For optional columns, you can specify mandatory fields that should always be fetched from API using <code>mandatoryFields</code> prop.</li>
+</ol>
+<p>Example:
+</p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">UsersTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'users'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="s1">'users'</span><span class="p">),</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">Table</span>
+<span class="w">      </span><span class="p">{...</span><span class="nx">tableProps</span><span class="p">}</span>
+<span class="w">      </span><span class="nx">hasOptionalColumns</span>
+<span class="w">      </span><span class="nx">mandatoryFields</span><span class="o">=</span><span class="p">{[</span><span class="s1">'uuid'</span><span class="p">,</span><span class="w"> </span><span class="s1">'name'</span><span class="p">]}</span>
+<span class="w">      </span><span class="nx">columns</span><span class="o">=</span><span class="p">{[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s1">'name'</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Name'</span><span class="p">),</span>
+<span class="w">          </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">optional</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">keys</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'name'</span><span class="p">],</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s1">'email'</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Email'</span><span class="p">),</span>
+<span class="w">          </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">email</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">optional</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">keys</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'email'</span><span class="p">],</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s1">'role'</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Role'</span><span class="p">),</span>
+<span class="w">          </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">role</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">optional</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">keys</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'role'</span><span class="p">,</span><span class="w"> </span><span class="s1">'permissions'</span><span class="p">],</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">]}</span>
+<span class="w">    </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-ui-tables-ordering-feature">Ordering feature</h2>
+<p>Table component supports column ordering. To enable it:</p>
+<ol>
+<li>Add <code>enableOrdering</code> prop to the Table component</li>
+<li>Configure columns with <code>orderField</code> property to specify which field should be used for ordering</li>
+</ol>
+<p>Example:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">UsersTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'users'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="s1">'users'</span><span class="p">),</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">Table</span>
+<span class="w">      </span><span class="p">{...</span><span class="nx">tableProps</span><span class="p">}</span>
+<span class="w">      </span><span class="nx">enableOrdering</span>
+<span class="w">      </span><span class="nx">columns</span><span class="o">=</span><span class="p">{[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Name'</span><span class="p">),</span>
+<span class="w">          </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">orderField</span><span class="o">:</span><span class="w"> </span><span class="s1">'name'</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Email'</span><span class="p">),</span>
+<span class="w">          </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">email</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">orderField</span><span class="o">:</span><span class="w"> </span><span class="s1">'email'</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">]}</span>
+<span class="w">    </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div></td></tr></table></div>
+<p>When ordering is enabled, clicking on column headers will toggle between ascending and descending order.</p>
+<h2 id="developer-guide-ui-tables-filters-feature">Filters feature</h2>
+<p>Filters are defined using the <code>filters</code> prop of the Table component. This prop accepts a React component that renders the filter UI.</p>
+<p>Example:
+</p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useSelector</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-redux'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">getFormValues</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'redux-form'</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">mapStateToFilter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getFormValues</span><span class="p">(</span><span class="s1">'CustomFilterForm'</span><span class="p">);</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">CustomFilterSet</span><span class="o">:</span><span class="w"> </span><span class="kt">FunctionComponent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">TableFilterItem</span><span class="w"> </span><span class="nx">title</span><span class="o">=</span><span class="s2">"Custom Filter field"</span><span class="w"> </span><span class="nx">name</span><span class="o">=</span><span class="s2">"custom"</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">Field</span><span class="w"> </span><span class="nx">name</span><span class="o">=</span><span class="s2">"custom"</span><span class="w"> </span><span class="nx">component</span><span class="o">=</span><span class="s2">"input"</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/TableFilterItem&gt;</span>
+<span class="p">);</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">FilteredListList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useSelector</span><span class="p">(</span><span class="nx">mapStateToFilter</span><span class="p">);</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'FilteredListList'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="s1">'hooks'</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">filter</span><span class="p">,</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">Table</span>
+<span class="w">      </span><span class="p">{...</span><span class="nx">tableProps</span><span class="p">}</span>
+<span class="w">      </span><span class="nx">filters</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">HooksListFilter</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
+<span class="w">      </span><span class="nx">columns</span><span class="o">=</span><span class="p">{[</span>
+<span class="w">        </span><span class="c1">// ...existing columns...</span>
+<span class="w">      </span><span class="p">]}</span>
+<span class="w">    </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-ui-tables-inline-filters">Inline filters</h3>
+<p>The feature allows users to quickly filter table data by clicking values directly in the table cells, without manually setting filters. When column has <code>inlineFilter</code> property enabled:</p>
+<ol>
+<li>A filter icon appears when hovering over cells in that column</li>
+<li>Clicking the icon adds a filter using the cell's value </li>
+<li>The <code>inlineFilter</code> function transforms row data into the filter value format</li>
+</ol>
+<p>Example:
+</p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Organization'</span><span class="p">),</span>
+<span class="w">  </span><span class="nx">render</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">customer_name</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">filter</span><span class="o">:</span><span class="w"> </span><span class="s1">'organization'</span><span class="p">,</span><span class="w">  </span><span class="c1">// Enable filtering</span>
+<span class="w">  </span><span class="nx">inlineFilter</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">row</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">    </span><span class="c1">// Transform row data into filter value</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">row.customer_name</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">uuid</span><span class="o">:</span><span class="w"> </span><span class="kt">row.customer_uuid</span>
+<span class="w">  </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-ui-tables-grid-mode">Grid mode</h2>
+<p>Table component supports switching between table and grid views. In grid mode, data is displayed as cards in a responsive grid layout.</p>
+<p>To enable grid mode:</p>
+<ol>
+<li>Add <code>gridItem</code> prop to specify the component used to render each item in grid view</li>
+<li>Optionally customize grid layout using <code>gridSize</code> prop which accepts Bootstrap column properties</li>
+<li>Set <code>initialMode</code> to 'grid' if you want grid view by default (table view is default)</li>
+</ol>
+<p>Example:
+</p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">GridListItem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">Card</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">CardHeader</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">row</span><span class="p">.</span><span class="nx">name</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/CardHeader&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">CardBody</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">row</span><span class="p">.</span><span class="nx">description</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">small</span><span class="o">&gt;</span><span class="nx">Users</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="nx">row</span><span class="p">.</span><span class="nx">users_count</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/small&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/CardBody&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/Card&gt;</span>
+<span class="p">);</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">GridList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'GridList'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="s1">'items'</span><span class="p">),</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">Table</span>
+<span class="w">      </span><span class="p">{...</span><span class="nx">tableProps</span><span class="p">}</span>
+<span class="w">      </span><span class="nx">gridItem</span><span class="o">=</span><span class="p">{</span><span class="nx">GridListItem</span><span class="p">}</span>
+<span class="w">      </span><span class="nx">gridSize</span><span class="o">=</span><span class="s2">"col-sm-6 col-md-4"</span>
+<span class="w">      </span><span class="nx">initialMode</span><span class="o">=</span><span class="s2">"grid"</span>
+<span class="w">    </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="developer-guide-ui-terminology_policy"><div><h1 id="terminology-policy">Terminology policy</h1>
 <p>We prefer British English over American English. For example, we use <code>cancelled</code> instead of <code>canceled</code>.</p>
 <p>Should be applied for naming buttons, separate pages of the process and in list of actions.</p>
 <p><strong>Add</strong> / <strong>Remove</strong></p>
