@@ -21052,31 +21052,13 @@ Column definition consists of two mandatory fields: <code>title</code> and <code
 <h2 id="developer-guide-ui-tables-fetchdata-property">fetchData property</h2>
 <p>The fetchData property is a function that retrieves data for the table. It should return a promise that resolves to an object containing rows and resultCount. The <code>fetchData</code> function can be customized to fetch data from any API endpoint and transform it as needed before passing it to the table.</p>
 <p>Example:
-</p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">getById</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@waldur/core/api'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useCallback</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
-
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">ExampleTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">resourceScope</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">fetchData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useCallback</span><span class="p">(</span>
-<span class="w">    </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span>
-<span class="w">      </span><span class="nx">getById</span><span class="p">(</span><span class="s1">'/api/resource/'</span><span class="p">,</span><span class="w"> </span><span class="nx">resourceScope</span><span class="p">.</span><span class="nx">uuid</span><span class="p">).</span><span class="nx">then</span><span class="p">((</span><span class="nx">resource</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
-<span class="w">        </span><span class="nx">rows</span><span class="o">:</span><span class="w"> </span><span class="kt">resource.items</span><span class="p">,</span>
-<span class="w">        </span><span class="nx">resultCount</span><span class="o">:</span><span class="w"> </span><span class="kt">resource.items.length</span><span class="p">,</span>
-<span class="w">      </span><span class="p">})),</span>
-<span class="w">    </span><span class="p">[</span><span class="nx">resourceScope</span><span class="p">],</span>
-<span class="w">  </span><span class="p">);</span>
-<span class="p">};</span>
+</p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">fetchData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">rows</span><span class="o">:</span><span class="w"> </span><span class="kt">resource.items</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">resultCount</span><span class="o">:</span><span class="w"> </span><span class="kt">resource.items.length</span><span class="p">,</span>
+<span class="p">});</span>
 </code></pre></div></td></tr></table></div>
 <h2 id="developer-guide-ui-tables-export-feature">Export feature</h2>
 <p>Table component supports data export functionality. To enable it:</p>
@@ -21118,9 +21100,7 @@ Column definition consists of two mandatory fields: <code>title</code> and <code
 <span class="w">  </span><span class="nx">export</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="w"> </span><span class="c1">// Exclude from export</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
-<ol>
-<li>Optionally, specify <code>exportTitle</code> property for columns to customize the header in the exported file:</li>
-</ol>
+<p>Optionally, specify <code>exportTitle</code> property for columns to customize the header in the exported file:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -21141,7 +21121,7 @@ Column definition consists of two mandatory fields: <code>title</code> and <code
 <li><code>id</code> - unique column identifier </li>
 <li><code>keys</code> - defines which fields should be requested from API (allows optimization by fetching only needed fields)</li>
 <li><code>optional</code> - mark column as optional to allow toggling</li>
-<li>For optional columns, you can specify mandatory fields that should always be fetched from API using <code>mandatoryFields</code> prop.</li>
+<li>For actions column, you can specify mandatory fields that should always be fetched from API using <code>mandatoryFields</code> prop.</li>
 </ol>
 <p>Example:
 </p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -21304,24 +21284,21 @@ Column definition consists of two mandatory fields: <code>title</code> and <code
 <span class="normal">23</span>
 <span class="normal">24</span>
 <span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useSelector</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-redux'</span><span class="p">;</span>
+<span class="normal">26</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useSelector</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-redux'</span><span class="p">;</span>
 <span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">getFormValues</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'redux-form'</span><span class="p">;</span>
 
-<span class="kd">const</span><span class="w"> </span><span class="nx">mapStateToFilter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getFormValues</span><span class="p">(</span><span class="s1">'CustomFilterForm'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">getFilterValues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getFormValues</span><span class="p">(</span><span class="s1">'FilterForm'</span><span class="p">);</span>
 
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">CustomFilterSet</span><span class="o">:</span><span class="w"> </span><span class="kt">FunctionComponent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
-<span class="w">  </span><span class="o">&lt;</span><span class="nx">TableFilterItem</span><span class="w"> </span><span class="nx">title</span><span class="o">=</span><span class="s2">"Custom Filter field"</span><span class="w"> </span><span class="nx">name</span><span class="o">=</span><span class="s2">"custom"</span><span class="o">&gt;</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">FilterSet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">TableFilterItem</span><span class="w"> </span><span class="nx">title</span><span class="o">=</span><span class="s2">"Filter field"</span><span class="w"> </span><span class="nx">name</span><span class="o">=</span><span class="s2">"custom"</span><span class="o">&gt;</span>
 <span class="w">    </span><span class="o">&lt;</span><span class="nx">Field</span><span class="w"> </span><span class="nx">name</span><span class="o">=</span><span class="s2">"custom"</span><span class="w"> </span><span class="nx">component</span><span class="o">=</span><span class="s2">"input"</span><span class="w"> </span><span class="o">/&gt;</span>
 <span class="w">  </span><span class="o">&lt;</span><span class="err">/TableFilterItem&gt;</span>
 <span class="p">);</span>
 
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">FilteredListList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useSelector</span><span class="p">(</span><span class="nx">mapStateToFilter</span><span class="p">);</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">FilteredList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useSelector</span><span class="p">(</span><span class="nx">getFilterValues</span><span class="p">);</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
-<span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'FilteredListList'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'FilteredList'</span><span class="p">,</span>
 <span class="w">    </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="s1">'hooks'</span><span class="p">),</span>
 <span class="w">    </span><span class="nx">filter</span><span class="p">,</span>
 <span class="w">  </span><span class="p">});</span>
@@ -21329,10 +21306,7 @@ Column definition consists of two mandatory fields: <code>title</code> and <code
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
 <span class="w">    </span><span class="o">&lt;</span><span class="nx">Table</span>
 <span class="w">      </span><span class="p">{...</span><span class="nx">tableProps</span><span class="p">}</span>
-<span class="w">      </span><span class="nx">filters</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">HooksListFilter</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
-<span class="w">      </span><span class="nx">columns</span><span class="o">=</span><span class="p">{[</span>
-<span class="w">        </span><span class="c1">// ...existing columns...</span>
-<span class="w">      </span><span class="p">]}</span>
+<span class="w">      </span><span class="nx">filters</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">FilterSet</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
 <span class="w">    </span><span class="o">/&gt;</span>
 <span class="w">  </span><span class="p">);</span>
 <span class="p">};</span>
@@ -21446,13 +21420,25 @@ undeploying is applied to:</p>
 <li>VMs</li>
 </ul>
 <p>Please use "synchronise" instead of "pull" in action title.</p></div></section><section class="print-page" id="developer-guide-ui-tests"><div><h1 id="testing">Testing</h1>
-<p>In order to run unit tests only once, execute command <code>yarn jest</code>.
-If you want to run server, which watches for changes in tests, run <code>yarn jest --watch</code>.</p>
-<p>Unit tests are used for testing React components, Redux actions, sagas, reducers, selectors.
-Unit tests are written in the <code>.spec.ts</code> files.</p>
-<p>Integration tests are implemented using <a href="https://www.cypress.io/">Cypress framework</a>.
-In order to run all integration tests, execute command <code>yarn ci:test</code>.
-If you already have dev server running, it's better to execute command <code>yarn cypress open</code>.</p></div></section><h1 class='nav-section-title-end'>Ended: Ui</h1><h1 class='nav-section-title-end'>Ended: Developer guide</h1>
+<h2 id="developer-guide-ui-tests-unit-tests">Unit tests</h2>
+<p>Unit tests are used for testing React components and utilities. They are written in <code>.test.ts</code> or <code>.test.tsx</code> files located next to the code they test.</p>
+<p>Run tests using <code>yarn test</code> command.</p>
+<p>Unit tests use written using:
+- <a href="https://vitest.dev/">Vitest</a> as the test runner
+- <a href="https://testing-library.com/docs/react-testing-library/intro/">@testing-library/react</a> for testing React components
+- <a href="https://testing-library.com/docs/user-event/intro/">@testing-library/user-event</a> for simulating user interactions</p>
+<h2 id="developer-guide-ui-tests-integration-tests">Integration tests</h2>
+<p>Integration tests are implemented using <a href="https://www.cypress.io/">Cypress framework</a>.</p>
+<ul>
+<li>Run all tests headless (CI mode): <code>yarn ci:test</code></li>
+<li>Open Cypress GUI (requires dev server running): <code>yarn cypress open</code></li>
+</ul>
+<p>Integration tests are located in:</p>
+<ul>
+<li><code>cypress/e2e/</code> - Test specifications</li>
+<li><code>cypress/fixtures/</code> - Test data</li>
+<li><code>cypress/support/</code> - Custom commands and utilities</li>
+</ul></div></section><h1 class='nav-section-title-end'>Ended: Ui</h1><h1 class='nav-section-title-end'>Ended: Developer guide</h1>
                         <h1 class='nav-section-title' id='section-user-guide'>
                             User guide <a class='headerlink' href='#section-user-guide' title='Permanent link'>↵</a>
                         </h1>
