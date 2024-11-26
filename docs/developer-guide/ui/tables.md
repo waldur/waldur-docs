@@ -43,19 +43,10 @@ The fetchData property is a function that retrieves data for the table. It shoul
 
 Example:
 ```ts
-import { getById } from '@waldur/core/api';
-import { useCallback } from 'react';
-
-export const ExampleTable = ({ resourceScope }) => {
-  const fetchData = useCallback(
-    () =>
-      getById('/api/resource/', resourceScope.uuid).then((resource) => ({
-        rows: resource.items,
-        resultCount: resource.items.length,
-      })),
-    [resourceScope],
-  );
-};
+const fetchData = () => Promise.resolve({
+  rows: resource.items,
+  resultCount: resource.items.length,
+});
 ```
 
 ## Export feature
@@ -85,7 +76,7 @@ Table component supports data export functionality. To enable it:
 }
 ```
 
-3. Optionally, specify `exportTitle` property for columns to customize the header in the exported file:
+Optionally, specify `exportTitle` property for columns to customize the header in the exported file:
 
 ```ts
 {
@@ -106,7 +97,7 @@ Table component supports optional columns that can be toggled by users. Optional
   - `id` - unique column identifier 
   - `keys` - defines which fields should be requested from API (allows optimization by fetching only needed fields)
   - `optional` - mark column as optional to allow toggling
-3. For optional columns, you can specify mandatory fields that should always be fetched from API using `mandatoryFields` prop.
+3. For actions column, you can specify mandatory fields that should always be fetched from API using `mandatoryFields` prop.
 
 Example:
 ```ts
@@ -197,18 +188,18 @@ Example:
 import { useSelector } from 'react-redux';
 import { getFormValues } from 'redux-form';
 
-const mapStateToFilter = getFormValues('CustomFilterForm');
+const getFilterValues = getFormValues('FilterForm');
 
-export const CustomFilterSet: FunctionComponent = () => (
-  <TableFilterItem title="Custom Filter field" name="custom">
+export const FilterSet = () => (
+  <TableFilterItem title="Filter field" name="custom">
     <Field name="custom" component="input" />
   </TableFilterItem>
 );
 
-export const FilteredListList = () => {
-  const filter = useSelector(mapStateToFilter);
+export const FilteredList = () => {
+  const filter = useSelector(getFilterValues);
   const tableProps = useTable({
-    table: 'FilteredListList',
+    table: 'FilteredList',
     fetchData: createFetcher('hooks'),
     filter,
   });
@@ -216,10 +207,7 @@ export const FilteredListList = () => {
   return (
     <Table
       {...tableProps}
-      filters={<HooksListFilter />}
-      columns={[
-        // ...existing columns...
-      ]}
+      filters={<FilterSet />}
     />
   );
 };

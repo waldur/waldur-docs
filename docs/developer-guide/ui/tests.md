@@ -1,11 +1,25 @@
 # Testing
 
-In order to run unit tests only once, execute command `yarn jest`.
-If you want to run server, which watches for changes in tests, run `yarn jest --watch`.
+## Unit tests
 
-Unit tests are used for testing React components, Redux actions, sagas, reducers, selectors.
-Unit tests are written in the `.spec.ts` files.
+Unit tests are used for testing React components and utilities. They are written in `.test.ts` or `.test.tsx` files located next to the code they test.
+
+Run tests using `yarn test` command.
+
+Unit tests use written using:
+- [Vitest](https://vitest.dev/) as the test runner
+- [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/) for testing React components
+- [@testing-library/user-event](https://testing-library.com/docs/user-event/intro/) for simulating user interactions
+
+## Integration tests
 
 Integration tests are implemented using [Cypress framework](https://www.cypress.io/).
-In order to run all integration tests, execute command `yarn ci:test`.
-If you already have dev server running, it's better to execute command `yarn cypress open`.
+
+* Run all tests headless (CI mode): `yarn ci:test`
+* Open Cypress GUI (requires dev server running): `yarn cypress open`
+
+Integration tests are located in:
+
+* `cypress/e2e/` - Test specifications
+* `cypress/fixtures/` - Test data
+* `cypress/support/` - Custom commands and utilities
