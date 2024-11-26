@@ -8,6 +8,10 @@ Make payments menu visible for staff users only.
 
 Allows to hide domain field in organization detail.
 
+## customer.show_permission_reviews
+
+Allows to show permission reviews tab and popups.
+
 ## invitations.civil_number_required
 
 Make civil number field mandatory in invitation creation form.
