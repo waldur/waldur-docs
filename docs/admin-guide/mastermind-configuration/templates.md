@@ -1590,6 +1590,21 @@ A notification about project details update.
 
 ## waldur_mastermind.marketplace_support
 
+### create_project_membership_update_issue.txt (waldur_mastermind.marketplace_support)
+
+``` txt
+User: {{user.first_name}} {{user.last_name}} (e-mail: {{user.email}}, username: {{user.username}}).
+Project: {{project}} ({{ project_url }}).
+
+Offerings:
+{% for offering in offerings %} {{offering}}
+    {% if offering.offering_user %}Offering user: {{offering.offering_user.username}}{% endif %}
+    {% if offering.resources %}Resources:
+        {% for resource in offering.resources %} name: {{resource.name}},  slug: {{resource.slug}}, backend ID: {{resource.backend_id}} {% endfor %}
+    {% endif %}
+{% endfor %}
+```
+
 ### terminate_resource_template.txt (waldur_mastermind.marketplace_support)
 
 ``` txt
