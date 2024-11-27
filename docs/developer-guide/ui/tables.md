@@ -36,12 +36,14 @@ export const RolesList = () => {
   );
 };
 ```
+
 Column definition consists of two mandatory fields: `title` and `render`.
 
 ## fetchData property
 The fetchData property is a function that retrieves data for the table. It should return a promise that resolves to an object containing rows and resultCount. The `fetchData` function can be customized to fetch data from any API endpoint and transform it as needed before passing it to the table.
 
 Example:
+
 ```ts
 const fetchData = () => Promise.resolve({
   rows: resource.items,
@@ -100,6 +102,7 @@ Table component supports optional columns that can be toggled by users. Optional
 3. For actions column, you can specify mandatory fields that should always be fetched from API using `mandatoryFields` prop.
 
 Example:
+
 ```ts
 export const UsersTable = () => {
   const tableProps = useTable({
@@ -184,6 +187,7 @@ When ordering is enabled, clicking on column headers will toggle between ascendi
 Filters are defined using the `filters` prop of the Table component. This prop accepts a React component that renders the filter UI.
 
 Example:
+
 ```ts
 import { useSelector } from 'react-redux';
 import { getFormValues } from 'redux-form';
@@ -222,6 +226,7 @@ The feature allows users to quickly filter table data by clicking values directl
 3. The `inlineFilter` function transforms row data into the filter value format
 
 Example:
+
 ```ts
 {
   title: translate('Organization'),
@@ -247,6 +252,7 @@ To enable grid mode:
 3. Set `initialMode` to 'grid' if you want grid view by default (table view is default)
 
 Example:
+
 ```ts
 export const GridListItem = ({ row }) => (
   <Card>
@@ -274,4 +280,3 @@ export const GridList = () => {
   );
 };
 ```
-
