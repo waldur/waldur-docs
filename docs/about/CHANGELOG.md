@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.1.7
+
+Notes: Bugfixes
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.1.6...7.1.7)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.1.6...7.1.7)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.1.6...7.1.7)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.1.6...7.1.7)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.1.6...7.1.7)
+
+Date: Sun Dec  1 20:44:47 UTC 2024
+
 ## 7.1.6
 
 Notes: Revert refactoring of OIDC redirect URLs
