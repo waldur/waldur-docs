@@ -10,6 +10,11 @@ OpenStack versions tested:
 - Train
 - Ussuri
 - Victoria
+- Wallaby
+- Xena
+- Yoga
+- Zed
+- Antelope
 
 In order to integrate an OpenStack-based cloud as a shared provider, the following data is required:
 
