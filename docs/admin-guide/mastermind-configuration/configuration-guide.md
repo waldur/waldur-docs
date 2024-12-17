@@ -361,7 +361,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'DEFAULT_IDP': '',
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
- 'ENABLE_GEOIP': True,
  'ENABLE_STRICT_CHECK_ACCEPTING_INVITATION': False,
  'EXTENSIONS_AUTOREGISTER': True,
  'EXTERNAL_LINKS': [],
@@ -465,12 +464,6 @@ Max age of change email request.
 Type: bool
 
 Allows to enable accounting for organizations using value of accounting_start_date field.
-
-#### ENABLE_GEOIP
-
-Type: bool
-
-Enable detection of coordinates of virtual machines.
 
 #### ENABLE_STRICT_CHECK_ACCEPTING_INVITATION
 
