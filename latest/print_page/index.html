@@ -9227,6 +9227,42 @@ For this, set <code>postgresql.enabled</code> to <code>true</code> and update re
 <p><strong>NB</strong>: the value <code>postgresqlha.enabled</code> and <code>externalDB.enabled</code> must be <code>false</code>.</p>
 <p>Prior Waldur installation, update chart dependencies:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>helm<span class="w"> </span>dependency<span class="w"> </span>update
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-deployment-helm-docs-postgres-db-readonly-user-configuration">Readonly user configuration</h2>
+<p>In order to enable /api/query/ endpoint please make sure that read-only user is configured.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">-- Create a read-only user</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">USER</span><span class="w"> </span><span class="n">readonly</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="n">PASSWORD</span><span class="w"> </span><span class="s1">'{readonly_password}'</span>
+
+<span class="c1">-- Grant read-only access to the database</span>
+<span class="k">GRANT</span><span class="w"> </span><span class="k">CONNECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="s1">'{database_name}'</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
+
+<span class="c1">-- Grant read-only access to the schema</span>
+<span class="k">GRANT</span><span class="w"> </span><span class="k">USAGE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">SCHEMA</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
+
+<span class="c1">-- Grant read-only access to existing tables</span>
+<span class="k">GRANT</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">ALL</span><span class="w"> </span><span class="n">TABLES</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="k">SCHEMA</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
+
+<span class="c1">-- Grant read-only access to future tables</span>
+<span class="k">ALTER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">PRIVILEGES</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="k">SCHEMA</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">GRANT</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">TABLES</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
+
+<span class="c1">-- Revoke access to authtoken_token table</span>
+<span class="k">REVOKE</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">authtoken_token</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
 </code></pre></div></td></tr></table></div></div></section><section class="print-page" id="admin-guide-deployment-helm-docs-proxy-setup"><div><h1 id="proxy-setup-for-waldur-components">Proxy setup for Waldur components</h1>
 <p>You can setup the proxy environment variables <code>https_proxy</code>, <code>http_proxy</code> and <code>no_proxy</code> for Waldur component containers.
 For this, please set values for the <code>proxy.httpsProxy</code>, <code>proxy.httpProxy</code> and <code>proxy.noProxy</code> variables in <code>waldur/values.yaml</code> file.</p>
