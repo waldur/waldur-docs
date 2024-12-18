@@ -40,7 +40,6 @@ export const RolesList = () => {
 Column definition consists of two mandatory fields: `title` and `render`.
 
 ## fetchData property
-
 The fetchData property is a function that retrieves data for the table. It should return a promise that resolves to an object containing rows and resultCount. The `fetchData` function can be customized to fetch data from any API endpoint and transform it as needed before passing it to the table.
 
 Example:
@@ -97,9 +96,9 @@ Table component supports optional columns that can be toggled by users. Optional
 
 1. Add `hasOptionalColumns` prop to enable optional columns functionality
 2. Configure columns with:
-    - `id` - unique column identifier
-    - `keys` - defines which fields should be requested from API (allows optimization by fetching only needed fields)
-    - `optional` - mark column as optional to allow toggling
+  - `id` - unique column identifier 
+  - `keys` - defines which fields should be requested from API (allows optimization by fetching only needed fields)
+  - `optional` - mark column as optional to allow toggling
 3. For actions column, you can specify mandatory fields that should always be fetched from API using `mandatoryFields` prop.
 
 Example:
@@ -223,7 +222,7 @@ export const FilteredList = () => {
 The feature allows users to quickly filter table data by clicking values directly in the table cells, without manually setting filters. When column has `inlineFilter` property enabled:
 
 1. A filter icon appears when hovering over cells in that column
-2. Clicking the icon adds a filter using the cell's value
+2. Clicking the icon adds a filter using the cell's value 
 3. The `inlineFilter` function transforms row data into the filter value format
 
 Example:
