@@ -4,6 +4,25 @@
 
 Call management in Waldur enables organizations to manage resource allocation through a structured application proposals and review process.
 
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Introduction](#introduction)
+3. [Prerequisites](#prerequisites)
+4. [Stakeholder Roles](#stakeholder-roles)
+  4.1 [Organization Owner](#organization-owner)
+  4.2 [Call Manager](#call-manager)
+  4.3 [Call Member (Applicant)](#call-member-applicant)
+  4.4 [Reviewer](#reviewer)
+5. [Call Structure and Workflow](#call-structure-and-workflow)
+   5.1 [Call Setup](#1-call-setup)
+   5.2 [Round Configuration](#2-round-configuration)
+   5.3 [Proposal Submission](#3-proposal-submission)
+   5.4 [Review Process](#4-review-process)
+   5.5 [Decision and Allocation](#5-decision-and-allocation)
+6. [Best Practices](#best-practices)
+7. [Troubleshooting](#troubleshooting)
+
 ## Introduction
 
 Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the proposing organization that initiated the call. Allocations are granted to this project, and team members who submitted the proposal are added to the project, ensuring the resources are immediately ready for use.
