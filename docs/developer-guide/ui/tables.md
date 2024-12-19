@@ -97,11 +97,9 @@ Table component supports optional columns that can be toggled by users. Optional
 
 1. Add `hasOptionalColumns` prop to enable optional columns functionality
 2. Configure columns with:
-
     - `id` - unique column identifier
     - `keys` - defines which fields should be requested from API (allows optimization by fetching only needed fields)
     - `optional` - mark column as optional to allow toggling
-
 3. For actions column, you can specify mandatory fields that should always be fetched from API using `mandatoryFields` prop.
 
 Example:
