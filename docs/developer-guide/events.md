@@ -48,13 +48,10 @@
 - create_of_credit_by_staff
 - invoice_canceled
 - invoice_created
-- invoice_creation_succeeded
-- invoice_deletion_succeeded
 - invoice_item_created
 - invoice_item_deleted
 - invoice_item_updated
 - invoice_paid
-- invoice_update_succeeded
 - payment_created
 - payment_removed
 - reduction_of_credit
@@ -63,12 +60,6 @@
 - roll_back_project_credit
 - set_to_zero_overdue_credit
 - update_of_credit_by_staff
-
-## Payments
-
-- payment_approval_succeeded
-- payment_cancel_succeeded
-- payment_creation_succeeded
 
 ## Permissions
 
