@@ -29,13 +29,13 @@ Prerequisites for creating projects:
     - User must have an account in Waldur instance.
 
 1. Select your home organization.
-2. Click on "Add project".
+2. Under the "Project" tab, click on "Add project".
 3. Fill the necessary fields (fields marked with * are mandatory).
 
     - Project name - The original title of the project.
     - Project description - A brief description about the project.
     - OECD FoS code - OECD science field code ([more info](https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about))
-    - End date - this is the end date for using the computational resources.
-    - Project image - Profile picture for the project (optional).
+    - Start date - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
+    - End date – once reached, triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
 
 ![type:video](img/create_project.mp4)
