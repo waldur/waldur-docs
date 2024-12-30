@@ -6,22 +6,22 @@ Call management in Waldur enables organizations to manage resource allocation th
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Introduction](#introduction)
-3. [Prerequisites](#prerequisites)
-4. [Stakeholder Roles](#stakeholder-roles)
-  4.1 [Organization Owner](#organization-owner)
-  4.2 [Call Manager](#call-manager)
-  4.3 [Call Member (Applicant)](#call-member-applicant)
-  4.4 [Reviewer](#reviewer)
-5. [Call Structure and Workflow](#call-structure-and-workflow)
-   5.1 [Call Setup](#1-call-setup)
-   5.2 [Round Configuration](#2-round-configuration)
-   5.3 [Proposal Submission](#3-proposal-submission)
-   5.4 [Review Process](#4-review-process)
-   5.5 [Decision and Allocation](#5-decision-and-allocation)
-6. [Best Practices](#best-practices)
-7. [Troubleshooting](#troubleshooting)
+- [Overview](#overview)
+- [Introduction](#introduction)
+- [Prerequisites](#prerequisites)
+- [Stakeholder Roles](#stakeholder-roles)
+   - [Organization Owner](#organization-owner)
+   - [Call Manager](#call-manager)
+   - [Call Member (Applicant)](#call-member-applicant)
+   - [Reviewer](#reviewer)
+- [Call Structure and Workflow](#call-structure-and-workflow)
+   - [Call Setup](#1-call-setup)
+   - [Round Configuration](#2-round-configuration)
+   - [Proposal Submission](#3-proposal-submission)
+   - [Review Process](#4-review-process)
+   - [Decision and Allocation](#5-decision-and-allocation)
+- [Best Practices](#best-practices)
+- [Troubleshooting](#troubleshooting)
 
 ## Introduction
 
