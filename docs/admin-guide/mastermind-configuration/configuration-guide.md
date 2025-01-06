@@ -901,169 +901,6 @@ Type: str
 
 UUID of a Waldur SLURM offering plan, which will be used for creating allocations for users
 
-### WALDUR_MARKETPLACE plugin
-
-Default value:
-
-```python
-WALDUR_MARKETPLACE = {'ANONYMOUS_USER_CAN_VIEW_OFFERINGS': True,
- 'ANONYMOUS_USER_CAN_VIEW_PLANS': True,
- 'DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE': True,
- 'ENABLE_RESOURCE_END_DATE': True,
- 'ENABLE_STALE_RESOURCE_NOTIFICATIONS': False,
- 'NOTIFY_ABOUT_RESOURCE_CHANGE': True,
- 'NOTIFY_STAFF_ABOUT_APPROVALS': False,
- 'TELEMETRY_URL': 'https://telemetry.waldur.com/',
- 'TELEMETRY_VERSION': 1,
- 'THUMBNAIL_SIZE': (120, 120)}
-```
-
-#### ANONYMOUS_USER_CAN_VIEW_OFFERINGS
-
-Type: bool
-
-Allow anonymous users to see shared offerings in active, paused and archived states
-
-#### ANONYMOUS_USER_CAN_VIEW_PLANS
-
-Type: bool
-
-Allow anonymous users to see plans
-
-#### DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE
-
-Type: bool
-
-Disable only resource update events.
-
-#### ENABLE_RESOURCE_END_DATE
-
-Type: bool
-
-Allow to view and update resource end date.
-
-#### ENABLE_STALE_RESOURCE_NOTIFICATIONS
-
-Type: bool
-
-Enable reminders to owners about resources of shared offerings that have not generated any cost for the last 3 months.
-
-#### NOTIFY_ABOUT_RESOURCE_CHANGE
-
-Type: bool
-
-If true, notify users about resource changes from Marketplace perspective. Can generate duplicate events if plugins also log
-
-#### NOTIFY_STAFF_ABOUT_APPROVALS
-
-Type: bool
-
-If true, users with staff role are notified when request for order approval is generated
-
-#### TELEMETRY_URL
-
-Type: str
-
-URL for sending telemetry data.
-
-#### TELEMETRY_VERSION
-
-Type: int
-
-Telemetry service version.
-
-#### THUMBNAIL_SIZE
-
-Type: tuple
-
-Size of the thumbnail to generate when screenshot is uploaded for an offering.
-
-### WALDUR_MARKETPLACE_REMOTE_SLURM plugin
-
-Default value:
-
-```python
-WALDUR_MARKETPLACE_REMOTE_SLURM = {'USE_WALDUR_USERNAMES': True}
-```
-
-#### USE_WALDUR_USERNAMES
-
-Type: bool
-
-Fetch usernames from Waldur rather then FreeIPA profiles.
-
-### WALDUR_MARKETPLACE_SCRIPT plugin
-
-Default value:
-
-```python
-WALDUR_MARKETPLACE_SCRIPT = {'DOCKER_CLIENT': {'base_url': 'unix://var/run/docker.sock'},
- 'DOCKER_IMAGES': {'python': {'command': 'python',
-                              'image': 'python:3.11-alpine'},
-                   'shell': {'command': 'sh', 'image': 'alpine:3'}},
- 'DOCKER_REMOVE_CONTAINER': True,
- 'DOCKER_RUN_OPTIONS': {'mem_limit': '512m'},
- 'DOCKER_SCRIPT_DIR': None,
- 'K8S_CONFIG_PATH': '~/.kube/config',
- 'K8S_JOB_TIMEOUT': 1800,
- 'K8S_NAMESPACE': 'default',
- 'SCRIPT_RUN_MODE': 'docker'}
-```
-
-#### DOCKER_CLIENT
-
-Type: dict
-
-Options for docker client. See also: <https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient>
-
-#### DOCKER_IMAGES
-
-Type: dict
-
-Key is command to execute script, value is a dictionary of image name and command.
-
-#### DOCKER_REMOVE_CONTAINER
-
-Type: bool
-
-Remove Docker container after script execution
-
-#### DOCKER_RUN_OPTIONS
-
-Type: dict
-
-Options for docker runtime. See also: <https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.run>
-
-#### DOCKER_SCRIPT_DIR
-
-Type: Optional[str]
-
-Path to folder on executor machine where to create temporary submission scripts. If None uses OS-dependent location. OS X users, see <https://github.com/docker/for-mac/issues/1532>
-
-#### K8S_CONFIG_PATH
-
-Type: str
-
-Path to Kubernetes configuration file
-
-#### K8S_JOB_TIMEOUT
-
-Type: int
-
-Timeout for execution of one Kubernetes job in seconds
-
-#### K8S_NAMESPACE
-
-Type: str
-
-Kubernetes namespace where jobs will be executed
-
-#### SCRIPT_RUN_MODE
-
-Type: str
-
-Type of jobs deployment. Valid values: "docker" for simple docker deployment, "k8s" for Kubernetes-based one
-
 ### WALDUR_OPENSTACK plugin
 
 Default value:
@@ -1314,7 +1151,7 @@ It is used as default page title if it's not specified explicitly.
 
 Description of the Waldur deployment.
 
-### Marketplace
+### Marketplace Branding
 
 #### SITE_ADDRESS
 
@@ -1341,6 +1178,158 @@ It is used in marketplace order header and UI footer.
 **Default value**: EUR
 
 It is used in marketplace order details and invoices for currency formatting.
+
+### Marketplace
+
+#### THUMBNAIL_SIZE
+
+**Type:** str
+
+**Default value**: 120x120
+
+Size of the thumbnail to generate when screenshot is uploaded for an offering.
+
+#### ANONYMOUS_USER_CAN_VIEW_OFFERINGS
+
+**Type:** bool
+
+**Default value**: True
+
+Allow anonymous users to see shared offerings in active, paused and archived states
+
+#### ANONYMOUS_USER_CAN_VIEW_PLANS
+
+**Type:** bool
+
+**Default value**: True
+
+Allow anonymous users to see plans
+
+#### NOTIFY_STAFF_ABOUT_APPROVALS
+
+**Type:** bool
+
+If true, users with staff role are notified when request for order approval is generated
+
+#### NOTIFY_ABOUT_RESOURCE_CHANGE
+
+**Type:** bool
+
+**Default value**: True
+
+If true, notify users about resource changes from Marketplace perspective. Can generate duplicate events if plugins also log
+
+#### DISABLE_SENDING_NOTIFICATIONS_ABOUT_RESOURCE_UPDATE
+
+**Type:** bool
+
+**Default value**: True
+
+Disable only resource update events.
+
+#### ENABLE_STALE_RESOURCE_NOTIFICATIONS
+
+**Type:** bool
+
+Enable reminders to owners about resources of shared offerings that have not generated any cost for the last 3 months.
+
+#### ENABLE_RESOURCE_END_DATE
+
+**Type:** bool
+
+**Default value**: True
+
+Allow to view and update resource end date.
+
+### Telemetry
+
+#### TELEMETRY_URL
+
+**Type:** str
+
+**Default value**: https://telemetry.waldur.com/
+
+URL for sending telemetry data.
+
+#### TELEMETRY_VERSION
+
+**Type:** int
+
+**Default value**: 1
+
+Telemetry service version.
+
+### Custom Scripts
+
+#### SCRIPT_RUN_MODE
+
+**Type:** str
+
+**Default value**: docker
+
+Type of jobs deployment. Valid values: "docker" for simple docker deployment, "k8s" for Kubernetes-based one
+
+#### DOCKER_CLIENT
+
+**Type:** dict_field
+
+**Default value**: {'base_url': 'unix://var/run/docker.sock'}
+
+Options for docker client. See also: <https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient>
+
+#### DOCKER_RUN_OPTIONS
+
+**Type:** dict_field
+
+**Default value**: {'mem_limit': '512m'}
+
+Options for docker runtime. See also: <https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.run>
+
+#### DOCKER_SCRIPT_DIR
+
+**Type:** str
+
+Path to folder on executor machine where to create temporary submission scripts. If None, uses OS-dependent location. OS X users, see <https://github.com/docker/for-mac/issues/1532>
+
+#### DOCKER_REMOVE_CONTAINER
+
+**Type:** bool
+
+**Default value**: True
+
+Remove Docker container after script execution
+
+#### DOCKER_IMAGES
+
+**Type:** dict_field
+
+**Default value**: {'python': {'image': 'python:3.11-alpine', 'command': 'python'}, 'shell': {'image': 'alpine:3', 'command': 'sh'}}
+
+Key is command to execute script, value is a dictionary of image name and command.
+
+#### K8S_NAMESPACE
+
+**Type:** str
+
+**Default value**: default
+
+Kubernetes namespace where jobs will be executed
+
+#### K8S_CONFIG_PATH
+
+**Type:** str
+
+**Default value**: ~/.kube/config
+
+Path to Kubernetes configuration file
+
+#### K8S_JOB_TIMEOUT
+
+**Type:** int
+
+**Default value**: 1800
+
+Timeout for execution of one Kubernetes job in seconds
 
 ### Notifications
 
