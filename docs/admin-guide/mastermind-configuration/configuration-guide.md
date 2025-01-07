@@ -1877,6 +1877,6 @@ List of enabled languages
 
 **Type:** bool
 
-Configure whether a user needs to approve TOS.
+Mark terms of services as approved for new users.
 
 
