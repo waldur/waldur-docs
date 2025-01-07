@@ -37,3 +37,38 @@ A CSV-file with the following format is required:
 
 Put this file to the `/tmp/projects-info.csv` location and
 execute [this script](scripts/import_projects_with_slug.py) with your Waldur shell.
+
+### Migrate legacy SLURM allocations to a new SLURM-remote offering
+
+```python
+from waldur_mastermind.marketplace import models as marketplace_models
+
+COMPONENT_TYPE_MAP = {
+    'cpu': 'cpu',
+    'gpu': 'gres/gpu',
+    'ram': 'mem',
+}
+
+def migrate_legacy_allocation(resource: marketplace_models.Resource, offering_new: marketplace_models.Offering):
+    print('Migrating legacy allocation %s' % resource)
+    resource.offering = offering_new
+    resource.save()
+    for usage in resource.usages.all():
+        new_component = offering_new.components.get(type=COMPONENT_TYPE_MAP[usage.component.type])
+        print('Switching usage %s' % usage)
+        usage.component = new_component
+        usage.save()
+
+offering_old_uuid = '<LEGACY_OFFERING_UUID>'
+offering_new_uuid = '<NEW_OFFERING_UUID>'
+offering_old = marketplace_models.Offering.objects.get(uuid=offering_old_uuid)
+offering_new = marketplace_models.Offering.objects.get(uuid=offering_new_uuid)
+
+legacy_allocations = marketplace_models.Resource.objects.filter(offering=offering_old)
+
+for legacy_allocation in legacy_allocations:
+    try:
+        migrate_legacy_allocation(legacy_allocation, offering_new)
+    except Exception as e:
+        print('Failed to migrate allocation %s: %s' % (legacy_allocation, e))
+```
