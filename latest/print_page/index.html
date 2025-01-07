@@ -18611,7 +18611,68 @@ Please enter backup's name:
 "abc","10000","01/1/2024","31/3/2024","05/1/2024","28/3/2024"
 </code></pre></div></td></tr></table></div>
 <p>Put this file to the <code>/tmp/projects-info.csv</code> location and
-execute <a href="../developer-guide/scripts/import_projects_with_slug.py">this script</a> with your Waldur shell.</p></div></section><section class="print-page" id="developer-guide-background"><div><h1 id="background-processing">Background processing</h1>
+execute <a href="../developer-guide/scripts/import_projects_with_slug.py">this script</a> with your Waldur shell.</p>
+<h3 id="developer-guide-ad-hoc-scripts-migrate-legacy-slurm-allocations-to-a-new-slurm-remote-offering">Migrate legacy SLURM allocations to a new SLURM-remote offering</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_mastermind.marketplace</span> <span class="kn">import</span> <span class="n">models</span> <span class="k">as</span> <span class="n">marketplace_models</span>
+
+<span class="n">COMPONENT_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'cpu'</span><span class="p">:</span> <span class="s1">'cpu'</span><span class="p">,</span>
+    <span class="s1">'gpu'</span><span class="p">:</span> <span class="s1">'gres/gpu'</span><span class="p">,</span>
+    <span class="s1">'ram'</span><span class="p">:</span> <span class="s1">'mem'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">migrate_legacy_allocation</span><span class="p">(</span><span class="n">resource</span><span class="p">:</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Resource</span><span class="p">,</span> <span class="n">offering_new</span><span class="p">:</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Offering</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Migrating legacy allocation </span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="n">resource</span><span class="p">)</span>
+    <span class="n">resource</span><span class="o">.</span><span class="n">offering</span> <span class="o">=</span> <span class="n">offering_new</span>
+    <span class="n">resource</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">usage</span> <span class="ow">in</span> <span class="n">resource</span><span class="o">.</span><span class="n">usages</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">new_component</span> <span class="o">=</span> <span class="n">offering_new</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">COMPONENT_TYPE_MAP</span><span class="p">[</span><span class="n">usage</span><span class="o">.</span><span class="n">component</span><span class="o">.</span><span class="n">type</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Switching usage </span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="n">usage</span><span class="p">)</span>
+        <span class="n">usage</span><span class="o">.</span><span class="n">component</span> <span class="o">=</span> <span class="n">new_component</span>
+        <span class="n">usage</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+<span class="n">offering_old_uuid</span> <span class="o">=</span> <span class="s1">'&lt;LEGACY_OFFERING_UUID&gt;'</span>
+<span class="n">offering_new_uuid</span> <span class="o">=</span> <span class="s1">'&lt;NEW_OFFERING_UUID&gt;'</span>
+<span class="n">offering_old</span> <span class="o">=</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Offering</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uuid</span><span class="o">=</span><span class="n">offering_old_uuid</span><span class="p">)</span>
+<span class="n">offering_new</span> <span class="o">=</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Offering</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uuid</span><span class="o">=</span><span class="n">offering_new_uuid</span><span class="p">)</span>
+
+<span class="n">legacy_allocations</span> <span class="o">=</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Resource</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">offering</span><span class="o">=</span><span class="n">offering_old</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">legacy_allocation</span> <span class="ow">in</span> <span class="n">legacy_allocations</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">migrate_legacy_allocation</span><span class="p">(</span><span class="n">legacy_allocation</span><span class="p">,</span> <span class="n">offering_new</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Failed to migrate allocation </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="n">legacy_allocation</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="developer-guide-background"><div><h1 id="background-processing">Background processing</h1>
 <p>For executing heavier requests and performing background tasks Waldur is
 using <a href="https://docs.celeryproject.org/en/stable/">Celery</a>. Celery is a task queue
 that supports multiple backends for storing the tasks and results.
