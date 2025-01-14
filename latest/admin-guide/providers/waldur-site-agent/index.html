@@ -2515,6 +2515,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#event-based-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event-based processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#older-systemd-versions" class="md-nav__link">
     <span class="md-ellipsis">
       Older systemd versions
@@ -5008,6 +5017,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#event-based-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event-based processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#older-systemd-versions" class="md-nav__link">
     <span class="md-ellipsis">
       Older systemd versions
@@ -5046,37 +5064,42 @@
 
 
 <div><h1 id="waldur-site-agent">Waldur Site Agent</h1>
-<p>Agent for Mastermind integration with a provider's site.
+<p>Project for Waldur integration with a service provider's site.
 The main purpose of the agent is data syncronization between Waldur
-and an application (for example SLURM or MOAB cluster).
-The agent uses order-related information
-from Waldur to manage accounts in the site and
-accounting-related info from the site (backend) to update usage data in Waldur.
-For now, the agent supports only SLURM and MOAB clusters as a site.</p>
+and a service backend (for example SLURM or MOAB cluster).
+The agent uses order information from Waldur
+to manage accounts in the site (backend) and accounting info
+from the site  to update usage data in Waldur.
+For now, the agent supports only SLURM and MOAB clusters as a service backend.</p>
 <h2 id="architecture">Architecture</h2>
 <p>Agent is a stateless application, which is deployed
-on a machine having access to a backend data.
-It consists of three sub-applications:</p>
+on a machine with access to backend data.
+It consists of 4 sub-applications:</p>
 <ul>
 <li><code>agent-order-process</code>, which fetches ordering data from Waldur and updates
-  a state of a backend correspondingly;
+  a state of backend object correspondingly;
   (e.g. creates/updates/deletes SLURM accounts);</li>
 <li><code>agent-report</code>, which reports computing usage and limits info from
-  a backend to Waldur (e.g. update of resource usages);</li>
-<li><code>agent-membership-sync</code>, which syncs membership info between Waldur
-  and a backend (e.g. adds users to a SLURM allocation).</li>
+  the backend to Waldur (e.g. update of resource usages);</li>
+<li><code>agent-membership-sync</code>, which syncronizes membership info between Waldur
+  and the backend (e.g. adds users to a SLURM allocation);</li>
+<li><code>agent-event-process</code>, which uses event-based approach to do the same as
+  <code>argent-order-process</code> and <code>agent-membership-sync</code>; requires an MQTT-system
+  as an event delivery queue between Waldur and the agent.</li>
 </ul>
 <h3 id="integration-with-waldur">Integration with Waldur</h3>
-<p>For this, the agent uses <a href="https://github.com/waldur/python-waldur-client">Waldur client</a>
-based on Python and REST communication with <a href="https://github.com/waldur/waldur-mastermind">Waldur backend</a>.
+<p>The agent uses a <a href="https://github.com/waldur/python-waldur-client">Python-based Waldur client</a>
+communicating with <a href="https://github.com/waldur/waldur-mastermind">Waldur backend</a>
+via REST interface.
 <code>Agent-order-process</code> application pulls data of orders created
 in Waldur and creates/updates/removes backend resources based on this info.
 <code>Agent-report</code> fetches usage data pushes it to Waldur.
 <code>Agent-membership-sync</code> fetches associations from
-a backend and syncronizes it with remote ones.</p>
+a backend and syncronizes it with remote ones.
+<code>Agent-event-process</code> manages Waldur orders and membership in event-based way.</p>
 <h3 id="integration-with-the-site">Integration with the site</h3>
 <h4 id="slurm-cluster">SLURM cluster</h4>
-<p>The agent relies on SLURM command line utilities (e.g. <code>sacct</code> and <code>sacctmgr</code>)
+<p>The agent relies on SLURM command-line utilities (e.g. <code>sacct</code> and <code>sacctmgr</code>)
 and should run on a headnode of the SLURM cluster.</p>
 <h4 id="moab-cluster">MOAB cluster</h4>
 <p>The agent relies on MOAB command line utilities (e.g. <code>mam-list-accounts</code> and <code>mam-create-account</code>)
@@ -5085,7 +5108,7 @@ and should run on a headnode of the MOAB cluster as a root user.</p>
 <p>The application supports the following CLI arguments:</p>
 <ul>
 <li><code>-m</code>, <code>--mode</code> - mode of agent; supported values:
-  <code>order_process</code>, <code>report</code> and <code>membership_sync</code>; default is <code>order_process</code>.</li>
+  <code>order_process</code>, <code>report</code>, <code>membership_sync</code> and <code>event_process</code>; default is <code>order_process</code>.</li>
 <li><code>-c</code>, <code>--config-file</code> - path to the config file with provider settings.</li>
 </ul>
 <p>Optional environment variables:</p>
@@ -5100,26 +5123,27 @@ and should run on a headnode of the MOAB cluster as a root user.</p>
   for Waldur client, default is <code>true</code>.</li>
 <li><code>SENTRY_ENVIRONMENT</code> - name of the Sentry environment.</li>
 </ul>
-<p>The primary config for the agent is a <code>waldur-site-agent-config.yaml</code>.
-Using it, the agent can serve several offerings
-and setup backend-related data, for example computing component settings.
+<p>The main config source for the agent is <code>waldur-site-agent-config.yaml</code> file.
+Using it, the agent can serve multiple offerings
+and setup backend-related data, for example settings of computing components.
 File <a href="../examples/waldur-site-agent-config.yaml.example">example</a> and <a href="#provider-config-file-reference">reference</a>.</p>
-<p><strong>NB:</strong> for MOAB, the only acceptable component is <code>deposit</code>.
+<p><strong>NB:</strong> for MOAB, the only acceptable backend component is <code>deposit</code>.
 All other specified components are ignored by the agent.</p>
 <h2 id="deployment">Deployment</h2>
-<p>A user should deploy 3 separate instances of the agent.
+<p>A user can deploy 4 separate instances of the agent.
 The first one (called agent-order-process) fetches data
 from Waldur with further processing,
 the second one (called agent-report)
 sends usage data from the backend to Waldur
-and the third one syncs membership information between Waldur and the backend.
-All the instances must be configured with CLI variables and provider config file.</p>
+the third one syncs membership information between Waldur and the backend and
+the optional fourth one processes order and membership info in event-based way.
+All the instances must be configured with provider config file and CLI variables.</p>
 <p>To deploy them, you need to setup and
 start the systemd services.</p>
 <h3 id="prerequisite-offering-configuration-in-waldur">Prerequisite: offering configuration in Waldur</h3>
 <h4 id="slurm-and-moab">SLURM and MOAB</h4>
-<p>The agents require existing offering data in Waldur.
-As a service provider owner, you should create an offering in the marketplace:</p>
+<p>Agents require a pre-created offering in Waldur.
+As a service provider owner, you should create a new offering in the marketplace:</p>
 <ul>
 <li>Go to <code>Service Provider</code> section of the organization
   and open offering creation menu</li>
@@ -5154,7 +5178,8 @@ section on the same page:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>cp<span class="w"> </span>examples/waldur-site-agent-config.yaml.example<span class="w"> </span>/etc/waldur/waldur-site-agent-config.yaml
 </code></pre></div></td></tr></table></div>
 <p>Please use the <code>waldur_site_load_components</code> command
-to load computing components into Waldur.</p>
+to load computing components into Waldur.
+This step is necessary for correct setup of the offering in Waldur.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur_site_load_components<span class="w"> </span>-c<span class="w"> </span>/etc/waldur/waldur-site-agent-config.yaml
 </code></pre></div></td></tr></table></div>
 <p>Thirdly, put systemd unit
@@ -5169,7 +5194,68 @@ and provider config files to the corresponding locations.</p>
 <li>
 <p>agent-membership-sync systemd unit: <a href="../systemd-conf/agent-membership-sync/agent.service">waldur-agent-membership-sync.service</a></p>
 </li>
+<li>
+<p>agent-event-process systemd unit: <a href="systemd-conf/agent-event-process/agent.service">waldur-agent-event-process.service</a></p>
+</li>
 </ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># For agent-order-process</span>
+cp<span class="w"> </span>systemd-conf/agent-order-process/agent.service<span class="w"> </span>/etc/systemd/system/waldur-agent-order-process.service
+
+<span class="c1"># For agent-report</span>
+cp<span class="w"> </span>systemd-conf/agent-report/agent.service<span class="w"> </span>/etc/systemd/system/waldur-agent-report.service
+
+<span class="c1"># For agent-membership-sync</span>
+cp<span class="w"> </span>systemd-conf/agent-membership-sync/agent.service<span class="w"> </span>/etc/systemd/system/waldur-agent-membership-sync.service
+
+<span class="c1"># For agent-event-process</span>
+cp<span class="w"> </span>systemd-conf/agent-event-process/agent.service<span class="w"> </span>/etc/systemd/system/waldur-agent-event-process.service
+</code></pre></div></td></tr></table></div>
+<p>After these preparation steps, run the following script to apply the changes.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>systemctl<span class="w"> </span>daemon-reload
+
+systemctl<span class="w"> </span>start<span class="w"> </span>waldur-agent-order-process.service
+systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-agent-order-process.service<span class="w"> </span><span class="c1"># to start after reboot</span>
+
+systemctl<span class="w"> </span>start<span class="w"> </span>waldur-agent-report.service
+systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-agent-report.service
+
+systemctl<span class="w"> </span>start<span class="w"> </span>waldur-agent-membership-sync.service
+systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-agent-membership-sync.service
+
+systemctl<span class="w"> </span>start<span class="w"> </span>waldur-agent-event-process.service
+systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-agent-event-process.service<span class="w"> </span><span class="c1"># to start after reboot</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="event-based-processing">Event-based processing</h3>
+<p>Each offering from the config file can have <code>mqtt_enabled</code>
+set to <code>true</code> or <code>false</code> (<code>false</code> by default).</p>
+<p>If this setting set to <code>true</code>, the offering is ignored
+by <code>agent-order-process</code> and <code>agent-membership-sync</code>,
+instead, the <code>agent-event-process</code> takes care of it.</p>
+<h3 id="older-systemd-versions">Older systemd versions</h3>
+<p>If you want to deploy the agents on a machine with systemd revision older than 240,
+you should use files with legacy configuration:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -5178,50 +5264,13 @@ and provider config files to the corresponding locations.</p>
 <span class="normal">6</span>
 <span class="normal">7</span>
 <span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># For agent-order-process</span>
-cp<span class="w"> </span>systemd-conf/agent-order-process/agent.service<span class="w"> </span>/etc/systemd/system/waldur-agent-order-process.service
-
-<span class="c1"># For agent-report</span>
-cp<span class="w"> </span>systemd-conf/agent-report/agent.service<span class="w"> </span>/etc/systemd/system/waldur-agent-report.service
-
-<span class="c1"># For agent-membership-sync</span>
-cp<span class="w"> </span>systemd-conf/agent-membership-sync/agent.service<span class="w"> </span>/etc/systemd/system/waldur-agent-membership-sync.service
-</code></pre></div></td></tr></table></div>
-<p>After these preparation steps, run the following script to apply the changes.</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code>systemctl<span class="w"> </span>daemon-reload
-systemctl<span class="w"> </span>start<span class="w"> </span>waldur-agent-order-process.service
-systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-agent-order-process.service<span class="w"> </span><span class="c1"># to start after reboot</span>
-systemctl<span class="w"> </span>start<span class="w"> </span>waldur-agent-report.service
-systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-agent-report.service
-systemctl<span class="w"> </span>start<span class="w"> </span>waldur-agent-membership-sync.service
-systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-agent-membership-sync.service
-</code></pre></div></td></tr></table></div>
-<h3 id="older-systemd-versions">Older systemd versions</h3>
-<p>If you want to deploy the agents on a machine
-with systemd revision older than 240,
-you should use files with legacy configuration:</p>
-<ul>
-<li>systemd legacy unit file for agent-pull:
-  <a href="../systemd-conf/agent-pull/waldur-site-agent-pull-legacy.service">waldur-site-agent-pull-legacy.service</a></li>
-<li>systemd legacy unit file for agent-push:
-  <a href="../systemd-conf/agent-push/waldur-site-agent-push-legacy.service">waldur-site-agent-push-legacy.service</a></li>
-</ul>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># For agent-order-process</span>
 cp<span class="w"> </span>systemd-conf/agent-order-process/agent-legacy.service<span class="w"> </span>/etc/systemd/system/waldur-agent-order-process-legacy.service
 <span class="c1"># For agent-report</span>
 cp<span class="w"> </span>systemd-conf/agent-report/agent-legacy.service<span class="w"> </span>/etc/systemd/system/waldur-agent-report-legacy.service
 <span class="c1"># For agent-membership-sync</span>
 cp<span class="w"> </span>systemd-conf/agent-membership-sync/agent-legacy.service<span class="w"> </span>/etc/systemd/system/waldur-agent-membership-sync-legacy.service
+<span class="c1"># For agent-event-process</span>
+cp<span class="w"> </span>systemd-conf/agent-event-process/agent-legacy.service<span class="w"> </span>/etc/systemd/system/waldur-agent-event-process-legacy.service
 </code></pre></div></td></tr></table></div>
 <h2 id="provider-config-file-reference">Provider config file reference</h2>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -5354,7 +5403,7 @@ cp<span class="w"> </span>systemd-conf/agent-membership-sync/agent-legacy.servic
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2024-12-18
+    2025-01-14
   </span>
 
     
