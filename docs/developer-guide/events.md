@@ -108,6 +108,7 @@
 - marketplace_order_failed
 - marketplace_order_rejected
 - marketplace_order_terminated
+- marketplace_order_unlinked
 - marketplace_resource_create_canceled
 - marketplace_resource_create_failed
 - marketplace_resource_create_requested
@@ -120,6 +121,7 @@
 - marketplace_resource_terminate_failed
 - marketplace_resource_terminate_requested
 - marketplace_resource_terminate_succeeded
+- marketplace_resource_unlinked
 - marketplace_resource_update_canceled
 - marketplace_resource_update_end_date_succeeded
 - marketplace_resource_update_failed
@@ -277,6 +279,5 @@
 - user_has_been_created_by_staff
 - user_password_updated
 - user_password_updated_by_staff
-- user_profile_changed
 - user_update_succeeded
 
