@@ -19,6 +19,21 @@
 - call_document_added
 - call_document_removed
 
+## Credits
+
+- allowed_offerings_have_been_updated
+- create_of_credit_by_staff
+- reduction_of_customer_credit
+- reduction_of_customer_credit_due_to_minimal_consumption
+- reduction_of_customer_expected_consumption
+- reduction_of_project_credit
+- reduction_of_project_credit_due_to_minimal_consumption
+- reduction_of_project_expected_consumption
+- roll_back_customer_credit
+- roll_back_project_credit
+- set_to_zero_overdue_credit
+- update_of_credit_by_staff
+
 ## Customers
 
 - allowed_offerings_have_been_updated
@@ -35,8 +50,12 @@
 - payment_added
 - payment_created
 - payment_removed
-- reduction_of_credit
-- reduction_of_credit_due_to_minimal_consumption
+- reduction_of_customer_credit
+- reduction_of_customer_credit_due_to_minimal_consumption
+- reduction_of_customer_expected_consumption
+- reduction_of_project_credit
+- reduction_of_project_credit_due_to_minimal_consumption
+- reduction_of_project_expected_consumption
 - roll_back_customer_credit
 - roll_back_project_credit
 - set_to_zero_overdue_credit
@@ -54,8 +73,12 @@
 - invoice_paid
 - payment_created
 - payment_removed
-- reduction_of_credit
-- reduction_of_credit_due_to_minimal_consumption
+- reduction_of_customer_credit
+- reduction_of_customer_credit_due_to_minimal_consumption
+- reduction_of_customer_expected_consumption
+- reduction_of_project_credit
+- reduction_of_project_credit_due_to_minimal_consumption
+- reduction_of_project_expected_consumption
 - roll_back_customer_credit
 - roll_back_project_credit
 - set_to_zero_overdue_credit
