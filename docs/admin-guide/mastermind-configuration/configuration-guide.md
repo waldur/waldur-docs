@@ -361,7 +361,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'DEFAULT_IDP': '',
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
- 'ENABLE_STRICT_CHECK_ACCEPTING_INVITATION': False,
  'EXTENSIONS_AUTOREGISTER': True,
  'EXTERNAL_LINKS': [],
  'GROUP_INVITATION_LIFETIME': datetime.timedelta(days=7),
@@ -464,12 +463,6 @@ Max age of change email request.
 Type: bool
 
 Allows to enable accounting for organizations using value of accounting_start_date field.
-
-#### ENABLE_STRICT_CHECK_ACCEPTING_INVITATION
-
-Type: bool
-
-If this is true and user email is pre-validated then accepting invitation to only do that if user’s email and email of the invitation fully match.
 
 #### EXTENSIONS_AUTOREGISTER
 
@@ -1878,5 +1871,11 @@ List of enabled languages
 **Type:** bool
 
 Mark terms of services as approved for new users.
+
+#### ENABLE_STRICT_CHECK_ACCEPTING_INVITATION
+
+**Type:** bool
+
+If this is true and user email is pre-validated then accepting invitation to only do that if user’s email and email of the invitation fully match.
 
 
