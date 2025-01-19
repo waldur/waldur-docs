@@ -18747,36 +18747,96 @@ execute <a href="../developer-guide/scripts/import_projects_with_slug.py">this s
 <span class="normal">27</span>
 <span class="normal">28</span>
 <span class="normal">29</span>
-<span class="normal">30</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_mastermind.marketplace</span> <span class="kn">import</span> <span class="n">models</span> <span class="k">as</span> <span class="n">marketplace_models</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_mastermind.marketplace</span> <span class="kn">import</span> <span class="n">models</span> <span class="k">as</span> <span class="n">marketplace_models</span>
 
 <span class="n">COMPONENT_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">'cpu'</span><span class="p">:</span> <span class="s1">'cpu'</span><span class="p">,</span>
-    <span class="s1">'gpu'</span><span class="p">:</span> <span class="s1">'gres/gpu'</span><span class="p">,</span>
-    <span class="s1">'ram'</span><span class="p">:</span> <span class="s1">'mem'</span><span class="p">,</span>
+    <span class="s2">"cpu"</span><span class="p">:</span> <span class="s2">"cpu"</span><span class="p">,</span>
+    <span class="s2">"gpu"</span><span class="p">:</span> <span class="s2">"gres/gpu"</span><span class="p">,</span>
+    <span class="s2">"ram"</span><span class="p">:</span> <span class="s2">"mem"</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="k">def</span> <span class="nf">migrate_legacy_allocation</span><span class="p">(</span><span class="n">resource</span><span class="p">:</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Resource</span><span class="p">,</span> <span class="n">offering_new</span><span class="p">:</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Offering</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">'Migrating legacy allocation </span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="n">resource</span><span class="p">)</span>
-    <span class="n">resource</span><span class="o">.</span><span class="n">offering</span> <span class="o">=</span> <span class="n">offering_new</span>
-    <span class="n">resource</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">usage</span> <span class="ow">in</span> <span class="n">resource</span><span class="o">.</span><span class="n">usages</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-        <span class="n">new_component</span> <span class="o">=</span> <span class="n">offering_new</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">COMPONENT_TYPE_MAP</span><span class="p">[</span><span class="n">usage</span><span class="o">.</span><span class="n">component</span><span class="o">.</span><span class="n">type</span><span class="p">])</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">'Switching usage </span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="n">usage</span><span class="p">)</span>
-        <span class="n">usage</span><span class="o">.</span><span class="n">component</span> <span class="o">=</span> <span class="n">new_component</span>
-        <span class="n">usage</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
-<span class="n">offering_old_uuid</span> <span class="o">=</span> <span class="s1">'&lt;LEGACY_OFFERING_UUID&gt;'</span>
-<span class="n">offering_new_uuid</span> <span class="o">=</span> <span class="s1">'&lt;NEW_OFFERING_UUID&gt;'</span>
+<span class="k">def</span> <span class="nf">migrate_legacy_allocation</span><span class="p">(</span>
+    <span class="n">resource</span><span class="p">:</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Resource</span><span class="p">,</span>
+    <span class="n">offering_new</span><span class="p">:</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Offering</span><span class="p">,</span>
+    <span class="n">dry_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">plan_old</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">plan</span>
+    <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Dry-run migrating legacy allocation </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">resource</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Migrating legacy allocation </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">resource</span><span class="p">)</span>
+        <span class="n">resource</span><span class="o">.</span><span class="n">offering</span> <span class="o">=</span> <span class="n">offering_new</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Updating resource plan to </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">plan_new</span><span class="p">)</span>
+        <span class="n">resource</span><span class="o">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">plan_new</span>
+        <span class="n">resource</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"offering"</span><span class="p">,</span> <span class="s2">"plan"</span><span class="p">])</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">usage</span> <span class="ow">in</span> <span class="n">resource</span><span class="o">.</span><span class="n">usages</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">new_component</span> <span class="o">=</span> <span class="n">offering_new</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">COMPONENT_TYPE_MAP</span><span class="p">[</span><span class="n">usage</span><span class="o">.</span><span class="n">component</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"Dry-run switching component usage </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">usage</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"Switching usage </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">usage</span><span class="p">)</span>
+                <span class="n">usage</span><span class="o">.</span><span class="n">component</span> <span class="o">=</span> <span class="n">new_component</span>
+                <span class="n">usage</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"component"</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Dry-run Rolling back resource offering and plan because of </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Rolling back resource offering and plan because of </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+            <span class="n">resource</span><span class="o">.</span><span class="n">offering</span> <span class="o">=</span> <span class="n">offering_old</span>
+            <span class="n">resource</span><span class="o">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">plan_old</span>
+            <span class="n">resource</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"offering"</span><span class="p">,</span> <span class="s2">"plan"</span><span class="p">])</span>
+
+<span class="n">offering_old_uuid</span> <span class="o">=</span> <span class="s2">"&lt;LEGACY_OFFERING_UUID&gt;"</span>
+<span class="n">offering_new_uuid</span> <span class="o">=</span> <span class="s2">"&lt;NEW_OFFERING_UUID&gt;"</span>
 <span class="n">offering_old</span> <span class="o">=</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Offering</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uuid</span><span class="o">=</span><span class="n">offering_old_uuid</span><span class="p">)</span>
 <span class="n">offering_new</span> <span class="o">=</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Offering</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uuid</span><span class="o">=</span><span class="n">offering_new_uuid</span><span class="p">)</span>
+<span class="n">plan_new</span> <span class="o">=</span> <span class="n">offering_new</span><span class="o">.</span><span class="n">plans</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 
 <span class="n">legacy_allocations</span> <span class="o">=</span> <span class="n">marketplace_models</span><span class="o">.</span><span class="n">Resource</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">offering</span><span class="o">=</span><span class="n">offering_old</span><span class="p">)</span>
 
+<span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">legacy_allocations_count</span> <span class="o">=</span> <span class="n">legacy_allocations</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">legacy_allocation</span> <span class="ow">in</span> <span class="n">legacy_allocations</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Processing resource </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">legacy_allocations_count</span><span class="p">))</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">migrate_legacy_allocation</span><span class="p">(</span><span class="n">legacy_allocation</span><span class="p">,</span> <span class="n">offering_new</span><span class="p">)</span>
+        <span class="n">migrate_legacy_allocation</span><span class="p">(</span><span class="n">legacy_allocation</span><span class="p">,</span> <span class="n">offering_new</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">'Failed to migrate allocation </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="n">legacy_allocation</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Failed to migrate allocation </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">legacy_allocation</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
 </code></pre></div></td></tr></table></div></div></section><section class="print-page" id="developer-guide-background"><div><h1 id="background-processing">Background processing</h1>
 <p>For executing heavier requests and performing background tasks Waldur is
 using <a href="https://docs.celeryproject.org/en/stable/">Celery</a>. Celery is a task queue
