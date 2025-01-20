@@ -14,7 +14,8 @@ Practical guides for the end users:
 * [Cost and usage policies](cost-and-usage-policies.md)
 * [Credit management](credit-management.md)
 
-Practical guides for the staff users (deployment adminsitrators):
+Practical guides for the staff users (deployment administrators):
 
-* [Projects removal by admin](projects-removal-admin.md)
+* [Announcements](announcements.md)
 * [Impersonation](impersonation.md)
+* [Projects removal by admin](projects-removal-admin.md)
