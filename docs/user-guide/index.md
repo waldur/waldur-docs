@@ -17,5 +17,6 @@ Practical guides for the end users:
 Practical guides for the staff users (deployment administrators):
 
 * [Announcements](announcements.md)
+* [Branding](branding.md)
 * [Impersonation](impersonation.md)
 * [Projects removal by admin](projects-removal-admin.md)
