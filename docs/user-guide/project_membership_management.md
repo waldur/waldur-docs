@@ -2,7 +2,7 @@
 
 Project team contains users with different roles.
 
-Please see [this page](https://docs.waldur.com/glossaries/structure/#user-roles-in-organization) for User Rights based on Roles in the Organization.
+Please see [this page](https://docs.waldur.com/latest/about/glossaries/structure/) for User Rights based on Roles in the Organization.
 
 ## Adding project members
 
