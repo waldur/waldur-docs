@@ -2,7 +2,7 @@
 
 Waldur provides a shell for command line scripting. To start a shell, run ``waldur shell`` in the MasterMind context.
 
-For docker-compose deployments, please run:
+For Docker Compose deployments, please run:
 
 ``docker exec -it waldur-mastermind-api waldur shell``
 
