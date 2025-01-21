@@ -32,6 +32,10 @@ Show tax number field in invitation creation form.
 
 Make tax number field mandatory in invitation creation form.
 
+## marketplace.call_only
+
+Allow marketplace to serve only as aggregator of call info.
+
 ## marketplace.catalogue_only
 
 Allow marketplace to function as a catalogue only.

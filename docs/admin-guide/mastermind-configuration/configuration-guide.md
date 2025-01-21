@@ -1172,6 +1172,14 @@ It is used in marketplace order header and UI footer.
 
 It is used in marketplace order details and invoices for currency formatting.
 
+#### MARKETPLACE_LANDING_PAGE
+
+**Type:** str
+
+**Default value**: Marketplace
+
+Marketplace landing page title.
+
 ### Marketplace
 
 #### THUMBNAIL_SIZE
