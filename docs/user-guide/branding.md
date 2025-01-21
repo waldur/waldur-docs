@@ -20,7 +20,4 @@ You will find Marketplace branding settings, Notifications branding settings, an
 
 ## Video Tutorial
 
-<video width="100%" controls>
-  <source src="img/branding.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![type:video](img/branding.mp4)
