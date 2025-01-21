@@ -18,5 +18,6 @@ Practical guides for the staff users (deployment administrators):
 
 * [Announcements](announcements.md)
 * [Branding](branding.md)
+* [Catalogue Mode](catalogue_mode.md)
 * [Impersonation](impersonation.md)
 * [Projects removal by admin](projects-removal-admin.md)
