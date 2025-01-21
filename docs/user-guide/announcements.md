@@ -23,6 +23,14 @@ Currently, there are three types of announcements:
 
 ![List of announcements](img/new_announcement.png)
 
+## Editing an announcement
+
+If you need to edit existing announcement, then:
+
+1. Navigate to announcement management page.
+2. Find the announcement you would like to change.
+3. Under the **Actions** column on the left side of the announcement, click the **Edit** button (visible by clicking on the three dots).
+
 Once an announcement is active, it will be displayed to users on every page, just below the Search box.
 
 ![List of announcements](img/active_announcement.png)
