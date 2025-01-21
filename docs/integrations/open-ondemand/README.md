@@ -126,8 +126,8 @@ Waldur-slurm-agent is a microservice for pulling allocation from Waldur and push
 
 The microservice supports 2 modes of operation:
 
-1. docker-compose - testing only, requires SLURM running in the same docker compose
-2. native - production
+1. Docker Compose - testing only, requires SLURM running in the same docker compose
+2. Native - production
 
 Follow [https://docs.waldur.com/integrations/waldur-slurm-service/](https://docs.waldur.com/integrations/waldur-slurm-service/) for installation guide. Make sure to enable the ENABLE_USER_HOMEDIR_ACCOUNT_CREATION flag - Open OnDemand does not work unless the user's home directory exists.
 
