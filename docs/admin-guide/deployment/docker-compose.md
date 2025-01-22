@@ -235,7 +235,7 @@ Example:
 TLS=internal
 ```
 
-- Custom - set environment variable TLS to "cert.pem key.pem" where cert.pem and key.pem - are paths to your custom certificates (this needs modifying `docker-compose.yml` with path to your certificates passed as volumes)
+- Custom - set environment variable TLS to "cert.pem key.pem" where cert.pem and key.pem - are paths to your custom certificates (this needs modifying docker-compose with path to your certificates passed as volumes)
 
 Example:
 
