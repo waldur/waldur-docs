@@ -16,6 +16,24 @@ Notes: None
     * Image SBOM: [waldur-prometheus-exporter-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.8-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-prometheus-exporter-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.8-source.cyclonedx.tar.gz)
 
+Date: Wed Jan 22 18:54:38 UTC 2025
+
+## 7.2.8
+
+Notes: None
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.8...7.2.8)
+    * Image SBOM: [waldur-mastermind-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.8-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-mastermind-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.8-source.cyclonedx.tar.gz)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.8...7.2.8)
+    * Image SBOM: [waldur-homeport-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.8-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-homeport-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.8-source.cyclonedx.tar.gz)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.8...7.2.8)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.8...7.2.8)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.8...7.2.8)
+    * Image SBOM: [waldur-prometheus-exporter-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.8-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-prometheus-exporter-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.8-source.cyclonedx.tar.gz)
+
 Date: Wed Jan 22 18:51:42 UTC 2025
 
 ## 7.2.8
