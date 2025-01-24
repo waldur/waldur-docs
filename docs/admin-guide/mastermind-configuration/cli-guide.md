@@ -157,6 +157,10 @@ options:
                         output will be printed to stdout by default.
 ```
 
+## export_model_metadata
+
+Collect and export metadata about Django models
+
 ## export_offering
 
 Export an offering from Waldur. Export data includes JSON file with an offering data and a thumbnail. Names of this files include offering ID.
