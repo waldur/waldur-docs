@@ -8,16 +8,24 @@ The portal allows you to customize its appearance to match your organization's b
 2. Click on Settings
 3. Select the Branding tab
 
+![Branding](img/path-to-branding.png)
+
+
 ## Available Customization Options
 
 ### Branding
 
-- **Site Name**: Sets the name of the organization
+- **Site Name**: Sets the name of the organization.
 - **Page title**: It is used as page title.
 - **Site description**: Description of the Waldur deployment.
 
-You will find Marketplace branding settings, Notifications branding settings, and other settings.
+### In the same page you will find more sections to customise
 
-## Video Tutorial
+- Marketplace branding
+- Notifications
+- Links
+- Theme
+- Images
 
-![type:video](img/branding.mp4)
+!!! note
+    All changes in branding settings will be applied system-wide. Please preview changes before saving to ensure they meet your organization's visual guidelines.
