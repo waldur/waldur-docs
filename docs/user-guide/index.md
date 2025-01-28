@@ -21,3 +21,4 @@ Practical guides for the staff users (deployment administrators):
 * [Catalogue Mode](catalogue_mode.md)
 * [Impersonation](impersonation.md)
 * [Projects removal by admin](projects-removal-admin.md)
+* [Remote sync of offerings](remote-sync.md)
