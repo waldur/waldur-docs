@@ -372,7 +372,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'INVITATIONS_ENABLED': True,
  'INVITATION_CIVIL_NUMBER_LABEL': '',
  'INVITATION_CREATE_MISSING_USER': False,
- 'INVITATION_DISABLE_MULTIPLE_ROLES': False,
  'INVITATION_LIFETIME': datetime.timedelta(days=7),
  'INVITATION_MAX_AGE': None,
  'INVITATION_TAX_NUMBER_LABEL': '',
@@ -529,12 +528,6 @@ Custom label for civil number field in invitation creation dialog.
 Type: bool
 
 Allow to create FreeIPA user using details specified in invitation if user does not exist yet.
-
-#### INVITATION_DISABLE_MULTIPLE_ROLES
-
-Type: bool
-
-Do not allow user to grant multiple roles in the same project or organization using invitation.
 
 #### INVITATION_LIFETIME
 
@@ -1308,6 +1301,14 @@ Remove Docker container after script execution
 
 Key is command to execute script, value is a dictionary of image name and command.
 
+#### DOCKER_VOLUME_NAME
+
+**Type:** str
+
+**Default value**: waldur-docker-compose_waldur_script_launchzone
+
+A name of the shared volume to store scripts
+
 #### K8S_NAMESPACE
 
 **Type:** str
@@ -1885,5 +1886,11 @@ Mark terms of services as approved for new users.
 **Type:** bool
 
 If this is true and user email is pre-validated then accepting invitation to only do that if user’s email and email of the invitation fully match.
+
+#### INVITATION_DISABLE_MULTIPLE_ROLES
+
+**Type:** bool
+
+Do not allow user to grant multiple roles in the same project or organization using invitation.
 
 
