@@ -7409,35 +7409,146 @@ information <a href="https://docs.waldur.com/about/contributing/#localisation">h
 <p>OfferingUser is a model in Waldur, which represents a link between an offering available in marketplace and a user.
 A service provider can utilize it to create an account for a service visible for all the offering resources, for example: a user account in a SLURM cluster.
 As an account, an OfferingUser can have a custom username different from user's one.</p>
-<p>This feature is available for offerings of types:</p>
-<ul>
-<li>Basic</li>
-<li>SLURM</li>
-<li>SLURM remote</li>
-<li>Custom script</li>
-<li>Rancher</li>
-</ul>
+<p>This feature is available for all offering types.</p>
 <p>For Basic, SLURM remote and Custom script offerings, offering-users are created automatically when a user is added to the project with active offering resources or when a new offering resource is created.</p>
 <p>In case of Rancher, offering-users are created when users are imported from a Rancher cluster.</p>
 <p>In case of SLURM, offering-users are created when association are imported from a SLURM cluster.</p>
-<h2 id="admin-guide-offering-users-username-generation">Username generation</h2>
-<p>The <code>username</code> field for the model can be generated via strategies:</p>
+<h2 id="admin-guide-offering-users-defining-the-offeringuser-management-policy">Defining the OfferingUser management policy</h2>
+<p>A service provider can define the policy via User Interface:</p>
 <ol>
-<li><code>service_provider</code>: a service provider should manually set usernames for the offering users (default strategy);</li>
-<li><code>anonymized</code>: usernames are generated with <code>&lt;prefix&gt;_&lt;number&gt;</code>, e.g. "anonym_00001"; the prefix must be specified in the plugin options of the offering as <code>username_anonymized_prefix</code>;</li>
-<li><code>full_name</code>: usernames are constructed using first and last name of users with numerical suffix, e.g. "john_doe_01";</li>
-<li><code>waldur_username</code>: uses a username of a user;</li>
-<li><code>freeipa</code>: uses the username field of a corresponding FreeIPA profile.</li>
+<li>Select the particular offering and go to <strong>Edit</strong> section.</li>
+<li>
+<p>Select <strong>Integration</strong> and then <strong>User management</strong> from the top menu.</p>
+<p><a class="glightbox" href="../admin-guide/img/offeringUser.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="OfferingUser management" src="../admin-guide/img/offeringUser.png"></a></p>
+</li>
+<li>
+<p>Here it is possible to enable the automatic creation of offering users and define how it is done exactly.</p>
+<ul>
+<li><strong>Enable automatic creation of offering users</strong>: Enable/disable automatic creation of offering users;</li>
+<li><strong>Shared user password</strong>: Set common password for all offering users;</li>
+<li>
+<p><strong>Username generation policy</strong>: Define how usernames are generated:</p>
+<ul>
+<li><code>Service provider</code>: a service provider should manually set usernames for the offering users (default strategy);</li>
+<li><code>Anonymized</code>: usernames are generated with <code>&lt;prefix&gt;_&lt;number&gt;</code>, e.g. "anonym_00001"; the prefix must be specified in the plugin options of the offering as <code>username_anonymized_prefix</code>;</li>
+<li><code>Full name</code>: usernames are constructed using first and last name of users with numerical suffix, e.g. "john_doe_01";</li>
+<li><code>Waldur username</code>: uses a Waldur instance username of a user;</li>
+<li><code>FreeIPA</code>: uses the username field of a corresponding FreeIPA profile;</li>
+<li><code>Identity claim</code>: uses dedicated attribute released by the IdP as a username.</li>
+</ul>
+</li>
+<li>
+<p><strong>Initial UID number</strong>: refers to the lowest numerical user ID (UID) assigned to regular users;</p>
+</li>
+<li><strong>Initial primary group number</strong>: refers to Group ID (GID) assigned to a user when they are created;</li>
+<li><strong>Home directory prefix</strong>: Allows to define home directory prefix for the offering users.</li>
+</ul>
+</li>
+<li>
+<p>After this, the usernames are regenerated for all the linked offering users.</p>
+</li>
 </ol>
-<p>A service provider can choose the policy via UI:</p>
-<ol>
-<li>go to offering edit section in a service provider page;</li>
-<li>open <code>Integration</code> tab;</li>
-<li>click <code>Edit integration options</code>;</li>
-<li>choose a username generation policy from the drop-down list;</li>
-<li>click <code>Save</code> button.</li>
-</ol>
-<p>After this, the usernames are regenerated for all the linked offering users.</p></div></section><section class="print-page" id="admin-guide-waldur-shell"><div><h1 id="waldur-shell">Waldur Shell</h1>
+<h2 id="admin-guide-offering-users-granting-user-access-to-resource">Granting user access to resource</h2>
+<p>An access to a resource can be granted by service provider for a particular user with specification of username. A result is represented by triplet [user, resource, username]. For this purpose, <code>create_remote_offering_user</code> should be invoked. This method requires the following arguments:</p>
+<ul>
+<li><strong>offering</strong> - UUID or URL of a target offering;</li>
+<li><strong>user</strong> - UUID or URL of a target user;</li>
+<li><strong>username</strong> - username for the user.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="nv">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>client.create_remote_offering_user<span class="o">(</span>
+<span class="w">      </span><span class="nv">offering</span><span class="o">=</span><span class="s1">'&lt;offering-uuid-or-url&gt;'</span>,
+<span class="w">      </span><span class="nv">user</span><span class="o">=</span><span class="s1">'&lt;user-uuid-or-url&gt;'</span>,
+<span class="w">      </span><span class="nv">username</span><span class="o">=</span><span class="s1">'&lt;username&gt;'</span>
+<span class="w">  </span><span class="o">)</span>
+
+<span class="w">  </span><span class="c1"># result =&gt; {</span>
+<span class="w">  </span><span class="c1">#  'created': '2021-08-12T15:22:18.993586Z',</span>
+<span class="w">  </span><span class="c1">#  'offering': 'http://localhost:8000/api/marketplace-provider-offerings/d47ca5bce71144579df29da3c290027e/',</span>
+<span class="w">  </span><span class="c1">#  'offering_name': 'Remote offering (really)',</span>
+<span class="w">  </span><span class="c1">#  'offering_uuid': 'd47ca5bce71144579df29da3c290027e',</span>
+<span class="w">  </span><span class="c1">#  'user': 'http://localhost:8000/api/users/db157a5cf7f247eba161cd90eba9ac63/',</span>
+<span class="w">  </span><span class="c1">#  'user_uuid': 'db157a5cf7f247eba161cd90eba9ac63',</span>
+<span class="w">  </span><span class="c1">#  'username': 'abc'</span>
+<span class="w">  </span><span class="c1"># }</span>
+</code></pre></div></td></tr></table></div>
+<p>In case if SDK usage is not possible, HTTP request can be sent:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>POST<span class="w"> </span>&lt;API-URL&gt;/marketplace-offering-users/
+
+<span class="w">  </span><span class="o">{</span>
+<span class="w">      </span><span class="s2">"offering"</span>:<span class="w"> </span><span class="s2">"&lt;offering-uuid-or-url&gt;"</span>,
+<span class="w">      </span><span class="s2">"user"</span>:<span class="w"> </span><span class="s2">"&lt;user-uuid-or-url&gt;"</span>,
+<span class="w">      </span><span class="s2">"username"</span>:<span class="w"> </span><span class="s2">"&lt;username&gt;"</span>
+<span class="w">  </span><span class="o">}</span>
+
+<span class="w">  </span><span class="o">&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span>
+
+<span class="w">  </span><span class="o">{</span>
+<span class="w">      </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2021-08-12T15:22:18.993586Z"</span>,
+<span class="w">      </span><span class="s2">"offering"</span>:<span class="w"> </span><span class="s2">"http://localhost:8000/api/marketplace-provider-offerings/d47ca5bce71144579df29da3c290027e/"</span>,
+<span class="w">      </span><span class="s2">"offering_name"</span>:<span class="w"> </span><span class="s2">"Remote offering (really)"</span>,
+<span class="w">      </span><span class="s2">"offering_uuid"</span>:<span class="w"> </span><span class="s2">"d47ca5bce71144579df29da3c290027e"</span>,
+<span class="w">      </span><span class="s2">"user"</span>:<span class="w"> </span><span class="s2">"http://localhost:8000/api/users/db157a5cf7f247eba161cd90eba9ac63/"</span>,
+<span class="w">      </span><span class="s2">"user_uuid"</span>:<span class="w"> </span><span class="s2">"db157a5cf7f247eba161cd90eba9ac63"</span>,
+<span class="w">      </span><span class="s2">"username"</span>:<span class="w"> </span><span class="s2">"abc"</span>
+<span class="w">  </span><span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-offering-users-granting-user-access-to-corresponding-resources-in-batch-manner">Granting user access to corresponding resources in batch manner</h2>
+<p>A service provider can grant access mentioned in the previous section to all resources used in projects including a target user. For such access creation or update, <code>set_offerings_username</code> is used. The method requires the following arguments:</p>
+<ul>
+<li><strong>service_provider_uuid</strong> - UUID of a target service provider;</li>
+<li><strong>user_uuid</strong> - UUID of a target user;</li>
+<li><strong>username</strong> - the new username.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="nv">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>client.set_offerings_username<span class="o">(</span>
+<span class="w">      </span><span class="nv">service_provider_uuid</span><span class="o">=</span><span class="s1">'&lt;service-provider-uuid&gt;'</span>,
+<span class="w">      </span><span class="nv">user_uuid</span><span class="o">=</span><span class="s1">'&lt;user-uuid&gt;'</span>,
+<span class="w">      </span><span class="nv">username</span><span class="o">=</span><span class="s1">'&lt;username&gt;'</span>,
+<span class="w">  </span><span class="o">)</span>
+
+<span class="w">  </span><span class="c1"># result =&gt;  {</span>
+<span class="w">  </span><span class="c1">#  'detail': 'Offering users have been set.'</span>
+<span class="w">  </span><span class="c1"># }</span>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="admin-guide-waldur-shell"><div><h1 id="waldur-shell">Waldur Shell</h1>
 <p>Waldur provides a shell for command line scripting. To start a shell, run <code>waldur shell</code> in the MasterMind context.</p>
 <p>For Docker Compose deployments, please run:</p>
 <p><code>docker exec -it waldur-mastermind-api waldur shell</code></p>
