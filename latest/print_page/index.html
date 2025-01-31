@@ -18206,8 +18206,12 @@ Below we list currently supported conventions and their impact.</p>
 line of the output.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># for python-based scripts</span>
-<span class="n">UUID</span> <span class="o">=</span> <span class="s2">"12345abcd"</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># for python-based scripts</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="n">UUID</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">UUID</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <p>If you want to save additional metadata, then last line of output should consist of 2 strings:</p>
@@ -18220,10 +18224,12 @@ line of the output.</p>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># for python-based scripts</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># for python-based scripts</span>
 <span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
 
-<span class="n">UUID</span> <span class="o">=</span> <span class="s2">"12345abcd"</span>
+<span class="n">UUID</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
 <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"backend_metadata"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cpu"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">UUID</span> <span class="o">+</span> <span class="s1">' '</span> <span class="o">+</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">metadata</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -18245,17 +18251,29 @@ In all cases the last line should include a base64-encoded string containing a d
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># for python-based scripts</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># for python-based scripts</span>
 <span class="kn">import</span> <span class="nn">base64</span>
 
 <span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
-  <span class="s2">"usages"</span><span class="p">:</span>
+  <span class="s2">"usages"</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
       <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"cpu"</span><span class="p">,</span>
       <span class="s2">"amount"</span><span class="p">:</span> <span class="mi">10</span>
-    <span class="p">}</span>
+    <span class="p">},</span>
+  <span class="p">]</span>
 <span class="p">}</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">info</span><span class="p">))</span>
+
+<span class="n">info_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+
+<span class="n">info_json_encoded</span> <span class="o">=</span> <span class="n">info_json</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">info_json_encoded</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -18267,17 +18285,446 @@ In all cases the last line should include a base64-encoded string containing a d
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># for python-based scripts</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># for python-based scripts</span>
 <span class="kn">import</span> <span class="nn">base64</span>
 
 <span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
-  <span class="s2">"report"</span><span class="p">:</span>
+  <span class="s2">"report"</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
       <span class="s2">"header"</span><span class="p">:</span> <span class="s2">"header"</span><span class="p">,</span>
       <span class="s2">"body"</span><span class="p">:</span> <span class="s2">"body"</span>
-    <span class="p">}</span>
+    <span class="p">},</span>
+  <span class="p">]</span>
 <span class="p">}</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">info</span><span class="p">))</span>
+
+<span class="n">info_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+
+<span class="n">info_json_encoded</span> <span class="o">=</span> <span class="n">info_json</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">info_json_encoded</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-providers-custom-scripts-example-scripts">Example scripts</h2>
+<p>Each of the scripts below require access to remote Waldur instance.
+Credentials for this passed as environment variables to the scripts with keys:</p>
+<ul>
+<li><code>WALDUR_API_URL</code> - URL of remote Waldur API including <code>/api/</code> path, example: <code>http://localhost/api/</code></li>
+<li><code>WALDUR_API_TOKEN</code> - token for a remote user with permissions of service provider owner</li>
+</ul>
+<h3 id="admin-guide-providers-custom-scripts-script-for-resource-creation">Script for resource creation</h3>
+<p>In the remote Waldur site, customer and offering should be pre-created for successful resource creation.
+Please, add the necessary variables to the local offering's environment:</p>
+<ul>
+<li><code>REMOTE_CUSTOMER_NAME</code> - name of the pre-created customer in the remote Waldur</li>
+<li><code>REMOTE_OFFERING_UUID</code> - UUID of the remote offering for creation of the remote resource</li>
+<li><code>PROJECT_NAME</code> - name of the remote project to be created</li>
+<li><code>PI_EMAILS</code> - optional comma-separated list of emails receiving invitations to the project after creation of the remote resource</li>
+<li><code>REMOTE_PROJECT_CREDIT_AMOUNT</code> - optional amount of credit applied to the remote project</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  1</span>
+<span class="normal">  2</span>
+<span class="normal">  3</span>
+<span class="normal">  4</span>
+<span class="normal">  5</span>
+<span class="normal">  6</span>
+<span class="normal">  7</span>
+<span class="normal">  8</span>
+<span class="normal">  9</span>
+<span class="normal"> 10</span>
+<span class="normal"> 11</span>
+<span class="normal"> 12</span>
+<span class="normal"> 13</span>
+<span class="normal"> 14</span>
+<span class="normal"> 15</span>
+<span class="normal"> 16</span>
+<span class="normal"> 17</span>
+<span class="normal"> 18</span>
+<span class="normal"> 19</span>
+<span class="normal"> 20</span>
+<span class="normal"> 21</span>
+<span class="normal"> 22</span>
+<span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_client</span> <span class="kn">import</span> <span class="n">WaldurClient</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">environ</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="n">waldur_client</span> <span class="o">=</span> <span class="n">WaldurClient</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="s2">"WALDUR_API_URL"</span><span class="p">],</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"WALDUR_API_TOKEN"</span><span class="p">])</span>
+
+<span class="n">CUSTOMER_NAME</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"REMOTE_CUSTOMER_NAME"</span><span class="p">]</span>
+<span class="n">OFFERING_UUID</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"REMOTE_OFFERING_UUID"</span><span class="p">]</span>
+<span class="n">PROJECT_NAME</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"REMOTE_PROJECT_NAME"</span><span class="p">]</span>
+<span class="n">PI_EMAILS</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PI_EMAILS"</span><span class="p">)</span>
+<span class="n">RESOURCE_LIMITS</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"LIMITS"</span><span class="p">]</span>
+<span class="n">PROJECT_CREDIT_AMOUNT</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"REMOTE_PROJECT_CREDIT_AMOUNT"</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_or_create_project</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Listing customers with name_exact: </span><span class="si">{</span><span class="n">CUSTOMER_NAME</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">existing_customers</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">list_customers</span><span class="p">({</span><span class="s2">"name_exact"</span><span class="p">:</span> <span class="n">CUSTOMER_NAME</span><span class="p">})</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">existing_customers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Customer with name </span><span class="si">{</span><span class="n">CUSTOMER_NAME</span><span class="si">}</span><span class="s2"> not found"</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Customer with name </span><span class="si">{</span><span class="n">CUSTOMER_NAME</span><span class="si">}</span><span class="s2"> exists"</span><span class="p">)</span>
+        <span class="n">customer</span> <span class="o">=</span> <span class="n">existing_customers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">customer_uuid</span> <span class="o">=</span> <span class="n">customer</span><span class="p">[</span><span class="s2">"uuid"</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Listing projects with name_exact: </span><span class="si">{</span><span class="n">PROJECT_NAME</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">existing_projects</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">list_projects</span><span class="p">({</span><span class="s2">"name_exact"</span><span class="p">:</span> <span class="n">PROJECT_NAME</span><span class="p">})</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">existing_projects</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Project with name </span><span class="si">{</span><span class="n">PROJECT_NAME</span><span class="si">}</span><span class="s2"> not found, creating it"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">create_project</span><span class="p">(</span><span class="n">customer_uuid</span><span class="p">,</span> <span class="n">PROJECT_NAME</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Project with name </span><span class="si">{</span><span class="n">PROJECT_NAME</span><span class="si">}</span><span class="s2"> exists"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">existing_projects</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">get_or_create_project_credits</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Listing project credits for project_uuid: </span><span class="si">{</span><span class="n">project_uuid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">project_credits</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">list_project_credits</span><span class="p">({</span><span class="s2">"project_uuid"</span><span class="p">:</span> <span class="n">project_uuid</span><span class="p">})</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">project_credits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Project credit for project_uuid </span><span class="si">{</span><span class="n">project_uuid</span><span class="si">}</span><span class="s2"> not found, creating it with amount </span><span class="si">{</span><span class="n">PROJECT_CREDIT_AMOUNT</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">create_project_credit</span><span class="p">(</span>
+            <span class="n">project_uuid</span><span class="p">,</span> <span class="n">PROJECT_CREDIT_AMOUNT</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Project credit for project_uuid </span><span class="si">{</span><span class="n">project_uuid</span><span class="si">}</span><span class="s2"> exists"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">project_credits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">invite_PIs</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Listing active roles"</span><span class="p">)</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">get_roles</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"is_active"</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Looking up role with name "PROJECT.MANAGER"'</span><span class="p">)</span>
+    <span class="n">project_manager_role</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">role</span> <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">roles</span> <span class="k">if</span> <span class="n">role</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"PROJECT.MANAGER"</span>
+    <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">project_manager_role_uuid</span> <span class="o">=</span> <span class="n">project_manager_role</span><span class="p">[</span><span class="s2">"uuid"</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Inviting PIs"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">pi_email</span> <span class="ow">in</span> <span class="n">PI_EMAILS</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pi_email</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Creating project invitation for email: </span><span class="si">{</span><span class="n">pi_email</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">waldur_client</span><span class="o">.</span><span class="n">create_project_invitation</span><span class="p">(</span>
+            <span class="n">pi_email</span><span class="p">,</span> <span class="n">project_uuid</span><span class="p">,</span> <span class="n">project_manager_role_uuid</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_resource</span><span class="p">(</span><span class="n">resource_name</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fetching marketplace provider offerings with UUID: </span><span class="si">{</span><span class="n">OFFERING_UUID</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">offering</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">get_marketplace_provider_offering</span><span class="p">(</span><span class="n">OFFERING_UUID</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Getting first plan UUID from offering"</span><span class="p">)</span>
+    <span class="n">plan_uuid</span> <span class="o">=</span> <span class="n">offering</span><span class="p">[</span><span class="s2">"plans"</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">"uuid"</span><span class="p">]</span>
+    <span class="n">resource_attributes</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="n">resource_name</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">resource_limits</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">RESOURCE_LIMITS</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Submitting order"</span><span class="p">)</span>
+    <span class="n">order_metadata</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">create_resource_via_marketplace</span><span class="p">(</span>
+        <span class="n">project_uuid</span><span class="p">,</span> <span class="n">OFFERING_UUID</span><span class="p">,</span> <span class="n">plan_uuid</span><span class="p">,</span> <span class="n">resource_attributes</span><span class="p">,</span> <span class="n">resource_limits</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Fetching order"</span><span class="p">)</span>
+    <span class="n">create_order_uuid</span> <span class="o">=</span> <span class="n">order_metadata</span><span class="p">[</span><span class="s2">"create_order_uuid"</span><span class="p">]</span>
+    <span class="n">resource_uuid</span> <span class="o">=</span> <span class="n">order_metadata</span><span class="p">[</span><span class="s2">"marketplace_resource_uuid"</span><span class="p">]</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">get_order</span><span class="p">(</span><span class="n">create_order_uuid</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Approving order"</span><span class="p">)</span>
+    <span class="n">waldur_client</span><span class="o">.</span><span class="n">marketplace_order_approve_by_provider</span><span class="p">(</span><span class="n">order</span><span class="p">[</span><span class="s2">"uuid"</span><span class="p">])</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">get_order</span><span class="p">(</span><span class="n">create_order_uuid</span><span class="p">)</span>
+
+    <span class="n">max_retries</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">retry_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Waiting for order to be done"</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">order</span><span class="p">[</span><span class="s2">"state"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"done"</span> <span class="ow">and</span> <span class="n">retry_count</span> <span class="o">&lt;</span> <span class="n">max_retries</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Order state: </span><span class="si">{</span><span class="n">order</span><span class="p">[</span><span class="s1">'state'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">get_order</span><span class="p">(</span><span class="n">order</span><span class="p">[</span><span class="s2">"uuid"</span><span class="p">])</span>
+        <span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">retry_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">order</span><span class="p">[</span><span class="s2">"state"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"done"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Order execution timed out, state is </span><span class="si">{</span><span class="n">order</span><span class="p">[</span><span class="s1">'state'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Order is done"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fetching marketplace provider resource with UUID: </span><span class="si">{</span><span class="n">resource_uuid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">resource</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">get_marketplace_provider_resource</span><span class="p">(</span><span class="n">resource_uuid</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Resource state is </span><span class="si">{</span><span class="n">resource</span><span class="p">[</span><span class="s2">"state"</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resource</span>
+
+<span class="n">unique_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+<span class="n">resource_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"portal-test-</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">"</span>
+
+<span class="n">project</span> <span class="o">=</span> <span class="n">get_or_create_project</span><span class="p">()</span>
+<span class="n">project_uuid</span> <span class="o">=</span> <span class="n">project</span><span class="p">[</span><span class="s2">"uuid"</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="n">PROJECT_CREDIT_AMOUNT</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">get_or_create_project_credits</span><span class="p">()</span>
+
+<span class="n">resource</span> <span class="o">=</span> <span class="n">create_resource</span><span class="p">(</span><span class="n">resource_name</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">PI_EMAILS</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">invite_PIs</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Execution finished"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">resource</span><span class="p">[</span><span class="s2">"uuid"</span><span class="p">])</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-custom-scripts-script-for-usage-pull">Script for usage pull</h3>
+<p>This script periodically pulls usage data of the remote resource and saves it locally.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_client</span> <span class="kn">import</span> <span class="n">WaldurClient</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">environ</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="n">waldur_client</span> <span class="o">=</span> <span class="n">WaldurClient</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="s2">"WALDUR_API_URL"</span><span class="p">],</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"WALDUR_API_TOKEN"</span><span class="p">])</span>
+
+<span class="n">RESOURCE_UUID</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"RESOURCE_BACKEND_ID"</span><span class="p">]</span>
+
+<span class="n">current_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+<span class="n">month_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">day</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">month</span><span class="o">=</span><span class="n">current_date</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="n">current_date</span><span class="o">.</span><span class="n">year</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fetching resource usages from </span><span class="si">{</span><span class="n">month_start</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">resource_usages</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">list_component_usages</span><span class="p">(</span>
+    <span class="n">RESOURCE_UUID</span><span class="p">,</span>
+    <span class="n">month_start</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">usages_data</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">usage</span> <span class="ow">in</span> <span class="n">resource_usages</span><span class="p">:</span>
+    <span class="n">usages_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="n">usage</span><span class="p">[</span><span class="s2">"type"</span><span class="p">],</span>
+            <span class="s2">"amount"</span><span class="p">:</span> <span class="n">usage</span><span class="p">[</span><span class="s2">"usage"</span><span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+<span class="n">output</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"usages"</span><span class="p">:</span> <span class="n">usages_data</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">output_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+<span class="n">output_json_encoded</span> <span class="o">=</span> <span class="n">output_json</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">output_json_encoded</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-custom-scripts-script-for-resource-termination">Script for resource termination</h3>
+<p>This script terminates the remote resource.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_client</span> <span class="kn">import</span> <span class="n">WaldurClient</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">environ</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+
+<span class="n">waldur_client</span> <span class="o">=</span> <span class="n">WaldurClient</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="s2">"WALDUR_API_URL"</span><span class="p">],</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"WALDUR_API_TOKEN"</span><span class="p">])</span>
+
+<span class="n">RESOURCE_UUID</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s2">"RESOURCE_BACKEND_ID"</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Creating resource termination order'</span><span class="p">)</span>
+<span class="n">order_uuid</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">marketplace_provider_resource_terminate_order</span><span class="p">(</span><span class="n">RESOURCE_UUID</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Approving the order'</span><span class="p">)</span>
+<span class="n">waldur_client</span><span class="o">.</span><span class="n">marketplace_order_approve_by_provider</span><span class="p">(</span><span class="n">order_uuid</span><span class="p">)</span>
+
+<span class="n">order</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">get_order</span><span class="p">(</span><span class="n">order_uuid</span><span class="p">)</span>
+<span class="n">max_retries</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">retry_count</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Waiting for order to be done"</span><span class="p">)</span>
+<span class="k">while</span> <span class="n">order</span><span class="p">[</span><span class="s2">"state"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"done"</span> <span class="ow">and</span> <span class="n">retry_count</span> <span class="o">&lt;</span> <span class="n">max_retries</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Order state: </span><span class="si">{</span><span class="n">order</span><span class="p">[</span><span class="s1">'state'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">waldur_client</span><span class="o">.</span><span class="n">get_order</span><span class="p">(</span><span class="n">order</span><span class="p">[</span><span class="s2">"uuid"</span><span class="p">])</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">retry_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<span class="k">if</span> <span class="n">order</span><span class="p">[</span><span class="s2">"state"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"done"</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Order execution timed out, state is </span><span class="si">{</span><span class="n">order</span><span class="p">[</span><span class="s1">'state'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div></div></section><section class="print-page" id="admin-guide-providers-moab"><div><h1 id="moab">MOAB</h1>
 <p>MOAB is a scheduling engine for HPC centers from Adaptive Computing.</p>
 <p>Waldur implementation of support for MOAB is done via the <a href="#admin-guide-providers-waldur-site-agent">Waldur site agent</a>.</p></div></section><section class="print-page" id="admin-guide-providers-openstack"><div><h1 id="openstack-tenant">OpenStack (Tenant)</h1>
