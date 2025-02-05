@@ -22,3 +22,4 @@ Practical guides for the staff users (deployment administrators):
 * [Impersonation](impersonation.md)
 * [Projects removal by admin](projects-removal-admin.md)
 * [Remote sync of offerings](remote-sync.md)
+* [Broadcast messages](broadcasting.md)
