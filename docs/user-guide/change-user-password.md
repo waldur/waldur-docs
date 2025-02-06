@@ -5,6 +5,7 @@ This guide explains how administrators can change user passwords in Waldur.
 ## Important note
 
 ⚠️ **This guide only applies to local Waldur accounts**:
+
 - For users authenticated via LDAP: Manage passwords in your LDAP directory
 - For users authenticated via OIDC: Manage passwords in your OpenID provider
 - For users authenticated via SAML: Manage passwords in your SAML identity provider
@@ -35,6 +36,7 @@ This guide explains how administrators can change user passwords in Waldur.
 ## Important notes
 
 ⚠️ **Security warnings**:
+
 - Only use this feature when absolutely necessary
 - Ensure password changes comply with your organization's security policies
 - Notify users when their passwords have been changed
