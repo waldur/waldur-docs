@@ -57,10 +57,12 @@ X-XSS-Protection: 1; mode=block
 
 ## Authentication Token management
 
-The easiest way to get your token is via Waldur HomePort. Go to user workspace by selecting 'Manage' in the user drop-down.
+The easiest way to obtain your token is via Waldur HomePort.
 
-![side-bar](img/side-bar.png){: style="height:288px;width:220px"}
+Open your user dashboard by clicking on your name in the upper left corner, then select **Credentials** -> **API token**.
 
-Scroll down to the Current API token field and click on the 'eye' icon to display the token.
+![Credentials](img/Credentials.png)
 
-![api-token](img/api-token.png)
+A page with your API token will open. Click on the eye icon to reveal the token.
+
+![API token](img/API_token.png)
