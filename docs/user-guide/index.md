@@ -23,3 +23,4 @@ Practical guides for the staff users (deployment administrators):
 * [Projects removal by admin](projects-removal-admin.md)
 * [Remote sync of offerings](remote-sync.md)
 * [Broadcast messages](broadcasting.md)
+* [Change user passwords](change-user-password.md)
