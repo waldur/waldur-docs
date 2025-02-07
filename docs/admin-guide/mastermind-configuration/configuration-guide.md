@@ -726,76 +726,6 @@ Type: bool
 
 Ensure that invitation and user emails match.
 
-### WALDUR_FREEIPA plugin
-
-Default value:
-
-```python
-WALDUR_FREEIPA = {'BLACKLISTED_USERNAMES': ['root'],
- 'ENABLED': False,
- 'GROUPNAME_PREFIX': 'waldur_',
- 'GROUP_SYNCHRONIZATION_ENABLED': True,
- 'HOSTNAME': 'ipa.example.com',
- 'PASSWORD': 'secret',
- 'USERNAME': 'admin',
- 'USERNAME_PREFIX': 'waldur_',
- 'VERIFY_SSL': True}
-```
-
-#### BLACKLISTED_USERNAMES
-
-Type: list
-
-List of username that users are not allowed to select
-
-#### ENABLED
-
-Type: bool
-
-Enable integration of identity provisioning in configured FreeIPA
-
-#### GROUPNAME_PREFIX
-
-Type: str
-
-Prefix to be appended to all group names created in FreeIPA by Waldur
-
-#### GROUP_SYNCHRONIZATION_ENABLED
-
-Type: bool
-
-Optionally disable creation of user groups in FreeIPA matching Waldur structure
-
-#### HOSTNAME
-
-Type: str
-
-Hostname of FreeIPA server
-
-#### PASSWORD
-
-Type: str
-
-Password of FreeIPA user with administrative privileges
-
-#### USERNAME
-
-Type: str
-
-Username of FreeIPA user with administrative privileges
-
-#### USERNAME_PREFIX
-
-Type: str
-
-Prefix to be appended to all usernames created in FreeIPA by Waldur
-
-#### VERIFY_SSL
-
-Type: bool
-
-Validate TLS certificate of FreeIPA web interface / REST API
-
 ### WALDUR_HPC plugin
 
 Default value:
@@ -1891,5 +1821,77 @@ Do not allow user to grant multiple roles in the same project or organization us
 **Type:** str
 
 Triggers authentication flow at once.
+
+### FreeIPA settings
+
+#### FREEIPA_ENABLED
+
+**Type:** bool
+
+Enable integration of identity provisioning in configured FreeIPA.
+
+#### FREEIPA_HOSTNAME
+
+**Type:** str
+
+**Default value**: ipa.example.com
+
+Hostname of FreeIPA server.
+
+#### FREEIPA_USERNAME
+
+**Type:** str
+
+**Default value**: admin
+
+Username of FreeIPA user with administrative privileges.
+
+#### FREEIPA_PASSWORD
+
+**Type:** secret_field
+
+**Default value**: secret
+
+Password of FreeIPA user with administrative privileges
+
+#### FREEIPA_VERIFY_SSL
+
+**Type:** bool
+
+**Default value**: True
+
+Validate TLS certificate of FreeIPA web interface / REST API
+
+#### FREEIPA_USERNAME_PREFIX
+
+**Type:** str
+
+**Default value**: waldur_
+
+Prefix to be appended to all usernames created in FreeIPA by Waldur
+
+#### FREEIPA_GROUPNAME_PREFIX
+
+**Type:** str
+
+**Default value**: waldur_
+
+Prefix to be appended to all group names created in FreeIPA by Waldur
+
+#### FREEIPA_BLACKLISTED_USERNAMES
+
+**Type:** list_field
+
+**Default value**: ['root']
+
+List of username that users are not allowed to select
+
+#### FREEIPA_GROUP_SYNCHRONIZATION_ENABLED
+
+**Type:** bool
+
+**Default value**: True
+
+Optionally disable creation of user groups in FreeIPA matching Waldur structure
 
 
