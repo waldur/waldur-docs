@@ -24,3 +24,4 @@ for deployment-specific documentation.
 * [Impersonation](Staff-users/impersonation.md)
 * [Projects removal by admin](Staff-users/projects-removal-admin.md)
 * [Remote sync of offerings](Staff-users/remote-sync.md)
+* [Reporting](Staff-users/reporting.md)

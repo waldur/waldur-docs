@@ -6,7 +6,7 @@ Waldur HomePort includes a number of built-in reports based on the user activity
 staff and support users from the "Reporting" sidebar menu.
 
 <figure markdown="span">
-  ![Homeport reports](./img/reporting-homeport.png)
+  ![Homeport reports](../img/reporting-homeport.png)
   <figcaption>List of built-in reports in HomePort</figcaption>
 </figure>
 
@@ -18,7 +18,7 @@ business dashboards, for example, in Grafana.
 Check out details about the [setup of the exporter](../../admin-guide/grafana.md).
 
 <figure markdown="span">
-  ![Example of OECD-science code report](./img/grafana-sp-example.png)
+  ![Example of OECD-science code report](../img/grafana-sp-example.png)
   <figcaption>Example of OECD-science code report</figcaption>
 </figure>
 
