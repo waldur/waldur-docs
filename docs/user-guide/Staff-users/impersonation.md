@@ -12,11 +12,11 @@ Waldur provides Impersonation functionality to allow the support team to debug a
 1. Log in to the Waldur deployment using a staff account.
 2. Navigate to the Administration menu, then go to Accounts → Users from the top menu.
 
-    ![Impersionation](img/Admin_Users.png)
+    ![Impersionation](../img/Admin_Users.png)
 
 3. Locate the user you wish to impersonate and select Impersonate from the Actions options.
 
-    ![Impersionation](img/User_impersionate.png)
+    ![Impersionation](../img/User_impersionate.png)
 
 ## Logging
 

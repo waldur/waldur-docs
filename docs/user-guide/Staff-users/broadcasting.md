@@ -30,7 +30,7 @@ A popup will appear with the following fields:
 * **Subject**: Subject line for the broadcast message
 * **Message**: Content of the message
 
-![New broadcast template](img/Broadcast_template_new.png)
+![New broadcast template](../img/Broadcast_template_new.png)
 
 ## Creating new broadcast message
 
@@ -50,7 +50,7 @@ You can then either save the message as a draft for later editing or save it as 
 
 If everything looks good and you would like to send it out, click **Select recipients**.
 
-![New broadcast](img/Broadcast_new.png)
+![New broadcast](../img/Broadcast_new.png)
 
 ### Selecting Recipients
 
@@ -62,4 +62,4 @@ In this step, you can define the target users for the broadcast message:
 
 Once you're ready, click **Send broadcast**.
 
-![New broadcast](img/Broadcast_new2.png)
+![New broadcast](../img/Broadcast_new2.png)

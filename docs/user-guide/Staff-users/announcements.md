@@ -12,7 +12,7 @@ Currently, there are three types of announcements:
 
 1. Navigate to **Administration** → **Settings** → **Announcements**.
 
-![List of announcements](img/list_of_announcements.png)
+![List of announcements](../img/list_of_announcements.png)
 
 ## Adding an announcement
 
@@ -21,7 +21,7 @@ Currently, there are three types of announcements:
 3. Enter the **message** for the users.
 4. Click **Create**.
 
-![List of announcements](img/new_announcement.png)
+![List of announcements](../img/new_announcement.png)
 
 ## Editing an announcement
 
@@ -33,4 +33,4 @@ If you need to edit existing announcement, then:
 
 Once an announcement is active, it will be displayed to users on every page, just below the Search box.
 
-![List of announcements](img/active_announcement.png)
+![List of announcements](../img/active_announcement.png)

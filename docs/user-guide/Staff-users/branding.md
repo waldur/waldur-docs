@@ -1,4 +1,4 @@
-# Branding Configuration
+# Branding configuration
 
 The portal allows you to customize its appearance to match your organization's brand identity. This guide will help you configure the branding settings.
 
@@ -8,7 +8,7 @@ The portal allows you to customize its appearance to match your organization's b
 2. Click on Settings
 3. Select the Branding tab
 
-![Branding](img/path-to-branding.png)
+![Branding](../img/path-to-branding.png)
 
 
 ## Available Customization Options
