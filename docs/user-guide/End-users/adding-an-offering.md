@@ -84,7 +84,7 @@ creating an offering is through a HomePort.
     ![Adding details](../img/Add_offering2.jpg)
 
 4. Offering details page opens, where you can add additional information:
-    ![Offering details](img/Offering_edit.jpg)
+    ![Offering details](../img/Offering_edit.jpg)
 
 5. Under Endpoints section, you can add access endpoints for the offering, for example, management consoles, SSH login nodes or similar.
     ![Offering endpoints](../img/Offering_edit_endpoints.png)
