@@ -1,4 +1,4 @@
-# User Guide
+# User guide
 
 This section contains instructions to typical operations done with Waldur. The section can be used as a basis
 for deployment-specific documentation.
@@ -17,9 +17,9 @@ for deployment-specific documentation.
 ## Practical guides for the staff users (deployment administrators)
 
 * [Announcements](Staff-users/announcements.md)
-* [Branding](Staff-users/branding.md)
+* [Branding configuration](Staff-users/branding.md)
 * [Broadcast messages](Staff-users/broadcasting.md)
-* [Catalogue Mode](Staff-users/catalogue_mode.md)
+* [Catalogue mode](Staff-users/catalogue_mode.md)
 * [Change user passwords](Staff-users/change-user-password.md)
 * [Impersonation](Staff-users/impersonation.md)
 * [Projects removal by admin](Staff-users/projects-removal-admin.md)

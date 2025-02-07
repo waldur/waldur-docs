@@ -1,4 +1,4 @@
-# Branding Configuration
+# Branding configuration
 
 The portal allows you to customize its appearance to match your organization's brand identity. This guide will help you configure the branding settings.
 
