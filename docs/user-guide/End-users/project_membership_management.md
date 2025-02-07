@@ -12,11 +12,11 @@ Please see [this page](https://docs.waldur.com/latest/about/glossaries/structure
 2. Select "Team" from top menu and click on "Users".
 3. By clicking "Add member" open "Add project member" window.<br><br>
 
-    ![Select organization](img/add-member-1.jpg)<br><br>
+    ![Select organization](../img/add-member-1.jpg)<br><br>
 
 4. Select correct user, set the role and expiration date if necessary.<br><br>
 
-    ![Select organization](img/add-member-2.jpg)<br><br>
+    ![Select organization](../img/add-member-2.jpg)<br><br>
 
 5. Finally, click on "Add".
 6. User now will get invitation email with the acceptance link.<br><br>
@@ -30,5 +30,5 @@ Please see [this page](https://docs.waldur.com/latest/about/glossaries/structure
 5. Fill in your custom message on the right side of the window and send the invitation.<br><br>
 6. User now will get invitation email with the acceptance link.
 
-![type:video](img/send_invitation.mp4)
+![type:video](../img/send_invitation.mp4)
 

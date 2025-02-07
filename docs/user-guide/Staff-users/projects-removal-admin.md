@@ -8,4 +8,4 @@ An admin can remove projects with all related resources with the following seque
 4. Select projects for removal
 5. Set action field to `Delete projects with all resources`
 
-![Project removal](img/project-removal.png)
+![Project removal](../img/project-removal.png)

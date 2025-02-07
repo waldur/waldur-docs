@@ -15,7 +15,7 @@ To manage existing offering syncs, follow this process:
 1. Log in to the local Waldur instance, open the **Administration** menu, and select **Marketplace** -> **Remote Offering Sync** from the top menu.
 2. The Remote Offering Sync Management page opens.
 
-    ![Remote sync management](img/remote-sync-management.png)
+    ![Remote sync management](../img/remote-sync-management.png)
 
 3. From this page, you can create a new sync, edit an existing one, or delete a sync.
 
@@ -25,7 +25,7 @@ To manage existing offering syncs, follow this process:
     - **Edit**: Modify the configuration of a particular sync.
     - **Delete**: Remove a remote instance sync.
 
-![Remote sync actions](img/remote-sync-actions.png)
+![Remote sync actions](../img/remote-sync-actions.png)
 
 ## Creating new remote offering sync
 
@@ -41,6 +41,6 @@ To manage existing offering syncs, follow this process:
     - **Enable synchronization**: Enable the sync now, or leave it disabled and enable it later.
     - Click **Create**.
 
-    ![New remote sync](img/new-remote-sync.png)
+    ![New remote sync](../img/new-remote-sync.png)
 
 4. If remote sync is enable, then local Waldur periodically (once per day) pulls inormation about offerings from the remote instance.

@@ -18,7 +18,7 @@ This can mean for example research group, institution, department or working gro
 
 3. Organization edit page opens, where it is possible to add additional information, like policies, contact information. It is beneficial to assign a predefined category group (like private company, university, government, individial person etc) to organization.
 
-![type:video](img/create_organization.mp4)
+![type:video](../img/create_organization.mp4)
 
 ## Creation of projects
 
@@ -38,4 +38,4 @@ Prerequisites for creating projects:
     - Start date - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
     - End date – once reached, triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
 
-![type:video](img/create_project.mp4)
+![type:video](../img/create_project.mp4)
