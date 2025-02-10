@@ -15,7 +15,7 @@ It is possible to import into a Waldur offerings from a remote Waldur.
 
 ## High level process
 
-- In local Waldur, make sure that you have a [service provider](../../user-guide/End-users/adding-an-offering.md) organization available.
+- In local Waldur, make sure that you have a [service provider](../../user-guide/end-users/adding-an-offering.md) organization available.
 - Click on "Import offering".
 - Input remote Waldur API and authentication token.
 - Select the remote organization and offering to be imported.
