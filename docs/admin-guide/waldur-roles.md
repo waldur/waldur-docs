@@ -41,7 +41,7 @@ Waldur provides predefined roles to streamline access management across differen
 | Project manager | Similar to the administrator role but includes additional permission management capabilities | Yes |
 | Project member | A limited role with basic project access | No |
 
-### Offering Roles
+### Offering roles
 
 **Scope**: Offering
 
