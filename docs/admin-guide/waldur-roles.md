@@ -102,11 +102,12 @@ The Waldur administration interface offers an intuitive way to manage user roles
 
 Using the administration interface simplifies role management and ensures a structured approach to access control.
 
+
 ⚠️ **Important notes**:
 
 - Roles should follow the principle of least privilege
-- Some roles are disabled by default (e.g., CUSTOMER.SUPPORT)
+- Some roles are disabled by default (e.g., Customer support)
 - Regular audits of role assignments are recommended
-- Certain roles are scope-restricted (e.g., CUSTOMER.CALL_ORGANIZER)
+- Certain roles are scope-restricted (e.g., Customer call organizer)
 - Changes to role permissions should be carefully considered
 - Document any custom role configurations
