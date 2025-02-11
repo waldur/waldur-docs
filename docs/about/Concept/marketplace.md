@@ -57,7 +57,7 @@ Open waldur-mastermind-worker shell and execute the following command:
 
 ### Overview
 
-This guide provides a structured approach for integrators to define an Offering within an organization. Offerings represent services, resources, or products made available through the platform. The configuration of an offering includes General Information and Public Information, ensuring clarity, accessibility, and compliance with organizational policies.
+This guide provides a structured approach for integrators to define an Offering. Offerings represent services, resources, or products made available through the platform.
 
 ### General information
 
