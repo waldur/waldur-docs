@@ -633,6 +633,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../about/Concept/marketplace/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Marketplace
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../about/Concept/structure/" class="md-nav__link">
         
   
@@ -4474,7 +4495,7 @@
         
   
   <span class="md-ellipsis">
-    Accounting and usage reports
+    Usage reports
   </span>
   
 
@@ -4604,11 +4625,53 @@
   
   
     <li class="md-nav__item">
+      <a href="../user-guide/service-provider-organization/accounting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Accounting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../user-guide/service-provider-organization/adding-an-offering/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Marketplace and offering creation
+    Offerings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/service-provider-organization/service-provider-registration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Service provider registration
   </span>
   
 
@@ -5888,7 +5951,53 @@ and interested in managed Waldur hosting.</p></div></section><section class="pri
                         <h2 class='nav-section-title' id='section-concept'>
                             Concept <a class='headerlink' href='#section-concept' title='Permanent link'>↵</a>
                         </h2>
-                        <section class="print-page" id="about-concept-structure"><div><h1 id="users-organizations-and-projects">Users, Organizations and Projects</h1>
+                        <section class="print-page" id="about-concept-marketplace"><div><h1 id="marketplace">Marketplace</h1>
+<p>Marketplace is a central module for provisioning of Waldur resources. Marketplace contains Offerings that
+belong to a special type of Organizations - Service Providers. Marketplace provides common functionality
+for resource lifecycle management, accounting and invoicing. Specifics are implemented in the Marketplace plugins
+(e.g. for OpenStack, SLURM, Rancher, etc).</p>
+<h2 id="about-concept-marketplace-diagram-of-concepts">Diagram of concepts</h2>
+<p><a class="glightbox" href="../about/img/marketplace-structure.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Diagram of marketplace concepts" src="../about/img/marketplace-structure.png"></a></p>
+<h2 id="about-concept-marketplace-adding-a-new-offering">Adding a new Offering</h2>
+<p>To create a new Offering in the Marketplace, you need to:</p>
+<ul>
+<li>Assure that categories are configured in the Marketplace.</li>
+<li>Create at least one service provider.</li>
+<li>Create and activate a public offering.</li>
+</ul>
+<h3 id="about-concept-marketplace-creating-marketplace-categories">Creating Marketplace categories</h3>
+<p>To create a category, either use administrative interface of Waldur, hosted under <code>`/admin</code> (can be accessed by staff users)
+or use management command for loading the pre-defined categories.</p>
+<ul>
+<li>With Docker-compose deployment:</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span>waldur<span class="w"> </span>load_categories<span class="w">  </span><span class="c1"># vpc vm storage ...</span>
+</code></pre></div></td></tr></table></div>
+<ul>
+<li>With Helm deployment</li>
+</ul>
+<p>Open waldur-mastermind-worker shell and execute the following command:</p>
+<ol>
+<li>Get waldur-mastermind-worker pod name</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
+<span class="w">  </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-A<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span><span class="c1"># --&gt;</span>
+<span class="w">  </span><span class="c1"># default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Connect to pod via shell</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
+<span class="w">  </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>waldur-mastermind-worker-6d98cd98bd-wps8n<span class="w"> </span>--<span class="w"> </span>/bin/bash
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Execute command to see available or add a category</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>waldur<span class="w"> </span>load_categories<span class="w">  </span><span class="c1"># vpc vm storage ...</span>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="about-concept-structure"><div><h1 id="users-organizations-and-projects">Users, Organizations and Projects</h1>
 <p>Waldur is a service for sharing resources across projects. It is based
 on the delegation model where an organization can allocate certain users to
 perform technical or non-technical actions in the projects.</p>
@@ -7692,7 +7801,7 @@ As an account, an OfferingUser can have a custom username different from user's 
 <li><strong>Description</strong> – A brief explanation of the role's purpose and responsibilities</li>
 <li><strong>Active</strong> – Indicates whether the role is currently available for assignment</li>
 </ul>
-<p>Users can be assigned one or more roles within an Organization, Project, Call, Offering, Service Provider, Proposal, or Call Managing Organization scope.</p>
+<p>Users can be assigned one or more roles within an Organization, Project, Call, Offering, Service Provider, Proposal, or Call managing organization scope.</p>
 <h2 id="admin-guide-waldur-roles-default-roles-and-permissions">Default roles and permissions</h2>
 <p>Waldur provides predefined roles to streamline access management across different scopes. Below is an overview of available roles, grouped by scope.</p>
 <h3 id="admin-guide-waldur-roles-organization-roles">Organization roles</h3>
@@ -24704,20 +24813,7 @@ You need to provision at least one VPC package from a suitable provider in order
 <p><a class="glightbox" href="../user-guide/img/how_to_add_resource.mp4" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><div class="video-container"><video style="width:100%" loop muted controls autoplay alt="type:video"><source src="../../img/how_to_add_resource.mp4" type="video/mp4"></source></video></div></a></p>
 <h2 id="user-guide-customer-organization-resource_management-resource-components-update">Resource components update</h2>
 <p>If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.</p>
-<p><a class="glightbox" href="../user-guide/img/allocation_update.mp4" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><div class="video-container"><video style="width:100%" loop muted controls autoplay alt="type:video"><source src="../../img/allocation_update.mp4" type="video/mp4"></source></video></div></a></p></div></section><section class="print-page" id="user-guide-customer-organization-usage_reports"><div><h1 id="accounting-and-usage-reports">Accounting and usage reports</h1>
-<h2 id="user-guide-customer-organization-usage_reports-accounting">Accounting</h2>
-<h3 id="user-guide-customer-organization-usage_reports-service-provider-revenue">Service provider revenue</h3>
-<p>If the organization is service provider, then it is possible to check the amount of revenue of a running month. To do that, open the organization dashboard, choose "Service provider" view and then dashboard opens. There you will see the total amount of estimated revenue and also 11 previous months.</p>
-<p>By clicking on "Active clients" on the left, it's possible to see more detailed information about clients and amounts.
-   <a class="glightbox" href="../user-guide/img/sp_revenue.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service provider revenue" src="../user-guide/img/sp_revenue.jpg"></a></p>
-<h3 id="user-guide-customer-organization-usage_reports-invoices">Invoices</h3>
-<p>Waldur provides a convenient way to see the invoices issued to the organization. Open the organization dashboard and select “Accounting” from the top menu and then “Invoices”. Now you’re able to see all invoices issued to the organization.
-   <a class="glightbox" href="../user-guide/img/Invoices.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Invoices" src="../user-guide/img/Invoices.jpg"></a></p>
-<p>Invoices’ information can be downloaded in different formats as well.
-   <a class="glightbox" href="../user-guide/img/Invoice_export.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Invoice export" src="../user-guide/img/Invoice_export.jpg"></a></p>
-<h3 id="user-guide-customer-organization-usage_reports-estimated-cost">Estimated cost</h3>
-<p>Estimated cost of a running month can be seen from the same view as invoices. By default, it shows top 4 projects with the highest cost. By clicking “Details”, you are able to see all projects with estimated costs.
-   <a class="glightbox" href="../user-guide/img/Estimated_cost.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Estimated cost" src="../user-guide/img/Estimated_cost.jpg"></a></p>
+<p><a class="glightbox" href="../user-guide/img/allocation_update.mp4" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><div class="video-container"><video style="width:100%" loop muted controls autoplay alt="type:video"><source src="../../img/allocation_update.mp4" type="video/mp4"></source></video></div></a></p></div></section><section class="print-page" id="user-guide-customer-organization-usage_reports"><div><h1 id="usage-reports">Usage reports</h1>
 <h2 id="user-guide-customer-organization-usage_reports-usage-of-a-resources">Usage of a resources</h2>
 <p>To see overall usage information of resources, please select "Reporting" from the left-side menu and then "Usage reports" on the top menu.</p>
 <p>It is possible to filter te results by organization, project, offering and export results.</p>
@@ -24820,74 +24916,21 @@ You need to provision at least one VPC package from a suitable provider in order
                         <h2 class='nav-section-title' id='section-service-provider-organization'>
                             Service provider organization <a class='headerlink' href='#section-service-provider-organization' title='Permanent link'>↵</a>
                         </h2>
-                        <section class="print-page" id="user-guide-service-provider-organization-adding-an-offering"><div><h1 id="marketplace-and-offering-creation">Marketplace and offering creation</h1>
-<p>Marketplace is a central module for provisioning of Waldur resources. Marketplace contains Offerings that
-belong to a special type of Organizations - Service Providers. Marketplace provides common functionality
-for resource lifecycle management, accounting and invoicing. Specifics are implemented in the Marketplace plugins
-(e.g. for OpenStack, SLURM, Rancher, etc).</p>
-<h2 id="user-guide-service-provider-organization-adding-an-offering-diagram-of-concepts">Diagram of concepts</h2>
-<p><a class="glightbox" href="../user-guide/img/marketplace-structure.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Diagram of marketplace concepts" src="../user-guide/img/marketplace-structure.png"></a></p>
-<h2 id="user-guide-service-provider-organization-adding-an-offering-adding-a-new-offering">Adding a new Offering</h2>
-<p>To create a new Offering in the Marketplace, you need to:</p>
-<ul>
-<li>Assure that categories are configured in the Marketplace.</li>
-<li>Create at least one service provider.</li>
-<li>Create and activate a public offering.</li>
-</ul>
-<h3 id="user-guide-service-provider-organization-adding-an-offering-creating-marketplace-categories">Creating Marketplace categories</h3>
-<p>To create a category, either use administrative interface of Waldur, hosted under <code>`/admin</code> (can be accessed by staff users)
-or use management command for loading the pre-defined categories.</p>
-<ul>
-<li>With Docker-compose deployment:</li>
-</ul>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span>waldur<span class="w"> </span>load_categories<span class="w">  </span><span class="c1"># vpc vm storage ...</span>
-</code></pre></div></td></tr></table></div>
-<ul>
-<li>With Helm deployment</li>
-</ul>
-<p>Open waldur-mastermind-worker shell and execute the following command:</p>
-<ol>
-<li>Get waldur-mastermind-worker pod name</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
-<span class="w">  </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-A<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span><span class="c1"># --&gt;</span>
-<span class="w">  </span><span class="c1"># default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s</span>
-</code></pre></div></td></tr></table></div>
-<ol>
-<li>Connect to pod via shell</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
-<span class="w">  </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>waldur-mastermind-worker-6d98cd98bd-wps8n<span class="w"> </span>--<span class="w"> </span>/bin/bash
-</code></pre></div></td></tr></table></div>
-<ol>
-<li>Execute command to see available or add a category</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>waldur<span class="w"> </span>load_categories<span class="w">  </span><span class="c1"># vpc vm storage ...</span>
-</code></pre></div></td></tr></table></div>
-<h3 id="user-guide-service-provider-organization-adding-an-offering-service-provider-registration">Service provider registration</h3>
-<p>In Waldur, only organizations registered as service providers can create offerings and provide the service to users.</p>
-<p>To register organization as service provider:</p>
-<ol>
-<li>
-<p>Open organization dashboard, click on "Edit" and select "Service provider" from the top menu.
-   <a class="glightbox" href="../user-guide/img/sp_reg.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service provider registration" src="../user-guide/img/sp_reg.jpg"></a></p>
-</li>
-<li>
-<p>Click on "Register as service provider" on the right.
-   <a class="glightbox" href="../user-guide/img/sp_reg2.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service provider registration" src="../user-guide/img/sp_reg2.jpg"></a></p>
-</li>
-<li>
-<p>Add service provider organization description. This description is visible in the Waldur marketplace under service provider list and under provider details.
-   <a class="glightbox" href="../user-guide/img/sp_descr.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service provider description" src="../user-guide/img/sp_descr.jpg"></a></p>
-</li>
-<li>
-<p>Make sure that service provider organization category group is also set.</p>
-</li>
-</ol>
-<h3 id="user-guide-service-provider-organization-adding-an-offering-offering-creation">Offering creation</h3>
+                        <section class="print-page" id="user-guide-service-provider-organization-accounting"><div><h1 id="accounting">Accounting</h1>
+<h2 id="user-guide-service-provider-organization-accounting-accounting-of-service-providers">Accounting of Service providers</h2>
+<h3 id="user-guide-service-provider-organization-accounting-service-provider-revenue">Service provider revenue</h3>
+<p>If the organization is service provider, then it is possible to check the amount of revenue of a running month. To do that, open the organization dashboard, choose "Service provider" view and then dashboard opens. There you will see the total amount of estimated revenue and also 11 previous months.</p>
+<p>By clicking on "Active clients" on the left, it's possible to see more detailed information about clients and amounts.
+   <a class="glightbox" href="../user-guide/img/sp_revenue.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service provider revenue" src="../user-guide/img/sp_revenue.jpg"></a></p>
+<h3 id="user-guide-service-provider-organization-accounting-invoices">Invoices</h3>
+<p>Waldur provides a convenient way to see the invoices issued to the organization. Open the organization dashboard and select “Accounting” from the top menu and then “Invoices”. Now you’re able to see all invoices issued to the organization.
+   <a class="glightbox" href="../user-guide/img/Invoices.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Invoices" src="../user-guide/img/Invoices.jpg"></a></p>
+<p>Invoices’ information can be downloaded in different formats as well.
+   <a class="glightbox" href="../user-guide/img/Invoice_export.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Invoice export" src="../user-guide/img/Invoice_export.jpg"></a></p>
+<h3 id="user-guide-service-provider-organization-accounting-estimated-cost">Estimated cost</h3>
+<p>Estimated cost of a running month can be seen from the same view as invoices. By default, it shows top 4 projects with the highest cost. By clicking “Details”, you are able to see all projects with estimated costs.
+   <a class="glightbox" href="../user-guide/img/Estimated_cost.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Estimated cost" src="../user-guide/img/Estimated_cost.jpg"></a></p></div></section><section class="print-page" id="user-guide-service-provider-organization-adding-an-offering"><div><h1 id="offerings">Offerings</h1>
+<h2 id="user-guide-service-provider-organization-adding-an-offering-offering-creation">Offering creation</h2>
 <p>Waldur supports a number of different types of service providers when creating a shared offering. A common way of
 creating an offering is through a HomePort.</p>
 <ol>
@@ -24946,7 +24989,26 @@ opening of an SSH client if configured for the browser. Out of the box works on 
 <p class="admonition-title">Tip</p>
 <p>For more advanced cases of management of offerings, take a look at how a SLURM offering can be managed using
 <a href="https://github.com/waldur/ansible-waldur-module/blob/develop/waldur_batch_offering.py">Ansible module</a>.</p>
-</div></div></section><h1 class='nav-section-title-end'>Ended: Service provider organization</h1>
+</div></div></section><section class="print-page" id="user-guide-service-provider-organization-service-provider-registration"><div><h1 id="service-provider-registration">Service provider registration</h1>
+<p>In Waldur, only organizations registered as service providers can create offerings and provide the service to users.</p>
+<p>To register organization as service provider:</p>
+<ol>
+<li>
+<p>Open organization dashboard, click on "Edit" and select "Service provider" from the top menu.
+   <a class="glightbox" href="../user-guide/img/sp_reg.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service provider registration" src="../user-guide/img/sp_reg.jpg"></a></p>
+</li>
+<li>
+<p>Click on "Register as service provider" on the right.
+   <a class="glightbox" href="../user-guide/img/sp_reg2.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service provider registration" src="../user-guide/img/sp_reg2.jpg"></a></p>
+</li>
+<li>
+<p>Add service provider organization description. This description is visible in the Waldur marketplace under service provider list and under provider details.
+   <a class="glightbox" href="../user-guide/img/sp_descr.jpg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service provider description" src="../user-guide/img/sp_descr.jpg"></a></p>
+</li>
+<li>
+<p>Make sure that service provider organization category group is also set.</p>
+</li>
+</ol></div></section><h1 class='nav-section-title-end'>Ended: Service provider organization</h1>
                         <h2 class='nav-section-title' id='section-staff-users'>
                             Staff users <a class='headerlink' href='#section-staff-users' title='Permanent link'>↵</a>
                         </h2>
@@ -25059,7 +25121,7 @@ opening of an SSH client if configured for the browser. Out of the box works on 
 </ul>
 <p>Once you're ready, click <strong>Send broadcast</strong>.</p>
 <p><a class="glightbox" href="../user-guide/img/Broadcast_new2.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="New broadcast" src="../user-guide/img/Broadcast_new2.png"></a></p></div></section><section class="print-page" id="user-guide-staff-users-catalogue_mode"><div><h1 id="catalogue-mode">Catalogue mode</h1>
-<p>This guide explains how to enable and use the Catalogue Mode in Waldur. This feature changes the marketplace to a catalog-only view, where services are displayed as a list of offerings but cannot be ordered directly through the platform.</p>
+<p>This guide explains how to enable and use the Catalogue mode in Waldur. This feature changes the marketplace to a catalog-only view, where services are displayed as a list of offerings but cannot be ordered directly through the platform.</p>
 <h2 id="user-guide-staff-users-catalogue_mode-enabling-catalogue-mode">Enabling Catalogue mode</h2>
 <h3 id="user-guide-staff-users-catalogue_mode-step-1-access-administration-settings">Step 1: Access Administration settings</h3>
 <p>Navigate to the Administration section in Waldur.</p>
@@ -25306,7 +25368,7 @@ provided in <a href="#integrator-guide-reporting">the section for integrators</a
 <ul>
 <li><strong>Waldur support enabled</strong> - Toggle <strong>Yes</strong> if you want to use support plugin.</li>
 <li><strong>Waldur support active backend type</strong> - Select the active configuration.</li>
-<li><strong>Waldur support display request type</strong> - Toggleto show the request type.</li>
+<li><strong>Waldur support display request type</strong> - Toggle to show the request type.</li>
 </ul>
 <p><a class="glightbox" href="../user-guide/img/Service_desk_config.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Service desk configuration" src="../user-guide/img/Service_desk_config.png"></a></p>
 <h2 id="user-guide-staff-users-service-desk-config-atlassian-configuration">Atlassian configuration</h2>
