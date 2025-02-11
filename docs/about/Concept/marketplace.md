@@ -102,9 +102,11 @@ Images provide visual representation and marketing appeal. Each image requires:
 The Category classifies the offering within a predefined structure. It can be selected from an existing list or manually edited to include additional metadata. The category section contains multiple attributes:
 
 ##### Security & certification
+
 - **Security certification** – Defines compliance standards and certifications
 
 ##### Support
+
 - **E-mail** – Contact email for support inquiries
 - **Phone** – A support phone number
 - **Support portal** – URL for submitting support requests
@@ -112,13 +114,16 @@ The Category classifies the offering within a predefined structure. It can be se
 - **ToS link** – Link to the Terms of Service document
 
 ##### Location
+
 - **Address** – The physical or virtual address of the service
 
 ##### Performance
+
 - **Peak TFlop/s** – Maximum floating point performance
 - **Linpack TFlop/s** – Performance benchmark using Linpack
 
 ##### Node information
+
 - **CPU model** – Type of processor used
 - **GPU model** – Type of graphical processing unit
 - **Memory per node (GB)** – Amount of RAM per node
@@ -127,14 +132,17 @@ The Category classifies the offering within a predefined structure. It can be se
 - **Node count** – Total number of nodes in the infrastructure
 
 ##### System information
+
 - **Queueing system** – The workload scheduling system
 - **Home space** – Storage allocation for user home directories
 - **Work space** – Storage allocation for working directories
 - **Linux distribution** – The Linux OS variant running on the infrastructure
 
 ##### Software
+
 - **Applications** – List of pre-installed applications available to users
 
 ##### Quality of service (QoS)
+
 - **QoS of network** – Performance metrics related to network services
 - **QoS of storage** – Performance guarantees for storage access
