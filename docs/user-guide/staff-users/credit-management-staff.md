@@ -1,7 +1,7 @@
 # Credit management configuration for staff
 
 Credit management establishes credit limits for organizations that can be used for purchasing eligible services.
-The credit can optional be sub-allocated to projects and used in [cost policies](../end-users/cost-and-usage-policies.md).
+The credit can optional be sub-allocated to projects and used in [cost policies](../customer-organization/cost-and-usage-policies.md).
 
 Users with staff role can allocate credit points to organizations. This can be done by selecting Administration from the left side menu and then Organizations -> Credit management from the top menu.
 
