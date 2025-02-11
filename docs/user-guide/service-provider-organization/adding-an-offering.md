@@ -2,6 +2,12 @@
 
 ## Offering creation
 
+To create a new Offering in the Marketplace, you need to:
+
+- Assure that categories are configured in the Marketplace.
+- Create at least one service provider.
+- Create and activate a public offering.
+
 Waldur supports a number of different types of service providers when creating a shared offering. A common way of
 creating an offering is through a HomePort.
 
