@@ -9,14 +9,6 @@ for resource lifecycle management, accounting and invoicing. Specifics are imple
 
 ![Diagram of marketplace concepts](../img/marketplace-structure.png)
 
-## Adding a new Offering
-
-To create a new Offering in the Marketplace, you need to:
-
-- Assure that categories are configured in the Marketplace.
-- Create at least one service provider.
-- Create and activate a public offering.
-
 ### Creating Marketplace categories
 
 To create a category, either use administrative interface of Waldur, hosted under ```/admin`` (can be accessed by staff users)
@@ -63,7 +55,7 @@ This guide provides a structured approach for integrators to define an Offering.
 
 The General Information section defines the core attributes of an offering, including its identity, accessibility, and governance policies.
 
-#### Required fields:
+#### Required fields
 
 - **Name** – The title of the offering, displayed across the platform
 - **Description** – A concise summary outlining the offering's purpose
