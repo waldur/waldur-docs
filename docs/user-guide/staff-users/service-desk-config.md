@@ -6,7 +6,7 @@ To set up the configuration, navigate to the Service Desk configuration page by 
 
 * **Waldur support enabled** - Toggle **Yes** if you want to use support plugin.
 * **Waldur support active backend type** - Select the active configuration.
-* **Waldur support display request type** - Toggleto show the request type.
+* **Waldur support display request type** - Toggle to show the request type.
 
 ![Service desk configuration](../img/Service_desk_config.png)
 

@@ -1,6 +1,6 @@
 # Catalogue mode
 
-This guide explains how to enable and use the Catalogue Mode in Waldur. This feature changes the marketplace to a catalog-only view, where services are displayed as a list of offerings but cannot be ordered directly through the platform.
+This guide explains how to enable and use the Catalogue mode in Waldur. This feature changes the marketplace to a catalog-only view, where services are displayed as a list of offerings but cannot be ordered directly through the platform.
 
 ## Enabling Catalogue mode
 
