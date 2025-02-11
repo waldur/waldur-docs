@@ -21,7 +21,7 @@ for deployment-specific documentation.
 
 ## Practical guides for the end users
 
-* [Interface overview](interface.md)
+* [Interface overview](end-users/interface.md)
 
 ## Practical guides for the staff and support users (deployment administrators)
 
@@ -31,6 +31,7 @@ for deployment-specific documentation.
 * [Catalogue mode](staff-users/catalogue_mode.md)
 * [Change user passwords](staff-users/change-user-password.md)
 * [Creation of organizations](staff-users/organization-creation.md)
+* [Credit management configuration](staff-users/credit-management-staff.md)
 * [Helpdesk interactions](staff-users/helpdesk-interactions.md)
 * [Impersonation](staff-users/impersonation.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
