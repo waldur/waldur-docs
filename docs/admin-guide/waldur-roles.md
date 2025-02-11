@@ -15,7 +15,7 @@ Roles in Waldur are structured to define user access within specific scopes. The
 - **Description** – A brief explanation of the role's purpose and responsibilities
 - **Active** – Indicates whether the role is currently available for assignment
 
-Users can be assigned one or more roles within an Organization, Project, Call, Offering, Service Provider, Proposal, or Call Managing Organization scope.
+Users can be assigned one or more roles within an Organization, Project, Call, Offering, Service Provider, Proposal, or Call managing organization scope.
 
 ## Default roles and permissions
 
