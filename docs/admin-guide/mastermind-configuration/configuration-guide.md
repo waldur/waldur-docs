@@ -366,7 +366,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'HOMEPORT_SENTRY_DSN': None,
  'HOMEPORT_SENTRY_ENVIRONMENT': 'waldur-production',
  'HOMEPORT_SENTRY_TRACES_SAMPLE_RATE': 0.01,
- 'HOMEPORT_URL': 'https://example.com/',
  'HTTP_CHUNK_SIZE': 50,
  'INVITATIONS_ENABLED': True,
  'INVITATION_CIVIL_NUMBER_LABEL': '',
@@ -491,12 +490,6 @@ Sentry environment name for Waldur Homeport.
 Type: float
 
 Percentage of transactions sent to Sentry for tracing.
-
-#### HOMEPORT_URL
-
-Type: str
-
-It is used for rendering callback URL in HomePort.
 
 #### HTTP_CHUNK_SIZE
 
@@ -1059,6 +1052,14 @@ It is used as default page title if it's not specified explicitly.
 **Default value**: Your single pane of control for managing projects, teams and resources in a self-service manner.
 
 Description of the Waldur deployment.
+
+#### HOMEPORT_URL
+
+**Type:** str
+
+**Default value**: https://example.com/
+
+It is used for rendering callback URL in HomePort
 
 ### Marketplace Branding
 

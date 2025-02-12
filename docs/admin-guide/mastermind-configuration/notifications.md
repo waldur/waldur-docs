@@ -1717,7 +1717,7 @@ A notification used for issue creation.
         - Backend ID: {{issue.resource.backend_id}}
     {% endif %}
     - Site name: {{ settings.WALDUR_CORE.SITE_NAME }}
-    - Site URL: {{ settings.WALDUR_CORE.HOMEPORT_URL }}
+    - Site URL: {{ config.HOMEPORT_URL }}
 
 ```
 
