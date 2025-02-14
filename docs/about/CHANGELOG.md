@@ -1,5 +1,23 @@
 # Changelog
 
+## 7.3.3
+
+Notes: Bugfix release
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.2...7.3.3)
+    * Image SBOM: [waldur-mastermind-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.3-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-mastermind-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.3-source.cyclonedx.tar.gz)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.2...7.3.3)
+    * Image SBOM: [waldur-homeport-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.3-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-homeport-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.3-source.cyclonedx.tar.gz)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.2...7.3.3)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.2...7.3.3)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.2...7.3.3)
+    * Image SBOM: [waldur-prometheus-exporter-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.3-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-prometheus-exporter-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.3-source.cyclonedx.tar.gz)
+
+Date: Fri Feb 14 19:17:37 UTC 2025
+
 ## 7.3.2
 
 Notes: None
