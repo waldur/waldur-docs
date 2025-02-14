@@ -2,7 +2,7 @@
 
 Project team contains users with different roles.
 
-Please see [this page](https://docs.waldur.com/latest/about/glossaries/structure/) for User Rights based on Roles in the Organization.
+Please see [this page](https://docs.waldur.com/latest/about/Concept/structure/#user-roles-in-organization) for User Rights based on Roles in the Project.
 
 ## Adding project members
 
@@ -23,11 +23,11 @@ Please see [this page](https://docs.waldur.com/latest/about/glossaries/structure
 
 ### New user don't have a account in current Waldur instance
 
-1. Open project in Waldur.<br><br>
-2. Select "Team" from top menu and click on "Invitations".<br><br>
-3. By clicking "Invite user" open "Invite by email" window.<br><br>
-4. Insert user's email and set the role for the new user and continue.<br><br>
-5. Fill in your custom message on the right side of the window and send the invitation.<br><br>
+1. Open project in Waldur.
+2. Select "Team" from top menu and click on "Invitations".
+3. By clicking "Invite user" open "Invite by email" window.
+4. Insert user's email and set the role for the new user and continue.
+5. Fill in your custom message on the right side of the window and send the invitation.
 6. User now will get invitation email with the acceptance link.
 
 ![type:video](../img/send_invitation.mp4)
