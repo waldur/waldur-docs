@@ -14,11 +14,11 @@ A page will open displaying all created tickets. You can view:
 * The status of each ticket.
 * The user name and organization that created the ticket.
 
-![Service desk tickets](../img/Helpdesk_tickets_all.png)
+![Service desk tickets](../../img/Helpdesk_tickets_all.png)
 
 To open a specific ticket, click on its key-name. This will open a dedicated ticket page.
 
-![Service desk tickets](../img/Helpdesk_ticket.png)
+![Service desk tickets](../../img/Helpdesk_ticket.png)
 
 On this page, you can:
 

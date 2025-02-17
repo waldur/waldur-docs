@@ -8,7 +8,7 @@ To set up the configuration, navigate to the Service Desk configuration page by 
 * **Waldur support active backend type** - Select the active configuration.
 * **Waldur support display request type** - Toggle to show the request type.
 
-![Service desk configuration](../img/Service_desk_config.png)
+![Service desk configuration](../../img/Service_desk_config.png)
 
 ## Atlassian configuration
 
@@ -47,9 +47,9 @@ A popup will appear. Fill in the required fields and click **Update**.
 * **Atlassian map Waldur users to service desk agents** – This suggests an integration between Waldur and Atlassian's service desk. Enabling this would map Waldur users to service desk agent roles.
 * **Atlassian pull priorities** – If enabled, it allows the system to synchronize or pull priority levels from Atlassian issues to maintain consistent prioritization.
 
-![Atlassian configuration](../img/Atlassian_config1.png)
-![Atlassian configuration](../img/Atlassian_config2.png)
-![Atlassian configuration](../img/Atlassian_config3.png)
+![Atlassian configuration](../../img/Atlassian_config1.png)
+![Atlassian configuration](../../img/Atlassian_config2.png)
+![Atlassian configuration](../../img/Atlassian_config3.png)
 
 ## Zammad configuration
 
@@ -65,7 +65,7 @@ A popup will appear. Fill in the required fields and click **Update**.
 * **Comment prefix with user info** - Additional comment line in Zammad with user name, who created the ticket.
 * **Zammad comment cooldown duration** - Time (in seconds) to remove the comment until it is saved in the system.
 
-![Zammad configuration](../img/Zammad_config.png)
+![Zammad configuration](../../img/Zammad_config.png)
 
 ## Smax configuration
 
@@ -86,4 +86,4 @@ A popup will appear. Fill in the required fields and click **Update**.
 * **Creation source name** - Specify the source name used when creating tickets or records in SMAX.
 * **Smax verify ssl** - Toggle this setting to enable or disable SSL verification when communicating with the SMAX server.
 
-![Smax configuration](../img/Smax_config.png)
+![Smax configuration](../../img/Smax_config.png)
