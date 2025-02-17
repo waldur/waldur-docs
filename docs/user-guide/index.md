@@ -32,7 +32,7 @@ for deployment-specific documentation.
 * [Change user passwords](staff-users/change-user-password.md)
 * [Creation of organizations](staff-users/organization-creation.md)
 * [Credit management configuration](staff-users/credit-management-staff.md)
-* [Helpdesk interactions](staff-users/helpdesk-interactions.md)
+* [Service desk interactions](staff-users/servicedesk-interactions.md)
 * [Impersonation](staff-users/impersonation.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
 * [Remote sync of offerings](staff-users/remote-sync.md)
