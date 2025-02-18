@@ -13,7 +13,16 @@ From **HomePort**:
 
 From **MasterMind**:
 
-1. Latest mastermind logs that include stacktrace of the error, typically *core.log* and *celery-celery.log*.
+1. Affected Mastermind URL(s)
+2. Details of affected Waldur objects: customer name, project name, resource name, etc.
+3. Details of environment: Waldur instance hostname, deployment type one of:
+   1. Docker-compose
+   2. Helm
+   3. ArgoCD
+4. In case issue is user specific, details of user facing the issue: roles in different scopes (project, organization, call, offering, etc), if user has global role (staff or support). If issue is reproducible in test environment, concrete username.
+5. Latest mastermind stdout logs that include stacktrace of the error
+   1. For docker-compose: [link](/docs/admin-guide/deployment/docker-compose/#logs)
+   2. For Helm: [link](/docs/admin-guide/debugging.md#helm-1)
 
 !!! warning
     Logs may contain sensitive data, please make sure that you either cleanup the data or share it with a trusted
