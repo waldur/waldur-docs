@@ -545,3 +545,54 @@ for user_role in user_roles:
                 invitation.uuid.hex, system_robot.full_name
             )
 ```
+
+### User deletion examples
+
+#### Basic user deletion
+
+```python
+from waldur_core.core.models import User
+
+# Delete user by exact username
+user = User.objects.get(username='example_username')
+user.delete()
+
+# Delete user by email
+user = User.objects.get(email='username@example.com')
+user.delete()
+```
+
+#### Find and delete users with partial information
+
+```python
+
+from waldur_core.core.models import User
+
+# Find and delete user when you only know part of the username
+# Note: filter() can return multiple results, first() gets only the first match
+user = User.objects.filter(username__icontains='smith').first()
+if user:
+    user.delete()
+```
+
+#### Find and delete user based on OfferingUser information
+
+```python
+from waldur_mastermind.marketplace.models import OfferingUser
+
+# This is useful when the username of the main User comes for example from MyAcessId with a complex format, but you know information about their OfferingUser, for example their username
+offering_user = OfferingUser.objects.get(username='test_user')
+
+print(f"Found offering user: {offering_user}")
+
+if offering_user:
+    user = offering_user.user
+    print(f"Found user: {user.username}")  # Verify it's the correct user
+    user.delete()
+```
+
+⚠️ **Important notes**:
+
+- Always verify you have the correct user before deletion
+- User deletion will cascade and remove all related permissions and roles
+- For users authenticated via external providers (LDAP, SAML, etc.), this only removes the user from Waldur
