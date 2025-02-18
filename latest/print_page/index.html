@@ -5893,7 +5893,16 @@ provide issue report, which includes:</p>
 </ol>
 <p>From <strong>MasterMind</strong>:</p>
 <ol>
-<li>Latest mastermind logs that include stacktrace of the error, typically <em>core.log</em> and <em>celery-celery.log</em>.</li>
+<li>Affected Mastermind URL(s)</li>
+<li>Details of affected Waldur objects: customer name, project name, resource name, etc.</li>
+<li>Details of environment: Waldur instance hostname, deployment type one of:</li>
+<li>Docker-compose</li>
+<li>Helm</li>
+<li>ArgoCD</li>
+<li>In case issue is user specific, details of user facing the issue: roles in different scopes (project, organization, call, offering, etc), if user has global role (staff or support). If issue is reproducible in test environment, concrete username.</li>
+<li>Latest mastermind stdout logs that include stacktrace of the error</li>
+<li>For docker-compose: <a href="#docs-admin-guide-deployment-docker-compose-logs">link</a></li>
+<li>For Helm: <a href="#docs-admin-guide-debugging.md-helm-1">link</a></li>
 </ol>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -7612,6 +7621,14 @@ $<span class="w"> </span>ls<span class="w"> </span>-lh<span class="w"> </span>wa
 <h3 id="admin-guide-debugging-helm">Helm</h3>
 <p>In this case, you can use the same approach, but execute <code>kubectl</code> instead of <code>docker</code> command:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>logs<span class="w"> </span>-l<span class="w"> </span><span class="nv">app</span><span class="o">=</span>waldur-mastermind-worker<span class="w"> </span>--tail<span class="o">=</span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">"about to send"</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-debugging-get-latest-logs-for-waldur-mastermind-api">Get latest logs for Waldur Mastermind API</h2>
+<h3 id="admin-guide-debugging-helm_1">Helm</h3>
+<p>To get latest 100 log records from Waldur Mastermind API server, execute:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>logs<span class="w"> </span>-l<span class="w"> </span><span class="nv">app</span><span class="o">=</span>waldur-mastermind-api<span class="w"> </span>--tail<span class="o">=</span><span class="m">100</span>
+</code></pre></div></td></tr></table></div>
+<p>For Waldur Mastermind Worker logs, execute:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>logs<span class="w"> </span>-l<span class="w"> </span><span class="nv">app</span><span class="o">=</span>waldur-mastermind-worker<span class="w"> </span>--tail<span class="o">=</span><span class="m">100</span>
 </code></pre></div></td></tr></table></div></div></section><section class="print-page" id="admin-guide-grafana"><div><h1 id="grafana-and-prometheus-metrics">Grafana and Prometheus Metrics</h1>
 <p>Waldur Homeport includes a number of reports, but for cases when additional custom reports need to be created,
 it is possible to setup a time-series database, for example, Prometheus, and setup business metrics exporter
