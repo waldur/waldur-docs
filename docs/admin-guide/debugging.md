@@ -36,3 +36,19 @@ In this case, you can use the same approach, but execute `kubectl` instead of `d
 ```bash
 kubectl logs -l app=waldur-mastermind-worker --tail=-1 | grep -i "about to send"
 ```
+
+## Get latest logs for Waldur Mastermind API
+
+### Helm
+
+To get latest 100 log records from Waldur Mastermind API server, execute:
+
+```bash
+kubectl logs -l app=waldur-mastermind-api --tail=100
+```
+
+For Waldur Mastermind Worker logs, execute:
+
+```bash
+kubectl logs -l app=waldur-mastermind-worker --tail=100
+```
