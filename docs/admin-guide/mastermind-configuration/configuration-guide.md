@@ -1385,6 +1385,12 @@ A custom favicon .png image file
 
 Default logo for offering
 
+#### KEYCLOAK_ICON
+
+**Type:** image_field
+
+A custom PNG icon for Keycloak login button
+
 ### Service desk integration settings
 
 #### WALDUR_SUPPORT_ENABLED
@@ -1809,7 +1815,7 @@ Mark terms of services as approved for new users.
 
 **Type:** bool
 
-If this is true and user email is pre-validated then accepting invitation to only do that if user’s email and email of the invitation fully match.
+If this is true and user email is pre-validated then accepting invitation to only do that if user's email and email of the invitation fully match.
 
 #### INVITATION_DISABLE_MULTIPLE_ROLES
 
