@@ -5643,21 +5643,46 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - created_by_full_name
+            - created_by_uuid
+            - expiration_time
+            - role_name
+            - role_uuid
+            - user_email
+            - user_full_name
+            - user_image
+            - user_username
+            - user_uuid
+            - uuid
+      - in: query
+        name: full_name
+        schema:
+          type: string
+      - in: query
+        name: native_name
+        schema:
+          type: string
+      - in: query
         name: o
         schema:
           type: array
           items:
             type: string
             enum:
-            - -customer_name
-            - customer_name
-        description: |-
-          Ordering
-
-          * `customer_name` - Customer name
-          * `-customer_name` - Customer name (descending)
-        explode: false
-        style: form
+            - created
+            - email
+            - expiration_time
+            - full_name
+            - native_name
+            - role
+            - username
       - name: page
         required: false
         in: query
@@ -5680,6 +5705,18 @@ paths:
           type: string
       - in: query
         name: user
+        schema:
+          type: string
+      - in: query
+        name: user_slug
+        schema:
+          type: string
+      - in: query
+        name: user_url
+        schema:
+          type: string
+      - in: query
+        name: username
         schema:
           type: string
       - in: path
@@ -7083,6 +7120,29 @@ paths:
         schema:
           type: string
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - created_by_full_name
+            - created_by_uuid
+            - expiration_time
+            - role_name
+            - role_uuid
+            - user_email
+            - user_full_name
+            - user_image
+            - user_username
+            - user_uuid
+            - uuid
+      - in: query
+        name: full_name
+        schema:
+          type: string
+      - in: query
         name: name
         schema:
           type: string
@@ -7094,12 +7154,20 @@ paths:
         name: native_name
         schema:
           type: string
-      - name: o
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
+      - in: query
+        name: o
         schema:
-          type: string
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - email
+            - expiration_time
+            - full_name
+            - native_name
+            - role
+            - username
       - in: query
         name: organization_group_name
         schema:
@@ -7144,6 +7212,18 @@ paths:
           type: string
       - in: query
         name: user
+        schema:
+          type: string
+      - in: query
+        name: user_slug
+        schema:
+          type: string
+      - in: query
+        name: user_url
+        schema:
+          type: string
+      - in: query
+        name: username
         schema:
           type: string
       - in: path
@@ -7266,6 +7346,23 @@ paths:
         name: email
         schema:
           type: string
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - email
+            - expiration_time
+            - full_name
+            - image
+            - projects
+            - role
+            - role_name
+            - url
+            - username
+            - uuid
       - in: query
         name: full_name
         schema:
@@ -7409,34 +7506,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Customer'
-          description: ''
-  /api/daily-quotas/:
-    get:
-      operationId: daily_quotas_list
-      parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      tags:
-      - daily-quotas
-      security:
-      - tokenAuth: []
-      - waldurCookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedDailyHistoryQuotaList'
           description: ''
   /api/database-stats/:
     get:
@@ -9040,6 +9109,7 @@ paths:
   /api/freeipa-profiles/{uuid}/update_ssh_keys/:
     post:
       operationId: freeipa_profiles_update_ssh_keys
+      description: Update SSH keys for profile.
       parameters:
       - in: path
         name: uuid
@@ -9049,32 +9119,41 @@ paths:
         required: true
       tags:
       - freeipa-profiles
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfileRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProfileRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProfileRequest'
-        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Profile'
-          description: ''
+          description: No response body
   /api/google-auth/:
     get:
       operationId: google_auth_list
       parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - calendar_refresh_token
+            - calendar_token
+            - created
+            - customer
+            - customer_abbreviation
+            - customer_country
+            - customer_image
+            - customer_name
+            - customer_native_name
+            - customer_slug
+            - customer_uuid
+            - description
+            - google_auth_url
+            - image
+            - offering_count
+            - organization_groups
+            - url
+            - uuid
       - in: query
         name: has_credentials
         schema:
@@ -9134,6 +9213,31 @@ paths:
     get:
       operationId: google_auth_retrieve
       parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - calendar_refresh_token
+            - calendar_token
+            - created
+            - customer
+            - customer_abbreviation
+            - customer_country
+            - customer_image
+            - customer_name
+            - customer_native_name
+            - customer_slug
+            - customer_uuid
+            - description
+            - google_auth_url
+            - image
+            - offering_count
+            - organization_groups
+            - url
+            - uuid
       - in: path
         name: uuid
         schema:
@@ -9238,6 +9342,31 @@ paths:
     get:
       operationId: google_auth_authorize_retrieve
       parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - calendar_refresh_token
+            - calendar_token
+            - created
+            - customer
+            - customer_abbreviation
+            - customer_country
+            - customer_image
+            - customer_name
+            - customer_native_name
+            - customer_slug
+            - customer_uuid
+            - description
+            - google_auth_url
+            - image
+            - offering_count
+            - organization_groups
+            - url
+            - uuid
       - in: path
         name: uuid
         schema:
@@ -9259,6 +9388,32 @@ paths:
   /api/google-auth/callback/:
     get:
       operationId: google_auth_callback_retrieve
+      parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - calendar_refresh_token
+            - calendar_token
+            - created
+            - customer
+            - customer_abbreviation
+            - customer_country
+            - customer_image
+            - customer_name
+            - customer_native_name
+            - customer_slug
+            - customer_uuid
+            - description
+            - google_auth_url
+            - image
+            - offering_count
+            - organization_groups
+            - url
+            - uuid
       tags:
       - google-auth
       security:
@@ -10399,6 +10554,18 @@ paths:
   /api/invoice-items/customer_costs_for_period/:
     get:
       operationId: invoice_items_customer_costs_for_period_retrieve
+      parameters:
+      - in: query
+        name: customer_uuid
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the project for which statistics should be calculated.
+      - in: query
+        name: period
+        schema:
+          type: integer
+        description: Period for which statistics should be calculated.
       tags:
       - accounting
       security:
@@ -10409,11 +10576,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InvoiceItemCustomerCostsForPeriod'
+                $ref: '#/components/schemas/CostsForPeriod'
           description: ''
   /api/invoice-items/project_costs_for_period/:
     get:
       operationId: invoice_items_project_costs_for_period_retrieve
+      parameters:
+      - in: query
+        name: period
+        schema:
+          type: integer
+        description: Period for which statistics should be calculated.
+      - in: query
+        name: project_uuid
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the project for which statistics should be calculated.
       tags:
       - accounting
       security:
@@ -10424,7 +10603,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InvoiceItemProjectCostsForPeriod'
+                $ref: '#/components/schemas/CostsForPeriod'
           description: ''
   /api/invoice/send-financial-report-by-mail/:
     post:
@@ -18286,6 +18465,29 @@ paths:
         schema:
           type: string
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - created_by_full_name
+            - created_by_uuid
+            - expiration_time
+            - role_name
+            - role_uuid
+            - user_email
+            - user_full_name
+            - user_image
+            - user_username
+            - user_uuid
+            - uuid
+      - in: query
+        name: full_name
+        schema:
+          type: string
+      - in: query
         name: keyword
         schema:
           type: string
@@ -18299,45 +18501,23 @@ paths:
         schema:
           type: string
       - in: query
+        name: native_name
+        schema:
+          type: string
+      - in: query
         name: o
         schema:
           type: array
           items:
             type: string
             enum:
-            - -created
-            - -name
-            - -state
-            - -total_cost
-            - -total_cost_estimated
-            - -total_customers
-            - -type
             - created
-            - name
-            - state
-            - total_cost
-            - total_cost_estimated
-            - total_customers
-            - type
-        description: |-
-          Ordering
-
-          * `name` - Name
-          * `-name` - Name (descending)
-          * `created` - Created
-          * `-created` - Created (descending)
-          * `type` - Type
-          * `-type` - Type (descending)
-          * `total_customers` - Total customers
-          * `-total_customers` - Total customers (descending)
-          * `total_cost` - Total cost
-          * `-total_cost` - Total cost (descending)
-          * `total_cost_estimated` - Total cost estimated
-          * `-total_cost_estimated` - Total cost estimated (descending)
-          * `state` - State
-          * `-state` - State (descending)
-        explode: false
-        style: form
+            - email
+            - expiration_time
+            - full_name
+            - native_name
+            - role
+            - username
       - in: query
         name: organization_group_uuid
         schema:
@@ -18422,6 +18602,18 @@ paths:
         style: form
       - in: query
         name: user
+        schema:
+          type: string
+      - in: query
+        name: user_slug
+        schema:
+          type: string
+      - in: query
+        name: user_url
+        schema:
+          type: string
+      - in: query
+        name: username
         schema:
           type: string
       - in: path
@@ -19401,8 +19593,10 @@ paths:
             enum:
             - -created
             - -name
+            - -project_name
             - created
             - name
+            - project_name
         description: |-
           Ordering
 
@@ -19410,6 +19604,8 @@ paths:
           * `-name` - Name (descending)
           * `created` - Created
           * `-created` - Created (descending)
+          * `project_name` - Project name
+          * `-project_name` - Project name (descending)
         explode: false
         style: form
       - in: query
@@ -21131,6 +21327,14 @@ paths:
           type: string
           pattern: ^[a-f0-9]+$
         required: true
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: name_exact
+        schema:
+          type: string
       - name: page
         required: false
         in: query
@@ -21474,8 +21678,10 @@ paths:
             enum:
             - -created
             - -name
+            - -project_name
             - created
             - name
+            - project_name
         description: |-
           Ordering
 
@@ -21483,6 +21689,8 @@ paths:
           * `-name` - Name (descending)
           * `created` - Created
           * `-created` - Created (descending)
+          * `project_name` - Project name
+          * `-project_name` - Project name (descending)
         explode: false
         style: form
       - in: query
@@ -23520,6 +23728,28 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - customer
+            - customer_abbreviation
+            - customer_country
+            - customer_image
+            - customer_name
+            - customer_native_name
+            - customer_slug
+            - customer_uuid
+            - description
+            - image
+            - offering_count
+            - organization_groups
+            - url
+            - uuid
+      - in: query
         name: o
         schema:
           type: array
@@ -23590,6 +23820,28 @@ paths:
     get:
       operationId: marketplace_service_providers_retrieve
       parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - customer
+            - customer_abbreviation
+            - customer_country
+            - customer_image
+            - customer_name
+            - customer_native_name
+            - customer_slug
+            - customer_uuid
+            - description
+            - image
+            - offering_count
+            - organization_groups
+            - url
+            - uuid
       - in: path
         name: uuid
         schema:
@@ -23728,6 +23980,28 @@ paths:
         On GET request - return service provider api_secret_code.
         On POST - generate new service provider api_secret_code.
       parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - customer
+            - customer_abbreviation
+            - customer_country
+            - customer_image
+            - customer_name
+            - customer_native_name
+            - customer_slug
+            - customer_uuid
+            - description
+            - image
+            - offering_count
+            - organization_groups
+            - url
+            - uuid
       - in: path
         name: uuid
         schema:
@@ -24019,21 +24293,46 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - created_by_full_name
+            - created_by_uuid
+            - expiration_time
+            - role_name
+            - role_uuid
+            - user_email
+            - user_full_name
+            - user_image
+            - user_username
+            - user_uuid
+            - uuid
+      - in: query
+        name: full_name
+        schema:
+          type: string
+      - in: query
+        name: native_name
+        schema:
+          type: string
+      - in: query
         name: o
         schema:
           type: array
           items:
             type: string
             enum:
-            - -customer_name
-            - customer_name
-        description: |-
-          Ordering
-
-          * `customer_name` - Customer name
-          * `-customer_name` - Customer name (descending)
-        explode: false
-        style: form
+            - created
+            - email
+            - expiration_time
+            - full_name
+            - native_name
+            - role
+            - username
       - name: page
         required: false
         in: query
@@ -24056,6 +24355,18 @@ paths:
           type: string
       - in: query
         name: user
+        schema:
+          type: string
+      - in: query
+        name: user_slug
+        schema:
+          type: string
+      - in: query
+        name: user_url
+        schema:
+          type: string
+      - in: query
+        name: username
         schema:
           type: string
       - in: path
@@ -24341,6 +24652,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: customer_name
+        schema:
+          type: string
+      - in: query
         name: customer_uuid
         schema:
           type: string
@@ -24436,6 +24751,10 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: project_name
+        schema:
+          type: string
       - in: path
         name: uuid
         schema:
@@ -34200,11 +34519,38 @@ paths:
         schema:
           type: string
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - created_by_full_name
+            - created_by_uuid
+            - expiration_time
+            - role_name
+            - role_uuid
+            - user_email
+            - user_full_name
+            - user_image
+            - user_username
+            - user_uuid
+            - uuid
+      - in: query
+        name: full_name
+        schema:
+          type: string
+      - in: query
         name: name
         schema:
           type: string
       - in: query
         name: name_exact
+        schema:
+          type: string
+      - in: query
+        name: native_name
         schema:
           type: string
       - in: query
@@ -34214,43 +34560,13 @@ paths:
           items:
             type: string
             enum:
-            - -created
-            - -customer_abbreviation
-            - -customer_name
-            - -customer_native_name
-            - -end_date
-            - -estimated_cost
-            - -name
-            - -start_date
             - created
-            - customer_abbreviation
-            - customer_name
-            - customer_native_name
-            - end_date
-            - estimated_cost
-            - name
-            - start_date
-        description: |-
-          Ordering
-
-          * `name` - Name
-          * `-name` - Name (descending)
-          * `created` - Created
-          * `-created` - Created (descending)
-          * `customer_name` - Customer name
-          * `-customer_name` - Customer name (descending)
-          * `customer_native_name` - Customer native name
-          * `-customer_native_name` - Customer native name (descending)
-          * `customer_abbreviation` - Customer abbreviation
-          * `-customer_abbreviation` - Customer abbreviation (descending)
-          * `estimated_cost` - Estimated cost
-          * `-estimated_cost` - Estimated cost (descending)
-          * `end_date` - End date
-          * `-end_date` - End date (descending)
-          * `start_date` - Start date
-          * `-start_date` - Start date (descending)
-        explode: false
-        style: form
+            - email
+            - expiration_time
+            - full_name
+            - native_name
+            - role
+            - username
       - name: page
         required: false
         in: query
@@ -34277,6 +34593,18 @@ paths:
           type: string
       - in: query
         name: user
+        schema:
+          type: string
+      - in: query
+        name: user_slug
+        schema:
+          type: string
+      - in: query
+        name: user_url
+        schema:
+          type: string
+      - in: query
+        name: username
         schema:
           type: string
       - in: path
@@ -35246,7 +35574,34 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - created_by_full_name
+            - created_by_uuid
+            - expiration_time
+            - role_name
+            - role_uuid
+            - user_email
+            - user_full_name
+            - user_image
+            - user_username
+            - user_uuid
+            - uuid
+      - in: query
+        name: full_name
+        schema:
+          type: string
+      - in: query
         name: name
+        schema:
+          type: string
+      - in: query
+        name: native_name
         schema:
           type: string
       - in: query
@@ -35256,31 +35611,13 @@ paths:
           items:
             type: string
             enum:
-            - -created
-            - -round__call__name
-            - -round__cutoff_time
-            - -round__start_time
-            - -state
             - created
-            - round__call__name
-            - round__cutoff_time
-            - round__start_time
-            - state
-        description: |-
-          Ordering
-
-          * `round__call__name` - Round  call  name
-          * `-round__call__name` - Round  call  name (descending)
-          * `round__start_time` - Round  start time
-          * `-round__start_time` - Round  start time (descending)
-          * `round__cutoff_time` - Round  cutoff time
-          * `-round__cutoff_time` - Round  cutoff time (descending)
-          * `state` - State
-          * `-state` - State (descending)
-          * `created` - Created
-          * `-created` - Created (descending)
-        explode: false
-        style: form
+            - email
+            - expiration_time
+            - full_name
+            - native_name
+            - role
+            - username
       - in: query
         name: organization_uuid
         schema:
@@ -35337,6 +35674,18 @@ paths:
         style: form
       - in: query
         name: user
+        schema:
+          type: string
+      - in: query
+        name: user_slug
+        schema:
+          type: string
+      - in: query
+        name: user_url
+        schema:
+          type: string
+      - in: query
+        name: username
         schema:
           type: string
       - in: path
@@ -35772,6 +36121,34 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - backend_id
+            - created
+            - created_by
+            - customer_name
+            - customer_uuid
+            - default_project_role
+            - default_project_role_description
+            - default_project_role_name
+            - description
+            - documents
+            - end_date
+            - external_url
+            - manager
+            - name
+            - offerings
+            - reference_code
+            - rounds
+            - start_date
+            - state
+            - url
+            - uuid
+      - in: query
         name: has_active_round
         schema:
           type: boolean
@@ -35883,6 +36260,34 @@ paths:
     get:
       operationId: proposal_protected_calls_retrieve
       parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - backend_id
+            - created
+            - created_by
+            - customer_name
+            - customer_uuid
+            - default_project_role
+            - default_project_role_description
+            - default_project_role_name
+            - description
+            - documents
+            - end_date
+            - external_url
+            - manager
+            - name
+            - offerings
+            - reference_code
+            - rounds
+            - start_date
+            - state
+            - url
+            - uuid
       - in: path
         name: uuid
         schema:
@@ -36192,11 +36597,38 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created
+            - created_by_full_name
+            - created_by_uuid
+            - expiration_time
+            - role_name
+            - role_uuid
+            - user_email
+            - user_full_name
+            - user_image
+            - user_username
+            - user_uuid
+            - uuid
+      - in: query
+        name: full_name
+        schema:
+          type: string
+      - in: query
         name: has_active_round
         schema:
           type: boolean
       - in: query
         name: name
+        schema:
+          type: string
+      - in: query
+        name: native_name
         schema:
           type: string
       - in: query
@@ -36206,23 +36638,13 @@ paths:
           items:
             type: string
             enum:
-            - -created
-            - -manager__customer__name
-            - -name
             - created
-            - manager__customer__name
-            - name
-        description: |-
-          Ordering
-
-          * `manager__customer__name` - Manager  customer  name
-          * `-manager__customer__name` - Manager  customer  name (descending)
-          * `created` - Created
-          * `-created` - Created (descending)
-          * `name` - Name
-          * `-name` - Name (descending)
-        explode: false
-        style: form
+            - email
+            - expiration_time
+            - full_name
+            - native_name
+            - role
+            - username
       - in: query
         name: offering_uuid
         schema:
@@ -36271,6 +36693,18 @@ paths:
         style: form
       - in: query
         name: user
+        schema:
+          type: string
+      - in: query
+        name: user_slug
+        schema:
+          type: string
+      - in: query
+        name: user_url
+        schema:
+          type: string
+      - in: query
+        name: username
         schema:
           type: string
       - in: path
@@ -36911,6 +37345,29 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - backend_id
+            - created
+            - customer_name
+            - customer_uuid
+            - description
+            - documents
+            - end_date
+            - external_url
+            - manager
+            - name
+            - offerings
+            - rounds
+            - start_date
+            - state
+            - url
+            - uuid
+      - in: query
         name: has_active_round
         schema:
           type: boolean
@@ -36997,6 +37454,29 @@ paths:
     get:
       operationId: proposal_public_calls_retrieve
       parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - backend_id
+            - created
+            - customer_name
+            - customer_uuid
+            - description
+            - documents
+            - end_date
+            - external_url
+            - manager
+            - name
+            - offerings
+            - rounds
+            - start_date
+            - state
+            - url
+            - uuid
       - in: path
         name: uuid
         schema:
@@ -42201,6 +42681,34 @@ paths:
         schema:
           type: string
       - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - content_type
+            - description
+            - description_ar
+            - description_cs
+            - description_da
+            - description_de
+            - description_en
+            - description_es
+            - description_et
+            - description_fr
+            - description_it
+            - description_lt
+            - description_lv
+            - description_nb
+            - description_ru
+            - description_sv
+            - is_active
+            - is_system_role
+            - name
+            - permissions
+            - uuid
+      - in: query
         name: is_active
         schema:
           type: boolean
@@ -42262,6 +42770,34 @@ paths:
     get:
       operationId: roles_retrieve
       parameters:
+      - in: query
+        name: field
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - content_type
+            - description
+            - description_ar
+            - description_cs
+            - description_da
+            - description_de
+            - description_en
+            - description_es
+            - description_et
+            - description_fr
+            - description_it
+            - description_lt
+            - description_lv
+            - description_nb
+            - description_ru
+            - description_sv
+            - is_active
+            - is_system_role
+            - name
+            - permissions
+            - uuid
       - in: path
         name: uuid
         schema:
@@ -45272,6 +45808,7 @@ paths:
   /api/user-group-invitations/{uuid}/cancel/:
     post:
       operationId: user_group_invitations_cancel
+      description: Cancel group invitation
       parameters:
       - in: path
         name: uuid
@@ -45281,28 +45818,12 @@ paths:
         required: true
       tags:
       - user-group-invitations
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GroupInvitationRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/GroupInvitationRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/GroupInvitationRequest'
-        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GroupInvitation'
-          description: ''
+          description: No response body
   /api/user-group-invitations/{uuid}/projects/:
     get:
       operationId: user_group_invitations_projects_retrieve
@@ -46071,6 +46592,11 @@ paths:
         schema:
           type: string
       - in: query
+        name: customer_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
         name: description
         schema:
           type: string
@@ -46233,6 +46759,11 @@ paths:
         schema:
           type: string
         description: Project roles
+      - in: query
+        name: project_uuid
+        schema:
+          type: string
+          format: uuid
       - in: query
         name: query
         schema:
@@ -46683,7 +47214,8 @@ paths:
   /api/version/:
     get:
       operationId: version_retrieve
-      description: Retrieve version of the application
+      description: Retrieve current version of the application and the latest available
+        version from GitHub (if available).
       tags:
       - version
       security:
@@ -46694,8 +47226,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: {}
+                $ref: '#/components/schemas/Version'
           description: ''
   /api/vmware-clusters/:
     get:
@@ -48686,6 +49217,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VmwareVirtualMachine'
+          description: ''
+  /daily-quotas/:
+    get:
+      operationId: daily_quotas_retrieve
+      parameters:
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+        description: End date in format YYYY-MM-DD
+      - in: query
+        name: quota_names
+        schema:
+          type: array
+          items:
+            type: string
+        description: List of quota names
+      - in: query
+        name: scope
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the scope object
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+        description: Start date in format YYYY-MM-DD
+      tags:
+      - daily-quotas
+      security:
+      - tokenAuth: []
+      - waldurCookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: integer
           description: ''
 components:
   schemas:
@@ -53623,6 +54199,25 @@ components:
       - Erred
       type: string
       description: ''
+    CostsForPeriod:
+      type: object
+      properties:
+        total_price:
+          type: string
+          readOnly: true
+        start_date:
+          type: string
+          format: date
+          readOnly: true
+        end_date:
+          type: string
+          format: date
+          readOnly: true
+      required:
+      - end_date
+      - start_date
+      - total_price
+      description: ''
     CountStats:
       type: object
       properties:
@@ -54532,6 +55127,7 @@ components:
       - name
     CustomerUser:
       type: object
+      description: ''
       properties:
         url:
           type: string
@@ -54583,25 +55179,6 @@ components:
       - url
       - username
       - uuid
-      description: ''
-    DailyHistoryQuota:
-      type: object
-      properties:
-        scope:
-          type: string
-        quota_names:
-          type: array
-          items:
-            type: string
-        start:
-          type: string
-          format: date
-        end:
-          type: string
-          format: date
-      required:
-      - scope
-      description: ''
     DataVolume:
       type: object
       description: ''
@@ -56917,27 +57494,6 @@ components:
       required:
       - offering_component_name
       description: ''
-    InvoiceItemCustomerCostsForPeriod:
-      type: object
-      properties:
-        period:
-          allOf:
-          - $ref: '#/components/schemas/PeriodEnum'
-          default: 1
-          description: |-
-            Period for which statistics should be calculated.
-
-            * `1` - Total
-            * `2` - 1 month
-            * `3` - 3 month
-            * `4` - 12 month
-        customer_uuid:
-          type: string
-          format: uuid
-          description: UUID of the customer for which statistics should be calculated.
-      required:
-      - customer_uuid
-      description: ''
     InvoiceItemDetail:
       type: object
       properties:
@@ -57045,27 +57601,6 @@ components:
           format: uri
       required:
       - invoice
-      description: ''
-    InvoiceItemProjectCostsForPeriod:
-      type: object
-      properties:
-        period:
-          allOf:
-          - $ref: '#/components/schemas/PeriodEnum'
-          default: 1
-          description: |-
-            Period for which statistics should be calculated.
-
-            * `1` - Total
-            * `2` - 1 month
-            * `3` - 3 month
-            * `4` - 12 month
-        project_uuid:
-          type: string
-          format: uuid
-          description: UUID of the project for which statistics should be calculated.
-      required:
-      - project_uuid
       description: ''
     InvoiceItemRequest:
       type: object
@@ -66142,11 +66677,6 @@ components:
       items:
         $ref: '#/components/schemas/CustomerUser'
       description: ''
-    PaginatedDailyHistoryQuotaList:
-      type: array
-      items:
-        $ref: '#/components/schemas/DailyHistoryQuota'
-      description: ''
     PaginatedDetailedProviderUserList:
       type: array
       items:
@@ -69035,6 +69565,7 @@ components:
           nullable: true
     PatchedRoleDetailsRequest:
       type: object
+      description: ''
       properties:
         name:
           type: string
@@ -69115,7 +69646,6 @@ components:
           maxLength: 2000
         is_active:
           type: boolean
-      description: ''
     PatchedRoundRequest:
       type: object
       properties:
@@ -76571,6 +77101,7 @@ components:
       description: ''
     RoleDetails:
       type: object
+      description: ''
       properties:
         uuid:
           type: string
@@ -76671,7 +77202,6 @@ components:
       - name
       - permissions
       - uuid
-      description: ''
     RoleEnum:
       enum:
       - owner
@@ -76680,6 +77210,7 @@ components:
       description: ''
     RoleModifyRequest:
       type: object
+      description: ''
       properties:
         name:
           type: string
@@ -76768,7 +77299,6 @@ components:
       - content_type
       - name
       - permissions
-      description: ''
     RolesEnum:
       enum:
       - controlplane
@@ -78655,6 +79185,18 @@ components:
       - freeipa
       - identity_claim
       type: string
+      description: ''
+    Version:
+      type: object
+      properties:
+        version:
+          type: string
+          description: Current installed version of the application
+        latest_version:
+          type: string
+          description: Latest available version from GitHub, if available.
+      required:
+      - version
       description: ''
     VisibleInvitationDetails:
       type: object
