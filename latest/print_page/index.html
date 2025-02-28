@@ -14900,24 +14900,36 @@ options:
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>    Project {{ project.name }} will be deleted.
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>    {% if count_projects &gt; 1 %}Your {{ count_projects }} projects{% else %} Project{% endif %} will be deleted on {{ end_date|date:'d/m/Y' }}.
 </code></pre></div></td></tr></table></div>
 <div class="tabbed-set tabbed-alternate" data-tabs="68:1"><input checked id="admin-guide-mastermind-configuration-notifications-__tabbed_68_1" name="admin-guide-mastermind-configuration-notifications-__tabbed_68" type="radio"><div class="tabbed-labels"><label for="admin-guide-mastermind-configuration-notifications-__tabbed_68_1">marketplace/notification_about_project_ending_message.txt</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code>    Dear {{ user.full_name }},
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>    Hello {{ user.full_name }}!
 
-    Your project {{ project.name }} is ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}. End of the project will lead to termination of all resources in the project.
+    The following projects are ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}:
+
+    {% for project in projects %}
+        - {{ project.name }} ({{ project.url }})
+    {% endfor %}
+
+    End of the project will lead to termination of all resources in the project.
     If you are aware of that, then no actions are needed from your side.
-    If you need to update project end date, please update it in project details {{ project_url }}.
+    If you need to update project end date, please update it in project details.
 
     Thank you!
 </code></pre></div></td></tr></table></div>
@@ -14943,21 +14955,27 @@ options:
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
-<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code>    &lt;html&gt;
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code>    &lt;html&gt;
     &lt;head lang="en"&gt;
         &lt;meta charset="UTF-8"&gt;
-        &lt;title&gt;Project {{ project.name }} will be deleted.&lt;/title&gt;
+        &lt;title&gt;Projects will be deleted.&lt;/title&gt;
     &lt;/head&gt;
     &lt;body&gt;
-    &lt;p&gt;Dear {{ user.full_name }},&lt;/p&gt;
-
-    &lt;p&gt;Your project {{ project.name }} is ending
-        {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
+    &lt;p&gt;Hello {{ user.full_name }}!&lt;/p&gt;
+    &lt;p&gt;The following projects are ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}:&lt;/p&gt;
+    &lt;ul&gt;
+    {% for project in projects %}
+        &lt;li&gt;&lt;a href="{{ project.url }}"&gt;{{ project.name }}&lt;/a&gt;&lt;/li&gt;
+    {% endfor %}
+    &lt;/ul&gt;
+    &lt;p&gt;
         End of the project will lead to termination of all resources in the project. &lt;br /&gt;
         If you are aware of that, then no actions are needed from your side. &lt;br /&gt;
-        If you need to update project end date, please update it in project details {{ project_url }}.
+        If you need to update project end date, please update it in project details.
     &lt;/p&gt;
-
     &lt;p&gt;Thank you!&lt;/p&gt;
     &lt;/body&gt;
     &lt;/html&gt;
@@ -17314,7 +17332,7 @@ this is a reminder that {{ organization_name }}'s fixed price contract {{ contra
 </code></pre></div></td></tr></table></div>
 <h2 id="admin-guide-mastermind-configuration-templates-waldur_mastermindmarketplace">waldur_mastermind.marketplace</h2>
 <h3 id="admin-guide-mastermind-configuration-templates-notification_about_project_ending_subjecttxt-waldur_mastermindmarketplace">notification_about_project_ending_subject.txt (waldur_mastermind.marketplace)</h3>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>Project {{ project.name }} will be deleted.
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>{% if count_projects &gt; 1 %}Your {{ count_projects }} projects{% else %} Project{% endif %} will be deleted on {{ end_date|date:'d/m/Y' }}.
 </code></pre></div></td></tr></table></div>
 <h3 id="admin-guide-mastermind-configuration-templates-marketplace_resource_update_limits_succeeded_messagetxt-waldur_mastermindmarketplace">marketplace_resource_update_limits_succeeded_message.txt (waldur_mastermind.marketplace)</h3>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -17853,21 +17871,27 @@ Thank you!
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
-<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">head</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
     <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Project {{ project.name }} will be deleted.<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Projects will be deleted.<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Dear {{ user.full_name }},<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
-
-<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Your project {{ project.name }} is ending
-    {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Hello {{ user.full_name }}!<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>The following projects are ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}:<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+{% for project in projects %}
+    <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"{{ project.url }}"</span><span class="p">&gt;</span>{{ project.name }}<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+{% endfor %}
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>
     End of the project will lead to termination of all resources in the project. <span class="p">&lt;</span><span class="nt">br</span> <span class="p">/&gt;</span>
     If you are aware of that, then no actions are needed from your side. <span class="p">&lt;</span><span class="nt">br</span> <span class="p">/&gt;</span>
-    If you need to update project end date, please update it in project details {{ project_url }}.
+    If you need to update project end date, please update it in project details.
 <span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
-
 <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Thank you!<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
@@ -18054,17 +18078,29 @@ The resource you have - {{ resource.name }} has not been used for the past 3 mon
 <span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
 </code></pre></div></td></tr></table></div>
 <h3 id="admin-guide-mastermind-configuration-templates-notification_about_project_ending_messagetxt-waldur_mastermindmarketplace">notification_about_project_ending_message.txt (waldur_mastermind.marketplace)</h3>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code>Dear {{ user.full_name }},
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>Hello {{ user.full_name }}!
 
-Your project {{ project.name }} is ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}. End of the project will lead to termination of all resources in the project.
+The following projects are ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}:
+
+{% for project in projects %}
+    - {{ project.name }} ({{ project.url }})
+{% endfor %}
+
+End of the project will lead to termination of all resources in the project.
 If you are aware of that, then no actions are needed from your side.
-If you need to update project end date, please update it in project details {{ project_url }}.
+If you need to update project end date, please update it in project details.
 
 Thank you!
 </code></pre></div></td></tr></table></div>
