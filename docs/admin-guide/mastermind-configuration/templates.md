@@ -779,7 +779,7 @@ Waldur accounting report for {{ month }}/{{ year }}
 ### notification_about_project_ending_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Project {{ project.name }} will be deleted.
+{% if count_projects > 1 %}Your {{ count_projects }} projects{% else %} Project{% endif %} will be deleted on {{ end_date|date:'d/m/Y' }}.
 ```
 
 ### marketplace_resource_update_limits_succeeded_message.txt (waldur_mastermind.marketplace)
@@ -1142,18 +1142,21 @@ Thank you!
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Project {{ project.name }} will be deleted.</title>
+    <title>Projects will be deleted.</title>
 </head>
 <body>
-<p>Dear {{ user.full_name }},</p>
-
-<p>Your project {{ project.name }} is ending
-    {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}.
+<p>Hello {{ user.full_name }}!</p>
+<p>The following projects are ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}:</p>
+<ul>
+{% for project in projects %}
+    <li><a href="{{ project.url }}">{{ project.name }}</a></li>
+{% endfor %}
+</ul>
+<p>
     End of the project will lead to termination of all resources in the project. <br />
     If you are aware of that, then no actions are needed from your side. <br />
-    If you need to update project end date, please update it in project details {{ project_url }}.
+    If you need to update project end date, please update it in project details.
 </p>
-
 <p>Thank you!</p>
 </body>
 </html>
@@ -1302,11 +1305,17 @@ The resource you have - {{ resource.name }} has not been used for the past 3 mon
 ### notification_about_project_ending_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
-Dear {{ user.full_name }},
+Hello {{ user.full_name }}!
 
-Your project {{ project.name }} is ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}. End of the project will lead to termination of all resources in the project.
+The following projects are ending {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %}:
+
+{% for project in projects %}
+    - {{ project.name }} ({{ project.url }})
+{% endfor %}
+
+End of the project will lead to termination of all resources in the project.
 If you are aware of that, then no actions are needed from your side.
-If you need to update project end date, please update it in project details {{ project_url }}.
+If you need to update project end date, please update it in project details.
 
 Thank you!
 ```
