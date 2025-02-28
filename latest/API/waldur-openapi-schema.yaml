@@ -7507,6 +7507,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/Customer'
           description: ''
+  /api/daily-quotas/:
+    get:
+      operationId: daily_quotas_retrieve
+      parameters:
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+        description: End date in format YYYY-MM-DD
+      - in: query
+        name: quota_names
+        schema:
+          type: array
+          items:
+            type: string
+        description: List of quota names
+      - in: query
+        name: scope
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the scope object
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+        description: Start date in format YYYY-MM-DD
+      tags:
+      - daily-quotas
+      security:
+      - tokenAuth: []
+      - waldurCookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: integer
+          description: ''
   /api/database-stats/:
     get:
       operationId: database_stats_list
@@ -49222,51 +49267,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/VmwareVirtualMachine'
           description: ''
-  /daily-quotas/:
-    get:
-      operationId: daily_quotas_retrieve
-      parameters:
-      - in: query
-        name: end
-        schema:
-          type: string
-          format: date
-        description: End date in format YYYY-MM-DD
-      - in: query
-        name: quota_names
-        schema:
-          type: array
-          items:
-            type: string
-        description: List of quota names
-      - in: query
-        name: scope
-        schema:
-          type: string
-          format: uuid
-        description: UUID of the scope object
-      - in: query
-        name: start
-        schema:
-          type: string
-          format: date
-        description: Start date in format YYYY-MM-DD
-      tags:
-      - daily-quotas
-      security:
-      - tokenAuth: []
-      - waldurCookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: array
-                  items:
-                    type: integer
-          description: ''
 components:
   schemas:
     AccessSubnet:
@@ -58483,6 +58483,11 @@ components:
         skip_connection_extnet:
           type: boolean
           default: false
+        networks:
+          type: array
+          items:
+            type: string
+            format: uuid
       description: ''
     MappingRequest:
       type: object
@@ -58498,6 +58503,11 @@ components:
         skip_connection_extnet:
           type: boolean
           default: false
+        networks:
+          type: array
+          items:
+            type: string
+            format: uuid
       description: ''
     MarketplaceCategory:
       type: object
