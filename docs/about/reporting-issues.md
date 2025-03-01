@@ -1,12 +1,12 @@
-# Reporting Issues
+# Reporting issues
 
 No software is perfect, and issues are to be expected. If you observe something that you think needs fixing, please provide a detailed issue report using the guidelines below.
 
-## Where to Report Issues
+## Where to report issues
 
 Choose the appropriate channel to report your issue:
 
-1. **Internal Issue Management (Atlassian JIRA)**
+1. **Internal issue management (Atlassian JIRA)**
    - If you have access to the internal issue management system, please report the issue through Atlassian JIRA
    - Use the appropriate project for the component experiencing the issue
    - Follow your organization's internal guidelines for issue categorization
@@ -17,7 +17,7 @@ Choose the appropriate channel to report your issue:
    - Select the repository that corresponds to the component with the issue (e.g., HomePort, MasterMind)
    - Create a new issue using the provided templates when available
 
-## Not Sure Which Component Has the Issue?
+## Not sure which component has the issue?
 
 If you're uncertain whether the issue is with HomePort or MasterMind, please provide:
 
@@ -38,7 +38,7 @@ If you're uncertain whether the issue is with HomePort or MasterMind, please pro
 
 This information will help us determine which component is affected and guide you on additional details we might need.
 
-## Required Information for All Issues
+## Required information for all issues
 
 The following information is helpful for troubleshooting any issue:
 
@@ -63,7 +63,7 @@ The following information is helpful for troubleshooting any issue:
     - Resource name
     - Any other relevant identifiers
 
-## HomePort-Specific Issues
+## Homeport-specific issues
 
 When reporting issues specifically with HomePort, please also include:
 
@@ -72,7 +72,7 @@ When reporting issues specifically with HomePort, please also include:
     - [How to generate a HAR file in Chrome/Firefox](https://support.zendesk.com/hc/en-us/articles/204410413-Generating-a-HAR-file-for-troubleshooting)
     - [Alternative HAR generation instructions](https://support.box.com/hc/en-us/articles/360043696054-How-to-Generate-Network-Captures-for-Troubleshooting)
 
-## MasterMind-Specific Issues
+## Mastermind-specific issues
 
 When reporting issues specifically with MasterMind, please also include:
 
@@ -85,7 +85,7 @@ When reporting issues specifically with MasterMind, please also include:
 !!! warning
     Logs may contain sensitive data. Please ensure you either clean up the data or share it only with trusted parties before submitting.
 
-## Best Practices for Issue Reports
+## Best practices for issue reports
 
 - Be specific about the steps to reproduce the issue
 - Mention which browser and version you're using (for frontend issues)
