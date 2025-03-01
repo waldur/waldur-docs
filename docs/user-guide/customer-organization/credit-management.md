@@ -1,9 +1,12 @@
 # Credit management for organization owners
 
 Credit management establishes credit limits for organizations that can be used for purchasing eligible services.
-The credit can optional be sub-allocated to projects and used in [cost policies](/cost-and-usage-policies.md).
+The credit can optional be sub-allocated to projects and used in [cost policies](cost-and-usage-policies.md).
 
-If credits are assigned to organizations by staff users (please see [Credit management for staff](../staff-users/credit-management-staff.md)), organization owners can distribute allocated credits to projects. Projects can use credits for specific resources, overused resources are invoiced according to the pricing plan. Organization owners can use credit management together with the [cost and usage policies](/cost-and-usage-policies.md) to handle overconsumption.
+If credits are assigned to organizations by staff users (please see [Credit management for staff](../staff-users/credit-management-staff.md)),
+organization owners can distribute allocated credits to projects. Projects can use credits for specific resources,
+overused resources are invoiced according to the pricing plan. Organization owners can use credit management together
+with the [cost and usage policies](cost-and-usage-policies.md) to handle overconsumption.
 
 To see current credit management policies, open the organization dashboard and then Accounting -> Credit management from the top menu.
 
