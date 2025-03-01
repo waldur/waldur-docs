@@ -5740,6 +5740,7 @@ paths:
   /api/call-managing-organisations/{uuid}/stats/:
     get:
       operationId: call_managing_organisations_stats_retrieve
+      description: Return statistics for call managing organisation.
       parameters:
       - in: path
         name: uuid
@@ -36440,6 +36441,7 @@ paths:
   /api/proposal-protected-calls/{uuid}/activate/:
     post:
       operationId: proposal_protected_calls_activate
+      description: Activate a call.
       parameters:
       - in: path
         name: uuid
@@ -36449,28 +36451,12 @@ paths:
         required: true
       tags:
       - proposal-protected-calls
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
-        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProtectedCall'
-          description: ''
+          description: No response body
   /api/proposal-protected-calls/{uuid}/add_user/:
     post:
       operationId: proposal_protected_calls_add_user
@@ -36504,6 +36490,7 @@ paths:
   /api/proposal-protected-calls/{uuid}/archive/:
     post:
       operationId: proposal_protected_calls_archive
+      description: Archive a call.
       parameters:
       - in: path
         name: uuid
@@ -36513,18 +36500,6 @@ paths:
         required: true
       tags:
       - proposal-protected-calls
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
-        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
@@ -36534,6 +36509,7 @@ paths:
   /api/proposal-protected-calls/{uuid}/attach_documents/:
     post:
       operationId: proposal_protected_calls_attach_documents
+      description: Attach documents to call.
       parameters:
       - in: path
         name: uuid
@@ -36547,23 +36523,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CallDocumentRequest'
+              $ref: '#/components/schemas/CallAttachDocumentsRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/CallDocumentRequest'
+              $ref: '#/components/schemas/CallAttachDocumentsRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CallDocumentRequest'
+              $ref: '#/components/schemas/CallAttachDocumentsRequest'
+        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CallDocument'
-          description: ''
+          description: No response body
   /api/proposal-protected-calls/{uuid}/delete_user/:
     post:
       operationId: proposal_protected_calls_delete_user
@@ -36597,6 +36570,7 @@ paths:
   /api/proposal-protected-calls/{uuid}/detach_documents/:
     post:
       operationId: proposal_protected_calls_detach_documents
+      description: Detach documents from call.
       parameters:
       - in: path
         name: uuid
@@ -36610,24 +36584,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
+              $ref: '#/components/schemas/CallDetachDocumentsRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
+              $ref: '#/components/schemas/CallDetachDocumentsRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ProtectedCallRequest'
+              $ref: '#/components/schemas/CallDetachDocumentsRequest'
         required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProtectedCall'
-          description: ''
+          description: No response body
   /api/proposal-protected-calls/{uuid}/list_users/:
     get:
       operationId: proposal_protected_calls_list_users_list
@@ -36777,6 +36747,7 @@ paths:
   /api/proposal-protected-calls/{uuid}/offerings/:
     get:
       operationId: proposal_protected_calls_offerings_list
+      description: List offerings for a call.
       parameters:
       - in: query
         name: customer
@@ -36881,6 +36852,7 @@ paths:
           description: ''
     post:
       operationId: proposal_protected_calls_offerings_set
+      description: Create offering for a call.
       parameters:
       - in: path
         name: uuid
@@ -37043,6 +37015,7 @@ paths:
   /api/proposal-protected-calls/{uuid}/rounds/:
     get:
       operationId: proposal_protected_calls_rounds_list
+      description: List rounds for a call.
       parameters:
       - in: query
         name: customer
@@ -37147,6 +37120,7 @@ paths:
           description: ''
     post:
       operationId: proposal_protected_calls_rounds_set
+      description: Create a round for a call.
       parameters:
       - in: path
         name: uuid
@@ -52547,6 +52521,31 @@ components:
       - SCHEDULED
       - SENT
       type: string
+      description: ''
+    CallAttachDocumentsRequest:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            type: string
+            format: binary
+        description:
+          type: string
+          minLength: 1
+      required:
+      - documents
+      description: ''
+    CallDetachDocumentsRequest:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - documents
       description: ''
     CallDocument:
       type: object
