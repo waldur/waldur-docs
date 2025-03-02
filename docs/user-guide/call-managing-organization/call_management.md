@@ -10,7 +10,6 @@ Call management in Waldur is built around structured components: calls, rounds, 
 
 ## Prerequisites
 
-- Organization must have call management enabled
 - Organization must be registered as a Call Managing Organization
 - Marketplace offerings must be available to be requested in calls
 
