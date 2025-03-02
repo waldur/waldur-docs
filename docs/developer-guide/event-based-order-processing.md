@@ -1,7 +1,5 @@
 # MQTT-Based Event Notification System for Order Processing
 
-After analyzing the code, I can see a sophisticated event notification system based on MQTT that facilitates communication between Waldur (a cloud management platform) and external resource providers like SLURM clusters. This system enables real-time processing of marketplace orders and resource management.
-
 ## System Overview
 
 The MQTT-based event notification system allows Waldur to communicate changes to resources, orders, and user roles to the `waldur-site-agent` that runs on a remote cluster. This eliminates the need for constant polling and enables immediate reactions to events.
