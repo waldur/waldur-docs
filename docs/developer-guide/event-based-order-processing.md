@@ -97,6 +97,7 @@ def on_resource_message(client, userdata, msg):
 ## Error Handling and Resilience
 
 The system includes:
+
 - Graceful connection handling
 - Signal handlers for proper shutdown
 - Retry mechanisms for order processing
