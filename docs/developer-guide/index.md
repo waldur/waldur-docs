@@ -1,22 +1,30 @@
 # Developer documentation
 
-- [Installation from source code](install-from-src.md)
-- [Workflow](workflow.md)
-- [Settings policy](settings-policy.md)
-- [Permissions](permissions.md)
-- [Managed entities](managed-entities.md)
-- [Resource actions](resource-actions.md)
-- [Logging](logging.md)
-- [Background processing](background.md)
-- [Quotas](quotas.md)
-- [Tasks and executors](tasks-and-executors.md)
-- [How to write serializers](how-to-write-serializers.md)
-- [How to write views](how-to-write-views.md)
-- [How to write tests](how-to-write-tests.md)
-- [How to write docs](how-to-write-docs.md)
-- [How to add a new language](how-to-add-new-language.md)
-- [Internationalization](i18n.md)
-- [Plugins](plugins/index.md)
-- [Events](events.md)
-- [Models](models.md)
-- [Templates](templates.md)
+## Overview
+
+Waldur is a multi-tenant cloud service management platform built with Django and React. This developer documentation
+provides comprehensive guidance for contributors, plugin developers, and anyone looking to extend or modify
+Waldur's functionality.
+
+Waldur follows a service-oriented architecture where the backend (Waldur Mastermind) exposes a REST API that is consumed by the frontend (HomePort).
+
+## Core architecture
+
+Waldur's architecture is built around several key concepts:
+
+- **Managed Entities**: Resources that Waldur manages through its database as the authoritative source of information
+- **Role-Based Access Control**: A permission system that determines what users can do based on roles
+- **Background Processing**: Uses Celery for executing heavier requests and background tasks
+- **Event System**: Comprehensive event logging and notification system, including MQTT-based event notifications
+- **Quotas**: Resource tracking functionality that stores and queries resource limits and usages
+
+## Development environment
+
+Waldur can be set up for development using two main approaches:
+
+- Dev Containers (for VS Code or GitHub Codespaces)
+- Manual installation from source
+
+The development workflow follows git flow principles, with feature branches created from the develop branch and merged via pull requests after testing and review.
+
+Whether you're implementing new features, fixing bugs, or developing plugins, this documentation provides the necessary information to effectively contribute to the Waldur ecosystem.
