@@ -372,7 +372,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'INVITATION_CREATE_MISSING_USER': False,
  'INVITATION_LIFETIME': datetime.timedelta(days=7),
  'INVITATION_MAX_AGE': None,
- 'INVITATION_TAX_NUMBER_LABEL': '',
  'INVITATION_USE_WEBHOOKS': False,
  'INVITATION_WEBHOOK_TOKEN_CLIENT_ID': '',
  'INVITATION_WEBHOOK_TOKEN_SECRET': '',
@@ -526,12 +525,6 @@ Defines for how long invitation remains valid.
 Type: Optional[timedelta]
 
 Max age of invitation token. It is used in approve and reject actions.
-
-#### INVITATION_TAX_NUMBER_LABEL
-
-Type: str
-
-Custom label for tax number field in invitation creation dialog.
 
 #### INVITATION_USE_WEBHOOKS
 

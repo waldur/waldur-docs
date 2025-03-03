@@ -347,10 +347,6 @@ A notification sent to staff users so that they can approve or reject invitation
     Civil number: {{ invitation.civil_number }}
     {% endif %}
 
-    {% if invitation.tax_number %}
-    Tax number: {{ invitation.tax_number }}
-    {% endif %}
-
     {% if invitation.phone_number %}
     Phone number: {{ invitation.phone_number }}
     {% endif %}
@@ -399,12 +395,6 @@ A notification sent to staff users so that they can approve or reject invitation
     {% if invitation.civil_number %}
       <p>
         Civil number: {{ invitation.civil_number }}
-      </p>
-    {% endif %}
-
-    {% if invitation.tax_number %}
-      <p>
-        Tax number: {{ invitation.tax_number }}
       </p>
     {% endif %}
 

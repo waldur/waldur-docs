@@ -301,10 +301,6 @@ to join {{ name }} {{ type }} in {{ role }} role.
 Civil number: {{ invitation.civil_number }}
 {% endif %}
 
-{% if invitation.tax_number %}
-Tax number: {{ invitation.tax_number }}
-{% endif %}
-
 {% if invitation.phone_number %}
 Phone number: {{ invitation.phone_number }}
 {% endif %}
@@ -393,12 +389,6 @@ Please visit the link below to approve or reject permission request: {{ requests
 {% if invitation.civil_number %}
   <p>
     Civil number: {{ invitation.civil_number }}
-  </p>
-{% endif %}
-
-{% if invitation.tax_number %}
-  <p>
-    Tax number: {{ invitation.tax_number }}
   </p>
 {% endif %}
 

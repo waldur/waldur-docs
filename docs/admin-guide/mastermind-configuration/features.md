@@ -20,18 +20,6 @@ Make civil number field mandatory in invitation creation form.
 
 Conceal civil number in invitation creation dialog.
 
-## invitations.require_user_details
-
-Render "Show user details" button in invitation creation form.
-
-## invitations.show_tax_number
-
-Show tax number field in invitation creation form.
-
-## invitations.tax_number_required
-
-Make tax number field mandatory in invitation creation form.
-
 ## marketplace.call_only
 
 Allow marketplace to serve only as aggregator of call info.
@@ -115,10 +103,6 @@ Conceal "Change request" from a selection of issue types for non-staff/non-suppo
 ## support.pricelist
 
 Render marketplace plan components pricelist in support workspace.
-
-## support.shared_providers
-
-Render overview of shared marketplace service providers in support workspace.
 
 ## support.users
 
