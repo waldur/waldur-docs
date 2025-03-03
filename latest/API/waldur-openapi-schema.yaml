@@ -3,21 +3,6 @@ info:
   title: Waldur API
   version: 0.0.0
 paths:
-  /api-auth/bcc/user-details/:
-    get:
-      operationId: api_auth_bcc_user_details_retrieve
-      tags:
-      - authentication
-      security:
-      - tokenAuth: []
-      - waldurCookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserDetails'
-          description: ''
   /api-auth/eduteams/complete/:
     get:
       operationId: api_auth_eduteams_complete_retrieve
@@ -73,6 +58,8 @@ paths:
   /api-auth/logout/:
     post:
       operationId: api_auth_logout
+      description: Logout from the system. If single logout is supported, returns
+        logout URL.
       tags:
       - authentication
       security:
@@ -80,6 +67,12 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Logout'
+          description: ''
+        '204':
           description: No response body
   /api-auth/password/:
     post:
@@ -4091,8 +4084,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -4214,8 +4205,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -5816,7 +5805,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedRoundList'
+                $ref: '#/components/schemas/PaginatedCallRoundList'
           description: ''
     post:
       operationId: call_rounds_create
@@ -5826,13 +5815,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoundRequest'
+              $ref: '#/components/schemas/CallRoundRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/RoundRequest'
+              $ref: '#/components/schemas/CallRoundRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/RoundRequest'
+              $ref: '#/components/schemas/CallRoundRequest'
         required: true
       security:
       - tokenAuth: []
@@ -5842,7 +5831,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Round'
+                $ref: '#/components/schemas/CallRound'
           description: ''
   /api/call-rounds/{uuid}/:
     get:
@@ -5864,7 +5853,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Round'
+                $ref: '#/components/schemas/CallRound'
           description: ''
     put:
       operationId: call_rounds_update
@@ -5881,13 +5870,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoundRequest'
+              $ref: '#/components/schemas/CallRoundRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/RoundRequest'
+              $ref: '#/components/schemas/CallRoundRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/RoundRequest'
+              $ref: '#/components/schemas/CallRoundRequest'
         required: true
       security:
       - tokenAuth: []
@@ -5897,7 +5886,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Round'
+                $ref: '#/components/schemas/CallRound'
           description: ''
     patch:
       operationId: call_rounds_partial_update
@@ -5914,13 +5903,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedRoundRequest'
+              $ref: '#/components/schemas/PatchedCallRoundRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedRoundRequest'
+              $ref: '#/components/schemas/PatchedCallRoundRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedRoundRequest'
+              $ref: '#/components/schemas/PatchedCallRoundRequest'
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
@@ -5929,7 +5918,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Round'
+                $ref: '#/components/schemas/CallRound'
           description: ''
     delete:
       operationId: call_rounds_destroy
@@ -5981,7 +5970,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedReviewerList'
+                $ref: '#/components/schemas/PaginatedRoundReviewerList'
           description: ''
   /api/celery-stats/:
     get:
@@ -15419,6 +15408,7 @@ paths:
             - category_icon
             - category_title
             - category_uuid
+            - completed_at
             - consumer_reviewed_at
             - consumer_reviewed_by
             - consumer_reviewed_by_full_name
@@ -15670,6 +15660,7 @@ paths:
             - category_icon
             - category_title
             - category_uuid
+            - completed_at
             - consumer_reviewed_at
             - consumer_reviewed_by
             - consumer_reviewed_by_full_name
@@ -16970,8 +16961,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -17212,8 +17201,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -17521,8 +17508,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -17616,8 +17601,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -17741,8 +17724,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -18031,8 +18012,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -18850,8 +18829,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -19361,8 +19338,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -19456,8 +19431,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -20825,8 +20798,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -21039,8 +21010,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -23239,8 +23208,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -23364,8 +23331,6 @@ paths:
             - latitude
             - longitude
             - name
-            - native_description
-            - native_name
             - options
             - order_count
             - organization_groups
@@ -26840,6 +26805,7 @@ paths:
   /api/openstack-floating-ips/{uuid}/attach_to_port/:
     post:
       operationId: openstack_floating_ips_attach_to_port
+      description: Attach floating IP to port
       parameters:
       - in: path
         name: uuid
@@ -26866,14 +26832,11 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackFloatingIPAttach'
-          description: ''
+          description: No response body
   /api/openstack-floating-ips/{uuid}/detach_from_port/:
     post:
       operationId: openstack_floating_ips_detach_from_port
+      description: Detach floating IP from port
       parameters:
       - in: path
         name: uuid
@@ -26888,11 +26851,7 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackFloatingIP'
-          description: ''
+          description: No response body
   /api/openstack-floating-ips/{uuid}/pull/:
     post:
       operationId: openstack_floating_ips_pull
@@ -26936,6 +26895,7 @@ paths:
   /api/openstack-floating-ips/{uuid}/update_description/:
     post:
       operationId: openstack_floating_ips_update_description
+      description: Update description of the floating IP
       parameters:
       - in: path
         name: uuid
@@ -26961,11 +26921,7 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackFloatingIPDescriptionUpdate'
-          description: ''
+          description: No response body
   /api/openstack-images/:
     get:
       operationId: openstack_images_list
@@ -27574,6 +27530,7 @@ paths:
   /api/openstack-instances/{uuid}/backup/:
     post:
       operationId: openstack_instances_backup
+      description: Create backup from instance
       parameters:
       - in: path
         name: uuid
@@ -27608,6 +27565,7 @@ paths:
   /api/openstack-instances/{uuid}/change_flavor/:
     post:
       operationId: openstack_instances_change_flavor
+      description: Change flavor of the instance
       parameters:
       - in: path
         name: uuid
@@ -27638,6 +27596,7 @@ paths:
   /api/openstack-instances/{uuid}/console/:
     get:
       operationId: openstack_instances_console_retrieve
+      description: Get console url for the instance
       parameters:
       - in: path
         name: uuid
@@ -27660,6 +27619,7 @@ paths:
   /api/openstack-instances/{uuid}/console_log/:
     get:
       operationId: openstack_instances_console_log_retrieve
+      description: Get console log for the instance
       parameters:
       - in: query
         name: length
@@ -27686,6 +27646,7 @@ paths:
   /api/openstack-instances/{uuid}/floating_ips/:
     get:
       operationId: openstack_instances_floating_ips_list
+      description: Get a list of instance floating IPs
       parameters:
       - name: page
         required: false
@@ -27719,14 +27680,145 @@ paths:
           description: ''
   /api/openstack-instances/{uuid}/ports/:
     get:
-      operationId: openstack_instances_ports_retrieve
+      operationId: openstack_instances_ports_list
+      description: Get a list of instance ports
       parameters:
+      - in: query
+        name: attach_volume_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: availability_zone_name
+        schema:
+          type: string
+      - in: query
+        name: backend_id
+        schema:
+          type: string
+      - in: query
+        name: customer
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: customer_abbreviation
+        schema:
+          type: string
+      - in: query
+        name: customer_name
+        schema:
+          type: string
+      - in: query
+        name: customer_native_name
+        schema:
+          type: string
+      - in: query
+        name: customer_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: description
+        schema:
+          type: string
+      - in: query
+        name: external_ip
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: name_exact
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: project
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: project_name
+        schema:
+          type: string
+      - in: query
+        name: project_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: runtime_state
+        schema:
+          type: string
+      - in: query
+        name: service_settings_name
+        schema:
+          type: string
+      - in: query
+        name: service_settings_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: state
+        schema:
+          type: array
+          items:
+            type: integer
+            enum:
+            - Creating
+            - Creation Scheduled
+            - Deleting
+            - Deletion Scheduled
+            - Erred
+            - OK
+            - Update Scheduled
+            - Updating
+        description: |-
+          * `Creation Scheduled` - Creation Scheduled
+          * `Creating` - Creating
+          * `Update Scheduled` - Update Scheduled
+          * `Updating` - Updating
+          * `Deletion Scheduled` - Deletion Scheduled
+          * `Deleting` - Deleting
+          * `OK` - OK
+          * `Erred` - Erred
+        explode: true
+        style: form
+      - in: query
+        name: tenant
+        schema:
+          type: string
+      - in: query
+        name: tenant_uuid
+        schema:
+          type: string
+          format: uuid
       - in: path
         name: uuid
         schema:
           type: string
           format: uuid
         required: true
+      - in: query
+        name: uuid
+        schema:
+          type: string
+          format: uuid
       tags:
       - openstack-instances
       security:
@@ -27737,7 +27829,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpenStackNestedPort'
+                $ref: '#/components/schemas/PaginatedOpenStackNestedPortList'
           description: ''
   /api/openstack-instances/{uuid}/pull/:
     post:
@@ -27760,6 +27852,7 @@ paths:
   /api/openstack-instances/{uuid}/restart/:
     post:
       operationId: openstack_instances_restart
+      description: Restart the instance
       parameters:
       - in: path
         name: uuid
@@ -27778,6 +27871,7 @@ paths:
   /api/openstack-instances/{uuid}/start/:
     post:
       operationId: openstack_instances_start
+      description: Start the instance
       parameters:
       - in: path
         name: uuid
@@ -27796,6 +27890,7 @@ paths:
   /api/openstack-instances/{uuid}/stop/:
     post:
       operationId: openstack_instances_stop
+      description: Stop the instance
       parameters:
       - in: path
         name: uuid
@@ -27836,6 +27931,7 @@ paths:
   /api/openstack-instances/{uuid}/update_allowed_address_pairs/:
     post:
       operationId: openstack_instances_update_allowed_address_pairs
+      description: Update allowed address pairs of the instance
       parameters:
       - in: path
         name: uuid
@@ -27866,6 +27962,7 @@ paths:
   /api/openstack-instances/{uuid}/update_floating_ips/:
     post:
       operationId: openstack_instances_update_floating_ips
+      description: Update floating IPs of the instance
       parameters:
       - in: path
         name: uuid
@@ -27891,14 +27988,11 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackInstanceFloatingIPsUpdate'
-          description: ''
+          description: No response body
   /api/openstack-instances/{uuid}/update_ports/:
     post:
       operationId: openstack_instances_update_ports
+      description: Update ports of the instance
       parameters:
       - in: path
         name: uuid
@@ -27929,6 +28023,7 @@ paths:
   /api/openstack-instances/{uuid}/update_security_groups/:
     post:
       operationId: openstack_instances_update_security_groups
+      description: Update security groups of the instance
       parameters:
       - in: path
         name: uuid
@@ -30278,118 +30373,6 @@ paths:
       responses:
         '200':
           description: No response body
-  /api/openstack-shared-settings-customers/:
-    get:
-      operationId: openstack_shared_settings_customers_retrieve
-      tags:
-      - openstack-shared-settings-customers
-      security:
-      - tokenAuth: []
-      - waldurCookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackSharedSettingsCustomer'
-          description: ''
-  /api/openstack-shared-settings-instances/:
-    get:
-      operationId: openstack_shared_settings_instances_retrieve
-      parameters:
-      - in: query
-        name: field
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - access_url
-            - action
-            - action_details
-            - availability_zone
-            - availability_zone_name
-            - backend_id
-            - connect_directly_to_external_network
-            - cores
-            - created
-            - customer
-            - customer_abbreviation
-            - customer_name
-            - customer_native_name
-            - data_volume_size
-            - data_volume_type
-            - data_volumes
-            - description
-            - disk
-            - error_message
-            - error_traceback
-            - external_address
-            - external_ips
-            - flavor
-            - flavor_disk
-            - flavor_name
-            - floating_ips
-            - hypervisor_hostname
-            - image
-            - image_name
-            - internal_ips
-            - is_limit_based
-            - is_usage_based
-            - key_fingerprint
-            - key_name
-            - latitude
-            - longitude
-            - marketplace_category_name
-            - marketplace_category_uuid
-            - marketplace_offering_name
-            - marketplace_offering_plugin_options
-            - marketplace_offering_uuid
-            - marketplace_plan_uuid
-            - marketplace_resource_state
-            - marketplace_resource_uuid
-            - min_disk
-            - min_ram
-            - modified
-            - name
-            - ports
-            - project
-            - project_name
-            - project_uuid
-            - ram
-            - rancher_cluster
-            - resource_type
-            - runtime_state
-            - security_groups
-            - server_group
-            - service_name
-            - service_settings
-            - service_settings_error_message
-            - service_settings_state
-            - service_settings_uuid
-            - ssh_public_key
-            - start_time
-            - state
-            - system_volume_size
-            - system_volume_type
-            - tenant
-            - tenant_uuid
-            - url
-            - user_data
-            - uuid
-            - volumes
-      tags:
-      - openstack-shared-settings-instances
-      security:
-      - tokenAuth: []
-      - waldurCookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackInstance'
-          description: ''
   /api/openstack-snapshots/:
     get:
       operationId: openstack_snapshots_list
@@ -30797,14 +30780,154 @@ paths:
           description: No response body
   /api/openstack-snapshots/{uuid}/restorations/:
     get:
-      operationId: openstack_snapshots_restorations_retrieve
+      operationId: openstack_snapshots_restorations_list
+      description: Get a list of snapshot restorations
       parameters:
+      - in: query
+        name: backend_id
+        schema:
+          type: string
+      - in: query
+        name: backup
+        schema:
+          type: string
+      - in: query
+        name: backup_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: customer
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: customer_abbreviation
+        schema:
+          type: string
+      - in: query
+        name: customer_name
+        schema:
+          type: string
+      - in: query
+        name: customer_native_name
+        schema:
+          type: string
+      - in: query
+        name: customer_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: description
+        schema:
+          type: string
+      - in: query
+        name: external_ip
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: name_exact
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: project
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: project_name
+        schema:
+          type: string
+      - in: query
+        name: project_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: runtime_state
+        schema:
+          type: string
+      - in: query
+        name: service_settings_name
+        schema:
+          type: string
+      - in: query
+        name: service_settings_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: source_volume
+        schema:
+          type: string
+      - in: query
+        name: source_volume_uuid
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: state
+        schema:
+          type: array
+          items:
+            type: integer
+            enum:
+            - Creating
+            - Creation Scheduled
+            - Deleting
+            - Deletion Scheduled
+            - Erred
+            - OK
+            - Update Scheduled
+            - Updating
+        description: |-
+          * `Creation Scheduled` - Creation Scheduled
+          * `Creating` - Creating
+          * `Update Scheduled` - Update Scheduled
+          * `Updating` - Updating
+          * `Deletion Scheduled` - Deletion Scheduled
+          * `Deleting` - Deleting
+          * `OK` - OK
+          * `Erred` - Erred
+        explode: true
+        style: form
+      - in: query
+        name: tenant
+        schema:
+          type: string
+      - in: query
+        name: tenant_uuid
+        schema:
+          type: string
+          format: uuid
       - in: path
         name: uuid
         schema:
           type: string
           format: uuid
         required: true
+      - in: query
+        name: uuid
+        schema:
+          type: string
+          format: uuid
       tags:
       - openstack-snapshots
       security:
@@ -30815,11 +30938,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpenStackSnapshotRestoration'
+                $ref: '#/components/schemas/PaginatedOpenStackSnapshotRestorationList'
           description: ''
   /api/openstack-snapshots/{uuid}/restore/:
     post:
       operationId: openstack_snapshots_restore
+      description: Restore volume from snapshot
       parameters:
       - in: path
         name: uuid
@@ -30849,7 +30973,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpenStackSnapshotRestoration'
+                $ref: '#/components/schemas/OpenStackVolume'
           description: ''
   /api/openstack-snapshots/{uuid}/unlink/:
     post:
@@ -31948,6 +32072,7 @@ paths:
   /api/openstack-tenants/{uuid}/change_password/:
     post:
       operationId: openstack_tenants_change_password
+      description: Change password for tenant user
       parameters:
       - in: path
         name: uuid
@@ -31974,14 +32099,11 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackTenantChangePassword'
-          description: ''
+          description: No response body
   /api/openstack-tenants/{uuid}/create_floating_ip/:
     post:
       operationId: openstack_tenants_create_floating_ip
+      description: Create floating IP for tenant
       parameters:
       - in: path
         name: uuid
@@ -32004,6 +32126,7 @@ paths:
   /api/openstack-tenants/{uuid}/create_network/:
     post:
       operationId: openstack_tenants_create_network
+      description: Create network for tenant
       parameters:
       - in: path
         name: uuid
@@ -32146,6 +32269,26 @@ paths:
   /api/openstack-tenants/{uuid}/pull_floating_ips/:
     post:
       operationId: openstack_tenants_pull_floating_ips
+      description: Trigger job to pull floating IPs from remote VPC
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - openstack-tenants
+      security:
+      - tokenAuth: []
+      - waldurCookieAuth: []
+      responses:
+        '202':
+          description: No response body
+  /api/openstack-tenants/{uuid}/pull_quotas/:
+    post:
+      operationId: openstack_tenants_pull_quotas
+      description: It triggers celery job to pull quotas from remote VPC
       parameters:
       - in: path
         name: uuid
@@ -32161,44 +32304,10 @@ paths:
       responses:
         '200':
           description: No response body
-  /api/openstack-tenants/{uuid}/pull_quotas/:
-    post:
-      operationId: openstack_tenants_pull_quotas
-      description: It triggers celery job to pull quotas from remote VPC
-      parameters:
-      - in: path
-        name: uuid
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - openstack-tenants
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-        required: true
-      security:
-      - tokenAuth: []
-      - waldurCookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackTenant'
-          description: ''
   /api/openstack-tenants/{uuid}/pull_security_groups/:
     post:
       operationId: openstack_tenants_pull_security_groups
+      description: Trigger job to pull security groups from remote VPC
       parameters:
       - in: path
         name: uuid
@@ -32208,18 +32317,6 @@ paths:
         required: true
       tags:
       - openstack-tenants
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
@@ -32233,6 +32330,7 @@ paths:
   /api/openstack-tenants/{uuid}/pull_server_groups/:
     post:
       operationId: openstack_tenants_pull_server_groups
+      description: Trigger job to pull server groups from remote VPC
       parameters:
       - in: path
         name: uuid
@@ -32242,18 +32340,6 @@ paths:
         required: true
       tags:
       - openstack-tenants
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/OpenStackTenantRequest'
-        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
@@ -32970,28 +33056,12 @@ paths:
         required: true
       tags:
       - openstack-volumes
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OpenStackVolumeRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/OpenStackVolumeRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/OpenStackVolumeRequest'
-        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackVolume'
-          description: ''
+          description: No response body
   /api/openstack-volumes/{uuid}/extend/:
     post:
       operationId: openstack_volumes_extend
@@ -33022,11 +33092,7 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackVolumeExtend'
-          description: ''
+          description: No response body
   /api/openstack-volumes/{uuid}/pull/:
     post:
       operationId: openstack_volumes_pull
@@ -33075,11 +33141,7 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenStackVolumeRetype'
-          description: ''
+          description: No response body
   /api/openstack-volumes/{uuid}/snapshot/:
     post:
       operationId: openstack_volumes_snapshot
@@ -38064,7 +38126,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedReviewList'
+                $ref: '#/components/schemas/PaginatedProposalReviewList'
           description: ''
     post:
       operationId: proposal_reviews_create
@@ -38074,13 +38136,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewRequest'
+              $ref: '#/components/schemas/ProposalReviewRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ReviewRequest'
+              $ref: '#/components/schemas/ProposalReviewRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ReviewRequest'
+              $ref: '#/components/schemas/ProposalReviewRequest'
         required: true
       security:
       - tokenAuth: []
@@ -38090,7 +38152,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Review'
+                $ref: '#/components/schemas/ProposalReview'
           description: ''
   /api/proposal-reviews/{uuid}/:
     get:
@@ -38112,7 +38174,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Review'
+                $ref: '#/components/schemas/ProposalReview'
           description: ''
     put:
       operationId: proposal_reviews_update
@@ -38129,13 +38191,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewRequest'
+              $ref: '#/components/schemas/ProposalReviewRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ReviewRequest'
+              $ref: '#/components/schemas/ProposalReviewRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ReviewRequest'
+              $ref: '#/components/schemas/ProposalReviewRequest'
         required: true
       security:
       - tokenAuth: []
@@ -38145,7 +38207,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Review'
+                $ref: '#/components/schemas/ProposalReview'
           description: ''
     patch:
       operationId: proposal_reviews_partial_update
@@ -38162,13 +38224,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedReviewRequest'
+              $ref: '#/components/schemas/PatchedProposalReviewRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedReviewRequest'
+              $ref: '#/components/schemas/PatchedProposalReviewRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedReviewRequest'
+              $ref: '#/components/schemas/PatchedProposalReviewRequest'
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
@@ -38177,7 +38239,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Review'
+                $ref: '#/components/schemas/ProposalReview'
           description: ''
     delete:
       operationId: proposal_reviews_destroy
@@ -52661,6 +52723,56 @@ components:
       - pending_review
       - rounds_closing_in_one_week
       description: ''
+    CallRound:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        start_time:
+          type: string
+          format: date-time
+        cutoff_time:
+          type: string
+          format: date-time
+        call_uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        call_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+      required:
+      - call_name
+      - call_uuid
+      - cutoff_time
+      - start_time
+      - status
+      - url
+      - uuid
+      description: ''
+    CallRoundRequest:
+      type: object
+      properties:
+        start_time:
+          type: string
+          format: date-time
+        cutoff_time:
+          type: string
+          format: date-time
+      required:
+      - cutoff_time
+      - start_time
+      description: ''
     CallStates:
       enum:
       - draft
@@ -57067,9 +57179,6 @@ components:
         native_name:
           type: string
           maxLength: 100
-        tax_number:
-          type: string
-          maxLength: 50
         phone_number:
           type: string
           maxLength: 255
@@ -57149,9 +57258,6 @@ components:
         native_name:
           type: string
           maxLength: 100
-        tax_number:
-          type: string
-          maxLength: 50
         phone_number:
           type: string
           maxLength: 255
@@ -58432,6 +58538,16 @@ components:
           format: uri
       required:
       - invoice
+      description: ''
+    Logout:
+      type: object
+      properties:
+        logout_url:
+          type: string
+          format: uri
+          readOnly: true
+      required:
+      - logout_url
       description: ''
     Mapping:
       type: object
@@ -60318,12 +60434,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/StateCodeEnum'
           readOnly: true
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -60786,12 +60896,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/StateCodeEnum'
           readOnly: true
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -60986,12 +61090,6 @@ components:
           description: Public data used by specific plugin, such as storage mode for
             OpenStack.
         secret_options: {}
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -61581,12 +61679,6 @@ components:
         plugin_options:
           description: Public data used by specific plugin, such as storage mode for
             OpenStack.
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -62594,15 +62686,6 @@ components:
       - tenant_uuid
       - url
       - uuid
-    OpenStackFloatingIPAttach:
-      type: object
-      properties:
-        port:
-          type: string
-          format: uri
-      required:
-      - port
-      description: ''
     OpenStackFloatingIPAttachRequest:
       type: object
       properties:
@@ -62611,13 +62694,6 @@ components:
           format: uri
       required:
       - port
-      description: ''
-    OpenStackFloatingIPDescriptionUpdate:
-      type: object
-      properties:
-        description:
-          type: string
-          description: New floating IP description.
       description: ''
     OpenStackFloatingIPDescriptionUpdateRequest:
       type: object
@@ -63012,14 +63088,6 @@ components:
           readOnly: true
       required:
       - url
-      description: ''
-    OpenStackInstanceFloatingIPsUpdate:
-      type: object
-      properties:
-        floating_ips:
-          type: array
-          items:
-            $ref: '#/components/schemas/OpenStackNestedFloatingIP'
       description: ''
     OpenStackInstanceFloatingIPsUpdateRequest:
       type: object
@@ -64501,32 +64569,6 @@ components:
       required:
       - name
       description: ''
-    OpenStackSharedSettingsCustomer:
-      type: object
-      properties:
-        name:
-          type: string
-          readOnly: true
-        uuid:
-          type: string
-          readOnly: true
-        created:
-          type: string
-          format: date
-          readOnly: true
-        abbreviation:
-          type: string
-          readOnly: true
-        vm_count:
-          type: integer
-          readOnly: true
-      required:
-      - abbreviation
-      - created
-      - name
-      - uuid
-      - vm_count
-      description: ''
     OpenStackSnapshot:
       type: object
       description: ''
@@ -65222,16 +65264,6 @@ components:
       - state
       - url
       - uuid
-    OpenStackTenantChangePassword:
-      type: object
-      properties:
-        user_password:
-          type: string
-          description: New tenant user password.
-          maxLength: 50
-      required:
-      - user_password
-      description: ''
     OpenStackTenantChangePasswordRequest:
       type: object
       properties:
@@ -65595,15 +65627,6 @@ components:
       - name
       - url
       - uuid
-    OpenStackVolumeExtend:
-      type: object
-      properties:
-        disk_size:
-          type: integer
-          minimum: 1
-      required:
-      - disk_size
-      description: ''
     OpenStackVolumeExtendRequest:
       type: object
       properties:
@@ -65654,15 +65677,6 @@ components:
       - name
       - project
       - tenant
-    OpenStackVolumeRetype:
-      type: object
-      properties:
-        type:
-          type: string
-          format: uri
-      required:
-      - type
-      description: ''
     OpenStackVolumeRetypeRequest:
       type: object
       properties:
@@ -65904,6 +65918,12 @@ components:
           format: uri
           nullable: true
           maxLength: 200
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Completion time
         url:
           type: string
           format: uri
@@ -65962,6 +65982,7 @@ components:
       - category_icon
       - category_title
       - category_uuid
+      - completed_at
       - consumer_reviewed_at
       - consumer_reviewed_by
       - consumer_reviewed_by_full_name
@@ -66176,6 +66197,12 @@ components:
           format: uri
           nullable: true
           maxLength: 200
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Completion time
         consumer_reviewed_by:
           type: string
           description: Required. 128 characters or fewer. Lowercase letters, numbers
@@ -66287,6 +66314,7 @@ components:
       - category_icon
       - category_title
       - category_uuid
+      - completed_at
       - consumer_reviewed_at
       - consumer_reviewed_by
       - consumer_reviewed_by_full_name
@@ -66539,6 +66567,11 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/CallManagingOrganisation'
+      description: ''
+    PaginatedCallRoundList:
+      type: array
+      items:
+        $ref: '#/components/schemas/CallRound'
       description: ''
     PaginatedCampaignList:
       type: array
@@ -66920,6 +66953,11 @@ components:
       items:
         $ref: '#/components/schemas/OpenStackNestedFloatingIP'
       description: ''
+    PaginatedOpenStackNestedPortList:
+      type: array
+      items:
+        $ref: '#/components/schemas/OpenStackNestedPort'
+      description: ''
     PaginatedOpenStackNetworkList:
       type: array
       items:
@@ -66949,6 +66987,11 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/OpenStackSnapshot'
+      description: ''
+    PaginatedOpenStackSnapshotRestorationList:
+      type: array
+      items:
+        $ref: '#/components/schemas/OpenStackSnapshotRestoration'
       description: ''
     PaginatedOpenStackSubNetList:
       type: array
@@ -67054,6 +67097,11 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Proposal'
+      description: ''
+    PaginatedProposalReviewList:
+      type: array
+      items:
+        $ref: '#/components/schemas/ProposalReview'
       description: ''
     PaginatedProtectedCallList:
       type: array
@@ -67220,16 +67268,6 @@ components:
       items:
         $ref: '#/components/schemas/ResourceUser'
       description: ''
-    PaginatedReviewList:
-      type: array
-      items:
-        $ref: '#/components/schemas/Review'
-      description: ''
-    PaginatedReviewerList:
-      type: array
-      items:
-        $ref: '#/components/schemas/Reviewer'
-      description: ''
     PaginatedRmqUserStatsItemList:
       type: array
       items:
@@ -67245,10 +67283,10 @@ components:
       items:
         $ref: '#/components/schemas/RoleDetails'
       description: ''
-    PaginatedRoundList:
+    PaginatedRoundReviewerList:
       type: array
       items:
-        $ref: '#/components/schemas/Round'
+        $ref: '#/components/schemas/RoundReviewer'
       description: ''
     PaginatedSaml2ProviderList:
       type: array
@@ -67572,6 +67610,16 @@ components:
           type: string
           format: binary
           nullable: true
+    PatchedCallRoundRequest:
+      type: object
+      properties:
+        start_time:
+          type: string
+          format: date-time
+        cutoff_time:
+          type: string
+          format: date-time
+      description: ''
     PatchedCampaignRequest:
       type: object
       description: ''
@@ -68324,12 +68372,6 @@ components:
         plugin_options:
           description: Public data used by specific plugin, such as storage mode for
             OpenStack.
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -68816,6 +68858,54 @@ components:
           - $ref: '#/components/schemas/OecdFos2007CodeEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
+    PatchedProposalReviewRequest:
+      type: object
+      description: ''
+      properties:
+        summary_score:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        summary_public_comment:
+          type: string
+        summary_private_comment:
+          type: string
+        comment_project_title:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_summary:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_is_confidential:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_has_civilian_purpose:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_description:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_duration:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_supporting_documentation:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_resource_requests:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_team:
+          type: string
+          nullable: true
+          maxLength: 255
     PatchedProtectedCallRequest:
       type: object
       description: ''
@@ -68922,12 +69012,6 @@ components:
           description: Public data used by specific plugin, such as storage mode for
             OpenStack.
         secret_options: {}
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -69078,12 +69162,6 @@ components:
         plugin_options:
           description: Public data used by specific plugin, such as storage mode for
             OpenStack.
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -69472,54 +69550,6 @@ components:
           type: string
           format: uri
       description: ''
-    PatchedReviewRequest:
-      type: object
-      description: ''
-      properties:
-        summary_score:
-          type: integer
-          maximum: 32767
-          minimum: 0
-        summary_public_comment:
-          type: string
-        summary_private_comment:
-          type: string
-        comment_project_title:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_summary:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_is_confidential:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_has_civilian_purpose:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_description:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_duration:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_supporting_documentation:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_resource_requests:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_team:
-          type: string
-          nullable: true
-          maxLength: 255
     PatchedRobotAccountRequest:
       type: object
       description: ''
@@ -69624,16 +69654,6 @@ components:
           maxLength: 2000
         is_active:
           type: boolean
-    PatchedRoundRequest:
-      type: object
-      properties:
-        start_time:
-          type: string
-          format: date-time
-        cutoff_time:
-          type: string
-          format: date-time
-      description: ''
     PatchedScreenshotRequest:
       type: object
       description: ''
@@ -71288,6 +71308,189 @@ components:
       required:
       - name
       - round_uuid
+    ProposalReview:
+      type: object
+      description: ''
+      properties:
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        proposal:
+          type: string
+          format: uri
+        reviewer:
+          type: string
+          format: uri
+        reviewer_full_name:
+          type: string
+          readOnly: true
+        reviewer_uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        state:
+          allOf:
+          - $ref: '#/components/schemas/ProposalReviewStateEnum'
+          readOnly: true
+        review_end_date:
+          type: string
+          format: date-time
+          readOnly: true
+        summary_score:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        summary_public_comment:
+          type: string
+        summary_private_comment:
+          type: string
+        proposal_name:
+          type: string
+          readOnly: true
+        round_uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        round_name:
+          type: string
+          readOnly: true
+        round_cutoff_time:
+          type: string
+          format: date-time
+          readOnly: true
+        round_start_time:
+          type: string
+          format: date-time
+          readOnly: true
+        call_name:
+          type: string
+          readOnly: true
+        call_uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        comment_project_title:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_summary:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_is_confidential:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_has_civilian_purpose:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_description:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_duration:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_supporting_documentation:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_resource_requests:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_team:
+          type: string
+          nullable: true
+          maxLength: 255
+      required:
+      - call_name
+      - call_uuid
+      - proposal
+      - proposal_name
+      - review_end_date
+      - reviewer
+      - reviewer_full_name
+      - reviewer_uuid
+      - round_cutoff_time
+      - round_name
+      - round_start_time
+      - round_uuid
+      - state
+      - url
+      - uuid
+    ProposalReviewRequest:
+      type: object
+      description: ''
+      properties:
+        proposal:
+          type: string
+          format: uri
+        reviewer:
+          type: string
+          format: uri
+        summary_score:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        summary_public_comment:
+          type: string
+        summary_private_comment:
+          type: string
+        comment_project_title:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_summary:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_is_confidential:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_has_civilian_purpose:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_description:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_duration:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_project_supporting_documentation:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_resource_requests:
+          type: string
+          nullable: true
+          maxLength: 255
+        comment_team:
+          type: string
+          nullable: true
+          maxLength: 255
+      required:
+      - proposal
+      - reviewer
+    ProposalReviewStateEnum:
+      enum:
+      - created
+      - in_review
+      - submitted
+      - rejected
+      type: string
+      description: ''
     ProposalStates:
       enum:
       - draft
@@ -71509,7 +71712,7 @@ components:
         reviews:
           type: array
           items:
-            $ref: '#/components/schemas/Review'
+            $ref: '#/components/schemas/ProposalReview'
           readOnly: true
         approved_by_name:
           type: string
@@ -71918,12 +72121,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/StateCodeEnum'
           readOnly: true
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -72125,12 +72322,6 @@ components:
           description: Public data used by specific plugin, such as storage mode for
             OpenStack.
         secret_options: {}
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -72731,12 +72922,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/StateCodeEnum'
           readOnly: true
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -72939,12 +73124,6 @@ components:
         plugin_options:
           description: Public data used by specific plugin, such as storage mode for
             OpenStack.
-        native_name:
-          type: string
-          maxLength: 160
-        native_description:
-          type: string
-          maxLength: 500
         vendor_details:
           type: string
         getting_started:
@@ -76431,124 +76610,6 @@ components:
       - role
       - user
       description: ''
-    Review:
-      type: object
-      description: ''
-      properties:
-        url:
-          type: string
-          format: uri
-          readOnly: true
-        uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        proposal:
-          type: string
-          format: uri
-        reviewer:
-          type: string
-          format: uri
-        reviewer_full_name:
-          type: string
-          readOnly: true
-        reviewer_uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        state:
-          allOf:
-          - $ref: '#/components/schemas/ReviewStateEnum'
-          readOnly: true
-        review_end_date:
-          type: string
-          format: date-time
-          readOnly: true
-        summary_score:
-          type: integer
-          maximum: 32767
-          minimum: 0
-        summary_public_comment:
-          type: string
-        summary_private_comment:
-          type: string
-        proposal_name:
-          type: string
-          readOnly: true
-        round_uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        round_name:
-          type: string
-          readOnly: true
-        round_cutoff_time:
-          type: string
-          format: date-time
-          readOnly: true
-        round_start_time:
-          type: string
-          format: date-time
-          readOnly: true
-        call_name:
-          type: string
-          readOnly: true
-        call_uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        comment_project_title:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_summary:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_is_confidential:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_has_civilian_purpose:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_description:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_duration:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_supporting_documentation:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_resource_requests:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_team:
-          type: string
-          nullable: true
-          maxLength: 255
-      required:
-      - call_name
-      - call_uuid
-      - proposal
-      - proposal_name
-      - review_end_date
-      - reviewer
-      - reviewer_full_name
-      - reviewer_uuid
-      - round_cutoff_time
-      - round_name
-      - round_start_time
-      - round_uuid
-      - state
-      - url
-      - uuid
     ReviewComment:
       type: object
       properties:
@@ -76562,98 +76623,11 @@ components:
           type: string
           minLength: 1
       description: ''
-    ReviewRequest:
-      type: object
-      description: ''
-      properties:
-        proposal:
-          type: string
-          format: uri
-        reviewer:
-          type: string
-          format: uri
-        summary_score:
-          type: integer
-          maximum: 32767
-          minimum: 0
-        summary_public_comment:
-          type: string
-        summary_private_comment:
-          type: string
-        comment_project_title:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_summary:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_is_confidential:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_has_civilian_purpose:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_description:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_duration:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_project_supporting_documentation:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_resource_requests:
-          type: string
-          nullable: true
-          maxLength: 255
-        comment_team:
-          type: string
-          nullable: true
-          maxLength: 255
-      required:
-      - proposal
-      - reviewer
-    ReviewStateEnum:
-      enum:
-      - created
-      - in_review
-      - submitted
-      - rejected
-      type: string
-      description: ''
     ReviewStrategyEnum:
       enum:
       - after_round
       - after_proposal
       type: string
-      description: ''
-    Reviewer:
-      type: object
-      properties:
-        full_name:
-          type: string
-          readOnly: true
-        email:
-          type: string
-          format: email
-        accepted_proposals:
-          type: integer
-        rejected_proposals:
-          type: integer
-        in_review_proposals:
-          type: integer
-      required:
-      - accepted_proposals
-      - email
-      - full_name
-      - in_review_proposals
-      - rejected_proposals
       description: ''
     RmqConnection:
       type: object
@@ -77284,55 +77258,27 @@ components:
       - worker
       type: string
       description: ''
-    Round:
+    RoundReviewer:
       type: object
       properties:
-        url:
-          type: string
-          format: uri
-          readOnly: true
-        uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        start_time:
-          type: string
-          format: date-time
-        cutoff_time:
-          type: string
-          format: date-time
-        call_uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        call_name:
+        full_name:
           type: string
           readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/StatusEnum'
-          readOnly: true
+        email:
+          type: string
+          format: email
+        accepted_proposals:
+          type: integer
+        rejected_proposals:
+          type: integer
+        in_review_proposals:
+          type: integer
       required:
-      - call_name
-      - call_uuid
-      - cutoff_time
-      - start_time
-      - status
-      - url
-      - uuid
-      description: ''
-    RoundRequest:
-      type: object
-      properties:
-        start_time:
-          type: string
-          format: date-time
-        cutoff_time:
-          type: string
-          format: date-time
-      required:
-      - cutoff_time
-      - start_time
+      - accepted_proposals
+      - email
+      - full_name
+      - in_review_proposals
+      - rejected_proposals
       description: ''
     RuntimeStates:
       type: object
@@ -78929,27 +78875,6 @@ components:
       - user_last_name
       - user_token_lifetime
       - user_username
-      description: ''
-    UserDetails:
-      type: object
-      properties:
-        full_name:
-          type: string
-          readOnly: true
-        native_name:
-          type: string
-          readOnly: true
-        organization:
-          type: string
-          readOnly: true
-        job_title:
-          type: string
-          readOnly: true
-      required:
-      - full_name
-      - job_title
-      - native_name
-      - organization
       description: ''
     UserEmailChangeRequest:
       type: object
