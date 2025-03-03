@@ -145,16 +145,19 @@ Call members should:
 ## States and Transitions
 
 ### Call States
+
 - **Draft**: Initial state, call is being configured
 - **Active**: Call is open for submissions
 - **Archived**: Call is completed and no longer active
 
 ### Round Statuses
+
 - **Scheduled**: Round start date is in the future
 - **Open**: Round is currently accepting submissions
 - **Ended**: Round cutoff date has passed
 
 ### Proposal States
+
 - **Draft**: Initial creation, editable by applicant
 - **Submitted**: Sent for review, awaiting reviewer assignment
 - **In Review**: Assigned to reviewers, under evaluation
@@ -164,12 +167,14 @@ Call members should:
 - **Canceled**: Withdrawn or automatically canceled
 
 ### Review States
+
 - **Created**: Review has been assigned
 - **In Review**: Reviewer has accepted and is working on evaluation
 - **Submitted**: Review is complete
 - **Rejected**: Reviewer has declined the assignment
 
 ### Requested Offering States
+
 - **Requested**: Initial state, awaiting service provider decision
 - **Accepted**: Service provider has approved use in call
 - **Canceled**: Service provider has declined use in call
@@ -201,6 +206,7 @@ The system provides RESTful API endpoints for:
 ## Troubleshooting
 
 ### Round Configuration
+
 - **Issue**: Round dates overlap with existing rounds
   **Solution**: Adjust dates to ensure no overlap within the same call
 
@@ -208,6 +214,7 @@ The system provides RESTful API endpoints for:
   **Solution**: Ensure call is in Draft or Active state
 
 ### Proposal Submission
+
 - **Issue**: Unable to submit proposal
   **Solution**: Verify round is in Open status and required fields are completed
 
@@ -215,6 +222,7 @@ The system provides RESTful API endpoints for:
   **Solution**: Check that service providers have accepted offering requests
 
 ### Review Assignment
+
 - **Issue**: Not enough reviewers available
   **Solution**: Assign additional reviewers to the call or adjust minimum number requirement
 
@@ -222,6 +230,7 @@ The system provides RESTful API endpoints for:
   **Solution**: Verify review strategy configuration and check reviewer availability
 
 ### Allocation Process
+
 - **Issue**: Resources not provisioned after approval
   **Solution**: Check marketplace availability and quotas
 
@@ -230,3 +239,4 @@ The system provides RESTful API endpoints for:
 
 - **Issue**: Unable to allocate proposal
   **Solution**: Ensure proposal is in correct state (In Review, Submitted) and review requirements are met
+  
