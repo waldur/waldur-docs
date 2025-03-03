@@ -89,3 +89,13 @@ creating an offering is through a HomePort.
 !!! tip
     For more advanced cases of management of offerings, take a look at how a SLURM offering can be managed using
     [Ansible module](https://github.com/waldur/ansible-waldur-module/blob/develop/waldur_batch_offering.py).
+
+## Offering management
+
+It is possible to temporarily unpublish the offering. For example, if the service is down for a longer maintenance. To do that, open the offering edit page and click on **Pause** from the right.
+
+![Offering pause](../img/Offering_pause.png)
+
+If the offering is not needed anymore, then it is possible to archive it by selecting **Archive** from the offering edit page.
+
+![Offering archive](../img/Offering_archive.png)
