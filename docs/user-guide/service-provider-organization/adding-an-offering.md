@@ -1,7 +1,5 @@
 # Offerings
 
-## Offering creation
-
 To create a new Offering in the Marketplace, you need to:
 
 - Assure that categories are configured in the Marketplace.
@@ -11,15 +9,50 @@ To create a new Offering in the Marketplace, you need to:
 Waldur supports a number of different types of service providers when creating a shared offering. A common way of
 creating an offering is through a HomePort.
 
+## OpenStack offering creation
+
 1. Select organization, which will provide the offering.
 
-2. Go to Provider dashboard and click on "Marketplace" -> "Offerings" -> "Add new offering":
-    ![Adding an offering](../img/Add_offering1.jpg)
+2. Go to Provider dashboard, click **Marketplace** -> **Offerings** from the top menu and then **Add** from the left.
+    ![Adding an offering](../img/Add_offering_main.png)
 
-3. Click on "Add new offering" and fill in the name for the offering, category and type:
+3. A popup opens, fill in the name for the offering, category (e.g. Private clouds) and type (**OpenStack tenant**) and click **Create**.
+    ![Adding details](../img/Add_offering_openstack.png)
+
+4. An offering configuration page opens with an option to edit different attributes.
+
+    ![Adding details](../img/OpenStack_offering_config1.png)
+
+5. For the OpenStack integration, select **Integration** -> **Credentials** from the top menu. Fill in requested parameters.
+
+    - **API URL** - OpenStack deployment keystone URL
+    - **Domain name** - OpenStack domain name
+    - **Username** - Tenant user username
+    - **Password** - Tenant user password
+    - **Tenant name** - OpenStack tenant name
+    - **External network ID** - OpenStack extnet UUID
+
+    ![Adding details](../img/OpenStack_offering_integration.png)
+
+6. If everything is filled in, click on **Synchronize** in the top left corner. After few seconds, the **State** field will show **OK** if the integration is completed between Waldur and OpenStack.
+
+7. To adjust the accounting, select **Accounting** from the top menu and then **Plans** -> **Edit prices**. Default accounting components are already defined.
+
+    ![Adding details](../img/OpenStack_accounting_config.png)
+
+8. If everything is completed and ready, click on **Activate** in the upper right corner to publish the offering.
+
+## SLURM offering creation
+
+1. Select organization, which will provide the offering.
+
+2. Go to Provider dashboard and click on **Marketplace** -> **Offerings** from the top menu and then click **Add** from the right.
+    ![Adding an offering](../img/Add_offering_main.png)
+
+3. A popup opens, fill in the name for the offering, category and type.
     ![Adding details](../img/Add_offering2.jpg)
 
-4. Offering details page opens, where you can add additional information:
+4. An offering configuration page opens with an option to edit different attributes.
     ![Offering details](../img/Offering_edit.jpg)
 
 5. Under Endpoints section, you can add access endpoints for the offering, for example, management consoles, SSH login nodes or similar.
@@ -42,7 +75,7 @@ creating an offering is through a HomePort.
 
     ![Accounting component details](../img/Add_component.png)
 
-8. To configure accounting frequency and prices, select "Accounting plans" from the top menu and then "Add plan" from the right. Select a name for the plan and accounting frequency:
+8. To configure accounting frequency and prices, select "Accounting plans" from the top menu and then "Add plan" from the right. Select a name for the plan and accounting frequency.
     ![Accounting frequency](../img/Accounting_plan.png)
 
 9. To define prices for the components, select "Actions" and then "Edit prices". Set new price and save. If there is a need to provide higher priority access to resources with different prices, then it is advised to create another offering for this kind of cases.
