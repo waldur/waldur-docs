@@ -1,6 +1,6 @@
 # Organization management
 
-After the creation of the organization by the staff user ([see here](../staff-users/organization-creation.md)), organization owners can manage organization details. To do this, navigate to the organization dashboard and select **Edit**.
+After the creation of the organization by the staff user ([see here](../staff-users/organization-management.md)), organization owners can manage organization details. To do this, navigate to the organization dashboard and select **Edit**.
 
 ![Organization management](../img/Organization_management.png)
 
