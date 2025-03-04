@@ -34,6 +34,7 @@ for deployment-specific documentation.
 * [Credit management configuration](staff-users/credit-management-staff.md)
 * [Impersonation](staff-users/impersonation.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
+* [User role management](staff-users/user_role_management.md)
 * [Remote sync of offerings](staff-users/remote-sync.md)
 * [Reporting](staff-users/reporting.md)
 * [Service desk configuration](staff-users/service-desk/service-desk-config.md)
