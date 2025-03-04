@@ -23,25 +23,25 @@ The roles interface displays all existing roles with their associated types and 
 For each role, administrators can:
 
 1. **Edit role**
-   - Modify role name
-   - Change role type
-   - Adjust permissions
+    - Modify role name
+    - Change role type
+    - Adjust permissions
 
 2. **Edit description**
-   - Update role description
-   - Add clarifying information
+    - Update role description
+    - Add clarifying information
 
 3. **Disable role**
-   - Temporarily deactivate role
-   - Prevent new assignments
+    - Temporarily deactivate role
+    - Prevent new assignments
 
 ## Creating new roles
 
 1. Click **Add new role**
 2. Complete the required fields:
-   - **Name** - Descriptive title for the role
-   - **Type** - Select role context
-   - **Permissions** - Configure permissions
+    - **Name** - Descriptive title for the role
+    - **Type** - Select role context
+    - **Permissions** - Configure permissions
 
 ### Available role types
 
@@ -54,6 +54,7 @@ For each role, administrators can:
 - Call managing organization
 
 ## Permission configuration
+
 
 Permissions in Waldur are extensively categorized to provide granular access control across different functional areas. Each permission category contains multiple specific actions that can be enabled or disabled.
 
