@@ -7237,6 +7237,7 @@ paths:
   /api/customers/{uuid}/stats/:
     get:
       operationId: customers_stats_retrieve
+      description: Return statistics about customer resources usage
       parameters:
       - in: path
         name: uuid
@@ -7259,6 +7260,7 @@ paths:
   /api/customers/{uuid}/update_organization_groups/:
     post:
       operationId: customers_update_organization_groups
+      description: Update organization groups for customer
       parameters:
       - in: path
         name: uuid
@@ -7284,11 +7286,7 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Customer'
-          description: ''
+          description: No response body
   /api/customers/{uuid}/update_user/:
     post:
       operationId: customers_update_user
@@ -7433,58 +7431,81 @@ paths:
           description: ''
   /api/customers/countries/:
     get:
-      operationId: customers_countries_retrieve
+      operationId: customers_countries_list
+      description: Return list of countries
       parameters:
       - in: query
-        name: field
+        name: abbreviation
+        schema:
+          type: string
+      - in: query
+        name: agreement_number
+        schema:
+          type: string
+      - in: query
+        name: archived
+        schema:
+          type: boolean
+      - in: query
+        name: backend_id
+        schema:
+          type: string
+      - in: query
+        name: contact_details
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: name_exact
+        schema:
+          type: string
+      - in: query
+        name: native_name
+        schema:
+          type: string
+      - name: o
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: organization_group_name
+        schema:
+          type: string
+      - in: query
+        name: organization_group_uuid
         schema:
           type: array
           items:
             type: string
-            enum:
-            - abbreviation
-            - access_subnets
-            - accounting_start_date
-            - address
-            - agreement_number
-            - archived
-            - backend_id
-            - bank_account
-            - bank_name
-            - billing_price_estimate
-            - blocked
-            - call_managing_organization_uuid
-            - contact_details
-            - country
-            - country_name
-            - created
-            - customer_credit
-            - default_tax_percent
-            - display_name
-            - domain
-            - email
-            - homepage
-            - image
-            - is_service_provider
-            - latitude
-            - longitude
-            - name
-            - native_name
-            - organization_groups
-            - payment_profiles
-            - phone_number
-            - postal
-            - projects
-            - projects_count
-            - registration_code
-            - service_provider
-            - service_provider_uuid
-            - slug
-            - sponsor_number
-            - url
-            - users_count
-            - uuid
-            - vat_code
+            format: uuid
+        description: organization_group_uuid
+        explode: true
+        style: form
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: registration_code
+        schema:
+          type: string
       tags:
       - organization
       security:
@@ -7495,7 +7516,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Customer'
+                $ref: '#/components/schemas/PaginatedCountryList'
           description: ''
   /api/daily-quotas/:
     get:
@@ -12942,6 +12963,7 @@ paths:
   /api/marketplace-checklists/{checklist_uuid}/answers/submit/:
     post:
       operationId: marketplace_checklists_answers_submit_create
+      description: Submit answer to checklist question
       parameters:
       - in: path
         name: checklist_uuid
@@ -12949,19 +12971,43 @@ paths:
           type: string
           pattern: ^[a-f0-9]+$
         required: true
+      - in: query
+        name: on_behalf_user_uuid
+        schema:
+          type: string
+          format: uuid
+        description: User UUID to submit answer on behalf of. Required staff permission.
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - marketplace
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AnswerSubmitRequest'
+              type: array
+              items:
+                $ref: '#/components/schemas/AnswerSubmitRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/AnswerSubmitRequest'
+              type: array
+              items:
+                $ref: '#/components/schemas/AnswerSubmitRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/AnswerSubmitRequest'
+              type: array
+              items:
+                $ref: '#/components/schemas/AnswerSubmitRequest'
         required: true
       security:
       - tokenAuth: []
@@ -12971,7 +13017,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AnswerSubmit'
+                $ref: '#/components/schemas/PaginatedAnswerSubmitList'
           description: ''
   /api/marketplace-checklists/{checklist_uuid}/questions/:
     get:
@@ -13730,6 +13776,20 @@ paths:
   /api/marketplace-global-categories/:
     get:
       operationId: marketplace_global_categories_retrieve
+      description: Count of resource categories for all resources accessible by user.
+      parameters:
+      - in: query
+        name: customer_uuid
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the customer to filter resources by.
+      - in: query
+        name: project_uuid
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the project to filter resources by.
       tags:
       - marketplace-global-categories
       security:
@@ -23990,33 +24050,9 @@ paths:
           description: No response body
   /api/marketplace-service-providers/{uuid}/api_secret_code/:
     get:
-      operationId: marketplace_service_providers_api_secret_code_retrieve
-      description: |-
-        On GET request - return service provider api_secret_code.
-        On POST - generate new service provider api_secret_code.
+      operationId: service_provider_api_secret_code_retrieve
+      description: Return service provider API secret code.
       parameters:
-      - in: query
-        name: field
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - created
-            - customer
-            - customer_abbreviation
-            - customer_country
-            - customer_image
-            - customer_name
-            - customer_native_name
-            - customer_slug
-            - customer_uuid
-            - description
-            - image
-            - offering_count
-            - organization_groups
-            - url
-            - uuid
       - in: path
         name: uuid
         schema:
@@ -24033,13 +24069,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceProvider'
+                $ref: '#/components/schemas/ServiceProviderApiSecretCode'
           description: ''
     post:
-      operationId: marketplace_service_providers_api_secret_code
-      description: |-
-        On GET request - return service provider api_secret_code.
-        On POST - generate new service provider api_secret_code.
+      operationId: service_provider_api_secret_code_generate
+      description: Generate new service provider API secret code.
       parameters:
       - in: path
         name: uuid
@@ -24049,18 +24083,6 @@ paths:
         required: true
       tags:
       - marketplace
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ServiceProviderRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ServiceProviderRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ServiceProviderRequest'
-        required: true
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
@@ -24069,7 +24091,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceProvider'
+                $ref: '#/components/schemas/ServiceProviderApiSecretCode'
           description: ''
   /api/marketplace-service-providers/{uuid}/customer_projects/:
     get:
@@ -24137,6 +24159,7 @@ paths:
   /api/marketplace-service-providers/{uuid}/customers/:
     get:
       operationId: marketplace_service_providers_customers_list
+      description: Return customers of service provider.
       parameters:
       - in: query
         name: customer
@@ -26456,11 +26479,8 @@ paths:
   /api/openstack-floating-ips/:
     get:
       operationId: openstack_floating_ips_list
-      description: |-
-        To get a list of all available floating IPs, issue **GET** against */api/floating-ips/*.
-        Floating IPs are read only. Each floating IP has fields: 'address', 'status'.
-
-        Status *DOWN* means that floating IP is not linked to a VM, status *ACTIVE* means that it is in use.
+      description: Status *DOWN* means that floating IP is not linked to a VM, status
+        *ACTIVE* means that it is in use.
       parameters:
       - in: query
         name: address
@@ -29784,146 +29804,14 @@ paths:
   /api/openstack-security-groups/{uuid}/set_rules/:
     post:
       operationId: openstack_security_groups_set_rules
-      description: |-
-        WARNING! Auto-generated HTML form is wrong for this endpoint. List should be defined as input.
-
-        Example:
-        [
-            {
-                "protocol": "tcp",
-                "from_port": 1,
-                "to_port": 10,
-                "cidr": "10.1.1.0/24"
-            }
-        ]
+      description: Update security group rules
       parameters:
-      - in: query
-        name: backend_id
-        schema:
-          type: string
-      - in: query
-        name: customer
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: customer_abbreviation
-        schema:
-          type: string
-      - in: query
-        name: customer_name
-        schema:
-          type: string
-      - in: query
-        name: customer_native_name
-        schema:
-          type: string
-      - in: query
-        name: customer_uuid
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: description
-        schema:
-          type: string
-      - in: query
-        name: external_ip
-        schema:
-          type: string
-      - in: query
-        name: name
-        schema:
-          type: string
-      - in: query
-        name: name_exact
-        schema:
-          type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - in: query
-        name: project
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: project_name
-        schema:
-          type: string
-      - in: query
-        name: project_uuid
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: query
-        schema:
-          type: string
-      - in: query
-        name: service_settings_name
-        schema:
-          type: string
-      - in: query
-        name: service_settings_uuid
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: state
-        schema:
-          type: array
-          items:
-            type: integer
-            enum:
-            - Creating
-            - Creation Scheduled
-            - Deleting
-            - Deletion Scheduled
-            - Erred
-            - OK
-            - Update Scheduled
-            - Updating
-        description: |-
-          * `Creation Scheduled` - Creation Scheduled
-          * `Creating` - Creating
-          * `Update Scheduled` - Update Scheduled
-          * `Updating` - Updating
-          * `Deletion Scheduled` - Deletion Scheduled
-          * `Deleting` - Deleting
-          * `OK` - OK
-          * `Erred` - Erred
-        explode: true
-        style: form
-      - in: query
-        name: tenant
-        schema:
-          type: string
-      - in: query
-        name: tenant_uuid
-        schema:
-          type: string
-          format: uuid
       - in: path
         name: uuid
         schema:
           type: string
           format: uuid
         required: true
-      - in: query
-        name: uuid
-        schema:
-          type: string
-          format: uuid
       tags:
       - openstack-security-groups
       requestBody:
@@ -29933,6 +29821,14 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/OpenStackSecurityGroupRuleUpdateRequest'
+            examples:
+              Openstack-security-group-set-rules:
+                value:
+                - - protocol: tcp
+                    from_port: 1
+                    to_port: 10
+                    cidr: 10.1.1.0/24
+                summary: openstack-security-group-set-rules
           application/x-www-form-urlencoded:
             schema:
               type: array
@@ -29949,11 +29845,7 @@ paths:
       - waldurCookieAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedOpenStackSecurityGroupRuleUpdateList'
-          description: ''
+          description: No response body
   /api/openstack-security-groups/{uuid}/unlink/:
     post:
       operationId: openstack_security_groups_unlink
@@ -34384,16 +34276,6 @@ paths:
   /api/projects/{uuid}/:
     get:
       operationId: projects_retrieve
-      description: |-
-        Optional `field` query parameter (can be list) allows to limit what fields are returned.
-        For example, given request /api/projects/<uuid>/?field=uuid&field=name you get response like this:
-
-        .. code-block:: javascript
-
-            {
-                "uuid": "90bcfe38b0124c9bbdadd617b5d739f5",
-                "name": "Default"
-            }
       parameters:
       - in: query
         name: field
@@ -36221,6 +36103,7 @@ paths:
             - offerings
             - reference_code
             - rounds
+            - slug
             - start_date
             - state
             - url
@@ -36361,6 +36244,7 @@ paths:
             - offerings
             - reference_code
             - rounds
+            - slug
             - start_date
             - state
             - url
@@ -37413,6 +37297,7 @@ paths:
             - name
             - offerings
             - rounds
+            - slug
             - start_date
             - state
             - url
@@ -37523,6 +37408,7 @@ paths:
             - name
             - offerings
             - rounds
+            - slug
             - start_date
             - state
             - url
@@ -54315,6 +54201,19 @@ components:
       - name
       - uuid
       description: ''
+    Country:
+      type: object
+      properties:
+        label:
+          type: string
+          readOnly: true
+        value:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - value
+      description: ''
     CountryEnum:
       enum:
       - AL
@@ -64464,53 +64363,6 @@ components:
           type: string
           format: uri
           nullable: true
-    OpenStackSecurityGroupRuleUpdate:
-      type: object
-      properties:
-        ethertype:
-          $ref: '#/components/schemas/EthertypeEnum'
-        direction:
-          $ref: '#/components/schemas/DirectionEnum'
-        protocol:
-          oneOf:
-          - $ref: '#/components/schemas/ProtocolEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-        from_port:
-          type: integer
-          maximum: 65535
-          minimum: -2147483648
-          nullable: true
-        to_port:
-          type: integer
-          maximum: 65535
-          minimum: -2147483648
-          nullable: true
-        cidr:
-          type: string
-          nullable: true
-          maxLength: 255
-        description:
-          type: string
-          maxLength: 2000
-        remote_group_name:
-          type: string
-          readOnly: true
-        remote_group_uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        id:
-          type: integer
-          readOnly: true
-        remote_group:
-          type: string
-          format: uri
-          nullable: true
-      required:
-      - id
-      - remote_group_name
-      - remote_group_uuid
-      description: ''
     OpenStackSecurityGroupRuleUpdateRequest:
       type: object
       properties:
@@ -66468,6 +66320,11 @@ components:
       items:
         $ref: '#/components/schemas/AnswerList'
       description: ''
+    PaginatedAnswerSubmitList:
+      type: array
+      items:
+        $ref: '#/components/schemas/AnswerSubmit'
+      description: ''
     PaginatedAttachmentList:
       type: array
       items:
@@ -66642,6 +66499,11 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/CountStats'
+      description: ''
+    PaginatedCountryList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Country'
       description: ''
     PaginatedCustomerCreditList:
       type: array
@@ -66977,11 +66839,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/OpenStackSecurityGroup'
-      description: ''
-    PaginatedOpenStackSecurityGroupRuleUpdateList:
-      type: array
-      items:
-        $ref: '#/components/schemas/OpenStackSecurityGroupRuleUpdate'
       description: ''
     PaginatedOpenStackSnapshotList:
       type: array
@@ -71586,6 +71443,11 @@ components:
           type: string
           format: date-time
           readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
         name:
           type: string
           maxLength: 150
@@ -71656,6 +71518,7 @@ components:
       - name
       - offerings
       - rounds
+      - slug
       - start_date
       - state
       - url
@@ -72754,6 +72617,11 @@ components:
           type: string
           format: date-time
           readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
         name:
           type: string
           maxLength: 150
@@ -72807,6 +72675,7 @@ components:
       - name
       - offerings
       - rounds
+      - slug
       - start_date
       - state
       - url
@@ -77723,6 +77592,15 @@ components:
       - organization_groups
       - url
       - uuid
+    ServiceProviderApiSecretCode:
+      type: object
+      properties:
+        api_secret_code:
+          type: string
+          readOnly: true
+      required:
+      - api_secret_code
+      description: ''
     ServiceProviderRequest:
       type: object
       description: ''
