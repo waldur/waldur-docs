@@ -30,7 +30,7 @@ for deployment-specific documentation.
 * [Broadcast messages](staff-users/broadcasting.md)
 * [Catalogue mode](staff-users/catalogue_mode.md)
 * [Change user passwords](staff-users/change-user-password.md)
-* [Creation of organizations](staff-users/organization-creation.md)
+* [Creation of organizations](staff-users/organization-management.md)
 * [Credit management configuration](staff-users/credit-management-staff.md)
 * [Impersonation](staff-users/impersonation.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
