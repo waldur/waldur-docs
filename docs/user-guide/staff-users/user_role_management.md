@@ -23,18 +23,15 @@ The roles interface displays all existing roles with their associated types and 
 For each role, administrators can:
 
 1. **Edit role**
-
    - Modify role name
    - Change role type
    - Adjust permissions
 
 2. **Edit description**
-
    - Update role description
    - Add clarifying information
 
 3. **Disable role**
-
    - Temporarily deactivate role
    - Prevent new assignments
 
@@ -44,6 +41,7 @@ For each role, administrators can:
 2. Complete the required fields:
    - **Name** - Descriptive title for the role
    - **Type** - Select role context
+   - **Permissions** - Configure permissions
 
 ### Available role types
 
