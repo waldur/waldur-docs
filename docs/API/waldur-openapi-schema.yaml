@@ -84,6 +84,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ObtainAuthTokenRequest'
+            examples:
+              ValidRequest:
+                value:
+                  username: alice
+                  password: $ecr3t
+                summary: Valid request example
+                description: Example of a valid request to obtain an authentication
+                  token.
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ObtainAuthTokenRequest'
@@ -99,8 +107,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ObtainAuthToken'
+                $ref: '#/components/schemas/CoreAuthToken'
+              examples:
+                SuccessResponse:
+                  value:
+                    token: c84d653b9ec92c6cbac41c706593e66f567a7fa4
+                  summary: Success response example
+                  description: Example of a successful response with the authentication
+                    token.
           description: ''
+        '401':
+          description: No response body
   /api-auth/saml2/login/:
     post:
       operationId: api_auth_saml2_login
@@ -821,20 +838,6 @@ paths:
   /api/auth-valimo/:
     post:
       operationId: auth_valimo_create
-      description: |-
-        To start PKI login process - issue post request with users phone.
-        Example of a valid request:
-
-        .. code-block:: http
-
-            POST /api/auth-valimo/ HTTP/1.1
-            Content-Type: application/json
-            Accept: application/json
-            Host: example.com
-
-            {
-                "phone": "1234567890",
-            }
       tags:
       - authentication
       requestBody:
@@ -842,6 +845,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AuthResultRequest'
+            examples:
+              ValidRequest:
+                value:
+                  phone: '1234567890'
+                summary: Start PKI login process
+                description: Example of a valid request to start PKI login process
+                  with user's phone.
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/AuthResultRequest'
@@ -862,41 +872,26 @@ paths:
   /api/auth-valimo/result/:
     post:
       operationId: auth_valimo_result
-      description: |-
-        To get PKI login status and details - issue post request against /api/auth-valimo/result/
-        with uuid in parameters.
-
-        Possible states:
-         - Scheduled - login process is scheduled
-         - Processing - login is in progress
-         - OK - login was successful. Response will contain token.
-         - Canceled - login was canceled by user or timed out. Field details will contain additional info.
-         - Erred - unexpected exception happened during login process.
-        Example of response:
-
-        .. code-block:: javascript
-
-            {
-                "uuid": "e42473f39c844333a80107e139a4dd06",
-                "token": null,
-                "message": "1234",
-                "state": "Canceled",
-                "error_message": "",
-                "details": "User cancel."
-            }
+      description: "\n        To get PKI login status and details - issue post request\
+        \ against /api/auth-valimo/result/\n        with uuid in parameters.\n\n \
+        \       Possible states:\n         - Scheduled - login process is scheduled\n\
+        \         - Processing - login is in progress\n         - OK - login was successful.\
+        \ Response will contain token.\n         - Canceled - login was canceled by\
+        \ user or timed out. Field details will contain additional info.\n       \
+        \  - Erred - unexpected exception happened during login process.\n        "
       tags:
       - authentication
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthResultRequest'
+              $ref: '#/components/schemas/AuthResultUUIDRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/AuthResultRequest'
+              $ref: '#/components/schemas/AuthResultUUIDRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/AuthResultRequest'
+              $ref: '#/components/schemas/AuthResultUUIDRequest'
         required: true
       security:
       - tokenAuth: []
@@ -907,6 +902,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResult'
+              examples:
+                SuccessfulLogin:
+                  value:
+                    uuid: e42473f39c844333a80107e139a4dd06
+                    token: null
+                    message: '1234'
+                    state: OK
+                    error_message: ''
+                    details: User authenticated.
+                  summary: Successful login
+                  description: Example of response for successful login.
+                CanceledLogin:
+                  value:
+                    uuid: e42473f39c844333a80107e139a4dd06
+                    token: null
+                    message: '1234'
+                    state: Canceled
+                    error_message: ''
+                    details: User cancel.
+                  summary: Canceled login
+                  description: Example of response when login was canceled by user.
           description: ''
   /api/aws-images/:
     get:
@@ -5415,7 +5431,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -5464,7 +5479,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -11758,7 +11772,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -11829,7 +11842,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -11949,7 +11961,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -11998,7 +12009,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -12483,7 +12493,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -12544,7 +12553,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -14715,7 +14723,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -14738,7 +14745,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -16113,7 +16119,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -16136,7 +16141,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -23857,7 +23861,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -23928,7 +23931,6 @@ paths:
       security:
       - tokenAuth: []
       - waldurCookieAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -49425,6 +49427,16 @@ components:
       - Erred
       type: string
       description: ''
+    AuthResultUUIDRequest:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: UUID of the authentication result.
+      required:
+      - uuid
+      description: ''
     AuthToken:
       type: object
       properties:
@@ -54152,6 +54164,15 @@ components:
       - json
       - form
       type: string
+      description: ''
+    CoreAuthToken:
+      type: object
+      properties:
+        token:
+          type: string
+          readOnly: true
+      required:
+      - token
       description: ''
     CoreStates:
       enum:
@@ -60147,19 +60168,6 @@ components:
       enum:
       - null
       description: ''
-    ObtainAuthToken:
-      type: object
-      description: ''
-      properties:
-        username:
-          type: string
-          maxLength: 128
-        password:
-          type: string
-          maxLength: 128
-      required:
-      - password
-      - username
     ObtainAuthTokenRequest:
       type: object
       description: ''
