@@ -8,7 +8,7 @@ for deployment-specific documentation.
 * [Accounting and reporting](customer-organization/usage_reports.md)
 * [Cost and usage policies](customer-organization/cost-and-usage-policies.md)
 * [Credit management](customer-organization/credit-management.md)
-* [Organization management](staff-users/organization-management.md/#organization-configuration)
+* [Organization management](staff-users/organization-management.md#organization-configuration)
 * [Project management](customer-organization/project-management.md)
 * [Project membership management](customer-organization/project_membership_management.md)
 * [Resource management](customer-organization/resource_management.md)
