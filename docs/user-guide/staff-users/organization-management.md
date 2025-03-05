@@ -20,6 +20,9 @@ In Waldur, an organization represents a configurable grouping unit that can be a
 
 ![type:video](../img/create_organization.mp4)
 
+!!! Note
+    After the creation of the organization by the staff user, organization owners can manage organization details. To do this, navigate to the organization dashboard and select **Edit**.
+
 ## Organization configuration
 
 The organization edit interface consists of six main tabs, each containing specific configuration options:
