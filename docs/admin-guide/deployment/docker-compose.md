@@ -280,7 +280,6 @@ You can see the list of all whitelabeling options below.
 - short_page_title
 - full_page_title
 - brand_color
-- brand_label_color
 - hero_link_label
 - hero_link_url
 - site_description
