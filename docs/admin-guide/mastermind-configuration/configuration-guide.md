@@ -318,45 +318,6 @@ Default value:
 WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'AUTHENTICATION_METHODS': ['LOCAL_SIGNIN'],
  'BACKEND_FIELDS_EDITABLE': True,
- 'COUNTRIES': ['AL',
-               'AT',
-               'BA',
-               'BE',
-               'BG',
-               'CH',
-               'CY',
-               'CZ',
-               'DE',
-               'DK',
-               'EE',
-               'ES',
-               'EU',
-               'FI',
-               'FR',
-               'GB',
-               'GE',
-               'GR',
-               'HR',
-               'HU',
-               'IE',
-               'IS',
-               'IT',
-               'LT',
-               'LU',
-               'LV',
-               'MC',
-               'MK',
-               'MT',
-               'NL',
-               'NO',
-               'PL',
-               'PT',
-               'RO',
-               'RS',
-               'SE',
-               'SI',
-               'SK',
-               'UA'],
  'CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION': False,
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
@@ -429,12 +390,6 @@ List of enabled authentication methods.
 Type: bool
 
 Allows to control /admin writable fields. If this flag is disabled it is impossible to edit any field that corresponds to backend value via /admin. Such restriction allows to save information from corruption.
-
-#### COUNTRIES
-
-Type: List[str]
-
-It is used in organization creation dialog in order to limit country choices to predefined set.
 
 #### CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION
 
@@ -1090,6 +1045,14 @@ It is used in marketplace order details and invoices for currency formatting.
 
 Marketplace landing page title.
 
+#### COUNTRIES
+
+**Type:** country_list_field
+
+**Default value**: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'EU', 'FI', 'FR', 'GB', 'GE', 'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LT', 'LU', 'LV', 'MC', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA']
+
+It is used in organization creation dialog in order to limit country choices to predefined set.
+
 ### Marketplace
 
 #### THUMBNAIL_SIZE
@@ -1308,14 +1271,6 @@ Style of sidebar. Possible values: dark, light, accent.
 
 Hex color definition is used in HomePort landing page for login button.
 
-#### BRAND_LABEL_COLOR
-
-**Type:** color_field
-
-**Default value**: #000000
-
-Hex color definition is used in HomePort landing page for font color of login button.
-
 #### DISABLE_DARK_THEME
 
 **Type:** bool
@@ -1416,7 +1371,7 @@ Toggler for request type displaying
 
 **Type:** url_field
 
-**Default value**: http://example.com/
+**Default value**: https://example.com/
 
 Atlassian API server URL
 
@@ -1592,6 +1547,8 @@ Is Service Desk username the same as in Waldur
 
 **Type:** bool
 
+**Default value**: True
+
 Toggler for SSL verification
 
 #### ATLASSIAN_USE_OLD_API
@@ -1642,7 +1599,7 @@ Toggler for pulling priorities from backend
 
 **Type:** url_field
 
-Zammad API server URL. For example <http://localhost:8080/>
+Zammad API server URL. For example <https://localhost:8080/>
 
 #### ZAMMAD_TOKEN
 
@@ -1694,7 +1651,7 @@ Time in minutes. Time in minutes while comment deletion is available <https://gi
 
 **Type:** url_field
 
-SMAX API server URL. For example <http://localhost:8080/>
+SMAX API server URL. For example <https://localhost:8080/>
 
 #### SMAX_TENANT_ID
 
