@@ -1275,7 +1275,7 @@ Hex color definition is used in HomePort landing page for login button.
 
 **Type:** bool
 
-Toggler for dark theme.
+Toggler to disable dark theme.
 
 ### Images
 
