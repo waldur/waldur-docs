@@ -99,3 +99,43 @@ It is possible to temporarily unpublish the offering. For example, if the servic
 If the offering is not needed anymore, then it is possible to archive it by selecting **Archive** from the offering edit page.
 
 ![Offering archive](../img/Offering_archive.png)
+
+## Configuring Getting Started Templates
+
+When setting up an offering, you can configure a "Getting Started" guide that will be shown to users after they provision a resource. This guide supports dynamic variables that are automatically replaced with actual resource values.
+
+### Available Template Variables
+
+- `{resource_name}` - The name of the resource
+- `{resource_username}` - The username associated with the resource
+- `{backend_id}` - The backend identifier (e.g., SLURM account name)
+- `{backend_metadata_key}` - Any metadata fields from the backend (e.g., `{backend_metadata_state}`)
+- `{options_key}` - Any custom options set for the resource (e.g., `{options_custom_field}`)
+
+### Example Template
+
+For SLURM allocations, you might want to create a comprehensive guide like this:
+
+```markdown
+# Getting Started with your SLURM Allocation
+
+Welcome to your new SLURM allocation. Here are your access details:
+
+- Account name: {backend_id}
+- Username: {resource_username}
+- Resource name: {resource_name}
+
+## Status
+
+Current state: {backend_metadata_state}
+```
+
+To configure this template:
+
+1. Go to your offering's page
+2. Select "Edit" from the top menu
+3. Scroll down and find the "Getting started instructions" and click the "Edit" button
+4. Enter your desired template information using the variables above
+5. Save the changes
+
+The template will be rendered with retreived values when users access their resources.
