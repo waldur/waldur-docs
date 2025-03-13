@@ -8,13 +8,13 @@ Projects are always created in the context of a specific customer, so as a first
 customer you want to use. Customer is a stable entity, so it's URL / UUID can be cached.
 
 ```bash
-$ http --pretty=format -v https://puhuri-core-beta.neic.no/api/customers/ field==url field==name Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"
+$ http --pretty=format -v https://waldur.com/api/customers/ field==url field==name Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"
 GET /api/customers/?field=url&field=name HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate
 Authorization: Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
 Connection: keep-alive
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 
@@ -31,7 +31,7 @@ Content-Length: 1188
 Content-Security-Policy: report-uri csp.hpc.ut.ee; form-action 'self';
 Content-Type: application/json
 Date: Fri, 09 Apr 2021 09:28:42 GMT
-Link: <https://puhuri-core-beta.neic.no/api/customers/?field=url&field=name>; rel="first", <https://puhuri-core-beta.neic.no/api/customers/?field=url&field=name>; rel="last"
+Link: <https://waldur.com/api/customers/?field=url&field=name>; rel="first", <https://waldur.com/api/customers/?field=url&field=name>; rel="last"
 Referrer-Policy: no-referrer-when-downgrade
 Strict-Transport-Security: max-age=31536000; preload
 Vary: Accept-Language, Cookie
@@ -42,40 +42,8 @@ X-XSS-Protection: 1; mode=block
 
 [
     {
-        "name": "Danish e-Infrastructure Cooperation",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/"
-    },
-    {
         "name": "Estonian Scientific Computing Infrastructure",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/33541d82c56c4eca8dbb1dabee54b3b9/"
-    },
-    {
-        "name": "IT CENTER FOR SCIENCE LTD",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/"
-    },
-    {
-        "name": "Swedish National Infrastructure for Computing",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/479843b7d15543bba6c0596bf408df63/"
-    },
-    {
-        "name": "Swiss National Supercomputing Centre",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/f7b91251f991485999f423529fcdc1ad/"
-    },
-    {
-        "name": "The IT4Innovations",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/9a8891e0327b460dbce61f9dda74d679/"
-    },
-    {
-        "name": "The Polish Grid Infrastructure",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/c11b0d4e95144bd5964a09a294d30196/"
-    },
-    {
-        "name": "UNINETT Sigma2 AS",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/918594bae69449bb8d011a4c5987515d/"
-    },
-    {
-        "name": "VLAAMS SUPERCOMPUTER CENTRUM",
-        "url": "https://puhuri-core-beta.neic.no/api/customers/b5fd863c7159484b8b9009aac1833cd3/"
+        "url": "https://waldur.com/api/customers/33541d82c56c4eca8dbb1dabee54b3b9/"
     }
 ]
 ```
@@ -83,7 +51,7 @@ X-XSS-Protection: 1; mode=block
 ## Create a new project
 
 ```bash
-$ http --pretty=format -v POST https://puhuri-core-beta.neic.no/api/projects/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" customer=https://puhuri-core-beta.neic.no/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/ name="Project name" description="Project description" backend_id="My unique string" oecd_fos_2007_code="1.1"
+$ http --pretty=format -v POST https://waldur.com/api/projects/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" customer=https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/ name="Project name" description="Project description" backend_id="My unique string" oecd_fos_2007_code="1.1"
 POST /api/projects/ HTTP/1.1
 Accept: application/json, */*;q=0.5
 Accept-Encoding: gzip, deflate
@@ -91,12 +59,12 @@ Authorization: Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
 Connection: keep-alive
 Content-Length: 192
 Content-Type: application/json
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 {
     "backend_id": "My unique string",
-    "customer": "https://puhuri-core-beta.neic.no/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
+    "customer": "https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
     "description": "Project description",
     "name": "Project name",
     "oecd_fos_2007_code": "1.1"
@@ -114,7 +82,7 @@ Content-Length: 604
 Content-Security-Policy: report-uri csp.hpc.ut.ee; form-action 'self';
 Content-Type: application/json
 Date: Fri, 09 Apr 2021 09:40:52 GMT
-Location: https://puhuri-core-beta.neic.no/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/
+Location: https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/
 Referrer-Policy: no-referrer-when-downgrade
 Strict-Transport-Security: max-age=31536000; preload
 Vary: Accept-Language, Cookie
@@ -131,7 +99,7 @@ X-XSS-Protection: 1; mode=block
         "total": 0.0
     },
     "created": "2021-04-09T09:40:51.832870Z",
-    "customer": "https://puhuri-core-beta.neic.no/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
+    "customer": "https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
     "customer_abbreviation": "DeiC",
     "customer_name": "Danish e-Infrastructure Cooperation",
     "customer_native_name": "",
@@ -140,7 +108,7 @@ X-XSS-Protection: 1; mode=block
     "name": "Project name",
     "oecd_fos_2007_code": "1.1",
     "type": null,
-    "url": "https://puhuri-core-beta.neic.no/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
+    "url": "https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
     "uuid": "4475ac77fa3a491aacb3fb3a6dfadadf"
 }
 ```
@@ -148,7 +116,7 @@ X-XSS-Protection: 1; mode=block
 ## Update an existing project
 
 ```bash
-$ http --pretty=format -v PUT https://puhuri-core-beta.neic.no/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" name="New project name" customer=https://puhuri-core-beta.neic.no/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/
+$ http --pretty=format -v PUT https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" name="New project name" customer=https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/
 PUT /api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/ HTTP/1.1
 Accept: application/json, */*;q=0.5
 Accept-Encoding: gzip, deflate
@@ -156,11 +124,11 @@ Authorization: Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
 Connection: keep-alive
 Content-Length: 124
 Content-Type: application/json
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 {
-    "customer": "https://puhuri-core-beta.neic.no/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
+    "customer": "https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
     "name": "New project name"
 }
 
@@ -192,7 +160,7 @@ X-XSS-Protection: 1; mode=block
         "total": 0.0
     },
     "created": "2021-04-09T09:40:51.832870Z",
-    "customer": "https://puhuri-core-beta.neic.no/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
+    "customer": "https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
     "customer_abbreviation": "DeiC",
     "customer_name": "Danish e-Infrastructure Cooperation",
     "customer_native_name": "",
@@ -200,7 +168,7 @@ X-XSS-Protection: 1; mode=block
     "description": "Project description",
     "name": "New project name",
     "type": null,
-    "url": "https://puhuri-core-beta.neic.no/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
+    "url": "https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
     "uuid": "4475ac77fa3a491aacb3fb3a6dfadadf"
 }
 ```
@@ -208,13 +176,13 @@ X-XSS-Protection: 1; mode=block
 ## List projects
 
 ```bash
-$ http --pretty=format -v https://puhuri-core-beta.neic.no/api/projects/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"
+$ http --pretty=format -v https://waldur.com/api/projects/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"
 GET /api/projects/ HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate
 Authorization: Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
 Connection: keep-alive
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 
@@ -231,7 +199,7 @@ Content-Length: 7129
 Content-Security-Policy: report-uri csp.hpc.ut.ee; form-action 'self';
 Content-Type: application/json
 Date: Fri, 09 Apr 2021 09:46:41 GMT
-Link: <https://puhuri-core-beta.neic.no/api/projects/>; rel="first", <https://puhuri-core-beta.neic.no/api/projects/?page=2>; rel="next", <https://puhuri-core-beta.neic.no/api/projects/?page=2>; rel="last"
+Link: <https://waldur.com/api/projects/>; rel="first", <https://waldur.com/api/projects/?page=2>; rel="next", <https://waldur.com/api/projects/?page=2>; rel="last"
 Referrer-Policy: no-referrer-when-downgrade
 Strict-Transport-Security: max-age=31536000; preload
 Vary: Accept-Language, Cookie
@@ -250,206 +218,17 @@ X-XSS-Protection: 1; mode=block
             "total": 0.0
         },
         "created": "2021-03-26T10:57:02.640605Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
+        "customer": "https://waldur.com/api/customers/29f29e6b65004bff9e831dec7c953177/",
+        "customer_abbreviation": "OD",
+        "customer_name": "Office Department",
         "customer_native_name": "",
         "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project description",
-        "name": "CSC test project",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
+        "description": "test project description",
+        "name": "test project",
+        "type": "https://waldur.com/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
         "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/8cb53568cbed40c584029cb43cc540f6/",
+        "url": "https://waldur.com/api/projects/8cb53568cbed40c584029cb43cc540f6/",
         "uuid": "8cb53568cbed40c584029cb43cc540f6"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T06:06:30.911124Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 10 description",
-        "name": "CSC test project 10",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/a6241bd8342c4fb4b8ea9507ea03d658/",
-        "uuid": "a6241bd8342c4fb4b8ea9507ea03d658"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T06:06:43.645113Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 11 description",
-        "name": "CSC test project 11",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/d21ccbb0033f49fa928dc6bcc739cd8e/",
-        "uuid": "d21ccbb0033f49fa928dc6bcc739cd8e"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T06:07:03.472114Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 12 description",
-        "name": "CSC test project 12",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/09119652d1f24a068ec8a6d29da1016a/",
-        "uuid": "09119652d1f24a068ec8a6d29da1016a"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T06:07:22.023662Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 13 description",
-        "name": "CSC test project 13",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/adf45385e57749c4b636d09b127039ea/",
-        "uuid": "adf45385e57749c4b636d09b127039ea"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T06:07:37.658803Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 14 description",
-        "name": "CSC test project 14",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/4b3ff8e4dfe84c8ab83834715c757e47/",
-        "uuid": "4b3ff8e4dfe84c8ab83834715c757e47"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T06:07:52.235226Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 15 description",
-        "name": "CSC test project 15",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/19cb4c0825ec4333adcdf3fce9382fac/",
-        "uuid": "19cb4c0825ec4333adcdf3fce9382fac"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T05:44:25.730256Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 2 description",
-        "name": "CSC test project 2",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/62808e67ca734d6c9710f7d1dd35a299/",
-        "uuid": "62808e67ca734d6c9710f7d1dd35a299"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T05:44:50.921959Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 3 description",
-        "name": "CSC test project 3",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/03a57d26bc5c448f96ccaf6e1ce2a91d/",
-        "uuid": "03a57d26bc5c448f96ccaf6e1ce2a91d"
-    },
-    {
-        "backend_id": "",
-        "billing_price_estimate": {
-            "current": 0,
-            "tax": 0,
-            "tax_current": 0,
-            "total": 0.0
-        },
-        "created": "2021-03-30T05:45:07.739197Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/29f29e6b65004bff9e831dec7c953177/",
-        "customer_abbreviation": "CSC",
-        "customer_name": "IT CENTER FOR SCIENCE LTD",
-        "customer_native_name": "",
-        "customer_uuid": "29f29e6b65004bff9e831dec7c953177",
-        "description": "CSC test project 4 description",
-        "name": "CSC test project 4",
-        "type": "https://puhuri-core-beta.neic.no/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/",
-        "type_name": "Name of project type",
-        "url": "https://puhuri-core-beta.neic.no/api/projects/ed75f213306740588854ea3e973c7fb5/",
-        "uuid": "ed75f213306740588854ea3e973c7fb5"
     }
 ]
 ```
@@ -459,7 +238,7 @@ X-XSS-Protection: 1; mode=block
 User creates a role for a user in a project.
 
 ```bash
-$ http --pretty=format -v POST https://puhuri-core-beta.neic.no/api/projects/2477fb6fad594922ac2f5ba195807502/add_user/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246" role=PROJECT.ADMIN user=d213b473874c44d0bb5e2588b091160d
+$ http --pretty=format -v POST https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/add_user/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246" role=PROJECT.ADMIN user=d213b473874c44d0bb5e2588b091160d
 POST /api/projects/2477fb6fad594922ac2f5ba195807502/add_user/ HTTP/1.1
 Accept: application/json, */*;q=0.5
 Accept-Encoding: gzip, deflate
@@ -467,7 +246,7 @@ Authorization: Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246
 Connection: keep-alive
 Content-Length: 69
 Content-Type: application/json
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/3.2.2
 
 {
@@ -502,13 +281,13 @@ x-xss-protection: 1; mode=block
 ## List project permissions
 
 ```bash
-$ http --pretty=format -v https://puhuri-core-beta.neic.no/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246" 
+$ http --pretty=format -v https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246" 
 GET /api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate
 Authorization: Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246
 Connection: keep-alive
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/3.2.2
 
 
@@ -525,7 +304,7 @@ content-length: 484
 content-security-policy: report-uri https://csp.hpc.ut.ee/log; form-action 'self'; frame-ancestors 'self';
 content-type: application/json
 date: Sun, 08 Oct 2023 17:29:53 GMT
-link: <https://puhuri-core-beta.neic.no/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/>; rel="first", <https://puhuri-core-beta.neic.no/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/>; rel="last"
+link: <https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/>; rel="first", <https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/>; rel="last"
 referrer-policy: strict-origin-when-cross-origin
 strict-transport-security: max-age=31536000; preload
 vary: Accept-Language, Cookie
@@ -557,7 +336,7 @@ x-xss-protection: 1; mode=block
 User can remove the permissions calling DELETE verb on permission's URL.
 
 ```bash
-$ http --pretty=format -v POST https://puhuri-core-beta.neic.no/api/projects/2477fb6fad594922ac2f5ba195807502/delete_user/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246" role=PROJECT.ADMIN user=d213b473874c44d0bb5e2588b091160d
+$ http --pretty=format -v POST https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/delete_user/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246" role=PROJECT.ADMIN user=d213b473874c44d0bb5e2588b091160d
 POST /api/projects/2477fb6fad594922ac2f5ba195807502/delete_user/ HTTP/1.1
 Accept: application/json, */*;q=0.5
 Accept-Encoding: gzip, deflate
@@ -565,7 +344,7 @@ Authorization: Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246
 Connection: keep-alive
 Content-Length: 69
 Content-Type: application/json
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/3.2.2
 
 {
@@ -610,13 +389,13 @@ User can fetch offerings and filter them by the following fields:
 - `type` - offering's type
 
 ```bash
-$ http --pretty=format -v https://puhuri-core-beta.neic.no/api/marketplace-public-offerings/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" state==Active shared==true
+$ http --pretty=format -v https://waldur.com/api/marketplace-public-offerings/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" state==Active shared==true
 GET /api/marketplace-public-offerings/?state=Active&shared=true HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate
 Authorization: Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
 Connection: keep-alive
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 
@@ -633,7 +412,7 @@ Content-Length: 4779
 Content-Security-Policy: report-uri csp.hpc.ut.ee; form-action 'self';
 Content-Type: application/json
 Date: Fri, 09 Apr 2021 12:49:06 GMT
-Link: <https://puhuri-core-beta.neic.no/api/marketplace-public-offerings/?shared=true&state=Active>; rel="first", <https://puhuri-core-beta.neic.no/api/marketplace-public-offerings/?shared=true&state=Active>; rel="last"
+Link: <https://waldur.com/api/marketplace-public-offerings/?shared=true&state=Active>; rel="first", <https://waldur.com/api/marketplace-public-offerings/?shared=true&state=Active>; rel="last"
 Referrer-Policy: no-referrer-when-downgrade
 Strict-Transport-Security: max-age=31536000; preload
 Vary: Accept-Language, Cookie
@@ -647,7 +426,7 @@ X-XSS-Protection: 1; mode=block
         "attributes": {},
         "backend_id": "",
         "billable": true,
-        "category": "https://puhuri-core-beta.neic.no/api/marketplace-categories/5b61d0811cfe4ed6a004119795a4c532/",
+        "category": "https://waldur.com/api/marketplace-categories/5b61d0811cfe4ed6a004119795a4c532/",
         "category_title": "HPC",
         "category_uuid": "5b61d0811cfe4ed6a004119795a4c532",
         "citation_count": -1,
@@ -705,17 +484,17 @@ X-XSS-Protection: 1; mode=block
             }
         ],
         "created": "2021-03-09T10:27:47.170024Z",
-        "customer": "https://puhuri-core-beta.neic.no/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
+        "customer": "https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/",
         "customer_name": "Danish e-Infrastructure Cooperation",
         "customer_uuid": "d42a18b6b8ba4c2bb0591b3ff8fb181d",
         "datacite_doi": "",
-        "description": "LUMI share of Denmark",
+        "description": "",
         "files": [],
-        "full_description": "<h2>Overview</h2>One of the most powerful supercomputers in the world, LUMI, will start its operations in CSC’s data center in Kajaani, Finland, next year. The peak performance of LUMI is an astonishing 552 petaflop/s. To date, the world’s fastest computer, Fugaku in Japan, reaches peak performance of 513 petaflop/s. When LUMI’s operations start next year, it will be one of the world’s fastest supercomputers",
+        "full_description": "<h2>Overview</h2>One of the most powerful supercomputers in the world",
         "google_calendar_is_public": null,
         "latitude": 64.2310486,
         "longitude": 27.7040942,
-        "name": "LUMI Denmark",
+        "name": " ",
         "native_description": "",
         "native_name": "",
         "options": {},
@@ -725,11 +504,11 @@ X-XSS-Protection: 1; mode=block
             {
                 "archived": false,
                 "article_code": "",
-                "description": "Default plan for all LUMI",
+                "description": "Default plan for all ",
                 "init_price": 0,
                 "is_active": true,
                 "max_amount": null,
-                "name": "LUMI Common",
+                "name": " Common",
                 "prices": {
                     "cpu_k_hours": 0.1,
                     "gb_k_hours": 0.001,
@@ -743,7 +522,7 @@ X-XSS-Protection: 1; mode=block
                 "switch_price": 0,
                 "unit": "month",
                 "unit_price": "0.0000000",
-                "url": "https://puhuri-core-beta.neic.no/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
+                "url": "https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
                 "uuid": "c0fb33c79e9b48f69fcb6da26db5a28b"
             }
         ],
@@ -760,7 +539,7 @@ X-XSS-Protection: 1; mode=block
         "terms_of_service": "",
         "thumbnail": null,
         "type": "Marketplace.Basic",
-        "url": "https://puhuri-core-beta.neic.no/api/marketplace-provider-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
+        "url": "https://waldur.com/api/marketplace-provider-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
         "uuid": "073a0ddd6eba4ff4a90b943ae3e1b7c9",
         "vendor_details": ""
     }
@@ -778,9 +557,9 @@ User can create an order providing requested allocation parameters.
 - **`limits`** - a set of resource limits for an allocation
 
 ```bash
-$ http --pretty=format -v POST https://puhuri-core-beta.neic.no/api/marketplace-orders/ Authorization:"Token 32e7682378fa394b0f8b2538c444b60129ebfb47" <<< '{
-    "project": "https://puhuri-core-beta.neic.no/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
-    "offering": "https://puhuri-core-beta.neic.no/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
+$ http --pretty=format -v POST https://waldur.com/api/marketplace-orders/ Authorization:"Token 32e7682378fa394b0f8b2538c444b60129ebfb47" <<< '{
+    "project": "https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
+    "offering": "https://waldur.com/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
     "attributes": {
         "name": "Resource allocation1",
         "used_ai_tech": [
@@ -791,7 +570,7 @@ $ http --pretty=format -v POST https://puhuri-core-beta.neic.no/api/marketplace-
         "is_commercial": false,
         "is_training": false
     },
-    "plan": "https://puhuri-core-beta.neic.no/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
+    "plan": "https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
     "limits": {
         "gb_k_hours": 1,
         "gpu_k_hours": 2,
@@ -806,7 +585,7 @@ Authorization: Token 32e7682378fa394b0f8b2538c444b60129ebfb47
 Connection: keep-alive
 Content-Length: 730
 Content-Type: application/json
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 {
@@ -825,9 +604,9 @@ User-Agent: HTTPie/2.4.0
         "gb_k_hours": 1,
         "gpu_k_hours": 2
     },
-    "offering": "https://puhuri-core-beta.neic.no/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
-    "plan": "https://puhuri-core-beta.neic.no/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
-    "project": "https://puhuri-core-beta.neic.no/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
+    "offering": "https://waldur.com/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
+    "plan": "https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
+    "project": "https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
 }
 
 HTTP/1.1 201 Created
@@ -842,7 +621,7 @@ Content-Length: 2114
 Content-Security-Policy: report-uri csp.hpc.ut.ee; form-action 'self';
 Content-Type: application/json
 Date: Wed, 21 Apr 2021 16:03:08 GMT
-Location: https://puhuri-core-beta.neic.no/api/marketplace-orders/d4ba1c23c3de47d6b0ad61bbfbaeed05/
+Location: https://waldur.com/api/marketplace-orders/d4ba1c23c3de47d6b0ad61bbfbaeed05/
 Referrer-Policy: no-referrer-when-downgrade
 Strict-Transport-Security: max-age=31536000; preload
 Vary: Accept-Language, Cookie
@@ -852,11 +631,11 @@ X-XSS-Protection: 1; mode=block
 
 {
     "approved_at": "2021-04-21T16:03:08.430238Z",
-    "approved_by": "https://puhuri-core-beta.neic.no/api/users/3f2cadfbb2b145fd8cf18d549dcd7329/",
+    "approved_by": "https://waldur.com/api/users/3f2cadfbb2b145fd8cf18d549dcd7329/",
     "approved_by_full_name": "Demo Staff",
     "approved_by_username": "admin",
     "created": "2021-04-21T16:03:08.389589Z",
-    "created_by": "https://puhuri-core-beta.neic.no/api/users/3f2cadfbb2b145fd8cf18d549dcd7329/",
+    "created_by": "https://waldur.com/api/users/3f2cadfbb2b145fd8cf18d549dcd7329/",
     "created_by_full_name": "Demo Staff",
     "created_by_username": "admin",
     "customer_uuid": "d42a18b6b8ba4c2bb0591b3ff8fb181d",
@@ -882,19 +661,19 @@ X-XSS-Protection: 1; mode=block
         "gpu_k_hours": 2
     },
     "modified": "2021-04-21T16:03:08.402139Z",
-    "offering": "https://puhuri-core-beta.neic.no/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
+    "offering": "https://waldur.com/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
     "offering_billable": true,
-    "offering_description": "LUMI share of Denmark",
-    "offering_name": "LUMI Denmark",
+    "offering_description": "",
+    "offering_name": " ",
     "offering_shared": true,
     "offering_terms_of_service": "",
     "offering_thumbnail": null,
     "offering_type": "Marketplace.Basic",
     "offering_uuid": "073a0ddd6eba4ff4a90b943ae3e1b7c9",
     "output": "",
-    "plan": "https://puhuri-core-beta.neic.no/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
-    "plan_description": "Default plan for all LUMI",
-    "plan_name": "LUMI Common",
+    "plan": "https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
+    "plan_description": "Default plan for all ",
+    "plan_name": " Common",
     "plan_unit": "month",
     "plan_uuid": "c0fb33c79e9b48f69fcb6da26db5a28b",
     "provider_name": "Danish e-Infrastructure Cooperation",
@@ -902,10 +681,10 @@ X-XSS-Protection: 1; mode=block
     "state": "pending-provider",
     "type": "Create",
     "uuid": "f980c6ae5dc746c5bf5bbf1e31ff7d7e"
-    "project": "https://puhuri-core-beta.neic.no/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
+    "project": "https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",
     "project_uuid": "4475ac77fa3a491aacb3fb3a6dfadadf",
     "total_cost": "1.3010000000",
-    "url": "https://puhuri-core-beta.neic.no/api/marketplace-orders/d4ba1c23c3de47d6b0ad61bbfbaeed05/",
+    "url": "https://waldur.com/api/marketplace-orders/d4ba1c23c3de47d6b0ad61bbfbaeed05/",
     "uuid": "d4ba1c23c3de47d6b0ad61bbfbaeed05"
 }
 ```
@@ -916,13 +695,13 @@ Otherwise, there is additional need for manual approval.
 After that, order should be pulled until resource UUID is present (`marketplace_resource_uuid` field).
 
 ```bash
-$ http --pretty=format -v https://puhuri-core-beta.neic.no/api/marketplace-orders/f980c6ae5dc746c5bf5bbf1e31ff7d7e/ Authorization:"Token 32e7682378fa394b0f8b2538c444b60129ebfb47"
+$ http --pretty=format -v https://waldur.com/api/marketplace-orders/f980c6ae5dc746c5bf5bbf1e31ff7d7e/ Authorization:"Token 32e7682378fa394b0f8b2538c444b60129ebfb47"
 GET /api/marketplace-orders/f980c6ae5dc746c5bf5bbf1e31ff7d7e/ HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate
 Authorization: Token 32e7682378fa394b0f8b2538c444b60129ebfb47
 Connection: keep-alive
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 
@@ -979,12 +758,12 @@ X-XSS-Protection: 1; mode=block
     "marketplace_resource_uuid": "7b0dc0323ce94ebda8670d76a40ebe99",
     "modified": "2021-04-21T16:03:08.542428Z",
     "new_cost_estimate": 1.301,
-    "new_plan_name": "LUMI Common",
+    "new_plan_name": "Common",
     "new_plan_uuid": "c0fb33c79e9b48f69fcb6da26db5a28b",
-    "offering": "https://puhuri-core-beta.neic.no/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
+    "offering": "https://waldur.com/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",
     "offering_billable": true,
-    "offering_description": "LUMI share of Denmark",
-    "offering_name": "LUMI Denmark",
+    "offering_description": "Description",
+    "offering_name": " ",
     "offering_shared": true,
     "offering_terms_of_service": "",
     "offering_thumbnail": null,
@@ -994,9 +773,9 @@ X-XSS-Protection: 1; mode=block
     "order_approved_at": "2021-04-21T16:03:08.430238Z",
     "order_approved_by": "Demo Staff",
     "output": "",
-    "plan": "https://puhuri-core-beta.neic.no/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
-    "plan_description": "Default plan for all LUMI",
-    "plan_name": "LUMI Common",
+    "plan": "https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",
+    "plan_description": "Default plan",
+    "plan_name": "Common",
     "plan_unit": "month",
     "plan_uuid": "c0fb33c79e9b48f69fcb6da26db5a28b",
     "project_name": "New project name",
@@ -1021,7 +800,7 @@ Of course, these endpoints are available only if you have service provider or se
 ## Modification of a resource allocation
 
 ```bash
-$ http --pretty=format -v PUT https://puhuri-core-beta.neic.no/api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" name="New resource name" description="New resource description"
+$ http --pretty=format -v PUT https://waldur.com/api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" name="New resource name" description="New resource description"
 PUT /api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/ HTTP/1.1
 Accept: application/json, */*;q=0.5
 Accept-Encoding: gzip, deflate
@@ -1029,7 +808,7 @@ Authorization: Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
 Connection: keep-alive
 Content-Length: 72
 Content-Type: application/json
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 {
@@ -1067,7 +846,7 @@ X-XSS-Protection: 1; mode=block
 As an RA, you can update options of an allocations. Update happens through a special endpoint on a resource.
 
 ```bash
-http -v POST https://puhuri-core-beta.neic.no/api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/update_options/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" <<< '{
+http -v POST https://waldur.com/api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/update_options/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" <<< '{
     "options": {
         "used_ai_tech": [
             "Deep Learning",
@@ -1083,7 +862,7 @@ Authorization: Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
 Connection: keep-alive
 Content-Length: 153
 Content-Type: application/json
-Host: puhuri-portal-demo.neic.no
+Host: waldur-demo.com
 User-Agent: HTTPie/3.2.2
 
 {
@@ -1129,14 +908,14 @@ x-xss-protection: 1; mode=block
 Termination uses a special short-cut action ``/terminate`` and returns UUID of a generated order.
 
 ```bash
-$ http -v POST https://puhuri-core-beta.neic.no/api/marketplace-resources/8887243fa8d0458c970eeb6be28ff4f7/terminate/ Authorization:"Token 32e7682378fa394b0f8b2538c444b60129ebfb47"
+$ http -v POST https://waldur.com/api/marketplace-resources/8887243fa8d0458c970eeb6be28ff4f7/terminate/ Authorization:"Token 32e7682378fa394b0f8b2538c444b60129ebfb47"
 POST /api/marketplace-resources/8887243fa8d0458c970eeb6be28ff4f7/terminate/ HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate
 Authorization: Token 32e7682378fa394b0f8b2538c444b60129ebfb47
 Connection: keep-alive
 Content-Length: 0
-Host: puhuri-core-beta.neic.no
+Host: waldur.com
 User-Agent: HTTPie/2.4.0
 
 
