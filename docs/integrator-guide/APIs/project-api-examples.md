@@ -205,8 +205,8 @@ X-XSS-Protection: 1; mode=block
 }
 ```
 
-
 ## List projects
+
 ```bash
 $ http --pretty=format -v https://puhuri-core-beta.neic.no/api/projects/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"
 GET /api/projects/ HTTP/1.1
@@ -455,6 +455,7 @@ X-XSS-Protection: 1; mode=block
 ```
 
 ## Project members permissions allocation
+
 User creates a role for a user in a project.
 
 ```bash
@@ -552,6 +553,7 @@ x-xss-protection: 1; mode=block
 ```
 
 ## Removal of members from a project
+
 User can remove the permissions calling DELETE verb on permission's URL.
 
 ```bash
@@ -590,8 +592,8 @@ x-frame-options: DENY
 x-xss-protection: 1; mode=block
 ```
 
-
 ## Getting a list of offerings
+
 User can fetch offerings and filter them by the following fields:
 
 - `name` - offering's name
@@ -600,7 +602,7 @@ User can fetch offerings and filter them by the following fields:
 - `customer_uuid` - organization's UUID
 - `allowed_customer_uuid` - allowed organization's UUID
 - `service_manager_uuid` - service manager's UUID
-- `attributes` - a set of attributes (key-value pairs) identifying the allocation. Check [below](#lumi-resource-options) for LUMI specific attributes.
+- `attributes` - a set of attributes (key-value pairs) identifying the allocation.
 - `state` - offering's state (`Active`, `Draft`, `Paused`, `Archived`), should be `Active`
 - `category_uuid` - category's UUID
 - `billable` - signalizing if an offering is billable or not, should be `true`
@@ -766,6 +768,7 @@ X-XSS-Protection: 1; mode=block
 ```
 
 ## Creation of a resource allocation
+
 User can create an order providing requested allocation parameters.
 
 - **`project`** - project's UUID
@@ -1062,7 +1065,6 @@ X-XSS-Protection: 1; mode=block
 ## Modification of resource allocation options
 
 As an RA, you can update options of an allocations. Update happens through a special endpoint on a resource.
-Check [below](#lumi-resource-options) for LUMI specific attributes.
 
 ```bash
 http -v POST https://puhuri-core-beta.neic.no/api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/update_options/ Authorization:"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811" <<< '{
