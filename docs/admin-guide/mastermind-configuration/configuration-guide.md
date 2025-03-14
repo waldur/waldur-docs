@@ -1765,7 +1765,7 @@ Mark terms of services as approved for new users.
 
 **Type:** bool
 
-If this is true and user email is pre-validated then accepting invitation to only do that if user's email and email of the invitation fully match.
+If true, user email in Waldur database and in invitatation must strictly match.
 
 #### INVITATION_DISABLE_MULTIPLE_ROLES
 
