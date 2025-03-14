@@ -4498,6 +4498,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrator-guide/APIs/project-api-examples/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Project API examples
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -25989,6 +26010,271 @@ previous, first and last pages are included in the Link header.
  <span class="l">&lt;http://example.com/api/users/?page=6&gt;; rel="last"</span>
 <span class="na">X-Result-Count</span><span class="o">:</span> <span class="l">54</span>
 <span class="na">Allow</span><span class="o">:</span> <span class="l">GET, POST, HEAD, OPTIONS</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-api-common-operations">Common operations</h2>
+<p>If you are integrating a python-based application, you might find useful a <a href="#integrator-guide-waldur-sdk">python wrapper</a> for typical operations.</p>
+<p>Almost all operations require authentication. Authentication process is a two-step:</p>
+<ol>
+<li>Generation of authentication token using <a href="#integrator-guide-apis-authentication">Authentication API</a>.</li>
+<li>Passing that token in the Authorization header along with all other REST API calls.</li>
+</ol>
+<p>Please note that all of the responses to the listing are paginated, by default up to 10 elements are returned.
+You can request more by passing <code>page_size=&lt;number&gt;</code> argument, number up to 200 will be respected. Information
+about the whole set is contained in the response headers. Check <a href="https://github.com/waldur/ansible-waldur-module/blob/6679b6b8f9ca21099eb3a6cb97e846d3e8dd1249/waldur_client.py#L140">example of a "get_all" function</a>
+to see how a full traversal can be done.</p>
+<h2 id="integrator-guide-apis-api-project-management">Project management</h2>
+<h3 id="integrator-guide-apis-api-customer-lookup">Customer lookup</h3>
+<p>Waldur implements a multi-tenant model to allow different organizations to allocate shared resources simultaneously
+and independently from each other. Each such organizaton is a customer of Waldur and is able to create its own
+projects. Project allows us to create new allocations as well as connect users with the project.</p>
+<p>Hence, to create a project, one needs first to have a reference to the customer. The reference is a stable one and
+can be cached by a REST API client.</p>
+<p>Examples:</p>
+<ul>
+<li><a href="#integrator-guide-apis-project-api-examples-lookup-allocator-customers-available-to-a-user">API call for customer lookup</a></li>
+</ul>
+<h3 id="integrator-guide-apis-api-project-creation">Project creation</h3>
+<p>In order to create a new project in an organization, user needs to provide the following fields:</p>
+<ul>
+<li><strong><code>customer</code></strong> - URL of the project's organization</li>
+<li><strong><code>name</code></strong> - project's name</li>
+<li><code>description</code> - description of a project description</li>
+<li><code>end_date</code> - optional date when the project and all allocations it contains will be scheduled for termination.</li>
+<li><code>backend_id</code> - optional identifier, which is intended to be unique in the resource allocator's project list. Can be used for connecting Waldur projects with the client's project registry.</li>
+<li><code>oecd_fos_2007_code</code> - optional OECD Field of Science code. A code is represented by a string with two numbers separated by dot for a corresponding field of science. For example <code>"1.1"</code> is code for Mathematics. More information can be found <a href="https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about">here</a>.</li>
+</ul>
+<p>Please note that the project becomes active at the moment of creation!</p>
+<p>Examples:</p>
+<ul>
+<li><a href="#integrator-guide-apis-project-api-examples-create-a-new-project">API call for project creation</a></li>
+<li><a href="https://github.com/waldur/waldur-mastermind/blob/54689ac472b1a07fa815a5ddebcf35ea888d3dcc/src/waldur_mastermind/marketplace_remote/utils.py#L122">Project creation in Waldur</a>.</li>
+</ul>
+<h3 id="integrator-guide-apis-api-project-update">Project update</h3>
+<p>It is possible to update an existing project using its URL link. Name, description and backend_id can be updated.</p>
+<p>Examples:</p>
+<ul>
+<li><a href="#integrator-guide-apis-project-api-examples-update-an-existing-project">API call for project update</a></li>
+</ul>
+<h3 id="integrator-guide-apis-api-project-lookup">Project lookup</h3>
+<p>User can list projects and filter them using the following query parameters:</p>
+<ul>
+<li><code>name</code> - project's name (uses 'contains' logic for lookup)</li>
+<li><code>name_exact</code> - project's exact name</li>
+<li><code>description</code> - project's description (uses 'contains' logic for lookup)</li>
+<li><code>backend_id</code> - project's exact backend ID</li>
+</ul>
+<p>In case API user has access to more than one customer, extra filter by customer properties can be added:</p>
+<ul>
+<li><code>customer</code> - exact filter by customer UUID</li>
+<li><code>customer_name</code> - filter by partial match of the full name of a customer</li>
+<li><code>abbreviation</code> - filter by partial match of the abbreviation of a customer</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li><a href="#integrator-guide-apis-project-api-examples-list-projects">API call for listing  of projects</a>)</li>
+</ul>
+<h2 id="integrator-guide-apis-api-project-membership-management">Project membership management</h2>
+<p>Creating a membership for a user means creating a permission link. While multiple roles of a user per project are allowed,
+we recommed for clarity to have one active project role per user in a project.</p>
+<p>The list of fields for creation are:</p>
+<ul>
+<li><code>user</code> - a user's UUID, looked up from a previous step.</li>
+<li><code>role</code> - a role of the user. Both role UUID and name are supported. By default the system roles 'PROJECT.MEMBER', 'PROJECT.ADMIN' and 'PROJECT.MANAGER' are supported. TODO: add reference to Puhuri terminology.</li>
+<li><code>expiration_time</code> - an optional field, if provided, it should contain date or ISO 8601 datetime.</li>
+</ul>
+<p>To remove the permission, REST API client needs to send a HTTP request using the same payload as for permission creation,
+but to <code>delete_user</code> endpoint .</p>
+<p>It is also possible to list available project permissions along with a <code>role</code> filter.</p>
+<p>Examples:</p>
+<ul>
+<li><a href="#integrator-guide-apis-project-api-examples-project-members-permissions-allocation">API call for allocating members to a project</a></li>
+<li><a href="#integrator-guide-apis-project-api-examples-removal-of-members-from-a-project">API call for removing members from a project</a></li>
+<li><a href="#integrator-guide-apis-project-api-examples-list-project-permissions">API call to listing project permissions</a></li>
+</ul>
+<h2 id="integrator-guide-apis-api-resource-allocation-management">Resource allocation management</h2>
+<p>Creating and managing resource allocations in Waldur follows ordering logic.</p>
+<p>All operations on resources, which lead to changes in allocations - e.g. creation, modification of allocated limits
+or termination - are wrapped in an order.</p>
+<h3 id="integrator-guide-apis-api-listing-offerings">Listing offerings</h3>
+<p>To create a new Allocation, one must first choose a specific Offering from available. Offering corresponds to a specific
+part of a shared resource that Resource Allocator can allocate. Offerings can be visible to multiple allocators, however in the first iteration we plan to limit allocators with
+access to only their owned shares.</p>
+<p>User can fetch offerings and filter them by the following fields:</p>
+<ul>
+<li><code>name</code> - offering's name</li>
+<li><code>name_exact</code> - offering's exact name</li>
+<li><code>customer</code> - organization's URL</li>
+<li><code>customer_uuid</code> - organization's UUID</li>
+</ul>
+<p>Generally Offering has a stable UUID, which can be used in Waldur client configuration. Offering defines inputs
+that are required to provision an instance of the offering, available accounting plans (at least one should be present)
+as well as attributes that can or should be provided with each request.</p>
+<p>Each Offering contains one or more plans, you will need to provide a reference (URL) to the plan when creating an
+allocation.</p>
+<p>API examples:</p>
+<ul>
+<li><a href="#integrator-guide-apis-project-api-examples-getting-a-list-of-offerings">Getting a list of offerings available for allocation</a></li>
+</ul>
+<h3 id="integrator-guide-apis-api-orders-and-resources">Orders and resources</h3>
+<p>To create a new allocation, an order must be created with requested attributes: project
+as well as details about the allocations.</p>
+<p>Order might require additional approvals - in this case upon creation its status will be <code>pending-consumer</code> or <code>pending-provider</code>, which
+can transition to <code>REJECTED</code> if order is rejected.
+Otherwise it will be switched to <code>EXECUTING</code>, ending either in <code>DONE</code> if all is good or <code>ERRED</code>, if error happens during the processing.</p>
+<p>Resource UUID is available as a <code>marketplace_resource_uuid</code> field of the creation order.</p>
+<p>In addition, <code>accepting_terms_of_service</code> flag must be provided as a lightweight confirmation that allocator is
+aware and agreeing with Terms of services of a specific Offering.</p>
+<p>Example of the order payload sent with <code>POST</code> to <code>https://puhuri-core-beta.neic.no/api/marketplace-orders/</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">   </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://puhuri-core-beta.neic.no/api/projects/72fff2b5f09643bdb1fa30684427336b/"</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">"offering"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://puhuri-core-beta.neic.no/api/marketplace-public-offerings/0980e9426d5247a0836ccfd64769d900/"</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"test20"</span><span class="p">,</span>
+<span class="w">   </span><span class="p">},</span>
+<span class="w">   </span><span class="nt">"limits"</span><span class="p">:{</span>
+<span class="w">      </span><span class="nt">"gb_k_hours"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"cpu_k_hours"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"gpu_k_hours"</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span>
+<span class="w">   </span><span class="p">},</span>
+<span class="w">   </span><span class="nt">"plan"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://puhuri-core-beta.neic.no/api/marketplace-public-plans/14b28e3a1cbe44b395bad48de9f934d8/"</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">"accepting_terms_of_service"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="integrator-guide-apis-api-change-resource-limits">Change resource limits</h3>
+<p>Send <code>POST</code> request to <code>https://puhuri-core-beta.neic.no/api/marketplace-resources/&lt;UUID_OF_A_RESOURCE&gt;/update_limits/</code> providing
+the new values of limits, for example:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">   </span><span class="nt">"limits"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"gb_k_hours"</span><span class="p">:</span><span class="w"> </span><span class="mi">35</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"cpu_k_hours"</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"gpu_k_hours"</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="integrator-guide-apis-api-resource-termination">Resource termination</h3>
+<p>Send <code>POST</code> request to <code>https://puhuri-core-beta.neic.no/api/marketplace-resources/&lt;UUID_OF_A_RESOURCE&gt;/terminate/</code>.</p>
+<p>API examples:</p>
+<ul>
+<li><a href="#integrator-guide-apis-project-api-examples-creation-of-a-resource-allocation">Creation of a resource allocation</a></li>
+<li><a href="#integrator-guide-apis-project-api-examples-modification-of-a-resource-allocation">Modification of a resource allocation</a></li>
+<li><a href="#integrator-guide-apis-project-api-examples-termination-of-a-resource-allocation">Termination of a resource allocation</a></li>
+</ul>
+<p>Example integrations:</p>
+<ul>
+<li><a href="https://github.com/waldur/waldur-mastermind/blob/7b2eba62e1e0dab945845f05030c7935e57f0d9c/src/waldur_mastermind/marketplace_remote/views.py#L45">Lookup of available offerings in Waldur</a>.</li>
+<li><a href="https://github.com/waldur/waldur-mastermind/blob/7b2eba62e1e0dab945845f05030c7935e57f0d9c/src/waldur_mastermind/marketplace_remote/processors.py#L37">Creation of a resource in Waldur</a>.</li>
+<li><a href="https://github.com/waldur/waldur-mastermind/blob/7b2eba62e1e0dab945845f05030c7935e57f0d9c/src/waldur_mastermind/marketplace_remote/processors.py#L53">Changing allocated limits in Waldur</a>.</li>
+<li><a href="https://github.com/waldur/waldur-mastermind/blob/7b2eba62e1e0dab945845f05030c7935e57f0d9c/src/waldur_mastermind/marketplace_remote/processors.py#L64">Deletion of a resource allocation in Waldur</a>.</li>
+</ul>
+<h2 id="integrator-guide-apis-api-reporting">Reporting</h2>
+<h3 id="integrator-guide-apis-api-getting-usage-data-of-a-specific-resource-allocation">Getting usage data of a specific resource allocation</h3>
+<p>To get reported usage for resources, send  <code>GET</code> request to <code>https://puhuri-core-beta.neic.no/api/marketplace-component-usages/</code>. If you want to get usage data of a specific resource, please add a filter, e.g. <code>https://puhuri-core-beta.neic.no/api/marketplace-component-usages/?resource_uuid=&lt;UUID_OF_A_RESOURCE&gt;</code>. Note that responses are paginated.</p>
+<p>Additional filters that can be used:</p>
+<ul>
+<li><code>date_before</code> - date of the returned usage records should be before or equal to provided, format YYYY-MM-DD, e.g. 2021-03-01.</li>
+<li><code>date_after</code> - date of the returned usage records should be later or equal to provided, format YYYY-MM-DD, e.g. 2021-03-01.</li>
+<li><code>offering_uuid</code> - return usage records only for a specified offering.</li>
+<li><code>type</code> - type of the usage record to return, e.g. 'cpu_k_hours'.</li>
+</ul>
+<p>Response will contain a list of usage records with a separate record for each component per month, for example:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"15a7a55fc78d44f995a6735b1f0f0c86"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"created"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2021-11-26T20:30:21.348221Z"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu_k_hours"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CPU allocation"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"measured_unit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CPU kH"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"usage"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2021-11-26T20:30:21.342018Z"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"resource_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Sample allocation"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"resource_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"4e4b8910b3df4ca0969871922eed8f3d"</span><span class="p">,</span><span class="err">Waldur</span>
+<span class="w">    </span><span class="nt">"offering_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"LUMI UoI / Fast Track Access for Industry Access"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"offering_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abe3c5e7cbe14d97a3208c56a22251f4"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"project_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"University of Iceland / Sample project"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"project_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"e1ffec53fd494d438fcb71daee1ae375"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"customer_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"University of Iceland"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"customer_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6b4aba63ed47472e9cee84dac500cf11"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"recurring"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"billing_period"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2021-11-01"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2b90e7f5f91d41b7838bc0d45093dd23"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"created"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2021-11-26T20:30:21.383305Z"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gb_k_hours"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Storage allocation"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"measured_unit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GB kH"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"usage"</span><span class="p">:</span><span class="w"> </span><span class="mi">34</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2021-11-26T20:30:21.342018Z"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"resource_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Sample allocation"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"resource_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"4e4b8910b3df4ca0969871922eed8f3d"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"offering_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"LUMI UoI / Fast Track Access for Industry Access"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"offering_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abe3c5e7cbe14d97a3208c56a22251f4"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"project_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"University of Iceland / Sample project"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"project_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"e1ffec53fd494d438fcb71daee1ae375"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"customer_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"University of Iceland"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"customer_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6b4aba63ed47472e9cee84dac500cf11"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"recurring"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"billing_period"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2021-11-01"</span>
+<span class="w">  </span><span class="p">}</span>
 </code></pre></div></td></tr></table></div></div></section><section class="print-page" id="integrator-guide-apis-authentication"><div><h1 id="authentication">Authentication</h1>
 <p>Outline:</p>
 <ul>
@@ -26245,6 +26531,1721 @@ X-Result-Count:<span class="w"> </span><span class="m">1</span>
 <span class="w">        </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"3c64889f169442d687490addc2a9de30"</span>
 <span class="w">    </span><span class="o">}</span>
 <span class="o">]</span>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="integrator-guide-apis-project-api-examples"><div><h1 id="project-api-examples">Project API examples</h1>
+<h2 id="integrator-guide-apis-project-api-examples-lookup-allocator-customers-available-to-a-user">Lookup allocator customers available to a user</h2>
+<p>In most cases integration user can see only one allocating organization, however it is
+possible that the same account is used for allocating different shares, e.g. national share and community specific.
+Projects are always created in the context of a specific customer, so as a first thing you need to lookup a specific
+customer you want to use. Customer is a stable entity, so it's URL / UUID can be cached.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>https://waldur.com/api/customers/<span class="w"> </span><span class="nv">field</span><span class="o">==</span>url<span class="w"> </span><span class="nv">field</span><span class="o">==</span>name<span class="w"> </span>Authorization:<span class="s2">"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"</span>
+GET<span class="w"> </span>/api/customers/?field<span class="o">=</span>url<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>name<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>*/*
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
+Connection:<span class="w"> </span>keep-alive
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>GET,<span class="w"> </span>POST,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">1188</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Fri,<span class="w"> </span><span class="m">09</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">09</span>:28:42<span class="w"> </span>GMT
+Link:<span class="w"> </span>&lt;https://waldur.com/api/customers/?field<span class="o">=</span>url<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>name&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"first"</span>,<span class="w"> </span>&lt;https://waldur.com/api/customers/?field<span class="o">=</span>url<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>name&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"last"</span>
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-Result-Count:<span class="w"> </span><span class="m">9</span>
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">[</span>
+<span class="w">    </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"Estonian Scientific Computing Infrastructure"</span>,
+<span class="w">        </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/customers/33541d82c56c4eca8dbb1dabee54b3b9/"</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">]</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-create-a-new-project">Create a new project</h2>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>POST<span class="w"> </span>https://waldur.com/api/projects/<span class="w"> </span>Authorization:<span class="s2">"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"</span><span class="w"> </span><span class="nv">customer</span><span class="o">=</span>https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/<span class="w"> </span><span class="nv">name</span><span class="o">=</span><span class="s2">"Project name"</span><span class="w"> </span><span class="nv">description</span><span class="o">=</span><span class="s2">"Project description"</span><span class="w"> </span><span class="nv">backend_id</span><span class="o">=</span><span class="s2">"My unique string"</span><span class="w"> </span><span class="nv">oecd_fos_2007_code</span><span class="o">=</span><span class="s2">"1.1"</span>
+POST<span class="w"> </span>/api/projects/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>application/json,<span class="w"> </span>*/*<span class="p">;</span><span class="nv">q</span><span class="o">=</span><span class="m">0</span>.5
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
+Connection:<span class="w"> </span>keep-alive
+Content-Length:<span class="w"> </span><span class="m">192</span>
+Content-Type:<span class="w"> </span>application/json
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"backend_id"</span>:<span class="w"> </span><span class="s2">"My unique string"</span>,
+<span class="w">    </span><span class="s2">"customer"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/"</span>,
+<span class="w">    </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">"Project description"</span>,
+<span class="w">    </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"Project name"</span>,
+<span class="w">    </span><span class="s2">"oecd_fos_2007_code"</span>:<span class="w"> </span><span class="s2">"1.1"</span>
+<span class="o">}</span>
+
+HTTP/1.1<span class="w"> </span><span class="m">201</span><span class="w"> </span>Created
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>GET,<span class="w"> </span>POST,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">604</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Fri,<span class="w"> </span><span class="m">09</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">09</span>:40:52<span class="w"> </span>GMT
+Location:<span class="w"> </span>https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"backend_id"</span>:<span class="w"> </span><span class="s2">"My unique string"</span>,
+<span class="w">    </span><span class="s2">"billing_price_estimate"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"current"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">        </span><span class="s2">"tax"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">        </span><span class="s2">"tax_current"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">        </span><span class="s2">"total"</span>:<span class="w"> </span><span class="m">0</span>.0
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2021-04-09T09:40:51.832870Z"</span>,
+<span class="w">    </span><span class="s2">"customer"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/"</span>,
+<span class="w">    </span><span class="s2">"customer_abbreviation"</span>:<span class="w"> </span><span class="s2">"DeiC"</span>,
+<span class="w">    </span><span class="s2">"customer_name"</span>:<span class="w"> </span><span class="s2">"Danish e-Infrastructure Cooperation"</span>,
+<span class="w">    </span><span class="s2">"customer_native_name"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"customer_uuid"</span>:<span class="w"> </span><span class="s2">"d42a18b6b8ba4c2bb0591b3ff8fb181d"</span>,
+<span class="w">    </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">"Project description"</span>,
+<span class="w">    </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"Project name"</span>,
+<span class="w">    </span><span class="s2">"oecd_fos_2007_code"</span>:<span class="w"> </span><span class="s2">"1.1"</span>,
+<span class="w">    </span><span class="s2">"type"</span>:<span class="w"> </span>null,
+<span class="w">    </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/"</span>,
+<span class="w">    </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"4475ac77fa3a491aacb3fb3a6dfadadf"</span>
+<span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-update-an-existing-project">Update an existing project</h2>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>PUT<span class="w"> </span>https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/<span class="w"> </span>Authorization:<span class="s2">"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"</span><span class="w"> </span><span class="nv">name</span><span class="o">=</span><span class="s2">"New project name"</span><span class="w"> </span><span class="nv">customer</span><span class="o">=</span>https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/
+PUT<span class="w"> </span>/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>application/json,<span class="w"> </span>*/*<span class="p">;</span><span class="nv">q</span><span class="o">=</span><span class="m">0</span>.5
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
+Connection:<span class="w"> </span>keep-alive
+Content-Length:<span class="w"> </span><span class="m">124</span>
+Content-Type:<span class="w"> </span>application/json
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"customer"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/"</span>,
+<span class="w">    </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"New project name"</span>
+<span class="o">}</span>
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>GET,<span class="w"> </span>PUT,<span class="w"> </span>PATCH,<span class="w"> </span>DELETE,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">608</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Fri,<span class="w"> </span><span class="m">09</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">09</span>:45:16<span class="w"> </span>GMT
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"backend_id"</span>:<span class="w"> </span><span class="s2">"My unique string"</span>,
+<span class="w">    </span><span class="s2">"billing_price_estimate"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"current"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">        </span><span class="s2">"tax"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">        </span><span class="s2">"tax_current"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">        </span><span class="s2">"total"</span>:<span class="w"> </span><span class="m">0</span>.0
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2021-04-09T09:40:51.832870Z"</span>,
+<span class="w">    </span><span class="s2">"customer"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/"</span>,
+<span class="w">    </span><span class="s2">"customer_abbreviation"</span>:<span class="w"> </span><span class="s2">"DeiC"</span>,
+<span class="w">    </span><span class="s2">"customer_name"</span>:<span class="w"> </span><span class="s2">"Danish e-Infrastructure Cooperation"</span>,
+<span class="w">    </span><span class="s2">"customer_native_name"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"customer_uuid"</span>:<span class="w"> </span><span class="s2">"d42a18b6b8ba4c2bb0591b3ff8fb181d"</span>,
+<span class="w">    </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">"Project description"</span>,
+<span class="w">    </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"New project name"</span>,
+<span class="w">    </span><span class="s2">"type"</span>:<span class="w"> </span>null,
+<span class="w">    </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/"</span>,
+<span class="w">    </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"4475ac77fa3a491aacb3fb3a6dfadadf"</span>
+<span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-list-projects">List projects</h2>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>https://waldur.com/api/projects/<span class="w"> </span>Authorization:<span class="s2">"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"</span>
+GET<span class="w"> </span>/api/projects/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>*/*
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
+Connection:<span class="w"> </span>keep-alive
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>GET,<span class="w"> </span>POST,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">7129</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Fri,<span class="w"> </span><span class="m">09</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">09</span>:46:41<span class="w"> </span>GMT
+Link:<span class="w"> </span>&lt;https://waldur.com/api/projects/&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"first"</span>,<span class="w"> </span>&lt;https://waldur.com/api/projects/?page<span class="o">=</span><span class="m">2</span>&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"next"</span>,<span class="w"> </span>&lt;https://waldur.com/api/projects/?page<span class="o">=</span><span class="m">2</span>&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"last"</span>
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-Result-Count:<span class="w"> </span><span class="m">20</span>
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">[</span>
+<span class="w">    </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"backend_id"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"billing_price_estimate"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="s2">"current"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">            </span><span class="s2">"tax"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">            </span><span class="s2">"tax_current"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">            </span><span class="s2">"total"</span>:<span class="w"> </span><span class="m">0</span>.0
+<span class="w">        </span><span class="o">}</span>,
+<span class="w">        </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2021-03-26T10:57:02.640605Z"</span>,
+<span class="w">        </span><span class="s2">"customer"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/customers/29f29e6b65004bff9e831dec7c953177/"</span>,
+<span class="w">        </span><span class="s2">"customer_abbreviation"</span>:<span class="w"> </span><span class="s2">"OD"</span>,
+<span class="w">        </span><span class="s2">"customer_name"</span>:<span class="w"> </span><span class="s2">"Office Department"</span>,
+<span class="w">        </span><span class="s2">"customer_native_name"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"customer_uuid"</span>:<span class="w"> </span><span class="s2">"29f29e6b65004bff9e831dec7c953177"</span>,
+<span class="w">        </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">"test project description"</span>,
+<span class="w">        </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"test project"</span>,
+<span class="w">        </span><span class="s2">"type"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/project-types/c588e4bc82fa4cf0b97e545e117c4c21/"</span>,
+<span class="w">        </span><span class="s2">"type_name"</span>:<span class="w"> </span><span class="s2">"Name of project type"</span>,
+<span class="w">        </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/projects/8cb53568cbed40c584029cb43cc540f6/"</span>,
+<span class="w">        </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"8cb53568cbed40c584029cb43cc540f6"</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">]</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-project-members-permissions-allocation">Project members permissions allocation</h2>
+<p>User creates a role for a user in a project.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>POST<span class="w"> </span>https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/add_user/<span class="w"> </span>Authorization:<span class="s2">"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246"</span><span class="w"> </span><span class="nv">role</span><span class="o">=</span>PROJECT.ADMIN<span class="w"> </span><span class="nv">user</span><span class="o">=</span>d213b473874c44d0bb5e2588b091160d
+POST<span class="w"> </span>/api/projects/2477fb6fad594922ac2f5ba195807502/add_user/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>application/json,<span class="w"> </span>*/*<span class="p">;</span><span class="nv">q</span><span class="o">=</span><span class="m">0</span>.5
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>b0dd9a5eb32a158b2739d57d2b359aeb30aef246
+Connection:<span class="w"> </span>keep-alive
+Content-Length:<span class="w"> </span><span class="m">69</span>
+Content-Type:<span class="w"> </span>application/json
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/3.2.2
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"role"</span>:<span class="w"> </span><span class="s2">"PROJECT.ADMIN"</span>,
+<span class="w">    </span><span class="s2">"user"</span>:<span class="w"> </span><span class="s2">"d213b473874c44d0bb5e2588b091160d"</span>
+<span class="o">}</span>
+
+HTTP/1.1<span class="w"> </span><span class="m">201</span><span class="w"> </span>Created
+access-control-allow-credentials:<span class="w"> </span><span class="nb">true</span>
+access-control-allow-headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With,<span class="w"> </span>sentry-trace,<span class="w"> </span>baggage
+access-control-allow-methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+access-control-allow-origin:<span class="w"> </span>*
+access-control-expose-headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+allow:<span class="w"> </span>POST,<span class="w"> </span>OPTIONS
+content-language:<span class="w"> </span>en
+content-length:<span class="w"> </span><span class="m">24</span>
+content-security-policy:<span class="w"> </span>report-uri<span class="w"> </span>https://csp.hpc.ut.ee/log<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span><span class="w"> </span>frame-ancestors<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+content-type:<span class="w"> </span>application/json
+date:<span class="w"> </span>Sun,<span class="w"> </span><span class="m">08</span><span class="w"> </span>Oct<span class="w"> </span><span class="m">2023</span><span class="w"> </span><span class="m">17</span>:28:49<span class="w"> </span>GMT
+referrer-policy:<span class="w"> </span>strict-origin-when-cross-origin
+strict-transport-security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+x-content-type-options:<span class="w"> </span>nosniff
+x-frame-options:<span class="w"> </span>DENY
+x-xss-protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"expiration_time"</span>:<span class="w"> </span>null
+<span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-list-project-permissions">List project permissions</h2>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/<span class="w"> </span>Authorization:<span class="s2">"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246"</span><span class="w"> </span>
+GET<span class="w"> </span>/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>*/*
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>b0dd9a5eb32a158b2739d57d2b359aeb30aef246
+Connection:<span class="w"> </span>keep-alive
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/3.2.2
+
+
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+access-control-allow-credentials:<span class="w"> </span><span class="nb">true</span>
+access-control-allow-headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With,<span class="w"> </span>sentry-trace,<span class="w"> </span>baggage
+access-control-allow-methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+access-control-allow-origin:<span class="w"> </span>*
+access-control-expose-headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+allow:<span class="w"> </span>GET,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+content-language:<span class="w"> </span>en
+content-length:<span class="w"> </span><span class="m">484</span>
+content-security-policy:<span class="w"> </span>report-uri<span class="w"> </span>https://csp.hpc.ut.ee/log<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span><span class="w"> </span>frame-ancestors<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+content-type:<span class="w"> </span>application/json
+date:<span class="w"> </span>Sun,<span class="w"> </span><span class="m">08</span><span class="w"> </span>Oct<span class="w"> </span><span class="m">2023</span><span class="w"> </span><span class="m">17</span>:29:53<span class="w"> </span>GMT
+link:<span class="w"> </span>&lt;https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"first"</span>,<span class="w"> </span>&lt;https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"last"</span>
+referrer-policy:<span class="w"> </span>strict-origin-when-cross-origin
+strict-transport-security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+x-content-type-options:<span class="w"> </span>nosniff
+x-frame-options:<span class="w"> </span>DENY
+x-result-count:<span class="w"> </span><span class="m">1</span>
+x-xss-protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">[</span>
+<span class="w">    </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2023-10-08T17:28:49.565755Z"</span>,
+<span class="w">        </span><span class="s2">"created_by_full_name"</span>:<span class="w"> </span><span class="s2">"Demo User"</span>,
+<span class="w">        </span><span class="s2">"created_by_uuid"</span>:<span class="w"> </span><span class="s2">"d213b473874c44d0bb5e2588b091160d"</span>,
+<span class="w">        </span><span class="s2">"expiration_time"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"role_name"</span>:<span class="w"> </span><span class="s2">"PROJECT.ADMIN"</span>,
+<span class="w">        </span><span class="s2">"role_uuid"</span>:<span class="w"> </span><span class="s2">"f734dc56c95e4f8880293defef00079e"</span>,
+<span class="w">        </span><span class="s2">"user_email"</span>:<span class="w"> </span><span class="s2">"demo.user@example.com"</span>,
+<span class="w">        </span><span class="s2">"user_full_name"</span>:<span class="w"> </span><span class="s2">"Demo User"</span>,
+<span class="w">        </span><span class="s2">"user_image"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"user_username"</span>:<span class="w"> </span><span class="s2">"1af2bdea-73db-4790-baa5-5b487b6625f5@myaccessid.org"</span>,
+<span class="w">        </span><span class="s2">"user_uuid"</span>:<span class="w"> </span><span class="s2">"d213b473874c44d0bb5e2588b091160d"</span>,
+<span class="w">        </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"afdda66296c9490ebed72fce4a00d27a"</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">]</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-removal-of-members-from-a-project">Removal of members from a project</h2>
+<p>User can remove the permissions calling DELETE verb on permission's URL.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>POST<span class="w"> </span>https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/delete_user/<span class="w"> </span>Authorization:<span class="s2">"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246"</span><span class="w"> </span><span class="nv">role</span><span class="o">=</span>PROJECT.ADMIN<span class="w"> </span><span class="nv">user</span><span class="o">=</span>d213b473874c44d0bb5e2588b091160d
+POST<span class="w"> </span>/api/projects/2477fb6fad594922ac2f5ba195807502/delete_user/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>application/json,<span class="w"> </span>*/*<span class="p">;</span><span class="nv">q</span><span class="o">=</span><span class="m">0</span>.5
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>b0dd9a5eb32a158b2739d57d2b359aeb30aef246
+Connection:<span class="w"> </span>keep-alive
+Content-Length:<span class="w"> </span><span class="m">69</span>
+Content-Type:<span class="w"> </span>application/json
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/3.2.2
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"role"</span>:<span class="w"> </span><span class="s2">"PROJECT.ADMIN"</span>,
+<span class="w">    </span><span class="s2">"user"</span>:<span class="w"> </span><span class="s2">"d213b473874c44d0bb5e2588b091160d"</span>
+<span class="o">}</span>
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+access-control-allow-credentials:<span class="w"> </span><span class="nb">true</span>
+access-control-allow-headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With,<span class="w"> </span>sentry-trace,<span class="w"> </span>baggage
+access-control-allow-methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+access-control-allow-origin:<span class="w"> </span>*
+access-control-expose-headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+allow:<span class="w"> </span>POST,<span class="w"> </span>OPTIONS
+content-language:<span class="w"> </span>en
+content-length:<span class="w"> </span><span class="m">0</span>
+content-security-policy:<span class="w"> </span>report-uri<span class="w"> </span>https://csp.hpc.ut.ee/log<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span><span class="w"> </span>frame-ancestors<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+date:<span class="w"> </span>Sun,<span class="w"> </span><span class="m">08</span><span class="w"> </span>Oct<span class="w"> </span><span class="m">2023</span><span class="w"> </span><span class="m">17</span>:31:32<span class="w"> </span>GMT
+referrer-policy:<span class="w"> </span>strict-origin-when-cross-origin
+strict-transport-security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+x-content-type-options:<span class="w"> </span>nosniff
+x-frame-options:<span class="w"> </span>DENY
+x-xss-protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-getting-a-list-of-offerings">Getting a list of offerings</h2>
+<p>User can fetch offerings and filter them by the following fields:</p>
+<ul>
+<li><code>name</code> - offering's name</li>
+<li><code>name_exact</code> - offering's exact name</li>
+<li><code>customer</code> - organization's URL</li>
+<li><code>customer_uuid</code> - organization's UUID</li>
+<li><code>allowed_customer_uuid</code> - allowed organization's UUID</li>
+<li><code>service_manager_uuid</code> - service manager's UUID</li>
+<li><code>attributes</code> - a set of attributes (key-value pairs) identifying the allocation.</li>
+<li><code>state</code> - offering's state (<code>Active</code>, <code>Draft</code>, <code>Paused</code>, <code>Archived</code>), should be <code>Active</code></li>
+<li><code>category_uuid</code> - category's UUID</li>
+<li><code>billable</code> - signalizing if an offering is billable or not, should be <code>true</code></li>
+<li><code>shared</code> - signalizing if an offering is public or not, should be <code>true</code></li>
+<li><code>type</code> - offering's type</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  1</span>
+<span class="normal">  2</span>
+<span class="normal">  3</span>
+<span class="normal">  4</span>
+<span class="normal">  5</span>
+<span class="normal">  6</span>
+<span class="normal">  7</span>
+<span class="normal">  8</span>
+<span class="normal">  9</span>
+<span class="normal"> 10</span>
+<span class="normal"> 11</span>
+<span class="normal"> 12</span>
+<span class="normal"> 13</span>
+<span class="normal"> 14</span>
+<span class="normal"> 15</span>
+<span class="normal"> 16</span>
+<span class="normal"> 17</span>
+<span class="normal"> 18</span>
+<span class="normal"> 19</span>
+<span class="normal"> 20</span>
+<span class="normal"> 21</span>
+<span class="normal"> 22</span>
+<span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>https://waldur.com/api/marketplace-public-offerings/<span class="w"> </span>Authorization:<span class="s2">"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"</span><span class="w"> </span><span class="nv">state</span><span class="o">==</span>Active<span class="w"> </span><span class="nv">shared</span><span class="o">==</span><span class="nb">true</span>
+GET<span class="w"> </span>/api/marketplace-public-offerings/?state<span class="o">=</span>Active<span class="p">&amp;</span><span class="nv">shared</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>*/*
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
+Connection:<span class="w"> </span>keep-alive
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>GET,<span class="w"> </span>POST,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">4779</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Fri,<span class="w"> </span><span class="m">09</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">12</span>:49:06<span class="w"> </span>GMT
+Link:<span class="w"> </span>&lt;https://waldur.com/api/marketplace-public-offerings/?shared<span class="o">=</span>true<span class="p">&amp;</span><span class="nv">state</span><span class="o">=</span>Active&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"first"</span>,<span class="w"> </span>&lt;https://waldur.com/api/marketplace-public-offerings/?shared<span class="o">=</span>true<span class="p">&amp;</span><span class="nv">state</span><span class="o">=</span>Active&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"last"</span>
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-Result-Count:<span class="w"> </span><span class="m">1</span>
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">[</span>
+<span class="w">    </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"attributes"</span>:<span class="w"> </span><span class="o">{}</span>,
+<span class="w">        </span><span class="s2">"backend_id"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"billable"</span>:<span class="w"> </span>true,
+<span class="w">        </span><span class="s2">"category"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-categories/5b61d0811cfe4ed6a004119795a4c532/"</span>,
+<span class="w">        </span><span class="s2">"category_title"</span>:<span class="w"> </span><span class="s2">"HPC"</span>,
+<span class="w">        </span><span class="s2">"category_uuid"</span>:<span class="w"> </span><span class="s2">"5b61d0811cfe4ed6a004119795a4c532"</span>,
+<span class="w">        </span><span class="s2">"citation_count"</span>:<span class="w"> </span>-1,
+<span class="w">        </span><span class="s2">"components"</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">            </span><span class="o">{</span>
+<span class="w">                </span><span class="s2">"article_code"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">                </span><span class="s2">"billing_type"</span>:<span class="w"> </span><span class="s2">"usage"</span>,
+<span class="w">                </span><span class="s2">"default_limit"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">                </span><span class="s2">"disable_quotas"</span>:<span class="w"> </span>false,
+<span class="w">                </span><span class="s2">"factor"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"is_boolean"</span>:<span class="w"> </span>false,
+<span class="w">                </span><span class="s2">"limit_amount"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"limit_period"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"max_value"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"measured_unit"</span>:<span class="w"> </span><span class="s2">"CPU kH"</span>,
+<span class="w">                </span><span class="s2">"min_value"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"CPU allocation"</span>,
+<span class="w">                </span><span class="s2">"type"</span>:<span class="w"> </span><span class="s2">"cpu_k_hours"</span>,
+<span class="w">                </span><span class="s2">"use_limit_for_billing"</span>:<span class="w"> </span><span class="nb">false</span>
+<span class="w">            </span><span class="o">}</span>,
+<span class="w">            </span><span class="o">{</span>
+<span class="w">                </span><span class="s2">"article_code"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">                </span><span class="s2">"billing_type"</span>:<span class="w"> </span><span class="s2">"usage"</span>,
+<span class="w">                </span><span class="s2">"default_limit"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">                </span><span class="s2">"disable_quotas"</span>:<span class="w"> </span>false,
+<span class="w">                </span><span class="s2">"factor"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"is_boolean"</span>:<span class="w"> </span>false,
+<span class="w">                </span><span class="s2">"limit_amount"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"limit_period"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"max_value"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"measured_unit"</span>:<span class="w"> </span><span class="s2">"CPU kH"</span>,
+<span class="w">                </span><span class="s2">"min_value"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"GPU allocation"</span>,
+<span class="w">                </span><span class="s2">"type"</span>:<span class="w"> </span><span class="s2">"gpu_k_hours"</span>,
+<span class="w">                </span><span class="s2">"use_limit_for_billing"</span>:<span class="w"> </span><span class="nb">false</span>
+<span class="w">            </span><span class="o">}</span>,
+<span class="w">            </span><span class="o">{</span>
+<span class="w">                </span><span class="s2">"article_code"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">                </span><span class="s2">"billing_type"</span>:<span class="w"> </span><span class="s2">"usage"</span>,
+<span class="w">                </span><span class="s2">"default_limit"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">                </span><span class="s2">"disable_quotas"</span>:<span class="w"> </span>false,
+<span class="w">                </span><span class="s2">"factor"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"is_boolean"</span>:<span class="w"> </span>false,
+<span class="w">                </span><span class="s2">"limit_amount"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"limit_period"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"max_value"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"measured_unit"</span>:<span class="w"> </span><span class="s2">"GB kH"</span>,
+<span class="w">                </span><span class="s2">"min_value"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"Storage allocation"</span>,
+<span class="w">                </span><span class="s2">"type"</span>:<span class="w"> </span><span class="s2">"gb_k_hours"</span>,
+<span class="w">                </span><span class="s2">"use_limit_for_billing"</span>:<span class="w"> </span><span class="nb">false</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">]</span>,
+<span class="w">        </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2021-03-09T10:27:47.170024Z"</span>,
+<span class="w">        </span><span class="s2">"customer"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/customers/d42a18b6b8ba4c2bb0591b3ff8fb181d/"</span>,
+<span class="w">        </span><span class="s2">"customer_name"</span>:<span class="w"> </span><span class="s2">"Danish e-Infrastructure Cooperation"</span>,
+<span class="w">        </span><span class="s2">"customer_uuid"</span>:<span class="w"> </span><span class="s2">"d42a18b6b8ba4c2bb0591b3ff8fb181d"</span>,
+<span class="w">        </span><span class="s2">"datacite_doi"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"files"</span>:<span class="w"> </span><span class="o">[]</span>,
+<span class="w">        </span><span class="s2">"full_description"</span>:<span class="w"> </span><span class="s2">"&lt;h2&gt;Overview&lt;/h2&gt;One of the most powerful supercomputers in the world"</span>,
+<span class="w">        </span><span class="s2">"google_calendar_is_public"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"latitude"</span>:<span class="w"> </span><span class="m">64</span>.2310486,
+<span class="w">        </span><span class="s2">"longitude"</span>:<span class="w"> </span><span class="m">27</span>.7040942,
+<span class="w">        </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">" "</span>,
+<span class="w">        </span><span class="s2">"native_description"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"native_name"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"options"</span>:<span class="w"> </span><span class="o">{}</span>,
+<span class="w">        </span><span class="s2">"order_count"</span>:<span class="w"> </span><span class="m">1</span>.0,
+<span class="w">        </span><span class="s2">"paused_reason"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"plans"</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">            </span><span class="o">{</span>
+<span class="w">                </span><span class="s2">"archived"</span>:<span class="w"> </span>false,
+<span class="w">                </span><span class="s2">"article_code"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">                </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">"Default plan for all "</span>,
+<span class="w">                </span><span class="s2">"init_price"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">                </span><span class="s2">"is_active"</span>:<span class="w"> </span>true,
+<span class="w">                </span><span class="s2">"max_amount"</span>:<span class="w"> </span>null,
+<span class="w">                </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">" Common"</span>,
+<span class="w">                </span><span class="s2">"prices"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="s2">"cpu_k_hours"</span>:<span class="w"> </span><span class="m">0</span>.1,
+<span class="w">                    </span><span class="s2">"gb_k_hours"</span>:<span class="w"> </span><span class="m">0</span>.001,
+<span class="w">                    </span><span class="s2">"gpu_k_hours"</span>:<span class="w"> </span><span class="m">0</span>.5
+<span class="w">                </span><span class="o">}</span>,
+<span class="w">                </span><span class="s2">"quotas"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="s2">"cpu_k_hours"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">                    </span><span class="s2">"gb_k_hours"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">                    </span><span class="s2">"gpu_k_hours"</span>:<span class="w"> </span><span class="m">0</span>
+<span class="w">                </span><span class="o">}</span>,
+<span class="w">                </span><span class="s2">"switch_price"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">                </span><span class="s2">"unit"</span>:<span class="w"> </span><span class="s2">"month"</span>,
+<span class="w">                </span><span class="s2">"unit_price"</span>:<span class="w"> </span><span class="s2">"0.0000000"</span>,
+<span class="w">                </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/"</span>,
+<span class="w">                </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"c0fb33c79e9b48f69fcb6da26db5a28b"</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">]</span>,
+<span class="w">        </span><span class="s2">"plugin_options"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="s2">"auto_approve_in_service_provider_projects"</span>:<span class="w"> </span><span class="nb">true</span>
+<span class="w">        </span><span class="o">}</span>,
+<span class="w">        </span><span class="s2">"quotas"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"rating"</span>:<span class="w"> </span><span class="m">5</span>,
+<span class="w">        </span><span class="s2">"scope"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"screenshots"</span>:<span class="w"> </span><span class="o">[]</span>,
+<span class="w">        </span><span class="s2">"secret_options"</span>:<span class="w"> </span><span class="o">{}</span>,
+<span class="w">        </span><span class="s2">"shared"</span>:<span class="w"> </span>true,
+<span class="w">        </span><span class="s2">"state"</span>:<span class="w"> </span><span class="s2">"Active"</span>,
+<span class="w">        </span><span class="s2">"terms_of_service"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"thumbnail"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"type"</span>:<span class="w"> </span><span class="s2">"Marketplace.Basic"</span>,
+<span class="w">        </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-provider-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/"</span>,
+<span class="w">        </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"073a0ddd6eba4ff4a90b943ae3e1b7c9"</span>,
+<span class="w">        </span><span class="s2">"vendor_details"</span>:<span class="w"> </span><span class="s2">""</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">]</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-creation-of-a-resource-allocation">Creation of a resource allocation</h2>
+<p>User can create an order providing requested allocation parameters.</p>
+<ul>
+<li><strong><code>project</code></strong> - project's UUID</li>
+<li><strong><code>offering</code></strong> - respectful offering's URL</li>
+<li><strong><code>attributes</code></strong> - specific attributes for the offering</li>
+<li><strong><code>plan</code></strong> - plan's URL (if offering is billable)</li>
+<li><strong><code>limits</code></strong> - a set of resource limits for an allocation</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  1</span>
+<span class="normal">  2</span>
+<span class="normal">  3</span>
+<span class="normal">  4</span>
+<span class="normal">  5</span>
+<span class="normal">  6</span>
+<span class="normal">  7</span>
+<span class="normal">  8</span>
+<span class="normal">  9</span>
+<span class="normal"> 10</span>
+<span class="normal"> 11</span>
+<span class="normal"> 12</span>
+<span class="normal"> 13</span>
+<span class="normal"> 14</span>
+<span class="normal"> 15</span>
+<span class="normal"> 16</span>
+<span class="normal"> 17</span>
+<span class="normal"> 18</span>
+<span class="normal"> 19</span>
+<span class="normal"> 20</span>
+<span class="normal"> 21</span>
+<span class="normal"> 22</span>
+<span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>POST<span class="w"> </span>https://waldur.com/api/marketplace-orders/<span class="w"> </span>Authorization:<span class="s2">"Token 32e7682378fa394b0f8b2538c444b60129ebfb47"</span><span class="w"> </span><span class="o">&lt;&lt;&lt;</span><span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "project": "https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/",</span>
+<span class="s1">    "offering": "https://waldur.com/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/",</span>
+<span class="s1">    "attributes": {</span>
+<span class="s1">        "name": "Resource allocation1",</span>
+<span class="s1">        "used_ai_tech": [</span>
+<span class="s1">            "Deep Learning",</span>
+<span class="s1">            "Machine Learning"</span>
+<span class="s1">        ],</span>
+<span class="s1">        "is_industry": true,</span>
+<span class="s1">        "is_commercial": false,</span>
+<span class="s1">        "is_training": false</span>
+<span class="s1">    },</span>
+<span class="s1">    "plan": "https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/",</span>
+<span class="s1">    "limits": {</span>
+<span class="s1">        "gb_k_hours": 1,</span>
+<span class="s1">        "gpu_k_hours": 2,</span>
+<span class="s1">        "cpu_k_hours": 3</span>
+<span class="s1">    }</span>
+<span class="s1">}'</span>
+
+POST<span class="w"> </span>/api/marketplace-orders/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>application/json,<span class="w"> </span>*/*<span class="p">;</span><span class="nv">q</span><span class="o">=</span><span class="m">0</span>.5
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>32e7682378fa394b0f8b2538c444b60129ebfb47
+Connection:<span class="w"> </span>keep-alive
+Content-Length:<span class="w"> </span><span class="m">730</span>
+Content-Type:<span class="w"> </span>application/json
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"attributes"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"Resource allocation1"</span>,
+<span class="w">        </span><span class="s2">"used_ai_tech"</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">            </span><span class="s2">"Deep Learning"</span>,
+<span class="w">            </span><span class="s2">"Machine Learning"</span>
+<span class="w">        </span><span class="o">]</span>,
+<span class="w">        </span><span class="s2">"is_industry"</span>:<span class="w"> </span>true,
+<span class="w">        </span><span class="s2">"is_commercial"</span>:<span class="w"> </span>false,
+<span class="w">        </span><span class="s2">"is_training"</span>:<span class="w"> </span><span class="nb">false</span>
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">"limits"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"cpu_k_hours"</span>:<span class="w"> </span><span class="m">3</span>,
+<span class="w">        </span><span class="s2">"gb_k_hours"</span>:<span class="w"> </span><span class="m">1</span>,
+<span class="w">        </span><span class="s2">"gpu_k_hours"</span>:<span class="w"> </span><span class="m">2</span>
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">"offering"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/"</span>,
+<span class="w">    </span><span class="s2">"plan"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/"</span>,
+<span class="w">    </span><span class="s2">"project"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/"</span>,
+<span class="o">}</span>
+
+HTTP/1.1<span class="w"> </span><span class="m">201</span><span class="w"> </span>Created
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>GET,<span class="w"> </span>POST,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">2114</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Wed,<span class="w"> </span><span class="m">21</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">16</span>:03:08<span class="w"> </span>GMT
+Location:<span class="w"> </span>https://waldur.com/api/marketplace-orders/d4ba1c23c3de47d6b0ad61bbfbaeed05/
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"approved_at"</span>:<span class="w"> </span><span class="s2">"2021-04-21T16:03:08.430238Z"</span>,
+<span class="w">    </span><span class="s2">"approved_by"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/users/3f2cadfbb2b145fd8cf18d549dcd7329/"</span>,
+<span class="w">    </span><span class="s2">"approved_by_full_name"</span>:<span class="w"> </span><span class="s2">"Demo Staff"</span>,
+<span class="w">    </span><span class="s2">"approved_by_username"</span>:<span class="w"> </span><span class="s2">"admin"</span>,
+<span class="w">    </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2021-04-21T16:03:08.389589Z"</span>,
+<span class="w">    </span><span class="s2">"created_by"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/users/3f2cadfbb2b145fd8cf18d549dcd7329/"</span>,
+<span class="w">    </span><span class="s2">"created_by_full_name"</span>:<span class="w"> </span><span class="s2">"Demo Staff"</span>,
+<span class="w">    </span><span class="s2">"created_by_username"</span>:<span class="w"> </span><span class="s2">"admin"</span>,
+<span class="w">    </span><span class="s2">"customer_uuid"</span>:<span class="w"> </span><span class="s2">"d42a18b6b8ba4c2bb0591b3ff8fb181d"</span>,
+<span class="w">    </span><span class="s2">"attributes"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"Resource allocation1"</span>,
+<span class="w">        </span><span class="s2">"used_ai_tech"</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">            </span><span class="s2">"Deep Learning"</span>,
+<span class="w">            </span><span class="s2">"Machine Learning"</span>
+<span class="w">        </span><span class="o">]</span>,
+<span class="w">        </span><span class="s2">"is_industry"</span>:<span class="w"> </span>true,
+<span class="w">        </span><span class="s2">"is_commercial"</span>:<span class="w"> </span>false,
+<span class="w">        </span><span class="s2">"is_training"</span>:<span class="w"> </span><span class="nb">false</span>
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">"category_title"</span>:<span class="w"> </span><span class="s2">"HPC"</span>,
+<span class="w">    </span><span class="s2">"category_uuid"</span>:<span class="w"> </span><span class="s2">"5b61d0811cfe4ed6a004119795a4c532"</span>,
+<span class="w">    </span><span class="s2">"cost"</span>:<span class="w"> </span><span class="s2">"1.3010000000"</span>,
+<span class="w">    </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2021-04-21T16:03:08.402139Z"</span>,
+<span class="w">    </span><span class="s2">"error_message"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"error_traceback"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"limits"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"cpu_k_hours"</span>:<span class="w"> </span><span class="m">3</span>,
+<span class="w">        </span><span class="s2">"gb_k_hours"</span>:<span class="w"> </span><span class="m">1</span>,
+<span class="w">        </span><span class="s2">"gpu_k_hours"</span>:<span class="w"> </span><span class="m">2</span>
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">"modified"</span>:<span class="w"> </span><span class="s2">"2021-04-21T16:03:08.402139Z"</span>,
+<span class="w">    </span><span class="s2">"offering"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/"</span>,
+<span class="w">    </span><span class="s2">"offering_billable"</span>:<span class="w"> </span>true,
+<span class="w">    </span><span class="s2">"offering_description"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"offering_name"</span>:<span class="w"> </span><span class="s2">" "</span>,
+<span class="w">    </span><span class="s2">"offering_shared"</span>:<span class="w"> </span>true,
+<span class="w">    </span><span class="s2">"offering_terms_of_service"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"offering_thumbnail"</span>:<span class="w"> </span>null,
+<span class="w">    </span><span class="s2">"offering_type"</span>:<span class="w"> </span><span class="s2">"Marketplace.Basic"</span>,
+<span class="w">    </span><span class="s2">"offering_uuid"</span>:<span class="w"> </span><span class="s2">"073a0ddd6eba4ff4a90b943ae3e1b7c9"</span>,
+<span class="w">    </span><span class="s2">"output"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"plan"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/"</span>,
+<span class="w">    </span><span class="s2">"plan_description"</span>:<span class="w"> </span><span class="s2">"Default plan for all "</span>,
+<span class="w">    </span><span class="s2">"plan_name"</span>:<span class="w"> </span><span class="s2">" Common"</span>,
+<span class="w">    </span><span class="s2">"plan_unit"</span>:<span class="w"> </span><span class="s2">"month"</span>,
+<span class="w">    </span><span class="s2">"plan_uuid"</span>:<span class="w"> </span><span class="s2">"c0fb33c79e9b48f69fcb6da26db5a28b"</span>,
+<span class="w">    </span><span class="s2">"provider_name"</span>:<span class="w"> </span><span class="s2">"Danish e-Infrastructure Cooperation"</span>,
+<span class="w">    </span><span class="s2">"provider_uuid"</span>:<span class="w"> </span><span class="s2">"d42a18b6b8ba4c2bb0591b3ff8fb181d"</span>,
+<span class="w">    </span><span class="s2">"state"</span>:<span class="w"> </span><span class="s2">"pending-provider"</span>,
+<span class="w">    </span><span class="s2">"type"</span>:<span class="w"> </span><span class="s2">"Create"</span>,
+<span class="w">    </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"f980c6ae5dc746c5bf5bbf1e31ff7d7e"</span>
+<span class="w">    </span><span class="s2">"project"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/projects/4475ac77fa3a491aacb3fb3a6dfadadf/"</span>,
+<span class="w">    </span><span class="s2">"project_uuid"</span>:<span class="w"> </span><span class="s2">"4475ac77fa3a491aacb3fb3a6dfadadf"</span>,
+<span class="w">    </span><span class="s2">"total_cost"</span>:<span class="w"> </span><span class="s2">"1.3010000000"</span>,
+<span class="w">    </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-orders/d4ba1c23c3de47d6b0ad61bbfbaeed05/"</span>,
+<span class="w">    </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"d4ba1c23c3de47d6b0ad61bbfbaeed05"</span>
+<span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<p>If a token belongs to a staff user, the order can be approved automatically.
+Otherwise, there is additional need for manual approval.</p>
+<p>After that, order should be pulled until resource UUID is present (<code>marketplace_resource_uuid</code> field).</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>https://waldur.com/api/marketplace-orders/f980c6ae5dc746c5bf5bbf1e31ff7d7e/<span class="w"> </span>Authorization:<span class="s2">"Token 32e7682378fa394b0f8b2538c444b60129ebfb47"</span>
+GET<span class="w"> </span>/api/marketplace-orders/f980c6ae5dc746c5bf5bbf1e31ff7d7e/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>*/*
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>32e7682378fa394b0f8b2538c444b60129ebfb47
+Connection:<span class="w"> </span>keep-alive
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>GET,<span class="w"> </span>PUT,<span class="w"> </span>PATCH,<span class="w"> </span>DELETE,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">1948</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Wed,<span class="w"> </span><span class="m">21</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">16</span>:04:53<span class="w"> </span>GMT
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"activation_price"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">    </span><span class="s2">"attributes"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"Resource allocation1"</span>,
+<span class="w">        </span><span class="s2">"used_ai_tech"</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">            </span><span class="s2">"Deep Learning"</span>,
+<span class="w">            </span><span class="s2">"Machine Learning"</span>
+<span class="w">        </span><span class="o">]</span>,
+<span class="w">        </span><span class="s2">"is_industry"</span>:<span class="w"> </span>true,
+<span class="w">        </span><span class="s2">"is_commercial"</span>:<span class="w"> </span>false,
+<span class="w">        </span><span class="s2">"is_training"</span>:<span class="w"> </span><span class="nb">false</span>
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">"can_terminate"</span>:<span class="w"> </span>false,
+<span class="w">    </span><span class="s2">"category_title"</span>:<span class="w"> </span><span class="s2">"HPC"</span>,
+<span class="w">    </span><span class="s2">"category_uuid"</span>:<span class="w"> </span><span class="s2">"5b61d0811cfe4ed6a004119795a4c532"</span>,
+<span class="w">    </span><span class="s2">"cost"</span>:<span class="w"> </span><span class="s2">"1.3010000000"</span>,
+<span class="w">    </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2021-04-21T16:03:08.402139Z"</span>,
+<span class="w">    </span><span class="s2">"created_by_civil_number"</span>:<span class="w"> </span>null,
+<span class="w">    </span><span class="s2">"created_by_full_name"</span>:<span class="w"> </span><span class="s2">"Demo Staff"</span>,
+<span class="w">    </span><span class="s2">"customer_name"</span>:<span class="w"> </span><span class="s2">"Danish e-Infrastructure Cooperation"</span>,
+<span class="w">    </span><span class="s2">"customer_uuid"</span>:<span class="w"> </span><span class="s2">"d42a18b6b8ba4c2bb0591b3ff8fb181d"</span>,
+<span class="w">    </span><span class="s2">"error_message"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"error_traceback"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"fixed_price"</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">    </span><span class="s2">"issue"</span>:<span class="w"> </span>null,
+<span class="w">    </span><span class="s2">"limits"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"cpu_k_hours"</span>:<span class="w"> </span><span class="m">3</span>,
+<span class="w">        </span><span class="s2">"gb_k_hours"</span>:<span class="w"> </span><span class="m">1</span>,
+<span class="w">        </span><span class="s2">"gpu_k_hours"</span>:<span class="w"> </span><span class="m">2</span>
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">"marketplace_resource_uuid"</span>:<span class="w"> </span><span class="s2">"7b0dc0323ce94ebda8670d76a40ebe99"</span>,
+<span class="w">    </span><span class="s2">"modified"</span>:<span class="w"> </span><span class="s2">"2021-04-21T16:03:08.542428Z"</span>,
+<span class="w">    </span><span class="s2">"new_cost_estimate"</span>:<span class="w"> </span><span class="m">1</span>.301,
+<span class="w">    </span><span class="s2">"new_plan_name"</span>:<span class="w"> </span><span class="s2">"Common"</span>,
+<span class="w">    </span><span class="s2">"new_plan_uuid"</span>:<span class="w"> </span><span class="s2">"c0fb33c79e9b48f69fcb6da26db5a28b"</span>,
+<span class="w">    </span><span class="s2">"offering"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-public-offerings/073a0ddd6eba4ff4a90b943ae3e1b7c9/"</span>,
+<span class="w">    </span><span class="s2">"offering_billable"</span>:<span class="w"> </span>true,
+<span class="w">    </span><span class="s2">"offering_description"</span>:<span class="w"> </span><span class="s2">"Description"</span>,
+<span class="w">    </span><span class="s2">"offering_name"</span>:<span class="w"> </span><span class="s2">" "</span>,
+<span class="w">    </span><span class="s2">"offering_shared"</span>:<span class="w"> </span>true,
+<span class="w">    </span><span class="s2">"offering_terms_of_service"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"offering_thumbnail"</span>:<span class="w"> </span>null,
+<span class="w">    </span><span class="s2">"offering_type"</span>:<span class="w"> </span><span class="s2">"Marketplace.Basic"</span>,
+<span class="w">    </span><span class="s2">"offering_uuid"</span>:<span class="w"> </span><span class="s2">"073a0ddd6eba4ff4a90b943ae3e1b7c9"</span>,
+<span class="w">    </span><span class="s2">"old_cost_estimate"</span>:<span class="w"> </span><span class="m">1</span>.301,
+<span class="w">    </span><span class="s2">"order_approved_at"</span>:<span class="w"> </span><span class="s2">"2021-04-21T16:03:08.430238Z"</span>,
+<span class="w">    </span><span class="s2">"order_approved_by"</span>:<span class="w"> </span><span class="s2">"Demo Staff"</span>,
+<span class="w">    </span><span class="s2">"output"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">    </span><span class="s2">"plan"</span>:<span class="w"> </span><span class="s2">"https://waldur.com/api/marketplace-public-plans/c0fb33c79e9b48f69fcb6da26db5a28b/"</span>,
+<span class="w">    </span><span class="s2">"plan_description"</span>:<span class="w"> </span><span class="s2">"Default plan"</span>,
+<span class="w">    </span><span class="s2">"plan_name"</span>:<span class="w"> </span><span class="s2">"Common"</span>,
+<span class="w">    </span><span class="s2">"plan_unit"</span>:<span class="w"> </span><span class="s2">"month"</span>,
+<span class="w">    </span><span class="s2">"plan_uuid"</span>:<span class="w"> </span><span class="s2">"c0fb33c79e9b48f69fcb6da26db5a28b"</span>,
+<span class="w">    </span><span class="s2">"project_name"</span>:<span class="w"> </span><span class="s2">"New project name"</span>,
+<span class="w">    </span><span class="s2">"project_uuid"</span>:<span class="w"> </span><span class="s2">"4475ac77fa3a491aacb3fb3a6dfadadf"</span>,
+<span class="w">    </span><span class="s2">"provider_name"</span>:<span class="w"> </span><span class="s2">"Danish e-Infrastructure Cooperation"</span>,
+<span class="w">    </span><span class="s2">"provider_uuid"</span>:<span class="w"> </span><span class="s2">"d42a18b6b8ba4c2bb0591b3ff8fb181d"</span>,
+<span class="w">    </span><span class="s2">"resource_name"</span>:<span class="w"> </span><span class="s2">"Resource allocation1"</span>,
+<span class="w">    </span><span class="s2">"resource_type"</span>:<span class="w"> </span>null,
+<span class="w">    </span><span class="s2">"resource_uuid"</span>:<span class="w"> </span>null,
+<span class="w">    </span><span class="s2">"state"</span>:<span class="w"> </span><span class="s2">"done"</span>,
+<span class="w">    </span><span class="s2">"type"</span>:<span class="w"> </span><span class="s2">"Create"</span>,
+<span class="w">    </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"f980c6ae5dc746c5bf5bbf1e31ff7d7e"</span>
+<span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="integrator-guide-apis-project-api-examples-order-approval-and-rejection">Order approval and rejection</h3>
+<p>In order to approve order by consumer, you shall issue POST request against <code>/api/marketplace-orders/{UUID}/approve_by_consumer/</code> endpoint. Similarly in order to approve order by provider, you shall issue POST request against <code>/api/marketplace-orders/{UUID}/approve_by_provider/</code> endpoint. Otherwise, you shall issue POST request against <code>/api/marketplace-orders/{UUID}/reject_by_consumer/</code> or <code>/api/marketplace-orders/{UUID}/reject_by_provider/</code> endpoint.</p>
+<p>Of course, these endpoints are available only if you have service provider or service consumer permission against corresponding offerings.</p>
+<h2 id="integrator-guide-apis-project-api-examples-modification-of-a-resource-allocation">Modification of a resource allocation</h2>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>--pretty<span class="o">=</span>format<span class="w"> </span>-v<span class="w"> </span>PUT<span class="w"> </span>https://waldur.com/api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/<span class="w"> </span>Authorization:<span class="s2">"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"</span><span class="w"> </span><span class="nv">name</span><span class="o">=</span><span class="s2">"New resource name"</span><span class="w"> </span><span class="nv">description</span><span class="o">=</span><span class="s2">"New resource description"</span>
+PUT<span class="w"> </span>/api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>application/json,<span class="w"> </span>*/*<span class="p">;</span><span class="nv">q</span><span class="o">=</span><span class="m">0</span>.5
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
+Connection:<span class="w"> </span>keep-alive
+Content-Length:<span class="w"> </span><span class="m">72</span>
+Content-Type:<span class="w"> </span>application/json
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">"New resource description"</span>,
+<span class="w">    </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"New resource name"</span>
+<span class="o">}</span>
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>GET,<span class="w"> </span>PUT,<span class="w"> </span>PATCH,<span class="w"> </span>DELETE,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">69</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Fri,<span class="w"> </span><span class="m">09</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">15</span>:21:23<span class="w"> </span>GMT
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"description"</span>:<span class="w"> </span><span class="s2">"New resource description"</span>,
+<span class="w">    </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"New resource name"</span>
+<span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-modification-of-resource-allocation-options">Modification of resource allocation options</h2>
+<p>As an RA, you can update options of an allocations. Update happens through a special endpoint on a resource.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span>-v<span class="w"> </span>POST<span class="w"> </span>https://waldur.com/api/marketplace-resources/b97e82d0fc2445d493cf5659a3085608/update_options/<span class="w"> </span>Authorization:<span class="s2">"Token 787de6b7c581ab6d9d42fe9ec12ac9f1811c5811"</span><span class="w"> </span><span class="o">&lt;&lt;&lt;</span><span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "options": {</span>
+<span class="s1">        "used_ai_tech": [</span>
+<span class="s1">            "Deep Learning",</span>
+<span class="s1">            "Machine Learning"</span>
+<span class="s1">        ],</span>
+<span class="s1">        "is_training": false</span>
+<span class="s1">    }</span>
+<span class="s1">}'</span>
+POST<span class="w"> </span>/api/marketplace-resources/53cb5c0a34cc41f5ad36b74c760e39f6/update_options/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>application/json,<span class="w"> </span>*/*<span class="p">;</span><span class="nv">q</span><span class="o">=</span><span class="m">0</span>.5
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>787de6b7c581ab6d9d42fe9ec12ac9f1811c5811
+Connection:<span class="w"> </span>keep-alive
+Content-Length:<span class="w"> </span><span class="m">153</span>
+Content-Type:<span class="w"> </span>application/json
+Host:<span class="w"> </span>waldur-demo.com
+User-Agent:<span class="w"> </span>HTTPie/3.2.2
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"options"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"is_training"</span>:<span class="w"> </span>false,
+<span class="w">        </span><span class="s2">"used_ai_tech"</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">            </span><span class="s2">"Deep Learning"</span>,
+<span class="w">            </span><span class="s2">"Machine Learning"</span>
+<span class="w">        </span><span class="o">]</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+access-control-allow-credentials:<span class="w"> </span><span class="nb">true</span>
+access-control-allow-headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With,<span class="w"> </span>X-Impersonated-User-Uuid,<span class="w"> </span>sentry-trace,<span class="w"> </span>baggage
+access-control-allow-methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+access-control-allow-origin:<span class="w"> </span>*
+access-control-expose-headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+allow:<span class="w"> </span>POST,<span class="w"> </span>OPTIONS
+content-language:<span class="w"> </span>en
+content-length:<span class="w"> </span><span class="m">43</span>
+content-security-policy:<span class="w"> </span>report-uri<span class="w"> </span>https://csp.hpc.ut.ee/log<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span><span class="w"> </span>frame-ancestors<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+content-type:<span class="w"> </span>application/json
+date:<span class="w"> </span>Tue,<span class="w"> </span><span class="m">27</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">2024</span><span class="w"> </span><span class="m">09</span>:18:29<span class="w"> </span>GMT
+referrer-policy:<span class="w"> </span>strict-origin-when-cross-origin
+strict-transport-security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+x-content-type-options:<span class="w"> </span>nosniff
+x-frame-options:<span class="w"> </span>DENY
+x-rate-limit-limit:<span class="w"> </span><span class="m">500</span>
+x-rate-limit-remaining:<span class="w"> </span><span class="m">488</span>
+x-xss-protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"status"</span>:<span class="w"> </span><span class="s2">"Resource options are submitted"</span>
+<span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="integrator-guide-apis-project-api-examples-termination-of-a-resource-allocation">Termination of a resource allocation</h2>
+<p>Termination uses a special short-cut action <code>/terminate</code> and returns UUID of a generated order.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span></pre></div></td><td class="code"><div><pre><span></span><code>$<span class="w"> </span>http<span class="w"> </span>-v<span class="w"> </span>POST<span class="w"> </span>https://waldur.com/api/marketplace-resources/8887243fa8d0458c970eeb6be28ff4f7/terminate/<span class="w"> </span>Authorization:<span class="s2">"Token 32e7682378fa394b0f8b2538c444b60129ebfb47"</span>
+POST<span class="w"> </span>/api/marketplace-resources/8887243fa8d0458c970eeb6be28ff4f7/terminate/<span class="w"> </span>HTTP/1.1
+Accept:<span class="w"> </span>*/*
+Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
+Authorization:<span class="w"> </span>Token<span class="w"> </span>32e7682378fa394b0f8b2538c444b60129ebfb47
+Connection:<span class="w"> </span>keep-alive
+Content-Length:<span class="w"> </span><span class="m">0</span>
+Host:<span class="w"> </span>waldur.com
+User-Agent:<span class="w"> </span>HTTPie/2.4.0
+
+
+
+HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
+Access-Control-Allow-Credentials:<span class="w"> </span><span class="nb">true</span>
+Access-Control-Allow-Headers:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Encoding,<span class="w"> </span>Authorization,<span class="w"> </span>Content-Type,<span class="w"> </span>Origin,<span class="w"> </span>User-Agent,<span class="w"> </span>X-CSRFToken,<span class="w"> </span>X-Requested-With
+Access-Control-Allow-Methods:<span class="w"> </span>DELETE,<span class="w"> </span>GET,<span class="w"> </span>OPTIONS,<span class="w"> </span>PATCH,<span class="w"> </span>POST,<span class="w"> </span>PUT
+Access-Control-Allow-Origin:<span class="w"> </span>*
+Access-Control-Expose-Headers:<span class="w"> </span>Link,<span class="w"> </span>X-Result-Count
+Allow:<span class="w"> </span>POST,<span class="w"> </span>OPTIONS
+Content-Language:<span class="w"> </span>en
+Content-Length:<span class="w"> </span><span class="m">49</span>
+Content-Security-Policy:<span class="w"> </span>report-uri<span class="w"> </span>csp.hpc.ut.ee<span class="p">;</span><span class="w"> </span>form-action<span class="w"> </span><span class="s1">'self'</span><span class="p">;</span>
+Content-Type:<span class="w"> </span>application/json
+Date:<span class="w"> </span>Wed,<span class="w"> </span><span class="m">14</span><span class="w"> </span>Apr<span class="w"> </span><span class="m">2021</span><span class="w"> </span><span class="m">22</span>:28:07<span class="w"> </span>GMT
+Referrer-Policy:<span class="w"> </span>no-referrer-when-downgrade
+Strict-Transport-Security:<span class="w"> </span>max-age<span class="o">=</span><span class="m">31536000</span><span class="p">;</span><span class="w"> </span>preload
+Vary:<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie
+X-Content-Type-Options:<span class="w"> </span>nosniff
+X-Frame-Options:<span class="w"> </span>SAMEORIGIN
+X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="nv">mode</span><span class="o">=</span>block
+
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">"order_uuid"</span>:<span class="w"> </span><span class="s2">"7c73504611d741749b3a3a538979e74a"</span>
+<span class="o">}</span>
 </code></pre></div></td></tr></table></div></div></section><h1 class='nav-section-title-end'>Ended: APIs</h1>
                         <h2 class='nav-section-title' id='section-existing-integrations'>
                             Existing integrations <a class='headerlink' href='#section-existing-integrations' title='Permanent link'>↵</a>
