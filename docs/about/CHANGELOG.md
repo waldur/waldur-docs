@@ -8,7 +8,7 @@ Notes: Bugfix release
     * Image SBOM: [waldur-mastermind-7.4.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.1-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-mastermind-7.4.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.1-source.cyclonedx.tar.gz)
     * OpenAPI specification for version 7.4.1 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.1.yaml)
-    
+
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.0...7.4.1)
     * Image SBOM: [waldur-homeport-7.4.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.1-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-homeport-7.4.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.1-source.cyclonedx.tar.gz)
@@ -28,7 +28,7 @@ Notes: Bugfix release
     * Image SBOM: [waldur-mastermind-7.4.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.0-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-mastermind-7.4.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.0-source.cyclonedx.tar.gz)
     * OpenAPI specification for version 7.4.0 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.0.yaml)
-    
+
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.9...7.4.0)
     * Image SBOM: [waldur-homeport-7.4.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.0-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-homeport-7.4.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.0-source.cyclonedx.tar.gz)
