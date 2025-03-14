@@ -81,7 +81,7 @@ If you are integrating a python-based application, you might find useful a [pyth
 
 Almost all operations require authentication. Authentication process is a two-step:
 
-1. Generation of authentication token using [Authentication API](API guide/authentication.md).
+1. Generation of authentication token using [Authentication API](authentication.md).
 2. Passing that token in the Authorization header along with all other REST API calls.
 
 Please note that all of the responses to the listing are paginated, by default up to 10 elements are returned.
