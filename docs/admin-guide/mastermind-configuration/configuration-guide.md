@@ -1267,9 +1267,9 @@ Style of sidebar. Possible values: dark, light, accent.
 
 **Type:** color_field
 
-**Default value**: #3a8500
+**Default value**: #307300
 
-Hex color definition is used in HomePort landing page for login button.
+Brand color is used for button background.
 
 #### DISABLE_DARK_THEME
 
