@@ -953,6 +953,12 @@ Phone: {{ support_phone }}
 {% endif %}
 ```
 
+### notification_to_user_that_order_been_rejected_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Your order to {{ order_type }} a resource {{ order.resource.name }} has been rejected.
+```
+
 ### marketplace_resource_update_failed_message.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -1310,6 +1316,14 @@ If you need to update project end date, please update it in project details.
 Thank you!
 ```
 
+### notification_to_user_that_order_been_rejected_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello!
+
+Your order {{ link }} to {{ order_type }} a resource {{ order.resource.name }} has been rejected.
+```
+
 ### notification_about_resource_ending_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -1378,6 +1392,25 @@ Resource {{ resource_name }} deletion has failed.
 <p>
     The resource you have - <a href="{{ resource_url }}">{{ resource.name }}</a> has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}.
     If you feel that you still want to keep it, please <a href="{{ resource_url }}"></a>remove the resource end date</a>.
+</p>
+</body>
+</html>
+```
+
+### notification_to_user_that_order_been_rejected_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Your order has been rejected.</title>
+</head>
+<body>
+<p>
+    Hello!
+</p>
+<p>
+    Your <a href="{{ link }}">order</a> to {{ order_type }} a resource {{ order.resource.name }} has been rejected.
 </p>
 </body>
 </html>

@@ -1286,6 +1286,48 @@ A notification about stale resources. The recipients are organization owners.
 
 ```
 
+### marketplace.notification_to_user_that_order_been_rejected
+
+Notification to user whose order been rejected.
+
+#### Templates
+
+=== "marketplace/notification_to_user_that_order_been_rejected_subject.txt"
+
+```txt
+    Your order to {{ order_type }} a resource {{ order.resource.name }} has been rejected.
+
+```
+
+=== "marketplace/notification_to_user_that_order_been_rejected_message.txt"
+
+```txt
+    Hello!
+
+    Your order {{ link }} to {{ order_type }} a resource {{ order.resource.name }} has been rejected.
+
+```
+
+=== "marketplace/notification_to_user_that_order_been_rejected_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Your order has been rejected.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        Your <a href="{{ link }}">order</a> to {{ order_type }} a resource {{ order.resource.name }} has been rejected.
+    </p>
+    </body>
+    </html>
+
+```
+
 ### marketplace.notification_usages
 
 A notification about usages. The recipients are organization owners.
