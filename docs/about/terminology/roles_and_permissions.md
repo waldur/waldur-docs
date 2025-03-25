@@ -1,4 +1,6 @@
-# Users, Organizations and Projects
+# Roles and permissions
+
+## Users, Organizations and Projects
 
 Waldur is a service for sharing resources across projects. It is based
 on the delegation model where an organization can allocate certain users to
@@ -9,8 +11,6 @@ The most common types of Waldur installations include:
 - **Cloud** - used in commercial or government sectors for providing access to cloud resources like virtual machines, storage and Kubernetes clusters.
 - **Academic** - used in research and education. Waldur is deployed for a single university, high school or research infrastructure.
 - **Academic Shared** - the same purpose as Academic, but is shared among several universities or infrastructures.
-
-## Glossary
 
 ### User
 
@@ -84,3 +84,14 @@ Organization that provides services to other organizations.
     | Approves creation of Resource Requests (Orders) | :material-check: | | :material-check: (configurable) | :material-check: |
     | Approves Resource Requests (Orders) | :material-check: | :material-check: | | |
     | Manage Offerings (Service provider-specific) | :material-check: | :material-check: | | | |
+
+### User roles in Call management
+
+
+| Role name              | Scope           | Description |
+|----------------------------|----------------------|-------------------------------------------------|
+| **Organization owner**         | Customer            | Has full administrative access to manage organizations, offerings, orders, resources, projects, and call-related permissions. |
+| **Call organiser** | Call organizer      | Manages calls at the organization level, similar to Call manager but restricted to a specific customer scope. |
+| **Call manager**           | Call                | Oversees the entire call process, including managing proposals, approving/rejecting applications, closing rounds, and handling permissions. |
+| **Call reviewer**          | Call                | Reviews and evaluates submitted proposals within a call. |
+| **Proposal member**       | Proposal            | Manages individual proposals, controlling their status and related workflows. |
