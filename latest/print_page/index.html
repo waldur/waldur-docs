@@ -490,6 +490,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../about/marketplace/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Marketplace concept
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../about/publications/" class="md-nav__link">
         
   
@@ -573,27 +594,6 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../about/terminology/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Terminology
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
     
     
     
@@ -612,7 +612,7 @@
             
   
   <span class="md-ellipsis">
-    Concept
+    Terminology
   </span>
   
 
@@ -622,7 +622,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_10_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1_10">
             <span class="md-nav__icon md-icon"></span>
-            Concept
+            Terminology
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -633,11 +633,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../about/Concept/marketplace/" class="md-nav__link">
+      <a href="../about/terminology/glossary/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Marketplace
+    Glossary
   </span>
   
 
@@ -654,11 +654,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../about/Concept/structure/" class="md-nav__link">
+      <a href="../about/terminology/roles_and_permissions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Users, Organizations and Projects
+    Roles and permissions
   </span>
   
 
@@ -5711,9 +5711,18 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#about-marketplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Marketplace concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#about-publications" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Academic publications
+      6. Academic publications
     </span>
   </a>
   
@@ -5722,7 +5731,7 @@
           <li class="md-nav__item">
   <a href="#about-reporting-issues" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Reporting issues
+      7. Reporting issues
     </span>
   </a>
   
@@ -5731,7 +5740,7 @@
           <li class="md-nav__item">
   <a href="#about-screenshots" class="md-nav__link">
     <span class="md-ellipsis">
-      7. Screenshots
+      8. Screenshots
     </span>
   </a>
   
@@ -5740,16 +5749,7 @@
           <li class="md-nav__item">
   <a href="#about-support" class="md-nav__link">
     <span class="md-ellipsis">
-      8. Support
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#about-terminology" class="md-nav__link">
-    <span class="md-ellipsis">
-      9. Terminology
+      9. Support
     </span>
   </a>
   
@@ -6405,6 +6405,80 @@ OpenNode maintains control over the authoritative source code and covers Product
   separate tasks or stories for component owners.</li>
 <li>Developers process tasks.</li>
 <li>Product owner releases tagged versions of the product once a certain amount of functionality or bugfixes went in.</li>
+</ul></div></section><section class="print-page" id="about-marketplace"><div><h1 id="marketplace-concept">Marketplace concept</h1>
+<p>Marketplace is a central module for provisioning of Waldur resources. Marketplace contains Offerings that
+belong to a special type of Organizations - Service Providers. Marketplace provides common functionality
+for resource lifecycle management, accounting and invoicing. Specifics are implemented in the Marketplace plugins
+(e.g. for OpenStack, SLURM, Rancher, etc).</p>
+<h2 id="about-marketplace-diagram-of-concepts">Diagram of concepts</h2>
+<p><a class="glightbox" href="../about/img/marketplace-structure.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Diagram of marketplace concepts" src="../about/img/marketplace-structure.png"></a></p>
+<h3 id="about-marketplace-creating-marketplace-categories">Creating Marketplace categories</h3>
+<p>To create a category, either use administrative interface of Waldur, hosted under <code>`/admin</code> (can be accessed by staff users)
+or use management command for loading the pre-defined categories.</p>
+<ul>
+<li>With Docker-compose deployment:</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span>waldur<span class="w"> </span>load_categories<span class="w">  </span><span class="c1"># vpc vm storage ...</span>
+</code></pre></div></td></tr></table></div>
+<ul>
+<li>With Helm deployment</li>
+</ul>
+<p>Open waldur-mastermind-worker shell and execute the following command:</p>
+<ol>
+<li>Get waldur-mastermind-worker pod name</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
+<span class="w">  </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-A<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span><span class="c1"># --&gt;</span>
+<span class="w">  </span><span class="c1"># default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Connect to pod via shell</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
+<span class="w">  </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>waldur-mastermind-worker-6d98cd98bd-wps8n<span class="w"> </span>--<span class="w"> </span>/bin/bash
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Execute command to see available or add a category</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>waldur<span class="w"> </span>load_categories<span class="w">  </span><span class="c1"># vpc vm storage ...</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="about-marketplace-service-offering-configuration-guide">Service offering configuration guide</h2>
+<h3 id="about-marketplace-overview">Overview</h3>
+<p>This guide provides a structured approach for integrators to define an Offering. Offerings represent services, resources, or products made available through the platform.</p>
+<h3 id="about-marketplace-general-information">General information</h3>
+<p>The General Information section defines the core attributes of an offering, including its identity, accessibility, and governance policies.</p>
+<h4 id="about-marketplace-required-fields">Required fields</h4>
+<ul>
+<li><strong>Name</strong> – The title of the offering, displayed across the platform</li>
+<li><strong>Description</strong> – A concise summary outlining the offering's purpose</li>
+<li><strong>Full description</strong> – A detailed explanation, including technical aspects and potential use cases</li>
+<li><strong>Terms of service</strong> – Any contractual obligations or usage restrictions</li>
+<li><strong>Privacy policy link</strong> – URL linking to the privacy policy</li>
+<li><strong>Terms of service link</strong> – URL linking to the terms of service</li>
+<li><strong>Access URL</strong> – The main entry point for users to access the offering</li>
+<li><strong>Slug</strong> – A unique identifier used in URLs (readonly)</li>
+<li><strong>Location</strong> – The geographical or virtual location of the offering</li>
+<li><strong>Access policies</strong> – Defines access control rules and user eligibility</li>
+<li><strong>Logo</strong> – A graphical representation of the offering</li>
+<li><strong>Getting started instructions</strong> – Guidelines on how users can begin using the offering</li>
+</ul>
+<h3 id="about-marketplace-public-information">Public information</h3>
+<p>The Public Information section ensures visibility and accessibility for end users. It includes Endpoints, Categories, and Images.</p>
+<h4 id="about-marketplace-endpoints">Endpoints</h4>
+<p>Endpoints provide connectivity to the offering's services. Each endpoint requires:</p>
+<ul>
+<li><strong>Name</strong> – A human-readable identifier for the endpoint</li>
+<li><strong>URL</strong> – The direct link to access the service</li>
+</ul>
+<h4 id="about-marketplace-images">Images</h4>
+<p>Images provide visual representation and marketing appeal. Each image requires:</p>
+<ul>
+<li><strong>Name</strong> – A descriptive title</li>
+<li><strong>Description</strong> – A brief explanation of the image content</li>
+<li><strong>Attached image file</strong> – The image file itself</li>
 </ul></div></section><section class="print-page" id="about-publications"><div><h1 id="academic-publications">Academic publications</h1>
 <ul>
 <li>2024 - <a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=10820785">Federated Single Sign-On and Zero Trust Co-design for AI and HPC Digital Research Infrastructures</a>, S. R. Alam et al., SC24-W: Workshops of the International Conference for High Performance Computing, Networking, Storage and Analysis, Atlanta, GA, USA, 2024, pp. 1756-1764, doi: 10.1109/SCW63240.2024.00220.</li>
@@ -6587,7 +6661,11 @@ OpenNode maintains control over the authoritative source code and covers Product
 <p>If you would like to know more, <a href="mailto:info@opennodecloud.com">reach out</a>!</p>
 <h2 id="about-support-managed-hosting-for-academical-institutions">Managed hosting for academical institutions</h2>
 <p>Please reach out to <a href="mailto:support@hpc.ut.ee">support@hpc.ut.ee</a> if you represent an R&amp;D organization
-and interested in managed Waldur hosting.</p></div></section><section class="print-page" id="about-terminology"><div><h1 id="terminology">Terminology</h1>
+and interested in managed Waldur hosting.</p></div></section>
+                        <h2 class='nav-section-title' id='section-terminology'>
+                            Terminology <a class='headerlink' href='#section-terminology' title='Permanent link'>↵</a>
+                        </h2>
+                        <section class="print-page" id="about-terminology-glossary"><div><h1 id="glossary">Glossary</h1>
 <table>
 <thead>
 <tr>
@@ -6673,85 +6751,8 @@ and interested in managed Waldur hosting.</p></div></section><section class="pri
 <td style="text-align: center;">5 virtual floating IPs for the last month.</td>
 </tr>
 </tbody>
-</table></div></section>
-                        <h2 class='nav-section-title' id='section-concept'>
-                            Concept <a class='headerlink' href='#section-concept' title='Permanent link'>↵</a>
-                        </h2>
-                        <section class="print-page" id="about-concept-marketplace"><div><h1 id="marketplace">Marketplace</h1>
-<p>Marketplace is a central module for provisioning of Waldur resources. Marketplace contains Offerings that
-belong to a special type of Organizations - Service Providers. Marketplace provides common functionality
-for resource lifecycle management, accounting and invoicing. Specifics are implemented in the Marketplace plugins
-(e.g. for OpenStack, SLURM, Rancher, etc).</p>
-<h2 id="about-concept-marketplace-diagram-of-concepts">Diagram of concepts</h2>
-<p><a class="glightbox" href="../about/img/marketplace-structure.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Diagram of marketplace concepts" src="../about/img/marketplace-structure.png"></a></p>
-<h3 id="about-concept-marketplace-creating-marketplace-categories">Creating Marketplace categories</h3>
-<p>To create a category, either use administrative interface of Waldur, hosted under <code>`/admin</code> (can be accessed by staff users)
-or use management command for loading the pre-defined categories.</p>
-<ul>
-<li>With Docker-compose deployment:</li>
-</ul>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span>waldur<span class="w"> </span>load_categories<span class="w">  </span><span class="c1"># vpc vm storage ...</span>
-</code></pre></div></td></tr></table></div>
-<ul>
-<li>With Helm deployment</li>
-</ul>
-<p>Open waldur-mastermind-worker shell and execute the following command:</p>
-<ol>
-<li>Get waldur-mastermind-worker pod name</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
-<span class="w">  </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-A<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>waldur-mastermind-worker<span class="w"> </span><span class="c1"># --&gt;</span>
-<span class="w">  </span><span class="c1"># default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s</span>
-</code></pre></div></td></tr></table></div>
-<ol>
-<li>Connect to pod via shell</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1"># Example:</span>
-<span class="w">  </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>waldur-mastermind-worker-6d98cd98bd-wps8n<span class="w"> </span>--<span class="w"> </span>/bin/bash
-</code></pre></div></td></tr></table></div>
-<ol>
-<li>Execute command to see available or add a category</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>waldur<span class="w"> </span>load_categories<span class="w">  </span><span class="c1"># vpc vm storage ...</span>
-</code></pre></div></td></tr></table></div>
-<h2 id="about-concept-marketplace-service-offering-configuration-guide">Service offering configuration guide</h2>
-<h3 id="about-concept-marketplace-overview">Overview</h3>
-<p>This guide provides a structured approach for integrators to define an Offering. Offerings represent services, resources, or products made available through the platform.</p>
-<h3 id="about-concept-marketplace-general-information">General information</h3>
-<p>The General Information section defines the core attributes of an offering, including its identity, accessibility, and governance policies.</p>
-<h4 id="about-concept-marketplace-required-fields">Required fields</h4>
-<ul>
-<li><strong>Name</strong> – The title of the offering, displayed across the platform</li>
-<li><strong>Description</strong> – A concise summary outlining the offering's purpose</li>
-<li><strong>Full description</strong> – A detailed explanation, including technical aspects and potential use cases</li>
-<li><strong>Terms of service</strong> – Any contractual obligations or usage restrictions</li>
-<li><strong>Privacy policy link</strong> – URL linking to the privacy policy</li>
-<li><strong>Terms of service link</strong> – URL linking to the terms of service</li>
-<li><strong>Access URL</strong> – The main entry point for users to access the offering</li>
-<li><strong>Slug</strong> – A unique identifier used in URLs (readonly)</li>
-<li><strong>Location</strong> – The geographical or virtual location of the offering</li>
-<li><strong>Access policies</strong> – Defines access control rules and user eligibility</li>
-<li><strong>Logo</strong> – A graphical representation of the offering</li>
-<li><strong>Getting started instructions</strong> – Guidelines on how users can begin using the offering</li>
-</ul>
-<h3 id="about-concept-marketplace-public-information">Public information</h3>
-<p>The Public Information section ensures visibility and accessibility for end users. It includes Endpoints, Categories, and Images.</p>
-<h4 id="about-concept-marketplace-endpoints">Endpoints</h4>
-<p>Endpoints provide connectivity to the offering's services. Each endpoint requires:</p>
-<ul>
-<li><strong>Name</strong> – A human-readable identifier for the endpoint</li>
-<li><strong>URL</strong> – The direct link to access the service</li>
-</ul>
-<h4 id="about-concept-marketplace-images">Images</h4>
-<p>Images provide visual representation and marketing appeal. Each image requires:</p>
-<ul>
-<li><strong>Name</strong> – A descriptive title</li>
-<li><strong>Description</strong> – A brief explanation of the image content</li>
-<li><strong>Attached image file</strong> – The image file itself</li>
-</ul></div></section><section class="print-page" id="about-concept-structure"><div><h1 id="users-organizations-and-projects">Users, Organizations and Projects</h1>
+</table></div></section><section class="print-page" id="about-terminology-roles_and_permissions"><div><h1 id="roles-and-permissions">Roles and permissions</h1>
+<h2 id="about-terminology-roles_and_permissions-users-organizations-and-projects">Users, Organizations and Projects</h2>
 <p>Waldur is a service for sharing resources across projects. It is based
 on the delegation model where an organization can allocate certain users to
 perform technical or non-technical actions in the projects.</p>
@@ -6761,12 +6762,11 @@ perform technical or non-technical actions in the projects.</p>
 <li><strong>Academic</strong> - used in research and education. Waldur is deployed for a single university, high school or research infrastructure.</li>
 <li><strong>Academic Shared</strong> - the same purpose as Academic, but is shared among several universities or infrastructures.</li>
 </ul>
-<h2 id="about-concept-structure-glossary">Glossary</h2>
-<h3 id="about-concept-structure-user">User</h3>
+<h3 id="about-terminology-roles_and_permissions-user">User</h3>
 <p>An account in Waldur belonging to a person or a robot. A user can have roles in Organizations and Projects.
 Some users - mostly affiliated with Waldur operator - can have global roles, e.g. support or staff.</p>
-<h3 id="about-concept-structure-organization">Organization</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked id="about-concept-structure-__tabbed_1_1" name="about-concept-structure-__tabbed_1" type="radio"><input id="about-concept-structure-__tabbed_1_2" name="about-concept-structure-__tabbed_1" type="radio"><input id="about-concept-structure-__tabbed_1_3" name="about-concept-structure-__tabbed_1" type="radio"><div class="tabbed-labels"><label for="about-concept-structure-__tabbed_1_1">Cloud</label><label for="about-concept-structure-__tabbed_1_2">Academic</label><label for="about-concept-structure-__tabbed_1_3">Academic Shared</label></div>
+<h3 id="about-terminology-roles_and_permissions-organization">Organization</h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked id="about-terminology-roles_and_permissions-__tabbed_1_1" name="about-terminology-roles_and_permissions-__tabbed_1" type="radio"><input id="about-terminology-roles_and_permissions-__tabbed_1_2" name="about-terminology-roles_and_permissions-__tabbed_1" type="radio"><input id="about-terminology-roles_and_permissions-__tabbed_1_3" name="about-terminology-roles_and_permissions-__tabbed_1" type="radio"><div class="tabbed-labels"><label for="about-terminology-roles_and_permissions-__tabbed_1_1">Cloud</label><label for="about-terminology-roles_and_permissions-__tabbed_1_2">Academic</label><label for="about-terminology-roles_and_permissions-__tabbed_1_3">Academic Shared</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>A company or a department. Organization can be a customer, a service provider or both.</p>
@@ -6779,11 +6779,11 @@ Some users - mostly affiliated with Waldur operator - can have global roles, e.g
 </div>
 </div>
 </div>
-<h3 id="about-concept-structure-project">Project</h3>
+<h3 id="about-terminology-roles_and_permissions-project">Project</h3>
 <p>A project within an Organization. Used for organizing and isolating Resources and Users.</p>
-<h3 id="about-concept-structure-service-provider">Service Provider</h3>
+<h3 id="about-terminology-roles_and_permissions-service-provider">Service Provider</h3>
 <p>Organization that provides services to other organizations.</p>
-<h3 id="about-concept-structure-user-types">User types</h3>
+<h3 id="about-terminology-roles_and_permissions-user-types">User types</h3>
 <table>
 <thead>
 <tr>
@@ -6832,8 +6832,8 @@ Some users - mostly affiliated with Waldur operator - can have global roles, e.g
 </tr>
 </tbody>
 </table>
-<h3 id="about-concept-structure-user-roles-in-organization">User roles in Organization</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked id="about-concept-structure-__tabbed_2_1" name="about-concept-structure-__tabbed_2" type="radio"><input id="about-concept-structure-__tabbed_2_2" name="about-concept-structure-__tabbed_2" type="radio"><input id="about-concept-structure-__tabbed_2_3" name="about-concept-structure-__tabbed_2" type="radio"><div class="tabbed-labels"><label for="about-concept-structure-__tabbed_2_1">Cloud</label><label for="about-concept-structure-__tabbed_2_2">Academic</label><label for="about-concept-structure-__tabbed_2_3">Academic Shared</label></div>
+<h3 id="about-terminology-roles_and_permissions-user-roles-in-organization">User roles in Organization</h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked id="about-terminology-roles_and_permissions-__tabbed_2_1" name="about-terminology-roles_and_permissions-__tabbed_2" type="radio"><input id="about-terminology-roles_and_permissions-__tabbed_2_2" name="about-terminology-roles_and_permissions-__tabbed_2" type="radio"><input id="about-terminology-roles_and_permissions-__tabbed_2_3" name="about-terminology-roles_and_permissions-__tabbed_2" type="radio"><div class="tabbed-labels"><label for="about-terminology-roles_and_permissions-__tabbed_2_1">Cloud</label><label for="about-terminology-roles_and_permissions-__tabbed_2_2">Academic</label><label for="about-terminology-roles_and_permissions-__tabbed_2_3">Academic Shared</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <table>
@@ -7014,21 +7014,54 @@ Some users - mostly affiliated with Waldur operator - can have global roles, e.g
 </table>
 </div>
 </div>
-</div></div></section><h1 class='nav-section-title-end'>Ended: Concept</h1><section class="print-page" id="about-changelog"><div><h1 id="changelog">Changelog</h1>
+</div>
+<h3 id="about-terminology-roles_and_permissions-user-roles-in-call-management">User roles in Call management</h3>
+<table>
+<thead>
+<tr>
+<th>Role name</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Organization owner</strong></td>
+<td>Customer</td>
+<td>Has full administrative access to manage organizations, offerings, orders, resources, projects, and call-related permissions.</td>
+</tr>
+<tr>
+<td><strong>Call organiser</strong></td>
+<td>Call organizer</td>
+<td>Manages calls at the organization level, similar to Call manager but restricted to a specific customer scope.</td>
+</tr>
+<tr>
+<td><strong>Call manager</strong></td>
+<td>Call</td>
+<td>Oversees the entire call process, including managing proposals, approving/rejecting applications, closing rounds, and handling permissions.</td>
+</tr>
+<tr>
+<td><strong>Call reviewer</strong></td>
+<td>Call</td>
+<td>Reviews and evaluates submitted proposals within a call.</td>
+</tr>
+<tr>
+<td><strong>Proposal member</strong></td>
+<td>Proposal</td>
+<td>Manages individual proposals, controlling their status and related workflows.</td>
+</tr>
+</tbody>
+</table></div></section><h1 class='nav-section-title-end'>Ended: Terminology</h1><section class="print-page" id="about-changelog"><div><h1 id="changelog">Changelog</h1>
 <h2 id="about-changelog-745">7.4.5</h2>
 <p>Notes: None</p>
 <ul>
-<li>
-<p>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.4.4...7.4.5">tag diff</a></p>
-<ul>
+<li>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.4.4...7.4.5">tag diff</a><ul>
 <li>Image SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.5-image.cyclonedx.tar.gz">waldur-mastermind-7.4.5-image.cyclonedx.tar.gz</a></li>
 <li>Source SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.5-source.cyclonedx.tar.gz">waldur-mastermind-7.4.5-source.cyclonedx.tar.gz</a></li>
 <li>OpenAPI specification for version 7.4.5 (YAML): <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.5.yaml">View API schema in OpenAPI</a></li>
 </ul>
 </li>
-<li>
-<p>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.4.4...7.4.5">tag diff</a></p>
-<ul>
+<li>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.4.4...7.4.5">tag diff</a><ul>
 <li>Image SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.5-image.cyclonedx.tar.gz">waldur-homeport-7.4.5-image.cyclonedx.tar.gz</a></li>
 <li>Source SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.5-source.cyclonedx.tar.gz">waldur-homeport-7.4.5-source.cyclonedx.tar.gz</a></li>
 </ul>
@@ -7045,17 +7078,13 @@ Some users - mostly affiliated with Waldur operator - can have global roles, e.g
 <h2 id="about-changelog-744">7.4.4</h2>
 <p>Notes: None</p>
 <ul>
-<li>
-<p>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.4.3...7.4.4">tag diff</a></p>
-<ul>
+<li>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.4.3...7.4.4">tag diff</a><ul>
 <li>Image SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.4-image.cyclonedx.tar.gz">waldur-mastermind-7.4.4-image.cyclonedx.tar.gz</a></li>
 <li>Source SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.4-source.cyclonedx.tar.gz">waldur-mastermind-7.4.4-source.cyclonedx.tar.gz</a></li>
 <li>OpenAPI specification for version 7.4.4 (YAML): <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.4.yaml">View API schema in OpenAPI</a></li>
 </ul>
 </li>
-<li>
-<p>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.4.3...7.4.4">tag diff</a></p>
-<ul>
+<li>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.4.3...7.4.4">tag diff</a><ul>
 <li>Image SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.4-image.cyclonedx.tar.gz">waldur-homeport-7.4.4-image.cyclonedx.tar.gz</a></li>
 <li>Source SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.4-source.cyclonedx.tar.gz">waldur-homeport-7.4.4-source.cyclonedx.tar.gz</a></li>
 </ul>
@@ -7072,17 +7101,13 @@ Some users - mostly affiliated with Waldur operator - can have global roles, e.g
 <h2 id="about-changelog-743">7.4.3</h2>
 <p>Notes: Use psycopg 3 PostgreSQL driver for Celery result backend</p>
 <ul>
-<li>
-<p>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.4.2...7.4.3">tag diff</a></p>
-<ul>
+<li>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.4.2...7.4.3">tag diff</a><ul>
 <li>Image SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.3-image.cyclonedx.tar.gz">waldur-mastermind-7.4.3-image.cyclonedx.tar.gz</a></li>
 <li>Source SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.3-source.cyclonedx.tar.gz">waldur-mastermind-7.4.3-source.cyclonedx.tar.gz</a></li>
 <li>OpenAPI specification for version 7.4.3 (YAML): <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.3.yaml">View API schema in OpenAPI</a></li>
 </ul>
 </li>
-<li>
-<p>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.4.2...7.4.3">tag diff</a></p>
-<ul>
+<li>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.4.2...7.4.3">tag diff</a><ul>
 <li>Image SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.3-image.cyclonedx.tar.gz">waldur-homeport-7.4.3-image.cyclonedx.tar.gz</a></li>
 <li>Source SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.3-source.cyclonedx.tar.gz">waldur-homeport-7.4.3-source.cyclonedx.tar.gz</a></li>
 </ul>
@@ -7099,17 +7124,13 @@ Some users - mostly affiliated with Waldur operator - can have global roles, e.g
 <h2 id="about-changelog-742">7.4.2</h2>
 <p>Notes: Updated postgresql driver</p>
 <ul>
-<li>
-<p>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.4.1...7.4.2">tag diff</a></p>
-<ul>
+<li>Waldur Mastermind: <a href="https://github.com/waldur/waldur-mastermind/compare/7.4.1...7.4.2">tag diff</a><ul>
 <li>Image SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.2-image.cyclonedx.tar.gz">waldur-mastermind-7.4.2-image.cyclonedx.tar.gz</a></li>
 <li>Source SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.2-source.cyclonedx.tar.gz">waldur-mastermind-7.4.2-source.cyclonedx.tar.gz</a></li>
 <li>OpenAPI specification for version 7.4.2 (YAML): <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.2.yaml">View API schema in OpenAPI</a></li>
 </ul>
 </li>
-<li>
-<p>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.4.1...7.4.2">tag diff</a></p>
-<ul>
+<li>Waldur Homeport: <a href="https://github.com/waldur/waldur-homeport/compare/7.4.1...7.4.2">tag diff</a><ul>
 <li>Image SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.2-image.cyclonedx.tar.gz">waldur-homeport-7.4.2-image.cyclonedx.tar.gz</a></li>
 <li>Source SBOM: <a href="https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.2-source.cyclonedx.tar.gz">waldur-homeport-7.4.2-source.cyclonedx.tar.gz</a></li>
 </ul>
@@ -28664,25 +28685,31 @@ X-XSS-Protection:<span class="w"> </span><span class="m">1</span><span class="p"
 <ul>
 <li>Repository: <a href="https://github.com/waldur/py-client">waldur/py-client</a></li>
 <li>Auto-generated Python client for Waldur REST API</li>
-<li>Installation:
-    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>waldur-client
-</code></pre></div></td></tr></table></div></li>
+<li>
+<p>Installation:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>waldur-client
+</code></pre></div></td></tr></table></div>
+</li>
 </ul>
 <h3 id="integrator-guide-apis-sdk-typescriptjavascript-sdk">TypeScript/JavaScript SDK</h3>
 <ul>
 <li>Repository: <a href="https://github.com/waldur/js-client">waldur/js-client</a></li>
 <li>Auto-generated TypeScript/JavaScript client for Waldur REST API</li>
-<li>Installation:
-    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>npm<span class="w"> </span>install<span class="w"> </span>waldur-js-client
-</code></pre></div></td></tr></table></div></li>
+<li>
+<p>Installation:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>npm<span class="w"> </span>install<span class="w"> </span>waldur-js-client
+</code></pre></div></td></tr></table></div>
+</li>
 </ul>
 <h3 id="integrator-guide-apis-sdk-go-sdk">Go SDK</h3>
 <ul>
 <li>Repository: <a href="https://github.com/waldur/go-client">waldur/go-client</a></li>
 <li>Auto-generated Go client for Waldur REST API</li>
-<li>Installation:
-    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>go<span class="w"> </span>get<span class="w"> </span>github.com/waldur/go-client
-</code></pre></div></td></tr></table></div></li>
+<li>
+<p>Installation:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>go<span class="w"> </span>get<span class="w"> </span>github.com/waldur/go-client
+</code></pre></div></td></tr></table></div>
+</li>
 </ul>
 <h2 id="integrator-guide-apis-sdk-features">Features</h2>
 <ul>
