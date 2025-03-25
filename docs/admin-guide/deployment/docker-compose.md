@@ -325,3 +325,39 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {readonly_us
 -- Revoke access to authtoken_token table
 REVOKE SELECT ON authtoken_token FROM {readonly_username};
 ```
+
+### Creating Marketplace categories
+
+To create a category, either use administrative interface of Waldur, hosted under ```/admin`` (can be accessed by staff users)
+or use management command for loading the pre-defined categories.
+
+- With Docker-compose deployment:
+
+```bash
+  docker exec -t waldur-mastermind-worker waldur load_categories  # vpc vm storage ...
+```
+
+- With Helm deployment
+
+Open waldur-mastermind-worker shell and execute the following command:
+
+1. Get waldur-mastermind-worker pod name
+
+```bash
+  # Example:
+  kubectl get pods -A | grep waldur-mastermind-worker # -->
+  # default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s
+```
+
+1. Connect to pod via shell
+
+```bash
+  # Example:
+  kubectl exec -it waldur-mastermind-worker-6d98cd98bd-wps8n -- /bin/bash
+```
+
+1. Execute command to see available or add a category
+
+```bash
+  waldur load_categories  # vpc vm storage ...
+```
