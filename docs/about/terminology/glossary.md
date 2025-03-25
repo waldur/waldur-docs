@@ -1,4 +1,4 @@
-# Terminology
+# Glossary
 
 |     Name     |              Description             | Examples |
 |:------------:|:------------------------------------:|:--------:|

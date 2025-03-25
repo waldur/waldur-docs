@@ -8,7 +8,6 @@ Notes: None
     * Image SBOM: [waldur-mastermind-7.4.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.5-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-mastermind-7.4.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.5-source.cyclonedx.tar.gz)
     * OpenAPI specification for version 7.4.5 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.5.yaml)
-    
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.4...7.4.5)
     * Image SBOM: [waldur-homeport-7.4.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.5-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-homeport-7.4.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.5-source.cyclonedx.tar.gz)
@@ -28,7 +27,6 @@ Notes: None
     * Image SBOM: [waldur-mastermind-7.4.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.4-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-mastermind-7.4.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.4-source.cyclonedx.tar.gz)
     * OpenAPI specification for version 7.4.4 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.4.yaml)
-    
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.3...7.4.4)
     * Image SBOM: [waldur-homeport-7.4.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.4-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-homeport-7.4.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.4-source.cyclonedx.tar.gz)
@@ -48,7 +46,6 @@ Notes: Use psycopg 3 PostgreSQL driver for Celery result backend
     * Image SBOM: [waldur-mastermind-7.4.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.3-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-mastermind-7.4.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.3-source.cyclonedx.tar.gz)
     * OpenAPI specification for version 7.4.3 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.3.yaml)
-    
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.2...7.4.3)
     * Image SBOM: [waldur-homeport-7.4.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.3-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-homeport-7.4.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.3-source.cyclonedx.tar.gz)
@@ -68,7 +65,6 @@ Notes: Updated postgresql driver
     * Image SBOM: [waldur-mastermind-7.4.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.2-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-mastermind-7.4.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.2-source.cyclonedx.tar.gz)
     * OpenAPI specification for version 7.4.2 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.2.yaml)
-    
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.1...7.4.2)
     * Image SBOM: [waldur-homeport-7.4.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.2-image.cyclonedx.tar.gz)
     * Source SBOM: [waldur-homeport-7.4.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.2-source.cyclonedx.tar.gz)
