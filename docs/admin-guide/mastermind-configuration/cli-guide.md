@@ -382,6 +382,20 @@ options:
                         UUID of a marketplace resource to move.
 ```
 
+## organization_access_subnets
+
+Dumps information about organization access subnets, merging adjacent or overlapping networks.
+
+```bash
+usage: waldur organization_access_subnets [-o OUTPUT]
+
+options:
+  -o OUTPUT, --output OUTPUT
+                        Specifies file to which the merged subnets will be
+                        written. The output will be printed to stdout by
+                        default.
+```
+
 ## override_constance_settings
 
 Override settings stored in django-constance. The example of .yaml file:
