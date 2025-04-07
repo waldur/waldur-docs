@@ -1,5 +1,25 @@
 # Changelog
 
+## 7.4.8
+
+Notes: Bugfix release
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.7...7.4.8)
+    * Image SBOM: [waldur-mastermind-7.4.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.8-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-mastermind-7.4.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.8-source.cyclonedx.tar.gz)
+    * OpenAPI specification for version 7.4.8 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.8.yaml)
+    * API changes: [View changes](/about/api-changes/waldur-openapi-schema-7.4.8-diff)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.7...7.4.8)
+    * Image SBOM: [waldur-homeport-7.4.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.8-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-homeport-7.4.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.8-source.cyclonedx.tar.gz)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.7...7.4.8)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.7...7.4.8)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.7...7.4.8)
+    * Image SBOM: [waldur-prometheus-exporter-7.4.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.8-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-prometheus-exporter-7.4.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.8-source.cyclonedx.tar.gz)
+
+Date: Mon Apr  7 07:13:39 UTC 2025
+
 ## 7.4.7
 
 Notes: Bugfix release
