@@ -1,64 +1,66 @@
-# Hardware requirements
+# Hardware Requirements
 
-## Docker-compose deployment (on a single server)
+This document outlines the recommended hardware requirements for deploying Waldur in different environments.
 
-- Docker version: 1.13+
-- Minimal configuration: 4 vCPU, 12 GB RAM
+## Deployment Methods
 
-## Helm-based deployment
+| Deployment Method | Minimum Requirements | Recommended Configuration | Notes |
+|-------------------|----------------------|---------------------------|-------|
+| **Docker Compose** | • 4 vCPU<br>• 12 GB RAM<br>• 20 GB storage | • 8 vCPU<br>• 16 GB RAM<br>• 40 GB storage | Single server deployment, fastest to set up |
+| **Kubernetes (Helm)** | See detailed component breakdown below | See detailed component breakdown below | Production-grade, scalable deployment |
 
-- Kubernetes version: 1.18+
-- Minimal namespace limits:
-  - CPU: **8000m**
-    - Waldur: 4000m
-    - PostgreSQL: 4000m
-  - RAM: **10000Mi**
-    - Waldur: 6000Mi
-    - PostgreSQL: 4000Mi
-  - Storage: **20Gi** (PostgreSQL DB)
-- Recommended namespace limits:
-  - CPU: **12000m**
-    - Waldur: 6000m
-    - PostgreSQL: 6000m
-  - RAM: **14000Mi**
-    - Waldur: 8000Mi
-    - PostgreSQL: 6000Mi
-  - Storage: **40Gi** (PostgreSQL DB)
+## Kubernetes Resource Requirements
 
-## Component specific requirements
+### Namespace Totals
 
-### Waldur Mastermind (API)
+| Requirement Level | CPU | Memory | Storage |
+|-------------------|-----|--------|---------|
+| **Minimal** | 8000m (8 vCPU) | 10000Mi (10 GB) | 20Gi for PostgreSQL |
+| **Recommended** | 12000m (12 vCPU) | 14000Mi (14 GB) | 40Gi for PostgreSQL |
 
-By default 4 uWSGI processes are started.
+### Per-Component Requirements
 
-- Minimum requirements: 1 CPU, 2GB RAM for every node
-- Recommended setup: 2 CPU or more, 4GB RAM or more
+| Component | CPU Requests | CPU Limits | Memory Requests | Memory Limits | Notes |
+|-----------|--------------|------------|-----------------|---------------|-------|
+| **Waldur Mastermind API** | 500m | 1000m | 2000Mi | 4000Mi | Serves API requests, increase for high traffic |
+| **Waldur Mastermind Worker** | 1000m | 2000m | 2000Mi | 4000Mi | Processes background tasks, critical for performance |
+| **Waldur Mastermind Beat** | 250m | 500m | 500Mi | 1000Mi | Schedules periodic tasks |
+| **Waldur HomePort** | 250m | 500m | 500Mi | 1000Mi | Serves web interface |
+| **PostgreSQL (Single)** | 500m | 1000m | 1024Mi | 2048Mi | Main database, persistent storage |
+| **PostgreSQL (HA)** | 1000m per replica | 2000m per replica | 2048Mi per replica | 4096Mi per replica | For high availability (3 replicas recommended) |
+| **RabbitMQ** | 500m | 1000m | 512Mi | 1000Mi | Message broker |
 
-### Waldur Mastermind (Celery worker)
+### Storage Requirements
 
-By default a single worker with 10 threads is started.
+| Component | Minimal Size | Recommended Size | Notes |
+|-----------|--------------|------------------|-------|
+| **PostgreSQL** | 10Gi | 40Gi | Main database storage, grows with user and resource count |
+| **RabbitMQ** | 2Gi | 5Gi | Message queue persistence |
+| **Backups** | 20Gi | 50Gi | Separate storage for database backups |
 
-- Minimum requirements: 1 CPU, 2 GB RAM
-- Recommended setup: 2 CPU or more, 4 GB RAM or more
+## Scaling Recommendations
 
-**More memory should be added if more Celery worker processes are running on the same host (512 MB for each 4 Celery workers).**
+| User Scale | API Replicas | Worker Replicas | PostgreSQL Configuration | Additional Notes |
+|------------|--------------|-----------------|--------------------------|------------------|
+| **Small** (<100 users) | 1 | 1 | Single instance | Default values sufficient |
+| **Medium** (100-500 users) | 2 | 2 | Single instance with increased resources | Enable HPA for API |
+| **Large** (500+ users) | 3+ | 3+ | HA with 3 replicas | Enable HPA for all components, increase resource limits |
 
-### Waldur Mastermind (Celery beat)
+## Performance Factors
 
-A single Celery beat process is started.
+Consider increasing resources beyond the recommended values if your deployment includes:
 
-- Minimum and recommended requirements: 1 CPU, 1 GB RAM
+- High number of concurrent users (>50 simultaneous active sessions)
+- Large number of resources being managed (>1000 total resources)
+- Complex marketplace offerings with many components
+- Frequent reporting or billing operations
+- Integration with multiple external systems
 
-### PostgreSQL
+## Hardware Recommendations for Production
 
-- Minimum requirements: 1 CPU, 1 GB RAM
-- Recommended setup: 2 CPU or more, 2 GB RAM or more
-
-### RabbitMQ
-
-- Minimum requirements: 1 CPU, 512 MB RAM
-- Recommended setup: 2 CPU or more, 1 GB RAM or more
-
-## Waldur HomePort (Nginx)
-
-- Minimum and recommended requirements: 1 CPU and 512MB RAM
+| Component | vCPU | RAM | Storage | Network |
+|-----------|------|-----|---------|---------|
+| **Control Plane Nodes** | 4 cores | 8 GB | 100 GB SSD | 1 Gbps |
+| **Worker Nodes** | 8 cores | 16 GB | 200 GB SSD | 1 Gbps |
+| **Database Nodes** | 4 cores | 8 GB | 100 GB SSD | 1 Gbps |
+| **Load Balancer** | 2 cores | 4 GB | 20 GB | 1 Gbps |
