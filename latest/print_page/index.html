@@ -967,7 +967,7 @@
         
   
   <span class="md-ellipsis">
-    Hardware requirements
+    Hardware Requirements
   </span>
   
 
@@ -5912,7 +5912,7 @@
           <li class="md-nav__item">
   <a href="#admin-guide-hardware-requirements" class="md-nav__link">
     <span class="md-ellipsis">
-      18. Hardware requirements
+      18. Hardware Requirements
     </span>
   </a>
   
@@ -14061,73 +14061,247 @@ other visualisation solutions.</p>
 <li>Count active resources grouped by organization group;</li>
 <li>Count projects with active resources grouped by provider and OECD science code;</li>
 <li>Count projects with active resources grouped by provider and industry flag.</li>
-</ul></div></section><section class="print-page" id="admin-guide-hardware-requirements"><div><h1 id="hardware-requirements">Hardware requirements</h1>
-<h2 id="admin-guide-hardware-requirements-docker-compose-deployment-on-a-single-server">Docker-compose deployment (on a single server)</h2>
+</ul></div></section><section class="print-page" id="admin-guide-hardware-requirements"><div><h1 id="hardware-requirements">Hardware Requirements</h1>
+<p>This document outlines the recommended hardware requirements for deploying Waldur in different environments.</p>
+<h2 id="admin-guide-hardware-requirements-deployment-methods">Deployment Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Deployment Method</th>
+<th>Minimum Requirements</th>
+<th>Recommended Configuration</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Docker Compose</strong></td>
+<td>• 4 vCPU<br>• 12 GB RAM<br>• 20 GB storage</td>
+<td>• 8 vCPU<br>• 16 GB RAM<br>• 40 GB storage</td>
+<td>Single server deployment, fastest to set up</td>
+</tr>
+<tr>
+<td><strong>Kubernetes (Helm)</strong></td>
+<td>See detailed component breakdown below</td>
+<td>See detailed component breakdown below</td>
+<td>Production-grade, scalable deployment</td>
+</tr>
+</tbody>
+</table>
+<h2 id="admin-guide-hardware-requirements-kubernetes-resource-requirements">Kubernetes Resource Requirements</h2>
+<h3 id="admin-guide-hardware-requirements-namespace-totals">Namespace Totals</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement Level</th>
+<th>CPU</th>
+<th>Memory</th>
+<th>Storage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Minimal</strong></td>
+<td>8000m (8 vCPU)</td>
+<td>10000Mi (10 GB)</td>
+<td>20Gi for PostgreSQL</td>
+</tr>
+<tr>
+<td><strong>Recommended</strong></td>
+<td>12000m (12 vCPU)</td>
+<td>14000Mi (14 GB)</td>
+<td>40Gi for PostgreSQL</td>
+</tr>
+</tbody>
+</table>
+<h3 id="admin-guide-hardware-requirements-per-component-requirements">Per-Component Requirements</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>CPU Requests</th>
+<th>CPU Limits</th>
+<th>Memory Requests</th>
+<th>Memory Limits</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Waldur Mastermind API</strong></td>
+<td>500m</td>
+<td>1000m</td>
+<td>2000Mi</td>
+<td>4000Mi</td>
+<td>Serves API requests, increase for high traffic</td>
+</tr>
+<tr>
+<td><strong>Waldur Mastermind Worker</strong></td>
+<td>1000m</td>
+<td>2000m</td>
+<td>2000Mi</td>
+<td>4000Mi</td>
+<td>Processes background tasks, critical for performance</td>
+</tr>
+<tr>
+<td><strong>Waldur Mastermind Beat</strong></td>
+<td>250m</td>
+<td>500m</td>
+<td>500Mi</td>
+<td>1000Mi</td>
+<td>Schedules periodic tasks</td>
+</tr>
+<tr>
+<td><strong>Waldur HomePort</strong></td>
+<td>250m</td>
+<td>500m</td>
+<td>500Mi</td>
+<td>1000Mi</td>
+<td>Serves web interface</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL (Single)</strong></td>
+<td>500m</td>
+<td>1000m</td>
+<td>1024Mi</td>
+<td>2048Mi</td>
+<td>Main database, persistent storage</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL (HA)</strong></td>
+<td>1000m per replica</td>
+<td>2000m per replica</td>
+<td>2048Mi per replica</td>
+<td>4096Mi per replica</td>
+<td>For high availability (3 replicas recommended)</td>
+</tr>
+<tr>
+<td><strong>RabbitMQ</strong></td>
+<td>500m</td>
+<td>1000m</td>
+<td>512Mi</td>
+<td>1000Mi</td>
+<td>Message broker</td>
+</tr>
+</tbody>
+</table>
+<h3 id="admin-guide-hardware-requirements-storage-requirements">Storage Requirements</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Minimal Size</th>
+<th>Recommended Size</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PostgreSQL</strong></td>
+<td>10Gi</td>
+<td>40Gi</td>
+<td>Main database storage, grows with user and resource count</td>
+</tr>
+<tr>
+<td><strong>RabbitMQ</strong></td>
+<td>2Gi</td>
+<td>5Gi</td>
+<td>Message queue persistence</td>
+</tr>
+<tr>
+<td><strong>Backups</strong></td>
+<td>20Gi</td>
+<td>50Gi</td>
+<td>Separate storage for database backups</td>
+</tr>
+</tbody>
+</table>
+<h2 id="admin-guide-hardware-requirements-scaling-recommendations">Scaling Recommendations</h2>
+<table>
+<thead>
+<tr>
+<th>User Scale</th>
+<th>API Replicas</th>
+<th>Worker Replicas</th>
+<th>PostgreSQL Configuration</th>
+<th>Additional Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Small</strong> (&lt;100 users)</td>
+<td>1</td>
+<td>1</td>
+<td>Single instance</td>
+<td>Default values sufficient</td>
+</tr>
+<tr>
+<td><strong>Medium</strong> (100-500 users)</td>
+<td>2</td>
+<td>2</td>
+<td>Single instance with increased resources</td>
+<td>Enable HPA for API</td>
+</tr>
+<tr>
+<td><strong>Large</strong> (500+ users)</td>
+<td>3+</td>
+<td>3+</td>
+<td>HA with 3 replicas</td>
+<td>Enable HPA for all components, increase resource limits</td>
+</tr>
+</tbody>
+</table>
+<h2 id="admin-guide-hardware-requirements-performance-factors">Performance Factors</h2>
+<p>Consider increasing resources beyond the recommended values if your deployment includes:</p>
 <ul>
-<li>Docker version: 1.13+</li>
-<li>Minimal configuration: 4 vCPU, 12 GB RAM</li>
+<li>High number of concurrent users (&gt;50 simultaneous active sessions)</li>
+<li>Large number of resources being managed (&gt;1000 total resources)</li>
+<li>Complex marketplace offerings with many components</li>
+<li>Frequent reporting or billing operations</li>
+<li>Integration with multiple external systems</li>
 </ul>
-<h2 id="admin-guide-hardware-requirements-helm-based-deployment">Helm-based deployment</h2>
-<ul>
-<li>Kubernetes version: 1.18+</li>
-<li>Minimal namespace limits:</li>
-<li>CPU: <strong>8000m</strong><ul>
-<li>Waldur: 4000m</li>
-<li>PostgreSQL: 4000m</li>
-</ul>
-</li>
-<li>RAM: <strong>10000Mi</strong><ul>
-<li>Waldur: 6000Mi</li>
-<li>PostgreSQL: 4000Mi</li>
-</ul>
-</li>
-<li>Storage: <strong>20Gi</strong> (PostgreSQL DB)</li>
-<li>Recommended namespace limits:</li>
-<li>CPU: <strong>12000m</strong><ul>
-<li>Waldur: 6000m</li>
-<li>PostgreSQL: 6000m</li>
-</ul>
-</li>
-<li>RAM: <strong>14000Mi</strong><ul>
-<li>Waldur: 8000Mi</li>
-<li>PostgreSQL: 6000Mi</li>
-</ul>
-</li>
-<li>Storage: <strong>40Gi</strong> (PostgreSQL DB)</li>
-</ul>
-<h2 id="admin-guide-hardware-requirements-component-specific-requirements">Component specific requirements</h2>
-<h3 id="admin-guide-hardware-requirements-waldur-mastermind-api">Waldur Mastermind (API)</h3>
-<p>By default 4 uWSGI processes are started.</p>
-<ul>
-<li>Minimum requirements: 1 CPU, 2GB RAM for every node</li>
-<li>Recommended setup: 2 CPU or more, 4GB RAM or more</li>
-</ul>
-<h3 id="admin-guide-hardware-requirements-waldur-mastermind-celery-worker">Waldur Mastermind (Celery worker)</h3>
-<p>By default a single worker with 10 threads is started.</p>
-<ul>
-<li>Minimum requirements: 1 CPU, 2 GB RAM</li>
-<li>Recommended setup: 2 CPU or more, 4 GB RAM or more</li>
-</ul>
-<p><strong>More memory should be added if more Celery worker processes are running on the same host (512 MB for each 4 Celery workers).</strong></p>
-<h3 id="admin-guide-hardware-requirements-waldur-mastermind-celery-beat">Waldur Mastermind (Celery beat)</h3>
-<p>A single Celery beat process is started.</p>
-<ul>
-<li>Minimum and recommended requirements: 1 CPU, 1 GB RAM</li>
-</ul>
-<h3 id="admin-guide-hardware-requirements-postgresql">PostgreSQL</h3>
-<ul>
-<li>Minimum requirements: 1 CPU, 1 GB RAM</li>
-<li>Recommended setup: 2 CPU or more, 2 GB RAM or more</li>
-</ul>
-<h3 id="admin-guide-hardware-requirements-rabbitmq">RabbitMQ</h3>
-<ul>
-<li>Minimum requirements: 1 CPU, 512 MB RAM</li>
-<li>Recommended setup: 2 CPU or more, 1 GB RAM or more</li>
-</ul>
-<h2 id="admin-guide-hardware-requirements-waldur-homeport-nginx">Waldur HomePort (Nginx)</h2>
-<ul>
-<li>Minimum and recommended requirements: 1 CPU and 512MB RAM</li>
-</ul></div></section><section class="print-page" id="admin-guide-managing-with-ansible"><div><h1 id="managing-waldur-with-ansible">Managing Waldur with Ansible</h1>
+<h2 id="admin-guide-hardware-requirements-hardware-recommendations-for-production">Hardware Recommendations for Production</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>vCPU</th>
+<th>RAM</th>
+<th>Storage</th>
+<th>Network</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Control Plane Nodes</strong></td>
+<td>4 cores</td>
+<td>8 GB</td>
+<td>100 GB SSD</td>
+<td>1 Gbps</td>
+</tr>
+<tr>
+<td><strong>Worker Nodes</strong></td>
+<td>8 cores</td>
+<td>16 GB</td>
+<td>200 GB SSD</td>
+<td>1 Gbps</td>
+</tr>
+<tr>
+<td><strong>Database Nodes</strong></td>
+<td>4 cores</td>
+<td>8 GB</td>
+<td>100 GB SSD</td>
+<td>1 Gbps</td>
+</tr>
+<tr>
+<td><strong>Load Balancer</strong></td>
+<td>2 cores</td>
+<td>4 GB</td>
+<td>20 GB</td>
+<td>1 Gbps</td>
+</tr>
+</tbody>
+</table></div></section><section class="print-page" id="admin-guide-managing-with-ansible"><div><h1 id="managing-waldur-with-ansible">Managing Waldur with Ansible</h1>
 <p><strong>NB!</strong> Repository with Ansible playbooks for Waldur management is not open-sourced. It is available to Waldur users
 that have purchased support packages.</p>
 <h2 id="admin-guide-managing-with-ansible-compatibility">Compatibility</h2>
