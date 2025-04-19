@@ -43,7 +43,6 @@ When enabled, Catalogue mode introduces the following changes:
 - Maintains full visibility of offering details and specifications
 - Preserves organization and category browsing capabilities
 
-
 ## Note
 
 The Catalogue mode can be disabled at any time by following the same steps and toggling the feature off.

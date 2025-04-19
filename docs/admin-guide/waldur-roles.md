@@ -66,7 +66,6 @@ Waldur provides predefined roles to streamline access management across differen
 | Call manager  | Oversees calls and proposal approvals | Yes |
 | Call reviewer  | A role dedicated to reviewing submitted proposals | Yes |
 
-
 ### Proposal roles
 
 **Scope**: Proposal
@@ -101,7 +100,6 @@ The Waldur administration interface offers an intuitive way to manage user roles
 4. Disable roles as needed
 
 Using the administration interface simplifies role management and ensures a structured approach to access control.
-
 
 ⚠️ **Important notes**:
 

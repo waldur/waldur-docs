@@ -8,4 +8,3 @@ for resource lifecycle management, accounting and invoicing. Specifics are imple
 ## Diagram of concepts
 
 ![Diagram of marketplace concepts](img/marketplace-structure.png)
-

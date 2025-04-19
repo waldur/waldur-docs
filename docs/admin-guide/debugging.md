@@ -21,7 +21,9 @@ This guide provides systematic approaches for troubleshooting Waldur Mastermind 
 ### Email-related events
 
 #### Docker Compose
+
 Check your specific deployment logs location, typically:
+
 ```bash
 # Find log location first
 docker inspect waldur-mastermind-worker | grep LogPath
@@ -30,6 +32,7 @@ cat /var/lib/docker/containers/[container-id]/[container-id]-json.log | grep -i 
 ```
 
 #### Helm
+
 ```bash
 # Replace 'waldur' with your namespace if different
 kubectl logs -n waldur -l app=waldur-mastermind-worker --tail=1000 | grep -i "about to send"
@@ -38,12 +41,14 @@ kubectl logs -n waldur -l app=waldur-mastermind-worker --tail=1000 | grep -i "ab
 ### Component logs
 
 #### API Logs in Helm
+
 ```bash
 # Replace 'waldur' with your namespace if different
 kubectl logs -n waldur -l app=waldur-mastermind-api --tail=100
 ```
 
 #### Worker Logs in Helm
+
 ```bash
 # Replace 'waldur' with your namespace if different
 kubectl logs -n waldur -l app=waldur-mastermind-worker --tail=100
@@ -67,6 +72,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
 ### API server problems
 
 1. Check if the API container is running:
+
    ```bash
    # Docker Compose
    docker ps | grep waldur-mastermind-api
@@ -76,12 +82,14 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```
 
 2. Verify API health endpoint:
+
    ```bash
    # Use appropriate authentication if required
    curl https://your-waldur-instance/health-check/
    ```
 
 3. Check for configuration issues:
+
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api cat /etc/waldur/override.conf.py
@@ -93,6 +101,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
 ### Worker issues
 
 1. Check Celery worker status:
+
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-worker celery -A waldur_core.server inspect active
@@ -102,6 +111,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```
 
 2. Verify task queue connectivity:
+
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-worker celery -A waldur_core.server inspect ping
@@ -113,6 +123,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
 ## Database troubleshooting
 
 1. Check database connectivity:
+
    ```bash
    # Docker Compose - if you have direct access
    docker exec -it waldur-mastermind-api waldur shell -c "from django.db import connection; connection.ensure_connection(); print('Connected')"
@@ -122,6 +133,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```
 
 2. Identify slow queries (requires database access rights):
+
    ```sql
    -- For PostgreSQL 9.6+
    SELECT pid, now() - pg_stat_activity.query_start AS duration, query 
@@ -133,6 +145,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
 ## API endpoint issues
 
 1. Test endpoint with curl (store tokens in environment variables for security):
+
    ```bash
    # Set token in environment variable first
    export WALDUR_TOKEN="your_token_here"
@@ -152,6 +165,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
 ## Authentication problems
 
 1. Check token validity:
+
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api waldur shell -c "from rest_framework.authtoken.models import Token; print(Token.objects.filter(key='your_token_here').exists())"
@@ -161,6 +175,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```
 
 2. Verify IdP configuration:
+
    ```bash
    # For SAML2 configuration (replace namespace if needed)
    kubectl -n waldur get configmap waldur-saml2-conf-config -o yaml
@@ -169,6 +184,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
 ## Resource provisioning failures
 
 1. Check resource state:
+
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api waldur shell -c "from waldur_mastermind.marketplace import models; print(models.Resource.objects.filter(uuid='RESOURCE_UUID').values('state', 'error_message'))"
@@ -178,6 +194,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```
 
 2. Check backend connectivity (if you have the right plugin installed):
+
    ```bash
    # For OpenStack
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-api -o name | head -1) -- waldur shell -c "from waldur_openstack.openstack import models; tenant = models.Tenant.objects.first(); print('No tenants found' if not tenant else tenant.get_backend().verify_connection())"
@@ -200,6 +217,7 @@ kubectl -n waldur describe pod $(kubectl -n waldur get pods -l app=waldur-master
 ### Centralized logging
 
 For production deployments, consider:
+
 - Fluentd for log collection
 - Elasticsearch for storage and search
 - Kibana for visualization

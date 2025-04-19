@@ -80,7 +80,7 @@ When reporting issues specifically with MasterMind, please also include:
     - Include the latest MasterMind stdout logs with the error stacktrace
     - For different deployment types, retrieve logs using:
         - Docker-compose: [View logging instructions](../admin-guide/deployment/docker-compose.md#logs)
-        - Helm: [View debugging instructions](../admin-guide/debugging.md#helm-1)
+        - Helm: [View debugging instructions](../admin-guide/debugging.md#helm)
 
 !!! warning
     Logs may contain sensitive data. Please ensure you either clean up the data or share it only with trusted parties before submitting.

@@ -5,7 +5,7 @@ Examples below show how it's possible to use Waldur SDK for generation of custom
 ## Running the scripts
 
 All of the scripts below should be saved as files and executed in the environment with installed
-[Waldur SDK](./waldur-sdk.md). Please make sure that you have python3 and pip installed in your command line.
+[Waldur SDK](./Waldur-SDK/waldur-sdk.md). Please make sure that you have python3 and pip installed in your command line.
 
 Make sure that you update ``WALDUR_HOST`` and ``TOKEN`` with values that match your target Waldur deployment.
 

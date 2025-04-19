@@ -9,7 +9,6 @@ In Waldur, an organization represents a configurable grouping unit that can be a
 !!! note
     Organization creation is only allowed for users in Staff role!
 
-
 1. Login to Waldur and select "Organizations" from the left-side menu and then select "Add" from the right.
 2. Fill the form and click "Create organization":
 
@@ -47,7 +46,6 @@ The organization edit interface consists of six main tabs, each containing speci
 
 ![type:image](../img/create_organization_basic.png)
 
-
 ### Contact information
 
 - **Email** - Primary contact email
@@ -61,8 +59,8 @@ The organization edit interface consists of six main tabs, each containing speci
 
 To configure network access restrictions add access subnets by specifying:
 
-  - **CIDR** - Network address range
-  - **Description** - Purpose or identifier for the subnet
+- **CIDR** - Network address range
+- **Description** - Purpose or identifier for the subnet
 
 ![type:image](../img/create_organization_access_control-1.png)
 ![type:image](../img/create_organization_access_control-2.png)

@@ -14,4 +14,3 @@ To register organization as service provider:
    ![Service provider description](../img/sp_descr.jpg)
 
 4. Make sure that service provider organization category group is also set.
-

@@ -4,7 +4,6 @@ Organization team contains users with different roles.
 
 Please see [this page](https://docs.waldur.com/latest/about/Concept/structure/#user-roles-in-organization) for User Rights based on Roles in the Organization.
 
-
 ## Adding organization members
 
 1. Open your organization in Waldur.
@@ -19,5 +18,3 @@ Please see [this page](https://docs.waldur.com/latest/about/Concept/structure/#u
 
 5. Fill in your custom message on the right side of the window and send the invitation.
 6. User now will get invitation email with the acceptance link.
-
-

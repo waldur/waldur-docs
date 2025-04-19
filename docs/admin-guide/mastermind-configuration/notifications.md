@@ -2032,4 +2032,3 @@ A notification used for issue creation.
     {% if issue.customer.abbreviation %}{{issue.customer.abbreviation}}: {% endif %}{{issue.summary}}
 
 ```
-

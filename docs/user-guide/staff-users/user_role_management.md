@@ -55,7 +55,6 @@ For each role, administrators can:
 
 ## Permission configuration
 
-
 Permissions in Waldur are extensively categorized to provide granular access control across different functional areas. Each permission category contains multiple specific actions that can be enabled or disabled.
 
 ### Offering permissions
