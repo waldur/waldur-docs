@@ -18,7 +18,11 @@ In order to perform operations, a user needs to create an instance of `Authentic
 ```python
 from waldur_api_client import AuthenticatedClient
 
-client = AuthenticatedClient(base_url="https://api.example.com", token="SuperSecretToken", prefix="Token")
+client = AuthenticatedClient(
+    base_url="https://api.example.com",
+    token="SuperSecretToken",
+    prefix="Token",
+)
 ```
 
 This instance provides interface for further interaction with Waldur and will be used across examples in related documentation.
@@ -56,8 +60,9 @@ the trick below can be used to disable validation of certificates by SDK, beware
 ```python
 client = AuthenticatedClient(
     base_url="https://internal_api.example.com", 
-    token="SuperSecretToken", 
-    verify_ssl=False
+    token="SuperSecretToken",
+    prefix="Token",
+    verify_ssl=False,
 )
 ```
 
@@ -67,6 +72,7 @@ Sometimes you may need to authenticate to a server (especially an internal serve
 client = AuthenticatedClient(
     base_url="https://internal_api.example.com", 
     token="SuperSecretToken",
+    prefix="Token",
     verify_ssl="/path/to/certificate_bundle.pem",
 )
 ```
@@ -75,22 +81,9 @@ client = AuthenticatedClient(
 
 The recommended way to install the SDK is using Poetry, a modern Python dependency management tool. In order to install Poetry, visit [Poetry](https://python-poetry.org/docs/#installation).
 
-After Poetry is installed, follow these steps:
-
-Download the project:
-
 ```shell
-git clone https://github.com/waldur/py-client.git
-cd py-client
+poetry add git+https://github.com/waldur/py-client.git
 ```
-
-Install the SDK:
-
-```shell
-poetry install
-```
-
-This will automatically create a virtual environment, install the SDK and its dependencies.
 
 ## Air gapped installation
 

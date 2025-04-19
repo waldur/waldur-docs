@@ -11,13 +11,11 @@ Please, read [initial setup for Waldur SDK](./waldur-sdk.md).
 `list_users` method is used to fetch all users in a Waldur instance.
 
 ```python
-# Getting a list of users
-
 # The sync function from users_list module is used to fetch all users
-from waldur_api_client.api.users.users_list import sync
+from waldur_api_client.api.users import users_list
 
 # Initialize your client first (per the SDK guide)
-result = sync(client=client)
+result = users_list.sync(client=client)
 
 # The result will be a list of User objects with the following attributes:
 # - url: str
