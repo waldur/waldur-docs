@@ -1930,3 +1930,4 @@ Please go to {{issue_url}} to see it.
 ``` txt
 Issue {{ issue.key }}. The comment has been updated
 ```
+
