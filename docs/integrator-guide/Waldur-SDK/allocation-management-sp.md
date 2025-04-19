@@ -703,7 +703,7 @@ projects = marketplace_service_providers_projects_list.sync(
 
 A service provider owner can also list all active projects permissions in projects, which have its resources.
 For this, `marketplace_service_providers_project_permissions_list` should be used. It accepts **service_provider_uuid**,
-which can be ffetched using `marketplace_service_providers_list`.
+which can be fetched using `marketplace_service_providers_list`.
 
 ```python
 from waldur_api_client.api.marketplace_service_providers import (
