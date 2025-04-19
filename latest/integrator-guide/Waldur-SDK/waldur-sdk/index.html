@@ -5973,9 +5973,17 @@ SDK is represented by Python module called <code>waldur_api_client</code>.</p>
 <p>In order to perform operations, a user needs to create an instance of <code>AuthenticatedClient</code> class:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">"Token"</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span>
+    <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="o">=</span><span class="s2">"Token"</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <p>This instance provides interface for further interaction with Waldur and will be used across examples in related documentation.</p>
 <h2 id="error-handling">Error handling</h2>
@@ -6013,10 +6021,12 @@ the trick below can be used to disable validation of certificates by SDK, beware
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://internal_api.example.com"</span><span class="p">,</span> 
-    <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span> 
-    <span class="n">verify_ssl</span><span class="o">=</span><span class="kc">False</span>
+    <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="o">=</span><span class="s2">"Token"</span><span class="p">,</span>
+    <span class="n">verify_ssl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <p>Sometimes you may need to authenticate to a server (especially an internal server) using a custom certificate bundle.</p>
@@ -6024,24 +6034,18 @@ the trick below can be used to disable validation of certificates by SDK, beware
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://internal_api.example.com"</span><span class="p">,</span> 
     <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="o">=</span><span class="s2">"Token"</span><span class="p">,</span>
     <span class="n">verify_ssl</span><span class="o">=</span><span class="s2">"/path/to/certificate_bundle.pem"</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <h2 id="installation-with-poetry">Installation with Poetry</h2>
 <p>The recommended way to install the SDK is using Poetry, a modern Python dependency management tool. In order to install Poetry, visit <a href="https://python-poetry.org/docs/#installation">Poetry</a>.</p>
-<p>After Poetry is installed, follow these steps:</p>
-<p>Download the project:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/waldur/py-client.git
-<span class="nb">cd</span><span class="w"> </span>py-client
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>poetry<span class="w"> </span>add<span class="w"> </span>git+https://github.com/waldur/py-client.git
 </code></pre></div></td></tr></table></div>
-<p>Install the SDK:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>poetry<span class="w"> </span>install
-</code></pre></div></td></tr></table></div>
-<p>This will automatically create a virtual environment, install the SDK and its dependencies.</p>
 <h2 id="air-gapped-installation">Air gapped installation</h2>
 <p>If your machine from where you run SDK is not connected to the public Internet, you can use the following method
 to transfer required libraries.</p>
