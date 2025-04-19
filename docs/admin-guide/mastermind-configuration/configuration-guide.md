@@ -1005,7 +1005,7 @@ Description of the Waldur deployment.
 
 **Type:** str
 
-**Default value**: https://example.com/
+**Default value**: <https://example.com/>
 
 It is used for rendering callback URL in HomePort
 
@@ -1121,7 +1121,7 @@ Allow to view and update resource end date.
 
 **Type:** str
 
-**Default value**: https://telemetry.waldur.com/
+**Default value**: <https://telemetry.waldur.com/>
 
 URL for sending telemetry data.
 
@@ -1371,7 +1371,7 @@ Toggler for request type displaying
 
 **Type:** url_field
 
-**Default value**: https://example.com/
+**Default value**: <https://example.com/>
 
 Atlassian API server URL
 
@@ -1850,5 +1850,3 @@ List of username that users are not allowed to select
 **Default value**: True
 
 Optionally disable creation of user groups in FreeIPA matching Waldur structure
-
-

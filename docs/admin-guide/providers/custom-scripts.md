@@ -114,7 +114,6 @@ Please, add the necessary variables to the local offering's environment:
 - `PI_EMAILS` - optional comma-separated list of emails receiving invitations to the project after creation of the remote resource
 - `REMOTE_PROJECT_CREDIT_AMOUNT` - optional amount of credit applied to the remote project
 
-
 ```python
 from waldur_client import WaldurClient
 from os import environ

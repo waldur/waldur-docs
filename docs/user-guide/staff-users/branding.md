@@ -10,7 +10,6 @@ The portal allows you to customize its appearance to match your organization's b
 
 ![Branding](../img/path-to-branding.png)
 
-
 ## Available Customization Options
 
 ### Branding

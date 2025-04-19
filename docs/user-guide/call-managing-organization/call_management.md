@@ -72,6 +72,7 @@ Call management in Waldur is built around structured components: calls, rounds, 
 ### 2. Round Configuration
 
 Call manager must configure:
+
 - Start and end dates
 - Review strategy options:
   - After round closure
@@ -91,6 +92,7 @@ Call manager must configure:
 ### 3. Proposal Submission
 
 Call members should:
+
 - Submit proposals to active rounds
 - Upload required documents
 - Select offerings and allocations
@@ -182,6 +184,7 @@ Call members should:
 ## API Endpoints
 
 The system provides RESTful API endpoints for:
+
 - Managing Call Organizations
 - Creating and configuring Calls
 - Managing Rounds

@@ -135,4 +135,3 @@ Enable display of slug field in user summary.
 ## user.ssh_keys
 
 Enable SSH keys management in user workspace.
-

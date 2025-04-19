@@ -31,4 +31,3 @@ Please see [this page](https://docs.waldur.com/latest/about/Concept/structure/#u
 6. User now will get invitation email with the acceptance link.
 
 ![type:video](../img/send_invitation.mp4)
-

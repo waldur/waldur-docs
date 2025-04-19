@@ -576,4 +576,3 @@ Synchronize SAML2 identity providers.
 ## sync_users
 
 Sync users from Waldur to Rancher.
-
