@@ -1,95 +1,159 @@
 # Marketplace concept
 
-The **Marketplace** is a central module in Waldur designed for the provisioning and lifecycle management of various resources. It provides a unified interface where users can browse, request, and manage services offered by different service providers within the platform.
+## Overview
 
-Each **offering** in the Marketplace is published by a **Service Provider**, which is a specialized type of organization in Waldur. Offerings may include anything from virtual machines (via OpenStack), HPC compute time (via SLURM), container environments (via Rancher), and more — depending on the enabled plugins.
+The Waldur Marketplace serves as a centralized platform for requesting, provisioning, and managing resources from various service providers. This guide explains key concepts and workflows in the Marketplace to help you effectively navigate and utilize its features.
 
-The Marketplace streamlines complex backend processes and enables:
-- Discovery of services through categorized offerings
-- Resource provisioning through a request-based model (orders & plans)
-- Monitoring of resource usage
-- Support for accounting and invoicing based on consumption
+## Core Concepts
 
-The core logic of the Marketplace relies on several interconnected modules in Waldur: the **Structure**, **Service Catalog**, and **Provisioning** modules. These modules work together to ensure secure access control, service configuration, and automated resource delivery.
+### Marketplace Framework
 
+The Marketplace operates through three integrated modules:
 
-## Architecture Breakdown
+1. **Structure Module**: Establishes organizational hierarchy through Organizations and Projects, with access controls enforced at the project level.
 
-The Marketplace module operates through the collaboration of three core modules in Waldur: **Structure**, **Service Catalog**, and **Provisioning**. Each module plays a distinct role in enabling the end-to-end service delivery process.
+2. **Service Catalog Module**: Enables Service Providers to configure Offerings with pricing models (Plans), resource components, and customized request forms.
 
-- **Structure module**  
-  Defines the organizational context by managing **Organizations** and **Projects**. Users operate within projects, and access rights are enforced at this level.
+3. **Provisioning Module**: Manages the complete resource lifecycle from order placement to resource creation, usage tracking, and termination.
 
-- **Service Catalog module**  
-  Allows **Service Providers** to create and configure **Offerings**, including pricing models (**Plans**), resource components, and custom request forms. Offerings are categorized and structured using sections and attributes.
-
-- **Provisioning module**  
-  Handles the service lifecycle. When a user places an order, it creates an **Order Item**, which leads to the provisioning of a **Resource**. The module also tracks **Component Usage** for accounting and monitoring purposes.
+4. **Billing Module**: Handles financial tracking, invoicing, and cost management for resources provisioned through the Marketplace.
 
 
-The architecture below illustrates the interaction between these modules
+### Key Components
 
-![Diagram of marketplace concepts](img/marketplace-structure.png)
+- **Service Provider**: An organization authorized to publish and deliver services through Waldur.
+- **Offering**: A specific service available for provisioning (e.g., virtual machines, HPC compute time).
+- **Plan**: A pricing and resource allocation model for an offering.
+- **Component**: A measurable resource unit (e.g., CPU hours, storage space) used for tracking consumption.
+- **Order**: A formal request for resource provisioning submitted by a user.
+- **Resource**: The provisioned service instance that results from a fulfilled order.
+- **Invoice**: A financial document detailing resource usage costs for an organization.
+- **Invoice Item**: An individual billing entry for a specific resource's consumption.
 
+## Architectural Framework
 
-## What Makes an Offering Marketplace-ready?
+```mermaid
+flowchart TD
+    %% Structure Module
+    subgraph Structure[Structure Module]
+        Org[Organization]
+        User[User]
+        Proj[Project]
+        ProjMember[Project Member]
+        ServiceProvider[Service Provider]
+    end
+    
+    %% Service Catalog Module
+    subgraph Catalog[Service Catalog Module]
+        Offering[Offering]
+        Plan[Plan]
+        PluginReg[Plugin Registry]
+    end
+    
+    %% Provisioning Module
+    subgraph Provisioning[Provisioning Module]
+        Order[Order]
+        Resource[Resource]
+        MarketplacePlugin[Marketplace Plugin]
+    end
+    
+    %% Billing Module
+    subgraph Billing[Billing Module]
+        Invoice[Invoice]
+        InvoiceItem[Invoice Item]
+    end
+    
+    %% Key Relationships
+    Org -- has --> Proj
+    Org -- becomes --> ServiceProvider
+    User -- belongs to --> Proj
+    User -- creates --> ProjMember
+    ServiceProvider -- provides --> Offering
+    Offering -- connects to --> PluginReg
+    Offering -- defines --> Plan
+    
+    ProjMember -- submits --> Order
+    Order -- approved by --> ServiceProvider
+    Order -- creates --> Resource
+    MarketplacePlugin -- processes --> Resource
+    
+    Resource -- generates --> InvoiceItem
+    InvoiceItem -- belongs to --> Invoice
+    Invoice -- billed to --> Org
+    Resource -- instantiated from --> Offering
+    Proj -- contains --> Resource
+    
+    classDef structureModule fill:#FFD07F,stroke:#333,stroke-width:1px
+    classDef catalogModule fill:#4C9E50,stroke:#333,stroke-width:1px
+    classDef provisioningModule fill:#358B37,stroke:#333,stroke-width:1px
+    classDef billingModule fill:#5BAD60,stroke:#333,stroke-width:1px
+    
+    class Org,User,Proj,ProjMember,ServiceProvider structureModule
+    class Offering,Plan,PluginReg catalogModule
+    class Order,Resource,MarketplacePlugin provisioningModule
+    class Invoice,InvoiceItem billingModule
+```
 
-To be listed in the Waldur Marketplace, an offering must be properly configured and published by a service provider. While technical steps and plugin-specific instructions (e.g. SLURM, OpenStack) are detailed in separate offering creation guides, the following elements are essential for any offering to become Marketplace-ready:
+The colors in the diagram represent different functional modules within the Waldur Marketplace system:
 
-- **Category**  
-  Defines where the offering appears in the Marketplace and helps users browse available services by type (e.g. HPC, Virtual Machines, Storage).
+1. **Yellow/Orange**: Structure Module
+    - This represents the organizational framework entities (Organization, User, Project, Project Member, Service Provider)
+    - These are the foundational elements that define who can access and use the system
 
-- **Offering**  
-  Represents the actual service available to users. It must include a name, description, associated plugin type, and linked service settings.
+2. **Green**: Service Catalog Module
+    - This represents the service definition components (Offering, Plan, Plugin Registry)
+    - These define what services are available in the marketplace
 
-- **Plan**  
-  Specifies resource limits and pricing. A single offering can include one or more plans, allowing service providers to define different resource tiers or pricing models.
+3. **Darker Green**: Provisioning Module
+    - This represents the resource creation elements (Order, Resource, Marketplace Plugin)
+    - These handle the actual creation and deployment of resources
 
-- **Plan Components**  
-  Identify what is being measured or billed (e.g. CPU hours, memory, GPU usage). These components are especially important for usage-based billing.
+4. **Light Green**: Billing Module
+    - This represents the financial tracking components (Invoice, Invoice Item)
+    - These handle tracking usage and costs
 
-- **Visibility and Project Permissions**  
-  The offering must be marked as *shared* and made visible to selected customers or projects for it to appear in the Marketplace.
+## Offering Requirements
 
-- **Attributes and Request Form (optional)**  
-  Providers may configure custom attributes to collect additional parameters from users when they place an order.
+For an offering to appear in the Marketplace, it must include:
 
-An offering becomes Marketplace-ready once these elements are correctly configured and saved. Only then will it appear to users in the Marketplace interface.
+- **Category Assignment**: Determines the offering's location in the Marketplace browsing hierarchy.
+- **Basic Information**: Name, description, plugin type, and service settings.
+- **Plan Configuration**: At least one plan defining resource limits and pricing structure.
+- **Component Definitions**: Specific resources being measured or billed.
+- **Visibility Settings**: Configuring which customers or projects can access the offering.
+- **Optional Attributes**: Custom parameters that users must provide when ordering.
 
-## Supported Backends and Marketplace Plugins
+## Supported Integration Plugins
 
-Each plugin enables resource provisioning and lifecycle management for a specific type of infrastructure or service.
+The Marketplace supports various backend systems through dedicated plugins:
 
-The following plugins are currently supported and documented:
+- **OpenStack Plugin**: Provisions virtual infrastructure including VMs, storage volumes, networks, and IP addresses.
+- **SLURM Plugin**: Facilitates access to HPC cluster resources with consumption typically measured in CPU or GPU hours.
 
-- **[OpenStack](https://docs.waldur.com/latest/user-guide/service-provider-organization/adding-an-offering/#openstack-offering-creation)**  
-  Enables users to provision virtual machines, volumes, networks, and floating IPs. Typically used for IaaS environments.
+Each plugin has specific configuration requirements detailed in its dedicated documentation section.
 
-- **[SLURM](https://docs.waldur.com/latest/user-guide/service-provider-organization/adding-an-offering/#slurm-offering-creation)**  
-  Allows users to request and consume compute time on HPC clusters. Usage is typically measured in CPU or GPU hours.
+## Resource Lifecycle
 
-Each plugin may have specific configuration requirements, input fields, or resource models. Service providers should consult the relevant plugin documentation when creating offerings for these backends.
+Resources in the Marketplace follow a defined lifecycle:
 
-## Lifecycle of a Resource in the Marketplace
+1. **Publication**: Service Provider creates and publishes an offering with associated plans.
+2. **Order Placement**: User selects an offering, chooses a plan, and submits an order within a project context.
+3. **Approval Process**: Orders may require authorization by project or customer owners based on configured policies.
+4. **Provisioning**: Upon approval, the system automatically provisions the requested resource via the appropriate plugin.
+5. **Usage Monitoring**: The system tracks resource consumption for accounting and reporting purposes.
+6. **Management Operations**: Users can perform lifecycle operations (update, pause, terminate) as permitted by the plugin and their access rights.
 
-Once an offering is published in the Marketplace, users can begin interacting with it by placing orders. The process from ordering to resource provisioning follows a clear, structured lifecycle:
+## Benefits of the Marketplace
 
-1. **Offering is created and published**  
-   A service provider defines an offering, including category, plans, components, and visibility settings.
+- **Service Discovery**: Browse categorized offerings from multiple providers in a unified interface.
+- **Streamlined Provisioning**: Request and manage diverse resources through a consistent workflow.
+- **Consumption Tracking**: Monitor resource usage across different service types.
+- **Integrated Billing**: Access accounting and invoicing based on actual resource consumption.
 
-2. **User places an order**  
-   A user selects the offering and plan, fills in any required attributes, and submits an order within a project.
+## Next Steps
 
-3. **Order approval (if required)**  
-   Depending on configuration, orders may require approval by a project or customer owner before provisioning.
+To learn more about specific offerings or how to perform common tasks in the Marketplace, refer to the following guides:
 
-4. **Resource provisioning**  
-   Once approved, the provisioning process is triggered automatically via the connected plugin (e.g. OpenStack, SLURM). A resource is created and becomes visible in the project.
+- [Creating OpenStack Offerings](https://docs.waldur.com/latest/user-guide/service-provider-organization/adding-an-offering/#openstack-offering-creation)
 
-5. **Resource usage tracking**  
-   Usage of resource components (such as CPU, memory, storage) is monitored and logged for accounting and reporting.
-
-6. **Resource management**  
-   Users can manage the lifecycle of the resource — update, pause, terminate — depending on the plugin and permissions.
-
-This flow is handled seamlessly by the Provisioning module, ensuring consistency across different service types and plugins.
+- [Setting Up SLURM Offerings](https://docs.waldur.com/latest/user-guide/service-provider-organization/adding-an-offering/#slurm-offering-creation)
