@@ -20,4 +20,3 @@ To create a new one, click "Add" on the right. A popup opens with configuration 
 4. If all set, click "Create".
 
 ![New project credit policy](../img/Project_credit_new.png)
-

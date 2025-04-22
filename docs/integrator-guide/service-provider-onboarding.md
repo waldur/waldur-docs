@@ -25,7 +25,7 @@ Body:
     "name": "Test Cluster",
     "description": "Test Cluster",
     "customer": "https://test-portal.example.com/api/customers/354c1f993eb54228b336046417ffaf39/",
-    "category": "https://test-portal.example.com/api/categories/4588ff519260461893ab371b8fe83363/",
+    "category": "https://test-portal.example.com/api/marketplace-categories/4588ff519260461893ab371b8fe83363/",
     "components": [
         {
             "type": "node_hours",
@@ -35,20 +35,6 @@ Body:
             "limit_period": null
         }
     ],
-    "plugin_options": {
-        "homedir_prefix": "/home/",
-        "initial_uidnumber": 5000,
-        "initial_usergroup_number": 6000,
-        "username_anonymized_prefix": "waldur_",
-        "username_generation_policy": "waldur_username",
-        "initial_primarygroup_number": 5000,
-        "account_name_generation_policy": "project_slug",
-        "supports_pausing": true,
-        "supports_downscaling": true
-    },
-    "secret_options": {
-        "service_provider_can_create_offering_user": true
-    },
     "plans": [
         {
             "name": "Default",
@@ -119,20 +105,8 @@ Body:
             "is_builtin": false
         }
     ],
-    "plugin_options": {
-        "homedir_prefix": "/home/",
-        "initial_uidnumber": 5000,
-        "initial_usergroup_number": 6000,
-        "username_anonymized_prefix": "waldur_",
-        "username_generation_policy": "waldur_username",
-        "initial_primarygroup_number": 5000,
-        "account_name_generation_policy": "project_slug",
-        "supports_pausing": true,
-        "supports_downscaling": true
-    },
-    "secret_options": {
-        "service_provider_can_create_offering_user": true
-    },
+    "plugin_options": {},
+    "secret_options": {},
     "service_attributes": {},
     "state": "Draft",
     "state_code": 1,
@@ -188,6 +162,62 @@ Body:
     "image": null,
     "backend_metadata": {}
 }
+```
+
+### Setting up integration options of the SLURM Offering
+
+For automated management of the offering-related accounts in Waldur, the service provider should update the integration options for the offering.
+
+#### Example request
+
+```http
+POST https://test-portal.example.com/api/marketplace-provider-offerings/b52a120a0301434a84571bde0b2b74bf/update_integration/
+Authorization: Token <Org Owner Token>
+Content-Type: application/json
+```
+
+Body:
+
+```json
+    {
+        "backend_id": "",
+        "plugin_options": {
+            "homedir_prefix": "/home/",
+            "initial_uidnumber": 5000,
+            "initial_usergroup_number": 6000,
+            "username_anonymized_prefix": "waldur_",
+            "username_generation_policy": "waldur_username",
+            "initial_primarygroup_number": 5000,
+            "account_name_generation_policy": "project_slug",
+            "supports_pausing": true,
+            "supports_downscaling": true,
+            "service_provider_can_create_offering_user": true
+        },
+        "secret_options": {},
+        "service_attributes": {},
+    }
+```
+
+#### Example response
+
+Status code: 200
+
+Body:
+
+```json
+    {
+        "plugin_options": {
+            "homedir_prefix": "/home/",
+            "initial_uidnumber": 5000,
+            "initial_usergroup_number": 6000,
+            "username_anonymized_prefix": "waldur_",
+            "username_generation_policy": "waldur_username",
+            "initial_primarygroup_number": 5000,
+            "account_name_generation_policy": "project_slug",
+            "supports_pausing": true,
+            "supports_downscaling": true
+        }
+    }
 ```
 
 ### Activation of the SLURM Offering

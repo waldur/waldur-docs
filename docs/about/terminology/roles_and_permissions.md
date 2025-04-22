@@ -87,7 +87,6 @@ Organization that provides services to other organizations.
 
 ### User roles in Call management
 
-
 | Role name              | Scope           | Description |
 |----------------------------|----------------------|-------------------------------------------------|
 | **Organization owner**         | Customer            | Has full administrative access to manage organizations, offerings, orders, resources, projects, and call-related permissions. |

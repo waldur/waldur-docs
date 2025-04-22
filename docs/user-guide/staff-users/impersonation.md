@@ -21,6 +21,3 @@ Waldur provides Impersonation functionality to allow the support team to debug a
 ## Logging
 
 All actions performed on behalf of a user are logged with additional context in the audit logs, including the impersonator's UUID, full name, and username. This is primarily for security purposes.
-
-
-

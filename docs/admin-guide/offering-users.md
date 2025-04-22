@@ -109,4 +109,3 @@ A service provider can grant access mentioned in the previous section to all res
   #  'detail': 'Offering users have been set.'
   # }
 ```
-

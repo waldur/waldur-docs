@@ -1,22 +1,42 @@
 # Changelog
 
+## 7.4.8
+
+Notes: Bugfix release
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.7...7.4.8)
+  * Image SBOM: [waldur-mastermind-7.4.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.8-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.8 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.8.yaml)
+  * API changes: [View changes](/latest/about/api-changes/waldur-openapi-schema-7.4.8-diff)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.7...7.4.8)
+  * Image SBOM: [waldur-homeport-7.4.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.8-source.cyclonedx.tar.gz)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.7...7.4.8)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.7...7.4.8)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.7...7.4.8)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.8-source.cyclonedx.tar.gz)
+
+Date: Mon Apr  7 07:13:39 UTC 2025
+
 ## 7.4.7
 
 Notes: Bugfix release
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.6...7.4.7)
-    * Image SBOM: [waldur-mastermind-7.4.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.4.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.7-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.4.7 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.7.yaml)
+  * Image SBOM: [waldur-mastermind-7.4.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.7-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.7 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.7.yaml)
 
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.6...7.4.7)
-    * Image SBOM: [waldur-homeport-7.4.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.4.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.7-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.4.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.7-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.6...7.4.7)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.6...7.4.7)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.6...7.4.7)
-    * Image SBOM: [waldur-prometheus-exporter-7.4.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.4.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.7-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.7-source.cyclonedx.tar.gz)
 
 Date: Thu Mar 27 18:56:04 UTC 2025
 
@@ -25,18 +45,18 @@ Date: Thu Mar 27 18:56:04 UTC 2025
 Notes: None
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.5...7.4.6)
-    * Image SBOM: [waldur-mastermind-7.4.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.4.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.6-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.4.6 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.6.yaml)
+  * Image SBOM: [waldur-mastermind-7.4.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.6-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.6 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.6.yaml)
 
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.5...7.4.6)
-    * Image SBOM: [waldur-homeport-7.4.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.4.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.6-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.4.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.6-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.5...7.4.6)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.5...7.4.6)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.5...7.4.6)
-    * Image SBOM: [waldur-prometheus-exporter-7.4.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.4.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.6-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.6-source.cyclonedx.tar.gz)
 
 Date: Wed Mar 26 21:27:56 UTC 2025
 
@@ -45,17 +65,17 @@ Date: Wed Mar 26 21:27:56 UTC 2025
 Notes: None
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.4...7.4.5)
-    * Image SBOM: [waldur-mastermind-7.4.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.4.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.5-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.4.5 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.5.yaml)
+  * Image SBOM: [waldur-mastermind-7.4.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.5-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.5 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.5.yaml)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.4...7.4.5)
-    * Image SBOM: [waldur-homeport-7.4.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.4.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.5-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.4.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.5-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.4...7.4.5)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.4...7.4.5)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.4...7.4.5)
-    * Image SBOM: [waldur-prometheus-exporter-7.4.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.4.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.5-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.5-source.cyclonedx.tar.gz)
 
 Date: Sun Mar 23 21:29:43 UTC 2025
 
@@ -64,17 +84,17 @@ Date: Sun Mar 23 21:29:43 UTC 2025
 Notes: None
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.3...7.4.4)
-    * Image SBOM: [waldur-mastermind-7.4.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.4.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.4-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.4.4 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.4.yaml)
+  * Image SBOM: [waldur-mastermind-7.4.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.4-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.4 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.4.yaml)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.3...7.4.4)
-    * Image SBOM: [waldur-homeport-7.4.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.4.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.4-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.4.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.4-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.3...7.4.4)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.3...7.4.4)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.3...7.4.4)
-    * Image SBOM: [waldur-prometheus-exporter-7.4.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.4.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.4-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.4-source.cyclonedx.tar.gz)
 
 Date: Wed Mar 19 17:42:10 UTC 2025
 
@@ -83,17 +103,17 @@ Date: Wed Mar 19 17:42:10 UTC 2025
 Notes: Use psycopg 3 PostgreSQL driver for Celery result backend
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.2...7.4.3)
-    * Image SBOM: [waldur-mastermind-7.4.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.4.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.3-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.4.3 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.3.yaml)
+  * Image SBOM: [waldur-mastermind-7.4.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.3-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.3 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.3.yaml)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.2...7.4.3)
-    * Image SBOM: [waldur-homeport-7.4.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.4.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.3-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.4.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.3-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.2...7.4.3)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.2...7.4.3)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.2...7.4.3)
-    * Image SBOM: [waldur-prometheus-exporter-7.4.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.4.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.3-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.3-source.cyclonedx.tar.gz)
 
 Date: Mon Mar 17 09:54:08 UTC 2025
 
@@ -102,17 +122,17 @@ Date: Mon Mar 17 09:54:08 UTC 2025
 Notes: Updated postgresql driver
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.1...7.4.2)
-    * Image SBOM: [waldur-mastermind-7.4.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.4.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.2-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.4.2 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.2.yaml)
+  * Image SBOM: [waldur-mastermind-7.4.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.2-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.2 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.2.yaml)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.1...7.4.2)
-    * Image SBOM: [waldur-homeport-7.4.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.4.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.2-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.4.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.2-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.1...7.4.2)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.1...7.4.2)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.1...7.4.2)
-    * Image SBOM: [waldur-prometheus-exporter-7.4.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.4.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.2-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.2-source.cyclonedx.tar.gz)
 
 Date: Sun Mar 16 22:10:21 UTC 2025
 
@@ -121,18 +141,18 @@ Date: Sun Mar 16 22:10:21 UTC 2025
 Notes: Bugfix release
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.4.0...7.4.1)
-    * Image SBOM: [waldur-mastermind-7.4.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.4.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.1-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.4.1 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.1.yaml)
+  * Image SBOM: [waldur-mastermind-7.4.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.1-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.1 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.1.yaml)
 
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.4.0...7.4.1)
-    * Image SBOM: [waldur-homeport-7.4.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.4.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.1-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.4.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.1-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.4.0...7.4.1)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.4.0...7.4.1)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.4.0...7.4.1)
-    * Image SBOM: [waldur-prometheus-exporter-7.4.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.4.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.1-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.1-source.cyclonedx.tar.gz)
 
 Date: Wed Mar 12 18:46:14 UTC 2025
 
@@ -141,18 +161,18 @@ Date: Wed Mar 12 18:46:14 UTC 2025
 Notes: Bugfix release
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.9...7.4.0)
-    * Image SBOM: [waldur-mastermind-7.4.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.4.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.0-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.4.0 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.0.yaml)
+  * Image SBOM: [waldur-mastermind-7.4.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.4.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.4.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.4.0-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.4.0 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.4.0.yaml)
 
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.9...7.4.0)
-    * Image SBOM: [waldur-homeport-7.4.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.4.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.0-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.4.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.4.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.4.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.4.0-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.9...7.4.0)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.9...7.4.0)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.9...7.4.0)
-    * Image SBOM: [waldur-prometheus-exporter-7.4.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.4.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.0-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.4.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.4.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.4.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.4.0-source.cyclonedx.tar.gz)
 
 Date: Tue Mar 11 19:54:43 UTC 2025
 
@@ -161,17 +181,17 @@ Date: Tue Mar 11 19:54:43 UTC 2025
 Notes: Bugfix
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.8...7.3.9)
-    * Image SBOM: [waldur-mastermind-7.3.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.9-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.9-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.3.9 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.3.9.yaml)
+  * Image SBOM: [waldur-mastermind-7.3.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.9-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.9-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.3.9 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.3.9.yaml)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.8...7.3.9)
-    * Image SBOM: [waldur-homeport-7.3.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.9-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.9-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.9-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.9-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.8...7.3.9)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.8...7.3.9)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.8...7.3.9)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.9-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.9-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.9-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.9-source.cyclonedx.tar.gz)
 
 Date: Thu Mar  6 21:51:24 UTC 2025
 
@@ -180,16 +200,16 @@ Date: Thu Mar  6 21:51:24 UTC 2025
 Notes: Bugfix of daily quota widgets
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.7...7.3.8)
-    * Image SBOM: [waldur-mastermind-7.3.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.8-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.8-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.3.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.8-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.7...7.3.8)
-    * Image SBOM: [waldur-homeport-7.3.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.8-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.8-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.8-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.7...7.3.8)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.7...7.3.8)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.7...7.3.8)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.8-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.8-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.8-source.cyclonedx.tar.gz)
 
 Date: Fri Feb 28 22:00:31 UTC 2025
 
@@ -198,16 +218,16 @@ Date: Fri Feb 28 22:00:31 UTC 2025
 Notes: Bugfixes, extended tenant replication capabilities
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.6...7.3.7)
-    * Image SBOM: [waldur-mastermind-7.3.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.7-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.3.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.7-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.6...7.3.7)
-    * Image SBOM: [waldur-homeport-7.3.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.7-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.7-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.6...7.3.7)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.6...7.3.7)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.6...7.3.7)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.7-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.7-source.cyclonedx.tar.gz)
 
 Date: Fri Feb 28 17:02:21 UTC 2025
 
@@ -216,16 +236,16 @@ Date: Fri Feb 28 17:02:21 UTC 2025
 Notes: Bugfix
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.5...7.3.6)
-    * Image SBOM: [waldur-mastermind-7.3.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.6-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.3.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.6-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.5...7.3.6)
-    * Image SBOM: [waldur-homeport-7.3.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.6-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.6-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.5...7.3.6)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.5...7.3.6)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.5...7.3.6)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.6-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.6-source.cyclonedx.tar.gz)
 
 Date: Mon Feb 24 08:51:19 UTC 2025
 
@@ -234,16 +254,16 @@ Date: Mon Feb 24 08:51:19 UTC 2025
 Notes: Bugfix
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.4...7.3.5)
-    * Image SBOM: [waldur-mastermind-7.3.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.5-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.3.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.5-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.4...7.3.5)
-    * Image SBOM: [waldur-homeport-7.3.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.5-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.5-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.4...7.3.5)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.4...7.3.5)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.4...7.3.5)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.5-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.5-source.cyclonedx.tar.gz)
 
 Date: Sun Feb 23 20:30:42 UTC 2025
 
@@ -252,16 +272,16 @@ Date: Sun Feb 23 20:30:42 UTC 2025
 Notes: None
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.3...7.3.4)
-    * Image SBOM: [waldur-mastermind-7.3.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.4-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.3.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.4-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.3...7.3.4)
-    * Image SBOM: [waldur-homeport-7.3.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.4-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.4-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.3...7.3.4)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.3...7.3.4)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.3...7.3.4)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.4-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.4-source.cyclonedx.tar.gz)
 
 Date: Sat Feb 22 19:55:18 UTC 2025
 
@@ -270,16 +290,16 @@ Date: Sat Feb 22 19:55:18 UTC 2025
 Notes: Bugfix release
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.2...7.3.3)
-    * Image SBOM: [waldur-mastermind-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.3-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.3-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.2...7.3.3)
-    * Image SBOM: [waldur-homeport-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.3-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.3-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.2...7.3.3)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.2...7.3.3)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.2...7.3.3)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.3-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.3-source.cyclonedx.tar.gz)
 
 Date: Fri Feb 14 19:17:37 UTC 2025
 
@@ -288,16 +308,16 @@ Date: Fri Feb 14 19:17:37 UTC 2025
 Notes: None
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.1...7.3.2)
-    * Image SBOM: [waldur-mastermind-7.3.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.2-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.3.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.2-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.1...7.3.2)
-    * Image SBOM: [waldur-homeport-7.3.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.2-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.2-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.1...7.3.2)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.1...7.3.2)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.1...7.3.2)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.2-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.2-source.cyclonedx.tar.gz)
 
 Date: Thu Feb 13 18:59:06 UTC 2025
 
@@ -306,16 +326,16 @@ Date: Thu Feb 13 18:59:06 UTC 2025
 Notes: Bugfixes
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.3.0...7.3.1)
-    * Image SBOM: [waldur-mastermind-7.3.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.1-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.3.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.1-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.3.0...7.3.1)
-    * Image SBOM: [waldur-homeport-7.3.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.1-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.1-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.3.0...7.3.1)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.3.0...7.3.1)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.3.0...7.3.1)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.1-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.1-source.cyclonedx.tar.gz)
 
 Date: Thu Feb 13 09:24:01 UTC 2025
 
@@ -324,18 +344,18 @@ Date: Thu Feb 13 09:24:01 UTC 2025
 Notes: None
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.9...7.3.0)
-    * Image SBOM: [waldur-mastermind-7.3.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.3.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.0-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.3.0 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.3.0.yaml)
+  * Image SBOM: [waldur-mastermind-7.3.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.3.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.3.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.3.0-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.3.0 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.3.0.yaml)
 
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.9...7.3.0)
-    * Image SBOM: [waldur-homeport-7.3.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.3.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.0-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.3.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.3.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.3.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.3.0-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.9...7.3.0)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.9...7.3.0)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.9...7.3.0)
-    * Image SBOM: [waldur-prometheus-exporter-7.3.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.3.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.0-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.3.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.3.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.3.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.3.0-source.cyclonedx.tar.gz)
 
 Date: Tue Mar 11 19:54:43 UTC 2025
 
@@ -344,17 +364,17 @@ Date: Tue Mar 11 19:54:43 UTC 2025
 Notes: Bugfix
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.8...7.2.9)
-    * Image SBOM: [waldur-mastermind-7.2.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.9-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.9-source.cyclonedx.tar.gz)
-    * OpenAPI specification for version 7.2.9 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.2.9.yaml)
+  * Image SBOM: [waldur-mastermind-7.2.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.9-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.9-source.cyclonedx.tar.gz)
+  * OpenAPI specification for version 7.2.9 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.2.9.yaml)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.8...7.2.9)
-    * Image SBOM: [waldur-homeport-7.2.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.9-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.9-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.9-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.9-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.8...7.2.9)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.8...7.2.9)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.8...7.2.9)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.9-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.9-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.9-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.9-source.cyclonedx.tar.gz)
 
 Date: Thu Mar  6 21:51:24 UTC 2025
 
@@ -363,16 +383,16 @@ Date: Thu Mar  6 21:51:24 UTC 2025
 Notes: Bugfix of daily quota widgets
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.7...7.2.8)
-    * Image SBOM: [waldur-mastermind-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.8-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.8-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.8-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.7...7.2.8)
-    * Image SBOM: [waldur-homeport-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.8-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.8-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.8-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.7...7.2.8)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.7...7.2.8)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.7...7.2.8)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.8-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.8-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.8-source.cyclonedx.tar.gz)
 
 Date: Fri Feb 28 22:00:31 UTC 2025
 
@@ -381,16 +401,16 @@ Date: Fri Feb 28 22:00:31 UTC 2025
 Notes: Bugfixes, extended tenant replication capabilities
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.6...7.2.7)
-    * Image SBOM: [waldur-mastermind-7.2.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.7-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.7-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.6...7.2.7)
-    * Image SBOM: [waldur-homeport-7.2.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.7-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.7-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.6...7.2.7)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.6...7.2.7)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.6...7.2.7)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.7-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.7-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.7-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.7-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.7-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.7-source.cyclonedx.tar.gz)
 
 Date: Fri Feb 28 17:02:21 UTC 2025
 
@@ -399,16 +419,16 @@ Date: Fri Feb 28 17:02:21 UTC 2025
 Notes: Bugfix
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.5...7.2.6)
-    * Image SBOM: [waldur-mastermind-7.2.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.6-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.6-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.5...7.2.6)
-    * Image SBOM: [waldur-homeport-7.2.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.6-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.6-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.5...7.2.6)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.5...7.2.6)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.5...7.2.6)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.6-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.6-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.6-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.6-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.6-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.6-source.cyclonedx.tar.gz)
 
 Date: Mon Feb 24 08:51:19 UTC 2025
 
@@ -417,16 +437,16 @@ Date: Mon Feb 24 08:51:19 UTC 2025
 Notes: Bugfix
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.4...7.2.5)
-    * Image SBOM: [waldur-mastermind-7.2.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.5-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.5-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.4...7.2.5)
-    * Image SBOM: [waldur-homeport-7.2.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.5-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.5-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.4...7.2.5)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.4...7.2.5)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.4...7.2.5)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.5-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.5-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.5-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.5-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.5-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.5-source.cyclonedx.tar.gz)
 
 Date: Sun Feb 23 20:30:42 UTC 2025
 
@@ -435,16 +455,16 @@ Date: Sun Feb 23 20:30:42 UTC 2025
 Notes: None
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.3...7.2.4)
-    * Image SBOM: [waldur-mastermind-7.2.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.4-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.4-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.3...7.2.4)
-    * Image SBOM: [waldur-homeport-7.2.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.4-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.4-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.3...7.2.4)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.3...7.2.4)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.3...7.2.4)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.4-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.4-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.4-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.4-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.4-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.4-source.cyclonedx.tar.gz)
 
 Date: Sat Feb 22 19:55:18 UTC 2025
 
@@ -453,16 +473,16 @@ Date: Sat Feb 22 19:55:18 UTC 2025
 Notes: Bugfix release
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.2...7.2.3)
-    * Image SBOM: [waldur-mastermind-7.2.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.3-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.3-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.2...7.2.3)
-    * Image SBOM: [waldur-homeport-7.2.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.3-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.3-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.2...7.2.3)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.2...7.2.3)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.2...7.2.3)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.3-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.3-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.3-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.3-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.3-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.3-source.cyclonedx.tar.gz)
 
 Date: Mon Dec 30 10:50:45 UTC 2024
 
@@ -471,16 +491,16 @@ Date: Mon Dec 30 10:50:45 UTC 2024
 Notes: Bugfixes
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.1...7.2.2)
-    * Image SBOM: [waldur-mastermind-7.2.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.2-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.2-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.1...7.2.2)
-    * Image SBOM: [waldur-homeport-7.2.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.2-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.2-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.1...7.2.2)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.1...7.2.2)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.1...7.2.2)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.2-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.2-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.2-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.2-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.2-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.2-source.cyclonedx.tar.gz)
 
 Date: Tue Dec 24 14:28:07 UTC 2024
 
@@ -489,16 +509,16 @@ Date: Tue Dec 24 14:28:07 UTC 2024
 Notes: Bugfix release
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.2.0...7.2.1)
-    * Image SBOM: [waldur-mastermind-7.2.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.1-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.1-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.2.0...7.2.1)
-    * Image SBOM: [waldur-homeport-7.2.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.1-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.1-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.2.0...7.2.1)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.2.0...7.2.1)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.2.0...7.2.1)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.1-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.1-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.1-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.1-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.1-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.1-source.cyclonedx.tar.gz)
 
 Date: Wed Dec 18 21:58:41 UTC 2024
 
@@ -507,16 +527,16 @@ Date: Wed Dec 18 21:58:41 UTC 2024
 Notes: Bugfixes
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.1.9...7.2.0)
-    * Image SBOM: [waldur-mastermind-7.2.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.2.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.0-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.2.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.2.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.2.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.2.0-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.1.9...7.2.0)
-    * Image SBOM: [waldur-homeport-7.2.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.2.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.0-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.2.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.2.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.2.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.2.0-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.1.9...7.2.0)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.1.9...7.2.0)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.1.9...7.2.0)
-    * Image SBOM: [waldur-prometheus-exporter-7.2.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.0-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-prometheus-exporter-7.2.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.0-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-prometheus-exporter-7.2.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.2.0-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-prometheus-exporter-7.2.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.2.0-source.cyclonedx.tar.gz)
 
 Date: Tue Dec 17 22:53:25 UTC 2024
 
@@ -525,11 +545,11 @@ Date: Tue Dec 17 22:53:25 UTC 2024
 Notes: Bugfix release
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.1.8...7.1.9)
-    * Image SBOM: [waldur-mastermind-7.1.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.1.9-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.1.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.1.9-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.1.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.1.9-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.1.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.1.9-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.1.8...7.1.9)
-    * Image SBOM: [waldur-homeport-7.1.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.1.9-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.1.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.1.9-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.1.9-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.1.9-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.1.9-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.1.9-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.1.8...7.1.9)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.1.8...7.1.9)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.1.8...7.1.9)
@@ -541,11 +561,11 @@ Date: Thu Dec 12 20:51:10 UTC 2024
 Notes: SBOM release
 
 * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.1.7...7.1.8)
-    * Image SBOM: [waldur-mastermind-7.1.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.1.8-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-mastermind-7.1.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.1.8-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-mastermind-7.1.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.1.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-mastermind-7.1.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.1.8-source.cyclonedx.tar.gz)
 * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.1.7...7.1.8)
-    * Image SBOM: [waldur-homeport-7.1.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.1.8-image.cyclonedx.tar.gz)
-    * Source SBOM: [waldur-homeport-7.1.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.1.8-source.cyclonedx.tar.gz)
+  * Image SBOM: [waldur-homeport-7.1.8-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.1.8-image.cyclonedx.tar.gz)
+  * Source SBOM: [waldur-homeport-7.1.8-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.1.8-source.cyclonedx.tar.gz)
 * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.1.7...7.1.8)
 * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.1.7...7.1.8)
 * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.1.7...7.1.8)

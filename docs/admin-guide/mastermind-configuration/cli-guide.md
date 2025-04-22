@@ -360,12 +360,15 @@ Move Waldur project to a different organization.
 
 ```bash
 usage: waldur move_project -p PROJECT_UUID -c CUSTOMER_UUID
+                           [--preserve-user-permissions]
 
 options:
   -p PROJECT_UUID, --project PROJECT_UUID
                         UUID of a project to move.
   -c CUSTOMER_UUID, --customer CUSTOMER_UUID
                         Target organization UUID
+  --preserve-user-permissions
+                        Preserve user permissions
 ```
 
 ## move_resource
