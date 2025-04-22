@@ -64,6 +64,10 @@ Render estimated cost column in projects list.
 
 Enable OECD code.
 
+## project.show_credit_in_create_dialog
+
+Show credit field in project create dialog.
+
 ## project.show_description_in_create_dialog
 
 Show description field in project create dialog.
