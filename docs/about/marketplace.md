@@ -136,8 +136,8 @@ Resources in the Marketplace follow a defined lifecycle:
 
 To learn more about specific offerings or how to perform common tasks in the Marketplace, refer to the following guides:
 
-- [Creating OpenStack offerings](../user-guide/service-provider-organization/adding-an-offering/#openstack-offering-creation)
-- [Setting up SLURM offerings](../user-guide/service-provider-organization/adding-an-offering/#slurm-offering-creation)
+- [Creating OpenStack offerings](/../user-guide/service-provider-organization/adding-an-offering/#openstack-offering-creation)
+- [Setting up SLURM offerings](/../user-guide/service-provider-organization/adding-an-offering/#slurm-offering-creation)
 
 ## Usage examples
 
