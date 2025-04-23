@@ -21,14 +21,23 @@ The Marketplace operates through four integrated modules:
 
 ### Key components
 
-- **Service provider**: An organization authorized to publish and deliver services through Waldur.
+- **User**: An individual who accesses the Waldur system with specific permissions within one or more organizations.
+- **Project**: A logical container for resources that belongs to an organization, with its own access control settings.
+- **Project Member**: A user who has been assigned specific permissions within a project.
+- **Service Provider**: An organization authorized to publish and deliver services through Waldur.
+- **Category**: A classification used to group similar offerings for easier browsing and management.
+- **Section**: A subdivision within a category that organizes related attributes.
+- **Attribute**: A specific property or parameter that defines characteristics of an offering.
 - **Offering**: A specific service available for provisioning (e.g., virtual machines, HPC compute time).
 - **Plan**: A pricing and resource allocation model for an offering.
 - **Component**: A measurable resource unit (e.g., CPU hours, storage space) used for tracking consumption.
+- **Plugin registry**: A central repository that maintains information about available backend services and their connection details.
+- **Marketplace plugin**: A software component that integrates a specific backend system (like OpenStack or SLURM) with the Waldur Marketplace.
 - **Order**: A formal request for resource provisioning submitted by a user.
 - **Resource**: The provisioned service instance that results from a fulfilled order.
 - **Invoice**: A financial document detailing resource usage costs for an organization.
-- **Invoice item**: An individual billing entry for a specific resource's consumption.
+- **Invoice Item**: An individual billing entry for a specific resource's consumption.
+
 
 ## Architectural framework
 
