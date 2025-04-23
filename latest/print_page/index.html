@@ -6552,12 +6552,167 @@ OpenNode maintains control over the authoritative source code and covers Product
 <li>Developers process tasks.</li>
 <li>Product owner releases tagged versions of the product once a certain amount of functionality or bugfixes went in.</li>
 </ul></div></section><section class="print-page" id="about-marketplace"><div><h1 id="marketplace-concept">Marketplace concept</h1>
-<p>Marketplace is a central module for provisioning of Waldur resources. Marketplace contains Offerings that
-belong to a special type of Organizations - Service Providers. Marketplace provides common functionality
-for resource lifecycle management, accounting and invoicing. Specifics are implemented in the Marketplace plugins
-(e.g. for OpenStack, SLURM, Rancher, etc).</p>
-<h2 id="about-marketplace-diagram-of-concepts">Diagram of concepts</h2>
-<p><a class="glightbox" href="../about/img/marketplace-structure.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Diagram of marketplace concepts" src="../about/img/marketplace-structure.png"></a></p></div></section><section class="print-page" id="about-publications"><div><h1 id="academic-publications">Academic publications</h1>
+<h2 id="about-marketplace-overview">Overview</h2>
+<p>The Waldur Marketplace serves as a centralized platform for requesting, provisioning, and managing resources from various service providers. This guide explains key concepts and workflows in the Marketplace to help you effectively navigate and utilize its features.</p>
+<h2 id="about-marketplace-core-concepts">Core concepts</h2>
+<h3 id="about-marketplace-marketplace-framework">Marketplace framework</h3>
+<p>The Marketplace operates through four integrated modules:</p>
+<ol>
+<li>
+<p><strong>Structure module</strong>: Establishes organizational hierarchy through Organizations and Projects, with access controls enforced at the project level.</p>
+</li>
+<li>
+<p><strong>Service catalogue module</strong>: Enables Service providers to configure Offerings with pricing models (Plans), resource components, and customized request forms.</p>
+</li>
+<li>
+<p><strong>Provisioning module</strong>: Manages the complete resource lifecycle from order placement to resource creation, usage tracking, and termination.</p>
+</li>
+<li>
+<p><strong>Billing module</strong>: Handles financial tracking, invoicing, and cost management for resources provisioned through the Marketplace.</p>
+</li>
+</ol>
+<h3 id="about-marketplace-key-components">Key components</h3>
+<ul>
+<li><strong>User</strong>: An individual who accesses the Waldur system with specific permissions within one or more organizations.</li>
+<li><strong>Organization</strong>: A business entity that can act as a customer, a service provider, or both within the Waldur system.</li>
+<li><strong>Project</strong>: A logical container for resources that belongs to an organization, with its own access control settings.</li>
+<li><strong>Project member</strong>: A user who has been assigned specific permissions within a project.</li>
+<li><strong>Service provider</strong>: An organization authorized to publish and deliver services through Waldur.</li>
+<li><strong>Marketplace plugin</strong>: A software component that integrates a specific backend system (like OpenStack or SLURM) with the Waldur Marketplace.</li>
+<li><strong>Order</strong>: A formal request for resource provisioning submitted by a user.</li>
+<li><strong>Resource</strong>: The provisioned service instance that results from a fulfilled order.</li>
+<li><strong>Offering</strong>: A specific service available for provisioning (e.g., virtual machines, HPC compute time).</li>
+<li><strong>Plan</strong>: A pricing and resource allocation model for an offering.</li>
+<li><strong>Plugin registry</strong>: A central repository that maintains information about available backend services and their connection details.</li>
+<li><strong>Invoice</strong>: A financial document detailing resource usage costs for an organization.</li>
+<li><strong>Invoice Item</strong>: An individual billing entry for a specific resource's consumption.</li>
+</ul>
+<h2 id="about-marketplace-architectural-framework">Architectural framework</h2>
+<pre class="mermaid"><code>flowchart TD
+    %% Structure module
+    subgraph Structure[Structure module]
+        Org[Organization]
+        User[User]
+        Proj[Project]
+        ProjMember[Project member]
+        ServiceProvider[Service provider]
+    end
+
+    %% Service catalogue module
+    subgraph Catalog[Service catalogue module]
+        Offering[Offering]
+        Plan[Plan]
+        PluginReg[Plugin registry]
+    end
+
+    %% Provisioning module
+    subgraph Provisioning[Provisioning module]
+        Order[Order]
+        Resource[Resource]
+        MarketplacePlugin[Marketplace plugin]
+    end
+
+    %% Billing module
+    subgraph Billing[Billing module]
+        Invoice[Invoice]
+        InvoiceItem[Invoice item]
+    end
+
+    %% Key Relationships
+    Org -- has --&gt; Proj
+    Org -- becomes --&gt; ServiceProvider
+    User -- belongs to --&gt; Proj
+    User -- creates --&gt; ProjMember
+    ServiceProvider -- provides --&gt; Offering
+    Offering -- connects to --&gt; PluginReg
+    Offering -- defines --&gt; Plan
+
+    ProjMember -- submits --&gt; Order
+    Order -- approved by --&gt; ServiceProvider
+    Order -- creates --&gt; Resource
+    MarketplacePlugin -- processes --&gt; Resource
+
+    Resource -- generates --&gt; InvoiceItem
+    InvoiceItem -- belongs to --&gt; Invoice
+    Invoice -- billed to --&gt; Org
+    Resource -- instantiated from --&gt; Offering
+    Proj -- contains --&gt; Resource
+
+    classDef structureModule fill:#5BAD60,stroke:#333,stroke-width:1px
+    classDef catalogModule fill:#5BAD60,stroke:#333,stroke-width:1px
+    classDef provisioningModule fill:#5BAD60,stroke:#333,stroke-width:1px
+    classDef billingModule fill:#5BAD60,stroke:#333,stroke-width:1px
+
+    class Org,User,Proj,ProjMember,ServiceProvider structureModule
+    class Offering,Plan,PluginReg catalogModule
+    class Order,Resource,MarketplacePlugin provisioningModule
+    class Invoice,InvoiceItem billingModule</code></pre>
+<h2 id="about-marketplace-offering-requirements">Offering requirements</h2>
+<p>For an offering to appear in the Marketplace, it must include:</p>
+<ul>
+<li><strong>Category assignment</strong>: Determines the offering's location in the Marketplace browsing hierarchy.</li>
+<li><strong>Basic information</strong>: Name, description, plugin type, and service settings.</li>
+<li><strong>Plan configuration</strong>: At least one plan defining resource limits and pricing structure.</li>
+<li><strong>Component definitions</strong>: Specific resources being measured or billed.</li>
+<li><strong>Visibility settings</strong>: Configuring which customers or projects can access the offering.</li>
+<li><strong>Optional attributes</strong>: Custom parameters that users must provide when ordering.</li>
+</ul>
+<h2 id="about-marketplace-supported-integration-plugins">Supported integration plugins</h2>
+<p>The Marketplace supports various backend systems through dedicated plugins. Here are examples of commonly used plugins:</p>
+<ul>
+<li><strong>OpenStack plugin</strong>: Provisions virtual infrastructure including VMs, storage volumes, networks, and IP addresses.</li>
+<li><strong>SLURM plugin</strong>: Facilitates access to HPC cluster resources with consumption typically measured in CPU or GPU hours.</li>
+</ul>
+<p>These are just examples of the available integrations. Waldur's plugin architecture allows for connecting to a wide range of service backends. Each plugin has specific configuration requirements detailed in its dedicated documentation section.</p>
+<p>Service providers can leverage these existing plugins or develop custom integrations to make their specific services available through the Marketplace.</p>
+<h2 id="about-marketplace-resource-lifecycle">Resource lifecycle</h2>
+<p>Resources in the Marketplace follow a defined lifecycle:</p>
+<ol>
+<li><strong>Publication</strong>: Service Provider creates and publishes an offering with associated plans.</li>
+<li><strong>Order placement</strong>: User selects an offering, chooses a plan, and submits an order within a project context.</li>
+<li><strong>Approval process</strong>: Orders may require authorization by project or customer owners based on configured policies.</li>
+<li><strong>Provisioning</strong>: Upon approval, the system automatically provisions the requested resource via the appropriate plugin.</li>
+<li><strong>Usage monitoring</strong>: The system tracks resource consumption for accounting and reporting purposes.</li>
+<li><strong>Management operations</strong>: Users can perform lifecycle operations (update, pause, terminate) as permitted by the plugin and their access rights.</li>
+</ol>
+<h2 id="about-marketplace-next-steps">Next steps</h2>
+<p>To learn more about specific offerings or how to perform common tasks in the Marketplace, refer to the following guides:</p>
+<ul>
+<li><a href="#user-guide-service-provider-organization-adding-an-offering-openstack-offering-creation">Creating OpenStack offerings</a></li>
+<li><a href="#user-guide-service-provider-organization-adding-an-offering-slurm-offering-creation">Setting up SLURM offerings</a></li>
+</ul>
+<h2 id="about-marketplace-usage-examples">Usage examples</h2>
+<p>Here are some common scenarios to help you understand how to use the Marketplace effectively:</p>
+<div class="admonition example">
+<p class="admonition-title">Requesting a Virtual Machine</p>
+<ol>
+<li>Navigate to the Marketplace</li>
+<li>Filter offerings by the "Virtual Machines" category</li>
+<li>Select the OpenStack offering from your preferred provider</li>
+<li>Choose the plan that matches your requirements (e.g., "Small VM" with 2 vCPUs, 4GB RAM)</li>
+<li>Fill in required parameters (name, SSH key, etc.)</li>
+<li>Submit your order</li>
+<li>Once approved, your VM will be provisioned and appear in your project's resources</li>
+</ol>
+</div>
+<div class="admonition example">
+<p class="admonition-title">Managing HPC allocation</p>
+<ol>
+<li>Access your project dashboard</li>
+<li>Select the SLURM allocation from your resources list</li>
+<li>View current usage statistics for CPU hours and storage</li>
+<li>If needed, request an extension through the "Modify Resource" option</li>
+<li>Submit jobs through the provided access methods</li>
+</ol>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Cost optimization</p>
+<p>Monitor your resource usage regularly through the dashboard to avoid unexpected charges. For VM resources, remember to shut down instances when not in use, as many providers charge based on uptime regardless of actual CPU utilization.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Approval workflows</p>
+<p>Some offerings may require approval from your organization owner or the service provider before provisioning begins. You can check the status of your order in the Orders section of your project dashboard.</p>
+</div></div></section><section class="print-page" id="about-publications"><div><h1 id="academic-publications">Academic publications</h1>
 <ul>
 <li>2024 - <a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=10820785">Federated Single Sign-On and Zero Trust Co-design for AI and HPC Digital Research Infrastructures</a>, S. R. Alam et al., SC24-W: Workshops of the International Conference for High Performance Computing, Networking, Storage and Analysis, Atlanta, GA, USA, 2024, pp. 1756-1764, doi: 10.1109/SCW63240.2024.00220.</li>
 <li>2024 - <a href="https://arxiv.org/abs/2410.11199">Isambard-AI: a leadership class supercomputer optimised specifically for Artificial Intelligence</a>, Simon McIntosh-Smith, Sadaf R Alam and Christopher Woods, <a href="https://doi.org/10.48550/arXiv.2410.11199">https://doi.org/10.48550/arXiv.2410.11199</a></li>
