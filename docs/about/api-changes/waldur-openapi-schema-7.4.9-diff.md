@@ -1,4 +1,4 @@
-# OpenApi Schema Diff
+# OpenApi Schema Diff - 7.4.9
 
 ## For version 7.4.9
 
@@ -20,7 +20,7 @@ GET /api/rancher-role-templates/{uuid}/
 
 ### Deleted Endpoints: 10
 
--------------------------
+---------------------
 GET /api/icons/favicon/  
 GET /api/icons/hero_image/  
 GET /api/icons/keycloak_icon/  
@@ -34,7 +34,7 @@ GET /api/icons/site_logo/
 
 ### Modified Endpoints: 141
 
----------------------------
+---------------------
 GET /api/aws-instances/
 
 - New query param: can_manage
