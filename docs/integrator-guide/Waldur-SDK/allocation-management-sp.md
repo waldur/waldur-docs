@@ -452,8 +452,8 @@ from waldur_api_client.models import OfferingUserRequest
 result = marketplace_offering_users_create.sync(
     client=client,
     body=OfferingUserRequest(
-        user='<user-uuid-or-url>',
-        offering='<offering-uuid-or-url>',
+        user='<user-url>',
+        offering='<offering-url>',
         username='<username>'
     )
 )
@@ -475,8 +475,8 @@ In case if SDK usage is not possible, HTTP request can be sent:
 POST <API-URL>/marketplace-offering-users/
 
 {
-    "offering": "<offering-uuid-or-url>",
-    "user": "<user-uuid-or-url>",
+    "offering": "<offering-url>",
+    "user": "<user-url>",
     "username": "<username>"
 }
 
@@ -487,7 +487,7 @@ POST <API-URL>/marketplace-offering-users/
     "offering": "offering_url",
     "offering_name": "offering_name",
     "offering_uuid": "<offering-uuid>",
-    "user": "offering_user",
+    "user": "user_url",
     "user_uuid": "<user-uuid>",
     "username": "user_username"
 }
