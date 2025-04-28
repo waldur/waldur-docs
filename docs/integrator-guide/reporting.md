@@ -22,19 +22,17 @@ The name of the output file is `project-report.csv`.
 Code example:
 
 ```python
-from waldur_client import WaldurClient, ObjectDoesNotExist
+import os
 import csv
 from collections import defaultdict
+from datetime import datetime
+from waldur_api_client.client import AuthenticatedClient
+from waldur_api_client.api.customers import customers_list
+from waldur_api_client.api.invoice_items import invoice_items_list
 
-# Your Waldur instance data
-WALDUR_HOST = 'example.waldur.com'
-TOKEN = 'STAFF_USER_API_TOKEN'
-
-# Date-related constants
-CURRENT_YEAR = 2021
-CURRENT_MONTH = 10
-
-# Other constants
+# Constants
+CURRENT_YEAR = datetime.now().year
+CURRENT_MONTH = datetime.now().month
 CSV_FILE_PATH = 'project-report.csv'
 HEADER = [
     'Organization name',
@@ -43,45 +41,46 @@ HEADER = [
     'Monthly cost of a project',
 ]
 
-# WaldurClient instance initialisation
-client = WaldurClient(
-    f'https://{WALDUR_HOST}/api/', TOKEN
+# Initialize client
+client = AuthenticatedClient(
+    base_url=os.environ.get('WALDUR_API_URL'),
+    token=os.environ.get('WALDUR_API_TOKEN'),
+    prefix="Token",
 )
 
-# Organisations data fetching
-customers_data = client.list_customers()
+# Get all customers
+customers = customers_list.sync(client=client)
+if not customers:
+    print("No customers found")
+    exit()
 
 with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
     writer = csv.writer(out_file)
     writer.writerow(HEADER)
 
-    for customer_data in customers_data:
+    for customer in customers:
         project_reporting = defaultdict(lambda: 0.0)
 
-        try:
-            # Invoices data fetching
-            invoice_data = client.get_invoice_for_customer(
-                customer_data['uuid'], CURRENT_YEAR, CURRENT_MONTH
-            )
-        # If customer doesn't have any projects or created after the requested month
-        except ObjectDoesNotExist:
-            pass
+        # Get invoice items for the customer
+        items = invoice_items_list.sync(
+            client=client,
+            customer_uuid=customer.uuid,
+            year=CURRENT_YEAR,
+            month=CURRENT_MONTH
+        )
 
-        invoice_items = [item for item in invoice_data['items']]
-
-        # Cost aggregation per each project
-        for item in invoice_items:
-            project_reporting[item['project_name']] += float(item['price'])
-
-        for key, val in project_reporting.items():
-            writer.writerow(
-                [
-                    customer_data['name'],
-                    customer_data['abbreviation'],
-                    key,
-                    val,
-                ]
-            )
+        if items:
+            for item in items:
+                if item.name and item.unit_price:
+                    project_reporting[item.name] += float(item.unit_price)
+            # Write to CSV file
+            for project_name, cost in project_reporting.items():
+                writer.writerow([
+                    customer.name,
+                    customer.abbreviation,
+                    project_name,
+                    cost,
+                ])
 ```
 
 Example of output file content:
@@ -103,24 +102,18 @@ The name of the output file is `openstack-report.csv`.
 Code example:
 
 ```python
-from waldur_client import WaldurClient, ObjectDoesNotExist
-from pprint import pprint
+import os
 import csv
+from datetime import datetime
+from waldur_api_client.client import AuthenticatedClient
+from waldur_api_client.api.customers import customers_list
+from waldur_api_client.api.invoice_items import invoice_items_list
+from waldur_api_client.api.marketplace_resources import marketplace_resources_list
+from waldur_api_client.api.openstack_tenants import openstack_tenants_list
 
-# Your Waldur instance data
-WALDUR_HOST = 'example.waldur.com'
-TOKEN = 'STAFF_USER_API_TOKEN'
-
-# Date-related constants
-CURRENT_YEAR = 2021
-CURRENT_MONTH = 10
-
-# WaldurClient instance initialisation
-client = WaldurClient(
-    f'https://{WALDUR_HOST}/api/', TOKEN
-)
-
-# Other constants
+# Constants
+CURRENT_YEAR = datetime.now().year
+CURRENT_MONTH = datetime.now().month
 CSV_FILE_PATH = 'openstack-report.csv'
 HEADER = [
     'Name of the OpenStack Tenant resource',
@@ -133,48 +126,71 @@ HEADER = [
     'Organization abbreviation',
 ]
 
-# Organisations data fetching
-customers_data = client.list_customers()
+# Initialize client
+client = AuthenticatedClient(
+    base_url=os.environ.get('WALDUR_API_URL'),
+    token=os.environ.get('WALDUR_API_TOKEN'),
+    prefix="Token",
+)
+
+# Get all customers
+customers = customers_list.sync(client=client)
+if not customers:
+    print("No customers found")
+    exit()
 
 with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
     writer = csv.writer(out_file)
     writer.writerow(HEADER)
-    for customer_data in customers_data:
-        customer_uuid = customer_data['uuid']
-        try:
-            # Invoices data fetching
-            invoice_data = client.get_invoice_for_customer(
-                customer_data['uuid'], CURRENT_YEAR, CURRENT_MONTH
-            )
-        # If customer doesn't have any projects or created after the requested month
-        except ObjectDoesNotExist:
-            pass
 
-        # Tenants data fetching
-        tenants = client.list_tenants({'customer_uuid': customer_uuid})
+    for customer in customers:
+        # Get invoice items for the customer
+        items = invoice_items_list.sync(
+            client=client,
+            customer_uuid=customer.uuid,
+            year=CURRENT_YEAR,
+            month=CURRENT_MONTH
+        )
 
-        resource_costs = {item['resource_uuid']: item['price'] for item in invoice_data['items']}
+        # Create resource costs mapping
+        resource_costs = {}
+        for item in items:
+            if item.name and item.unit_price:
+                resource_costs[item.name] = float(item.unit_price)
 
+
+        # Get tenants for the customer
+        tenants = openstack_tenants_list.sync(
+            client=client,
+            customer_uuid=customer.uuid
+        )
+            
         for tenant in tenants:
-            resource_uuid = tenant['marketplace_resource_uuid']
+            if not tenant.marketplace_resource_uuid:
+                continue
 
-            # Resource data fetching
-            resource = client.get_marketplace_resource(resource_uuid)
-            limits = resource['limits']
-            try:
-                writer.writerow([
-                    tenant['name'],
-                    limits['cores'],
-                    limits['ram'],
-                    limits['storage'],
-                    resource_costs.get(resource_uuid, 0.0), # if a resource wasn't used during the month
-                    tenant['project_name'],
-                    tenant['customer_name'],
-                    tenant['customer_abbreviation']
-                ])
-            except KeyError as e:
-                pprint(resource_uuid)
-                pprint(e)
+            # Get resource details
+            resources = marketplace_resources_list.sync(
+                client=client,
+                uuid=tenant.marketplace_resource_uuid
+            )
+
+            if not resources:
+                continue
+
+            resource = resources[0]
+            limits = resource.limits or {}
+
+            writer.writerow([
+                tenant.name,
+                limits.get('cores', 0),
+                limits.get('ram', 0),
+                limits.get('storage', 0),
+                resource_costs.get(str(tenant.marketplace_resource_uuid), 0.0),
+                tenant.project_name,
+                tenant.customer_name,
+                tenant.customer_abbreviation
+            ])
 ```
 
 Example of output file content:
@@ -198,16 +214,20 @@ from collections import defaultdict
 import unicodedata
 import re
 from decimal import Decimal
+from datetime import datetime
 
-from waldur_client import WaldurClient, ObjectDoesNotExist
+from waldur_api_client import AuthenticatedClient
+from waldur_api_client.api.customers import customers_list
+from waldur_api_client.api.invoices import invoices_list
+from waldur_api_client.errors import UnexpectedStatus
 
 # Your Waldur instance data
 WALDUR_HOST = 'example.waldur.com'
 TOKEN = 'SUPPORT_STAFF_SECRET_TOKEN'
 
 # Date-related constants
-CURRENT_YEAR = 2023
-CURRENT_MONTH = 4
+CURRENT_YEAR = datetime.now().year
+CURRENT_MONTH = datetime.now().month
 
 
 def slugify(value, allow_unicode=False):
@@ -226,35 +246,42 @@ def slugify(value, allow_unicode=False):
     value = re.sub(r'[^\w\s-]', '', value.lower())
     return re.sub(r'[-\s]+', '-', value).strip('-_')
 
-# WaldurClient instance initialisation
-client = WaldurClient(
-    f'https://{WALDUR_HOST}/api/', TOKEN
+# Client instance initialization
+client = AuthenticatedClient(
+    base_url=WALDUR_HOST,
+    token=TOKEN,
+    prefix="Token",
 )
 
-# Organisations data fetching
-customers_data = client.list_customers()
+# Organizations data fetching
+customers = customers_list.sync(client=client)
 
 sp = {}
 
-for customer_data in customers_data:
+for customer in customers:
     try:
         # Invoices data fetching
-        invoice_data = client.get_invoice_for_customer(
-            customer_data['uuid'], CURRENT_YEAR, CURRENT_MONTH
+        invoices = invoices_list.sync(
+            client=client,
+            customer_uuid=customer.uuid,
+            year=CURRENT_YEAR,
+            month=CURRENT_MONTH
         )
+        if not invoices:
+            continue
+        invoice = invoices[0]
     # If customer doesn't have any projects or created after the requested month
-    except ObjectDoesNotExist:
+    except UnexpectedStatus:
         continue
 
-    invoice_items = [item for item in invoice_data['items']]
-
-    for item in invoice_items:
+    for item in invoice.items:
         # allocate to SP
-        if 'service_provider_name' in item['details']:
-            if item['details']['service_provider_name'] in sp:
-                sp[item['details']['service_provider_name']].append((item, customer_data['name']))
+        if hasattr(item.details, 'service_provider_name'):
+            provider_name = item.details.service_provider_name
+            if provider_name in sp:
+                sp[provider_name].append((item, customer.name))
             else:
-                sp[item['details']['service_provider_name']] = [(item, customer_data['name'])]
+                sp[provider_name] = [(item, customer.name)]
 
 for provider in sp.keys():
     filename = f'{slugify(provider)}_{CURRENT_YEAR}_{CURRENT_MONTH}.csv'
@@ -271,21 +298,20 @@ for provider in sp.keys():
         ]
         writer.writerow(HEADER)
         for inv, customer_name in sp[provider]:
-            code = inv['article_code']
+            code = inv.article_code
             try:
-                code = inv['article_code'].split('_')[0]
+                code = inv.article_code.split('_')[0]
             except:
                 # failed to parse custom logic
                 pass
             writer.writerow(
                 [
                     code,
-                    inv['name'],
+                    inv.name,
                     customer_name,
-                    int(Decimal(inv['quantity'])),
-                    inv['unit_price'],
-                    inv['price'],
+                    int(Decimal(str(inv.quantity))),
+                    inv.unit_price,
+                    inv.price,
                 ]
             )
-
 ```
