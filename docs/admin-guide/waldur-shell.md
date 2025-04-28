@@ -229,6 +229,10 @@ def generate_report():
 ### Update limits for all tenants in a specific organization
 
 ```python
+from waldur_api_client import AuthenticatedClient
+from waldur_api_client.api.openstack_tenants import openstack_tenants_list
+from waldur_api_client.api.marketplace_resources import marketplace_resources_update_limits
+from waldur_api_client.models import ResourceUpdateLimitsRequest
 
 WALDUR_API_URL = '<CHANGEME>'
 WALDUR_API_TOKEN = '<CHANGEME>'
@@ -244,16 +248,24 @@ TENANT_LIMITS = {
     'storage': STORAGE_GB_LIMIT * 1024
 }
 
-from waldur_client import WaldurClient
+client = AuthenticatedClient(
+    base_url="https://api.example.com",
+    token="SuperSecretToken",
+    prefix="Token",
+)
 
-client = WaldurClient(WALDUR_API_URL, WALDUR_API_TOKEN)
-tenants = client.list_tenants({'customer_uuid': CUSTOMER_UUID})
+tenants = openstack_tenants_list.sync(
+    client=client,
+    customer_uuid=CUSTOMER_UUID
+)
 
 for tenant in tenants:
-    client.marketplace_resource_update_limits_order(
-        resource_uuid=tenant['marketplace_resource_uuid'],
-        limits=TENANT_LIMITS,
+    marketplace_resources_update_limits.sync(
+        client=client,
+        uuid=tenant.marketplace_resource_uuid,
+        body=ResourceUpdateLimitsRequest(limits=TENANT_LIMITS)
     )
+
 ```
 
 ### Generate cost report for a specific organization by month
