@@ -573,7 +573,3 @@ Backend data update if a server was switched.
 
 Synchronize SAML2 identity providers.
 
-## sync_users
-
-Sync users from Waldur to Rancher.
-

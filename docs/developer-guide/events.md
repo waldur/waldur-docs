@@ -161,6 +161,7 @@
 - openstack_port_deleted
 - openstack_port_imported
 - openstack_port_pulled
+- openstack_port_updated
 - openstack_router_updated
 - openstack_security_group_cleaned
 - openstack_security_group_created

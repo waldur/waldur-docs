@@ -1475,52 +1475,6 @@ A notification for provider about pending order. The recipients are users that h
 
 ```
 
-## WALDUR_RANCHER
-
-### rancher.notification_create_user
-
-A notification for created rancher user. The recipients is the user who requested the creation.
-
-#### Templates
-
-=== "rancher/notification_create_user_subject.txt"
-
-```txt
-    New account has been created.
-
-```
-
-=== "rancher/notification_create_user_message.txt"
-
-```txt
-    Hello!
-
-    User with login {{ user.username }} and temporary password {{ password }} has been created.
-    Please go to management console {{ rancher_url }} to change the password.
-
-```
-
-=== "rancher/notification_create_user_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>A new user account has been created for you.</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>
-        User with login {{ user.username }} and temporary password {{ password }} has been created.<br />
-        Please go to <a href="{{ rancher_url }}">management console</a> to change the password.
-    </p>
-    </body>
-    </html>
-
-```
-
 ## WALDUR_MASTERMIND.MARKETPLACE_REMOTE
 
 ### marketplace_remote.notification_about_pending_project_updates

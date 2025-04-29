@@ -92,6 +92,10 @@ Show start date field in project create dialog.
 
 Show type field in project create dialog.
 
+## rancher.apps
+
+Render Rancher apps as a separate tab in resource details page.
+
 ## rancher.volume_mount_point
 
 Allow to select mount point for data volume when Rancher cluster is provisioned.
