@@ -291,17 +291,6 @@ options:
              created.
 ```
 
-## initsecuritygroups
-
-Add default security groups with given names to all tenants.
-
-```bash
-usage: waldur initsecuritygroups names [names ...]
-
-positional arguments:
-  names
-```
-
 ## load_categories
 
 Loads a categories for the Marketplace
