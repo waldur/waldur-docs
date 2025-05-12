@@ -48,6 +48,10 @@ Enabled display of call management functionality.
 
 Enabled display of experimental or mocked components in marketplace.
 
+## marketplace.show_resource_end_date
+
+Show resource end date as a non optional column in resources list.
+
 ## openstack.hide_volume_type_selector
 
 Allow to hide OpenStack volume type selector when instance or volume is provisioned.
@@ -139,6 +143,10 @@ Render preferred language column in users list.
 ## user.show_slug
 
 Enable display of slug field in user summary.
+
+## user.show_username
+
+Enable display of username field in user tables.
 
 ## user.ssh_keys
 
