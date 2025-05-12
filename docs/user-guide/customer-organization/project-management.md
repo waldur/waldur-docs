@@ -18,6 +18,8 @@ Project creation is allowed for organization owners in their organizations and s
 4. If you need to edit project details later, open your project and select the **Edit** tab.
 
 !!! note
-    If a resource's termination date is beyond the project end date, the project end date will be used instead for that resource as a termination date. However, if a resource's termination date is earlier than the project end date, the resource's own termination date will apply. Setting end dates only triggers the creation of a termination order. Resources continue to exist in the project until the termination order is fully processed.
+    1. If a resource has a termination date that comes after the project's end date, the project's end date will automatically become that resource's termination date.
+    2. If a resource has a termination date that comes before the project's end date, we'll use the resource's original termination date.
+    3. Important: Setting any end date (either the project's or a resource's) only creates a termination request. The resource remains active in the project until the termination process is fully completed.
 
 ![type:video](../img/create_project.mp4)
