@@ -15,9 +15,9 @@ Project creation is allowed for organization owners in their organizations and s
     - **Start date** - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
     - **End date** – once reached, triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
 
+4. If you need to edit project details later, open your project and select the **Edit** tab.
+
 !!! note
     If a resource's termination date is beyond the project end date, the project end date will be used instead for that resource as a termination date. However, if a resource's termination date is earlier than the project end date, the resource's own termination date will apply. Setting end dates only triggers the creation of a termination order. Resources continue to exist in the project until the termination order is fully processed.
-
-4. If you need to edit project details later, open your project and select the **Edit** tab.
 
 ![type:video](../img/create_project.mp4)
