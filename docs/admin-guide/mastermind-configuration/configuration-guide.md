@@ -1135,14 +1135,6 @@ Disable only resource update events.
 
 Enable reminders to owners about resources of shared offerings that have not generated any cost for the last 3 months.
 
-#### ENABLE_RESOURCE_END_DATE
-
-**Type:** bool
-
-**Default value**: True
-
-Allow to view and update resource end date.
-
 ### Telemetry
 
 #### TELEMETRY_URL
