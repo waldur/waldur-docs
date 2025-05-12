@@ -32,6 +32,9 @@ const result = markdownlint.sync({
     // Disable rule that flags bare URLs without angle brackets or proper linking
     MD034: false,
 
+    // Horizontal rule style
+    MD035: false,
+
     // Allow documents to start without a top-level heading (e.g., '# Title')
     MD041: false,
 
