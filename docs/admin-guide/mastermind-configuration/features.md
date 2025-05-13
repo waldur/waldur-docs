@@ -20,6 +20,10 @@ Make civil number field mandatory in invitation creation form.
 
 Conceal civil number in invitation creation dialog.
 
+## invitations.show_service_accounts
+
+Show service accounts of the scopes.
+
 ## marketplace.call_only
 
 Allow marketplace to serve only as aggregator of call info.
