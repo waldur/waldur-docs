@@ -24,7 +24,7 @@
     
     
       
-        <title>MQTT-Based Event Notification System for Order Processing - Waldur Documentation</title>
+        <title>STOMP-Based Event Notification System - Waldur Documentation</title>
       
     
     
@@ -101,7 +101,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mqtt-based-event-notification-system-for-order-processing" class="md-skip">
+        <a href="#stomp-based-event-notification-system" class="md-skip">
           Skip to content
         </a>
       
@@ -138,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              MQTT-Based Event Notification System for Order Processing
+              STOMP-Based Event Notification System
             
           </span>
         </div>
@@ -2594,7 +2594,7 @@
           
   
   <span class="md-ellipsis">
-    MQTT-Based Event Notification System for Order Processing
+    STOMP-Based Event Notification System
   </span>
   
 
@@ -2605,7 +2605,7 @@
         
   
   <span class="md-ellipsis">
-    MQTT-Based Event Notification System for Order Processing
+    STOMP-Based Event Notification System
   </span>
   
 
@@ -2714,9 +2714,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#benefits-of-the-mqtt-approach" class="md-nav__link">
+  <a href="#benefits-of-the-stomp-approach" class="md-nav__link">
     <span class="md-ellipsis">
-      Benefits of the MQTT Approach
+      Benefits of the STOMP Approach
     </span>
   </a>
   
@@ -6166,9 +6166,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#benefits-of-the-mqtt-approach" class="md-nav__link">
+  <a href="#benefits-of-the-stomp-approach" class="md-nav__link">
     <span class="md-ellipsis">
-      Benefits of the MQTT Approach
+      Benefits of the STOMP Approach
     </span>
   </a>
   
@@ -6189,25 +6189,28 @@
                   
 
 
-<div><h1 id="mqtt-based-event-notification-system-for-order-processing">MQTT-Based Event Notification System for Order Processing</h1>
+<div><h1 id="stomp-based-event-notification-system">STOMP-Based Event Notification System</h1>
 <h2 id="system-overview">System Overview</h2>
-<p>The MQTT-based event notification system allows Waldur to communicate changes to resources, orders, and user roles to the <code>waldur-site-agent</code> that runs on a remote cluster. This eliminates the need for constant polling and enables immediate reactions to events.</p>
+<p>The <a href="https://stomp.github.io/">STOMP</a>-based event notification system allows Waldur to communicate changes to resources, orders, and user roles to the <code>waldur-site-agent</code> that runs on a remote cluster. This eliminates the need for constant polling and enables immediate reactions to events.</p>
 <p>The key components include:</p>
 <ol>
 <li>
-<p><strong>MQTT Publisher (Waldur side)</strong>: Located in the <code>waldur_mastermind/marketplace_slurm_remote/handlers.py</code> and <code>utils.py</code> files, this component publishes messages to MQTT topics when specific events occur.</p>
+<p><strong>STOMP Publisher (Waldur side)</strong>: Located in the <a href="https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/utils.py#L88">waldur_core/logging/utils.py</a> file, this component publishes messages to STOMP queues when specific events occur.</p>
 </li>
 <li>
-<p><strong>Event Subscription Service</strong>: Manages subscriptions to events by creating unique topics for each type of notification.</p>
+<p><strong>Event Subscription Service</strong>: Manages subscriptions to events by creating unique topics for each type of notification. Related file: event subscription management via API: <a href="https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/views.py#L193">waldur_core/logging/views.py</a></p>
 </li>
 <li>
-<p><strong>MQTT Consumer (Agent side)</strong>: The <code>waldur-site-agent</code> running on the resource provider's infrastructure that subscribes to these topics and processes incoming messages.</p>
+<p><strong>STOMP Consumer (Agent side)</strong>: The <code>waldur-site-agent</code> running on the resource provider's infrastructure that subscribes to these topics and processes incoming messages. Related files:</p>
 </li>
+<li>Event subscription registration: <a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/utils.py#L50">waldur_site_agent/event_processing/utils.py</a></li>
+<li>STOMP message handlers: <a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L99">waldur_site_agent/event_processing/handlers.py</a></li>
+<li>STOMP listener: <a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/listener.py#L30">waldur_site_agent/event_processing/listener.py</a></li>
 </ol>
 <h2 id="event-flow">Event Flow</h2>
 <ol>
 <li>An event occurs in Waldur (e.g., a new order is created, a user role changes, or a resource is updated)</li>
-<li>Waldur publishes a message to the appropriate MQTT topic</li>
+<li>Waldur publishes a message to the appropriate STOMP queue(s)</li>
 <li>The site agent receives the message and processes it based on the event type</li>
 <li>The agent communicates with the backend (e.g., SLURM) to execute the necessary actions</li>
 </ol>
@@ -6220,64 +6223,27 @@
 </ol>
 <h2 id="implementation-details">Implementation Details</h2>
 <h3 id="publishing-messages-waldur-side">Publishing Messages (Waldur Side)</h3>
-<p>When events like order creation occur, Waldur prepares and publishes MQTT messages:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">prepare_mqtt_messages</span><span class="p">(</span><span class="n">offering</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">affected_object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""...prepares MQTT messages for marketplace events..."""</span>
-    <span class="c1"># Determines which users should receive the notification</span>
-    <span class="c1"># Creates appropriate topic names</span>
-    <span class="c1"># Returns a list of messages to be sent</span>
-</code></pre></div></td></tr></table></div>
-<p>These messages are then sent via:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">logging_tasks</span><span class="o">.</span><span class="n">publish_mqtt_messages</span><span class="o">.</span><span class="n">delay</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
+<p>When events like order creation occur, Waldur prepares and publishes STOMP messages: <a href="https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_mastermind/marketplace_slurm_remote/utils.py#L12">code link</a></p>
+<p>These messages are then sent via: <a href="https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/tasks.py#L83">publish_stomp_messages</a></p>
 <h3 id="subscription-management-agent-side">Subscription Management (Agent Side)</h3>
-<p>The <code>EventSubscriptionManager</code> class handles creation of event subscriptions and setup of MQTT consumers:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">create_event_subscription</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Create event subscription for specific object types"""</span>
-    <span class="c1"># ...</span>
-</code></pre></div></td></tr></table></div>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">start_mqtt_consumer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_subscription</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Start MQTT consumer for the subscription"""</span>
-    <span class="c1"># Setup MQTT client</span>
-    <span class="c1"># Connect to broker</span>
-    <span class="c1"># Subscribe to topic</span>
-</code></pre></div></td></tr></table></div>
+<p>The <a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/event_subscription_manager.py#L28">EventSubscriptionManager</a> class handles creation of event subscriptions and setup of STOMP consumers:</p>
+<ul>
+<li><a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/event_subscription_manager.py#L98">get_or_create_event_subscription</a> - create an event subscription in Waldur if doesn't exist yet</li>
+<li><a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/event_subscription_manager.py#L193">start_stomp_connection</a> - setup STOMP client, connect agent to the broker and subscribe consumer to a queue</li>
+</ul>
 <h3 id="message-processing-agent-side">Message Processing (Agent Side)</h3>
 <p>When a message arrives, it's routed to the appropriate handler based on the event type:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on_order_message</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-    <span class="c1"># Process order messages</span>
-    <span class="c1"># Create or update resources on backend</span>
-</code></pre></div></td></tr></table></div>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on_user_role_message</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-    <span class="c1"># Process user role changes</span>
-    <span class="c1"># Update access permissions on backend</span>
-</code></pre></div></td></tr></table></div>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on_resource_message</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-    <span class="c1"># Process resource updates</span>
-    <span class="c1"># Update resource configuration on backend</span>
-</code></pre></div></td></tr></table></div>
+<ul>
+<li><a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L99">on_order_message_stomp</a> - create or update resources on backend</li>
+<li><a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L117">on_user_role_message_stomp</a> - create or update access permissions on backend</li>
+<li><a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L152C5-L152C30">on_resource_message_stomp</a> - create or update resource configuration on backend</li>
+</ul>
 <h2 id="technical-components">Technical Components</h2>
 <ol>
-<li><strong>WebSocket Transport</strong>: The system uses MQTT over WebSockets for communication</li>
+<li><strong>WebSocket Transport</strong>: The system uses STOMP over WebSockets for communication</li>
 <li><strong>TLS Security</strong>: Connections can be secured with TLS</li>
-<li><strong>User Authentication</strong>: Each subscription has its own credentials</li>
-<li><strong>Topic Structure</strong>: Topics follow the pattern <code>subscription/{sub_uuid}/offering/{offering_uuid}/{affected_object}</code></li>
+<li><strong>User Authentication</strong>: Each subscription has its own credentials and permissions in RabbitMQ</li>
+<li><strong>Queue Structure</strong>: Queue names follow the pattern <code>/queue/subscription_{subscription_uuid}_offering_{offering_uuid}_{affected_object}</code></li>
 </ol>
 <h2 id="error-handling-and-resilience">Error Handling and Resilience</h2>
 <p>The system includes:</p>
@@ -6287,13 +6253,13 @@
 <li>Retry mechanisms for order processing</li>
 <li>Error logging and optional Sentry integration</li>
 </ul>
-<h2 id="benefits-of-the-mqtt-approach">Benefits of the MQTT Approach</h2>
+<h2 id="benefits-of-the-stomp-approach">Benefits of the STOMP Approach</h2>
 <ol>
 <li><strong>Real-time Processing</strong>: Actions are triggered immediately when events occur</li>
 <li><strong>Reduced Network Traffic</strong>: No constant polling needed</li>
 <li><strong>Decoupling</strong>: The agent doesn't need direct access to Waldur's database</li>
 <li><strong>Scalability</strong>: Multiple agents can subscribe to different events</li>
-<li><strong>Reliability</strong>: The MQTT protocol provides QoS options to ensure message delivery</li>
+<li><strong>Reliability</strong>: The STOMP protocol provides queue persistency to ensure message delivery and different acknowledgement options on the agent side</li>
 </ol>
 <p>This event-driven architecture significantly improves the responsiveness and efficiency of the order processing system compared to traditional polling approaches.</p></div>
 
