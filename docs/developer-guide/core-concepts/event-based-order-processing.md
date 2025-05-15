@@ -1,21 +1,24 @@
-# MQTT-Based Event Notification System for Order Processing
+# STOMP-Based Event Notification System
 
 ## System Overview
 
-The MQTT-based event notification system allows Waldur to communicate changes to resources, orders, and user roles to the `waldur-site-agent` that runs on a remote cluster. This eliminates the need for constant polling and enables immediate reactions to events.
+The [STOMP](https://stomp.github.io/)-based event notification system allows Waldur to communicate changes to resources, orders, and user roles to the `waldur-site-agent` that runs on a remote cluster. This eliminates the need for constant polling and enables immediate reactions to events.
 
 The key components include:
 
-1. **MQTT Publisher (Waldur side)**: Located in the `waldur_mastermind/marketplace_slurm_remote/handlers.py` and `utils.py` files, this component publishes messages to MQTT topics when specific events occur.
+1. **STOMP Publisher (Waldur side)**: Located in the [waldur_core/logging/utils.py](https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/utils.py#L88) file, this component publishes messages to STOMP queues when specific events occur.
 
-2. **Event Subscription Service**: Manages subscriptions to events by creating unique topics for each type of notification.
+2. **Event Subscription Service**: Manages subscriptions to events by creating unique topics for each type of notification. Related file: event subscription management via API: [waldur_core/logging/views.py](https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/views.py#L193)
 
-3. **MQTT Consumer (Agent side)**: The `waldur-site-agent` running on the resource provider's infrastructure that subscribes to these topics and processes incoming messages.
+3. **STOMP Consumer (Agent side)**: The `waldur-site-agent` running on the resource provider's infrastructure that subscribes to these topics and processes incoming messages. Related files:
+   1. Event subscription registration: [waldur_site_agent/event_processing/utils.py](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/utils.py#L50)
+   2. STOMP message handlers: [waldur_site_agent/event_processing/handlers.py](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L99)
+   3. STOMP listener: [waldur_site_agent/event_processing/listener.py](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/listener.py#L30)
 
 ## Event Flow
 
 1. An event occurs in Waldur (e.g., a new order is created, a user role changes, or a resource is updated)
-2. Waldur publishes a message to the appropriate MQTT topic
+2. Waldur publishes a message to the appropriate STOMP queue(s)
 3. The site agent receives the message and processes it based on the event type
 4. The agent communicates with the backend (e.g., SLURM) to execute the necessary actions
 
@@ -31,84 +34,47 @@ The system handles three primary types of events:
 
 ### Publishing Messages (Waldur Side)
 
-When events like order creation occur, Waldur prepares and publishes MQTT messages:
+When events like order creation occur, Waldur prepares and publishes STOMP messages: [code link](https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_mastermind/marketplace_slurm_remote/utils.py#L12)
 
-```python
-def prepare_mqtt_messages(offering, payload, affected_object):
-    """...prepares MQTT messages for marketplace events..."""
-    # Determines which users should receive the notification
-    # Creates appropriate topic names
-    # Returns a list of messages to be sent
-```
-
-These messages are then sent via:
-
-```python
-logging_tasks.publish_mqtt_messages.delay(messages)
-```
+These messages are then sent via: [publish_stomp_messages](https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/tasks.py#L83)
 
 ### Subscription Management (Agent Side)
 
-The `EventSubscriptionManager` class handles creation of event subscriptions and setup of MQTT consumers:
+The [EventSubscriptionManager](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/event_subscription_manager.py#L28) class handles creation of event subscriptions and setup of STOMP consumers:
 
-```python
-def create_event_subscription(self):
-    """Create event subscription for specific object types"""
-    # ...
-```
-
-```python
-def start_mqtt_consumer(self, event_subscription):
-    """Start MQTT consumer for the subscription"""
-    # Setup MQTT client
-    # Connect to broker
-    # Subscribe to topic
-```
+* [get_or_create_event_subscription](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/event_subscription_manager.py#L98) - create an event subscription in Waldur if doesn't exist yet
+* [start_stomp_connection](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/event_subscription_manager.py#L193) - setup STOMP client, connect agent to the broker and subscribe consumer to a queue
 
 ### Message Processing (Agent Side)
 
 When a message arrives, it's routed to the appropriate handler based on the event type:
 
-```python
-def on_order_message(client, userdata, msg):
-    # Process order messages
-    # Create or update resources on backend
-```
-
-```python
-def on_user_role_message(client, userdata, msg):
-    # Process user role changes
-    # Update access permissions on backend
-```
-
-```python
-def on_resource_message(client, userdata, msg):
-    # Process resource updates
-    # Update resource configuration on backend
-```
+* [on_order_message_stomp](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L99) - create or update resources on backend
+* [on_user_role_message_stomp](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L117) - create or update access permissions on backend
+* [on_resource_message_stomp](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L152C5-L152C30) - create or update resource configuration on backend
 
 ## Technical Components
 
-1. **WebSocket Transport**: The system uses MQTT over WebSockets for communication
+1. **WebSocket Transport**: The system uses STOMP over WebSockets for communication
 2. **TLS Security**: Connections can be secured with TLS
-3. **User Authentication**: Each subscription has its own credentials
-4. **Topic Structure**: Topics follow the pattern `subscription/{sub_uuid}/offering/{offering_uuid}/{affected_object}`
+3. **User Authentication**: Each subscription has its own credentials and permissions in RabbitMQ
+4. **Queue Structure**: Queue names follow the pattern `/queue/subscription_{subscription_uuid}_offering_{offering_uuid}_{affected_object}`
 
 ## Error Handling and Resilience
 
 The system includes:
 
-- Graceful connection handling
-- Signal handlers for proper shutdown
-- Retry mechanisms for order processing
-- Error logging and optional Sentry integration
+* Graceful connection handling
+* Signal handlers for proper shutdown
+* Retry mechanisms for order processing
+* Error logging and optional Sentry integration
 
-## Benefits of the MQTT Approach
+## Benefits of the STOMP Approach
 
 1. **Real-time Processing**: Actions are triggered immediately when events occur
 2. **Reduced Network Traffic**: No constant polling needed
 3. **Decoupling**: The agent doesn't need direct access to Waldur's database
 4. **Scalability**: Multiple agents can subscribe to different events
-5. **Reliability**: The MQTT protocol provides QoS options to ensure message delivery
+5. **Reliability**: The STOMP protocol provides queue persistency to ensure message delivery and different acknowledgement options on the agent side
 
 This event-driven architecture significantly improves the responsiveness and efficiency of the order processing system compared to traditional polling approaches.
