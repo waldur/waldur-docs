@@ -1,21 +1,24 @@
-# MQTT-Based Event Notification System for Order Processing
+# STOMP-Based Event Notification System
 
 ## System Overview
 
-The MQTT-based event notification system allows Waldur to communicate changes to resources, orders, and user roles to the `waldur-site-agent` that runs on a remote cluster. This eliminates the need for constant polling and enables immediate reactions to events.
+The [STOMP](https://stomp.github.io/)-based event notification system allows Waldur to communicate changes to resources, orders, and user roles to the `waldur-site-agent` that runs on a remote cluster. This eliminates the need for constant polling and enables immediate reactions to events.
 
 The key components include:
 
-1. **MQTT Publisher (Waldur side)**: Located in the `waldur_mastermind/marketplace_slurm_remote/handlers.py` and `utils.py` files, this component publishes messages to MQTT topics when specific events occur.
+1. **STOMP Publisher (Waldur side)**: Located in the [waldur_core/logging/utils.py](https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/utils.py#L88) file, this component publishes messages to STOMP queues when specific events occur.
 
-2. **Event Subscription Service**: Manages subscriptions to events by creating unique topics for each type of notification.
+2. **Event Subscription Service**: Manages subscriptions to events by creating unique topics for each type of notification. Related file: event subscription management via API: [waldur_core/logging/views.py](https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/views.py#L193)
 
-3. **MQTT Consumer (Agent side)**: The `waldur-site-agent` running on the resource provider's infrastructure that subscribes to these topics and processes incoming messages.
+3. **STOMP Consumer (Agent side)**: The `waldur-site-agent` running on the resource provider's infrastructure that subscribes to these topics and processes incoming messages. Related files:
+   1. Event subscription registration: [waldur_site_agent/event_processing/utils.py](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/utils.py#L50)
+   2. STOMP message handlers: [waldur_site_agent/event_processing/handlers.py](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L99)
+   3. STOMP listener: [waldur_site_agent/event_processing/listener.py](https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/listener.py#L30)
 
 ## Event Flow
 
 1. An event occurs in Waldur (e.g., a new order is created, a user role changes, or a resource is updated)
-2. Waldur publishes a message to the appropriate MQTT topic
+2. Waldur publishes a message to the appropriate STOMP queue(s)
 3. The site agent receives the message and processes it based on the event type
 4. The agent communicates with the backend (e.g., SLURM) to execute the necessary actions
 
@@ -31,21 +34,9 @@ The system handles three primary types of events:
 
 ### Publishing Messages (Waldur Side)
 
-When events like order creation occur, Waldur prepares and publishes MQTT messages:
+When events like order creation occur, Waldur prepares and publishes STOMP messages: [code link](https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_mastermind/marketplace_slurm_remote/utils.py#L12)
 
-```python
-def prepare_mqtt_messages(offering, payload, affected_object):
-    """...prepares MQTT messages for marketplace events..."""
-    # Determines which users should receive the notification
-    # Creates appropriate topic names
-    # Returns a list of messages to be sent
-```
-
-These messages are then sent via:
-
-```python
-logging_tasks.publish_mqtt_messages.delay(messages)
-```
+These messages are then sent via: [publish_stomp_messages](https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/tasks.py#L83)
 
 ### Subscription Management (Agent Side)
 
