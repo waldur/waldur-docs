@@ -360,10 +360,11 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'REQUEST_HEADER_IMPERSONATED_USER_UUID': 'HTTP_X_IMPERSONATED_USER_UUID',
  'RESPONSE_HEADER_IMPERSONATOR_UUID': 'X-impersonator-uuid',
  'SELLER_COUNTRY_CODE': None,
- 'SERVICE_ACCOUNT_USE_WEBHOOKS': False,
- 'SERVICE_ACCOUNT_WEBHOOK_TOKEN_CLIENT_ID': '',
- 'SERVICE_ACCOUNT_WEBHOOK_TOKEN_SECRET': '',
- 'SERVICE_ACCOUNT_WEBHOOK_TOKEN_URL': '',
+ 'SERVICE_ACCOUNT_TOKEN_CLIENT_ID': '',
+ 'SERVICE_ACCOUNT_TOKEN_SECRET': '',
+ 'SERVICE_ACCOUNT_TOKEN_URL': '',
+ 'SERVICE_ACCOUNT_URL': '',
+ 'SERVICE_ACCOUNT_USE_API': False,
  'SUPPORT_PORTAL_URL': '',
  'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
@@ -623,29 +624,35 @@ Type: Optional[str]
 
 Specifies seller legal or effective country of registration or residence as an ISO 3166-1 alpha-2 country code. It is used for computing VAT charge rate.
 
-#### SERVICE_ACCOUNT_USE_WEBHOOKS
-
-Type: bool
-
-Send service account creation and deletion events to webhook.
-
-#### SERVICE_ACCOUNT_WEBHOOK_TOKEN_CLIENT_ID
+#### SERVICE_ACCOUNT_TOKEN_CLIENT_ID
 
 Type: str
 
 Client ID to get access token for service account.
 
-#### SERVICE_ACCOUNT_WEBHOOK_TOKEN_SECRET
+#### SERVICE_ACCOUNT_TOKEN_SECRET
 
 Type: str
 
 Client secret to get access for service account.
 
-#### SERVICE_ACCOUNT_WEBHOOK_TOKEN_URL
+#### SERVICE_ACCOUNT_TOKEN_URL
 
 Type: str
 
-Webhook URL for getting service account token.
+Webhook URL for getting token for further service account management.
+
+#### SERVICE_ACCOUNT_URL
+
+Type: str
+
+Webhook URL for service account management.
+
+#### SERVICE_ACCOUNT_USE_API
+
+Type: bool
+
+Send service account creation and deletion requests to API.
 
 #### SUPPORT_PORTAL_URL
 
@@ -1036,6 +1043,14 @@ Description of the Waldur deployment.
 **Default value**: https://example.com/
 
 It is used for rendering callback URL in HomePort
+
+#### RANCHER_USERNAME_INPUT_LABEL
+
+**Type:** str
+
+**Default value**: Username
+
+Label for the username field in Rancher external user resource access management.
 
 ### Marketplace Branding
 
