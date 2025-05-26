@@ -77,6 +77,18 @@
 - set_to_zero_overdue_credit
 - update_of_credit_by_staff
 
+## Offering_accounting
+
+- marketplace_offering_component_created
+- marketplace_offering_component_deleted
+- marketplace_offering_component_updated
+- marketplace_plan_archived
+- marketplace_plan_component_current_price_updated
+- marketplace_plan_component_future_price_updated
+- marketplace_plan_component_quota_updated
+- marketplace_plan_created
+- marketplace_plan_updated
+
 ## Permissions
 
 - role_granted
