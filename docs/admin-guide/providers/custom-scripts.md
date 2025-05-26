@@ -30,7 +30,7 @@ UUID = uuid.uuid4()
 print(UUID)
 ```
 
-If you want to save additional metadata, then last line of output should consist of 2 strings:
+If you want to save additional metadata, then last line of output should consist of 2 space separated strings:
 
 - ID of the created resource that will be saved as backend_id;
 - Base64 encoded metadata object.
