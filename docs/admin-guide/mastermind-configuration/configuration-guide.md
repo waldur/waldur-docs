@@ -1350,6 +1350,18 @@ The image rendered at the bottom of login menu in HomePort.
 
 The image rendered at hero section of HomePort landing page.
 
+#### MARKETPLACE_HERO_IMAGE
+
+**Type:** image_field
+
+The image rendered at hero section of Marketplace landing page. Please, use a wide image (min. 1920×600px) with no text or logos. Keep the center area clean, and choose a darker image for dark mode or a brighter image for light mode.
+
+#### CALL_MANAGEMENT_HERO_IMAGE
+
+**Type:** image_field
+
+The image rendered at hero section of Call Management landing page. Please, use a wide image (min. 1920×600px) with no text or logos. Keep the center area clean, and choose a darker image for dark mode or a brighter image for light mode.
+
 #### LOGIN_LOGO
 
 **Type:** image_field
