@@ -742,3 +742,225 @@ permissions = marketplace_service_providers_project_permissions_list.sync(
 # user_uuid: UUID
 # user_email: str
 ```
+
+## Creating Offerings
+
+Service providers can create new offerings using the Waldur SDK. The following example demonstrates how to create a new offering with components and plans.
+
+```python
+import os
+import uuid
+from uuid import UUID
+
+from waldur_api_client import AuthenticatedClient
+from waldur_api_client.api.customers import customers_list, customers_retrieve
+from waldur_api_client.api.marketplace_categories import (
+    marketplace_categories_list,
+    marketplace_categories_retrieve,
+)
+from waldur_api_client.api.marketplace_provider_offerings import (
+    marketplace_provider_offerings_activate,
+    marketplace_provider_offerings_create,
+)
+from waldur_api_client.errors import UnexpectedStatus
+from waldur_api_client.models.base_provider_plan_request import BaseProviderPlanRequest
+from waldur_api_client.models.billing_type_enum import BillingTypeEnum
+from waldur_api_client.models.billing_unit import BillingUnit
+from waldur_api_client.models.country_enum import CountryEnum
+from waldur_api_client.models.limit_period_enum import LimitPeriodEnum
+from waldur_api_client.models.offering_component_request import OfferingComponentRequest
+from waldur_api_client.models.offering_create_request import OfferingCreateRequest
+from waldur_api_client.models.customer import Customer
+from waldur_api_client.models.marketplace_category import MarketplaceCategory
+
+
+def is_uuid_like(value: str | UUID) -> bool:
+    """
+    Check if value looks like a valid UUID.
+
+    Args:
+        value: Value to check, can be string or UUID
+
+    Returns:
+        bool: True if value is a valid UUID, False otherwise
+    """
+    if isinstance(value, UUID):
+        return True
+    try:
+        uuid.UUID(str(value))
+    except (TypeError, ValueError, AttributeError):
+        return False
+    else:
+        return True
+
+
+def get_category(
+    client: AuthenticatedClient, category_identifier: str | UUID
+) -> MarketplaceCategory:
+    """
+    Get category object from identifier (name or UUID).
+    """
+    if is_uuid_like(category_identifier):
+        category = marketplace_categories_retrieve.sync(
+            client=client, uuid=category_identifier
+        )
+        if category is None:
+            raise ValueError(f"Category with UUID '{category_identifier}' not found")
+        return category
+    else:
+        categories = marketplace_categories_list.sync(
+            client=client, title=category_identifier
+        )
+        if not categories:
+            raise ValueError(f"Category with name '{category_identifier}' not found")
+        return categories[0]
+
+
+def get_provider(
+    client: AuthenticatedClient, provider_identifier: str | UUID
+) -> Customer:
+    """
+    Get provider (customer) object from identifier (name or UUID).
+    """
+    if is_uuid_like(provider_identifier):
+        provider = customers_retrieve.sync(
+            client=client, uuid=UUID(str(provider_identifier))
+        )
+        if provider is None:
+            raise ValueError(f"Provider with UUID '{provider_identifier}' not found")
+        return provider
+    else:
+        providers = customers_list.sync(client=client, name=provider_identifier)
+        if not providers:
+            raise ValueError(f"Provider with name '{provider_identifier}' not found")
+        return providers[0]
+
+
+def create_offering(
+    client: AuthenticatedClient,
+    provider_identifier: str | UUID,
+    category_identifier: str | UUID,
+    name: str,
+    type_: str,
+    **kwargs,
+) -> UUID:
+    """
+    Create a new offering for an organization.
+
+    Required arguments:
+        client: Authenticated client instance
+        provider_identifier: Provider name or UUID
+        category_identifier: Category name or UUID
+        name: Name of the offering
+        type_: Type of the offering
+
+    Optional arguments (pass as kwargs):
+        description: Short description of the offering
+        full_description: Detailed description
+        terms_of_service: Terms of service text
+        terms_of_service_link: Link to terms of service
+        privacy_policy_link: Link to privacy policy
+        access_url: Public access URL
+        vendor_details: Vendor information
+        getting_started: Getting started guide
+        integration_guide: Integration guide
+        shared: Whether the offering is shared with all customers
+        billable: Whether the offering is billable
+        country: Country where the offering is available
+        components: List of offering components
+        plans: List of offering plans
+    """
+
+    # Get provider and category objects
+    provider = get_provider(client, provider_identifier)
+    category = get_category(client, category_identifier)
+
+    # Create the offering request
+    offering_request = OfferingCreateRequest(
+        name=name, category=category.url, type_=type_, customer=provider.url, **kwargs
+    )
+
+    try:
+        response = marketplace_provider_offerings_create.sync(
+            client=client,
+            body=offering_request,
+        )
+    except UnexpectedStatus as e:
+        print(f"Error creating offering: {e}")
+        raise e
+
+    if response is None:
+        raise Exception("Failed to create offering - no response received")
+
+    return response.uuid
+
+
+# Example usage:
+if __name__ == "__main__":
+    # Note, requires the waldur-api-client package to be installed.
+    # Environment variables should be set in the environment. Example of environment variables:
+    # WALDUR_API_URL=https://hpcservicehub.eu
+    # WALDUR_API_TOKEN=1234567890 ( your token from waldur instance with access to organization )
+
+    api_url = os.getenv("WALDUR_API_URL")
+    api_token = os.getenv("WALDUR_API_TOKEN")
+
+    if not api_url or not api_token:
+        print(
+            "Required environment variables not set. Please set WALDUR_API_URL and WALDUR_API_TOKEN"
+        )
+        exit(1)
+
+    # Initialize the client
+    client = AuthenticatedClient(
+        base_url=os.getenv("WALDUR_API_URL"),
+        token=os.getenv("WALDUR_API_TOKEN"),
+        prefix="Token",
+        raise_on_unexpected_status=True,
+    )
+
+    # Create a component
+    component = OfferingComponentRequest(
+        type_="cpu",
+        name="CPU",
+        measured_unit="hours",
+        billing_type=BillingTypeEnum.FIXED,
+        limit_period=LimitPeriodEnum.MONTH,
+        limit_amount=1000,
+    )
+
+    # Create a plan
+    plan = BaseProviderPlanRequest(
+        name="Basic Plan",
+        unit_price="10",
+        unit=BillingUnit.HOUR,
+    )
+
+    try:
+        # Create the offering using names instead of UUIDs
+        offering_uuid = create_offering(
+            client=client,
+            provider_identifier="My Org Name",  # Insert the organization name or UUID
+            category_identifier="HPC",  # Insert the category name or UUID
+            name="New Offering",  # Name of the offering
+            type_="Marketplace.Basic",  # Type of the offering
+            description="Offering description",
+            components=[component],  # List of components
+            plans=[plan],  # List of plans
+            shared=True,
+            billable=True,
+            country=CountryEnum.FR,  # France
+        )
+
+        print(f"Created offering with UUID: {offering_uuid}")
+
+        # Activate the offering
+        print(f"Activating offering with UUID: {offering_uuid}")
+        marketplace_provider_offerings_activate.sync(
+            client=client,
+            uuid=offering_uuid,
+        )
+        print(f"Offering activated with UUID: {offering_uuid}")
+    except (UnexpectedStatus, ValueError) as e:
+        print(f"Error: {str(e)}")
+```
