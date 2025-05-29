@@ -5178,6 +5178,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#creating-offerings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Offerings
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6447,6 +6456,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#creating-offerings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Offerings
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -7638,6 +7656,438 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
 <span class="c1"># user_username: str</span>
 <span class="c1"># user_uuid: UUID</span>
 <span class="c1"># user_email: str</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="creating-offerings">Creating Offerings</h2>
+<p>Service providers can create new offerings using the Waldur SDK. The following example demonstrates how to create a new offering with components and plans.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  1</span>
+<span class="normal">  2</span>
+<span class="normal">  3</span>
+<span class="normal">  4</span>
+<span class="normal">  5</span>
+<span class="normal">  6</span>
+<span class="normal">  7</span>
+<span class="normal">  8</span>
+<span class="normal">  9</span>
+<span class="normal"> 10</span>
+<span class="normal"> 11</span>
+<span class="normal"> 12</span>
+<span class="normal"> 13</span>
+<span class="normal"> 14</span>
+<span class="normal"> 15</span>
+<span class="normal"> 16</span>
+<span class="normal"> 17</span>
+<span class="normal"> 18</span>
+<span class="normal"> 19</span>
+<span class="normal"> 20</span>
+<span class="normal"> 21</span>
+<span class="normal"> 22</span>
+<span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span>
+
+<span class="kn">from</span> <span class="nn">waldur_api_client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.customers</span> <span class="kn">import</span> <span class="n">customers_list</span><span class="p">,</span> <span class="n">customers_retrieve</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_categories</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_categories_list</span><span class="p">,</span>
+    <span class="n">marketplace_categories_retrieve</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_provider_offerings</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_provider_offerings_activate</span><span class="p">,</span>
+    <span class="n">marketplace_provider_offerings_create</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.errors</span> <span class="kn">import</span> <span class="n">UnexpectedStatus</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.base_provider_plan_request</span> <span class="kn">import</span> <span class="n">BaseProviderPlanRequest</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.billing_type_enum</span> <span class="kn">import</span> <span class="n">BillingTypeEnum</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.billing_unit</span> <span class="kn">import</span> <span class="n">BillingUnit</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.country_enum</span> <span class="kn">import</span> <span class="n">CountryEnum</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.limit_period_enum</span> <span class="kn">import</span> <span class="n">LimitPeriodEnum</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.offering_component_request</span> <span class="kn">import</span> <span class="n">OfferingComponentRequest</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.offering_create_request</span> <span class="kn">import</span> <span class="n">OfferingCreateRequest</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.customer</span> <span class="kn">import</span> <span class="n">Customer</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.marketplace_category</span> <span class="kn">import</span> <span class="n">MarketplaceCategory</span>
+
+
+<span class="k">def</span> <span class="nf">is_uuid_like</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Check if value looks like a valid UUID.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        value: Value to check, can be string or UUID</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: True if value is a valid UUID, False otherwise</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span> <span class="nf">get_category</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">AuthenticatedClient</span><span class="p">,</span> <span class="n">category_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarketplaceCategory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Get category object from identifier (name or UUID).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">is_uuid_like</span><span class="p">(</span><span class="n">category_identifier</span><span class="p">):</span>
+        <span class="n">category</span> <span class="o">=</span> <span class="n">marketplace_categories_retrieve</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">uuid</span><span class="o">=</span><span class="n">category_identifier</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">category</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Category with UUID '</span><span class="si">{</span><span class="n">category_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">category</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">categories</span> <span class="o">=</span> <span class="n">marketplace_categories_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">category_identifier</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Category with name '</span><span class="si">{</span><span class="n">category_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">categories</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">get_provider</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">AuthenticatedClient</span><span class="p">,</span> <span class="n">provider_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Customer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Get provider (customer) object from identifier (name or UUID).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">is_uuid_like</span><span class="p">(</span><span class="n">provider_identifier</span><span class="p">):</span>
+        <span class="n">provider</span> <span class="o">=</span> <span class="n">customers_retrieve</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">uuid</span><span class="o">=</span><span class="n">UUID</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">provider_identifier</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">provider</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider with UUID '</span><span class="si">{</span><span class="n">provider_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">provider</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">providers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">provider_identifier</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">providers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider with name '</span><span class="si">{</span><span class="n">provider_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">create_offering</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">AuthenticatedClient</span><span class="p">,</span>
+    <span class="n">provider_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">category_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">type_</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UUID</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create a new offering for an organization.</span>
+
+<span class="sd">    Required arguments:</span>
+<span class="sd">        client: Authenticated client instance</span>
+<span class="sd">        provider_identifier: Provider name or UUID</span>
+<span class="sd">        category_identifier: Category name or UUID</span>
+<span class="sd">        name: Name of the offering</span>
+<span class="sd">        type_: Type of the offering</span>
+
+<span class="sd">    Optional arguments (pass as kwargs):</span>
+<span class="sd">        description: Short description of the offering</span>
+<span class="sd">        full_description: Detailed description</span>
+<span class="sd">        terms_of_service: Terms of service text</span>
+<span class="sd">        terms_of_service_link: Link to terms of service</span>
+<span class="sd">        privacy_policy_link: Link to privacy policy</span>
+<span class="sd">        access_url: Public access URL</span>
+<span class="sd">        vendor_details: Vendor information</span>
+<span class="sd">        getting_started: Getting started guide</span>
+<span class="sd">        integration_guide: Integration guide</span>
+<span class="sd">        shared: Whether the offering is shared with all customers</span>
+<span class="sd">        billable: Whether the offering is billable</span>
+<span class="sd">        country: Country where the offering is available</span>
+<span class="sd">        components: List of offering components</span>
+<span class="sd">        plans: List of offering plans</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Get provider and category objects</span>
+    <span class="n">provider</span> <span class="o">=</span> <span class="n">get_provider</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">provider_identifier</span><span class="p">)</span>
+    <span class="n">category</span> <span class="o">=</span> <span class="n">get_category</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">category_identifier</span><span class="p">)</span>
+
+    <span class="c1"># Create the offering request</span>
+    <span class="n">offering_request</span> <span class="o">=</span> <span class="n">OfferingCreateRequest</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="n">type_</span><span class="p">,</span> <span class="n">customer</span><span class="o">=</span><span class="n">provider</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_provider_offerings_create</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+            <span class="n">body</span><span class="o">=</span><span class="n">offering_request</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="n">UnexpectedStatus</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error creating offering: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">e</span>
+
+    <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">"Failed to create offering - no response received"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">uuid</span>
+
+
+<span class="c1"># Example usage:</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="c1"># Note, requires the waldur-api-client package to be installed.</span>
+    <span class="c1"># Environment variables should be set in the environment. Example of environment variables:</span>
+    <span class="c1"># WALDUR_API_URL=https://hpcservicehub.eu</span>
+    <span class="c1"># WALDUR_API_TOKEN=1234567890 ( your token from waldur instance with access to organization )</span>
+
+    <span class="n">api_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"WALDUR_API_URL"</span><span class="p">)</span>
+    <span class="n">api_token</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"WALDUR_API_TOKEN"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">api_url</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">api_token</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">"Required environment variables not set. Please set WALDUR_API_URL and WALDUR_API_TOKEN"</span>
+        <span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the client</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+        <span class="n">base_url</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"WALDUR_API_URL"</span><span class="p">),</span>
+        <span class="n">token</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"WALDUR_API_TOKEN"</span><span class="p">),</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">"Token"</span><span class="p">,</span>
+        <span class="n">raise_on_unexpected_status</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create a component</span>
+    <span class="n">component</span> <span class="o">=</span> <span class="n">OfferingComponentRequest</span><span class="p">(</span>
+        <span class="n">type_</span><span class="o">=</span><span class="s2">"cpu"</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"CPU"</span><span class="p">,</span>
+        <span class="n">measured_unit</span><span class="o">=</span><span class="s2">"hours"</span><span class="p">,</span>
+        <span class="n">billing_type</span><span class="o">=</span><span class="n">BillingTypeEnum</span><span class="o">.</span><span class="n">FIXED</span><span class="p">,</span>
+        <span class="n">limit_period</span><span class="o">=</span><span class="n">LimitPeriodEnum</span><span class="o">.</span><span class="n">MONTH</span><span class="p">,</span>
+        <span class="n">limit_amount</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create a plan</span>
+    <span class="n">plan</span> <span class="o">=</span> <span class="n">BaseProviderPlanRequest</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Basic Plan"</span><span class="p">,</span>
+        <span class="n">unit_price</span><span class="o">=</span><span class="s2">"10"</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">BillingUnit</span><span class="o">.</span><span class="n">HOUR</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Create the offering using names instead of UUIDs</span>
+        <span class="n">offering_uuid</span> <span class="o">=</span> <span class="n">create_offering</span><span class="p">(</span>
+            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+            <span class="n">provider_identifier</span><span class="o">=</span><span class="s2">"My Org Name"</span><span class="p">,</span>  <span class="c1"># Insert the organization name or UUID</span>
+            <span class="n">category_identifier</span><span class="o">=</span><span class="s2">"HPC"</span><span class="p">,</span>  <span class="c1"># Insert the category name or UUID</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"New Offering"</span><span class="p">,</span>  <span class="c1"># Name of the offering</span>
+            <span class="n">type_</span><span class="o">=</span><span class="s2">"Marketplace.Basic"</span><span class="p">,</span>  <span class="c1"># Type of the offering</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Offering description"</span><span class="p">,</span>
+            <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="n">component</span><span class="p">],</span>  <span class="c1"># List of components</span>
+            <span class="n">plans</span><span class="o">=</span><span class="p">[</span><span class="n">plan</span><span class="p">],</span>  <span class="c1"># List of plans</span>
+            <span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">billable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">country</span><span class="o">=</span><span class="n">CountryEnum</span><span class="o">.</span><span class="n">FR</span><span class="p">,</span>  <span class="c1"># France</span>
+        <span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created offering with UUID: </span><span class="si">{</span><span class="n">offering_uuid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Activate the offering</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Activating offering with UUID: </span><span class="si">{</span><span class="n">offering_uuid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">marketplace_provider_offerings_activate</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+            <span class="n">uuid</span><span class="o">=</span><span class="n">offering_uuid</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Offering activated with UUID: </span><span class="si">{</span><span class="n">offering_uuid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">UnexpectedStatus</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div></div>
 
 
@@ -7659,7 +8109,7 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-05-13
+    2025-05-29
   </span>
 
     
