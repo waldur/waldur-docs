@@ -1,5 +1,25 @@
 # Changelog
 
+## 7.6.0
+
+Notes: Bugfixes
+
+* Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.5.9...7.6.0)
+    * Image SBOM: [waldur-mastermind-7.6.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-7.6.0-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-mastermind-7.6.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-7.6.0-source.cyclonedx.tar.gz)
+    * OpenAPI specification for version 7.6.0 (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-7.6.0.yaml)
+    * API changes: [View changes](/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.6.0-diff)
+* Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.5.9...7.6.0)
+    * Image SBOM: [waldur-homeport-7.6.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-7.6.0-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-homeport-7.6.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-7.6.0-source.cyclonedx.tar.gz)
+* Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/7.5.9...7.6.0)
+* Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/7.5.9...7.6.0)
+* Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/7.5.9...7.6.0)
+    * Image SBOM: [waldur-prometheus-exporter-7.6.0-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-7.6.0-image.cyclonedx.tar.gz)
+    * Source SBOM: [waldur-prometheus-exporter-7.6.0-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-7.6.0-source.cyclonedx.tar.gz)
+
+Date: Mon Jun  2 20:16:44 UTC 2025
+
 ## 7.5.9
 
 Notes: None
