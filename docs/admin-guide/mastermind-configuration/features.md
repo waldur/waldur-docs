@@ -12,6 +12,14 @@ Allows to hide domain field in organization detail.
 
 Allows to show permission reviews tab and popups.
 
+## deployment.enable_cookie_notice
+
+Enable cookie notice in marketplace.
+
+## deployment.send_metrics
+
+Send telemetry metrics.
+
 ## invitations.civil_number_required
 
 Make civil number field mandatory in invitation creation form.
@@ -135,10 +143,6 @@ Render list of users in support workspace.
 ## support.vm_type_overview
 
 Enable VM type overview in support workspace.
-
-## telemetry.send_metrics
-
-Send telemetry metrics.
 
 ## user.disable_user_termination
 
