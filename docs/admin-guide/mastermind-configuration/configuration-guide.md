@@ -1150,6 +1150,12 @@ Disable only resource update events.
 
 Enable reminders to owners about resources of shared offerings that have not generated any cost for the last 3 months.
 
+#### ENABLE_MOCK_SERVICE_ACCOUNT_BACKEND
+
+**Type:** bool
+
+Enable mock returns for the service account service
+
 ### Telemetry
 
 #### TELEMETRY_URL
