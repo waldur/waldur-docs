@@ -365,6 +365,14 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'SERVICE_ACCOUNT_TOKEN_URL': '',
  'SERVICE_ACCOUNT_URL': '',
  'SERVICE_ACCOUNT_USE_API': False,
+ 'SUBNET_BLACKLIST': ['10.0.0.0/8',
+                      '172.16.0.0/12',
+                      '192.168.0.0/16',
+                      '169.254.0.0/16',
+                      '127.0.0.0/8',
+                      '::1/128',
+                      'fc00::/7',
+                      'fe80::/10'],
  'SUPPORT_PORTAL_URL': '',
  'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
@@ -653,6 +661,12 @@ Webhook URL for service account management.
 Type: bool
 
 Send service account creation and deletion requests to API.
+
+#### SUBNET_BLACKLIST
+
+Type: List[str]
+
+List of IP ranges that are blocked for the SDK client.
 
 #### SUPPORT_PORTAL_URL
 
