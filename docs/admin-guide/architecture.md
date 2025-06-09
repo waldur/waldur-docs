@@ -7,7 +7,6 @@ Waldur is composed of a several components.
 - Celery workers - Background processing of tasks
 - Celery beat - Scheduling of periodic tasks for background processing
 - PostgreSQL database - Storing persistent data, also serves as Celery result store in Kubernetes deployment
-- Redis - Tasks queue and result store for Celery (Docker Compose deployment only)
-- RabbitMQ - Tasks queue and result store for Celery (Kubernetes deployment only)
+- RabbitMQ - Tasks queue and result store for Celery
 
 ![diagram](../assets/components.svg)
