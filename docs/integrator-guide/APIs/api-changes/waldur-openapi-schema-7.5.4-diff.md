@@ -1,4 +1,4 @@
-# OpenApi Schema Diff - 7.5.4
+# OpenAPI schema diff - 7.5.4
 
 ## For version 7.5.4
 
