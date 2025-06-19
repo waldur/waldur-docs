@@ -40,7 +40,6 @@ Test mkdocs:
   - git config --global user.name "$GITLAB_USER_NAME"
   - git config --global user.email "$GITLAB_USER_EMAIL"
 
-
 .build_script_steps: &build_script_steps
   - git remote add github_waldur git@github.com:waldur/waldur-docs.git || true
   - git remote -v
@@ -115,12 +114,16 @@ Test changelog generation:
       * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/$PREV_TAG...$CI_COMMIT_TAG)
       * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/$PREV_TAG...$CI_COMMIT_TAG)
       * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Python SDK: [tag diff](https://github.com/waldur/py-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur TypeScript/JavaScript SDK: [tag diff](https://github.com/waldur/js-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Go SDK: [tag diff](https://github.com/waldur/go-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
 
       Date: $TIMESTAMP\n" | cat - docs/about/CHANGELOG.md > tmp
     - cat tmp
     - mv -f tmp docs/about/CHANGELOG.md
 
-Tag Mastermind, Homeport and Helm repositories:
+Tag all repositories:
   image:
     name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
   stage: deploy
@@ -150,12 +153,12 @@ Tag Mastermind, Homeport and Helm repositories:
 
       Notes: ${CI_COMMIT_TAG_MESSAGE:-None}
 
-      * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur MasterMind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/$PREV_TAG...$CI_COMMIT_TAG)
           * Image SBOM: [waldur-mastermind-$CI_COMMIT_TAG-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-$CI_COMMIT_TAG-image.cyclonedx.tar.gz)
           * Source SBOM: [waldur-mastermind-$CI_COMMIT_TAG-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-$CI_COMMIT_TAG-source.cyclonedx.tar.gz)
           * OpenAPI specification for version $CI_COMMIT_TAG (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml)
           * API changes: [View changes](/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-${CI_COMMIT_TAG}-diff)
-      * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur HomePort: [tag diff](https://github.com/waldur/waldur-homeport/compare/$PREV_TAG...$CI_COMMIT_TAG)
           * Image SBOM: [waldur-homeport-$CI_COMMIT_TAG-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-$CI_COMMIT_TAG-image.cyclonedx.tar.gz)
           * Source SBOM: [waldur-homeport-$CI_COMMIT_TAG-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-$CI_COMMIT_TAG-source.cyclonedx.tar.gz)
       * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/$PREV_TAG...$CI_COMMIT_TAG)
@@ -163,6 +166,9 @@ Tag Mastermind, Homeport and Helm repositories:
       * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/$PREV_TAG...$CI_COMMIT_TAG)
           * Image SBOM: [waldur-prometheus-exporter-$CI_COMMIT_TAG-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-$CI_COMMIT_TAG-image.cyclonedx.tar.gz)
           * Source SBOM: [waldur-prometheus-exporter-$CI_COMMIT_TAG-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-$CI_COMMIT_TAG-source.cyclonedx.tar.gz)
+      * Waldur Python SDK: [tag diff](https://github.com/waldur/py-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur TypeScript/JavaScript SDK: [tag diff](https://github.com/waldur/js-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
+      * Waldur Go SDK: [tag diff](https://github.com/waldur/go-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
 
       Date: $TIMESTAMP\n" | cat - docs/about/CHANGELOG.md > tmp
     - cat tmp
@@ -172,6 +178,7 @@ Tag Mastermind, Homeport and Helm repositories:
     - git commit -m "Update changelog for $CI_COMMIT_TAG"
     - git --no-pager show
     - git push origin master
+    - cd ../
   script:
     - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-mastermind.git"
     - cd waldur-mastermind/
@@ -214,7 +221,24 @@ Tag Mastermind, Homeport and Helm repositories:
     - git push -o "ci.skip"
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
+    - cd ../
     - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-prometheus-exporter.git"
     - cd waldur-prometheus-exporter/
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
+    - cd ../
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/py-client.git"
+    - cd py-client/
+    - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
+    - git push origin $CI_COMMIT_TAG
+    - cd ../
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/js-client.git"
+    - cd js-client/
+    - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
+    - git push origin $CI_COMMIT_TAG
+    - cd ../
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/go-client.git"
+    - cd go-client/
+    - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
+    - git push origin $CI_COMMIT_TAG
+    - cd ../
