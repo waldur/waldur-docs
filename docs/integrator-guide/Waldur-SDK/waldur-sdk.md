@@ -1,16 +1,16 @@
 # Waldur SDK
 
-Waldur SDK is a [python wrapper](https://github.com/waldur/py-client)
-for typical REST operations.
-You can use it, if you want to send requests to Waldur REST API directly from Python.
-SDK is represented by Python module called `waldur_api_client`.
+Waldur SDK is a thin Python wrapper for common REST operations.
+It allows you to interact with the Waldur REST API directly from your Python code.
+The SDK is provided as a Python module named `waldur_api_client`.
 
 ## Installation
 
-Due to frequent SDK updates, installation from the public GitHub repository is highly recommended:
+The Waldur SDK is available on PyPI and can be installed using either `pip` or `poetry`:
 
 ```bash
-pip install https://github.com/waldur/py-client/archive/master.zip
+pip install waldur-api-client
+poetry add waldur-api-client
 ```
 
 In order to perform operations, a user needs to create an instance of `AuthenticatedClient` class:
@@ -21,7 +21,6 @@ from waldur_api_client import AuthenticatedClient
 client = AuthenticatedClient(
     base_url="https://api.example.com",
     token="SuperSecretToken",
-    prefix="Token",
 )
 ```
 
@@ -61,7 +60,6 @@ the trick below can be used to disable validation of certificates by SDK, beware
 client = AuthenticatedClient(
     base_url="https://internal_api.example.com", 
     token="SuperSecretToken",
-    prefix="Token",
     verify_ssl=False,
 )
 ```
@@ -72,18 +70,10 @@ Sometimes you may need to authenticate to a server (especially an internal serve
 client = AuthenticatedClient(
     base_url="https://internal_api.example.com", 
     token="SuperSecretToken",
-    prefix="Token",
     verify_ssl="/path/to/certificate_bundle.pem",
 )
 ```
 
-## Installation with Poetry
-
-The recommended way to install the SDK is using Poetry, a modern Python dependency management tool. In order to install Poetry, visit [Poetry](https://python-poetry.org/docs/#installation).
-
-```shell
-poetry add git+https://github.com/waldur/py-client.git
-```
 
 ## Air gapped installation
 
