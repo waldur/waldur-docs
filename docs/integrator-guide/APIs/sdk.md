@@ -10,9 +10,9 @@ This document provides information about official Waldur SDK libraries available
 - Auto-generated Python client for Waldur REST API
 - Installation:
 
-    ```bash
-    pip install waldur-client
-    ```
+```bash
+pip install waldur-api-client
+```
 
 ### TypeScript/JavaScript SDK
 
@@ -20,9 +20,9 @@ This document provides information about official Waldur SDK libraries available
 - Auto-generated TypeScript/JavaScript client for Waldur REST API
 - Installation:
 
-    ```bash
-    npm install waldur-js-client
-    ```
+```bash
+npm install waldur-js-client
+```
 
 ### Go SDK
 
@@ -30,9 +30,9 @@ This document provides information about official Waldur SDK libraries available
 - Auto-generated Go client for Waldur REST API
 - Installation:
 
-    ```bash
-    go get github.com/waldur/go-client
-    ```
+```bash
+go get github.com/waldur/go-client
+```
 
 ## Features
 
