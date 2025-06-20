@@ -915,7 +915,6 @@ if __name__ == "__main__":
     client = AuthenticatedClient(
         base_url=os.getenv("WALDUR_API_URL"),
         token=os.getenv("WALDUR_API_TOKEN"),
-        prefix="Token",
         raise_on_unexpected_status=True,
     )
 

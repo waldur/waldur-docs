@@ -45,7 +45,6 @@ HEADER = [
 client = AuthenticatedClient(
     base_url=os.environ.get('WALDUR_API_URL'),
     token=os.environ.get('WALDUR_API_TOKEN'),
-    prefix="Token",
 )
 
 # Get all customers
@@ -130,7 +129,6 @@ HEADER = [
 client = AuthenticatedClient(
     base_url=os.environ.get('WALDUR_API_URL'),
     token=os.environ.get('WALDUR_API_TOKEN'),
-    prefix="Token",
 )
 
 # Get all customers
@@ -250,7 +248,6 @@ def slugify(value, allow_unicode=False):
 client = AuthenticatedClient(
     base_url=WALDUR_HOST,
     token=TOKEN,
-    prefix="Token",
 )
 
 # Organizations data fetching

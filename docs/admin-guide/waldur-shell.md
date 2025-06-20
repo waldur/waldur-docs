@@ -251,7 +251,6 @@ TENANT_LIMITS = {
 client = AuthenticatedClient(
     base_url="https://api.example.com",
     token="SuperSecretToken",
-    prefix="Token",
 )
 
 tenants = openstack_tenants_list.sync(

@@ -138,7 +138,6 @@ from time import sleep
 client = AuthenticatedClient(
     base_url=environ["WALDUR_API_URL"],
     token=environ["WALDUR_API_TOKEN"],
-    prefix="Token",
 )
 
 CUSTOMER_NAME = environ["REMOTE_CUSTOMER_NAME"]
@@ -299,7 +298,6 @@ from uuid import UUID
 client = AuthenticatedClient(
     base_url=environ["WALDUR_API_URL"],
     token=environ["WALDUR_API_TOKEN"],
-    prefix="Token",
 )
 RESOURCE_UUID = UUID(environ["RESOURCE_BACKEND_ID"])
 
@@ -350,7 +348,6 @@ from uuid import UUID
 client = AuthenticatedClient(
     base_url=environ["WALDUR_API_URL"],
     token=environ["WALDUR_API_TOKEN"],
-    prefix="Token",
 )
 
 # Get the resource UUID from environment
