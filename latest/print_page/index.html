@@ -60590,13 +60590,14 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
     <span class="k">except</span> <span class="p">(</span><span class="n">UnexpectedStatus</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div></div></section><section class="print-page" id="integrator-guide-waldur-sdk-waldur-sdk"><div><h1 id="waldur-sdk">Waldur SDK</h1>
-<p>Waldur SDK is a <a href="https://github.com/waldur/py-client">python wrapper</a>
-for typical REST operations.
-You can use it, if you want to send requests to Waldur REST API directly from Python.
-SDK is represented by Python module called <code>waldur_api_client</code>.</p>
+<p>Waldur SDK is a thin Python wrapper for common REST operations.
+It allows you to interact with the Waldur REST API directly from your Python code.
+The SDK is provided as a Python module named <code>waldur_api_client</code>.</p>
 <h2 id="integrator-guide-waldur-sdk-waldur-sdk-installation">Installation</h2>
-<p>Due to frequent SDK updates, installation from the public GitHub repository is highly recommended:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>https://github.com/waldur/py-client/archive/master.zip
+<p>The Waldur SDK is available on PyPI and can be installed using either <code>pip</code> or <code>poetry</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>waldur-api-client
+poetry<span class="w"> </span>add<span class="w"> </span>waldur-api-client
 </code></pre></div></td></tr></table></div>
 <p>In order to perform operations, a user needs to create an instance of <code>AuthenticatedClient</code> class:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -60604,13 +60605,11 @@ SDK is represented by Python module called <code>waldur_api_client</code>.</p>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span>
     <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span>
-    <span class="n">prefix</span><span class="o">=</span><span class="s2">"Token"</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <p>This instance provides interface for further interaction with Waldur and will be used across examples in related documentation.</p>
@@ -60649,11 +60648,9 @@ the trick below can be used to disable validation of certificates by SDK, beware
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://internal_api.example.com"</span><span class="p">,</span> 
     <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span>
-    <span class="n">prefix</span><span class="o">=</span><span class="s2">"Token"</span><span class="p">,</span>
     <span class="n">verify_ssl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -60662,17 +60659,11 @@ the trick below can be used to disable validation of certificates by SDK, beware
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://internal_api.example.com"</span><span class="p">,</span> 
     <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span>
-    <span class="n">prefix</span><span class="o">=</span><span class="s2">"Token"</span><span class="p">,</span>
     <span class="n">verify_ssl</span><span class="o">=</span><span class="s2">"/path/to/certificate_bundle.pem"</span><span class="p">,</span>
 <span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-<h2 id="integrator-guide-waldur-sdk-waldur-sdk-installation-with-poetry">Installation with Poetry</h2>
-<p>The recommended way to install the SDK is using Poetry, a modern Python dependency management tool. In order to install Poetry, visit <a href="https://python-poetry.org/docs/#installation">Poetry</a>.</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>poetry<span class="w"> </span>add<span class="w"> </span>git+https://github.com/waldur/py-client.git
 </code></pre></div></td></tr></table></div>
 <h2 id="integrator-guide-waldur-sdk-waldur-sdk-air-gapped-installation">Air gapped installation</h2>
 <p>If your machine from where you run SDK is not connected to the public Internet, you can use the following method
