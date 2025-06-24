@@ -1,28 +1,5 @@
 # Message templates
 
-## waldur_core.logging
-
-### email.html (waldur_core.logging)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Notifications from waldur_core</title>
-</head>
-<body>
-<ul>
-    {% for event in events %}
-    <li>
-        {{ event.message }}
-        <div>{{ event.created|date:"M d H:i e"}}</div>
-    </li>
-    {% endfor %}
-</ul>
-</body>
-</html>
-```
-
 ## waldur_core.structure
 
 ### notifications_profile_changes_operator_subject.txt (waldur_core.structure)
@@ -437,6 +414,29 @@ Please visit the link below to approve or reject permission request: {{ requests
 
 ``` txt
 Invitation request
+```
+
+## waldur_core.logging
+
+### email.html (waldur_core.logging)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Notifications from waldur_core</title>
+</head>
+<body>
+<ul>
+    {% for event in events %}
+    <li>
+        {{ event.message }}
+        <div>{{ event.created|date:"M d H:i e"}}</div>
+    </li>
+    {% endfor %}
+</ul>
+</body>
+</html>
 ```
 
 ## waldur_mastermind.booking
