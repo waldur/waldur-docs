@@ -127,6 +127,10 @@ options:
   --fuzzy-matching     Try to detect leftovers by name.
 ```
 
+## drop_stale_permissions
+
+Delete permissions from DB which are no longer in code.
+
 ## dumpusers
 
 Dumps information about users, their organizations and projects.
