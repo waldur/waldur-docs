@@ -1918,4 +1918,40 @@ List of username that users are not allowed to select
 
 Optionally disable creation of user groups in FreeIPA matching Waldur structure
 
+### OIDC auth settings
+
+#### OIDC_INTROSPECTION_URL
+
+**Type:** str
+
+OIDC introspection endpoint URL for validating access tokens.
+
+#### OIDC_CLIENT_ID
+
+**Type:** str
+
+Client ID for authenticating against the introspection endpoint.
+
+#### OIDC_CLIENT_SECRET
+
+**Type:** str
+
+Client secret for authenticating against the introspection endpoint.
+
+#### OIDC_USER_FIELD
+
+**Type:** str
+
+**Default value**: username
+
+Field name from the introspection response to identify the user (e.g., 'username', 'email', 'client_id').
+
+#### OIDC_CACHE_TIMEOUT
+
+**Type:** int
+
+**Default value**: 300
+
+Number of seconds to cache token introspection results.
+
 
