@@ -136,6 +136,10 @@ Conceal "Change request" from a selection of issue types for non-staff/non-suppo
 
 Render marketplace plan components pricelist in support workspace.
 
+## support.users
+
+Render list of users in support workspace.
+
 ## support.vm_type_overview
 
 Enable VM type overview in support workspace.
