@@ -1,15 +1,48 @@
-## Linking a local version of the Waldur SDK with Yarn
+# Local pipeline for developers: OpenAPI -> TypeScript SDK -> Homeport
 
-You can use your local development version of the Waldur SDK in your project by leveraging [Yarn link](https://classic.yarnpkg.com/lang/en/docs/cli/link/).
+## Prerequisites
 
-1. In the Waldur SDK directory, run:
+Before proceeding, ensure you have the following installed and configured:
+
+* **poetry**: For managing Python dependencies in Waldur MasterMind.
+* **npx**: Comes with Node.js, used for executing Node.js package binaries.
+* **yarn**: For managing JavaScript dependencies in Waldur HomePort and Waldur TypeScript SDK.
+* **Waldur MasterMind**: Cloned and set up in a directory named `waldur-mastermind`.
+* **Waldur HomePort**: Cloned and set up in a directory named `waldur-homeport`.
+* **Waldur TypeScript SDK**: Cloned and set up in a directory named `js-client`.
+
+## Steps to generate and link the SDK
+
+These steps outline the process of generating the TypeScript SDK from the Waldur MasterMind OpenAPI schema and linking it to Waldur HomePort for local development.
+
+1.  **Generate the OpenAPI schema.**
+    This command uses `waldur spectacular` to generate the `waldur-openapi-schema.yaml` file. In `waldur-mastermind` directory, run:
+    ```bash
+    waldur spectacular --file waldur-openapi-schema.yaml --fail-on-warn
+    ```
+
+2.  **Generate TypeScript code from the OpenAPI schema.**
+    This step uses `@hey-api/openapi-ts` to convert the OpenAPI schema into TypeScript client code. In `waldur-mastermind` directory, run:
+    ```bash
+    # generation
+    npx --yes @hey-api/openapi-ts@0.77.0
+
+    # post-processing
+    sed -i '/querySerializer: {/,/},/d' waldur-typescript-sdk/sdk.gen.ts
+    sed -i '1i export { formDataBodySerializer, RequestResult } from "./client";' waldur-typescript-sdk/index.ts
+
+    # copying
+    cp waldur-typescript-sdk ../js-client/src
+    ```
+
+3. **Linking a local version of the Waldur SDK with Yarn.**
+    In the `js-client` directory, run:
     ```bash
     yarn link
     ```
 
-2. In the Waldur HomePort directory, run:
+4. **Enable locally installed Waldur SDK in Waldur HomePort.**
+    This command will symlink your local Waldur SDK into Waldur HomePort for development and testing. In `waldur-homeport` directory, run:
     ```bash
     yarn link waldur-js-client
     ```
-
-This will symlink your local Waldur SDK into Waldur HomePort for development and testing.
