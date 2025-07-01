@@ -374,7 +374,6 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
                       'fc00::/7',
                       'fe80::/10'],
  'SUPPORT_PORTAL_URL': '',
- 'TOKEN_KEY': 'x-auth-token',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
  'TRANSLATION_DOMAIN': '',
  'USER_MANDATORY_FIELDS': ['first_name', 'last_name', 'email'],
@@ -673,12 +672,6 @@ List of IP ranges that are blocked for the SDK client.
 Type: str
 
 Support portal URL is rendered as a shortcut on dashboard
-
-#### TOKEN_KEY
-
-Type: str
-
-Header for token authentication.
 
 #### TOKEN_LIFETIME
 
@@ -1919,6 +1912,12 @@ List of username that users are not allowed to select
 Optionally disable creation of user groups in FreeIPA matching Waldur structure
 
 ### OIDC auth settings
+
+#### OIDC_AUTH_URL
+
+**Type:** str
+
+OIDC authentication endpoint URL.
 
 #### OIDC_INTROSPECTION_URL
 

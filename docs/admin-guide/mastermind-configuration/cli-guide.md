@@ -548,16 +548,6 @@ positional arguments:
 
 Check status of Waldur MasterMind configured services
 
-```bash
-usage: waldur status [--check-api-endpoints-at BASE_URL]
-
-options:
-  --check-api-endpoints-at BASE_URL
-                        Runs API endpoints check at specified base URL (i.e.
-                        http://example.com). If this argument is not provided,
-                        check will be skipped.
-```
-
 ## switching_backend_server
 
 Backend data update if a server was switched.
