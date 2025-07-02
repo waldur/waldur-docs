@@ -226,18 +226,36 @@ Tag all repositories:
     - cd waldur-prometheus-exporter/
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
-    - cd ../
+
+Release Python SDK:
+  image:
+    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+  before_script: *build_before_script
+  script:
+    - *build_script_steps
     - |
-      git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/py-client.git"
+      git clone git@github.com/waldur/py-client.git
       cd py-client/
       sed -i 's/^version = "[^"]*"/version = "'$CI_COMMIT_TAG'"/' pyproject.toml
       git add pyproject.toml
       git commit -m "Release: bump version to $CI_COMMIT_TAG"
       git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
       git push origin $CI_COMMIT_TAG
-    - cd ../
+
+Release TypeScript/JavaScript SDK:
+  image:
+    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+  before_script: *build_before_script
+  script:
+    - *build_script_steps
     - |
-      git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/js-client.git"
+      git clone git@github.com/waldur/js-client.git
       cd js-client/
       sed -i 's/"version": "[^"]*"/"version": "'$CI_COMMIT_TAG'"/' package.json
       # Update top-level version
@@ -248,9 +266,18 @@ Tag all repositories:
       git commit -m "Release: bump version to $CI_COMMIT_TAG"
       git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
       git push origin $CI_COMMIT_TAG
-    - cd ../
-    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/go-client.git"
+
+Release Go SDK:
+  image:
+    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+  before_script: *build_before_script
+  script:
+    - *build_script_steps
+    - |
+    - git clone git@github.com/waldur/go-client.git
     - cd go-client/
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
-    - cd ../
