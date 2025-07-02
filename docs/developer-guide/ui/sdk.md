@@ -1,5 +1,7 @@
 # Local pipeline for developers: OpenAPI -> TypeScript SDK -> Homeport
 
+This document describes the process of generating and linking the Waldur TypeScript SDK for local development. Although the SDK code is published to GitHub and npm repositories, a local pipeline is essential for developers who need to make changes to the SDK without using GitLab CI or work with the very latest OpenAPI definitions from Waldur MasterMind before they are officially released.
+
 ## Prerequisites
 
 Before proceeding, ensure you have the following installed and configured:
@@ -18,7 +20,7 @@ These steps outline the process of generating the TypeScript SDK from the Waldur
 1.  **Generate the OpenAPI schema.**
     This command uses `waldur spectacular` to generate the `waldur-openapi-schema.yaml` file. In `waldur-mastermind` directory, run:
     ```bash
-    waldur spectacular --file waldur-openapi-schema.yaml --fail-on-warn
+    poetry run waldur spectacular --file waldur-openapi-schema.yaml --fail-on-warn
     ```
 
 2.  **Generate TypeScript code from the OpenAPI schema.**
@@ -35,13 +37,19 @@ These steps outline the process of generating the TypeScript SDK from the Waldur
     cp waldur-typescript-sdk ../js-client/src
     ```
 
-3. **Linking a local version of the Waldur SDK with Yarn.**
+3. **Building a local version of the Waldur SDK with Yarn.**
+    In the `js-client` directory, run:
+    ```bash
+    yarn build
+    ```
+
+4. **Linking a local version of the Waldur SDK with Yarn.**
     In the `js-client` directory, run:
     ```bash
     yarn link
     ```
 
-4. **Enable locally installed Waldur SDK in Waldur HomePort.**
+5. **Enable locally installed Waldur SDK in Waldur HomePort.**
     This command will symlink your local Waldur SDK into Waldur HomePort for development and testing. In `waldur-homeport` directory, run:
     ```bash
     yarn link waldur-js-client
