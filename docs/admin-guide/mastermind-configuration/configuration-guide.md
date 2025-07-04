@@ -1839,6 +1839,12 @@ Do not allow user to grant multiple roles in the same project or organization us
 
 Triggers authentication flow at once.
 
+#### DEACTIVATE_USER_IF_NO_ROLES
+
+**Type:** bool
+
+Deactivate user if all roles are revoked (except staff/support)
+
 ### FreeIPA settings
 
 #### FREEIPA_ENABLED

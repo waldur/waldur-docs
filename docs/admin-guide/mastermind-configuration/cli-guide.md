@@ -488,6 +488,18 @@ Prints Mastermind notifications with a description and templates
 
 Prints all Waldur permissions description as typescript code.
 
+## print_scheduled_jobs
+
+Prints all scheduled background jobs in markdown format.
+
+```bash
+usage: waldur print_scheduled_jobs [--output-file OUTPUT_FILE]
+
+options:
+  --output-file OUTPUT_FILE
+                        Output file path (optional, defaults to stdout)
+```
+
 ## print_settings_description
 
 Prints all Waldur feature description as typescript code.

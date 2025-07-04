@@ -294,6 +294,7 @@
 - user_activated
 - user_creation_succeeded
 - user_deactivated
+- user_deactivated_no_roles
 - user_deletion_succeeded
 - user_details_update_succeeded
 - user_has_been_created_by_staff
