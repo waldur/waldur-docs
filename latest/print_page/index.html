@@ -22365,6 +22365,39 @@ cp<span class="w"> </span>systemd-conf/agent-membership-sync/agent-legacy.servic
 <span class="c1"># For agent-event-process</span>
 cp<span class="w"> </span>systemd-conf/agent-event-process/agent-legacy.service<span class="w"> </span>/etc/systemd/system/waldur-agent-event-process-legacy.service
 </code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-waldur-site-agent-custom-backend-for-username-retrieval-and-generation">Custom backend for username retrieval and generation</h3>
+<p>By default, the agent doesn't generate usernames for users of resources.
+For this, a custom username management backend can be included in the agent:</p>
+<ol>
+<li>add a path to your class in the <code>project.entry-points."waldur_site_agent.username_management"</code>
+   section of <code>pyproject.toml</code> file, example:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">...</span>
+<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.username_management"</span><span class="k">]</span>
+<span class="n">custom_backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"your_project.backend.usernames:CustomUsernameManagementBackend"</span>
+<span class="p">...</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>the class should implement the interface
+   <code>waldur_site_agent.backends.username_backend.backend:AbstractUsernameManagementBackend</code></li>
+<li>rebuild the agent, e.g. <code>poetry install</code>, <code>uv sync</code></li>
+<li>add <code>username_management_backend</code> field to offerings in your agent config, example:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span><span class="w"> </span><span class="c1"># Settings for offerings</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Example</span><span class="nv"> </span><span class="s">Offering"</span><span class="w"> </span><span class="c1"># offering name</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">   </span><span class="l l-Scalar l-Scalar-Plain"># Note</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">the value matches to the setting's key from the step 1</span>
+<span class="w">  </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"custom_backend"</span><span class="w"> </span><span class="c1"># Name of the backend from entrypoints</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div></td></tr></table></div>
 <h2 id="admin-guide-providers-waldur-site-agent-provider-config-file-reference">Provider config file reference</h2>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
