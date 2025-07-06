@@ -1,12 +1,12 @@
 # Events
 
-## Access_subnets
+## Eventgroup.access_subnets
 
 - access_subnet_creation_succeeded
 - access_subnet_deletion_succeeded
 - access_subnet_update_succeeded
 
-## Auth
+## Eventgroup.auth
 
 - auth_logged_in_with_username
 - auth_logged_out
@@ -14,12 +14,12 @@
 - token_created
 - token_lifetime_updated
 
-## Call
+## Eventgroup.call
 
 - call_document_added
 - call_document_removed
 
-## Credits
+## Eventgroup.credits
 
 - allowed_offerings_have_been_updated
 - create_of_credit_by_staff
@@ -34,7 +34,7 @@
 - set_to_zero_overdue_credit
 - update_of_credit_by_staff
 
-## Customers
+## Eventgroup.customers
 
 - allowed_offerings_have_been_updated
 - create_of_credit_by_staff
@@ -54,7 +54,7 @@
 - set_to_zero_overdue_credit
 - update_of_credit_by_staff
 
-## Invoices
+## Eventgroup.invoices
 
 - allowed_offerings_have_been_updated
 - create_of_credit_by_staff
@@ -77,7 +77,7 @@
 - set_to_zero_overdue_credit
 - update_of_credit_by_staff
 
-## Offering_accounting
+## Eventgroup.offering_accounting
 
 - marketplace_offering_component_created
 - marketplace_offering_component_deleted
@@ -89,13 +89,13 @@
 - marketplace_plan_created
 - marketplace_plan_updated
 
-## Permissions
+## Eventgroup.permissions
 
 - role_granted
 - role_revoked
 - role_updated
 
-## Projects
+## Eventgroup.projects
 
 - project_creation_succeeded
 - project_deletion_succeeded
@@ -105,13 +105,13 @@
 - project_update_request_rejected
 - project_update_succeeded
 
-## Proposal
+## Eventgroup.proposal
 
 - proposal_canceled
 - proposal_document_added
 - proposal_document_removed
 
-## Providers
+## Eventgroup.providers
 
 - marketplace_resource_create_canceled
 - marketplace_resource_create_failed
@@ -129,7 +129,7 @@
 - resource_robot_account_state_changed
 - resource_robot_account_updated
 
-## Resources
+## Eventgroup.resources
 
 - marketplace_order_approved
 - marketplace_order_completed
@@ -259,16 +259,16 @@
 - resource_update_security_groups_succeeded
 - resource_update_succeeded
 
-## Review
+## Eventgroup.review
 
 - review_canceled
 
-## Ssh
+## Eventgroup.ssh
 
 - ssh_key_creation_succeeded
 - ssh_key_deletion_succeeded
 
-## Support
+## Eventgroup.support
 
 - attachment_created
 - attachment_deleted
@@ -277,9 +277,8 @@
 - issue_deletion_succeeded
 - issue_update_succeeded
 
-## Users
+## Eventgroup.users
 
-- auth_logged_in_with_oauth
 - auth_logged_in_with_saml2
 - auth_logged_out_with_saml2
 - freeipa_profile_created
@@ -294,7 +293,6 @@
 - user_activated
 - user_creation_succeeded
 - user_deactivated
-- user_deactivated_no_roles
 - user_deletion_succeeded
 - user_details_update_succeeded
 - user_has_been_created_by_staff
