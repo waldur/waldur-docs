@@ -2151,6 +2151,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../admin-guide/mastermind-configuration/scheduled/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scheduled Background Jobs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../admin-guide/mastermind-configuration/templates/" class="md-nav__link">
         
   
@@ -18588,7 +18609,524 @@ positional<span class="w"> </span>arguments:
 </div>
 </div>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>    {% if issue.customer.abbreviation %}{{issue.customer.abbreviation}}: {% endif %}{{issue.summary}}
-</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="admin-guide-mastermind-configuration-templates"><div><h1 id="message-templates">Message templates</h1>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="admin-guide-mastermind-configuration-scheduled"><div><h1 id="scheduled-background-jobs">Scheduled Background Jobs</h1>
+<p>This document lists all scheduled background jobs (Celery beat tasks) configured in the system.</p>
+<style>
+table {
+  table-layout: fixed;
+  width: 100%;
+}
+td:nth-child(1) {
+  width: 25%;
+  word-wrap: break-word;
+}
+td:nth-child(2) {
+  width: 25%;
+  word-wrap: break-word;
+}
+td:nth-child(3) {
+  width: 15%;
+  word-wrap: break-word;
+}
+td:nth-child(4) {
+  width: 35%;
+  word-wrap: break-word;
+}
+</style>
+
+<h2 id="admin-guide-mastermind-configuration-scheduled-scheduled-jobs">Scheduled Jobs</h2>
+<table>
+<thead>
+<tr>
+<th>Job Name</th>
+<th>Task</th>
+<th>Schedule</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cancel-expired-invitations</code></td>
+<td><code>waldur_core.users.cancel_expired_invitations</code></td>
+<td>1 day</td>
+<td>Invitation lifetime must be specified in Waldur Core settings with parameter<br> "INVITATION_LIFETIME". If invitation creation time is less than expiration time, the invitation will set as expired.</td>
+</tr>
+<tr>
+<td><code>cancel_expired_group_invitations</code></td>
+<td><code>waldur_core.users.cancel_expired_group_invitations</code></td>
+<td>1 day</td>
+<td>Invitation lifetime must be specified in Waldur Core settings with parameter<br> "GROUP_INVITATION_LIFETIME". If invitation creation time is less than expiration time,<br> the invitation will set as expired.</td>
+</tr>
+<tr>
+<td><code>check-expired-permissions</code></td>
+<td><code>waldur_core.permissions.check_expired_permissions</code></td>
+<td>1 day</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>check-polices</code></td>
+<td><code>waldur_mastermind.policy.check_polices</code></td>
+<td>Cron: * * 1 * * (m/h/dM/MY/d)</td>
+<td>Evaluate all policies across all policy types in the system.</td>
+</tr>
+<tr>
+<td><code>core-reset-updating-resources</code></td>
+<td><code>waldur_core.reset_updating_resources</code></td>
+<td>10 minutes</td>
+<td>Reset resources stuck in UPDATING state when their Celery tasks are completed.</td>
+</tr>
+<tr>
+<td><code>create-reviews-if-strategy-is-after-proposal</code></td>
+<td><code>waldur_mastermind.proposal.create_reviews_if_strategy_is_after_proposal</code></td>
+<td>1 hour</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>create-reviews-if-strategy-is-after-round</code></td>
+<td><code>waldur_mastermind.proposal.create_reviews_if_strategy_is_after_round</code></td>
+<td>1 hour</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>create_customer_permission_reviews</code></td>
+<td><code>waldur_core.structure.create_customer_permission_reviews</code></td>
+<td>1 day</td>
+<td>Create customer permission reviews for customers that need periodic review of user permissions.</td>
+</tr>
+<tr>
+<td><code>expired-reviews-should-be-cancelled</code></td>
+<td><code>waldur_mastermind.proposal.expired_reviews_should_be_cancelled</code></td>
+<td>1 hour</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>mark-offering-backend-as-disconnected-after-timeout</code></td>
+<td><code>waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout</code></td>
+<td>1 hour</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>mark_resources_as_erred_after_timeout</code></td>
+<td><code>waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout</code></td>
+<td>2 hours</td>
+<td>Mark stale orders and their resources as erred if they have been executing for more than 2 hours.</td>
+</tr>
+<tr>
+<td><code>marketplace-openstack.create-resources-for-lost-instances-and-volumes</code></td>
+<td><code>waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes</code></td>
+<td>6 hours</td>
+<td>Create marketplace resources for OpenStack instances and volumes that exist in backend but are missing from marketplace.</td>
+</tr>
+<tr>
+<td><code>marketplace-openstack.refresh-instance-backend-metadata</code></td>
+<td><code>waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata</code></td>
+<td>1 day</td>
+<td>Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information.</td>
+</tr>
+<tr>
+<td><code>notification_about_project_ending</code></td>
+<td><code>waldur_mastermind.marketplace.notification_about_project_ending</code></td>
+<td>Cron: 0 10 * * * (m/h/dM/MY/d)</td>
+<td>Send notifications about projects ending in 1 day and 7 days.</td>
+</tr>
+<tr>
+<td><code>notification_about_resource_ending</code></td>
+<td><code>waldur_mastermind.marketplace.notification_about_resource_ending</code></td>
+<td>Cron: 0 10 * * * (m/h/dM/MY/d)</td>
+<td>Send notifications about resources ending in 1 day and 7 days.</td>
+</tr>
+<tr>
+<td><code>notify_about_stale_resource</code></td>
+<td><code>waldur_mastermind.marketplace.notify_about_stale_resource</code></td>
+<td>Cron: 0 15 5 * * (m/h/dM/MY/d)</td>
+<td>Notify customers about resources that have not generated invoice items in the last 3 months.</td>
+</tr>
+<tr>
+<td><code>openstack-delete-expired-backups</code></td>
+<td><code>openstack.DeleteExpiredBackups</code></td>
+<td>10 minutes</td>
+<td>Delete expired OpenStack backup resources that have reached their retention period.</td>
+</tr>
+<tr>
+<td><code>openstack-delete-expired-snapshots</code></td>
+<td><code>openstack.DeleteExpiredSnapshots</code></td>
+<td>10 minutes</td>
+<td>Delete expired OpenStack snapshot resources that have reached their retention period.</td>
+</tr>
+<tr>
+<td><code>openstack-tenant-properties-list-pull-task</code></td>
+<td><code>openstack.tenant_properties_list_pull_task</code></td>
+<td>1 day</td>
+<td>Pull OpenStack tenant properties like flavors, images, and volume types from backend.</td>
+</tr>
+<tr>
+<td><code>openstack-tenant-pull-quotas</code></td>
+<td><code>openstack.TenantPullQuotas</code></td>
+<td>12 hours</td>
+<td>Pull quota limits and usage information for all OpenStack tenants.</td>
+</tr>
+<tr>
+<td><code>openstack-tenant-resources-list-pull-task</code></td>
+<td><code>openstack.tenant_resources_list_pull_task</code></td>
+<td>1 hour</td>
+<td>Pull OpenStack tenant resources like instances, volumes, and snapshots from backend.</td>
+</tr>
+<tr>
+<td><code>openstack-tenant-subresources-list-pull-task</code></td>
+<td><code>openstack.tenant_subresources_list_pull_task</code></td>
+<td>2 hours</td>
+<td>Pull OpenStack tenant subresources like security groups, networks, subnets, and ports from backend.</td>
+</tr>
+<tr>
+<td><code>openstack_mark_as_erred_old_tenants_in_deleting_state</code></td>
+<td><code>openstack.mark_as_erred_old_tenants_in_deleting_state</code></td>
+<td>1 day</td>
+<td>Mark OpenStack tenants as erred if they have been in deleting state for more than 1 day.</td>
+</tr>
+<tr>
+<td><code>process-pending-project-invitations</code></td>
+<td><code>waldur_core.users.process_pending_project_invitations</code></td>
+<td>2 hours</td>
+<td>Process project invitations for projects that have become active.</td>
+</tr>
+<tr>
+<td><code>process_pending_project_orders</code></td>
+<td><code>waldur_mastermind.marketplace.process_pending_project_orders</code></td>
+<td>2 hours</td>
+<td>Process orders for projects that have become active.</td>
+</tr>
+<tr>
+<td><code>proposals-for-ended-rounds-should-be-cancelled</code></td>
+<td><code>waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled</code></td>
+<td>1 hour</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>pull-priorities</code></td>
+<td><code>waldur_mastermind.support.pull_priorities</code></td>
+<td>1 day</td>
+<td>Pull priority levels from the active support backend.</td>
+</tr>
+<tr>
+<td><code>pull-service-properties</code></td>
+<td><code>waldur_core.structure.ServicePropertiesListPullTask</code></td>
+<td>1 day</td>
+<td>Pull service properties from all active service backends.</td>
+</tr>
+<tr>
+<td><code>pull-service-resources</code></td>
+<td><code>waldur_core.structure.ServiceResourcesListPullTask</code></td>
+<td>1 hour</td>
+<td>Pull resources from all active service backends.</td>
+</tr>
+<tr>
+<td><code>pull-support-users</code></td>
+<td><code>waldur_mastermind.support.pull_support_users</code></td>
+<td>6 hours</td>
+<td>Pull support users from the active support backend.</td>
+</tr>
+<tr>
+<td><code>remove_deleted_robot_accounts</code></td>
+<td><code>waldur_mastermind.marketplace.remove_deleted_robot_accounts</code></td>
+<td>1 day</td>
+<td>Remove robot accounts that are in DELETED state.<br> This task runs daily to clean up robot accounts that have been marked for deletion.</td>
+</tr>
+<tr>
+<td><code>send-messages-about-pending-orders</code></td>
+<td><code>waldur_mastermind.marketplace_site_agent.send_messages_about_pending_orders</code></td>
+<td>1 hour</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>send-monthly-invoicing-reports-about-customers</code></td>
+<td><code>invoices.send_monthly_invoicing_reports_about_customers</code></td>
+<td>Cron: 0 0 2 * * (m/h/dM/MY/d)</td>
+<td>Send monthly invoicing reports via email to configured recipients.</td>
+</tr>
+<tr>
+<td><code>send-notifications-about-upcoming-ends</code></td>
+<td><code>invoices.send_notifications_about_upcoming_ends</code></td>
+<td>1 day</td>
+<td>Send notifications about upcoming end dates of fixed payment profiles.</td>
+</tr>
+<tr>
+<td><code>send-reminder-for-pending-invitations</code></td>
+<td><code>waldur_core.users.send_reminder_for_pending_invitations</code></td>
+<td>1 day</td>
+<td>Send reminder emails for pending invitations that are about to expire.</td>
+</tr>
+<tr>
+<td><code>send-scheduled-broadcast-notifications</code></td>
+<td><code>waldur_mastermind.notifications.send_scheduled_broadcast_messages</code></td>
+<td>12 hours</td>
+<td>Send broadcast messages that have been scheduled for delivery.</td>
+</tr>
+<tr>
+<td><code>send_telemetry</code></td>
+<td><code>waldur_mastermind.marketplace.send_metrics</code></td>
+<td>1 day</td>
+<td>Send anonymous usage metrics and telemetry data to the Waldur team.</td>
+</tr>
+<tr>
+<td><code>structure-set-erred-stuck-resources</code></td>
+<td><code>waldur_core.structure.SetErredStuckResources</code></td>
+<td>1 hour</td>
+<td>This task marks all resources which have been provisioning for more than 3 hours as erred.</td>
+</tr>
+<tr>
+<td><code>sync-resources</code></td>
+<td><code>waldur_mastermind.marketplace_site_agent.sync_resources</code></td>
+<td>10 minutes</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>sync_request_types</code></td>
+<td><code>waldur_mastermind.support.sync_request_types</code></td>
+<td>1 day</td>
+<td>Synchronize request types from the active support backend.</td>
+</tr>
+<tr>
+<td><code>terminate_expired_resources</code></td>
+<td><code>waldur_mastermind.marketplace.terminate_expired_resources</code></td>
+<td>1 day</td>
+<td>Terminate marketplace resources that have reached their end date.</td>
+</tr>
+<tr>
+<td><code>terminate_resources_if_project_end_date_has_been_reached</code></td>
+<td><code>waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached</code></td>
+<td>1 day</td>
+<td>Terminate resources when their project has reached its end date.</td>
+</tr>
+<tr>
+<td><code>terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order</code></td>
+<td><code>waldur_mastermind.marketplace.terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order</code></td>
+<td>1 day</td>
+<td>Clean up erred Slurm resources that failed both creation and termination.</td>
+</tr>
+<tr>
+<td><code>update-custom-quotas</code></td>
+<td><code>waldur_core.quotas.update_custom_quotas</code></td>
+<td>1 hour</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>update-invoices-total-cost</code></td>
+<td><code>invoices.update_invoices_total_cost</code></td>
+<td>1 day</td>
+<td>Update cached total cost for current month invoices.</td>
+</tr>
+<tr>
+<td><code>update-standard-quotas</code></td>
+<td><code>waldur_core.quotas.update_standard_quotas</code></td>
+<td>1 day</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>valimo-auth-cleanup-auth-results</code></td>
+<td><code>waldur_auth_valimo.cleanup_auth_results</code></td>
+<td>1 hour</td>
+<td>Clean up Valimo authentication results older than 7 days.</td>
+</tr>
+<tr>
+<td><code>waldur-create-invoices</code></td>
+<td><code>invoices.create_monthly_invoices</code></td>
+<td>Monthly (1st day of month at midnight)</td>
+<td>- For every customer change state of the invoices for previous months from "pending" to "billed"<br> and freeze their items.<br> - Create new invoice for every customer in current month if not created yet.</td>
+</tr>
+<tr>
+<td><code>waldur-create-offering-users-for-site-agent-offerings</code></td>
+<td><code>waldur_mastermind.marketplace_site_agent.sync_offering_users</code></td>
+<td>1 day</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>waldur-firecrest-pull-jobs</code></td>
+<td><code>waldur_firecrest.pull_jobs</code></td>
+<td>1 hour</td>
+<td>Pull SLURM jobs from Firecrest API for all offering users with valid OAuth tokens.</td>
+</tr>
+<tr>
+<td><code>waldur-freeipa-sync-groups</code></td>
+<td><code>waldur_freeipa.sync_groups</code></td>
+<td>10 minutes</td>
+<td>This task is used by Celery beat in order to periodically<br> schedule FreeIPA group synchronization.</td>
+</tr>
+<tr>
+<td><code>waldur-freeipa-sync-names</code></td>
+<td><code>waldur_freeipa.sync_names</code></td>
+<td>1 day</td>
+<td>Synchronize user names between Waldur and FreeIPA backend.</td>
+</tr>
+<tr>
+<td><code>waldur-marketplace-calculate-usage</code></td>
+<td><code>waldur_mastermind.marketplace.calculate_usage_for_current_month</code></td>
+<td>1 hour</td>
+<td>Calculate marketplace resource usage for the current month across all customers and projects.</td>
+</tr>
+<tr>
+<td><code>waldur-marketplace-script-pull-resources</code></td>
+<td><code>waldur_marketplace_script.pull_resources</code></td>
+<td>1 hour</td>
+<td>Pull resources from marketplace script offerings by executing configured pull scripts.</td>
+</tr>
+<tr>
+<td><code>waldur-marketplace-script-remove-old-dry-runs</code></td>
+<td><code>waldur_marketplace_script.remove_old_dry_runs</code></td>
+<td>1 day</td>
+<td>Remove old dry run records that are older than one day.</td>
+</tr>
+<tr>
+<td><code>waldur-mastermind-reject-past-bookings</code></td>
+<td><code>waldur_mastermind.booking.reject_past_bookings</code></td>
+<td>Cron: 0 10 * * * (m/h/dM/MY/d)</td>
+<td>Reject booking resources that have start times in the past.</td>
+</tr>
+<tr>
+<td><code>waldur-mastermind-send-notifications-about-upcoming-bookings</code></td>
+<td><code>waldur_mastermind.booking.send_notifications_about_upcoming_bookings</code></td>
+<td>Cron: 0 9 * * * (m/h/dM/MY/d)</td>
+<td>Send email notifications to users about their upcoming bookings.</td>
+</tr>
+<tr>
+<td><code>waldur-pid-update-all-referrables</code></td>
+<td><code>waldur_pid.update_all_referrables</code></td>
+<td>1 day</td>
+<td>Update DataCite DOI information for all referrable objects with existing DOIs.</td>
+</tr>
+<tr>
+<td><code>waldur-pull-remote-eduteams-ssh-keys</code></td>
+<td><code>waldur_auth_social.pull_remote_eduteams_ssh_keys</code></td>
+<td>3 minutes</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>waldur-pull-remote-eduteams-users</code></td>
+<td><code>waldur_auth_social.pull_remote_eduteams_users</code></td>
+<td>5 minutes</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>waldur-rancher-delete-leftover-keycloak-groups</code></td>
+<td><code>waldur_rancher.delete_leftover_keycloak_groups</code></td>
+<td>1 hour</td>
+<td>Delete remote Keycloak groups with no linked groups in Waldur</td>
+</tr>
+<tr>
+<td><code>waldur-rancher-delete-leftover-keycloak-memberships</code></td>
+<td><code>waldur_rancher.delete_leftover_keycloak_memberships</code></td>
+<td>1 hour</td>
+<td>Delete remote Keycloak user memberships in groups with no linked instances in Waldur</td>
+</tr>
+<tr>
+<td><code>waldur-rancher-sync-keycloak-users</code></td>
+<td><code>waldur_rancher.sync_keycloak_users</code></td>
+<td>15 minutes</td>
+<td>Synchronize Keycloak users with pending group memberships in Rancher.</td>
+</tr>
+<tr>
+<td><code>waldur-rancher-sync-rancher-group-bindings</code></td>
+<td><code>waldur_rancher.sync_rancher_group_bindings</code></td>
+<td>1 hour</td>
+<td>Sync group bindings in Rancher with the groups in Waldur.</td>
+</tr>
+<tr>
+<td><code>waldur-rancher-sync-rancher-roles</code></td>
+<td><code>waldur_rancher.sync_rancher_roles</code></td>
+<td>1 hour</td>
+<td>Synchronize Rancher roles with local role templates for clusters and projects.</td>
+</tr>
+<tr>
+<td><code>waldur-rancher-update-clusters-nodes</code></td>
+<td><code>waldur_rancher.pull_all_clusters_nodes</code></td>
+<td>1 day</td>
+<td>Pull node information for all Rancher clusters and update their states.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-notify-about-pending-project-update-requests</code></td>
+<td><code>waldur_mastermind.marketplace_remote.notify_about_pending_project_update_requests</code></td>
+<td>7 days</td>
+<td>Notify about pending project update requests.<br><br> This task sends email notifications to project owners about pending<br> project update requests that have been waiting for more than a week.<br> Runs weekly via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-offerings-sync</code></td>
+<td><code>waldur_mastermind.marketplace_remote.remote_offerings_sync</code></td>
+<td>1 day</td>
+<td>Synchronize remote offerings based on RemoteSynchronisation configurations.<br><br> This task processes active remote synchronization configurations,<br> running synchronization for each configured remote marketplace.<br> Runs daily via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-pull-erred-orders</code></td>
+<td><code>waldur_mastermind.marketplace_remote.pull_erred_orders</code></td>
+<td>1 day</td>
+<td>Pull and synchronize erred remote marketplace orders.<br><br> This task specifically handles erred local orders that may have been<br> resolved in remote Waldur instances. It synchronizes UPDATE and TERMINATE<br> order states and adjusts local resource states accordingly.<br> Runs daily via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-pull-invoices</code></td>
+<td><code>waldur_mastermind.marketplace_remote.pull_invoices</code></td>
+<td>1 hour</td>
+<td>Pull and synchronize remote marketplace resource invoice data.<br><br> This task synchronizes invoice items for marketplace resources from<br> remote Waldur instances, including current and previous month data.<br> Runs every 60 minutes via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-pull-offering-users</code></td>
+<td><code>waldur_mastermind.marketplace_remote.pull_offering_users</code></td>
+<td>1 hour</td>
+<td>Pull and synchronize remote marketplace offering users.<br><br> This task synchronizes user associations with marketplace offerings from<br> remote Waldur instances, ensuring local user mappings are up to date.<br> Runs every 60 minutes via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-pull-offerings</code></td>
+<td><code>waldur_mastermind.marketplace_remote.pull_offerings</code></td>
+<td>1 hour</td>
+<td>Pull and synchronize remote marketplace offerings.<br><br> This task synchronizes offerings from remote Waldur instances, updating<br> local offering data including components, plans, and access endpoints.<br> Runs every 60 minutes via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-pull-orders</code></td>
+<td><code>waldur_mastermind.marketplace_remote.pull_orders</code></td>
+<td>1 hour</td>
+<td>Pull and synchronize remote marketplace orders.<br><br> This task synchronizes order states from remote Waldur instances,<br> updating local order states and associated resource backend IDs.<br> Only processes non-terminal orders. Runs every 60 minutes via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-pull-resources</code></td>
+<td><code>waldur_mastermind.marketplace_remote.pull_resources</code></td>
+<td>1 hour</td>
+<td>Pull and synchronize remote marketplace resources.<br><br> This task synchronizes resource data from remote Waldur instances,<br> updating local resource states and importing remote orders when needed.<br> Runs every 60 minutes via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-pull-robot-accounts</code></td>
+<td><code>waldur_mastermind.marketplace_remote.pull_robot_accounts</code></td>
+<td>1 hour</td>
+<td>Pull and synchronize remote marketplace resource robot accounts.<br><br> This task synchronizes robot account data for marketplace resources from<br> remote Waldur instances, including account types, usernames, and keys.<br> Runs every 60 minutes via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-pull-usage</code></td>
+<td><code>waldur_mastermind.marketplace_remote.pull_usage</code></td>
+<td>1 hour</td>
+<td>Pull and synchronize remote marketplace resource usage data.<br><br> This task synchronizes component usage data from remote Waldur instances,<br> including both regular usage and user-specific usage metrics.<br> Pulls usage data from the last 4 months. Runs every 60 minutes via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-push-project-data</code></td>
+<td><code>waldur_mastermind.marketplace_remote.push_remote_project_data</code></td>
+<td>1 day</td>
+<td>Push project data to remote Waldur instances.<br><br> This task pushes local project data (name, description, end date, etc.)<br> to remote Waldur instances for projects that have marketplace resources.<br> Runs daily via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-remote-sync-remote-project-permissions</code></td>
+<td><code>waldur_mastermind.marketplace_remote.sync_remote_project_permissions</code></td>
+<td>6 hours</td>
+<td>Synchronize project permissions with remote Waldur instances.<br><br> This task ensures that project permissions are synchronized between<br> local and remote Waldur instances when eduTEAMS sync is enabled.<br> It creates remote projects if needed and manages user role assignments.<br> Runs every 6 hours via celery beat.</td>
+</tr>
+<tr>
+<td><code>waldur-sync-daily-quotas</code></td>
+<td><code>analytics.sync_daily_quotas</code></td>
+<td>1 day</td>
+<td>Task not found in registry</td>
+</tr>
+<tr>
+<td><code>waldur-update-all-pid</code></td>
+<td><code>waldur_pid.update_all_pid</code></td>
+<td>1 day</td>
+<td>Update all PID (Persistent Identifier) information for referrable objects with DataCite DOIs.</td>
+</tr>
+</tbody>
+</table></div></section><section class="print-page" id="admin-guide-mastermind-configuration-templates"><div><h1 id="message-templates">Message templates</h1>
 <h2 id="admin-guide-mastermind-configuration-templates-waldur_corestructure">waldur_core.structure</h2>
 <h3 id="admin-guide-mastermind-configuration-templates-notifications_profile_changes_operator_subjecttxt-waldur_corestructure">notifications_profile_changes_operator_subject.txt (waldur_core.structure)</h3>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>Owner details have been updated
