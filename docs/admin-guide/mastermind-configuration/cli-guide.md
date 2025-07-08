@@ -480,6 +480,18 @@ Prints all Waldur feature toggles in markdown format.
 
 Prints all Waldur feature toggles as typescript enums.
 
+## print_mixins
+
+Prints all mixin classes in the codebase in markdown format.
+
+```bash
+usage: waldur print_mixins [--output-file OUTPUT_FILE]
+
+options:
+  --output-file OUTPUT_FILE
+                        Output file path (optional, defaults to stdout)
+```
+
 ## print_notifications
 
 Prints Mastermind notifications with a description and templates

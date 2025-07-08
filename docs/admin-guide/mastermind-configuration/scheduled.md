@@ -25,8 +25,6 @@ td:nth-child(4) {
 }
 </style>
 
-## Scheduled Jobs
-
 | Job Name | Task | Schedule | Description |
 |----------|------|----------|-------------|
 | `cancel-expired-invitations` | `waldur_core.users.cancel_expired_invitations` | 1 day | Invitation lifetime must be specified in Waldur Core settings with parameter<br> "INVITATION_LIFETIME". If invitation creation time is less than expiration time, the invitation will set as expired. |
