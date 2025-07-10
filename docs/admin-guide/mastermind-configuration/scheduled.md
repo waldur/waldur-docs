@@ -30,7 +30,7 @@ td:nth-child(4) {
 | `cancel-expired-invitations` | `waldur_core.users.cancel_expired_invitations` | 1 day | Invitation lifetime must be specified in Waldur Core settings with parameter<br> "INVITATION_LIFETIME". If invitation creation time is less than expiration time, the invitation will set as expired. |
 | `cancel_expired_group_invitations` | `waldur_core.users.cancel_expired_group_invitations` | 1 day | Invitation lifetime must be specified in Waldur Core settings with parameter<br> "GROUP_INVITATION_LIFETIME". If invitation creation time is less than expiration time,<br> the invitation will set as expired. |
 | `check-expired-permissions` | `waldur_core.permissions.check_expired_permissions` | 1 day | Task not found in registry |
-| `check-polices` | `waldur_mastermind.policy.check_polices` | Cron: * * 1 * * (m/h/dM/MY/d) | Evaluate all policies across all policy types in the system. |
+| `check-polices` | `waldur_mastermind.policy.check_polices` | Cron: `* * 1 * * (m/h/dM/MY/d)` | Evaluate all policies across all policy types in the system. |
 | `core-reset-updating-resources` | `waldur_core.reset_updating_resources` | 10 minutes | Reset resources stuck in UPDATING state when their Celery tasks are completed. |
 | `create-reviews-if-strategy-is-after-proposal` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_proposal` | 1 hour | Task not found in registry |
 | `create-reviews-if-strategy-is-after-round` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_round` | 1 hour | Task not found in registry |
@@ -40,9 +40,9 @@ td:nth-child(4) {
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
 | `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Create marketplace resources for OpenStack instances and volumes that exist in backend but are missing from marketplace. |
 | `marketplace-openstack.refresh-instance-backend-metadata` | `waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata` | 1 day | Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information. |
-| `notification_about_project_ending` | `waldur_mastermind.marketplace.notification_about_project_ending` | Cron: 0 10 * * * (m/h/dM/MY/d) | Send notifications about projects ending in 1 day and 7 days. |
-| `notification_about_resource_ending` | `waldur_mastermind.marketplace.notification_about_resource_ending` | Cron: 0 10 * * * (m/h/dM/MY/d) | Send notifications about resources ending in 1 day and 7 days. |
-| `notify_about_stale_resource` | `waldur_mastermind.marketplace.notify_about_stale_resource` | Cron: 0 15 5 * * (m/h/dM/MY/d) | Notify customers about resources that have not generated invoice items in the last 3 months. |
+| `notification_about_project_ending` | `waldur_mastermind.marketplace.notification_about_project_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about projects ending in 1 day and 7 days. |
+| `notification_about_resource_ending` | `waldur_mastermind.marketplace.notification_about_resource_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about resources ending in 1 day and 7 days. |
+| `notify_about_stale_resource` | `waldur_mastermind.marketplace.notify_about_stale_resource` | Cron: `0 15 5 * * (m/h/dM/MY/d)` | Notify customers about resources that have not generated invoice items in the last 3 months. |
 | `openstack-delete-expired-backups` | `openstack.DeleteExpiredBackups` | 10 minutes | Delete expired OpenStack backup resources that have reached their retention period. |
 | `openstack-delete-expired-snapshots` | `openstack.DeleteExpiredSnapshots` | 10 minutes | Delete expired OpenStack snapshot resources that have reached their retention period. |
 | `openstack-tenant-properties-list-pull-task` | `openstack.tenant_properties_list_pull_task` | 1 day | Pull OpenStack tenant properties like flavors, images, and volume types from backend. |
@@ -59,7 +59,7 @@ td:nth-child(4) {
 | `pull-support-users` | `waldur_mastermind.support.pull_support_users` | 6 hours | Pull support users from the active support backend. |
 | `remove_deleted_robot_accounts` | `waldur_mastermind.marketplace.remove_deleted_robot_accounts` | 1 day | Remove robot accounts that are in DELETED state.<br> This task runs daily to clean up robot accounts that have been marked for deletion. |
 | `send-messages-about-pending-orders` | `waldur_mastermind.marketplace_site_agent.send_messages_about_pending_orders` | 1 hour | Task not found in registry |
-| `send-monthly-invoicing-reports-about-customers` | `invoices.send_monthly_invoicing_reports_about_customers` | Cron: 0 0 2 * * (m/h/dM/MY/d) | Send monthly invoicing reports via email to configured recipients. |
+| `send-monthly-invoicing-reports-about-customers` | `invoices.send_monthly_invoicing_reports_about_customers` | Cron: `0 0 2 * * (m/h/dM/MY/d)` | Send monthly invoicing reports via email to configured recipients. |
 | `send-notifications-about-upcoming-ends` | `invoices.send_notifications_about_upcoming_ends` | 1 day | Send notifications about upcoming end dates of fixed payment profiles. |
 | `send-reminder-for-pending-invitations` | `waldur_core.users.send_reminder_for_pending_invitations` | 1 day | Send reminder emails for pending invitations that are about to expire. |
 | `send-scheduled-broadcast-notifications` | `waldur_mastermind.notifications.send_scheduled_broadcast_messages` | 12 hours | Send broadcast messages that have been scheduled for delivery. |
@@ -82,8 +82,8 @@ td:nth-child(4) {
 | `waldur-marketplace-calculate-usage` | `waldur_mastermind.marketplace.calculate_usage_for_current_month` | 1 hour | Calculate marketplace resource usage for the current month across all customers and projects. |
 | `waldur-marketplace-script-pull-resources` | `waldur_marketplace_script.pull_resources` | 1 hour | Pull resources from marketplace script offerings by executing configured pull scripts. |
 | `waldur-marketplace-script-remove-old-dry-runs` | `waldur_marketplace_script.remove_old_dry_runs` | 1 day | Remove old dry run records that are older than one day. |
-| `waldur-mastermind-reject-past-bookings` | `waldur_mastermind.booking.reject_past_bookings` | Cron: 0 10 * * * (m/h/dM/MY/d) | Reject booking resources that have start times in the past. |
-| `waldur-mastermind-send-notifications-about-upcoming-bookings` | `waldur_mastermind.booking.send_notifications_about_upcoming_bookings` | Cron: 0 9 * * * (m/h/dM/MY/d) | Send email notifications to users about their upcoming bookings. |
+| `waldur-mastermind-reject-past-bookings` | `waldur_mastermind.booking.reject_past_bookings` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Reject booking resources that have start times in the past. |
+| `waldur-mastermind-send-notifications-about-upcoming-bookings` | `waldur_mastermind.booking.send_notifications_about_upcoming_bookings` | Cron: `0 9 * * * (m/h/dM/MY/d)` | Send email notifications to users about their upcoming bookings. |
 | `waldur-pid-update-all-referrables` | `waldur_pid.update_all_referrables` | 1 day | Update DataCite DOI information for all referrable objects with existing DOIs. |
 | `waldur-pull-remote-eduteams-ssh-keys` | `waldur_auth_social.pull_remote_eduteams_ssh_keys` | 3 minutes | Task not found in registry |
 | `waldur-pull-remote-eduteams-users` | `waldur_auth_social.pull_remote_eduteams_users` | 5 minutes | Task not found in registry |

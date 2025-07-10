@@ -1,4 +1,4 @@
-# Waldur SDK
+# Waldur Python SDK
 
 Waldur SDK is a thin Python wrapper for common REST operations.
 It allows you to interact with the Waldur REST API directly from your Python code.

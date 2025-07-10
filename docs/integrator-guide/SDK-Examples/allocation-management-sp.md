@@ -4,7 +4,7 @@ This page describes operations to be performed by service provider.
 
 ## Prerequisites
 
-Please, read [initial setup for Waldur SDK](./waldur-sdk.md).
+Please, read [initial setup for Waldur SDK](../sdk.md).
 
 ## Getting a list of users
 
