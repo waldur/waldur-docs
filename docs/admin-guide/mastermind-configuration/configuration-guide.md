@@ -1275,6 +1275,22 @@ Common footer in txt format for all emails.
 
 Common footer in html format for all emails.
 
+#### MAINTENANCE_ANNOUNCEMENT_NOTIFY_BEFORE_MINUTES
+
+**Type:** int
+
+**Default value**: 60
+
+How many minutes before scheduled maintenance users should be notified.
+
+#### MAINTENANCE_ANNOUNCEMENT_NOTIFY_SYSTEM
+
+**Type:** list_field
+
+**Default value**: ['AdminAnnouncement']
+
+How maintenance notifications are delivered. Choices: AdminAnnouncement or BroadcastMessage.
+
 ### Links
 
 #### DOCS_URL
