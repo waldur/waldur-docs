@@ -77,7 +77,7 @@ Allow: GET, POST, HEAD, OPTIONS
 
 ## Common operations
 
-If you are integrating a python-based application, you might find useful a [python wrapper](../Waldur-SDK/waldur-sdk.md) for typical operations.
+If you are integrating a python-based application, you might find useful a [python wrapper](../sdk.md) for typical operations.
 
 Almost all operations require authentication. Authentication process is a two-step:
 

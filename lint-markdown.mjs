@@ -2,7 +2,7 @@ import markdownlint from "markdownlint";
 import { globby } from "globby";
 import relativeLinksRule from "markdownlint-rule-relative-links";
 
-const files = await globby(["**/*.md", "!**/node_modules/**"]);
+const files = await globby(["**/*.md", "!**/node_modules/**",]);
 
 const result = markdownlint.sync({
   config: {
