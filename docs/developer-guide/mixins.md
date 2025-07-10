@@ -24,17 +24,17 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ReviewStateMixin`](#reviewstate-mixin) | `waldur_core.core.mixins` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`ScopeMixin`](#scope-mixin) | `waldur_core.core.mixins` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`UpdateExecutorMixin`](#updateexecutor-mixin) | `waldur_core.core.mixins` | Mixin to execute update operations using background executors |
-| [`ActionMixin`](#action-mixin) | `waldur_core.core.models` | Mixin to add a standardized "error_message" and "error_traceback" fields |
+| [`ActionMixin`](#action-mixin) | `waldur_core.core.models` | Mixin for action tracking with state management |
 | [`BackendMixin`](#backend-mixin) | `waldur_core.core.models` | Mixin to add standard backend_id field |
-| [`BackendModelMixin`](#backendmodel-mixin) | `waldur_core.core.models` | Represents model that is connected to backend object |
+| [`BackendModelMixin`](#backendmodel-mixin) | `waldur_core.core.models` | Mixin for models connected to backend objects |
 | [`DescendantMixin`](#descendant-mixin) | `waldur_core.core.models` | Mixin to provide child-parent relationships |
 | [`DescribableMixin`](#describable-mixin) | `waldur_core.core.models` | Mixin to add a standardized "description" field |
-| [`ErrorMessageMixin`](#errormessage-mixin) | `waldur_core.core.models` | Mixin to add a standardized "error_message" and "error_traceback" fields |
-| [`LastSyncMixin`](#lastsync-mixin) | `waldur_core.core.models` | Make subclasses preserve the alters_data attribute on overridden methods |
-| [`NameMixin`](#name-mixin) | `waldur_core.core.models` | Mixin to add a standardized "name" field |
-| [`RuntimeStateMixin`](#runtimestate-mixin) | `waldur_core.core.models` | Provide runtime_state field |
+| [`ErrorMessageMixin`](#errormessage-mixin) | `waldur_core.core.models` | Mixin to add standardized error handling fields |
+| [`LastSyncMixin`](#lastsync-mixin) | `waldur_core.core.models` | Mixin to track last synchronization time |
+| [`NameMixin`](#name-mixin) | `waldur_core.core.models` | Mixin to add a standardized "name" field with validation |
+| [`RuntimeStateMixin`](#runtimestate-mixin) | `waldur_core.core.models` | Mixin to provide runtime state tracking |
 | [`SlugMixin`](#slug-mixin) | `waldur_core.core.models` | Mixin to automatically generate a name-based slug |
-| [`StateMixin`](#state-mixin) | `waldur_core.core.models` | Mixin to add a standardized "error_message" and "error_traceback" fields |
+| [`StateMixin`](#state-mixin) | `waldur_core.core.models` | Mixin implementing finite state machine (FSM) functionality |
 | [`UiDescribableMixin`](#uidescribable-mixin) | `waldur_core.core.models` | Mixin to add a standardized "description" and "icon url" fields |
 | [`UserDetailsMixin`](#userdetails-mixin) | `waldur_core.core.models` | This mixin is shared by User and Invitation model |
 | [`UuidMixin`](#uuid-mixin) | `waldur_core.core.models` | Mixin to identify models by UUID |
@@ -64,10 +64,10 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ProtectedModelMixin`](#protectedmodel-mixin) | `waldur_core.structure.admin` | Mixin to handle protected model deletion errors gracefully in Django admin |
 | [`CoordinatesMixin`](#coordinates-mixin) | `waldur_core.structure.mixins` | Mixin to add a latitude and longitude fields |
 | [`IPCoordinatesMixin`](#ipcoordinates-mixin) | `waldur_core.structure.mixins` | Mixin to add a latitude and longitude fields |
-| [`CustomerDetailsMixin`](#customerdetails-mixin) | `waldur_core.structure.models` | Mixin to add a standardized "name" field |
-| [`ProjectOECDFOS2007CodeMixin`](#projectoecdfos2007code-mixin) | `waldur_core.structure.models` | Make subclasses preserve the alters_data attribute on overridden methods |
+| [`CustomerDetailsMixin`](#customerdetails-mixin) | `waldur_core.structure.models` | Mixin containing customer detail fields |
+| [`ProjectOECDFOS2007CodeMixin`](#projectoecdfos2007code-mixin) | `waldur_core.structure.models` | Mixin providing OECD FOS 2007 classification codes for research projects |
 | [`ServiceAccountMixin`](#serviceaccount-mixin) | `waldur_core.structure.models` | Mixin for models that support service accounts |
-| [`StructureLoggableMixin`](#structureloggable-mixin) | `waldur_core.structure.models` | Mixin to serialize model in logs |
+| [`StructureLoggableMixin`](#structureloggable-mixin) | `waldur_core.structure.models` | Extends LoggableMixin with structure-specific permission filtering |
 | [`VATMixin`](#vat-mixin) | `waldur_core.structure.models` | Add country, VAT number fields and check results from EU VAT Information Exch... |
 | [`CountrySerializerMixin`](#countryserializer-mixin) | `waldur_core.structure.serializers` | The BaseSerializer class provides a minimal class which may be used for writi... |
 | [`FieldFilteringMixin`](#fieldfiltering-mixin) | `waldur_core.structure.serializers` | Mixin allowing to filter fields by user |
@@ -78,10 +78,10 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ConnectedResourceMixin`](#connectedresource-mixin) | `waldur_mastermind.marketplace.admin` | Protects object from modification if there are connected resources |
 | [`ParentInlineMixin`](#parentinline-mixin) | `waldur_mastermind.marketplace.admin` | Mixin to get parent object from request in Django admin inline views |
 | [`OfferingFilterMixin`](#offeringfilter-mixin) | `waldur_mastermind.marketplace.filters` | Mixin to provide common offering-related filters |
-| [`CostEstimateMixin`](#costestimate-mixin) | `waldur_mastermind.marketplace.models` | Make subclasses preserve the alters_data attribute on overridden methods |
-| [`RequestTypeMixin`](#requesttype-mixin) | `waldur_mastermind.marketplace.models` | Make subclasses preserve the alters_data attribute on overridden methods |
-| [`ResourceDetailsMixin`](#resourcedetails-mixin) | `waldur_mastermind.marketplace.models` | Mixin to add a standardized "name" field |
-| [`SafeAttributesMixin`](#safeattributes-mixin) | `waldur_mastermind.marketplace.models` | Make subclasses preserve the alters_data attribute on overridden methods |
+| [`CostEstimateMixin`](#costestimate-mixin) | `waldur_mastermind.marketplace.models` | Mixin for cost estimation functionality |
+| [`RequestTypeMixin`](#requesttype-mixin) | `waldur_mastermind.marketplace.models` | Mixin for request type handling |
+| [`ResourceDetailsMixin`](#resourcedetails-mixin) | `waldur_mastermind.marketplace.models` | Mixin combining resource details with cost estimation |
+| [`SafeAttributesMixin`](#safeattributes-mixin) | `waldur_mastermind.marketplace.models` | Mixin for safe attribute handling |
 | [`ConnectedOfferingDetailsMixin`](#connectedofferingdetails-mixin) | `waldur_mastermind.marketplace.views` | Mixin to provide offering details action for connected resources |
 | [`PublicViewsetMixin`](#publicviewset-mixin) | `waldur_mastermind.marketplace.views` | Mixin to allow anonymous access to offerings when configured |
 | [`TenantMixin`](#tenant-mixin) | `waldur_mastermind.marketplace_openstack.processors` | No description available |
@@ -284,7 +284,11 @@ Mixin to execute update operations using background executors.
 **Module:** `waldur_core.core.models`
 
 **Description:**
-Mixin to add a standardized "error_message" and "error_traceback" fields.
+Mixin for action tracking with state management.
+
+Extends StateMixin with action tracking fields including action name,
+action details (JSON), and task ID for background task tracking.
+Used for models that need to track ongoing operations.
 
 **Base classes:** `StateMixin`
 
@@ -295,6 +299,10 @@ Mixin to add a standardized "error_message" and "error_traceback" fields.
 **Description:**
 Mixin to add standard backend_id field.
 
+Provides a backend_id CharField for storing identifiers from
+external backend systems. Used for mapping local objects to
+their corresponding backend representations.
+
 **Base classes:** `Model`
 
 ### BackendModelMixin
@@ -302,9 +310,11 @@ Mixin to add standard backend_id field.
 **Module:** `waldur_core.core.models`
 
 **Description:**
-Represents model that is connected to backend object.
+Mixin for models connected to backend objects.
 
-This model cannot be created or updated via admin, because we do not support queries to backend from admin interface.
+Represents models that are synchronized with external backend systems.
+These models cannot be created or updated via admin interface because
+backend queries are not supported in the admin.
 
 ### DescendantMixin
 
@@ -312,7 +322,10 @@ This model cannot be created or updated via admin, because we do not support que
 
 **Description:**
 Mixin to provide child-parent relationships.
-Each related model can provide list of its parents.
+
+Each related model can provide list of its parents through the
+get_parents() method. Used for hierarchical data structures
+where objects have parent-child relationships.
 
 ### DescribableMixin
 
@@ -328,7 +341,10 @@ Mixin to add a standardized "description" field.
 **Module:** `waldur_core.core.models`
 
 **Description:**
-Mixin to add a standardized "error_message" and "error_traceback" fields.
+Mixin to add standardized error handling fields.
+
+Provides error_message and error_traceback TextField for storing
+error information and debugging details when operations fail.
 
 **Base classes:** `Model`
 
@@ -337,7 +353,11 @@ Mixin to add a standardized "error_message" and "error_traceback" fields.
 **Module:** `waldur_core.core.models`
 
 **Description:**
-Make subclasses preserve the alters_data attribute on overridden methods.
+Mixin to track last synchronization time.
+
+Provides a last_sync DateTimeField that defaults to the current time
+and is not editable through forms. Used for tracking when data was
+last synchronized with external systems.
 
 **Base classes:** `Model`
 
@@ -346,7 +366,10 @@ Make subclasses preserve the alters_data attribute on overridden methods.
 **Module:** `waldur_core.core.models`
 
 **Description:**
-Mixin to add a standardized "name" field.
+Mixin to add a standardized "name" field with validation.
+
+Provides a CharField with maximum length of 150 characters and
+validates the name using the validate_name validator.
 
 **Base classes:** `Model`
 
@@ -355,7 +378,10 @@ Mixin to add a standardized "name" field.
 **Module:** `waldur_core.core.models`
 
 **Description:**
-Provide runtime_state field
+Mixin to provide runtime state tracking.
+
+Adds a runtime_state field with predefined ONLINE/OFFLINE states.
+Used to track the current operational status of resources.
 
 **Base classes:** `Model`
 
@@ -366,6 +392,10 @@ Provide runtime_state field
 **Description:**
 Mixin to automatically generate a name-based slug.
 
+Generates unique slugs based on the source field (default: 'name')
+during save operations. Uses generate_slug() to ensure uniqueness
+by appending numeric suffixes when needed.
+
 **Base classes:** `Model`
 
 ### StateMixin
@@ -373,7 +403,11 @@ Mixin to automatically generate a name-based slug.
 **Module:** `waldur_core.core.models`
 
 **Description:**
-Mixin to add a standardized "error_message" and "error_traceback" fields.
+Mixin implementing finite state machine (FSM) functionality.
+
+Provides state management with transitions between creation, updating,
+deletion, OK, and error states. Includes error handling capabilities
+and concurrent transition support.
 
 **Base classes:** `ErrorMessageMixin`, `ConcurrentTransitionMixin`
 
@@ -383,6 +417,9 @@ Mixin to add a standardized "error_message" and "error_traceback" fields.
 
 **Description:**
 Mixin to add a standardized "description" and "icon url" fields.
+
+Extends DescribableMixin with an icon_url field for UI display purposes.
+The icon_url field accepts URLs up to 500 characters.
 
 **Base classes:** `DescribableMixin`
 
@@ -404,6 +441,9 @@ because they have different constraints in User and Invitation model.
 
 **Description:**
 Mixin to identify models by UUID.
+
+Provides a UUID field for unique model identification.
+The UUID is automatically generated and used as a primary identifier.
 
 **Base classes:** `Model`
 
@@ -753,7 +793,11 @@ Mixin to add a latitude and longitude fields
 **Module:** `waldur_core.structure.models`
 
 **Description:**
-Mixin to add a standardized "name" field.
+Mixin containing customer detail fields.
+
+Provides comprehensive customer information fields including
+native name, contact details, agreement number, email, phone,
+address, banking information, and external system integration.
 
 **Base classes:** `NameMixin`, `VATMixin`, `CoordinatesMixin`
 
@@ -762,7 +806,11 @@ Mixin to add a standardized "name" field.
 **Module:** `waldur_core.structure.models`
 
 **Description:**
-Make subclasses preserve the alters_data attribute on overridden methods.
+Mixin providing OECD FOS 2007 classification codes for research projects.
+
+Provides standardized classification codes for different scientific fields
+according to the OECD Fields of Science and Technology (FOS) 2007 standard.
+Used to categorize research projects by their scientific domain.
 
 **Base classes:** `Model`
 
@@ -773,6 +821,10 @@ Make subclasses preserve the alters_data attribute on overridden methods.
 **Description:**
 Mixin for models that support service accounts.
 
+Provides functionality for managing service accounts with
+configurable maximum limits. Used by customers and projects
+to control service account creation.
+
 **Base classes:** `Model`
 
 ### StructureLoggableMixin
@@ -780,8 +832,10 @@ Mixin for models that support service accounts.
 **Module:** `waldur_core.structure.models`
 
 **Description:**
-Mixin to serialize model in logs.
-Extends django model or custom class with fields extraction method.
+Extends LoggableMixin with structure-specific permission filtering.
+
+Provides permission filtering for logging operations based on
+structure-specific user permissions and visibility rules.
 
 **Base classes:** `LoggableMixin`
 
@@ -911,7 +965,11 @@ Mixin to provide common offering-related filters.
 **Module:** `waldur_mastermind.marketplace.models`
 
 **Description:**
-Make subclasses preserve the alters_data attribute on overridden methods.
+Mixin for cost estimation functionality.
+
+Provides cost estimation with plan-based calculations and policy
+validation. Used for calculating costs based on limits and plans
+with policy compliance checking.
 
 **Base classes:** `Model`
 
@@ -920,7 +978,11 @@ Make subclasses preserve the alters_data attribute on overridden methods.
 **Module:** `waldur_mastermind.marketplace.models`
 
 **Description:**
-Make subclasses preserve the alters_data attribute on overridden methods.
+Mixin for request type handling.
+
+Extends CostEstimateMixin with request type-specific cost calculation
+for different operation types (CREATE, UPDATE, etc.). Provides
+pricing logic based on request type and plan switching.
 
 **Base classes:** `CostEstimateMixin`
 
@@ -929,7 +991,11 @@ Make subclasses preserve the alters_data attribute on overridden methods.
 **Module:** `waldur_mastermind.marketplace.models`
 
 **Description:**
-Mixin to add a standardized "name" field.
+Mixin combining resource details with cost estimation.
+
+Provides comprehensive resource details including cost estimation,
+safe attributes, and end date management. Used for resource
+lifecycle management and billing calculations.
 
 **Base classes:** `SafeAttributesMixin`, `CostEstimateMixin`, `NameMixin`, `SlugMixin`, `DescribableMixin`
 
@@ -938,7 +1004,11 @@ Mixin to add a standardized "name" field.
 **Module:** `waldur_mastermind.marketplace.models`
 
 **Description:**
-Make subclasses preserve the alters_data attribute on overridden methods.
+Mixin for safe attribute handling.
+
+Provides safe attribute functionality excluding secret attributes.
+Used for secure attribute access that filters out sensitive
+information like passwords and credentials.
 
 **Base classes:** `Model`
 
