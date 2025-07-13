@@ -500,6 +500,21 @@ Prints Mastermind notifications with a description and templates
 
 Prints all Waldur permissions description as typescript code.
 
+## print_registered_handlers
+
+Prints all registered signal handlers in markdown format.
+
+```bash
+usage: waldur print_registered_handlers [--output-file OUTPUT_FILE]
+                                        [--handler-type {signals,custom_signals,all}]
+
+options:
+  --output-file OUTPUT_FILE
+                        Output file path (optional, defaults to stdout)
+  --handler-type {signals,custom_signals,all}
+                        Type of handlers to collect (default: all)
+```
+
 ## print_scheduled_jobs
 
 Prints all scheduled background jobs in markdown format.
