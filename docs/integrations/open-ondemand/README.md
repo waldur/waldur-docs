@@ -14,7 +14,36 @@
 
 ## Integration overview
 
-![Waldur Open Ondemand integration scheme](images/scheme.png)
+```mermaid
+flowchart TD
+    User[👤 Local or federated user] --> Keycloak[🔐 Keycloak<br/>Identity Server]
+    
+    Keycloak --> Waldur[🏛️ Waldur<br/>Management Platform]
+    Keycloak --> OOD[💻 Open OnDemand<br/>Web Interface]
+    
+    LDAP[📋 Existing LDAP<br/>User Directory] --> LDAPService[🔧 LDAP Microservice]
+    LDAPService --> |SSSD-LDAP connect| SLURM[⚡ SLURM Cluster]
+    LDAPService --> |SSSD-LDAP connect| OOD
+    
+    Waldur --> |Pulls users| LDAPService
+    
+    Agent[🤖 Waldur Site Agent<br/>Resource Manager] --> |Pushes usages| Waldur
+    Agent --> |Pulls accounts| Waldur
+    Agent --> |Creates accounts| SLURM
+    Agent --> |Connects via SSH and launches jobs| SLURM
+    
+    OOD --> |SSSD-LDAP connect| LDAPService
+    
+    classDef user fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef waldur fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    classDef external fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef infrastructure fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    
+    class User user
+    class Waldur,LDAPService,Agent waldur
+    class LDAP,SLURM external
+    class Keycloak,OOD infrastructure
+```
 
 ## OOD requirements
 
@@ -84,7 +113,19 @@ ansible-playbook -i inventory.yaml -D ood.yml
 
 3. OOD connects to a SLURM cluster with the selected preferred_username
 
-![alt_text](images/image2.png "image_tooltip")
+```mermaid
+flowchart LR
+    User[👤 User] --> |Authenticates| OOD[💻 OOD starts per-user<br/>environment on the VM]
+    OOD --> |Logins as the specific user| SLURM[⚡ SLURM login node]
+    
+    classDef user fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef system fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef cluster fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    
+    class User user
+    class OOD system
+    class SLURM cluster
+```
 
 ## Keycloak configuration
 
@@ -120,16 +161,16 @@ v2:
     submit_host: 172.16.1.2
 ```
 
-## waldur-slurm-agent configuration
+## Waldur Site Agent configuration
 
-Waldur-slurm-agent is a microservice for pulling allocation from Waldur and pushing the allocation usage statistics back to Waldur.
+Waldur Site Agent is a microservice for pulling allocation from Waldur and pushing the allocation usage statistics back to Waldur.
 
 The microservice supports 2 modes of operation:
 
 1. Docker Compose - testing only, requires SLURM running in the same docker compose
 2. Native - production
 
-Follow [https://docs.waldur.com/integrations/waldur-slurm-service/](https://docs.waldur.com/integrations/waldur-slurm-service/) for installation guide. Make sure to enable the ENABLE_USER_HOMEDIR_ACCOUNT_CREATION flag - Open OnDemand does not work unless the user's home directory exists.
+Follow [Waldur Site Agent documentation](../../admin-guide/providers/waldur-site-agent.md) for installation guide. Make sure to enable the `enable_user_homedir_account_creation` flag - Open OnDemand does not work unless the user's home directory exists.
 
 ## Host-based SSH authentication configuration
 
