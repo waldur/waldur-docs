@@ -3253,11 +3253,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../developer-guide/settings-policy/" class="md-nav__link">
+      <a href="../developer-guide/release-orchestration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Settings policy
+    Release Orchestration
   </span>
   
 
@@ -3274,11 +3274,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../developer-guide/templates/" class="md-nav__link">
+      <a href="../developer-guide/settings-policy/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Templates
+    Settings policy
   </span>
   
 
@@ -6328,18 +6328,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#developer-guide-settings-policy" class="md-nav__link">
+  <a href="#developer-guide-release-orchestration" class="md-nav__link">
     <span class="md-ellipsis">
-      32. Settings policy
+      32. Release Orchestration
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#developer-guide-templates" class="md-nav__link">
+  <a href="#developer-guide-settings-policy" class="md-nav__link">
     <span class="md-ellipsis">
-      33. Templates
+      33. Settings policy
     </span>
   </a>
   
@@ -9260,16 +9260,42 @@ Some users - mostly affiliated with Waldur operator - can have global roles, e.g
                             Admin guide <a class='headerlink' href='#section-admin-guide' title='Permanent link'>↵</a>
                         </h1>
                         <section class="print-page" id="admin-guide-architecture"><div><h1 id="architecture">Architecture</h1>
-<p>Waldur is composed of a several components.</p>
+<p>Waldur is composed of several components that work together to provide a comprehensive cloud management platform.</p>
+<h2 id="admin-guide-architecture-components">Components</h2>
 <ul>
-<li>Homeport (web client, graphical interface) - React application</li>
-<li>Mastermind API server - Django/Django REST Framework application implementing the core business logic</li>
-<li>Celery workers - Background processing of tasks</li>
-<li>Celery beat - Scheduling of periodic tasks for background processing</li>
-<li>PostgreSQL database - Storing persistent data, also serves as Celery result store in Kubernetes deployment</li>
-<li>RabbitMQ - Tasks queue and result store for Celery</li>
+<li><strong>Homeport</strong> (web client, graphical interface) - React application</li>
+<li><strong>Waldur site agent</strong> - Remote agent for managing provider resources and synchronizing data</li>
+<li><strong>Mastermind API server</strong> - Django/Django REST Framework application implementing the core business logic</li>
+<li><strong>Celery workers</strong> - Background processing of tasks</li>
+<li><strong>Celery beat</strong> - Scheduling of periodic tasks for background processing</li>
+<li><strong>PostgreSQL database</strong> - Storing persistent data, also serves as Celery result store in Kubernetes deployment</li>
+<li><strong>RabbitMQ</strong> - Tasks queue and result store for Celery</li>
 </ul>
-<p><a class="glightbox" href="../assets/components.svg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="diagram" src="../assets/components.svg"></a></p></div></section><section class="print-page" id="admin-guide-backups"><div><h1 id="backups">Backups</h1>
+<h2 id="admin-guide-architecture-architecture-diagram">Architecture diagram</h2>
+<pre class="mermaid"><code>flowchart TD
+    User[👤 User] --&gt; Browser[🌐 Web Browser]
+    Browser --&gt; |Sends request| Homeport[🏠 Homeport&lt;br/&gt;React Application]
+    Homeport --&gt; |API calls| API[🔧 Mastermind API&lt;br/&gt;Django/DRF Server]
+
+    Agent[🤖 Waldur Site Agent&lt;br/&gt;Remote Resource Manager] --&gt; |API calls| API
+
+    API --&gt; |Saves data| DB[(🗄️ PostgreSQL&lt;br/&gt;Database)]
+    API --&gt; |Pushes tasks| Queue[📋 Task Queue&lt;br/&gt;RabbitMQ]
+
+    Worker[⚙️ Celery Worker&lt;br/&gt;Background Processing] --&gt; |Pulls tasks| Queue
+    Worker --&gt; |Saves results| DB
+
+    Beat[⏰ Celery Beat&lt;br/&gt;Task Scheduler] --&gt; |Schedules periodic tasks| Queue
+
+    classDef frontend fill:#d5e8d4,stroke:#82b366,stroke-width:2px
+    classDef backend fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px
+    classDef infrastructure fill:#fff2cc,stroke:#d6b656,stroke-width:2px
+    classDef agent fill:#f8cecc,stroke:#b85450,stroke-width:2px
+
+    class User,Browser,Homeport frontend
+    class API,Worker,Beat backend
+    class DB,Queue infrastructure
+    class Agent agent</code></pre></div></section><section class="print-page" id="admin-guide-backups"><div><h1 id="backups">Backups</h1>
 <p>Waldur keeps state in 2 components:</p>
 <ul>
 <li>Database - main persistency layer.</li>
@@ -27064,7 +27090,247 @@ Make subclasses preserve the alters_data attribute on overridden methods.</p>
 <h2 id="developer-guide-models-permissions-application-models">Permissions application models</h2>
 <p><a class="glightbox" href="../developer-guide/core_permissions.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Permissions application models" src="../developer-guide/core_permissions.png"></a></p>
 <h2 id="developer-guide-models-marketplace-application-models">Marketplace application models</h2>
-<p><a class="glightbox" href="../developer-guide/marketplace.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Marketplace application models" src="../developer-guide/marketplace.png"></a></p></div></section><section class="print-page" id="developer-guide-settings-policy"><div><h1 id="settings-policy">Settings policy</h1>
+<p><a class="glightbox" href="../developer-guide/marketplace.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Marketplace application models" src="../developer-guide/marketplace.png"></a></p></div></section><section class="print-page" id="developer-guide-release-orchestration"><div><h1 id="release-orchestration">Release Orchestration</h1>
+<p>This document describes the automated release orchestration system that coordinates releases across the entire Waldur ecosystem from the <code>waldur-docs</code> repository.</p>
+<h2 id="developer-guide-release-orchestration-overview">Overview</h2>
+<p>The <code>waldur-docs</code> repository serves as the central orchestration hub for Waldur releases. When a semantic version tag (e.g., <code>7.6.8</code>) is applied to this repository, it triggers an automated workflow that:</p>
+<ol>
+<li><strong>Updates documentation</strong> with versioned API schemas and changelogs</li>
+<li><strong>Tags all repositories</strong> across the Waldur ecosystem</li>
+<li><strong>Updates version references</strong> in deployment configurations</li>
+<li><strong>Releases SDKs</strong> with updated version numbers</li>
+<li><strong>Generates comprehensive changelogs</strong> with cross-repository links</li>
+</ol>
+<h2 id="developer-guide-release-orchestration-release-flow-diagram">Release flow diagram</h2>
+<pre class="mermaid"><code>flowchart TD
+  A[Create semantic version tag&lt;br/&gt;on waldur-docs] --&gt; B{GitLab CI pipeline&lt;br/&gt;triggered}
+
+  B --&gt; C[Test stage]
+  C --&gt; C1[Lint markdown files]
+  C --&gt; C2[Test MkDocs build]
+  C --&gt; C3[Test Docker Compose&lt;br/&gt;deployment]
+  C --&gt; C4[Test Helm&lt;br/&gt;deployment]
+  C --&gt; C5[Test changelog&lt;br/&gt;generation]
+
+  C1 --&gt; D{All tests pass?}
+  C2 --&gt; D
+  C3 --&gt; D
+  C4 --&gt; D
+  C5 --&gt; D
+
+  D --&gt;|No| E[Pipeline fails]
+  D --&gt;|Yes| F[Deploy stage]
+
+  F --&gt; F1[Build &amp; deploy&lt;br/&gt;documentation]
+  F --&gt; F2[Tag all repositories]
+  F --&gt; F3[Release SDKs]
+  F --&gt; F4[Update configurations]
+  F --&gt; F5[Generate changelog]
+
+  F1 --&gt; F1a[Deploy latest docs&lt;br/&gt;to GitHub Pages]
+  F1 --&gt; F1b[Deploy tagged version&lt;br/&gt;with mike]
+
+  F2 --&gt; F2a[waldur-mastermind]
+  F2 --&gt; F2b[waldur-homeport]
+  F2 --&gt; F2c[waldur-prometheus-exporter]
+
+  F3 --&gt; F3a[Python SDK&lt;br/&gt;update pyproject.toml]
+  F3 --&gt; F3b[JS/TS SDK&lt;br/&gt;update package.json]
+  F3 --&gt; F3c[Go SDK&lt;br/&gt;git tag only]
+
+  F4 --&gt; F4a[Helm charts&lt;br/&gt;update Chart.yaml &amp; values.yaml]
+  F4 --&gt; F4b[Docker Compose&lt;br/&gt;update .env.example]
+
+  F5 --&gt; F5a[Parse previous version&lt;br/&gt;from CHANGELOG.md]
+  F5 --&gt; F5b[Generate diff links&lt;br/&gt;for all repos]
+  F5 --&gt; F5c[Add SBOM &amp; API&lt;br/&gt;schema references]
+  F5 --&gt; F5d[Commit updated&lt;br/&gt;changelog]
+
+  F1a --&gt; G[Release complete]
+  F1b --&gt; G
+  F2a --&gt; G
+  F2b --&gt; G
+  F2c --&gt; G
+  F3a --&gt; G
+  F3b --&gt; G
+  F3c --&gt; G
+  F4a --&gt; G
+  F4b --&gt; G
+  F5d --&gt; G
+
+  G --&gt; H[Post-deploy stage]
+  H --&gt; H1[Deploy tagged&lt;br/&gt;documentation]
+
+  style A fill:#e1f5fe
+  style G fill:#c8e6c9
+  style E fill:#ffcdd2
+  style F fill:#fff3e0</code></pre>
+<h2 id="developer-guide-release-orchestration-coordinated-repositories">Coordinated repositories</h2>
+<p>The release orchestration manages the following repositories:</p>
+<h3 id="developer-guide-release-orchestration-core-components">Core components</h3>
+<ul>
+<li><strong>waldur-mastermind</strong> - Backend API and business logic</li>
+<li><strong>waldur-homeport</strong> - Frontend web application</li>
+<li><strong>waldur-prometheus-exporter</strong> - Metrics and monitoring</li>
+</ul>
+<h3 id="developer-guide-release-orchestration-deployment-infrastructure">Deployment &amp; infrastructure</h3>
+<ul>
+<li><strong>waldur-helm</strong> - Kubernetes Helm charts</li>
+<li><strong>waldur-docker-compose</strong> - Docker Compose configurations</li>
+</ul>
+<h3 id="developer-guide-release-orchestration-sdks-client-libraries">SDKs &amp; client libraries</h3>
+<ul>
+<li><strong>py-client</strong> - Python SDK</li>
+<li><strong>js-client</strong> - TypeScript/JavaScript SDK  </li>
+<li><strong>go-client</strong> - Go SDK</li>
+</ul>
+<h2 id="developer-guide-release-orchestration-release-workflow">Release workflow</h2>
+<h3 id="developer-guide-release-orchestration-1-pre-release-testing">1. Pre-release testing</h3>
+<p>Before creating a release tag, the system validates:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Triggered on semantic version tags</span>
+<span class="nt">Test Docker Compose deployment before tagging</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">if</span><span class="p">:</span><span class="w"> </span><span class="s">'$CI_COMMIT_TAG</span><span class="nv"> </span><span class="s">=~</span><span class="nv"> </span><span class="s">/^\d+\.\d+\.\d+$/'</span>
+<span class="w">  </span><span class="nt">trigger</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur/waldur-docker-compose</span>
+
+<span class="nt">Test Helm deployment before tagging</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">if</span><span class="p">:</span><span class="w"> </span><span class="s">'$CI_COMMIT_TAG</span><span class="nv"> </span><span class="s">=~</span><span class="nv"> </span><span class="s">/^\d+\.\d+\.\d+$/'</span>
+<span class="w">  </span><span class="nt">trigger</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur/waldur-helm</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-release-orchestration-2-repository-tagging">2. Repository tagging</h3>
+<p>The system automatically tags all core repositories with the same version:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Each repository is cloned, tagged, and pushed</span>
+git<span class="w"> </span>clone<span class="w"> </span><span class="s2">"https://gitlab-ci-token:</span><span class="nv">$GITLAB_TOKEN</span><span class="s2">@</span><span class="nv">$CI_SERVER_HOST</span><span class="s2">/waldur/waldur-mastermind.git"</span>
+git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span><span class="nv">$CI_COMMIT_TAG</span><span class="w"> </span>-m<span class="w"> </span><span class="s2">"</span><span class="nv">$CI_COMMIT_TAG_MESSAGE</span><span class="s2">"</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span><span class="nv">$CI_COMMIT_TAG</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-release-orchestration-3-configuration-updates">3. Configuration updates</h3>
+<h4 id="developer-guide-release-orchestration-helm-charts">Helm charts</h4>
+<p>Version numbers are updated in <code>Chart.yaml</code> and <code>values.yaml</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span>-E<span class="w"> </span><span class="s2">"s/^version: ('.*'|.*)</span>$<span class="s2">/version: </span><span class="nv">$CI_COMMIT_TAG</span><span class="s2">/"</span><span class="w"> </span>waldur/Chart.yaml
+sed<span class="w"> </span>-i<span class="w"> </span>-E<span class="w"> </span><span class="s2">"s/^appVersion: ('.*'|.*)</span>$<span class="s2">/appVersion: \"</span><span class="nv">$CI_COMMIT_TAG</span><span class="s2">\"/"</span><span class="w"> </span>waldur/Chart.yaml
+sed<span class="w"> </span>-i<span class="w"> </span>-E<span class="w"> </span><span class="s2">"s/^  imageTag: ('.*'|.*)</span>$<span class="s2">/  imageTag: \"</span><span class="nv">$CI_COMMIT_TAG</span><span class="s2">\"/"</span><span class="w"> </span>waldur/values.yaml
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-release-orchestration-docker-compose">Docker Compose</h4>
+<p>Image tags are updated in <code>.env.example</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span>-E<span class="w"> </span><span class="s2">"s/^WALDUR_MASTERMIND_IMAGE_TAG=('.*'|.*)</span>$<span class="s2">/WALDUR_MASTERMIND_IMAGE_TAG=</span><span class="nv">$CI_COMMIT_TAG</span><span class="s2">/"</span><span class="w"> </span>.env.example
+sed<span class="w"> </span>-i<span class="w"> </span>-E<span class="w"> </span><span class="s2">"s/^WALDUR_HOMEPORT_IMAGE_TAG=('.*'|.*)</span>$<span class="s2">/WALDUR_HOMEPORT_IMAGE_TAG=</span><span class="nv">$CI_COMMIT_TAG</span><span class="s2">/"</span><span class="w"> </span>.env.example
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-release-orchestration-4-sdk-releases">4. SDK releases</h3>
+<h4 id="developer-guide-release-orchestration-python-sdk">Python SDK</h4>
+<p>Updates <code>pyproject.toml</code> with new version:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'s/^version = "[^"]*"/version = "'</span><span class="nv">$CI_COMMIT_TAG</span><span class="s1">'"/'</span><span class="w"> </span>pyproject.toml
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-release-orchestration-javascripttypescript-sdk">JavaScript/TypeScript SDK</h4>
+<p>Updates both <code>package.json</code> and <code>package-lock.json</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'s/"version": "[^"]*"/"version": "'</span><span class="nv">$CI_COMMIT_TAG</span><span class="s1">'"/'</span><span class="w"> </span>package.json
+<span class="c1"># Complex package-lock.json updates for multiple version references</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-release-orchestration-go-sdk">Go SDK</h4>
+<p>Simple tag-based versioning (Go modules use git tags for versions).</p>
+<h3 id="developer-guide-release-orchestration-5-changelog-generation">5. Changelog generation</h3>
+<p>The system automatically generates comprehensive changelogs that include:</p>
+<h4 id="developer-guide-release-orchestration-cross-repository-diff-links">Cross-repository diff links</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">*</span><span class="w"> </span>Waldur MasterMind: [<span class="nt">tag diff</span>](<span class="na">https://github.com/waldur/waldur-mastermind/compare/7.6.7...7.6.8</span>)
+<span class="k">*</span><span class="w"> </span>Waldur HomePort: [<span class="nt">tag diff</span>](<span class="na">https://github.com/waldur/waldur-homeport/compare/7.6.7...7.6.8</span>)
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-release-orchestration-security-compliance-artifacts">Security &amp; compliance artifacts</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">*</span><span class="w"> </span>Image SBOM: [<span class="nt">waldur-mastermind-7.6.8-image.cyclonedx.tar.gz</span>](<span class="na">...</span>)
+<span class="k">*</span><span class="w"> </span>Source SBOM: [<span class="nt">waldur-mastermind-7.6.8-source.cyclonedx.tar.gz</span>](<span class="na">...</span>)
+<span class="k">*</span><span class="w"> </span>OpenAPI specification: [<span class="nt">waldur-openapi-schema-7.6.8.yaml</span>](<span class="na">...</span>)
+<span class="k">*</span><span class="w"> </span>API changes: [<span class="nt">View changes</span>](<span class="na">/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.6.8-diff</span>)
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-release-orchestration-documentation-versioning">Documentation versioning</h2>
+<h3 id="developer-guide-release-orchestration-version-specific-documentation">Version-specific documentation</h3>
+<p>The system deploys versioned documentation using <code>mike</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Latest version (from master branch)</span>
+mike<span class="w"> </span>deploy<span class="w"> </span>latest<span class="w"> </span>-p<span class="w"> </span>-r<span class="w"> </span>github_waldur<span class="w"> </span>-b<span class="w"> </span>gh-pages
+
+<span class="c1"># Tagged versions</span>
+mike<span class="w"> </span>deploy<span class="w"> </span><span class="nv">$CI_COMMIT_TAG</span><span class="w"> </span>-p<span class="w"> </span>-r<span class="w"> </span>github_waldur<span class="w"> </span>-b<span class="w"> </span>gh-pages
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-release-orchestration-api-schema-management">API schema management</h3>
+<p>Each release includes:</p>
+<ul>
+<li><strong>Versioned OpenAPI schema</strong> - <code>waldur-openapi-schema-{version}.yaml</code></li>
+<li><strong>API diff reports</strong> - Comparing changes between versions</li>
+<li><strong>SBOM files</strong> - Software Bill of Materials for security compliance</li>
+</ul>
+<h2 id="developer-guide-release-orchestration-release-process">Release process</h2>
+<h3 id="developer-guide-release-orchestration-for-maintainers">For maintainers</h3>
+<ol>
+<li><strong>Prepare the release</strong> by ensuring all component repositories are ready</li>
+<li><strong>Create a semantic version tag</strong> on <code>waldur-docs</code> repository:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span><span class="m">7</span>.6.9<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Release 7.6.9: Description of changes"</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span><span class="m">7</span>.6.9
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Monitor the pipeline</strong> - GitLab CI will automatically:</li>
+<li>Test deployment configurations</li>
+<li>Tag all repositories</li>
+<li>Update configuration files</li>
+<li>Release SDKs</li>
+<li>Generate changelogs</li>
+<li>Deploy documentation</li>
+</ol>
+<h3 id="developer-guide-release-orchestration-validation">Validation</h3>
+<p>The release is complete when:
+- [ ] All repositories have the new tag
+- [ ] Helm chart versions are updated
+- [ ] Docker Compose configurations reference new image tags
+- [ ] SDK packages are released with new versions
+- [ ] Documentation is deployed with the new version
+- [ ] Changelog is updated with comprehensive links</p>
+<h2 id="developer-guide-release-orchestration-emergency-procedures">Emergency procedures</h2>
+<h3 id="developer-guide-release-orchestration-rolling-back-a-release">Rolling back a release</h3>
+<p>If a release needs to be rolled back:</p>
+<ol>
+<li><strong>Remove the git tag</strong> from all repositories</li>
+<li><strong>Revert configuration changes</strong> in helm and docker-compose repositories</li>
+<li><strong>Update documentation</strong> to remove the problematic version</li>
+<li><strong>Coordinate with package repositories</strong> (PyPI, npm) if SDKs were published</li>
+</ol>
+<h3 id="developer-guide-release-orchestration-partial-release-recovery">Partial release recovery</h3>
+<p>If only some repositories were tagged successfully:</p>
+<ol>
+<li><strong>Identify missing tags</strong> by checking each repository</li>
+<li><strong>Manually tag missing repositories</strong> using the same tag message</li>
+<li><strong>Re-run failed CI jobs</strong> if configuration updates are missing</li>
+</ol>
+<h2 id="developer-guide-release-orchestration-security-considerations">Security considerations</h2>
+<ul>
+<li><strong>SSH keys</strong> for GitHub authentication are stored as GitLab CI variables</li>
+<li><strong>GitLab tokens</strong> provide access to private repositories</li>
+<li><strong>SBOM generation</strong> ensures supply chain security compliance</li>
+<li><strong>Automated testing</strong> validates deployments before release completion</li>
+</ul></div></section><section class="print-page" id="developer-guide-settings-policy"><div><h1 id="settings-policy">Settings policy</h1>
 <p>Settings are used to configure behaviour of Waldur deployment. Settings can be used for configuration of both
 core and plugins, or dependent libraries.</p>
 <p>Below is a policy for the settings.</p>
@@ -27078,8 +27344,7 @@ plugin developer.</p>
 <li><code>override.conf.py</code> - all settings overwritten for the deployment apart from logging settings;</li>
 <li><code>features.json</code> - features setup for frontend;</li>
 <li><code>logging.conf.py</code> - logging configuration for Waldur</li>
-</ul></div></section><section class="print-page" id="developer-guide-templates"><div><h1 id="templates">Templates</h1>
-<p>The content of this document is autogenerated during CI job execution.</p></div></section><section class="print-page" id="developer-guide-waldur-ci-cd"><div><h1 id="waldur-cicd">Waldur CI/CD</h1>
+</ul></div></section><section class="print-page" id="developer-guide-waldur-ci-cd"><div><h1 id="waldur-cicd">Waldur CI/CD</h1>
 <h2 id="developer-guide-waldur-ci-cd-general-architecture">General Architecture</h2>
 <p>Waldur uses CI/CD approach for testing, packaging and deployment. The approach is implemented with GitLab CI system. It provides a framework for building pipelines. A pipeline consists of a sequence of stages, each of which depends on the result of a predecessor and includes smaller parts called jobs. A job is a sequence of actions executed for a specific purpose, e.g., testing an application.</p>
 <p>The entire CI/CD pipeline consists of smaller pipelines, each of which resides in a corresponding repository and belongs to a particular part.</p>

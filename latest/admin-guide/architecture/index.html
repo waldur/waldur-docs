@@ -772,6 +772,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -781,6 +792,43 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Components
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture diagram
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -3277,11 +3325,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../developer-guide/settings-policy/" class="md-nav__link">
+      <a href="../../developer-guide/release-orchestration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Settings policy
+    Release Orchestration
   </span>
   
 
@@ -3298,11 +3346,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../developer-guide/templates/" class="md-nav__link">
+      <a href="../../developer-guide/settings-policy/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Templates
+    Settings policy
   </span>
   
 
@@ -6028,6 +6076,32 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Components
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture diagram
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -6042,16 +6116,42 @@
 
 
 <div><h1 id="architecture">Architecture</h1>
-<p>Waldur is composed of a several components.</p>
+<p>Waldur is composed of several components that work together to provide a comprehensive cloud management platform.</p>
+<h2 id="components">Components</h2>
 <ul>
-<li>Homeport (web client, graphical interface) - React application</li>
-<li>Mastermind API server - Django/Django REST Framework application implementing the core business logic</li>
-<li>Celery workers - Background processing of tasks</li>
-<li>Celery beat - Scheduling of periodic tasks for background processing</li>
-<li>PostgreSQL database - Storing persistent data, also serves as Celery result store in Kubernetes deployment</li>
-<li>RabbitMQ - Tasks queue and result store for Celery</li>
+<li><strong>Homeport</strong> (web client, graphical interface) - React application</li>
+<li><strong>Waldur site agent</strong> - Remote agent for managing provider resources and synchronizing data</li>
+<li><strong>Mastermind API server</strong> - Django/Django REST Framework application implementing the core business logic</li>
+<li><strong>Celery workers</strong> - Background processing of tasks</li>
+<li><strong>Celery beat</strong> - Scheduling of periodic tasks for background processing</li>
+<li><strong>PostgreSQL database</strong> - Storing persistent data, also serves as Celery result store in Kubernetes deployment</li>
+<li><strong>RabbitMQ</strong> - Tasks queue and result store for Celery</li>
 </ul>
-<p><a class="glightbox" href="../../assets/components.svg" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="diagram" src="../../assets/components.svg"></a></p></div>
+<h2 id="architecture-diagram">Architecture diagram</h2>
+<pre class="mermaid"><code>flowchart TD
+    User[👤 User] --&gt; Browser[🌐 Web Browser]
+    Browser --&gt; |Sends request| Homeport[🏠 Homeport&lt;br/&gt;React Application]
+    Homeport --&gt; |API calls| API[🔧 Mastermind API&lt;br/&gt;Django/DRF Server]
+
+    Agent[🤖 Waldur Site Agent&lt;br/&gt;Remote Resource Manager] --&gt; |API calls| API
+
+    API --&gt; |Saves data| DB[(🗄️ PostgreSQL&lt;br/&gt;Database)]
+    API --&gt; |Pushes tasks| Queue[📋 Task Queue&lt;br/&gt;RabbitMQ]
+
+    Worker[⚙️ Celery Worker&lt;br/&gt;Background Processing] --&gt; |Pulls tasks| Queue
+    Worker --&gt; |Saves results| DB
+
+    Beat[⏰ Celery Beat&lt;br/&gt;Task Scheduler] --&gt; |Schedules periodic tasks| Queue
+
+    classDef frontend fill:#d5e8d4,stroke:#82b366,stroke-width:2px
+    classDef backend fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px
+    classDef infrastructure fill:#fff2cc,stroke:#d6b656,stroke-width:2px
+    classDef agent fill:#f8cecc,stroke:#b85450,stroke-width:2px
+
+    class User,Browser,Homeport frontend
+    class API,Worker,Beat backend
+    class DB,Queue infrastructure
+    class Agent agent</code></pre></div>
 
 
 
@@ -6072,7 +6172,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-07-02
+    2025-07-13
   </span>
 
     
