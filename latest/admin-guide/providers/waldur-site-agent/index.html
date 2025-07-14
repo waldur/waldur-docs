@@ -16,7 +16,7 @@
         <link rel="prev" href="../slurm/">
       
       
-        <link rel="next" href="../../rke2-setup/RKE2-setup/">
+        <link rel="next" href="../docs/architecture/">
       
       
       <link rel="icon" href="../../../assets/waldur-logo.svg">
@@ -2554,9 +2554,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#custom-backend-for-username-retrieval-and-generation" class="md-nav__link">
+  <a href="#custom-backends" class="md-nav__link">
     <span class="md-ellipsis">
-      Custom backend for username retrieval and generation
+      Custom backends
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-backends-for-username-retrieval-and-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom backends for username retrieval and generation
     </span>
   </a>
   
@@ -2579,6 +2588,73 @@
     </ul>
   
 </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_17_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_17_8" id="__nav_2_17_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Docs
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_17_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_17_8">
+            <span class="md-nav__icon md-icon"></span>
+            Docs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/architecture/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plugin Architecture
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -6064,9 +6140,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#custom-backend-for-username-retrieval-and-generation" class="md-nav__link">
+  <a href="#custom-backends" class="md-nav__link">
     <span class="md-ellipsis">
-      Custom backend for username retrieval and generation
+      Custom backends
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-backends-for-username-retrieval-and-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom backends for username retrieval and generation
     </span>
   </a>
   
@@ -6112,7 +6197,7 @@ For now, the agent supports only SLURM and MOAB clusters as a service backend.</
 <h2 id="architecture">Architecture</h2>
 <p>Agent is a stateless application, which is deployed
 on a machine with access to backend data.
-It consists of 4 sub-applications:</p>
+It supports 4 modes:</p>
 <ul>
 <li><code>agent-order-process</code>, which fetches ordering data from Waldur and updates
   a state of backend object correspondingly;
@@ -6125,6 +6210,17 @@ It consists of 4 sub-applications:</p>
   <code>agent-order-process</code> and <code>agent-membership-sync</code>; requires either MQTT- or STOMP-plugin
   as an event delivery system between Waldur and the agent.</li>
 </ul>
+<p>Code-wise, the agent consists of the main python module called <code>waldur-site-agent</code>
+and set of plugins with implementation for different backends
+(for example, <code>waldur-site-agent-slurm</code>).
+The main module contains the configuration for running the
+application, shared utils and abstract classes for backends.
+A plugin should contain implementation of the abstract classes exposing them
+via entry-points in the respecting <code>pyproject.toml</code> file.
+Each plugin depends on the main module,
+while this module uses plugin classes via entry-points.</p>
+<p>For detailed information about the plugin architecture, including diagrams, implementation details,
+and custom plugin development, see the <a href="../docs/architecture/">Architecture Documentation</a>.</p>
 <h3 id="integration-with-waldur">Integration with Waldur</h3>
 <p>The agent uses a <a href="https://github.com/waldur/python-waldur-client">Python-based Waldur client</a>
 communicating with <a href="https://github.com/waldur/waldur-mastermind">Waldur backend</a>
@@ -6196,29 +6292,29 @@ As a service provider owner, you should create a new offering in the marketplace
 <ul>
 <li>Go to <code>Service Provider</code> section of the organization
   and open offering creation menu</li>
-<li>Input a name, choose a category, select <code>SLURM remote allocation</code>
+<li>Input a name, choose a category, select <code>Waldur site agent</code>
   from the drop-down list on the bottom and click <code>Create</code> button</li>
 </ul>
-<p><a class="glightbox" href="../img/remote-slurm-offering.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-creation" src="../img/remote-slurm-offering.png"></a></p>
+<p><a class="glightbox" href="../docs/img/offering-creation.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-creation" src="../docs/img/offering-creation.png"></a></p>
 <ul>
 <li>Open the offering page, choose <code>Edit</code> tab, click <code>Accounting</code> section,
   choose <code>Accounting plans</code> from the drop-down list and create a plan:
   click <code>Add plan</code> and input the necessary details;</li>
 </ul>
-<p><a class="glightbox" href="../img/offering-plan.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-plan" src="../img/offering-plan.png"></a></p>
+<p><a class="glightbox" href="../docs/img/offering-plan.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-plan" src="../docs/img/offering-plan.png"></a></p>
 <ul>
 <li>In the same page, click <code>Integration</code> section choose <code>User management</code>
   from the drop-down list and set the
   <code>Service provider can create offering user</code> option to <code>Yes</code>;</li>
 </ul>
-<p><a class="glightbox" href="../img/offering-user-management.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-user-management" src="../img/offering-user-management.png"></a></p>
+<p><a class="glightbox" href="../docs/img/offering-user-management.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-user-management" src="../docs/img/offering-user-management.png"></a></p>
 <ul>
 <li>Activate the offering using the big green button <code>Activate</code>.</li>
 </ul>
 <p><strong>Note</strong>: You will need to set the offering UUID in the agent config file.
 For this, you can copy the UUID from the <code>Integration -&gt; Credentials</code>
 section on the same page:</p>
-<p><a class="glightbox" href="../img/offering-uuid.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-uuid" src="../img/offering-uuid.png"></a></p>
+<p><a class="glightbox" href="../docs/img/offering-uuid.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="offering-uuid" src="../docs/img/offering-uuid.png"></a></p>
 <h3 id="setup">Setup</h3>
 <p>Firstly, install the <code>waldur-site-agent</code> module:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>waldur-site-agent
@@ -6321,18 +6417,53 @@ cp<span class="w"> </span>systemd-conf/agent-membership-sync/agent-legacy.servic
 <span class="c1"># For agent-event-process</span>
 cp<span class="w"> </span>systemd-conf/agent-event-process/agent-legacy.service<span class="w"> </span>/etc/systemd/system/waldur-agent-event-process-legacy.service
 </code></pre></div></td></tr></table></div>
-<h3 id="custom-backend-for-username-retrieval-and-generation">Custom backend for username retrieval and generation</h3>
+<h3 id="custom-backends">Custom backends</h3>
+<p>A user should explicitly set backend type for each agent process in an offering config.
+For this, a user should use the following settings in an offering item:</p>
+<ul>
+<li><code>order_processing_backend</code> - name of the backend from entrypoints
+  to use for order processing;</li>
+<li><code>membership_sync_backend</code> - name of the backend from entrypoints
+  to use for membership syncing;</li>
+<li><code>reporting_backend</code> - name of the backend from entrypoints
+  to use for reporting.</li>
+</ul>
+<p>If a setting is omitted, the agent doesn't start the respecting process.</p>
+<p>For example, given the following config:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nn">...</span>
+<span class="nt">offerings</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Example</span><span class="nv"> </span><span class="s">SLURM</span><span class="nv"> </span><span class="s">Offering"</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">    </span><span class="nt">stomp_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"custom-slurm-api"</span>
+<span class="w">    </span><span class="c1"># Note: membership_sync_backend is omitted</span>
+</code></pre></div></td></tr></table></div>
+<p>the agent starts</p>
+<ul>
+<li>STOMP-based service only for order processing via SLURM</li>
+<li>usage-reporting service using a custom SLURM API,
+  which is provided via custom module's entry-point</li>
+</ul>
+<h3 id="custom-backends-for-username-retrieval-and-generation">Custom backends for username retrieval and generation</h3>
 <p>By default, the agent doesn't generate usernames for users of resources.
 For this, a custom username management backend can be included in the agent:</p>
 <ol>
-<li>add a path to your class in the <code>project.entry-points."waldur_site_agent.username_management"</code>
+<li>add a path to your class in the <code>project.entry-points."waldur_site_agent.username_management_backends"</code>
    section of <code>pyproject.toml</code> file, example:</li>
 </ol>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">...</span>
-<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.username_management"</span><span class="k">]</span>
+<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.username_management_backends"</span><span class="k">]</span>
 <span class="n">custom_backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"your_project.backend.usernames:CustomUsernameManagementBackend"</span>
 <span class="p">...</span>
 </code></pre></div></td></tr></table></div>
@@ -6491,7 +6622,7 @@ For this, a custom username management backend can be included in the agent:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-07-04
+    2025-07-14
   </span>
 
     
