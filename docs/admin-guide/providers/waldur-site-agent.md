@@ -12,7 +12,7 @@ For now, the agent supports only SLURM and MOAB clusters as a service backend.
 
 Agent is a stateless application, which is deployed
 on a machine with access to backend data.
-It consists of 4 sub-applications:
+It supports 4 modes:
 
 - `agent-order-process`, which fetches ordering data from Waldur and updates
   a state of backend object correspondingly;
@@ -24,6 +24,19 @@ It consists of 4 sub-applications:
 - `agent-event-process`, which uses event-based approach to do the same as
   `agent-order-process` and `agent-membership-sync`; requires either MQTT- or STOMP-plugin
   as an event delivery system between Waldur and the agent.
+
+Code-wise, the agent consists of the main python module called `waldur-site-agent`
+and set of plugins with implementation for different backends
+(for example, `waldur-site-agent-slurm`).
+The main module contains the configuration for running the
+application, shared utils and abstract classes for backends.
+A plugin should contain implementation of the abstract classes exposing them
+via entry-points in the respecting `pyproject.toml` file.
+Each plugin depends on the main module,
+while this module uses plugin classes via entry-points.
+
+For detailed information about the plugin architecture, including diagrams, implementation details,
+and custom plugin development, see the [Architecture Documentation](docs/architecture.md).
 
 ### Integration with Waldur
 
@@ -112,22 +125,22 @@ As a service provider owner, you should create a new offering in the marketplace
 
 - Go to `Service Provider` section of the organization
   and open offering creation menu
-- Input a name, choose a category, select `SLURM remote allocation`
+- Input a name, choose a category, select `Waldur site agent`
   from the drop-down list on the bottom and click `Create` button
 
-![offering-creation](img/remote-slurm-offering.png)
+![offering-creation](docs/img/offering-creation.png)
 
 - Open the offering page, choose `Edit` tab, click `Accounting` section,
   choose `Accounting plans` from the drop-down list and create a plan:
   click `Add plan` and input the necessary details;
 
-![offering-plan](img/offering-plan.png)
+![offering-plan](docs/img/offering-plan.png)
 
 - In the same page, click `Integration` section choose `User management`
   from the drop-down list and set the
   `Service provider can create offering user` option to `Yes`;
 
-![offering-user-management](img/offering-user-management.png)
+![offering-user-management](docs/img/offering-user-management.png)
 
 - Activate the offering using the big green button `Activate`.
 
@@ -135,7 +148,7 @@ As a service provider owner, you should create a new offering in the marketplace
 For this, you can copy the UUID from the `Integration -> Credentials`
 section on the same page:
 
-![offering-uuid](img/offering-uuid.png)
+![offering-uuid](docs/img/offering-uuid.png)
 
 ### Setup
 
@@ -227,17 +240,50 @@ cp systemd-conf/agent-membership-sync/agent-legacy.service /etc/systemd/system/w
 cp systemd-conf/agent-event-process/agent-legacy.service /etc/systemd/system/waldur-agent-event-process-legacy.service
 ```
 
-### Custom backend for username retrieval and generation
+### Custom backends
+
+A user should explicitly set backend type for each agent process in an offering config.
+For this, a user should use the following settings in an offering item:
+
+- `order_processing_backend` - name of the backend from entrypoints
+  to use for order processing;
+- `membership_sync_backend` - name of the backend from entrypoints
+  to use for membership syncing;
+- `reporting_backend` - name of the backend from entrypoints
+  to use for reporting.
+
+If a setting is omitted, the agent doesn't start the respecting process.
+
+For example, given the following config:
+
+```yaml
+...
+offerings:
+  - name: "Example SLURM Offering"
+    ...
+    stomp_enabled: true
+    order_processing_backend: "slurm"
+    reporting_backend: "custom-slurm-api"
+    # Note: membership_sync_backend is omitted
+```
+
+the agent starts
+
+- STOMP-based service only for order processing via SLURM
+- usage-reporting service using a custom SLURM API,
+  which is provided via custom module's entry-point
+
+### Custom backends for username retrieval and generation
 
 By default, the agent doesn't generate usernames for users of resources.
 For this, a custom username management backend can be included in the agent:
 
-1. add a path to your class in the `project.entry-points."waldur_site_agent.username_management"`
+1. add a path to your class in the `project.entry-points."waldur_site_agent.username_management_backends"`
    section of `pyproject.toml` file, example:
 
    ```toml
    ...
-   [project.entry-points."waldur_site_agent.username_management"]
+   [project.entry-points."waldur_site_agent.username_management_backends"]
    custom_backend = "your_project.backend.usernames:CustomUsernameManagementBackend"
    ...
    ```
