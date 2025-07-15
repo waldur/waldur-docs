@@ -87,6 +87,7 @@
 - marketplace_plan_component_future_price_updated
 - marketplace_plan_component_quota_updated
 - marketplace_plan_created
+- marketplace_plan_deleted
 - marketplace_plan_updated
 
 ## Eventgroup.permissions
