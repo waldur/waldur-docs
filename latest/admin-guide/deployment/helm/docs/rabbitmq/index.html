@@ -1706,6 +1706,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#additional-protocol-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Protocol Support
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -5914,6 +5923,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#additional-protocol-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Protocol Support
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -5938,7 +5956,7 @@ is used.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>bitnami<span class="w"> </span>https://charts.bitnami.com/bitnami
 </code></pre></div></td></tr></table></div>
 <p>Install rabbitmq-ha release:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>rmq<span class="w"> </span>bitnami/rabbitmq<span class="w"> </span>--version<span class="w"> </span><span class="m">10</span>.3.5<span class="w"> </span>-f<span class="w"> </span>rmq-values.yaml
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>rmq<span class="w"> </span>bitnami/rabbitmq<span class="w"> </span>--version<span class="w"> </span><span class="m">15</span>.0.2<span class="w"> </span>-f<span class="w"> </span>rmq-values.yaml
 </code></pre></div></td></tr></table></div>
 <h2 id="configuration">Configuration</h2>
 <p>You can change rabbitmq config with the following variables in <code>rmq-values.yaml</code>:</p>
@@ -5953,13 +5971,24 @@ is used.</p>
 <p>For more config values, see <a href="https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq#parameters">this section</a></p>
 <p>In <code>values.yaml</code> file, you need to setup the following vars (<code>rabbitmq</code> prefix):</p>
 <ol>
-<li><code>user</code> - should be same as <code>auth.username</code> in the <code>rmq-values.yaml</code> file</li>
-<li><code>password</code> - should be same as <code>auth.password</code> in the <code>rmq-values.yaml</code> file</li>
-<li><code>host</code> - rabbitmq-ha service <strong>hostname</strong>
+<li><code>auth.username</code> - should be same as <code>auth.username</code> in the <code>rmq-values.yaml</code> file</li>
+<li><code>auth.password</code> - should be same as <code>auth.password</code> in the <code>rmq-values.yaml</code> file</li>
+<li><code>host</code> - rabbitmq service <strong>hostname</strong>
     (See <a href="../service-endpoint/">this doc</a> for details)</li>
 <li><code>customManagementPort</code> - custom port for rabbitmq management interface</li>
 <li><code>customAMQPPort</code> - custom port for AMQP access</li>
-</ol></div>
+</ol>
+<h2 id="additional-protocol-support">Additional Protocol Support</h2>
+<p>The chart supports additional messaging protocols beyond AMQP:</p>
+<ul>
+<li><strong>MQTT</strong> (port 1883) - for IoT device communication</li>
+<li><strong>STOMP</strong> (port 61613) - for simple text-based messaging</li>
+<li><strong>WebSocket variants</strong> (ports 15674, 15675) - for browser-based connections</li>
+</ul>
+<p>These protocols are enabled through the <code>extraPlugins</code> configuration:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">extraPlugins</span><span class="p">:</span><span class="w"> </span><span class="s">"rabbitmq_auth_backend_ldap</span><span class="nv"> </span><span class="s">rabbitmq_mqtt</span><span class="nv"> </span><span class="s">rabbitmq_web_mqtt</span><span class="nv"> </span><span class="s">rabbitmq_management</span><span class="nv"> </span><span class="s">rabbitmq_web_stomp</span><span class="nv"> </span><span class="s">rabbitmq_stomp"</span>
+</code></pre></div></td></tr></table></div>
+<p>Additional container and service ports are automatically configured for these protocols.</p></div>
 
 
 
@@ -5980,7 +6009,7 @@ is used.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-07-05
+    2025-07-16
   </span>
 
     

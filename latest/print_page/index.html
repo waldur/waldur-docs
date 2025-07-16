@@ -11689,7 +11689,7 @@ helm install my-waldur --set postgresql.enabled=true --set rabbitmq.enabled=true
 ```
 </code></pre></div></td></tr></table></div>
 <p>2.2. Advanced setup of dependencies
-      Setup databaseusing one of:
+      Setup database using one of:
       - Simple PostgreSQL DB: <a href="#admin-guide-deployment-helm-docs-postgres-db">instructions</a> or
       - PostgreSQL HA DB: <a href="#admin-guide-deployment-helm-docs-postgres-db-ha">instructions</a> or
       - Integrate with external DB: <a href="#admin-guide-deployment-helm-docs-external-db-integration">instructions</a></p>
@@ -11718,7 +11718,7 @@ in <code>test</code> namespace in the following way:</p>
 </li>
 <li>
 <p>Install release:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>waldur<span class="w"> </span>waldur<span class="w"> </span>--namespace<span class="w"> </span><span class="nb">test</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>waldur<span class="w"> </span>waldur-charts/waldur<span class="w"> </span>--namespace<span class="w"> </span><span class="nb">test</span>
 </code></pre></div></td></tr></table></div>
 </li>
 </ol>
@@ -12561,29 +12561,25 @@ is used as a highly available database for Waldur.</p>
 <p>Install <code>postgresql-ha</code> release:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>postgresql-ha<span class="w"> </span>bitnami/postgresql-ha<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-f<span class="w"> </span>postgresql-ha-values.yaml<span class="w"> </span>--version<span class="w"> </span><span class="m">11</span>.7.4
+<span class="w">    </span>-f<span class="w"> </span>postgresql-ha-values.yaml<span class="w"> </span>--version<span class="w"> </span><span class="m">14</span>.2.34
 </code></pre></div></td></tr></table></div>
-<p><strong>NB</strong>: the value <code>postgresql.HAEnabled</code> for waldur release must be <code>true</code>.</p>
+<p><strong>NB</strong>: the value <code>postgresqlha.enabled</code> for waldur release must be <code>true</code>.</p>
 <h3 id="admin-guide-deployment-helm-docs-postgres-db-ha-chart-configuration">Chart configuration</h3>
 <p>You can change default PostgreSQL config with
 the following variables in <code>values.yaml</code> (<code>postgresql-ha-values.yaml</code> file):</p>
 <ol>
 <li><code>postgresql.database</code> - name of a database.
-    <strong>NB</strong>: must match <code>postgresql.database</code> value in <code>waldur/values.yaml</code></li>
+    <strong>NB</strong>: must match <code>postgresqlha.postgresql.database</code> value in <code>waldur/values.yaml</code></li>
 <li><code>postgresql.username</code> - name of a database user.
-    <strong>NB</strong>: must match <code>postgresql.username</code> value in <code>waldur/values.yaml</code></li>
+    <strong>NB</strong>: must match <code>postgresqlha.postgresql.username</code> value in <code>waldur/values.yaml</code></li>
 <li><code>postgresql.password</code> - password of a database user</li>
 <li><code>postgresql.replicaCount</code> - number of db replicas</li>
-<li><code>postgresql.syncReplication</code> - enable/disable synchronous replication</li>
-<li><code>postgresql.repmgrUsername</code> - username of <code>repmgr</code> user</li>
 <li><code>postgresql.repmgrPassword</code> - password of <code>repmgr</code> user</li>
 <li><code>persistence.size</code> - size of a database (for each replica)</li>
-<li><code>pgpoolImage.tag</code> - tag of <code>Pgpool</code> image.
+<li><code>pgpool.image.tag</code> - tag of <code>Pgpool</code> image.
     Possible tags for default image can be found <a href="https://hub.docker.com/r/bitnami/pgpool/tags">here</a></li>
-<li><code>postgresqlImage.tag</code> - tag of <code>PostgreSQL</code> image.
+<li><code>postgresql.image.tag</code> - tag of <code>PostgreSQL</code> image.
      Possible tags for default image can be found <a href="https://hub.docker.com/r/bitnami/postgresql-repmgr/tags/">here</a></li>
-<li><code>pgpoolImage.tag</code> - registry of <code>Pgpool</code> image.</li>
-<li><code>postgresqlImage.tag</code> - registry of <code>PostgreSQL</code> image.</li>
 </ol>
 <p>More information related to possible values
 <a href="https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha#parameters">here</a>.</p>
@@ -12601,7 +12597,7 @@ is used as a database for Waldur.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>bitnami<span class="w"> </span>https://charts.bitnami.com/bitnami
 </code></pre></div></td></tr></table></div>
 <p>Install <code>postgresql</code> release:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>bitnami/postgresql<span class="w"> </span>--version<span class="w"> </span><span class="m">11</span>.9.1<span class="w"> </span>-f<span class="w"> </span>postgresql-values.yaml
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>bitnami/postgresql<span class="w"> </span>--version<span class="w"> </span><span class="m">16</span>.0.1<span class="w"> </span>-f<span class="w"> </span>postgresql-values.yaml
 </code></pre></div></td></tr></table></div>
 <p><strong>NB</strong>: the values <code>postgresql.enabled</code> and <code>postgresqlha.enabled</code> must be <code>false</code>.</p>
 <h3 id="admin-guide-deployment-helm-docs-postgres-db-chart-configuration">Chart configuration</h3>
@@ -12690,7 +12686,7 @@ is used.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>bitnami<span class="w"> </span>https://charts.bitnami.com/bitnami
 </code></pre></div></td></tr></table></div>
 <p>Install rabbitmq-ha release:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>rmq<span class="w"> </span>bitnami/rabbitmq<span class="w"> </span>--version<span class="w"> </span><span class="m">10</span>.3.5<span class="w"> </span>-f<span class="w"> </span>rmq-values.yaml
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>rmq<span class="w"> </span>bitnami/rabbitmq<span class="w"> </span>--version<span class="w"> </span><span class="m">15</span>.0.2<span class="w"> </span>-f<span class="w"> </span>rmq-values.yaml
 </code></pre></div></td></tr></table></div>
 <h2 id="admin-guide-deployment-helm-docs-rabbitmq-configuration">Configuration</h2>
 <p>You can change rabbitmq config with the following variables in <code>rmq-values.yaml</code>:</p>
@@ -12705,13 +12701,24 @@ is used.</p>
 <p>For more config values, see <a href="https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq#parameters">this section</a></p>
 <p>In <code>values.yaml</code> file, you need to setup the following vars (<code>rabbitmq</code> prefix):</p>
 <ol>
-<li><code>user</code> - should be same as <code>auth.username</code> in the <code>rmq-values.yaml</code> file</li>
-<li><code>password</code> - should be same as <code>auth.password</code> in the <code>rmq-values.yaml</code> file</li>
-<li><code>host</code> - rabbitmq-ha service <strong>hostname</strong>
+<li><code>auth.username</code> - should be same as <code>auth.username</code> in the <code>rmq-values.yaml</code> file</li>
+<li><code>auth.password</code> - should be same as <code>auth.password</code> in the <code>rmq-values.yaml</code> file</li>
+<li><code>host</code> - rabbitmq service <strong>hostname</strong>
     (See <a href="#admin-guide-deployment-helm-docs-service-endpoint">this doc</a> for details)</li>
 <li><code>customManagementPort</code> - custom port for rabbitmq management interface</li>
 <li><code>customAMQPPort</code> - custom port for AMQP access</li>
-</ol></div></section><section class="print-page" id="admin-guide-deployment-helm-docs-saml2"><div><h1 id="saml2-configuration">SAML2 configuration</h1>
+</ol>
+<h2 id="admin-guide-deployment-helm-docs-rabbitmq-additional-protocol-support">Additional Protocol Support</h2>
+<p>The chart supports additional messaging protocols beyond AMQP:</p>
+<ul>
+<li><strong>MQTT</strong> (port 1883) - for IoT device communication</li>
+<li><strong>STOMP</strong> (port 61613) - for simple text-based messaging</li>
+<li><strong>WebSocket variants</strong> (ports 15674, 15675) - for browser-based connections</li>
+</ul>
+<p>These protocols are enabled through the <code>extraPlugins</code> configuration:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">extraPlugins</span><span class="p">:</span><span class="w"> </span><span class="s">"rabbitmq_auth_backend_ldap</span><span class="nv"> </span><span class="s">rabbitmq_mqtt</span><span class="nv"> </span><span class="s">rabbitmq_web_mqtt</span><span class="nv"> </span><span class="s">rabbitmq_management</span><span class="nv"> </span><span class="s">rabbitmq_web_stomp</span><span class="nv"> </span><span class="s">rabbitmq_stomp"</span>
+</code></pre></div></td></tr></table></div>
+<p>Additional container and service ports are automatically configured for these protocols.</p></div></section><section class="print-page" id="admin-guide-deployment-helm-docs-saml2"><div><h1 id="saml2-configuration">SAML2 configuration</h1>
 <p>To configure SAML2 for Waldur:</p>
 <ol>
 <li>Enable SAML2 support in <code>values.yaml</code>:
@@ -12750,7 +12757,7 @@ If not, requests can come to unexpected service, which will cause errors.</p>
 <p>For example: <code>http://elasticsearch-master:9200</code></p></div></section><section class="print-page" id="admin-guide-deployment-helm-docs-tls-config"><div><h1 id="tls-configuration-instructions">TLS configuration instructions</h1>
 <p>To enable tls globally please set <code>ingress.tls.enabled=true</code> in <code>values.yaml</code></p>
 <h2 id="admin-guide-deployment-helm-docs-tls-config-lets-encrypt-setup">Let’s Encrypt setup</h2>
-<p>It you want co configure <a href="https://letsencrypt.org/">letsencrypt</a>
+<p>If you want to configure <a href="https://letsencrypt.org/">letsencrypt</a>
 certification, you need to:</p>
 <ol>
 <li>Set <code>ingress.tls.source="letsEncrypt"</code> in <code>values.yaml</code></li>
@@ -12775,8 +12782,8 @@ certification, you need to:</p>
 <span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>cert-manager<span class="w"> </span>jetstack/cert-manager<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--namespace<span class="w"> </span>cert-manager<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--version<span class="w"> </span>v1.7.1<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--set<span class="w"> </span><span class="nv">installCRDs</span><span class="o">=</span><span class="nb">true</span>
+<span class="w">    </span>--version<span class="w"> </span>v1.15.3<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--set<span class="w"> </span>crds.enabled<span class="o">=</span><span class="nb">true</span>
 </code></pre></div></td></tr></table></div>
 <ol>
 <li>After that, <code>waldur</code> release is ready for installation.</li>
