@@ -107,4 +107,5 @@ td:nth-child(4) {
 | `waldur-remote-sync-remote-project-permissions` | `waldur_mastermind.marketplace_remote.sync_remote_project_permissions` | 6 hours | Synchronize project permissions with remote Waldur instances.<br><br> This task ensures that project permissions are synchronized between<br> local and remote Waldur instances when eduTEAMS sync is enabled.<br> It creates remote projects if needed and manages user role assignments.<br> Runs every 6 hours via celery beat. |
 | `waldur-sync-daily-quotas` | `analytics.sync_daily_quotas` | 1 day | Task not found in registry |
 | `waldur-update-all-pid` | `waldur_pid.update_all_pid` | 1 day | Update all PID (Persistent Identifier) information for referrable objects with DataCite DOIs. |
+| `waldur_mastermind.marketplace_rancher.sync_managed_rancher_invoice_items` | `waldur_mastermind.marketplace_rancher.sync_managed_rancher_invoice_items` | 1 hour | Task not found in registry |
 
