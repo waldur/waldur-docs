@@ -20,6 +20,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`EagerLoadMixin`](#eagerloadmixin) | `waldur_core.core.mixins` | Reduce number of requests to DB |
 | [`ExecutorMixin`](#executormixin) | `waldur_core.core.mixins` | Execute create/update/delete operation with executor |
 | [`GetValueMixin`](#getvaluemixin) | `waldur_core.core.mixins` | Mixin to provide helper method for getting values from attrs or instance |
+| [`ProjectNameTemplateMixin`](#projectnametemplatemixin) | `waldur_core.core.mixins` | Mixin for models that need to generate project names from templates |
 | [`ReviewMixin`](#reviewmixin) | `waldur_core.core.mixins` | An abstract base class model that provides self-updating ``created`` and ``mo... |
 | [`ReviewStateMixin`](#reviewstatemixin) | `waldur_core.core.mixins` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`ScopeMixin`](#scopemixin) | `waldur_core.core.mixins` | Make subclasses preserve the alters_data attribute on overridden methods |
@@ -241,6 +242,15 @@ Execute create/update/delete operation with executor
 
 **Description:**
 Mixin to provide helper method for getting values from attrs or instance.
+
+### ProjectNameTemplateMixin
+
+**Module:** `waldur_core.core.mixins`
+
+**Description:**
+Mixin for models that need to generate project names from templates.
+
+**Base classes:** `Model`
 
 ### ReviewMixin
 
