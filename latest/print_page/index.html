@@ -2438,6 +2438,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin-guide/providers/docs/slurm-usage-reporting-setup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SLURM Usage Reporting Setup Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -23163,7 +23184,308 @@ graph TB
 - <strong>Mixed backend usage</strong>: Different backends for different operations
 - <strong>Gradual migration</strong>: Transition between backends incrementally
 - <strong>Specialized backends</strong>: Use purpose-built backends for specific tasks
-- <strong>Development flexibility</strong>: Test new backends alongside production ones</p></div></section><h1 class='nav-section-title-end'>Ended: Docs</h1><h1 class='nav-section-title-end'>Ended: Providers</h1>
+- <strong>Development flexibility</strong>: Test new backends alongside production ones</p></div></section><section class="print-page" id="admin-guide-providers-docs-slurm-usage-reporting-setup"><div><h1 id="slurm-usage-reporting-setup-guide">SLURM Usage Reporting Setup Guide</h1>
+<p>This guide explains how to set up a single Waldur Site Agent instance for usage reporting with SLURM backend.
+This configuration is ideal when you only need to collect and report usage data from your SLURM cluster to
+Waldur Mastermind.</p>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-overview">Overview</h2>
+<p>The usage reporting agent (<code>report</code> mode) collects CPU, memory, and other resource usage data from SLURM
+accounting records and sends it to Waldur Mastermind. It runs in a continuous loop, fetching usage data for
+the current billing period and reporting it at regular intervals.</p>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-prerequisites">Prerequisites</h2>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-system-requirements">System Requirements</h3>
+<ul>
+<li>Linux system with access to SLURM cluster head node</li>
+<li>Python 3.11 or higher</li>
+<li><code>uv</code> package manager installed</li>
+<li>Root access (required for SLURM commands)</li>
+<li>Network access to Waldur Mastermind API</li>
+</ul>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-slurm-requirements">SLURM Requirements</h3>
+<ul>
+<li>SLURM accounting enabled (<code>sacct</code> and <code>sacctmgr</code> commands available)</li>
+<li>Access to SLURM accounting database</li>
+<li>Required SLURM commands:</li>
+<li><code>sacct</code> - for usage reporting</li>
+<li><code>sacctmgr</code> - for account management</li>
+<li><code>sinfo</code> - for cluster diagnostics</li>
+</ul>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-installation">Installation</h2>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-1-clone-and-install-the-application">1. Clone and Install the Application</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Clone the repository</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/waldur/waldur-site-agent.git
+<span class="nb">cd</span><span class="w"> </span>waldur-site-agent
+
+<span class="c1"># Install dependencies with SLURM plugin</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>slurm
+</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-2-create-configuration-directory">2. Create Configuration Directory</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/etc/waldur
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-configuration">Configuration</h2>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-1-create-configuration-file">1. Create Configuration File</h3>
+<p>Create <code>/etc/waldur/waldur-site-agent-config.yaml</code> with the following configuration:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">sentry_dsn</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w">  </span><span class="c1"># Optional: Sentry DSN for error tracking</span>
+<span class="nt">timezone</span><span class="p">:</span><span class="w"> </span><span class="s">"UTC"</span><span class="w">  </span><span class="c1"># Timezone for billing period calculations</span>
+
+<span class="nt">offerings</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"SLURM</span><span class="nv"> </span><span class="s">Usage</span><span class="nv"> </span><span class="s">Reporting"</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://your-waldur-instance.com/api/"</span>
+<span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"your-api-token-here"</span>
+<span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"your-offering-uuid-here"</span>
+
+<span class="w">    </span><span class="c1"># Backend configuration for usage reporting only</span>
+<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"base"</span><span class="w">  </span><span class="c1"># Not used in report mode</span>
+<span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span><span class="w">   </span><span class="c1"># Not used in report mode</span>
+<span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span><span class="w">    </span><span class="c1"># Not used in report mode</span>
+<span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span><span class="w">          </span><span class="c1"># This is what matters for reporting</span>
+
+<span class="w">    </span><span class="c1"># Event processing (not needed for usage reporting)</span>
+<span class="w">    </span><span class="nt">mqtt_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">stomp_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+
+<span class="w">    </span><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">default_account</span><span class="p">:</span><span class="w"> </span><span class="s">"root"</span><span class="w">           </span><span class="c1"># Root account in SLURM</span>
+<span class="w">      </span><span class="nt">customer_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"hpc_"</span><span class="w">           </span><span class="c1"># Prefix for customer accounts</span>
+<span class="w">      </span><span class="nt">project_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"hpc_"</span><span class="w">            </span><span class="c1"># Prefix for project accounts</span>
+<span class="w">      </span><span class="nt">allocation_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"hpc_"</span><span class="w">         </span><span class="c1"># Prefix for allocation accounts</span>
+
+<span class="w">      </span><span class="c1"># QoS settings (not used in report mode but required)</span>
+<span class="w">      </span><span class="nt">qos_downscaled</span><span class="p">:</span><span class="w"> </span><span class="s">"limited"</span>
+<span class="w">      </span><span class="nt">qos_paused</span><span class="p">:</span><span class="w"> </span><span class="s">"paused"</span>
+<span class="w">      </span><span class="nt">qos_default</span><span class="p">:</span><span class="w"> </span><span class="s">"normal"</span>
+
+<span class="w">      </span><span class="c1"># Home directory settings (not used in report mode)</span>
+<span class="w">      </span><span class="nt">enable_user_homedir_account_creation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">homedir_umask</span><span class="p">:</span><span class="w"> </span><span class="s">"0700"</span>
+
+<span class="w">    </span><span class="c1"># Define components for usage reporting</span>
+<span class="w">    </span><span class="nt">backend_components</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">cpu</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w">                       </span><span class="c1"># Not used in usage reporting</span>
+<span class="w">        </span><span class="nt">measured_unit</span><span class="p">:</span><span class="w"> </span><span class="s">"k-Hours"</span><span class="w">        </span><span class="c1"># Waldur unit for CPU usage</span>
+<span class="w">        </span><span class="nt">unit_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60000</span><span class="w">              </span><span class="c1"># Convert CPU-minutes to k-Hours (60 * 1000)</span>
+<span class="w">        </span><span class="nt">accounting_type</span><span class="p">:</span><span class="w"> </span><span class="s">"usage"</span><span class="w">        </span><span class="c1"># Report actual usage</span>
+<span class="w">        </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"CPU"</span>
+
+<span class="w">      </span><span class="nt">mem</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w">                       </span><span class="c1"># Not used in usage reporting</span>
+<span class="w">        </span><span class="nt">measured_unit</span><span class="p">:</span><span class="w"> </span><span class="s">"gb-Hours"</span><span class="w">       </span><span class="c1"># Waldur unit for memory usage</span>
+<span class="w">        </span><span class="nt">unit_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">61440</span><span class="w">              </span><span class="c1"># Convert MB-minutes to gb-Hours (60 * 1024)</span>
+<span class="w">        </span><span class="nt">accounting_type</span><span class="p">:</span><span class="w"> </span><span class="s">"usage"</span><span class="w">        </span><span class="c1"># Report actual usage</span>
+<span class="w">        </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"RAM"</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-2-configuration-parameters-explained">2. Configuration Parameters Explained</h3>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-waldur-connection">Waldur Connection</h4>
+<ul>
+<li><code>waldur_api_url</code>: URL to your Waldur Mastermind API endpoint</li>
+<li><code>waldur_api_token</code>: API token for authentication (create in Waldur admin)</li>
+<li><code>waldur_offering_uuid</code>: UUID of the SLURM offering in Waldur</li>
+</ul>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-backend-settings">Backend Settings</h4>
+<ul>
+<li><code>default_account</code>: Root account in SLURM cluster</li>
+<li>Prefixes: Used to identify accounts created by the agent (for filtering)</li>
+</ul>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-backend-components">Backend Components</h4>
+<ul>
+<li><code>cpu</code>: CPU usage tracking in CPU-minutes (SLURM native unit)</li>
+<li><code>mem</code>: Memory usage tracking in MB-minutes (SLURM native unit)</li>
+<li><code>unit_factor</code>: Conversion factor from SLURM units to Waldur units</li>
+<li><code>accounting_type: "usage"</code>: Report actual usage (not limits)</li>
+</ul>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-deployment">Deployment</h2>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-option-1-systemd-service-recommended">Option 1: Systemd Service (Recommended)</h3>
+<ol>
+<li><strong>Copy service file:</strong></li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>sudo<span class="w"> </span>cp<span class="w"> </span>systemd-conf/agent-report/agent.service<span class="w"> </span>/etc/systemd/system/waldur-site-agent-report.service
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Reload systemd and enable service:</strong></li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span>daemon-reload
+sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-site-agent-report.service
+sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>waldur-site-agent-report.service
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Check service status:</strong></li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>waldur-site-agent-report.service
+</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-option-2-manual-execution">Option 2: Manual Execution</h3>
+<p>For testing or one-time runs:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Run directly</span>
+uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span class="w"> </span>-m<span class="w"> </span>report<span class="w"> </span>-c<span class="w"> </span>/etc/waldur/waldur-site-agent-config.yaml
+
+<span class="c1"># Or with installed package</span>
+waldur_site_agent<span class="w"> </span>-m<span class="w"> </span>report<span class="w"> </span>-c<span class="w"> </span>/etc/waldur/waldur-site-agent-config.yaml
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-operation">Operation</h2>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-how-it-works">How It Works</h3>
+<ol>
+<li><strong>Initialization</strong>: Agent loads configuration and connects to SLURM cluster</li>
+<li><strong>Account Discovery</strong>: Identifies accounts matching configured prefixes</li>
+<li><strong>Usage Collection</strong>:</li>
+<li>Runs <code>sacct</code> to collect usage data for current billing period</li>
+<li>Aggregates CPU and memory usage per account and user</li>
+<li>Converts SLURM units to Waldur units using configured factors</li>
+<li><strong>Reporting</strong>: Sends usage data to Waldur Mastermind API</li>
+<li><strong>Sleep</strong>: Waits for configured interval (default: 30 minutes)</li>
+<li><strong>Repeat</strong>: Returns to step 3</li>
+</ol>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-timing-configuration">Timing Configuration</h3>
+<p>Control reporting frequency with environment variable:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Report every 15 minutes instead of default 30</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">WALDUR_SITE_AGENT_REPORT_PERIOD_MINUTES</span><span class="o">=</span><span class="m">15</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-logging">Logging</h3>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-systemd-service-logs">Systemd Service Logs</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># View service logs</span>
+sudo<span class="w"> </span>journalctl<span class="w"> </span>-u<span class="w"> </span>waldur-site-agent-report.service<span class="w"> </span>-f
+
+<span class="c1"># View logs for specific time period</span>
+sudo<span class="w"> </span>journalctl<span class="w"> </span>-u<span class="w"> </span>waldur-site-agent-report.service<span class="w"> </span>--since<span class="w"> </span><span class="s2">"1 hour ago"</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-manual-execution-logs">Manual Execution Logs</h4>
+<p>Logs are written to stdout/stderr when running manually.</p>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-monitoring-and-troubleshooting">Monitoring and Troubleshooting</h2>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-health-checks">Health Checks</h3>
+<ol>
+<li><strong>Test SLURM connectivity:</strong></li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>waldur_site_diagnostics
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Verify configuration:</strong></li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Check if configuration is valid</span>
+uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span class="w"> </span>-m<span class="w"> </span>report<span class="w"> </span>-c<span class="w"> </span>/etc/waldur/waldur-site-agent-config.yaml<span class="w"> </span>--dry-run
+</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-common-issues">Common Issues</h3>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-slurm-commands-not-found">SLURM Commands Not Found</h4>
+<ul>
+<li>Ensure SLURM tools are in PATH</li>
+<li>Verify <code>sacct</code> and <code>sacctmgr</code> are executable</li>
+<li>Check SLURM accounting is enabled</li>
+</ul>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-authentication-errors">Authentication Errors</h4>
+<ul>
+<li>Verify Waldur API token is valid</li>
+<li>Check network connectivity to Waldur Mastermind</li>
+<li>Ensure offering UUID exists in Waldur</li>
+</ul>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-no-usage-data">No Usage Data</h4>
+<ul>
+<li>Verify accounts exist in SLURM with configured prefixes</li>
+<li>Check SLURM accounting database has recent data</li>
+<li>Ensure users have submitted jobs in the current billing period</li>
+</ul>
+<h4 id="admin-guide-providers-docs-slurm-usage-reporting-setup-permission-errors">Permission Errors</h4>
+<ul>
+<li>Agent typically needs root access for SLURM commands</li>
+<li>Verify service runs as root user</li>
+<li>Check file permissions on configuration file</li>
+</ul>
+<h3 id="admin-guide-providers-docs-slurm-usage-reporting-setup-debugging">Debugging</h3>
+<p>Enable debug logging by setting environment variable:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">WALDUR_SITE_AGENT_LOG_LEVEL</span><span class="o">=</span>DEBUG
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-data-flow">Data Flow</h2>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code>SLURM Cluster → sacct command → Usage aggregation → Unit conversion → Waldur API
+     ↓              ↓                    ↓                ↓              ↓
+- Job records  - CPU-minutes      - Per-account    - k-Hours     - POST usage
+- Resource     - MB-minutes       - Per-user       - gb-Hours      data
+  usage        - Account data     - Totals         - Converted
+                                                    values
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-security-considerations">Security Considerations</h2>
+<ol>
+<li><strong>API Token Security</strong>: Store Waldur API token securely, restrict file permissions</li>
+<li><strong>Root Access</strong>: Agent needs root for SLURM commands - run in controlled environment</li>
+<li><strong>Network</strong>: Ensure secure connection to Waldur Mastermind (HTTPS)</li>
+<li><strong>Logging</strong>: Avoid logging sensitive data, configure log rotation</li>
+</ol>
+<h2 id="admin-guide-providers-docs-slurm-usage-reporting-setup-integration-notes">Integration Notes</h2>
+<p>This setup is designed for <strong>usage reporting only</strong>. For a complete Waldur Site Agent deployment that includes:</p>
+<ul>
+<li>Order processing (resource creation/deletion)</li>
+<li>Membership synchronization</li>
+<li>Event processing</li>
+</ul>
+<p>You would need additional agent instances or a multi-mode configuration with different service files for each mode.</p></div></section><h1 class='nav-section-title-end'>Ended: Docs</h1><h1 class='nav-section-title-end'>Ended: Providers</h1>
                         <h2 class='nav-section-title' id='section-rke2-setup'>
                             Rke2 setup <a class='headerlink' href='#section-rke2-setup' title='Permanent link'>↵</a>
                         </h2>
