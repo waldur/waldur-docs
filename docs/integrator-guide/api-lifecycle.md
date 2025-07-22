@@ -4,23 +4,23 @@
 
 Waldur's API lifecycle management balances innovation with stability through defined policies:
 
-1. **Release Cadence**:
+- **Release Cadence**:
    - 2 major releases per year (every 6 months)
    - 4 minor releases per year (every 3 months)
 
-2. **API Group Segmentation**:
+- **API Group Segmentation**:
    - APIs are grouped by functional domains (e.g., `core`, `marketplace`, `openstack`)
    - Groups have independent maturity levels and versioning
 
-3. **API Maturity Management**:
+- **API Maturity Management**:
    - Three maturity levels: `alpha`, `beta`, `stable`
    - Each level has specific stability guarantees and versioning rules
 
-4. **Change Classification**:
+- **Change Classification**:
    - Backward-compatible (additive changes) and backward-incompatible (breaking changes)
    - API changes, database changes, configuration and deployment changes
 
-5. **Change Communication**:
+- **Change Communication**:
    - For Waldur developers: via commit message and OpenAPI schema linter
    - For release manager: breaking changes in stable APIs trigger policy validation
    - For external developers: via OpenAPI schema, SDK documentation, code transformations and validation tools
@@ -223,19 +223,19 @@ graph LR
 
 ### Impact Report Components
 
-1. **Database Impact**:
+- **Database Impact**:
 
    - Schema changes
    - Data migration requirements
    - Estimated execution time
 
-2. **API Compatibility**:
+- **API Compatibility**:
 
    - Breaking changes
    - Required client updates
    - Deprecation timeline
 
-3. **Configuration Changes**:
+- **Configuration Changes**:
 
    - Modified settings
    - New environment variables
