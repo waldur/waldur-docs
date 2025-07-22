@@ -3165,6 +3165,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../developer-guide/ui/testing-http-mocks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Mocking HTTP Requests for Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../developer-guide/ui/tests/" class="md-nav__link">
         
   
@@ -25811,7 +25832,120 @@ undeploying is applied to:</p>
 <ul>
 <li>VMs</li>
 </ul>
-<p>Please use "synchronise" instead of "pull" in action title.</p></div></section><section class="print-page" id="developer-guide-ui-tests"><div><h1 id="testing">Testing</h1>
+<p>Please use "synchronise" instead of "pull" in action title.</p></div></section><section class="print-page" id="developer-guide-ui-testing-http-mocks"><div><h1 id="mocking-http-requests-for-unit-tests">Mocking HTTP Requests for Unit Tests</h1>
+<p>When writing unit tests for frontend components, it's crucial to isolate the component from external dependencies, especially network requests. Mocking HTTP requests allows us to simulate API responses and test our components in a predictable and controlled environment. This guide describes how to use <code>nock</code>, <code>got</code>, and React Testing Library (RTL) to achieve this.
+By following these patterns, you can effectively mock HTTP requests in your unit tests, leading to more robust and reliable components.</p>
+<h2 id="developer-guide-ui-testing-http-mocks-key-libraries">Key Libraries</h2>
+<ul>
+<li><strong><a href="https://github.com/nock/nock">Nock</a></strong>: A powerful HTTP server mocking and expectations library for Node.js. It allows you to intercept outgoing HTTP requests and provide custom responses.</li>
+<li><strong><a href="https://github.com/sindresorhus/got">Got</a></strong>: A human-friendly and powerful HTTP request library for Node.js. We use it in tests to trigger the mocked endpoints and wait for <code>nock</code> to resolve them.</li>
+<li><strong><a href="https://testing-library.com/docs/react-testing-library/intro/">React Testing Library (RTL)</a></strong>: A library for testing React components in a way that resembles how users interact with them.</li>
+</ul>
+<h2 id="developer-guide-ui-testing-http-mocks-basic-setup">Basic Setup</h2>
+<p>To ensure a clean testing environment for each test case, we should set up <code>nock</code> before each test and clean up the mocks afterward. This is typically done in <code>beforeEach</code> and <code>afterEach</code> blocks.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">render</span><span class="p">,</span><span class="w"> </span><span class="nx">screen</span><span class="p">,</span><span class="w"> </span><span class="nx">waitFor</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@testing-library/react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">got</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'got'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">nock</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'nock'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">afterEach</span><span class="p">,</span><span class="w"> </span><span class="nx">beforeEach</span><span class="p">,</span><span class="w"> </span><span class="nx">describe</span><span class="p">,</span><span class="w"> </span><span class="nx">it</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'vitest'</span><span class="p">;</span>
+
+<span class="c1">// It's a good practice to define the base URL of your API to avoid repetition.</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">API_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'http://example.com'</span><span class="p">;</span>
+
+<span class="nx">describe</span><span class="p">(</span><span class="s1">'MyComponent'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">beforeEach</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Setup nock to intercept requests to our API.</span>
+<span class="w">    </span><span class="nx">nock</span><span class="p">(</span><span class="nx">API_URL</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/api/my-data/'</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">reply</span><span class="p">(</span><span class="mf">200</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">1</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'Test Data'</span><span class="w"> </span><span class="p">});</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">afterEach</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Clean up all nock interceptors after each test.</span>
+<span class="w">    </span><span class="nx">nock</span><span class="p">.</span><span class="nx">cleanAll</span><span class="p">();</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">'should fetch and display data'</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Render your component which fetches data on mount.</span>
+<span class="w">    </span><span class="nx">render</span><span class="p">(</span><span class="o">&lt;</span><span class="nx">MyComponent</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Use got to trigger the request and wait for nock to handle it.</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nx">waitFor</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">got</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">API_URL</span><span class="si">}</span><span class="sb">/api/my-data/`</span><span class="p">));</span>
+
+<span class="w">    </span><span class="c1">// Assert that the component displays the mocked data.</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">screen</span><span class="p">.</span><span class="nx">getByText</span><span class="p">(</span><span class="s1">'Test Data'</span><span class="p">)).</span><span class="nx">toBeInTheDocument</span><span class="p">();</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="p">});</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-ui-testing-http-mocks-mocking-different-scenarios">Mocking Different Scenarios</h2>
+<h3 id="developer-guide-ui-testing-http-mocks-successful-get-request">Successful GET Request</h3>
+<p>The example above shows a basic successful <code>GET</code> request. You can customize the response data to fit your test case.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nx">nock</span><span class="p">(</span><span class="s1">'http://example.com'</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/api/organization-groups/'</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="nx">reply</span><span class="p">(</span><span class="mf">200</span><span class="p">,</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'Group 1'</span><span class="p">,</span><span class="w"> </span><span class="nx">uuid</span><span class="o">:</span><span class="w"> </span><span class="s1">'group-1-uuid'</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'Group 2'</span><span class="p">,</span><span class="w"> </span><span class="nx">uuid</span><span class="o">:</span><span class="w"> </span><span class="s1">'group-2-uuid'</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">]);</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-ui-testing-http-mocks-mocking-failed-requests">Mocking Failed Requests</h3>
+<p>To test how your component handles API errors, you can mock a request to return an error status code.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nx">nock</span><span class="p">(</span><span class="s1">'http://example.com'</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/api/organization-groups/'</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="nx">reply</span><span class="p">(</span><span class="mf">400</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">'Invalid request'</span><span class="w"> </span><span class="p">});</span>
+
+<span class="c1">// In your test:</span>
+<span class="nx">render</span><span class="p">(</span><span class="o">&lt;</span><span class="nx">MyComponent</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">);</span>
+<span class="k">await</span><span class="w"> </span><span class="nx">waitFor</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">  </span><span class="nx">expect</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">screen</span><span class="p">.</span><span class="nx">getByText</span><span class="p">(</span><span class="s1">'Unable to load organization groups.'</span><span class="p">),</span>
+<span class="w">  </span><span class="p">).</span><span class="nx">toBeInTheDocument</span><span class="p">(),</span>
+<span class="p">);</span>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="developer-guide-ui-tests"><div><h1 id="testing">Testing</h1>
 <h2 id="developer-guide-ui-tests-unit-tests">Unit tests</h2>
 <p>Unit tests are used for testing React components and utilities. They are written in <code>.test.ts</code> or <code>.test.tsx</code> files located next to the code they test.</p>
 <p>Run tests using <code>yarn test</code> command.</p>
