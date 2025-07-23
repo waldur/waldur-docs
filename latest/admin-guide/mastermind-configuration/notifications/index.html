@@ -3208,6 +3208,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#waldur_mastermindproposal" class="md-nav__link">
+    <span class="md-ellipsis">
+      WALDUR_MASTERMIND.PROPOSAL
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="WALDUR_MASTERMIND.PROPOSAL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proposalproposal_state_changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      proposal.proposal_state_changed
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="proposal.proposal_state_changed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#templates_38" class="md-nav__link">
+    <span class="md-ellipsis">
+      Templates
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -7992,6 +8031,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#waldur_mastermindproposal" class="md-nav__link">
+    <span class="md-ellipsis">
+      WALDUR_MASTERMIND.PROPOSAL
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="WALDUR_MASTERMIND.PROPOSAL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proposalproposal_state_changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      proposal.proposal_state_changed
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="proposal.proposal_state_changed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#templates_38" class="md-nav__link">
+    <span class="md-ellipsis">
+      Templates
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -10848,6 +10926,285 @@
 </div>
 </div>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>    {% if issue.customer.abbreviation %}{{issue.customer.abbreviation}}: {% endif %}{{issue.summary}}
+</code></pre></div></td></tr></table></div>
+<h2 id="waldur_mastermindproposal">WALDUR_MASTERMIND.PROPOSAL</h2>
+<h3 id="proposalproposal_state_changed">proposal.proposal_state_changed</h3>
+<p>A notification about the proposal state changes (submitted → in review → accepted/rejected).</p>
+<h4 id="templates_38">Templates</h4>
+<div class="tabbed-set tabbed-alternate" data-tabs="111:1"><input checked id="__tabbed_111_1" name="__tabbed_111" type="radio"><div class="tabbed-labels"><label for="__tabbed_111_1">proposal/proposal_state_changed_message.txt</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code>    Dear {{ proposal_creator_name }},
+
+    The state of your proposal "{{ proposal_name }}" in call "{{ call_name }}" has been updated.
+
+    State change:
+    - Previous state: {{ previous_state }}
+    - New state: {{ new_state }}
+    - Updated on: {{ update_date }}
+
+    {% if new_state == 'accepted' %}
+    Project created: {{ project_name }}
+    Allocation start date: {{ allocation_date }}
+    Duration: {{ duration }} days
+    {% endif %}
+
+    {% if new_state == 'rejected' %}
+    Feedback: {{ rejection_feedback }}
+    {% endif %}
+
+    {% if new_state == 'submitted' %}
+    Your proposal has been successfully submitted and will be reviewed according to the review process for this call. You will receive further notifications as your proposal progresses through the review process.
+    {% endif %}
+
+    {% if new_state == 'in_review' %}
+    Your proposal is now under review. Reviewers will evaluate your proposal based on the criteria specified in the call. This process may take {{ review_period }} days according to the round's review period.
+    {% endif %}
+
+    {% if new_state == 'accepted' %}
+    Congratulations! Your proposal has been accepted. Resources have been allocated based on your request and a new project has been created. You can access your project by clicking the link below.
+    {% endif %}
+
+    {% if new_state == 'rejected' %}
+    We regret to inform you that your proposal has not been accepted at this time. Please review any feedback provided above. You may have the opportunity to submit a revised proposal in future rounds.
+    {% endif %}
+
+    View Proposal: {{ proposal_url }}
+    {% if new_state == 'accepted' and project_url %}
+    View Project: {{ project_url }}
+    {% endif %}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+</code></pre></div></td></tr></table></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="112:1"><input checked id="__tabbed_112_1" name="__tabbed_112" type="radio"><div class="tabbed-labels"><label for="__tabbed_112_1">proposal/proposal_state_changed_message.html</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code>    &lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="UTF-8"&gt;
+        &lt;title&gt;Proposal Status Update&lt;/title&gt;
+        &lt;style&gt;
+            body {
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                margin-bottom: 20px;
+            }
+            .state-change {
+                background-color: #f9f9f9;
+                padding: 15px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+            }
+            .message-box {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            .footer {
+                margin-top: 30px;
+                color: #777;
+                border-top: 1px solid #eee;
+                padding-top: 10px;
+            }
+        &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div class="header"&gt;
+            &lt;p&gt;Dear {{ proposal_creator_name }},&lt;/p&gt;
+            &lt;p&gt;The state of your proposal "&lt;strong&gt;{{ proposal_name }}&lt;/strong&gt;" in call "&lt;strong&gt;{{ call_name }}&lt;/strong&gt;" has been updated.&lt;/p&gt;
+        &lt;/div&gt;
+
+        &lt;div class="state-change"&gt;
+            &lt;h3&gt;State change:&lt;/h3&gt;
+            &lt;ul&gt;
+                &lt;li&gt;&lt;strong&gt;Previous state:&lt;/strong&gt; {{ previous_state }}&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;New state:&lt;/strong&gt; {{ new_state }}&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;Updated on:&lt;/strong&gt; {{ update_date }}&lt;/li&gt;
+            &lt;/ul&gt;
+
+            {% if new_state == 'accepted' %}
+            &lt;ul&gt;
+                &lt;li&gt;&lt;strong&gt;Project created:&lt;/strong&gt; {{ project_name }}&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;Allocation start date:&lt;/strong&gt; {{ allocation_date }}&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;Duration:&lt;/strong&gt; {{ duration }} days&lt;/li&gt;
+            &lt;/ul&gt;
+            {% endif %}
+
+            {% if new_state == 'rejected' %}
+            &lt;p&gt;&lt;strong&gt;Feedback:&lt;/strong&gt; {{ rejection_feedback }}&lt;/p&gt;
+            {% endif %}
+        &lt;/div&gt;
+
+        &lt;div class="message-box"&gt;
+            {% if new_state == 'submitted' %}
+            &lt;p&gt;Your proposal has been successfully submitted and will be reviewed according to the review process for this call. You will receive further notifications as your proposal progresses through the review process.&lt;/p&gt;
+            {% endif %}
+
+            {% if new_state == 'in_review' %}
+            &lt;p&gt;Your proposal is now under review. Reviewers will evaluate your proposal based on the criteria specified in the call. This process may take {{ review_period }} days according to the round's review period.&lt;/p&gt;
+            {% endif %}
+
+            {% if new_state == 'accepted' %}
+            &lt;p&gt;Congratulations! Your proposal has been accepted. Resources have been allocated based on your request and a new project has been created. You can access your project by clicking the link below.&lt;/p&gt;
+            {% endif %}
+
+            {% if new_state == 'rejected' %}
+            &lt;p&gt;We regret to inform you that your proposal has not been accepted at this time. Please review any feedback provided above. You may have the opportunity to submit a revised proposal in future rounds.&lt;/p&gt;
+            {% endif %}
+        &lt;/div&gt;
+
+        &lt;a href="{{ proposal_url }}"&gt;View Proposal&lt;/a&gt;
+        &lt;br&gt;
+        {% if new_state == 'accepted' and project_url %}
+        &lt;a href="{{ project_url }}"&gt;View Project&lt;/a&gt;
+        {% endif %}
+
+        &lt;div class="footer"&gt;
+            &lt;p&gt;This is an automated message from the {{ site_name }}. Please do not reply to this email.&lt;/p&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+</code></pre></div></td></tr></table></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="113:1"><input checked id="__tabbed_113_1" name="__tabbed_113" type="radio"><div class="tabbed-labels"><label for="__tabbed_113_1">proposal/proposal_state_changed_subject.txt</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>    Proposal state update: {{ proposal_name }} - {{ new_state }}
 </code></pre></div></td></tr></table></div></div>
 
 
@@ -10869,7 +11226,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-07-10
+    2025-07-23
   </span>
 
     
