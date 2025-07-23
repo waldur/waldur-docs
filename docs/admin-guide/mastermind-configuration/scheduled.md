@@ -32,10 +32,10 @@ td:nth-child(4) {
 | `check-expired-permissions` | `waldur_core.permissions.check_expired_permissions` | 1 day | Task not found in registry |
 | `check-polices` | `waldur_mastermind.policy.check_polices` | Cron: `* * 1 * * (m/h/dM/MY/d)` | Evaluate all policies across all policy types in the system. |
 | `core-reset-updating-resources` | `waldur_core.reset_updating_resources` | 10 minutes | Reset resources stuck in UPDATING state when their Celery tasks are completed. |
-| `create-reviews-if-strategy-is-after-proposal` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_proposal` | 1 hour | Task not found in registry |
-| `create-reviews-if-strategy-is-after-round` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_round` | 1 hour | Task not found in registry |
+| `create-reviews-if-strategy-is-after-proposal` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_proposal` | 1 hour | Create reviews for active rounds with 'after proposal' review strategy. |
+| `create-reviews-if-strategy-is-after-round` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_round` | 1 hour | Create reviews for active rounds with 'after round' review strategy. |
 | `create_customer_permission_reviews` | `waldur_core.structure.create_customer_permission_reviews` | 1 day | Create customer permission reviews for customers that need periodic review of user permissions. |
-| `expired-reviews-should-be-cancelled` | `waldur_mastermind.proposal.expired_reviews_should_be_cancelled` | 1 hour | Task not found in registry |
+| `expired-reviews-should-be-cancelled` | `waldur_mastermind.proposal.expired_reviews_should_be_cancelled` | 1 hour | Cancel reviews that have expired. |
 | `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | Task not found in registry |
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
 | `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Create marketplace resources for OpenStack instances and volumes that exist in backend but are missing from marketplace. |
@@ -52,7 +52,7 @@ td:nth-child(4) {
 | `openstack_mark_as_erred_old_tenants_in_deleting_state` | `openstack.mark_as_erred_old_tenants_in_deleting_state` | 1 day | Mark OpenStack tenants as erred if they have been in deleting state for more than 1 day. |
 | `process-pending-project-invitations` | `waldur_core.users.process_pending_project_invitations` | 2 hours | Process project invitations for projects that have become active. |
 | `process_pending_project_orders` | `waldur_mastermind.marketplace.process_pending_project_orders` | 2 hours | Process orders for projects that have become active. |
-| `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Task not found in registry |
+| `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Cancel proposals for rounds that have ended. |
 | `pull-priorities` | `waldur_mastermind.support.pull_priorities` | 1 day | Pull priority levels from the active support backend. |
 | `pull-service-properties` | `waldur_core.structure.ServicePropertiesListPullTask` | 1 day | Pull service properties from all active service backends. |
 | `pull-service-resources` | `waldur_core.structure.ServiceResourcesListPullTask` | 1 hour | Pull resources from all active service backends. |

@@ -1987,3 +1987,159 @@ A notification used for issue creation.
 
 ```
 
+## WALDUR_MASTERMIND.PROPOSAL
+
+### proposal.proposal_state_changed
+
+A notification about the proposal state changes (submitted → in review → accepted/rejected).
+
+#### Templates
+
+=== "proposal/proposal_state_changed_message.txt"
+
+```txt
+    Dear {{ proposal_creator_name }},
+
+    The state of your proposal "{{ proposal_name }}" in call "{{ call_name }}" has been updated.
+
+    State change:
+    - Previous state: {{ previous_state }}
+    - New state: {{ new_state }}
+    - Updated on: {{ update_date }}
+
+    {% if new_state == 'accepted' %}
+    Project created: {{ project_name }}
+    Allocation start date: {{ allocation_date }}
+    Duration: {{ duration }} days
+    {% endif %}
+
+    {% if new_state == 'rejected' %}
+    Feedback: {{ rejection_feedback }}
+    {% endif %}
+
+    {% if new_state == 'submitted' %}
+    Your proposal has been successfully submitted and will be reviewed according to the review process for this call. You will receive further notifications as your proposal progresses through the review process.
+    {% endif %}
+
+    {% if new_state == 'in_review' %}
+    Your proposal is now under review. Reviewers will evaluate your proposal based on the criteria specified in the call. This process may take {{ review_period }} days according to the round's review period.
+    {% endif %}
+
+    {% if new_state == 'accepted' %}
+    Congratulations! Your proposal has been accepted. Resources have been allocated based on your request and a new project has been created. You can access your project by clicking the link below.
+    {% endif %}
+
+    {% if new_state == 'rejected' %}
+    We regret to inform you that your proposal has not been accepted at this time. Please review any feedback provided above. You may have the opportunity to submit a revised proposal in future rounds.
+    {% endif %}
+
+    View Proposal: {{ proposal_url }}
+    {% if new_state == 'accepted' and project_url %}
+    View Project: {{ project_url }}
+    {% endif %}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/proposal_state_changed_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Proposal Status Update</title>
+        <style>
+            body {
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                margin-bottom: 20px;
+            }
+            .state-change {
+                background-color: #f9f9f9;
+                padding: 15px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+            }
+            .message-box {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            .footer {
+                margin-top: 30px;
+                color: #777;
+                border-top: 1px solid #eee;
+                padding-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <p>Dear {{ proposal_creator_name }},</p>
+            <p>The state of your proposal "<strong>{{ proposal_name }}</strong>" in call "<strong>{{ call_name }}</strong>" has been updated.</p>
+        </div>
+
+        <div class="state-change">
+            <h3>State change:</h3>
+            <ul>
+                <li><strong>Previous state:</strong> {{ previous_state }}</li>
+                <li><strong>New state:</strong> {{ new_state }}</li>
+                <li><strong>Updated on:</strong> {{ update_date }}</li>
+            </ul>
+
+            {% if new_state == 'accepted' %}
+            <ul>
+                <li><strong>Project created:</strong> {{ project_name }}</li>
+                <li><strong>Allocation start date:</strong> {{ allocation_date }}</li>
+                <li><strong>Duration:</strong> {{ duration }} days</li>
+            </ul>
+            {% endif %}
+
+            {% if new_state == 'rejected' %}
+            <p><strong>Feedback:</strong> {{ rejection_feedback }}</p>
+            {% endif %}
+        </div>
+
+        <div class="message-box">
+            {% if new_state == 'submitted' %}
+            <p>Your proposal has been successfully submitted and will be reviewed according to the review process for this call. You will receive further notifications as your proposal progresses through the review process.</p>
+            {% endif %}
+
+            {% if new_state == 'in_review' %}
+            <p>Your proposal is now under review. Reviewers will evaluate your proposal based on the criteria specified in the call. This process may take {{ review_period }} days according to the round's review period.</p>
+            {% endif %}
+
+            {% if new_state == 'accepted' %}
+            <p>Congratulations! Your proposal has been accepted. Resources have been allocated based on your request and a new project has been created. You can access your project by clicking the link below.</p>
+            {% endif %}
+
+            {% if new_state == 'rejected' %}
+            <p>We regret to inform you that your proposal has not been accepted at this time. Please review any feedback provided above. You may have the opportunity to submit a revised proposal in future rounds.</p>
+            {% endif %}
+        </div>
+
+        <a href="{{ proposal_url }}">View Proposal</a>
+        <br>
+        {% if new_state == 'accepted' and project_url %}
+        <a href="{{ project_url }}">View Project</a>
+        {% endif %}
+
+        <div class="footer">
+            <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
+        </div>
+    </body>
+    </html>
+
+```
+
+=== "proposal/proposal_state_changed_subject.txt"
+
+```txt
+    Proposal state update: {{ proposal_name }} - {{ new_state }}
+
+```
+
