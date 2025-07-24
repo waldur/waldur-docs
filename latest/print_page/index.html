@@ -2737,6 +2737,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../developer-guide/core-concepts/offering-users/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OfferingUser States and Management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../developer-guide/core-concepts/permissions/" class="md-nav__link">
         
   
@@ -24658,7 +24679,304 @@ from an initial REST API call and then query state changes of the entity.</p>
 </li>
 </ol>
 <h2 id="developer-guide-core-concepts-managed-entities-simplified-schema-of-operations-flow">Simplified schema of operations flow</h2>
-<p>View ---&gt; Serializer ---&gt; View ---&gt; Executor ---&gt; Tasks ---&gt; Backend</p></div></section><section class="print-page" id="developer-guide-core-concepts-permissions"><div><h1 id="role-based-access-control">Role-based access control</h1>
+<p>View ---&gt; Serializer ---&gt; View ---&gt; Executor ---&gt; Tasks ---&gt; Backend</p></div></section><section class="print-page" id="developer-guide-core-concepts-offering-users"><div><h1 id="offeringuser-states-and-management">OfferingUser States and Management</h1>
+<p>OfferingUser represents a user account created for a specific marketplace offering. It supports a finite state machine (FSM) that tracks the lifecycle of user account creation, validation, and management.</p>
+<h2 id="developer-guide-core-concepts-offering-users-states">States</h2>
+<p>OfferingUser has the following states:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CREATION_REQUESTED</code></td>
+<td>Initial state when user account creation is requested</td>
+</tr>
+<tr>
+<td><code>CREATING</code></td>
+<td>Account is being created by the service provider</td>
+</tr>
+<tr>
+<td><code>PENDING_ACCOUNT_LINKING</code></td>
+<td>Waiting for user to link their existing account</td>
+</tr>
+<tr>
+<td><code>PENDING_ADDITIONAL_VALIDATION</code></td>
+<td>Requires additional validation from service provider</td>
+</tr>
+<tr>
+<td><code>OK</code></td>
+<td>Account is active and ready to use</td>
+</tr>
+<tr>
+<td><code>DELETION_REQUESTED</code></td>
+<td>Account deletion has been requested</td>
+</tr>
+<tr>
+<td><code>DELETING</code></td>
+<td>Account is being deleted</td>
+</tr>
+<tr>
+<td><code>DELETED</code></td>
+<td>Account has been successfully deleted</td>
+</tr>
+<tr>
+<td><code>ERROR</code></td>
+<td>An error occurred during account management</td>
+</tr>
+</tbody>
+</table>
+<h2 id="developer-guide-core-concepts-offering-users-state-transitions">State Transitions</h2>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; CREATION_REQUESTED : Account requested
+
+    CREATION_REQUESTED --&gt; CREATING : begin_creating()
+    CREATION_REQUESTED --&gt; OK : set_ok()
+
+    CREATING --&gt; PENDING_ACCOUNT_LINKING : set_pending_account_linking()
+    CREATING --&gt; PENDING_ADDITIONAL_VALIDATION : set_pending_additional_validation()
+    CREATING --&gt; OK : set_ok()
+
+    PENDING_ACCOUNT_LINKING --&gt; OK : set_validation_complete()
+    PENDING_ADDITIONAL_VALIDATION --&gt; OK : set_validation_complete()
+
+    OK --&gt; DELETION_REQUESTED : request_deletion()
+
+    DELETION_REQUESTED --&gt; DELETING : set_deleting()
+    DELETING --&gt; DELETED : set_deleted()
+
+    CREATION_REQUESTED --&gt; ERROR : set_error()
+    CREATING --&gt; ERROR : set_error()
+    PENDING_ACCOUNT_LINKING --&gt; ERROR : set_error()
+    PENDING_ADDITIONAL_VALIDATION --&gt; ERROR : set_error()
+    OK --&gt; ERROR : set_error()
+    DELETION_REQUESTED --&gt; ERROR : set_error()
+    DELETING --&gt; ERROR : set_error()
+
+    ERROR --&gt; OK : set_ok()
+    ERROR --&gt; PENDING_ACCOUNT_LINKING : set_pending_account_linking()
+    ERROR --&gt; PENDING_ADDITIONAL_VALIDATION : set_pending_additional_validation()</code></pre>
+<h2 id="developer-guide-core-concepts-offering-users-rest-api-endpoints">REST API Endpoints</h2>
+<h3 id="developer-guide-core-concepts-offering-users-state-transition-actions">State Transition Actions</h3>
+<p>All state transition endpoints require <code>UPDATE_OFFERING_USER</code> permission and are accessed via POST to the offering user detail endpoint with the action suffix.</p>
+<p><strong>Base URL:</strong> <code>/api/marketplace-offering-users/{uuid}/</code></p>
+<h4 id="developer-guide-core-concepts-offering-users-set-pending-additional-validation">Set Pending Additional Validation</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_pending_additional_validation/</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">{</span>
+<span class="err">  "comment": "Additional documents required for validation"</span>
+<span class="err">}</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>CREATING</code>, <code>ERROR</code></p>
+<h4 id="developer-guide-core-concepts-offering-users-set-pending-account-linking">Set Pending Account Linking</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_pending_account_linking/</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">{</span>
+<span class="err">  "comment": "Please link your existing service account"</span>
+<span class="err">}</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>CREATING</code>, <code>ERROR</code></p>
+<h4 id="developer-guide-core-concepts-offering-users-set-validation-complete">Set Validation Complete</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_validation_complete/</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>PENDING_ADDITIONAL_VALIDATION</code>, <code>PENDING_ACCOUNT_LINKING</code></p>
+<p><strong>Note:</strong> This action clears the <code>service_provider_comment</code> field.</p>
+<h3 id="developer-guide-core-concepts-offering-users-offeringuser-fields">OfferingUser Fields</h3>
+<p>When retrieving or updating OfferingUser objects, the following state-related fields are available:</p>
+<ul>
+<li><code>state</code> (string, read-only): Current state of the user account</li>
+<li><code>service_provider_comment</code> (string, read-only): Comment from service provider for pending states</li>
+</ul>
+<h2 id="developer-guide-core-concepts-offering-users-backward-compatibility">Backward Compatibility</h2>
+<p>The system maintains backward compatibility with existing integrations:</p>
+<h3 id="developer-guide-core-concepts-offering-users-automatic-state-transitions">Automatic State Transitions</h3>
+<ul>
+<li><strong>Username Assignment</strong>: When a username is assigned to an OfferingUser (via API or <code>set_offerings_username</code>), the state automatically transitions to <code>OK</code></li>
+<li><strong>Creation with Username</strong>: Creating an OfferingUser with a username immediately sets the state to <code>OK</code></li>
+</ul>
+<h3 id="developer-guide-core-concepts-offering-users-legacy-endpoints">Legacy Endpoints</h3>
+<ul>
+<li><code>POST /api/marketplace-service-providers/{uuid}/set_offerings_username/</code> - Bulk username assignment that automatically transitions users to <code>OK</code> state</li>
+</ul>
+<h2 id="developer-guide-core-concepts-offering-users-usage-examples">Usage Examples</h2>
+<h3 id="developer-guide-core-concepts-offering-users-service-provider-workflow">Service Provider Workflow</h3>
+<ol>
+<li><strong>Initial Creation</strong>: OfferingUser is created with state <code>CREATION_REQUESTED</code></li>
+<li><strong>Begin Processing</strong>: Transition to <code>CREATING</code> state</li>
+<li><strong>Require Validation</strong>: If additional validation needed, transition to <code>PENDING_ADDITIONAL_VALIDATION</code> with explanatory comment</li>
+<li><strong>Complete Validation</strong>: Once validated, transition to <code>OK</code> state</li>
+<li><strong>Account Ready</strong>: User can now access the service</li>
+</ol>
+<h2 id="developer-guide-core-concepts-offering-users-permissions">Permissions</h2>
+<p>State transition endpoints use the <code>permission_factory</code> pattern with:</p>
+<ul>
+<li>Permission: <code>UPDATE_OFFERING_USER</code></li>
+<li>Scope: <code>["offering.customer"]</code> - User must have permission on the offering's customer</li>
+</ul>
+<p>This means users need the <code>UPDATE_OFFERING_USER</code> permission on the customer that owns the offering associated with the OfferingUser.</p>
+<h2 id="developer-guide-core-concepts-offering-users-filtering-offeringusers">Filtering OfferingUsers</h2>
+<p>The OfferingUser list endpoint supports filtering by state to help manage users across different lifecycle stages.</p>
+<h3 id="developer-guide-core-concepts-offering-users-state-filtering">State Filtering</h3>
+<p>Filter OfferingUsers by their current state using the <code>state</code> query parameter:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/marketplace-offering-users/?state=Requested</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Pending%20additional%20validation</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-offering-users-available-state-filter-values">Available State Filter Values</h4>
+<table>
+<thead>
+<tr>
+<th>Filter Value</th>
+<th>State Constant</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Requested</code></td>
+<td><code>CREATION_REQUESTED</code></td>
+<td>Users with account creation requested</td>
+</tr>
+<tr>
+<td><code>Creating</code></td>
+<td><code>CREATING</code></td>
+<td>Users whose accounts are being created</td>
+</tr>
+<tr>
+<td><code>Pending account linking</code></td>
+<td><code>PENDING_ACCOUNT_LINKING</code></td>
+<td>Users waiting to link existing accounts</td>
+</tr>
+<tr>
+<td><code>Pending additional validation</code></td>
+<td><code>PENDING_ADDITIONAL_VALIDATION</code></td>
+<td>Users requiring additional validation</td>
+</tr>
+<tr>
+<td><code>OK</code></td>
+<td><code>OK</code></td>
+<td>Users with active, ready-to-use accounts</td>
+</tr>
+<tr>
+<td><code>Requested deletion</code></td>
+<td><code>DELETION_REQUESTED</code></td>
+<td>Users with deletion requested</td>
+</tr>
+<tr>
+<td><code>Deleting</code></td>
+<td><code>DELETING</code></td>
+<td>Users whose accounts are being deleted</td>
+</tr>
+<tr>
+<td><code>Deleted</code></td>
+<td><code>DELETED</code></td>
+<td>Users with successfully deleted accounts</td>
+</tr>
+<tr>
+<td><code>Error</code></td>
+<td><code>ERROR</code></td>
+<td>Users with errors during account management</td>
+</tr>
+</tbody>
+</table>
+<h4 id="developer-guide-core-concepts-offering-users-multiple-state-filtering">Multiple State Filtering</h4>
+<p>Filter by multiple states simultaneously:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/marketplace-offering-users/?state=Requested&amp;state=OK</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Pending%20account%20linking&amp;state=Pending%20additional%20validation</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-offering-users-combining-with-other-filters">Combining with Other Filters</h4>
+<p>State filtering can be combined with other available filters:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Filter by state and offering</span>
+<span class="err">GET /api/marketplace-offering-users/?state=OK&amp;offering_uuid=123e4567-e89b-12d3-a456-426614174000</span>
+
+<span class="err"># Filter by state and user</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Pending%20additional%20validation&amp;user_uuid=456e7890-e89b-12d3-a456-426614174001</span>
+
+<span class="err"># Filter by state and provider</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Creating&amp;provider_uuid=789e0123-e89b-12d3-a456-426614174002</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-offering-users-error-handling">Error Handling</h4>
+<p>Invalid state values return HTTP 400 Bad Request:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/marketplace-offering-users/?state=InvalidState</span>
+<span class="err"># Returns: 400 Bad Request with error details</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-core-concepts-offering-users-other-available-filters">Other Available Filters</h3>
+<p>The OfferingUser list endpoint also supports these filters:</p>
+<ul>
+<li><code>offering_uuid</code> - Filter by offering UUID</li>
+<li><code>user_uuid</code> - Filter by user UUID</li>
+<li><code>user_username</code> - Filter by user's username (case-insensitive)</li>
+<li><code>provider_uuid</code> - Filter by service provider UUID</li>
+<li><code>is_restricted</code> - Filter by restriction status (boolean)</li>
+<li><code>created_before</code> / <code>created_after</code> - Filter by creation date</li>
+<li><code>modified_before</code> / <code>modified_after</code> - Filter by modification date</li>
+<li><code>query</code> - General search across offering name, username, and user names</li>
+</ul>
+<h3 id="developer-guide-core-concepts-offering-users-practical-filtering-examples">Practical Filtering Examples</h3>
+<p>Here are common filtering scenarios for managing OfferingUsers:</p>
+<h4 id="developer-guide-core-concepts-offering-users-find-users-requiring-attention">Find Users Requiring Attention</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Get users needing validation or account linking</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Pending%20additional%20validation&amp;state=Pending%20account%20linking</span>
+
+<span class="err"># Get users in error state</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Error</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-offering-users-monitor-service-provider-operations">Monitor Service Provider Operations</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Track active creation processes for a specific provider</span>
+<span class="err">GET /api/marketplace-offering-users/?provider_uuid=123e4567&amp;state=Creating</span>
+
+<span class="err"># Find successfully created accounts for a provider</span>
+<span class="err">GET /api/marketplace-offering-users/?provider_uuid=123e4567&amp;state=OK</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-offering-users-audit-and-reporting">Audit and Reporting</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Get all deleted accounts for audit purposes</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Deleted</span>
+
+<span class="err"># Find restricted users across all offerings</span>
+<span class="err">GET /api/marketplace-offering-users/?is_restricted=true</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-core-concepts-offering-users-events-and-logging">Events and Logging</h2>
+<p>State transitions generate:</p>
+<ul>
+<li><strong>Event logs</strong>: Recorded in the system event log for audit purposes</li>
+<li><strong>Application logs</strong>: Logged with user attribution for debugging and monitoring</li>
+</ul></div></section><section class="print-page" id="developer-guide-core-concepts-permissions"><div><h1 id="role-based-access-control">Role-based access control</h1>
 <h2 id="developer-guide-core-concepts-permissions-introduction">Introduction</h2>
 <p>Waldur authorization system determines what user can do. It consists of permissions and roles. Permission is unique string designating action to be executed. Role is named set of permissions. This functionality is implemented in <code>waldur_core.permissions</code> application.</p>
 <p>First thing to remember is to use <code>PermissionEnum</code> to define permissions instead of using plain string or standalone named constant, otherwise they would not be pushed to frontend.</p>
