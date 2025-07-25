@@ -1728,10 +1728,67 @@ View Project: {{ project_url }}
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
 ```
 
+### new_proposal_submitted_message.html (waldur_mastermind.proposal)
+
+``` html
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <p>Dear call manager,</p>
+
+    <p>A new proposal has been submitted to the call "{{ call_name }}".</p>
+
+    <p>
+        <strong>Proposal details:</strong><br>
+        - Name: {{ proposal_name }}<br>
+        - Submitted by: {{ proposal_creator_name }}<br>
+        - Submission date: {{ submission_date }}<br>
+        - Round: {{ round_name }}
+    </p>
+
+    <p>
+        You can review this proposal by visiting the following URL:<br>
+        <a href="{{ proposal_url }}">{{ proposal_url }}</a>
+    </p>
+
+    <p>
+        This is an automated message from the {{ site_name }}. Please do not reply to this email.
+    </p>
+</body>
+</html>
+```
+
 ### proposal_state_changed_subject.txt (waldur_mastermind.proposal)
 
 ``` txt
 Proposal state update: {{ proposal_name }} - {{ new_state }}
+```
+
+### new_proposal_submitted_subject.txt (waldur_mastermind.proposal)
+
+``` txt
+New proposal submitted: {{ proposal_name }}
+```
+
+### new_proposal_submitted_message.txt (waldur_mastermind.proposal)
+
+``` txt
+Dear call manager,
+
+A new proposal has been submitted to the call "{{ call_name }}".
+
+Proposal details:
+- Name: {{ proposal_name }}
+- Submitted by: {{ proposal_creator_name }}
+- Submission date: {{ submission_date }}
+- Round: {{ round_name }}
+
+You can review this proposal by visiting the following URL:
+{{ proposal_url }}
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
 ```
 
 ### proposal_state_changed_message.html (waldur_mastermind.proposal)

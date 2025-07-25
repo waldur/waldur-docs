@@ -1989,6 +1989,72 @@ A notification used for issue creation.
 
 ## WALDUR_MASTERMIND.PROPOSAL
 
+### proposal.new_proposal_submitted
+
+A notification to the call manager about a new proposal submission.
+
+#### Templates
+
+=== "proposal/new_proposal_submitted_message.txt"
+
+```txt
+    Dear call manager,
+
+    A new proposal has been submitted to the call "{{ call_name }}".
+
+    Proposal details:
+    - Name: {{ proposal_name }}
+    - Submitted by: {{ proposal_creator_name }}
+    - Submission date: {{ submission_date }}
+    - Round: {{ round_name }}
+
+    You can review this proposal by visiting the following URL:
+    {{ proposal_url }}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/new_proposal_submitted_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <p>Dear call manager,</p>
+
+        <p>A new proposal has been submitted to the call "{{ call_name }}".</p>
+
+        <p>
+            <strong>Proposal details:</strong><br>
+            - Name: {{ proposal_name }}<br>
+            - Submitted by: {{ proposal_creator_name }}<br>
+            - Submission date: {{ submission_date }}<br>
+            - Round: {{ round_name }}
+        </p>
+
+        <p>
+            You can review this proposal by visiting the following URL:<br>
+            <a href="{{ proposal_url }}">{{ proposal_url }}</a>
+        </p>
+
+        <p>
+            This is an automated message from the {{ site_name }}. Please do not reply to this email.
+        </p>
+    </body>
+    </html>
+
+```
+
+=== "proposal/new_proposal_submitted_subject.txt"
+
+```txt
+    New proposal submitted: {{ proposal_name }}
+
+```
+
 ### proposal.proposal_state_changed
 
 A notification about the proposal state changes (submitted → in review → accepted/rejected).

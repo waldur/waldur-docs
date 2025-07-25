@@ -37,6 +37,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`SlugMixin`](#slugmixin) | `waldur_core.core.models` | Mixin to automatically generate a name-based slug |
 | [`StateMixin`](#statemixin) | `waldur_core.core.models` | Mixin implementing finite state machine (FSM) functionality |
 | [`UiDescribableMixin`](#uidescribablemixin) | `waldur_core.core.models` | Mixin to add a standardized "description" and "icon url" fields |
+| [`UserDetailsMatchMixin`](#userdetailsmatchmixin) | `waldur_core.core.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`UserDetailsMixin`](#userdetailsmixin) | `waldur_core.core.models` | This mixin is shared by User and Invitation model |
 | [`UuidMixin`](#uuidmixin) | `waldur_core.core.models` | Mixin to identify models by UUID |
 | [`LookupMixin`](#lookupmixin) | `waldur_core.core.nested_routers` | Deprecated |
@@ -432,6 +433,15 @@ Extends DescribableMixin with an icon_url field for UI display purposes.
 The icon_url field accepts URLs up to 500 characters.
 
 **Base classes:** `DescribableMixin`
+
+### UserDetailsMatchMixin
+
+**Module:** `waldur_core.core.models`
+
+**Description:**
+Make subclasses preserve the alters_data attribute on overridden methods.
+
+**Base classes:** `Model`
 
 ### UserDetailsMixin
 
