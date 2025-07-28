@@ -2737,6 +2737,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../developer-guide/core-concepts/marketplace/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Waldur Marketplace Module
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../developer-guide/core-concepts/offering-users/" class="md-nav__link">
         
   
@@ -24916,7 +24937,610 @@ from an initial REST API call and then query state changes of the entity.</p>
 </li>
 </ol>
 <h2 id="developer-guide-core-concepts-managed-entities-simplified-schema-of-operations-flow">Simplified schema of operations flow</h2>
-<p>View ---&gt; Serializer ---&gt; View ---&gt; Executor ---&gt; Tasks ---&gt; Backend</p></div></section><section class="print-page" id="developer-guide-core-concepts-offering-users"><div><h1 id="offeringuser-states-and-management">OfferingUser States and Management</h1>
+<p>View ---&gt; Serializer ---&gt; View ---&gt; Executor ---&gt; Tasks ---&gt; Backend</p></div></section><section class="print-page" id="developer-guide-core-concepts-marketplace"><div><h1 id="waldur-marketplace-module">Waldur Marketplace Module</h1>
+<p>The Waldur marketplace module provides a unified service catalog with configurable billing patterns, approval workflows, and comprehensive service orchestration. It serves as the central hub for service provisioning, order management, and billing across diverse service types.</p>
+<h2 id="developer-guide-core-concepts-marketplace-architecture-overview">Architecture Overview</h2>
+<p>The marketplace follows a <strong>Service Catalog → Order → Resource → Billing</strong> architecture that abstracts service complexity while providing flexible customization:</p>
+<pre class="mermaid"><code>graph TB
+    subgraph "Service Catalog"
+        SP[ServiceProvider] --&gt; O[Offering]
+        O --&gt; OC[OfferingComponent]
+        O --&gt; P[Plan]
+        P --&gt; PC[PlanComponent]
+    end
+
+    subgraph "Order Processing"
+        Order --&gt; Processor[OrderProcessor]
+        Processor --&gt; Resource
+        Resource --&gt; Endpoint[ResourceAccessEndpoint]
+    end
+
+    subgraph "Billing"
+        PC --&gt; CU[ComponentUsage]
+        Resource --&gt; CU
+        CU --&gt; Invoice[Billing System]
+    end
+
+    Order --&gt; Resource
+    O --&gt; Order
+    P --&gt; Order</code></pre>
+<h3 id="developer-guide-core-concepts-marketplace-core-models">Core Models</h3>
+<ul>
+<li><strong><code>ServiceProvider</code></strong>: Organizations offering services through the marketplace</li>
+<li><strong><code>Offering</code></strong>: Service definitions with pricing, components, and configuration</li>
+<li><strong><code>OfferingComponent</code></strong>: Individual billable items (CPU, storage, support hours, etc.)</li>
+<li><strong><code>Plan</code></strong>: Service packages with specific pricing and resource allocations</li>
+<li><strong><code>Order</code></strong>: Purchase requests that trigger resource provisioning</li>
+<li><strong><code>Resource</code></strong>: Provisioned service instances with lifecycle management</li>
+</ul>
+<h2 id="developer-guide-core-concepts-marketplace-order-lifecycle-and-state-management">Order Lifecycle and State Management</h2>
+<h3 id="developer-guide-core-concepts-marketplace-order-states">Order States</h3>
+<p>Orders progress through a carefully managed state machine with approval workflows:</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; PENDING_CONSUMER : Order created
+
+    PENDING_CONSUMER --&gt; PENDING_PROVIDER : Consumer approves
+    PENDING_CONSUMER --&gt; CANCELED : Consumer cancels
+    PENDING_CONSUMER --&gt; REJECTED : Consumer rejects
+
+    PENDING_PROVIDER --&gt; PENDING_PROJECT : Provider approves
+    PENDING_PROVIDER --&gt; CANCELED : Provider cancels
+    PENDING_PROVIDER --&gt; REJECTED : Provider rejects
+
+    PENDING_PROJECT --&gt; EXECUTING : Project activated
+    PENDING_PROJECT --&gt; CANCELED : Project issues
+
+    EXECUTING --&gt; DONE : Processing complete
+    EXECUTING --&gt; ERRED : Processing failed
+
+    DONE --&gt; [*]
+    ERRED --&gt; [*]
+    CANCELED --&gt; [*]
+    REJECTED --&gt; [*]</code></pre>
+<h4 id="developer-guide-core-concepts-marketplace-state-descriptions">State Descriptions</h4>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Description</th>
+<th>Triggers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PENDING_CONSUMER</strong></td>
+<td>Awaiting customer approval</td>
+<td>Order creation</td>
+</tr>
+<tr>
+<td><strong>PENDING_PROVIDER</strong></td>
+<td>Awaiting service provider approval</td>
+<td>Consumer approval</td>
+</tr>
+<tr>
+<td><strong>PENDING_PROJECT</strong></td>
+<td>Awaiting project activation</td>
+<td>Provider approval</td>
+</tr>
+<tr>
+<td><strong>EXECUTING</strong></td>
+<td>Resource provisioning in progress</td>
+<td>Processor execution</td>
+</tr>
+<tr>
+<td><strong>DONE</strong></td>
+<td>Order completed successfully</td>
+<td>Resource provisioning success</td>
+</tr>
+<tr>
+<td><strong>ERRED</strong></td>
+<td>Order failed with errors</td>
+<td>Processing errors</td>
+</tr>
+<tr>
+<td><strong>CANCELED</strong></td>
+<td>Order canceled by user/system</td>
+<td>User cancellation</td>
+</tr>
+<tr>
+<td><strong>REJECTED</strong></td>
+<td>Order rejected by provider</td>
+<td>Provider rejection</td>
+</tr>
+</tbody>
+</table>
+<h3 id="developer-guide-core-concepts-marketplace-resource-states">Resource States</h3>
+<p>Resources maintain their own lifecycle independent of orders:</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; CREATING : Order approved
+
+    CREATING --&gt; OK : Provisioning success
+    CREATING --&gt; ERRED : Provisioning failed
+
+    OK --&gt; UPDATING : Update requested
+    OK --&gt; TERMINATING : Deletion requested
+
+    UPDATING --&gt; OK : Update success
+    UPDATING --&gt; ERRED : Update failed
+
+    TERMINATING --&gt; TERMINATED : Deletion success
+    TERMINATING --&gt; ERRED : Deletion failed
+
+    ERRED --&gt; OK : Error resolved
+    ERRED --&gt; UPDATING : Retry update
+    ERRED --&gt; TERMINATING : Force deletion
+
+    TERMINATED --&gt; [*]</code></pre>
+<h4 id="developer-guide-core-concepts-marketplace-resource-state-descriptions">Resource State Descriptions</h4>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Description</th>
+<th>Operations Allowed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CREATING</strong></td>
+<td>Resource being provisioned</td>
+<td>Monitor progress</td>
+</tr>
+<tr>
+<td><strong>OK</strong></td>
+<td>Resource active and healthy</td>
+<td>Update, delete, use</td>
+</tr>
+<tr>
+<td><strong>UPDATING</strong></td>
+<td>Resource being modified</td>
+<td>Monitor progress</td>
+</tr>
+<tr>
+<td><strong>TERMINATING</strong></td>
+<td>Resource being deleted</td>
+<td>Monitor progress</td>
+</tr>
+<tr>
+<td><strong>TERMINATED</strong></td>
+<td>Resource deleted</td>
+<td>Archive, billing</td>
+</tr>
+<tr>
+<td><strong>ERRED</strong></td>
+<td>Resource in error state</td>
+<td>Retry, investigate, delete</td>
+</tr>
+</tbody>
+</table>
+<h2 id="developer-guide-core-concepts-marketplace-billing-system">Billing System</h2>
+<h3 id="developer-guide-core-concepts-marketplace-billing-types">Billing Types</h3>
+<p>The marketplace supports five distinct billing patterns:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Use Case</th>
+<th>Example</th>
+<th>Billing Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FIXED</strong></td>
+<td>Monthly subscriptions, SaaS plans</td>
+<td>$50/month hosting</td>
+<td>Service provider sets price</td>
+</tr>
+<tr>
+<td><strong>USAGE</strong></td>
+<td>Pay-as-you-consume</td>
+<td>$0.10/GB storage used</td>
+<td>Usage reports submitted</td>
+</tr>
+<tr>
+<td><strong>LIMIT</strong></td>
+<td>Resource quotas</td>
+<td>$5/CPU core allocated</td>
+<td>User specifies limits</td>
+</tr>
+<tr>
+<td><strong>ONE_TIME</strong></td>
+<td>Setup fees, licenses</td>
+<td>$100 installation</td>
+<td>Resource activation</td>
+</tr>
+<tr>
+<td><strong>ON_PLAN_SWITCH</strong></td>
+<td>Plan change fees</td>
+<td>$25 upgrade fee</td>
+<td>Plan modifications</td>
+</tr>
+</tbody>
+</table>
+<h3 id="developer-guide-core-concepts-marketplace-component-architecture">Component Architecture</h3>
+<p>Each offering consists of billable components with independent pricing:</p>
+<pre class="mermaid"><code>graph LR
+    subgraph "Offering: Cloud VM"
+        C1[CPU Cores&lt;br/&gt;LIMIT billing]
+        C2[RAM GB&lt;br/&gt;LIMIT billing]
+        C3[Storage GB&lt;br/&gt;USAGE billing]
+        C4[Network Traffic&lt;br/&gt;USAGE billing]
+        C5[Management Fee&lt;br/&gt;FIXED billing]
+    end
+
+    subgraph "User Order"
+        L1[4 CPU cores]
+        L2[8 GB RAM]
+        L3[Unlimited storage]
+        L4[Unlimited network]
+        L5[1x management]
+    end
+
+    C1 --&gt; L1
+    C2 --&gt; L2
+    C3 --&gt; L3
+    C4 --&gt; L4
+    C5 --&gt; L5</code></pre>
+<h3 id="developer-guide-core-concepts-marketplace-limit-periods">Limit Periods</h3>
+<p>For USAGE and LIMIT billing types, components can have consumption limits:</p>
+<ul>
+<li><strong>MONTHLY</strong>: Reset limits every month (e.g., 100 GB storage/month)</li>
+<li><strong>ANNUAL</strong>: Reset limits yearly (e.g., 1000 CPU hours/year)</li>
+<li><strong>TOTAL</strong>: Lifetime limits (e.g., 10 TB total storage)</li>
+</ul>
+<h2 id="developer-guide-core-concepts-marketplace-processor-architecture">Processor Architecture</h2>
+<p>Processors handle service-specific provisioning logic while maintaining consistent interfaces:</p>
+<h3 id="developer-guide-core-concepts-marketplace-base-processor-classes">Base Processor Classes</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">BaseOrderProcessor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">process_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Execute approved orders"""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">validate_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Pre-submission validation"""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-core-concepts-marketplace-processor-flow">Processor Flow</h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as User
+    participant O as Order
+    participant P as Processor
+    participant B as Backend
+    participant R as Resource
+
+    U-&gt;&gt;O: Create order
+    O-&gt;&gt;P: validate_order()
+
+    Note over O: Approval workflow
+
+    O-&gt;&gt;P: process_order()
+    P-&gt;&gt;B: Provision resource
+    B--&gt;&gt;P: Backend ID/metadata
+    P-&gt;&gt;R: Create resource
+    P-&gt;&gt;R: Set endpoints
+    P--&gt;&gt;O: Processing complete</code></pre>
+<h2 id="developer-guide-core-concepts-marketplace-realistic-service-examples">Realistic Service Examples</h2>
+<h3 id="developer-guide-core-concepts-marketplace-1-cloud-infrastructure-openstack">1. Cloud Infrastructure (OpenStack)</h3>
+<p><strong>Service Type</strong>: Virtual private cloud with compute, storage, networking
+<strong>Billing Pattern</strong>: Limit-based quotas + usage-based consumption</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TenantCreateProcessor</span><span class="p">(</span><span class="n">CreateResourceProcessor</span><span class="p">):</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'description'</span><span class="p">,</span> <span class="s1">'user_username'</span><span class="p">,</span> <span class="s1">'subnet_cidr'</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_post_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Maps order limits to OpenStack quotas</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">'quotas'</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">'vcpu'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="o">.</span><span class="n">limits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'cpu'</span><span class="p">),</span>
+                <span class="s1">'ram'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="o">.</span><span class="n">limits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ram'</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">,</span>
+                <span class="s1">'storage'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="o">.</span><span class="n">limits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'storage'</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Components</strong>:</p>
+<ul>
+<li>CPU cores (limit-based, monthly reset)</li>
+<li>RAM GB (limit-based, monthly reset)</li>
+<li>Storage GB (usage-based, pay per GB used)</li>
+<li>Network traffic (usage-based, pay per GB transferred)</li>
+</ul>
+<h3 id="developer-guide-core-concepts-marketplace-2-managed-kubernetes-rancher">2. Managed Kubernetes (Rancher)</h3>
+<p><strong>Service Type</strong>: Fully managed Kubernetes with infrastructure orchestration
+<strong>Billing Pattern</strong>: Aggregated billing across multiple resources</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">ManagedRancherCreateProcessor</span><span class="p">(</span><span class="n">CreateResourceProcessor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">process_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="c1"># Complex orchestration: projects, tenants, networking, security</span>
+        <span class="n">project</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_dedicated_project</span><span class="p">()</span>
+        <span class="n">tenants</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_multi_az_tenants</span><span class="p">()</span>
+        <span class="n">load_balancer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_load_balancer</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_rancher_cluster</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">tenants</span><span class="p">,</span> <span class="n">load_balancer</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Components</strong>:</p>
+<ul>
+<li>Worker node hours (usage-based)</li>
+<li>Master node (fixed monthly)</li>
+<li>Load balancer (fixed monthly)</li>
+<li>Storage volumes (limit-based, total)</li>
+<li>Management fee (fixed monthly)</li>
+</ul>
+<h3 id="developer-guide-core-concepts-marketplace-3-hpc-compute-allocation-slurm">3. HPC Compute Allocation (SLURM)</h3>
+<p><strong>Service Type</strong>: High-performance computing resource allocation
+<strong>Billing Pattern</strong>: Time-limited resource quotas</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">CreateAllocationProcessor</span><span class="p">(</span><span class="n">CreateResourceProcessor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">validate_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="c1"># Validate against cluster capacity and user quotas</span>
+        <span class="n">cluster_capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cluster_capacity</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="o">.</span><span class="n">limits</span><span class="p">[</span><span class="s1">'cpu_hours'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">cluster_capacity</span><span class="o">.</span><span class="n">available</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">"Insufficient cluster capacity"</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Components</strong>:</p>
+<ul>
+<li>CPU hours (limit-based, annual reset)</li>
+<li>GPU hours (limit-based, annual reset)</li>
+<li>Storage quota (limit-based, total)</li>
+<li>Priority queue access (one-time fee)</li>
+</ul>
+<h2 id="developer-guide-core-concepts-marketplace-advanced-features">Advanced Features</h2>
+<h3 id="developer-guide-core-concepts-marketplace-resource-access-endpoints">Resource Access Endpoints</h3>
+<p>Resources can expose multiple access points:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># In processor</span>
+<span class="n">endpoints</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Web Console"</span><span class="p">,</span> <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"https://console.example.com"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"SSH Access"</span><span class="p">,</span> <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"ssh user@server.example.com"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"API Endpoint"</span><span class="p">,</span> <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"https://api.example.com/v1"</span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-core-concepts-marketplace-backend-metadata">Backend Metadata</h3>
+<p>Processors can store service-specific metadata:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">backend_metadata</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"cluster_id"</span><span class="p">:</span> <span class="s2">"k8s-prod-001"</span><span class="p">,</span>
+    <span class="s2">"region"</span><span class="p">:</span> <span class="s2">"us-west-2"</span><span class="p">,</span>
+    <span class="s2">"version"</span><span class="p">:</span> <span class="s2">"1.28.0"</span><span class="p">,</span>
+    <span class="s2">"features"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"ingress"</span><span class="p">,</span> <span class="s2">"storage"</span><span class="p">,</span> <span class="s2">"monitoring"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-core-concepts-marketplace-approval-workflows">Approval Workflows</h3>
+<p>The marketplace implements intelligent approval workflows that automatically determine when manual approval is required based on order characteristics, user permissions, and offering configuration.</p>
+<h4 id="developer-guide-core-concepts-marketplace-order-approval-logic-flow">Order Approval Logic Flow</h4>
+<pre class="mermaid"><code>flowchart TD
+    A[Order Created] --&gt; B{Consumer Approval Required?}
+    B --&gt;|Yes| C[PENDING_CONSUMER]
+    B --&gt;|No| D{Project Start Date Set?}
+    C --&gt; E[Consumer Reviews] --&gt; D
+    D --&gt;|Yes| F[PENDING_PROJECT]
+    D --&gt;|No| G{Provider Approval Required?}
+    F --&gt; H[Project Activated] --&gt; G
+    G --&gt;|Yes| I[PENDING_PROVIDER]
+    G --&gt;|No| J[EXECUTING]
+    I --&gt; K[Provider Reviews] --&gt; J
+    J --&gt; L[Order Processing]</code></pre>
+<h4 id="developer-guide-core-concepts-marketplace-consumer-approval-rules">Consumer Approval Rules</h4>
+<p>Consumer approval is <strong>skipped</strong> when any of these conditions are met:</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Requirements</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Staff User</strong></td>
+<td>Order created by staff user</td>
+<td><code>user.is_staff == True</code></td>
+</tr>
+<tr>
+<td><strong>Private Offering</strong></td>
+<td>User has project-level approval permission</td>
+<td><code>has_permission(APPROVE_PRIVATE_ORDER, project)</code></td>
+</tr>
+<tr>
+<td><strong>Same Organization Auto-Approval</strong></td>
+<td>Public offering with auto-approval enabled</td>
+<td><code>offering.shared &amp;&amp; offering.customer == project.customer &amp;&amp; auto_approve_in_service_provider_projects == True</code></td>
+</tr>
+<tr>
+<td><strong>Termination by Service Provider</strong></td>
+<td>Service provider owner terminating resource</td>
+<td><code>order.type == TERMINATE &amp;&amp; has_owner_access(user, offering.customer)</code></td>
+</tr>
+<tr>
+<td><strong>Project Permission</strong></td>
+<td>User has order approval permission</td>
+<td><code>has_permission(APPROVE_ORDER, project)</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="developer-guide-core-concepts-marketplace-provider-approval-rules">Provider Approval Rules</h4>
+<p>Provider approval is <strong>skipped</strong> for specific offering types and conditions:</p>
+<table>
+<thead>
+<tr>
+<th>Offering Type</th>
+<th>Auto-Approval Logic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Basic Offerings</strong></td>
+<td>Always require manual approval (<code>BASIC_PLUGIN_NAME</code>)</td>
+</tr>
+<tr>
+<td><strong>Site Agent</strong></td>
+<td>Always require manual approval (<code>SITE_AGENT_PLUGIN_NAME</code>)</td>
+</tr>
+<tr>
+<td><strong>Remote Offerings</strong></td>
+<td>Skip if: <code>auto_approve_remote_orders</code> OR user is service provider owner/manager</td>
+</tr>
+<tr>
+<td><strong>All Other Types</strong></td>
+<td>Always skip approval (auto-approve)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="developer-guide-core-concepts-marketplace-remote-offering-approval-logic">Remote Offering Approval Logic</h4>
+<p>For remote marketplace offerings, approval is skipped when:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Any of these conditions allows auto-approval:</span>
+<span class="n">auto_approve_remote_orders</span> <span class="o">=</span> <span class="n">offering</span><span class="o">.</span><span class="n">plugin_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"auto_approve_remote_orders"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+<span class="n">user_is_service_provider_owner</span> <span class="o">=</span> <span class="n">has_owner_access</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">offering</span><span class="o">.</span><span class="n">customer</span><span class="p">)</span>
+<span class="n">user_is_service_provider_offering_manager</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">has_service_manager_access</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">offering</span><span class="o">.</span><span class="n">customer</span><span class="p">)</span> <span class="ow">and</span>
+    <span class="n">offering</span><span class="o">.</span><span class="n">has_user</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-marketplace-project-approval-rules">Project Approval Rules</h4>
+<p>Project approval occurs when:</p>
+<ul>
+<li><strong>Project Start Date</strong>: Project has a future <code>start_date</code> set</li>
+<li>Orders wait in <code>PENDING_PROJECT</code> state until project is activated</li>
+<li>When <code>start_date</code> is cleared, pending orders automatically proceed</li>
+</ul>
+<h4 id="developer-guide-core-concepts-marketplace-approval-workflow-handler">Approval Workflow Handler</h4>
+<p>The approval logic is implemented in <code>notify_approvers_when_order_is_created</code> handler:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">notify_approvers_when_order_is_created</span><span class="p">(</span><span class="n">order</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">order_should_not_be_reviewed_by_consumer</span><span class="p">(</span><span class="n">order</span><span class="p">):</span>
+        <span class="n">order</span><span class="o">.</span><span class="n">review_by_consumer</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">created_by</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">start_date</span> <span class="ow">and</span> <span class="n">order</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">start_date</span> <span class="o">&gt;</span> <span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">():</span>
+            <span class="n">order</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">OrderStates</span><span class="o">.</span><span class="n">PENDING_PROJECT</span>
+        <span class="k">elif</span> <span class="n">order_should_not_be_reviewed_by_provider</span><span class="p">(</span><span class="n">order</span><span class="p">):</span>
+            <span class="n">order</span><span class="o">.</span><span class="n">set_state_executing</span><span class="p">()</span>
+            <span class="n">process_order_on_commit</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">created_by</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">order</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">OrderStates</span><span class="o">.</span><span class="n">PENDING_PROVIDER</span>
+            <span class="n">notify_provider_about_pending_order</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">notify_consumer_about_pending_order</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-marketplace-notification-system">Notification System</h4>
+<p>The system automatically notifies relevant approvers:</p>
+<ul>
+<li><strong>Consumer Notifications</strong>: Project managers, customer owners with <code>APPROVE_ORDER</code> permission</li>
+<li><strong>Provider Notifications</strong>: Service provider staff, offering managers</li>
+<li><strong>Staff Notifications</strong>: Optional staff notifications via <code>NOTIFY_STAFF_ABOUT_APPROVALS</code> setting</li>
+</ul>
+<h4 id="developer-guide-core-concepts-marketplace-configuration-options">Configuration Options</h4>
+<p>Approval behavior can be customized through offering <code>plugin_options</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">offering</span><span class="o">.</span><span class="n">plugin_options</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"auto_approve_in_service_provider_projects"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># Skip consumer approval for same org</span>
+    <span class="s2">"auto_approve_remote_orders"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>                 <span class="c1"># Skip provider approval for remote</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p>This intelligent approval system ensures that:</p>
+<ul>
+<li><strong>Routine operations</strong> (staff actions, same-org requests) skip unnecessary approvals</li>
+<li><strong>High-risk operations</strong> (external requests, termination) require appropriate review</li>
+<li><strong>Complex workflows</strong> (remote offerings, delayed projects) handle edge cases gracefully</li>
+<li><strong>Notification fatigue</strong> is minimized through targeted approver selection</li>
+</ul>
+<h3 id="developer-guide-core-concepts-marketplace-error-handling-and-rollback">Error Handling and Rollback</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">process_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">provision_resource</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configure_networking</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_monitoring</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">resource</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rollback_changes</span><span class="p">()</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provisioning failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-core-concepts-marketplace-integration-patterns">Integration Patterns</h2>
+<h3 id="developer-guide-core-concepts-marketplace-synchronous-processing">Synchronous Processing</h3>
+<p>For simple, fast operations:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">process_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+    <span class="n">resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_simple_resource</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># Immediate completion</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-core-concepts-marketplace-asynchronous-processing">Asynchronous Processing</h3>
+<p>For complex, long-running operations:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">process_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">schedule_provisioning_task</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># Async completion, callbacks handle state</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="developer-guide-core-concepts-marketplace-external-api-integration">External API Integration</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">send_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+    <span class="n">api_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_api_client</span><span class="p">()</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">create_resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_post_data</span><span class="p">())</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="developer-guide-core-concepts-offering-users"><div><h1 id="offeringuser-states-and-management">OfferingUser States and Management</h1>
 <p>OfferingUser represents a user account created for a specific marketplace offering. It supports a finite state machine (FSM) that tracks the lifecycle of user account creation, validation, and management.</p>
 <h2 id="developer-guide-core-concepts-offering-users-states">States</h2>
 <p>OfferingUser has the following states:</p>
