@@ -55,7 +55,7 @@ td:nth-child(4) {
 | `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Cancel proposals for rounds that have ended. |
 | `pull-priorities` | `waldur_mastermind.support.pull_priorities` | 1 day | Pull priority levels from the active support backend. |
 | `pull-service-properties` | `waldur_core.structure.ServicePropertiesListPullTask` | 1 day | Pull service properties from all active service backends. |
-| `pull-service-resources` | `waldur_core.structure.ServiceResourcesListPullTask` | 1 hour | Pull resources from all active service backends. |
+| `pull-service-resources` | `waldur_core.structure.ServiceResourcesListPullTask` | Hourly (at minute 0) | Pull resources from all active service backends. |
 | `pull-support-users` | `waldur_mastermind.support.pull_support_users` | 6 hours | Pull support users from the active support backend. |
 | `remove_deleted_robot_accounts` | `waldur_mastermind.marketplace.remove_deleted_robot_accounts` | 1 day | Remove robot accounts that are in DELETED state.<br> This task runs daily to clean up robot accounts that have been marked for deletion. |
 | `send-messages-about-pending-orders` | `waldur_mastermind.marketplace_site_agent.send_messages_about_pending_orders` | 1 hour | Task not found in registry |
@@ -67,8 +67,8 @@ td:nth-child(4) {
 | `structure-set-erred-stuck-resources` | `waldur_core.structure.SetErredStuckResources` | 1 hour | This task marks all resources which have been provisioning for more than 3 hours as erred. |
 | `sync-resources` | `waldur_mastermind.marketplace_site_agent.sync_resources` | 10 minutes | Task not found in registry |
 | `sync_request_types` | `waldur_mastermind.support.sync_request_types` | 1 day | Synchronize request types from the active support backend. |
-| `terminate_expired_resources` | `waldur_mastermind.marketplace.terminate_expired_resources` | 1 day | Terminate marketplace resources that have reached their end date. |
-| `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | 1 day | Terminate resources when their project has reached its end date. |
+| `terminate_expired_resources` | `waldur_mastermind.marketplace.terminate_expired_resources` | Cron: `20 1 * * * (m/h/dM/MY/d)` | Terminate marketplace resources that have reached their end date. |
+| `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their project has reached its end date. |
 | `terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | `waldur_mastermind.marketplace.terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | 1 day | Clean up erred Slurm resources that failed both creation and termination. |
 | `update-custom-quotas` | `waldur_core.quotas.update_custom_quotas` | 1 hour | Task not found in registry |
 | `update-invoices-total-cost` | `invoices.update_invoices_total_cost` | 1 day | Update cached total cost for current month invoices. |
