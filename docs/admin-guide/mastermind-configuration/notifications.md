@@ -2055,6 +2055,83 @@ A notification to the call manager about a new proposal submission.
 
 ```
 
+### proposal.new_review_submitted
+
+A notification to the call manager about a new review submission.
+
+#### Templates
+
+=== "proposal/new_review_submitted_message.txt"
+
+```txt
+    Dear call manager,
+
+    A review has been submitted for proposal "{{ proposal_name }}" in call "{{ call_name }}".
+
+    Review summary:
+    - Reviewer: {{ reviewer_name }}
+    - Submission date: {{ submission_date }}
+    - Score: {{ score }}/{{ max_score }}
+
+    Review Progress:
+    - Submitted reviews: {{ submitted_reviews }}
+    - Pending reviews: {{ pending_reviews }}
+    - Rejected reviews: {{ rejected_reviews }}
+
+    You can view the full review details at:
+    {{ review_url }}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/new_review_submitted_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Review Submitted</title>
+    </head>
+    <body>
+        <p>Dear call manager,</p>
+
+        <p>A review has been submitted for proposal "{{ proposal_name }}" in call "{{ call_name }}".</p>
+
+        <p>
+            <strong>Review summary:</strong><br>
+            - Reviewer: {{ reviewer_name }}<br>
+            - Submission date: {{ review_date }}<br>
+            - Score: {{ score }}/{{ max_score }}
+        </p>
+
+        <p>
+            <strong>Review Progress:</strong><br>
+            - Submitted reviews: {{ submitted_reviews }}<br>
+            - Pending reviews: {{ pending_reviews }}<br>
+            - Rejected reviews: {{ rejected_reviews }}<br>
+        </p>
+
+        <p>
+            You can view the full review details at:<br>
+            <a href="{{ review_url }}">{{ review_url }}</a>
+        </p>
+
+        <p>
+            This is an automated message from the {{ site_name }}. Please do not reply to this email.
+        </p>
+    </body>
+    </html>
+
+```
+
+=== "proposal/new_review_submitted_subject.txt"
+
+```txt
+    Review submitted for proposal: {{ proposal_name }}
+
+```
+
 ### proposal.proposal_state_changed
 
 A notification about the proposal state changes (submitted → in review → accepted/rejected).
@@ -2206,6 +2283,89 @@ A notification about the proposal state changes (submitted → in review → acc
 
 ```txt
     Proposal state update: {{ proposal_name }} - {{ new_state }}
+
+```
+
+### proposal.review_rejected
+
+A notification to the call managers about a rejected review.
+
+#### Templates
+
+=== "proposal/review_rejected_message.txt"
+
+```txt
+    Dear call manager,
+
+    A reviewer has rejected their assignment to review proposal "{{ proposal_name }}" in call "{{ call_name }}".
+
+    Assignment details:
+    - Reviewer: {{ reviewer_name }}
+    - Assigned date: {{ assign_date }}
+    - Rejected date: {{ rejection_date }}
+
+    ACTION REQUIRED: Please assign a new reviewer to maintain the minimum required number of reviews for this proposal.
+
+    Review Progress:
+    - Submitted reviews: {{ submitted_reviews }}
+    - Pending reviews: {{ pending_reviews }}
+    - Rejected reviews: {{ rejected_reviews }}
+
+    You can assign a new reviewer by visiting:
+    {{ create_review_link }}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/review_rejected_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Reviewer Assignment Rejected</title>
+    </head>
+    <body>
+        <p>Dear call manager,</p>
+
+        <p>A reviewer has rejected their assignment to review proposal "{{ proposal_name }}" in call "{{ call_name }}".</p>
+
+        <p>
+            <strong>Assignment details:</strong><br>
+            - Reviewer: {{ reviewer_name }}<br>
+            - Assigned date: {{ assign_date }}<br>
+            - Rejected date: {{ rejection_date }}
+        </p>
+
+        <p>
+            <strong style="color: #d9534f;">ACTION REQUIRED:</strong> Please assign a new reviewer to maintain the minimum required number of reviews for this proposal.
+        </p>
+
+        <p>
+            <strong>Review Progress:</strong><br>
+            - Submitted reviews: {{ submitted_reviews }}<br>
+            - Pending reviews: {{ pending_reviews }}<br>
+            - Rejected reviews: {{ rejected_reviews }}<br>
+        </p>
+
+        <p>
+            You can assign a new reviewer by visiting:<br>
+            <a href="{{ create_review_link }}">{{ create_review_link }}</a>
+        </p>
+
+        <p>
+            This is an automated message from the {{ site_name }}. Please do not reply to this email.
+        </p>
+    </body>
+    </html>
+
+```
+
+=== "proposal/review_rejected_subject.txt"
+
+```txt
+    Alert: review assignment rejected for {{ proposal_name }}
 
 ```
 

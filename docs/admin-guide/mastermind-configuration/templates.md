@@ -1682,6 +1682,12 @@ New limits: {{ new_limits }}.
 
 ## waldur_mastermind.proposal
 
+### review_rejected_subject.txt (waldur_mastermind.proposal)
+
+``` txt
+Alert: review assignment rejected for {{ proposal_name }}
+```
+
 ### proposal_state_changed_message.txt (waldur_mastermind.proposal)
 
 ``` txt
@@ -1728,6 +1734,45 @@ View Project: {{ project_url }}
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
 ```
 
+### new_review_submitted_message.html (waldur_mastermind.proposal)
+
+``` html
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Review Submitted</title>
+</head>
+<body>
+    <p>Dear call manager,</p>
+
+    <p>A review has been submitted for proposal "{{ proposal_name }}" in call "{{ call_name }}".</p>
+
+    <p>
+        <strong>Review summary:</strong><br>
+        - Reviewer: {{ reviewer_name }}<br>
+        - Submission date: {{ review_date }}<br>
+        - Score: {{ score }}/{{ max_score }}
+    </p>
+
+    <p>
+        <strong>Review Progress:</strong><br>
+        - Submitted reviews: {{ submitted_reviews }}<br>
+        - Pending reviews: {{ pending_reviews }}<br>
+        - Rejected reviews: {{ rejected_reviews }}<br>
+    </p>
+
+    <p>
+        You can view the full review details at:<br>
+        <a href="{{ review_url }}">{{ review_url }}</a>
+    </p>
+
+    <p>
+        This is an automated message from the {{ site_name }}. Please do not reply to this email.
+    </p>
+</body>
+</html>
+```
+
 ### new_proposal_submitted_message.html (waldur_mastermind.proposal)
 
 ``` html
@@ -1766,6 +1811,72 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 Proposal state update: {{ proposal_name }} - {{ new_state }}
 ```
 
+### new_review_submitted_message.txt (waldur_mastermind.proposal)
+
+``` txt
+Dear call manager,
+
+A review has been submitted for proposal "{{ proposal_name }}" in call "{{ call_name }}".
+
+Review summary:
+- Reviewer: {{ reviewer_name }}
+- Submission date: {{ submission_date }}
+- Score: {{ score }}/{{ max_score }}
+
+Review Progress:
+- Submitted reviews: {{ submitted_reviews }}
+- Pending reviews: {{ pending_reviews }}
+- Rejected reviews: {{ rejected_reviews }}
+
+You can view the full review details at:
+{{ review_url }}
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
+```
+
+### review_rejected_message.html (waldur_mastermind.proposal)
+
+``` html
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reviewer Assignment Rejected</title>
+</head>
+<body>
+    <p>Dear call manager,</p>
+
+    <p>A reviewer has rejected their assignment to review proposal "{{ proposal_name }}" in call "{{ call_name }}".</p>
+
+    <p>
+        <strong>Assignment details:</strong><br>
+        - Reviewer: {{ reviewer_name }}<br>
+        - Assigned date: {{ assign_date }}<br>
+        - Rejected date: {{ rejection_date }}
+    </p>
+
+    <p>
+        <strong style="color: #d9534f;">ACTION REQUIRED:</strong> Please assign a new reviewer to maintain the minimum required number of reviews for this proposal.
+    </p>
+
+    <p>
+        <strong>Review Progress:</strong><br>
+        - Submitted reviews: {{ submitted_reviews }}<br>
+        - Pending reviews: {{ pending_reviews }}<br>
+        - Rejected reviews: {{ rejected_reviews }}<br>
+    </p>
+
+    <p>
+        You can assign a new reviewer by visiting:<br>
+        <a href="{{ create_review_link }}">{{ create_review_link }}</a>
+    </p>
+
+    <p>
+        This is an automated message from the {{ site_name }}. Please do not reply to this email.
+    </p>
+</body>
+</html>
+```
+
 ### new_proposal_submitted_subject.txt (waldur_mastermind.proposal)
 
 ``` txt
@@ -1787,6 +1898,31 @@ Proposal details:
 
 You can review this proposal by visiting the following URL:
 {{ proposal_url }}
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
+```
+
+### review_rejected_message.txt (waldur_mastermind.proposal)
+
+``` txt
+Dear call manager,
+
+A reviewer has rejected their assignment to review proposal "{{ proposal_name }}" in call "{{ call_name }}".
+
+Assignment details:
+- Reviewer: {{ reviewer_name }}
+- Assigned date: {{ assign_date }}
+- Rejected date: {{ rejection_date }}
+
+ACTION REQUIRED: Please assign a new reviewer to maintain the minimum required number of reviews for this proposal.
+
+Review Progress:
+- Submitted reviews: {{ submitted_reviews }}
+- Pending reviews: {{ pending_reviews }}
+- Rejected reviews: {{ rejected_reviews }}
+
+You can assign a new reviewer by visiting:
+{{ create_review_link }}
 
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
 ```
@@ -1882,6 +2018,12 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
     </div>
 </body>
 </html>
+```
+
+### new_review_submitted_subject.txt (waldur_mastermind.proposal)
+
+``` txt
+Review submitted for proposal: {{ proposal_name }}
 ```
 
 ## waldur_mastermind.support
