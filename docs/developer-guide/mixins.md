@@ -86,11 +86,13 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`SafeAttributesMixin`](#safeattributesmixin) | `waldur_mastermind.marketplace.models` | Mixin for safe attribute handling |
 | [`ConnectedOfferingDetailsMixin`](#connectedofferingdetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide offering details action for connected resources |
 | [`PublicViewsetMixin`](#publicviewsetmixin) | `waldur_mastermind.marketplace.views` | Mixin to allow anonymous access to offerings when configured |
+| [`ChecklistCompletionMixin`](#checklistcompletionmixin) | `waldur_mastermind.marketplace_checklist.mixins` | Abstract mixin providing checklist completion functionality for any model tha... |
 | [`TenantMixin`](#tenantmixin) | `waldur_mastermind.marketplace_openstack.processors` | No description available |
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
+| [`ProposalComplianceTestMixin`](#proposalcompliancetestmixin) | `waldur_mastermind.proposal.tests.test_proposal_compliance` | Common setup for proposal compliance tests |
 | [`BackendNameMixin`](#backendnamemixin) | `waldur_mastermind.support.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`FileMixin`](#filemixin) | `waldur_mastermind.support.models` | Mixin to provide file-related functionality and properties |
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_mastermind.support.views` | Raise exception if extension is disabled |
@@ -1046,6 +1048,15 @@ Mixin to provide offering details action for connected resources.
 **Description:**
 Mixin to allow anonymous access to offerings when configured.
 
+### ChecklistCompletionMixin
+
+**Module:** `waldur_mastermind.marketplace_checklist.mixins`
+
+**Description:**
+Abstract mixin providing checklist completion functionality for any model that tracks checklist completion.
+
+**Base classes:** `Model`
+
 ### TenantMixin
 
 **Module:** `waldur_mastermind.marketplace_openstack.processors`
@@ -1165,6 +1176,13 @@ This mixin provides several extensions to stock Serializer class:
 or uses URL name specified in a model of serialized object.
 
 **Base classes:** `AugmentedSerializerMixin`
+
+### ProposalComplianceTestMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_proposal_compliance`
+
+**Description:**
+Common setup for proposal compliance tests.
 
 ### BackendNameMixin
 
