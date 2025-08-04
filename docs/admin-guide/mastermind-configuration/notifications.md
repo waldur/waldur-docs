@@ -2132,6 +2132,79 @@ A notification to the call manager about a new review submission.
 
 ```
 
+### proposal.proposal_cancelled
+
+A notification to proposal creator about the proposal cancellation.
+
+#### Templates
+
+=== "proposal/proposal_cancelled_message.txt"
+
+```txt
+    Dear {{ proposal_creator_name }},
+
+    Your proposal "{{ proposal_name }}" in call "{{ call_name }}" has been canceled.
+
+    Cancellation details:
+    - Proposal: {{ proposal_name }}
+    - Cancellation date: {{ cancellation_date }}
+    - Reason for cancellation: Round closure/The submission deadline has passed and the proposal was not finalized
+
+    All draft proposals are automatically canceled when a round closes. This ensures that only fully submitted proposals proceed to the review stage.
+
+    You can still view your proposal by visiting:
+    {{ proposal_url }}
+
+    If you would like to resubmit your proposal, please check for upcoming rounds in this call or other relevant calls.
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/proposal_cancelled_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Proposal Canceled</title>
+    </head>
+    <body>
+        <p>Dear {{ proposal_creator_name }},</p>
+
+        <p>Your proposal "{{ proposal_name }}" in call "{{ call_name }}" has been canceled.</p>
+
+        <p>
+            <strong>Cancellation details:</strong><br>
+            - Proposal: {{ proposal_name }}<br>
+            - Cancelation date: {{ cancellation_date }}<br>
+            - Reason for cancellation: Round closure/The submission deadline has passed and the proposal was not finalized
+        </p>
+
+        <p>All draft proposals are automatically canceled when a round closes. This ensures that only fully submitted proposals proceed to the review stage.</p>
+
+        <p>
+            You can still view your proposal by visiting:<br>
+            <a href="{{ proposal_url }}">{{ proposal_url }}</a>
+        </p>
+
+        <p>If you would like to resubmit your proposal, please check for upcoming rounds in this call or other relevant calls.</p>
+
+        <p>
+            This is an automated message from the {{ site_name }}. Please do not reply to this email.
+        </p>
+    </body>
+    </html>
+
+```
+
+=== "proposal/proposal_cancelled_subject.txt"
+
+```txt
+    Proposal canceled: {{ proposal_name }}
+
+```
+
 ### proposal.proposal_state_changed
 
 A notification about the proposal state changes (submitted → in review → accepted/rejected).
