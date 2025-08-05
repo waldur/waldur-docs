@@ -2563,9 +2563,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#custom-backends-for-username-retrieval-and-generation" class="md-nav__link">
+  <a href="#username-management" class="md-nav__link">
     <span class="md-ellipsis">
-      Custom backends for username retrieval and generation
+      Username Management
     </span>
   </a>
   
@@ -2644,6 +2644,27 @@
   
   <span class="md-ellipsis">
     Plugin Architecture
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/offering-users/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Offering Users and Async User Creation
   </span>
   
 
@@ -6401,9 +6422,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#custom-backends-for-username-retrieval-and-generation" class="md-nav__link">
+  <a href="#username-management" class="md-nav__link">
     <span class="md-ellipsis">
-      Custom backends for username retrieval and generation
+      Username Management
     </span>
   </a>
   
@@ -6704,39 +6725,11 @@ For this, a user should use the following settings in an offering item:</p>
 <li>usage-reporting service using a custom SLURM API,
   which is provided via custom module's entry-point</li>
 </ul>
-<h3 id="custom-backends-for-username-retrieval-and-generation">Custom backends for username retrieval and generation</h3>
-<p>By default, the agent doesn't generate usernames for users of resources.
-For this, a custom username management backend can be included in the agent:</p>
-<ol>
-<li>add a path to your class in the <code>project.entry-points."waldur_site_agent.username_management_backends"</code>
-   section of <code>pyproject.toml</code> file, example:</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">...</span>
-<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.username_management_backends"</span><span class="k">]</span>
-<span class="n">custom_backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"your_project.backend.usernames:CustomUsernameManagementBackend"</span>
-<span class="p">...</span>
-</code></pre></div></td></tr></table></div>
-<ol>
-<li>the class should implement the interface
-   <code>waldur_site_agent.backends.username_backend.backend:AbstractUsernameManagementBackend</code></li>
-<li>rebuild the agent, e.g. <code>poetry install</code>, <code>uv sync</code></li>
-<li>add <code>username_management_backend</code> field to offerings in your agent config, example:</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span><span class="w"> </span><span class="c1"># Settings for offerings</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Example</span><span class="nv"> </span><span class="s">Offering"</span><span class="w"> </span><span class="c1"># offering name</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
-<span class="w">   </span><span class="l l-Scalar l-Scalar-Plain"># Note</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">the value matches to the setting's key from the step 1</span>
-<span class="w">  </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"custom_backend"</span><span class="w"> </span><span class="c1"># Name of the backend from entrypoints</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
-</code></pre></div></td></tr></table></div>
+<h3 id="username-management">Username Management</h3>
+<p>The agent supports asynchronous username generation and management for offering users. This system provides pluggable
+backends for custom username generation logic and handles complex scenarios with graceful error recovery.</p>
+<p>For comprehensive documentation on username management, async user creation workflows, configuration, and custom
+backend development, see the <a href="../docs/offering-users/">Username Management Documentation</a>.</p>
 <h2 id="provider-config-file-reference">Provider config file reference</h2>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -6795,7 +6788,24 @@ For this, a custom username management backend can be included in the agent:</p>
 <span class="normal">55</span>
 <span class="normal">56</span>
 <span class="normal">57</span>
-<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">sentry_dsn</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># Data Source Name for Sentry (more info https://docs.sentry.io/product/sentry-basics/dsn-explainer/).</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">sentry_dsn</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># Data Source Name for Sentry (more info https://docs.sentry.io/product/sentry-basics/dsn-explainer/).</span>
 <span class="nt">timezone</span><span class="p">:</span><span class="w"> </span><span class="s">"UTC"</span><span class="w"> </span><span class="c1"># Timezone for billing period calculations (e.g. "UTC", "Europe/Tallinn").</span>
 <span class="w">  </span><span class="c1"># Defaults to system timezone if not specified.</span>
 <span class="nt">offerings</span><span class="p">:</span><span class="w"> </span><span class="c1"># Settings for offerings</span>
@@ -6803,6 +6813,15 @@ For this, a custom username management backend can be included in the agent:</p>
 <span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:8081/api/"</span><span class="w"> </span><span class="c1"># URL of Waldur API (e.g. http://localhost:8081/api/).</span>
 <span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># Token to access the Waldur API.</span>
 <span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># UUID of the offering in Waldur.</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for username management</span>
+<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"base"</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for order processing</span>
+<span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for membership syncing</span>
+<span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">     </span><span class="c1"># Name of the backend from entrypoints to use for reporting</span>
+<span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">resource_import_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># Whether to expose importable resources to Waldur</span>
 <span class="w">    </span><span class="nt">stomp_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># STOMP feature toggler</span>
 <span class="w">    </span><span class="nt">mqtt_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># MQTT feature toggler</span>
 <span class="w">    </span><span class="nt">websocket_use_tls</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># Whether to use TLS for websocket connection</span>
@@ -6841,6 +6860,14 @@ For this, a custom username management backend can be included in the agent:</p>
 <span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:8081/api/"</span>
 <span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
 <span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for username management</span>
+<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"base"</span>
+<span class="w">     </span><span class="c1"># Name of the backend from entrypoints to use for order processing</span>
+<span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"moab"</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for membership syncing</span>
+<span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"moab"</span>
+<span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"moab"</span><span class="w"> </span><span class="c1"># Name of the backend from entrypoints to use for reporting</span>
+<span class="w">    </span><span class="nt">resource_import_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Whether to expose importable resources to Waldur</span>
 <span class="w">    </span><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"moab"</span>
 <span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">default_account</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
@@ -6874,7 +6901,7 @@ For this, a custom username management backend can be included in the agent:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-07-15
+    2025-08-05
   </span>
 
     

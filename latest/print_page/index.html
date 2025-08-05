@@ -2445,6 +2445,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../admin-guide/providers/docs/offering-users/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Offering Users and Async User Creation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../admin-guide/providers/docs/slurm-usage-reporting-setup/" class="md-nav__link">
         
   
@@ -24515,39 +24536,11 @@ For this, a user should use the following settings in an offering item:</p>
 <li>usage-reporting service using a custom SLURM API,
   which is provided via custom module's entry-point</li>
 </ul>
-<h3 id="admin-guide-providers-waldur-site-agent-custom-backends-for-username-retrieval-and-generation">Custom backends for username retrieval and generation</h3>
-<p>By default, the agent doesn't generate usernames for users of resources.
-For this, a custom username management backend can be included in the agent:</p>
-<ol>
-<li>add a path to your class in the <code>project.entry-points."waldur_site_agent.username_management_backends"</code>
-   section of <code>pyproject.toml</code> file, example:</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">...</span>
-<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.username_management_backends"</span><span class="k">]</span>
-<span class="n">custom_backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"your_project.backend.usernames:CustomUsernameManagementBackend"</span>
-<span class="p">...</span>
-</code></pre></div></td></tr></table></div>
-<ol>
-<li>the class should implement the interface
-   <code>waldur_site_agent.backends.username_backend.backend:AbstractUsernameManagementBackend</code></li>
-<li>rebuild the agent, e.g. <code>poetry install</code>, <code>uv sync</code></li>
-<li>add <code>username_management_backend</code> field to offerings in your agent config, example:</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span><span class="w"> </span><span class="c1"># Settings for offerings</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Example</span><span class="nv"> </span><span class="s">Offering"</span><span class="w"> </span><span class="c1"># offering name</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
-<span class="w">   </span><span class="l l-Scalar l-Scalar-Plain"># Note</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">the value matches to the setting's key from the step 1</span>
-<span class="w">  </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"custom_backend"</span><span class="w"> </span><span class="c1"># Name of the backend from entrypoints</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
-</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-waldur-site-agent-username-management">Username Management</h3>
+<p>The agent supports asynchronous username generation and management for offering users. This system provides pluggable
+backends for custom username generation logic and handles complex scenarios with graceful error recovery.</p>
+<p>For comprehensive documentation on username management, async user creation workflows, configuration, and custom
+backend development, see the <a href="#admin-guide-providers-docs-offering-users">Username Management Documentation</a>.</p>
 <h2 id="admin-guide-providers-waldur-site-agent-provider-config-file-reference">Provider config file reference</h2>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -24606,7 +24599,24 @@ For this, a custom username management backend can be included in the agent:</p>
 <span class="normal">55</span>
 <span class="normal">56</span>
 <span class="normal">57</span>
-<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">sentry_dsn</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># Data Source Name for Sentry (more info https://docs.sentry.io/product/sentry-basics/dsn-explainer/).</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">sentry_dsn</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># Data Source Name for Sentry (more info https://docs.sentry.io/product/sentry-basics/dsn-explainer/).</span>
 <span class="nt">timezone</span><span class="p">:</span><span class="w"> </span><span class="s">"UTC"</span><span class="w"> </span><span class="c1"># Timezone for billing period calculations (e.g. "UTC", "Europe/Tallinn").</span>
 <span class="w">  </span><span class="c1"># Defaults to system timezone if not specified.</span>
 <span class="nt">offerings</span><span class="p">:</span><span class="w"> </span><span class="c1"># Settings for offerings</span>
@@ -24614,6 +24624,15 @@ For this, a custom username management backend can be included in the agent:</p>
 <span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:8081/api/"</span><span class="w"> </span><span class="c1"># URL of Waldur API (e.g. http://localhost:8081/api/).</span>
 <span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># Token to access the Waldur API.</span>
 <span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"> </span><span class="c1"># UUID of the offering in Waldur.</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for username management</span>
+<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"base"</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for order processing</span>
+<span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for membership syncing</span>
+<span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">     </span><span class="c1"># Name of the backend from entrypoints to use for reporting</span>
+<span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">resource_import_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># Whether to expose importable resources to Waldur</span>
 <span class="w">    </span><span class="nt">stomp_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># STOMP feature toggler</span>
 <span class="w">    </span><span class="nt">mqtt_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># MQTT feature toggler</span>
 <span class="w">    </span><span class="nt">websocket_use_tls</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># Whether to use TLS for websocket connection</span>
@@ -24652,6 +24671,14 @@ For this, a custom username management backend can be included in the agent:</p>
 <span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:8081/api/"</span>
 <span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
 <span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for username management</span>
+<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"base"</span>
+<span class="w">     </span><span class="c1"># Name of the backend from entrypoints to use for order processing</span>
+<span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"moab"</span>
+<span class="w">    </span><span class="c1"># Name of the backend from entrypoints to use for membership syncing</span>
+<span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"moab"</span>
+<span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"moab"</span><span class="w"> </span><span class="c1"># Name of the backend from entrypoints to use for reporting</span>
+<span class="w">    </span><span class="nt">resource_import_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Whether to expose importable resources to Waldur</span>
 <span class="w">    </span><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"moab"</span>
 <span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">default_account</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
@@ -24959,7 +24986,208 @@ graph TB
 - <strong>Mixed backend usage</strong>: Different backends for different operations
 - <strong>Gradual migration</strong>: Transition between backends incrementally
 - <strong>Specialized backends</strong>: Use purpose-built backends for specific tasks
-- <strong>Development flexibility</strong>: Test new backends alongside production ones</p></div></section><section class="print-page" id="admin-guide-providers-docs-slurm-usage-reporting-setup"><div><h1 id="slurm-usage-reporting-setup-guide">SLURM Usage Reporting Setup Guide</h1>
+- <strong>Development flexibility</strong>: Test new backends alongside production ones</p></div></section><section class="print-page" id="admin-guide-providers-docs-offering-users"><div><h1 id="offering-users-and-async-user-creation">Offering Users and Async User Creation</h1>
+<p>The Waldur Site Agent provides robust support for managing offering users with asynchronous username generation and
+state management. This system enables non-blocking user processing and supports complex username generation scenarios
+through a pluggable backend architecture.</p>
+<h2 id="admin-guide-providers-docs-offering-users-overview">Overview</h2>
+<p>Offering users represent the relationship between Waldur users and marketplace offerings. The agent handles username
+generation, state transitions, and integration with backend systems to ensure users can access provisioned resources.</p>
+<h2 id="admin-guide-providers-docs-offering-users-async-user-creation-workflow">Async User Creation Workflow</h2>
+<h3 id="admin-guide-providers-docs-offering-users-state-machine">State Machine</h3>
+<p>The async user creation follows a state-based workflow that prevents blocking operations:</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; REQUESTED : User requests access
+    REQUESTED --&gt; CREATING : Begin username generation
+    CREATING --&gt; OK : Username successfully created
+    CREATING --&gt; PENDING_ACCOUNT_LINKING : Manual linking required
+    CREATING --&gt; PENDING_ADDITIONAL_VALIDATION : Additional validation needed
+    PENDING_ACCOUNT_LINKING --&gt; OK : Username generation succeeds on retry
+    PENDING_ADDITIONAL_VALIDATION --&gt; OK : Username generation succeeds on retry
+    OK --&gt; [*] : User ready for resource access</code></pre>
+<h3 id="admin-guide-providers-docs-offering-users-state-descriptions">State Descriptions</h3>
+<ul>
+<li><strong>REQUESTED</strong>: Initial state when user requests access to an offering</li>
+<li><strong>CREATING</strong>: Transitional state during username generation process</li>
+<li><strong>OK</strong>: Username successfully generated and user is ready for resource access</li>
+<li><strong>PENDING_ACCOUNT_LINKING</strong>: Manual intervention required to link user accounts</li>
+<li><strong>PENDING_ADDITIONAL_VALIDATION</strong>: Additional validation steps needed before proceeding</li>
+</ul>
+<h2 id="admin-guide-providers-docs-offering-users-core-components">Core Components</h2>
+<h3 id="admin-guide-providers-docs-offering-users-main-functions">Main Functions</h3>
+<h4 id="admin-guide-providers-docs-offering-users-sync_offering_users"><code>sync_offering_users()</code></h4>
+<p>Entry point function that processes all offering users across configured offerings.</p>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>waldur_sync_offering_users<span class="w"> </span>-c<span class="w"> </span>config.yaml
+</code></pre></div></td></tr></table></div>
+<p><strong>Behavior</strong>:</p>
+<ul>
+<li>Iterates through all configured offerings</li>
+<li>Retrieves offering users from Waldur API</li>
+<li>Delegates processing to <code>update_offering_users()</code></li>
+</ul>
+<h4 id="admin-guide-providers-docs-offering-users-update_offering_users"><code>update_offering_users()</code></h4>
+<p>Core processing function that handles username generation and state transitions.</p>
+<p><strong>Process</strong>:
+1. Checks offering's username generation policy
+2. Processes users in REQUESTED state
+3. Handles users in pending states (PENDING_ACCOUNT_LINKING, PENDING_ADDITIONAL_VALIDATION)
+4. Manages state transitions and error handling</p>
+<h3 id="admin-guide-providers-docs-offering-users-username-management-backend-system">Username Management Backend System</h3>
+<p>The agent uses a pluggable backend architecture for username generation, allowing custom implementations for different
+identity providers and naming conventions.</p>
+<h4 id="admin-guide-providers-docs-offering-users-base-abstract-class">Base Abstract Class</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_site_agent.backend.backends</span> <span class="kn">import</span> <span class="n">AbstractUsernameManagementBackend</span>
+
+<span class="k">class</span> <span class="nc">CustomUsernameBackend</span><span class="p">(</span><span class="n">AbstractUsernameManagementBackend</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">generate_username</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offering_user</span><span class="p">:</span> <span class="n">OfferingUser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Generate new username based on offering user details."""</span>
+        <span class="c1"># Custom logic here</span>
+        <span class="k">return</span> <span class="n">generated_username</span>
+
+    <span class="k">def</span> <span class="nf">get_username</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offering_user</span><span class="p">:</span> <span class="n">OfferingUser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Retrieve existing username from local identity provider."""</span>
+        <span class="c1"># Custom lookup logic here</span>
+        <span class="k">return</span> <span class="n">existing_username</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="admin-guide-providers-docs-offering-users-plugin-registration">Plugin Registration</h4>
+<p>Register your backend via entry points in <code>pyproject.toml</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.username_management_backends"</span><span class="k">]</span>
+<span class="n">custom_backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my_package.backend:CustomUsernameBackend"</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="admin-guide-providers-docs-offering-users-built-in-backends">Built-in Backends</h4>
+<ul>
+<li><strong>base</strong>: Basic username management backend (plugins/basic_username_management/)</li>
+<li><strong>UnknownUsernameManagementBackend</strong>: Fallback backend when configuration is missing</li>
+</ul>
+<h2 id="admin-guide-providers-docs-offering-users-configuration">Configuration</h2>
+<h3 id="admin-guide-providers-docs-offering-users-offering-configuration">Offering Configuration</h3>
+<p>Configure username management per offering in your agent configuration:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"SLURM</span><span class="nv"> </span><span class="s">Cluster"</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur.example.com/api/"</span>
+<span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"your-token"</span>
+<span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"offering-uuid"</span>
+<span class="w">    </span><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"custom_backend"</span><span class="w">  </span><span class="c1"># References entry point name</span>
+<span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># ... other settings</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="admin-guide-providers-docs-offering-users-prerequisites">Prerequisites</h3>
+<ol>
+<li><strong>Service Provider Username Generation</strong>: The offering must be configured
+   with <code>username_generation_policy = SERVICE_PROVIDER</code> in Waldur</li>
+<li><strong>Backend Plugin</strong>: Appropriate username management backend must be installed and configured</li>
+<li><strong>Permissions</strong>: API token must have permissions to manage offering users</li>
+</ol>
+<h2 id="admin-guide-providers-docs-offering-users-integration-with-order-processing">Integration with Order Processing</h2>
+<p>The async user creation system is seamlessly integrated with the agent's order processing workflows:</p>
+<h3 id="admin-guide-providers-docs-offering-users-automatic-processing">Automatic Processing</h3>
+<p>Username generation is automatically triggered during:
+- Resource creation orders
+- User addition to existing resources
+- Membership synchronization operations</p>
+<h3 id="admin-guide-providers-docs-offering-users-implementation-in-processors">Implementation in Processors</h3>
+<p>The <code>OfferingBaseProcessor</code> class provides <code>_update_offering_users()</code> method that:</p>
+<ol>
+<li>Calls username generation for users with blank usernames</li>
+<li>Refreshes offering user data after processing</li>
+<li>Filters users to only include those with valid usernames for resource operations</li>
+</ol>
+<p><strong>Example usage in order processing</strong>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Before adding users to a resource</span>
+<span class="n">offering_users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_waldur_offering_users</span><span class="p">()</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">_update_offering_users</span><span class="p">(</span><span class="n">offering_users</span><span class="p">)</span>
+
+<span class="c1"># Refresh data after username generation</span>
+<span class="n">offering_users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_waldur_offering_users</span><span class="p">()</span>
+
+<span class="c1"># Use only users with valid usernames</span>
+<span class="n">valid_usernames</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">user</span><span class="o">.</span><span class="n">username</span> <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">offering_users</span>
+    <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">OfferingUserStateEnum</span><span class="o">.</span><span class="n">OK</span> <span class="ow">and</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="admin-guide-providers-docs-offering-users-error-handling">Error Handling</h2>
+<h3 id="admin-guide-providers-docs-offering-users-exception-types">Exception Types</h3>
+<p>The system defines specific exceptions for different error scenarios:</p>
+<ul>
+<li><strong><code>OfferingUserAccountLinkingRequiredError</code></strong>: Raised when manual account linking is required</li>
+<li><strong><code>OfferingUserAdditionalValidationRequiredError</code></strong>: Raised when additional validation steps are needed</li>
+</ul>
+<h3 id="admin-guide-providers-docs-offering-users-error-recovery">Error Recovery</h3>
+<p>When exceptions occur:
+1. User state transitions to appropriate pending state
+2. Error details are logged with context
+3. Comment field is updated with error information
+4. Processing continues for other users
+5. Pending users are retried in subsequent runs</p>
+<h2 id="admin-guide-providers-docs-offering-users-best-practices">Best Practices</h2>
+<h3 id="admin-guide-providers-docs-offering-users-username-backend-implementation">Username Backend Implementation</h3>
+<ol>
+<li><strong>Idempotent Operations</strong>: Ensure <code>get_or_create_username()</code> can be called multiple times safely</li>
+<li><strong>Error Handling</strong>: Raise appropriate exceptions for recoverable errors</li>
+<li><strong>Logging</strong>: Include detailed logging for troubleshooting</li>
+<li><strong>Validation</strong>: Validate generated usernames meet backend system requirements</li>
+</ol>
+<h3 id="admin-guide-providers-docs-offering-users-deployment-considerations">Deployment Considerations</h3>
+<ol>
+<li><strong>Regular Sync</strong>: Run <code>waldur_sync_offering_users</code> regularly via cron or systemd timer</li>
+<li><strong>Monitoring</strong>: Monitor pending user states for manual intervention needs</li>
+<li><strong>Backup Strategy</strong>: Consider username mapping backup for disaster recovery</li>
+<li><strong>Testing</strong>: Test username generation logic thoroughly before production deployment</li>
+</ol>
+<h2 id="admin-guide-providers-docs-offering-users-troubleshooting">Troubleshooting</h2>
+<h3 id="admin-guide-providers-docs-offering-users-diagnostic-commands">Diagnostic Commands</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Check system health</span>
+uv<span class="w"> </span>run<span class="w"> </span>waldur_site_diagnostics<span class="w"> </span>-c<span class="w"> </span>config.yaml
+
+<span class="c1"># Manual user sync</span>
+uv<span class="w"> </span>run<span class="w"> </span>waldur_sync_offering_users<span class="w"> </span>-c<span class="w"> </span>config.yaml
+
+<span class="c1"># Check offering user states via API</span>
+curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Token YOUR_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://waldur.example.com/api/marketplace-offering-users/?offering_uuid=OFFERING_UUID"</span>
+</code></pre></div></td></tr></table></div></div></section><section class="print-page" id="admin-guide-providers-docs-slurm-usage-reporting-setup"><div><h1 id="slurm-usage-reporting-setup-guide">SLURM Usage Reporting Setup Guide</h1>
 <p>This guide explains how to set up a single Waldur Site Agent instance for usage reporting with SLURM backend.
 This configuration is ideal when you only need to collect and report usage data from your SLURM cluster to
 Waldur Mastermind.</p>
