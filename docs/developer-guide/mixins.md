@@ -4,6 +4,7 @@ This document lists all mixin classes found in the Waldur codebase.
 
 | Mixin Name | Module | Short Description |
 |------------|--------|-------------------|
+| [`ChecklistCompletionMixin`](#checklistcompletionmixin) | `waldur_core.checklist.mixins` | Abstract mixin providing checklist completion functionality for any model tha... |
 | [`CopyButtonMixin`](#copybuttonmixin) | `waldur_core.core.admin` | Mixin to add copy-to-clipboard functionality to form fields in Django admin |
 | [`ExcludedFieldsAdminMixin`](#excludedfieldsadminmixin) | `waldur_core.core.admin` | This mixin allows to toggle display of fields in Django model admin according... |
 | [`ExtraActionsMixin`](#extraactionsmixin) | `waldur_core.core.admin` | Allows to add extra actions to admin list page |
@@ -86,7 +87,6 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`SafeAttributesMixin`](#safeattributesmixin) | `waldur_mastermind.marketplace.models` | Mixin for safe attribute handling |
 | [`ConnectedOfferingDetailsMixin`](#connectedofferingdetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide offering details action for connected resources |
 | [`PublicViewsetMixin`](#publicviewsetmixin) | `waldur_mastermind.marketplace.views` | Mixin to allow anonymous access to offerings when configured |
-| [`ChecklistCompletionMixin`](#checklistcompletionmixin) | `waldur_mastermind.marketplace_checklist.mixins` | Abstract mixin providing checklist completion functionality for any model tha... |
 | [`TenantMixin`](#tenantmixin) | `waldur_mastermind.marketplace_openstack.processors` | No description available |
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
@@ -111,6 +111,15 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`VirtualMachineMixin`](#virtualmachinemixin) | `waldur_vmware.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 
 ## Detailed Descriptions
+
+### ChecklistCompletionMixin
+
+**Module:** `waldur_core.checklist.mixins`
+
+**Description:**
+Abstract mixin providing checklist completion functionality for any model that tracks checklist completion.
+
+**Base classes:** `Model`
 
 ### CopyButtonMixin
 
@@ -1047,15 +1056,6 @@ Mixin to provide offering details action for connected resources.
 
 **Description:**
 Mixin to allow anonymous access to offerings when configured.
-
-### ChecklistCompletionMixin
-
-**Module:** `waldur_mastermind.marketplace_checklist.mixins`
-
-**Description:**
-Abstract mixin providing checklist completion functionality for any model that tracks checklist completion.
-
-**Base classes:** `Model`
 
 ### TenantMixin
 
