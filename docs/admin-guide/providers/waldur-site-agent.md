@@ -273,34 +273,13 @@ the agent starts
 - usage-reporting service using a custom SLURM API,
   which is provided via custom module's entry-point
 
-### Custom backends for username retrieval and generation
+### Username Management
 
-By default, the agent doesn't generate usernames for users of resources.
-For this, a custom username management backend can be included in the agent:
+The agent supports asynchronous username generation and management for offering users. This system provides pluggable
+backends for custom username generation logic and handles complex scenarios with graceful error recovery.
 
-1. add a path to your class in the `project.entry-points."waldur_site_agent.username_management_backends"`
-   section of `pyproject.toml` file, example:
-
-   ```toml
-   ...
-   [project.entry-points."waldur_site_agent.username_management_backends"]
-   custom_backend = "your_project.backend.usernames:CustomUsernameManagementBackend"
-   ...
-   ```
-
-2. the class should implement the interface
-   `waldur_site_agent.backends.username_backend.backend:AbstractUsernameManagementBackend`
-3. rebuild the agent, e.g. `poetry install`, `uv sync`
-4. add `username_management_backend` field to offerings in your agent config, example:
-
-  ```yaml
-  offerings: # Settings for offerings
-  - name: "Example Offering" # offering name
-    ...
-     # Note: the value matches to the setting's key from the step 1
-    username_management_backend: "custom_backend" # Name of the backend from entrypoints
-    ...
-  ```
+For comprehensive documentation on username management, async user creation workflows, configuration, and custom
+backend development, see the [Username Management Documentation](docs/offering-users.md).
 
 ## Provider config file reference
 
@@ -313,6 +292,15 @@ offerings: # Settings for offerings
     waldur_api_url: "http://localhost:8081/api/" # URL of Waldur API (e.g. http://localhost:8081/api/).
     waldur_api_token: "" # Token to access the Waldur API.
     waldur_offering_uuid: "" # UUID of the offering in Waldur.
+    # Name of the backend from entrypoints to use for username management
+    username_management_backend: "base"
+    # Name of the backend from entrypoints to use for order processing
+    order_processing_backend: "slurm"
+    # Name of the backend from entrypoints to use for membership syncing
+    membership_sync_backend: "slurm"
+     # Name of the backend from entrypoints to use for reporting
+    reporting_backend: "slurm"
+    resource_import_enabled: true # Whether to expose importable resources to Waldur
     stomp_enabled: false # STOMP feature toggler
     mqtt_enabled: true # MQTT feature toggler
     websocket_use_tls: true # Whether to use TLS for websocket connection
@@ -351,6 +339,14 @@ offerings: # Settings for offerings
     waldur_api_url: "http://localhost:8081/api/"
     waldur_api_token: ""
     waldur_offering_uuid: ""
+    # Name of the backend from entrypoints to use for username management
+    username_management_backend: "base"
+     # Name of the backend from entrypoints to use for order processing
+    order_processing_backend: "moab"
+    # Name of the backend from entrypoints to use for membership syncing
+    membership_sync_backend: "moab"
+    reporting_backend: "moab" # Name of the backend from entrypoints to use for reporting
+    resource_import_enabled: false # Whether to expose importable resources to Waldur
     backend_type: "moab"
     backend_settings:
       default_account: root
