@@ -87,7 +87,8 @@ Test Helm deployment before tagging:
 
 Test changelog generation:
   image:
-    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+    name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
+    entrypoint: [""]
   stage: test
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -100,7 +101,7 @@ Test changelog generation:
     - echo $CI_COMMIT_TAG_MESSAGE
     - echo $CI_RELEASE_DESCRIPTION
     - export TIMESTAMP=$(date)
-    - PREV_TAG=$(cat docs/about/CHANGELOG.md| grep "##" | head -n 1 | sed "s/## //" )
+    - PREV_TAG=$(grep -m 1 "##" docs/about/CHANGELOG.md | sed "s/## //" )
     - echo $PREV_TAG
     - sed -i -E -e "s/# Changelog//" docs/about/CHANGELOG.md
     - |
@@ -125,7 +126,8 @@ Test changelog generation:
 
 Tag all repositories:
   image:
-    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+    name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
+    entrypoint: [""]
   stage: deploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
@@ -234,7 +236,8 @@ Tag all repositories:
 
 Release Python SDK:
   image:
-    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+    name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
+    entrypoint: [""]
   stage: deploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
@@ -252,7 +255,8 @@ Release Python SDK:
 
 Release TypeScript/JavaScript SDK:
   image:
-    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+    name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
+    entrypoint: [""]
   stage: deploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
@@ -274,7 +278,8 @@ Release TypeScript/JavaScript SDK:
 
 Release Go SDK:
   image:
-    name: registry.hpc.ut.ee/mirror/bitnami/git:2.39.1
+    name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
+    entrypoint: [""]
   stage: deploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
