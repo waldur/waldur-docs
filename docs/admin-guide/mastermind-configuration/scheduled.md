@@ -31,12 +31,13 @@ td:nth-child(4) {
 | `cancel_expired_group_invitations` | `waldur_core.users.cancel_expired_group_invitations` | 1 day | Invitation lifetime must be specified in Waldur Core settings with parameter<br> "GROUP_INVITATION_LIFETIME". If invitation creation time is less than expiration time,<br> the invitation will set as expired. |
 | `check-expired-permissions` | `waldur_core.permissions.check_expired_permissions` | 1 day | Task not found in registry |
 | `check-polices` | `waldur_mastermind.policy.check_polices` | Cron: `* * 1 * * (m/h/dM/MY/d)` | Evaluate all policies across all policy types in the system. |
+| `cleanup-orphaned-answers` | `waldur_core.checklist.cleanup_orphaned_answers` | 1 day | Task not found in registry |
 | `core-reset-updating-resources` | `waldur_core.reset_updating_resources` | 10 minutes | Reset resources stuck in UPDATING state when their Celery tasks are completed. |
 | `create-reviews-if-strategy-is-after-proposal` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_proposal` | 1 hour | Create reviews for active rounds with 'after proposal' review strategy. |
 | `create-reviews-if-strategy-is-after-round` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_round` | 1 hour | Create reviews for active rounds with 'after round' review strategy. |
 | `create_customer_permission_reviews` | `waldur_core.structure.create_customer_permission_reviews` | 1 day | Create customer permission reviews for customers that need periodic review of user permissions. |
 | `expired-reviews-should-be-cancelled` | `waldur_mastermind.proposal.expired_reviews_should_be_cancelled` | 1 hour | Cancel reviews that have expired. |
-| `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | Task not found in registry |
+| `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | No description available |
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
 | `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Create marketplace resources for OpenStack instances and volumes that exist in backend but are missing from marketplace. |
 | `marketplace-openstack.refresh-instance-backend-metadata` | `waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata` | 1 day | Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information. |
@@ -50,6 +51,7 @@ td:nth-child(4) {
 | `openstack-tenant-resources-list-pull-task` | `openstack.tenant_resources_list_pull_task` | 1 hour | Pull OpenStack tenant resources like instances, volumes, and snapshots from backend. |
 | `openstack-tenant-subresources-list-pull-task` | `openstack.tenant_subresources_list_pull_task` | 2 hours | Pull OpenStack tenant subresources like security groups, networks, subnets, and ports from backend. |
 | `openstack_mark_as_erred_old_tenants_in_deleting_state` | `openstack.mark_as_erred_old_tenants_in_deleting_state` | 1 day | Mark OpenStack tenants as erred if they have been in deleting state for more than 1 day. |
+| `openstack_mark_stuck_updating_tenants_as_erred` | `openstack.mark_stuck_updating_tenants_as_erred` | 1 hour | No description available |
 | `process-pending-project-invitations` | `waldur_core.users.process_pending_project_invitations` | 2 hours | Process project invitations for projects that have become active. |
 | `process_pending_project_orders` | `waldur_mastermind.marketplace.process_pending_project_orders` | 2 hours | Process orders for projects that have become active. |
 | `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Cancel proposals for rounds that have ended. |
@@ -58,14 +60,14 @@ td:nth-child(4) {
 | `pull-service-resources` | `waldur_core.structure.ServiceResourcesListPullTask` | Hourly (at minute 0) | Pull resources from all active service backends. |
 | `pull-support-users` | `waldur_mastermind.support.pull_support_users` | 6 hours | Pull support users from the active support backend. |
 | `remove_deleted_robot_accounts` | `waldur_mastermind.marketplace.remove_deleted_robot_accounts` | 1 day | Remove robot accounts that are in DELETED state.<br> This task runs daily to clean up robot accounts that have been marked for deletion. |
-| `send-messages-about-pending-orders` | `waldur_mastermind.marketplace_site_agent.send_messages_about_pending_orders` | 1 hour | Task not found in registry |
+| `send-messages-about-pending-orders` | `waldur_mastermind.marketplace_site_agent.send_messages_about_pending_orders` | 1 hour | Send a message about pending orders created 1 hour ago to MQTT |
 | `send-monthly-invoicing-reports-about-customers` | `invoices.send_monthly_invoicing_reports_about_customers` | Cron: `0 0 2 * * (m/h/dM/MY/d)` | Send monthly invoicing reports via email to configured recipients. |
 | `send-notifications-about-upcoming-ends` | `invoices.send_notifications_about_upcoming_ends` | 1 day | Send notifications about upcoming end dates of fixed payment profiles. |
 | `send-reminder-for-pending-invitations` | `waldur_core.users.send_reminder_for_pending_invitations` | 1 day | Send reminder emails for pending invitations that are about to expire. |
 | `send-scheduled-broadcast-notifications` | `waldur_mastermind.notifications.send_scheduled_broadcast_messages` | 12 hours | Send broadcast messages that have been scheduled for delivery. |
 | `send_telemetry` | `waldur_mastermind.marketplace.send_metrics` | 1 day | Send anonymous usage metrics and telemetry data to the Waldur team. |
 | `structure-set-erred-stuck-resources` | `waldur_core.structure.SetErredStuckResources` | 1 hour | This task marks all resources which have been provisioning for more than 3 hours as erred. |
-| `sync-resources` | `waldur_mastermind.marketplace_site_agent.sync_resources` | 10 minutes | Task not found in registry |
+| `sync-resources` | `waldur_mastermind.marketplace_site_agent.sync_resources` | 10 minutes | Sync resources that haven't been updated in the last hour.<br> Processes only resources that users have subscribed to receive updates for. |
 | `sync_request_types` | `waldur_mastermind.support.sync_request_types` | 1 day | Synchronize request types from the active support backend. |
 | `terminate_expired_resources` | `waldur_mastermind.marketplace.terminate_expired_resources` | Cron: `20 1 * * * (m/h/dM/MY/d)` | Terminate marketplace resources that have reached their end date. |
 | `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their project has reached its end date. |
@@ -75,7 +77,7 @@ td:nth-child(4) {
 | `update-standard-quotas` | `waldur_core.quotas.update_standard_quotas` | 1 day | Task not found in registry |
 | `valimo-auth-cleanup-auth-results` | `waldur_auth_valimo.cleanup_auth_results` | 1 hour | Clean up Valimo authentication results older than 7 days. |
 | `waldur-create-invoices` | `invoices.create_monthly_invoices` | Monthly (1st day of month at midnight) | - For every customer change state of the invoices for previous months from "pending" to "billed"<br> and freeze their items.<br> - Create new invoice for every customer in current month if not created yet. |
-| `waldur-create-offering-users-for-site-agent-offerings` | `waldur_mastermind.marketplace_site_agent.sync_offering_users` | 1 day | Task not found in registry |
+| `waldur-create-offering-users-for-site-agent-offerings` | `waldur_mastermind.marketplace_site_agent.sync_offering_users` | 1 day | No description available |
 | `waldur-firecrest-pull-jobs` | `waldur_firecrest.pull_jobs` | 1 hour | Pull SLURM jobs from Firecrest API for all offering users with valid OAuth tokens. |
 | `waldur-freeipa-sync-groups` | `waldur_freeipa.sync_groups` | 10 minutes | This task is used by Celery beat in order to periodically<br> schedule FreeIPA group synchronization. |
 | `waldur-freeipa-sync-names` | `waldur_freeipa.sync_names` | 1 day | Synchronize user names between Waldur and FreeIPA backend. |

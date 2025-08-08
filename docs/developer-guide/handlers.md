@@ -482,6 +482,7 @@ td:nth-child(4) {
 | `customer_credit_changed_handler` | `Django Signal (post_save)` | `invoices.CustomerCredit` | Handle customer credit value changes and evaluate related policies. |
 | `customer_credit_offerings_list_changed_handler` | `Django Signal (m2m_changed)` | `CustomerCredit_offerings` | No description |
 | `customer_estimated_cost_policy_trigger_handler` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Evaluate customer cost policies when invoice items are updated. |
+| `delete_checklist_completion` | `Django Signal (pre_delete)` | `proposal.Proposal` | Remove checklist completion tracking when proposal is deleted. |
 | `delete_expired_project_if_every_resource_has_been_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Delete an expired project if all its resources have been terminated. |
 | `delete_offering_component_for_volume_type` | `Django Signal (post_delete)` | `openstack.VolumeType` | No description |
 | `delete_remote_project` | `Django Signal (post_delete)` | `structure.Project` | No description |
@@ -552,9 +553,9 @@ td:nth-child(4) {
 | `send_issue_updated_notification` | `Django Signal (post_save)` | `support.Issue` | No description |
 | `send_offering_user_username_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | No description |
 | `send_pending_order_to_message_queue` | `Django Signal (post_save)` | `marketplace.Order` | Send pending marketplace order to message queue for site agent processing. |
-| `send_resource_update_message_to_mqtt` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
-| `send_role_granted_message_to_mqtt` | `Custom Signal (role_granted)` | `—` | No description |
-| `send_role_revoked_message_to_mqtt` | `Custom Signal (role_revoked)` | `—` | No description |
+| `send_resource_update_message_to_queue` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
+| `send_role_granted_message_to_queue` | `Custom Signal (role_granted)` | `—` | No description |
+| `send_role_revoked_message_to_queue` | `Custom Signal (role_revoked)` | `—` | No description |
 | `set_mtu_when_network_has_been_created` | `Django Signal (post_save)` | `openstack.Network` | No description |
 | `set_project_name_on_invoice_item_creation` | `Django Signal (post_save)` | `invoices.InvoiceItem` | No description |
 | `set_tax_percent_on_invoice_creation` | `Django Signal (pre_save)` | `invoices.Invoice` | No description |
@@ -695,14 +696,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 620
+Total unique handlers found: 621
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 330 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 242 handlers
+- **waldur_mastermind**: 243 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
 - **waldur_rancher**: 12 handlers

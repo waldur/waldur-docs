@@ -4,7 +4,9 @@ This document lists all mixin classes found in the Waldur codebase.
 
 | Mixin Name | Module | Short Description |
 |------------|--------|-------------------|
-| [`ChecklistCompletionMixin`](#checklistcompletionmixin) | `waldur_core.checklist.mixins` | Abstract mixin providing checklist completion functionality for any model tha... |
+| [`BaseChecklistMixin`](#basechecklistmixin) | `waldur_core.checklist.mixins` | Base mixin providing common checklist functionality |
+| [`ReviewerChecklistMixin`](#reviewerchecklistmixin) | `waldur_core.checklist.mixins` | Mixin for ViewSets that provide checklist review functionality to reviewers |
+| [`UserChecklistMixin`](#userchecklistmixin) | `waldur_core.checklist.mixins` | Mixin for ViewSets that provide checklist functionality to end users |
 | [`CopyButtonMixin`](#copybuttonmixin) | `waldur_core.core.admin` | Mixin to add copy-to-clipboard functionality to form fields in Django admin |
 | [`ExcludedFieldsAdminMixin`](#excludedfieldsadminmixin) | `waldur_core.core.admin` | This mixin allows to toggle display of fields in Django model admin according... |
 | [`ExtraActionsMixin`](#extraactionsmixin) | `waldur_core.core.admin` | Allows to add extra actions to admin list page |
@@ -92,7 +94,6 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
-| [`ProposalComplianceTestMixin`](#proposalcompliancetestmixin) | `waldur_mastermind.proposal.tests.test_proposal_compliance` | Common setup for proposal compliance tests |
 | [`BackendNameMixin`](#backendnamemixin) | `waldur_mastermind.support.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`FileMixin`](#filemixin) | `waldur_mastermind.support.models` | Mixin to provide file-related functionality and properties |
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_mastermind.support.views` | Raise exception if extension is disabled |
@@ -112,14 +113,60 @@ This document lists all mixin classes found in the Waldur codebase.
 
 ## Detailed Descriptions
 
-### ChecklistCompletionMixin
+### BaseChecklistMixin
 
 **Module:** `waldur_core.checklist.mixins`
 
 **Description:**
-Abstract mixin providing checklist completion functionality for any model that tracks checklist completion.
+Base mixin providing common checklist functionality.
 
-**Base classes:** `Model`
+Provides shared helper methods used by both UserChecklistMixin and ReviewerChecklistMixin.
+Should not be used directly - use UserChecklistMixin or ReviewerChecklistMixin instead.
+
+### ReviewerChecklistMixin
+
+**Module:** `waldur_core.checklist.mixins`
+
+**Description:**
+Mixin for ViewSets that provide checklist review functionality to reviewers.
+
+Provides actions for designated reviewers to view full checklist information
+including sensitive review logic:
+- checklist_review: Get full checklist with review logic exposed
+- completion_review_status: Get full completion status with review triggers exposed
+
+Security Design:
+This mixin exposes privileged review information and should only be used with
+proper reviewer permission controls.
+
+IMPORTANT: Must override permissions with app-specific reviewer checks:
+- checklist_review_permissions = [permission_factory(...)]  # Reviewer permissions required
+- completion_review_status_permissions = [permission_factory(...)]  # Reviewer permissions required
+
+**Base classes:** `BaseChecklistMixin`
+
+### UserChecklistMixin
+
+**Module:** `waldur_core.checklist.mixins`
+
+**Description:**
+Mixin for ViewSets that provide checklist functionality to end users.
+
+Provides actions for users filling in checklists or viewing their answers:
+- checklist: Get checklist questions with existing answers (hides review logic)
+- completion_status: Get completion status (hides review triggers)
+- submit_answers: Submit answers to checklist questions
+
+Security Design:
+This mixin hides all review logic information to prevent users from gaming
+the system by seeing which answers trigger reviews.
+
+Default permissions are IsAdminUser but should be overridden with app-specific permissions:
+- checklist_permissions = [permission_factory(...)]
+- completion_status_permissions = [permission_factory(...)]
+- submit_answers_permissions = [permission_factory(...)]
+
+**Base classes:** `BaseChecklistMixin`
 
 ### CopyButtonMixin
 
@@ -1176,13 +1223,6 @@ This mixin provides several extensions to stock Serializer class:
 or uses URL name specified in a model of serialized object.
 
 **Base classes:** `AugmentedSerializerMixin`
-
-### ProposalComplianceTestMixin
-
-**Module:** `waldur_mastermind.proposal.tests.test_proposal_compliance`
-
-**Description:**
-Common setup for proposal compliance tests.
 
 ### BackendNameMixin
 
