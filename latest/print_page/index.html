@@ -26631,8 +26631,12 @@ from an initial REST API call and then query state changes of the entity.</p>
 <td>Account has been successfully deleted</td>
 </tr>
 <tr>
-<td><code>ERROR</code></td>
-<td>An error occurred during account management</td>
+<td><code>ERROR_CREATING</code></td>
+<td>An error occurred during account creation</td>
+</tr>
+<tr>
+<td><code>ERROR_DELETING</code></td>
+<td>An error occurred during account deletion</td>
 </tr>
 </tbody>
 </table>
@@ -26655,17 +26659,33 @@ from an initial REST API call and then query state changes of the entity.</p>
     DELETION_REQUESTED --&gt; DELETING : set_deleting()
     DELETING --&gt; DELETED : set_deleted()
 
-    CREATION_REQUESTED --&gt; ERROR : set_error()
-    CREATING --&gt; ERROR : set_error()
-    PENDING_ACCOUNT_LINKING --&gt; ERROR : set_error()
-    PENDING_ADDITIONAL_VALIDATION --&gt; ERROR : set_error()
-    OK --&gt; ERROR : set_error()
-    DELETION_REQUESTED --&gt; ERROR : set_error()
-    DELETING --&gt; ERROR : set_error()
+    %% Error state transitions during creation flow
+    CREATION_REQUESTED --&gt; ERROR_CREATING : set_error_creating()
+    CREATING --&gt; ERROR_CREATING : set_error_creating()
+    PENDING_ACCOUNT_LINKING --&gt; ERROR_CREATING : set_error_creating()
+    PENDING_ADDITIONAL_VALIDATION --&gt; ERROR_CREATING : set_error_creating()
 
-    ERROR --&gt; OK : set_ok()
-    ERROR --&gt; PENDING_ACCOUNT_LINKING : set_pending_account_linking()
-    ERROR --&gt; PENDING_ADDITIONAL_VALIDATION : set_pending_additional_validation()</code></pre>
+    %% Error state transitions during deletion flow
+    DELETION_REQUESTED --&gt; ERROR_DELETING : set_error_deleting()
+    DELETING --&gt; ERROR_DELETING : set_error_deleting()
+
+    %% Recovery from error states
+    ERROR_CREATING --&gt; CREATING : begin_creating()
+    ERROR_CREATING --&gt; OK : set_ok()
+    ERROR_CREATING --&gt; PENDING_ACCOUNT_LINKING : set_pending_account_linking()
+    ERROR_CREATING --&gt; PENDING_ADDITIONAL_VALIDATION : set_pending_additional_validation()
+
+    ERROR_DELETING --&gt; DELETING : set_deleting()
+    ERROR_DELETING --&gt; OK : set_ok()
+
+    %% Legacy error transitions (backward compatibility)
+    CREATION_REQUESTED --&gt; ERROR_CREATING : set_error() [legacy]
+    CREATING --&gt; ERROR_CREATING : set_error() [legacy]
+    PENDING_ACCOUNT_LINKING --&gt; ERROR_CREATING : set_error() [legacy]
+    PENDING_ADDITIONAL_VALIDATION --&gt; ERROR_CREATING : set_error() [legacy]
+    OK --&gt; ERROR_CREATING : set_error() [legacy]
+    DELETION_REQUESTED --&gt; ERROR_CREATING : set_error() [legacy]
+    DELETING --&gt; ERROR_CREATING : set_error() [legacy]</code></pre>
 <h2 id="developer-guide-core-concepts-offering-users-rest-api-endpoints">REST API Endpoints</h2>
 <h3 id="developer-guide-core-concepts-offering-users-state-transition-actions">State Transition Actions</h3>
 <p>All state transition endpoints require <code>UPDATE_OFFERING_USER</code> permission and are accessed via POST to the offering user detail endpoint with the action suffix.</p>
@@ -26676,38 +26696,93 @@ from an initial REST API call and then query state changes of the entity.</p>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_pending_additional_validation/</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_pending_additional_validation/</span>
 <span class="err">Content-Type: application/json</span>
 
 <span class="err">{</span>
-<span class="err">  "comment": "Additional documents required for validation"</span>
+<span class="err">  "comment": "Additional documents required for validation",</span>
+<span class="err">  "comment_url": "https://docs.example.com/validation-requirements"</span>
 <span class="err">}</span>
 </code></pre></div></td></tr></table></div>
-<p><strong>Valid transitions from:</strong> <code>CREATING</code>, <code>ERROR</code></p>
+<p><strong>Valid transitions from:</strong> <code>CREATING</code>, <code>ERROR_CREATING</code></p>
 <h4 id="developer-guide-core-concepts-offering-users-set-pending-account-linking">Set Pending Account Linking</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_pending_account_linking/</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_pending_account_linking/</span>
 <span class="err">Content-Type: application/json</span>
 
 <span class="err">{</span>
-<span class="err">  "comment": "Please link your existing service account"</span>
+<span class="err">  "comment": "Please link your existing service account",</span>
+<span class="err">  "comment_url": "https://service.example.com/account-linking"</span>
 <span class="err">}</span>
 </code></pre></div></td></tr></table></div>
-<p><strong>Valid transitions from:</strong> <code>CREATING</code>, <code>ERROR</code></p>
+<p><strong>Valid transitions from:</strong> <code>CREATING</code>, <code>ERROR_CREATING</code></p>
 <h4 id="developer-guide-core-concepts-offering-users-set-validation-complete">Set Validation Complete</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_validation_complete/</span>
 </code></pre></div></td></tr></table></div>
 <p><strong>Valid transitions from:</strong> <code>PENDING_ADDITIONAL_VALIDATION</code>, <code>PENDING_ACCOUNT_LINKING</code></p>
-<p><strong>Note:</strong> This action clears the <code>service_provider_comment</code> field.</p>
+<p><strong>Note:</strong> This action clears both the <code>service_provider_comment</code> and <code>service_provider_comment_url</code> fields.</p>
+<h4 id="developer-guide-core-concepts-offering-users-set-error-creating">Set Error Creating</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_error_creating/</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>CREATION_REQUESTED</code>, <code>CREATING</code>, <code>PENDING_ACCOUNT_LINKING</code>, <code>PENDING_ADDITIONAL_VALIDATION</code></p>
+<p>Sets the user account to error state during the creation process. Used when creation operations fail.</p>
+<h4 id="developer-guide-core-concepts-offering-users-set-error-deleting">Set Error Deleting</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_error_deleting/</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>DELETION_REQUESTED</code>, <code>DELETING</code></p>
+<p>Sets the user account to error state during the deletion process. Used when deletion operations fail.</p>
+<h4 id="developer-guide-core-concepts-offering-users-begin-creating">Begin Creating</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/begin_creating/</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>CREATION_REQUESTED</code>, <code>ERROR_CREATING</code></p>
+<p>Initiates the account creation process. Can be used to retry creation after an error.</p>
+<h4 id="developer-guide-core-concepts-offering-users-request-deletion">Request Deletion</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/request_deletion/</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>OK</code></p>
+<p>Initiates the account deletion process. Moves the user from active status to deletion requested.</p>
+<h4 id="developer-guide-core-concepts-offering-users-set-deleting">Set Deleting</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_deleting/</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>DELETION_REQUESTED</code>, <code>ERROR_DELETING</code></p>
+<p>Begins the account deletion process. Can be used to retry deletion after an error.</p>
+<h4 id="developer-guide-core-concepts-offering-users-set-deleted">Set Deleted</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_deleted/</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Valid transitions from:</strong> <code>DELETING</code></p>
+<p>Marks the user account as successfully deleted. This is the final state for successful account deletion.</p>
+<h3 id="developer-guide-core-concepts-offering-users-service-provider-comment-management">Service Provider Comment Management</h3>
+<h4 id="developer-guide-core-concepts-offering-users-update-comments">Update Comments</h4>
+<p>Service providers can directly update comment fields without changing the user's state:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">PATCH /api/marketplace-offering-users/{uuid}/update_comments/</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">{</span>
+<span class="err">  "service_provider_comment": "Updated instructions for account access",</span>
+<span class="err">  "service_provider_comment_url": "https://help.example.com/account-setup"</span>
+<span class="err">}</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Permissions:</strong> Requires <code>UPDATE_OFFERING_USER</code> permission on the offering's customer.</p>
+<p><strong>Valid states:</strong> All states except <code>DELETED</code></p>
+<p>Both fields are optional - you can update just the comment, just the URL, or both.</p>
 <h3 id="developer-guide-core-concepts-offering-users-offeringuser-fields">OfferingUser Fields</h3>
 <p>When retrieving or updating OfferingUser objects, the following state-related fields are available:</p>
 <ul>
 <li><code>state</code> (string, read-only): Current state of the user account</li>
 <li><code>service_provider_comment</code> (string, read-only): Comment from service provider for pending states</li>
+<li><code>service_provider_comment_url</code> (string, read-only): Optional URL link for additional information or actions related to the service provider comment</li>
 </ul>
 <h2 id="developer-guide-core-concepts-offering-users-backward-compatibility">Backward Compatibility</h2>
 <p>The system maintains backward compatibility with existing integrations:</p>
@@ -26720,15 +26795,113 @@ from an initial REST API call and then query state changes of the entity.</p>
 <ul>
 <li><code>POST /api/marketplace-service-providers/{uuid}/set_offerings_username/</code> - Bulk username assignment that automatically transitions users to <code>OK</code> state</li>
 </ul>
+<h3 id="developer-guide-core-concepts-offering-users-legacy-error-state-support">Legacy Error State Support</h3>
+<p>For backward compatibility with existing integrations:</p>
+<ul>
+<li><strong><code>set_error()</code> method</strong>: The legacy <code>set_error()</code> method still exists and defaults to <code>ERROR_CREATING</code> state</li>
+</ul>
+<p>New integrations should use the specific error states (<code>ERROR_CREATING</code>, <code>ERROR_DELETING</code>) for better error context.</p>
 <h2 id="developer-guide-core-concepts-offering-users-usage-examples">Usage Examples</h2>
 <h3 id="developer-guide-core-concepts-offering-users-service-provider-workflow">Service Provider Workflow</h3>
+<h4 id="developer-guide-core-concepts-offering-users-standard-creation-flow">Standard Creation Flow</h4>
 <ol>
 <li><strong>Initial Creation</strong>: OfferingUser is created with state <code>CREATION_REQUESTED</code></li>
 <li><strong>Begin Processing</strong>: Transition to <code>CREATING</code> state</li>
-<li><strong>Require Validation</strong>: If additional validation needed, transition to <code>PENDING_ADDITIONAL_VALIDATION</code> with explanatory comment</li>
+<li><strong>Require Validation</strong>: If additional validation needed, transition to <code>PENDING_ADDITIONAL_VALIDATION</code> with explanatory comment and optional URL</li>
 <li><strong>Complete Validation</strong>: Once validated, transition to <code>OK</code> state</li>
 <li><strong>Account Ready</strong>: User can now access the service</li>
 </ol>
+<h4 id="developer-guide-core-concepts-offering-users-enhanced-workflow-with-comment-urls">Enhanced Workflow with Comment URLs</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Step 1: Start creating the account</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/begin_creating/</span>
+
+<span class="err"># Step 2: If validation is needed, provide instructions and a helpful URL</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_pending_additional_validation/</span>
+<span class="err">{</span>
+<span class="err">  "comment": "Please upload your identity verification documents",</span>
+<span class="err">  "comment_url": "https://portal.example.com/identity-verification"</span>
+<span class="err">}</span>
+
+<span class="err"># Step 3: Service provider can update instructions without changing state</span>
+<span class="err">PATCH /api/marketplace-offering-users/abc123/update_comments/</span>
+<span class="err">{</span>
+<span class="err">  "service_provider_comment": "Documents received. Additional tax forms required.",</span>
+<span class="err">  "service_provider_comment_url": "https://portal.example.com/tax-forms"</span>
+<span class="err">}</span>
+
+<span class="err"># Step 4: When validation is complete, transition to OK (clears comment fields)</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_validation_complete/</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-offering-users-error-handling-and-recovery">Error Handling and Recovery</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># If creation fails, set appropriate error state</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_error_creating/</span>
+
+<span class="err"># To retry creation after fixing issues</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/begin_creating/</span>
+
+<span class="err"># If deletion fails, set deletion error state</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_error_deleting/</span>
+
+<span class="err"># To retry deletion after fixing issues</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_deleting/</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="developer-guide-core-concepts-offering-users-account-deletion-workflow">Account Deletion Workflow</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Step 1: Request account deletion (from OK state)</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/request_deletion/</span>
+
+<span class="err"># Step 2: Begin deletion process (service provider starts deletion)</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_deleting/</span>
+
+<span class="err"># Step 3: Mark as successfully deleted (final step)</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_deleted/</span>
+
+<span class="err"># Alternative: If deletion encounters errors</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_error_deleting/</span>
+
+<span class="err"># Then retry deletion process</span>
+<span class="err">POST /api/marketplace-offering-users/abc123/set_deleting/</span>
+</code></pre></div></td></tr></table></div>
 <h2 id="developer-guide-core-concepts-offering-users-permissions">Permissions</h2>
 <p>State transition endpoints use the <code>permission_factory</code> pattern with:</p>
 <ul>
@@ -26795,9 +26968,14 @@ from an initial REST API call and then query state changes of the entity.</p>
 <td>Users with successfully deleted accounts</td>
 </tr>
 <tr>
-<td><code>Error</code></td>
-<td><code>ERROR</code></td>
-<td>Users with errors during account management</td>
+<td><code>Error creating</code></td>
+<td><code>ERROR_CREATING</code></td>
+<td>Users with errors during account creation</td>
+</tr>
+<tr>
+<td><code>Error deleting</code></td>
+<td><code>ERROR_DELETING</code></td>
+<td>Users with errors during account deletion</td>
 </tr>
 </tbody>
 </table>
@@ -26846,15 +27024,27 @@ from an initial REST API call and then query state changes of the entity.</p>
 <h3 id="developer-guide-core-concepts-offering-users-practical-filtering-examples">Practical Filtering Examples</h3>
 <p>Here are common filtering scenarios for managing OfferingUsers:</p>
 <h4 id="developer-guide-core-concepts-offering-users-find-users-requiring-attention">Find Users Requiring Attention</h4>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Get users needing validation or account linking</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Get users needing validation or account linking</span>
 <span class="err">GET /api/marketplace-offering-users/?state=Pending%20additional%20validation&amp;state=Pending%20account%20linking</span>
 
-<span class="err"># Get users in error state</span>
-<span class="err">GET /api/marketplace-offering-users/?state=Error</span>
+<span class="err"># Get users in creation error state</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Error%20creating</span>
+
+<span class="err"># Get users in deletion error state</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Error%20deleting</span>
+
+<span class="err"># Get all users with any error state</span>
+<span class="err">GET /api/marketplace-offering-users/?state=Error%20creating&amp;state=Error%20deleting</span>
 </code></pre></div></td></tr></table></div>
 <h4 id="developer-guide-core-concepts-offering-users-monitor-service-provider-operations">Monitor Service Provider Operations</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
