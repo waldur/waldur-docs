@@ -32,10 +32,8 @@ These steps outline the process of generating the TypeScript SDK from the Waldur
    npx --yes @hey-api/openapi-ts@0.77.0
 
    # post-processing
-   sed -i '' '/querySerializer: {/,/},/d' waldur-typescript-sdk/sdk.gen.ts
-   sed -i '' '1i\
-   export { formDataBodySerializer, RequestResult } from "./client";
-   ' waldur-typescript-sdk/index.ts
+   sed -i '/querySerializer: {/,/},/d' waldur-typescript-sdk/sdk.gen.ts
+   sed -i '1i export { formDataBodySerializer, RequestResult } from "./client";' waldur-typescript-sdk/index.ts
 
    # copying
    cp waldur-typescript-sdk ../js-client/src
