@@ -2695,6 +2695,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../developer-guide/core-concepts/checklists/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Core Checklists
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../developer-guide/core-concepts/event-based-order-processing/" class="md-nav__link">
         
   
@@ -25785,7 +25806,240 @@ information - <strong>error_message</strong>. The field should be exposed via RE
 Background task should update this field before transiting into an erred
 state.</p>
 <p>Cleaning of the error state of the model instance should clean up also
-<code>error_message</code> field.</p></div></section><section class="print-page" id="developer-guide-core-concepts-event-based-order-processing"><div><h1 id="stomp-based-event-notification-system">STOMP-Based Event Notification System</h1>
+<code>error_message</code> field.</p></div></section><section class="print-page" id="developer-guide-core-concepts-checklists"><div><h1 id="core-checklists">Core Checklists</h1>
+<p>The core checklist module provides a flexible questionnaire system that enables organizations to manage various types of compliance and metadata requirements through customizable questionnaires with conditional logic and review workflows.</p>
+<h2 id="developer-guide-core-concepts-checklists-overview">Overview</h2>
+<p>The checklist system is designed as an extendable staff-configured metadata schema
+to be used in different scenarios, for example:</p>
+<ul>
+<li><strong>Project Metadata</strong>: Extendable schema for project metadata</li>
+<li><strong>Project Compliance</strong>: Ensures projects meet organizational standards</li>
+<li><strong>Proposal Compliance</strong>: Validates proposals before submission</li>
+<li><strong>Offering Compliance</strong>: Verifies marketplace offerings meet requirements</li>
+</ul>
+<h2 id="developer-guide-core-concepts-checklists-core-models">Core Models</h2>
+<h3 id="developer-guide-core-concepts-checklists-category">Category</h3>
+<p>Groups checklists by category with icon support for UI display. Categories provide organizational structure for managing different types of compliance checklists.</p>
+<h3 id="developer-guide-core-concepts-checklists-checklist">Checklist</h3>
+<p>Main container for compliance questions. Each checklist has a type (project/proposal/offering compliance/project metadata) and contains an ordered set of questions that users must complete.</p>
+<p><strong>Key features:</strong></p>
+<ul>
+<li>Type-based categorization (project_compliance, proposal_compliance, offering_compliance, project_metadata)</li>
+<li>Dynamic question visibility based on user context and dependencies</li>
+<li>Optional category grouping for UI organization</li>
+<li>Timestamped for audit trail</li>
+</ul>
+<h3 id="developer-guide-core-concepts-checklists-question">Question</h3>
+<p>Individual questions with configurable types, optional images, ordering, and review trigger logic based on answer values.</p>
+<p><strong>Question Types:</strong></p>
+<ul>
+<li><strong>Boolean</strong>: Yes/No/N/A responses</li>
+<li><strong>Single Select</strong>: Choose one option from a list</li>
+<li><strong>Multi Select</strong>: Choose multiple options from a list</li>
+<li><strong>Text Input</strong>: Short text responses</li>
+<li><strong>Text Area</strong>: Long text responses</li>
+<li><strong>Number</strong>: Numeric input</li>
+<li><strong>Date</strong>: Date selection</li>
+<li><strong>File</strong>: File upload (planned)</li>
+</ul>
+<p><strong>Features:</strong></p>
+<ul>
+<li>Conditional visibility based on dependencies</li>
+<li>Review triggering based on answer values</li>
+<li>Required/optional questions</li>
+<li>Image support for visual questions</li>
+<li>Ordered display</li>
+</ul>
+<h3 id="developer-guide-core-concepts-checklists-questionoption">QuestionOption</h3>
+<p>Multiple choice options for select-type questions with ordering support. Provides the available choices for single-select and multi-select questions.</p>
+<h3 id="developer-guide-core-concepts-checklists-questiondependency">QuestionDependency</h3>
+<p>Conditional visibility logic - questions can depend on other questions' answers with circular dependency prevention. This enables dynamic questionnaires that adapt based on user responses.</p>
+<p><strong>Operators supported:</strong></p>
+<ul>
+<li><code>equals</code>: Exact match</li>
+<li><code>not_equals</code>: Not equal to</li>
+<li><code>contains</code>: Text contains substring</li>
+<li><code>in</code>: Value in list</li>
+<li><code>not_in</code>: Value not in list</li>
+</ul>
+<h3 id="developer-guide-core-concepts-checklists-checklistcompletion">ChecklistCompletion</h3>
+<p>Generic completion tracking model that links checklists to any domain object (proposals, projects, etc.) using Django's generic foreign key system.</p>
+<p><strong>Features:</strong></p>
+<ul>
+<li>Generic foreign key to any model (scope)</li>
+<li>Completion status tracking</li>
+<li>Review requirement detection</li>
+<li>Reviewer assignment and notes</li>
+<li>Completion percentage calculation</li>
+</ul>
+<h3 id="developer-guide-core-concepts-checklists-answer">Answer</h3>
+<p>User responses linked to ChecklistCompletion objects, stored as JSON with automatic review flagging and reviewer tracking.</p>
+<p><strong>Features:</strong></p>
+<ul>
+<li>Flexible JSON storage for different answer types</li>
+<li>Automatic review requirement detection based on question configuration</li>
+<li>Review workflow with reviewer assignment and notes</li>
+<li>Audit trail with timestamps</li>
+<li>Answer validation based on question type</li>
+<li>Unique constraints per completion/question/user</li>
+</ul>
+<h2 id="developer-guide-core-concepts-checklists-api-endpoints">API Endpoints</h2>
+<h3 id="developer-guide-core-concepts-checklists-core-endpoints">Core Endpoints</h3>
+<ul>
+<li><code>GET /api/marketplace-checklists-categories/</code> - List checklist categories</li>
+<li><code>GET /api/marketplace-checklists-categories/{uuid}/</code> - Category details</li>
+</ul>
+<h3 id="developer-guide-core-concepts-checklists-admin-endpoints-staff-only">Admin Endpoints (Staff Only)</h3>
+<ul>
+<li><code>GET /api/marketplace-checklists-admin/</code> - List checklists (staff only)</li>
+<li><code>POST /api/marketplace-checklists-admin/</code> - Create checklist (staff only)</li>
+<li><code>GET /api/marketplace-checklists-admin/{uuid}/</code> - Checklist details (staff only)</li>
+<li><code>PUT/PATCH /api/marketplace-checklists-admin/{uuid}/</code> - Update checklist (staff only)</li>
+<li><code>DELETE /api/marketplace-checklists-admin/{uuid}/</code> - Delete checklist (staff only)</li>
+<li>
+<p><code>GET /api/marketplace-checklists-admin/{uuid}/questions/</code> - List checklist questions (staff only)</p>
+</li>
+<li>
+<p><code>GET /api/marketplace-checklists-admin-questions/</code> - List all questions (staff only)</p>
+</li>
+<li><code>POST /api/marketplace-checklists-admin-questions/</code> - Create question (staff only)</li>
+<li><code>GET /api/marketplace-checklists-admin-questions/{uuid}/</code> - Question details (staff only)</li>
+<li><code>PUT/PATCH /api/marketplace-checklists-admin-questions/{uuid}/</code> - Update question (staff only)</li>
+<li>
+<p><code>DELETE /api/marketplace-checklists-admin-questions/{uuid}/</code> - Delete question (staff only)</p>
+</li>
+<li>
+<p><code>GET /api/marketplace-checklists-admin-question-options/</code> - List question options (staff only)</p>
+</li>
+<li><code>POST /api/marketplace-checklists-admin-question-options/</code> - Create option (staff only)</li>
+<li>Full CRUD operations on question options and dependencies</li>
+</ul>
+<h3 id="developer-guide-core-concepts-checklists-integration-via-viewset-mixins">Integration via ViewSet Mixins</h3>
+<p>The core checklist module provides ViewSet mixins for integration into other apps:</p>
+<p><strong>UserChecklistMixin</strong> - For end users filling checklists:</p>
+<ul>
+<li><code>GET /{app}/{uuid}/checklist/</code> - Get checklist questions with user's answers</li>
+<li><code>GET /{app}/{uuid}/completion_status/</code> - Get completion status</li>
+<li><code>POST /{app}/{uuid}/submit_answers/</code> - Submit answers</li>
+</ul>
+<p><strong>ReviewerChecklistMixin</strong> - For reviewers (with sensitive review logic):</p>
+<ul>
+<li><code>GET /{app}/{uuid}/checklist_review/</code> - Get full checklist with review triggers</li>
+<li><code>GET /{app}/{uuid}/completion_review_status/</code> - Get completion with review details</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li><code>GET /api/proposals/{uuid}/checklist/</code> - Get proposal checklist</li>
+<li><code>POST /api/proposals/{uuid}/submit_answers/</code> - Submit proposal answers</li>
+<li><code>GET /api/proposals/{uuid}/checklist_review/</code> - Review proposal checklist (reviewers only)</li>
+</ul>
+<h2 id="developer-guide-core-concepts-checklists-question-dependencies">Question Dependencies</h2>
+<p>The system supports sophisticated conditional logic through question dependencies:</p>
+<ol>
+<li><strong>Simple Dependencies</strong>: Show Question B only if Question A equals specific value</li>
+<li><strong>Complex Dependencies</strong>: Multiple conditions with different operators</li>
+<li><strong>Circular Prevention</strong>: Automatic detection and prevention of circular dependencies</li>
+<li><strong>Dynamic Visibility</strong>: Real-time question showing/hiding based on current answers</li>
+</ol>
+<p>Example: A security questionnaire might only show cloud-specific questions if the user indicates they use cloud services.</p>
+<h2 id="developer-guide-core-concepts-checklists-review-workflow">Review Workflow</h2>
+<p>Questions can be configured to trigger reviews based on answers:</p>
+<ol>
+<li><strong>Automatic Review Triggers</strong>: Specific answer values trigger review requirements</li>
+<li><strong>Always Review</strong>: Questions that always require review regardless of answer</li>
+<li><strong>Review Assignment</strong>: Staff can be assigned to review flagged answers</li>
+<li><strong>Review Notes</strong>: Internal notes and approval tracking</li>
+</ol>
+<h2 id="developer-guide-core-concepts-checklists-permission-system">Permission System</h2>
+<p>Access control is implemented through:</p>
+<ul>
+<li><strong>Staff Administration</strong>: Direct checklist management restricted to staff users</li>
+<li><strong>App-level Integration</strong>: Checklist access controlled via host application permissions</li>
+<li><strong>Mixin-based Permissions</strong>: Apps define their own permission requirements for checklist actions</li>
+<li><strong>Review Segregation</strong>: Separate permissions for users vs reviewers to hide sensitive review logic</li>
+</ul>
+<h2 id="developer-guide-core-concepts-checklists-validation-and-data-integrity">Validation and Data Integrity</h2>
+<p>The system includes comprehensive validation:</p>
+<ul>
+<li><strong>Answer Type Validation</strong>: Ensures answers match expected question types</li>
+<li><strong>Required Question Enforcement</strong>: Prevents submission of incomplete required questions</li>
+<li><strong>UUID Validation</strong>: Proper UUID format checking for references</li>
+<li><strong>Circular Dependency Prevention</strong>: Automatic detection of invalid dependency chains</li>
+</ul>
+<h2 id="developer-guide-core-concepts-checklists-integration-with-waldur-apps">Integration with Waldur Apps</h2>
+<p>The checklist system integrates with various Waldur applications:</p>
+<ul>
+<li><strong>Generic Foreign Key System</strong>: Can be attached to any Django model (proposals, projects, resources, etc.)</li>
+<li><strong>ViewSet Mixins</strong>: Easy integration through <code>UserChecklistMixin</code> and <code>ReviewerChecklistMixin</code></li>
+<li><strong>Flexible Completion Tracking</strong>: Each integration controls its own completion lifecycle</li>
+<li><strong>Permission Delegation</strong>: Host applications define appropriate permission checks</li>
+</ul>
+<h2 id="developer-guide-core-concepts-checklists-usage-patterns">Usage Patterns</h2>
+<h3 id="developer-guide-core-concepts-checklists-basic-integration-flow">Basic Integration Flow</h3>
+<ol>
+<li><strong>Admin Setup</strong>: Staff creates checklists with questions, dependencies, and review triggers</li>
+<li><strong>App Integration</strong>: Host app (e.g., proposals) creates <code>ChecklistCompletion</code> objects linking checklists to domain objects</li>
+<li><strong>User Interaction</strong>: End users access checklists through app-specific endpoints using <code>UserChecklistMixin</code></li>
+<li><strong>Answer Submission</strong>: Users submit answers, triggering automatic completion status updates</li>
+<li><strong>Review Process</strong>: Reviewers access full checklist information through <code>ReviewerChecklistMixin</code></li>
+<li><strong>Completion Tracking</strong>: Host apps monitor completion status and take appropriate actions</li>
+</ol>
+<h3 id="developer-guide-core-concepts-checklists-example-integration-proposals">Example Integration (Proposals)</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># proposals/models.py</span>
+<span class="k">class</span> <span class="nc">Proposal</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># ... other fields</span>
+    <span class="n">checklist_completion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">ChecklistCompletion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+<span class="c1"># proposals/views.py</span>
+<span class="k">class</span> <span class="nc">ProposalViewSet</span><span class="p">(</span><span class="n">UserChecklistMixin</span><span class="p">,</span> <span class="n">ReviewerChecklistMixin</span><span class="p">,</span> <span class="n">ActionsViewSet</span><span class="p">):</span>
+    <span class="c1"># User permissions</span>
+    <span class="n">checklist_permissions</span> <span class="o">=</span> <span class="p">[</span><span class="n">permission_factory</span><span class="p">(</span><span class="n">PermissionEnum</span><span class="o">.</span><span class="n">MANAGE_PROPOSAL</span><span class="p">)]</span>
+    <span class="n">submit_answers_permissions</span> <span class="o">=</span> <span class="p">[</span><span class="n">permission_factory</span><span class="p">(</span><span class="n">PermissionEnum</span><span class="o">.</span><span class="n">MANAGE_PROPOSAL</span><span class="p">)]</span>
+
+    <span class="c1"># Reviewer permissions</span>
+    <span class="n">checklist_review_permissions</span> <span class="o">=</span> <span class="p">[</span><span class="n">permission_factory</span><span class="p">(</span><span class="n">PermissionEnum</span><span class="o">.</span><span class="n">REVIEW_PROPOSALS</span><span class="p">)]</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="developer-guide-core-concepts-checklists-technical-implementation">Technical Implementation</h2>
+<p>The module follows Waldur's standard architecture patterns:</p>
+<ul>
+<li><strong>Django Models</strong>: Standard ORM with mixins (UuidMixin, DescribableMixin, TimeStampedModel)</li>
+<li><strong>Generic Foreign Keys</strong>: Flexible linking to any Django model through ChecklistCompletion</li>
+<li><strong>DRF Serializers</strong>: REST API serialization with context-aware field exposure</li>
+<li><strong>ViewSet Mixins</strong>: Reusable mixins for consistent integration across applications</li>
+<li><strong>Admin-Only Core APIs</strong>: Direct checklist management restricted to staff</li>
+<li><strong>Permissions</strong>: Delegated to host applications with mixin-based controls</li>
+<li><strong>Filtering</strong>: Advanced filtering for admin interfaces</li>
+<li><strong>Validation</strong>: Answer validation based on question types and business rules</li>
+</ul>
+<h3 id="developer-guide-core-concepts-checklists-architecture-principles">Architecture Principles</h3>
+<ul>
+<li><strong>Separation of Concerns</strong>: Core checklist logic separated from app-specific business logic</li>
+<li><strong>Flexible Integration</strong>: Generic foreign keys allow attachment to any model</li>
+<li><strong>Security by Design</strong>: Review logic hidden from users, exposed only to authorized reviewers</li>
+<li><strong>Extensible Question Types</strong>: Support for multiple answer formats with validation</li>
+<li><strong>Dependency Management</strong>: Sophisticated conditional logic with circular prevention</li>
+</ul>
+<p>The system is designed for scalability and extensibility, supporting complex compliance scenarios while maintaining ease of integration for host applications.</p></div></section><section class="print-page" id="developer-guide-core-concepts-event-based-order-processing"><div><h1 id="stomp-based-event-notification-system">STOMP-Based Event Notification System</h1>
 <h2 id="developer-guide-core-concepts-event-based-order-processing-system-overview">System Overview</h2>
 <p>The <a href="https://stomp.github.io/">STOMP</a>-based event notification system allows Waldur to communicate changes to resources, orders, and user roles to the <code>waldur-site-agent</code> that runs on a remote cluster. This eliminates the need for constant polling and enables immediate reactions to events.</p>
 <p>The key components include:</p>
