@@ -38,7 +38,9 @@ td:nth-child(4) {
 | `change_users_quota` | `Custom Signal (role_revoked)` | `—` | Update the user count quota for a customer when a user's role is changed. |
 | `constance_updated` | `Custom Signal (config_updated)` | `—` | Clear the API configuration cache when a Constance setting is updated. |
 | `create_auth_token` | `Django Signal (post_save)` | `core.User` | Create a token for a new user. |
+| `create_existing_projects_completions` | `Django Signal (post_save)` | `structure.Customer` | Create ChecklistCompletion for existing projects when customer checklist is updated. |
 | `create_notification_about_permission_request_has_been_submitted` | `Django Signal (post_save)` | `users.PermissionRequest` | Send a notification when a permission request has been submitted. |
+| `create_project_metadata_completion` | `Django Signal (post_save)` | `structure.Project` | Create ChecklistCompletion for project metadata when a project is created. |
 | `deactivate_user_if_no_roles` | `Custom Signal (role_revoked)` | `—` | Deactivate a user if they no longer have any active roles. |
 | `delete_error_message` | `Custom Signal (post_transition)` | `structure.ServiceSettings` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `structure.SharedServiceSettings` | Delete error message if instance state changed from erred |
@@ -85,6 +87,7 @@ td:nth-child(4) {
 | `delete_error_message` | `Custom Signal (post_transition)` | `support.Comment` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `support.Attachment` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `support.Feedback` | Delete error message if instance state changed from erred |
+| `delete_project_metadata_completions` | `Django Signal (post_save)` | `structure.Customer` | Delete ChecklistCompletions when customer's project metadata checklist is removed. |
 | `delete_quotas_when_model_is_deleted` | `Django Signal (pre_delete)` | `structure.Customer` | Delete all quotas related to a model when it is deleted. |
 | `delete_quotas_when_model_is_deleted` | `Django Signal (pre_delete)` | `structure.Project` | Delete all quotas related to a model when it is deleted. |
 | `delete_quotas_when_model_is_deleted` | `Django Signal (pre_delete)` | `structure.ServiceSettings` | Delete all quotas related to a model when it is deleted. |
@@ -696,11 +699,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 621
+Total unique handlers found: 624
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 330 handlers
+- **waldur_core**: 333 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 243 handlers

@@ -78,6 +78,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`FieldFilteringMixin`](#fieldfilteringmixin) | `waldur_core.structure.serializers` | Mixin allowing to filter fields by user |
 | [`PermissionFieldFilteringMixin`](#permissionfieldfilteringmixin) | `waldur_core.structure.serializers` | Mixin allowing to filter related fields |
 | [`SshPublicKeySerializerMixin`](#sshpublickeyserializermixin) | `waldur_core.structure.serializers` | A type of `ModelSerializer` that uses hyperlinked relationships instead of pr... |
+| [`ProjectMetadataTestMixin`](#projectmetadatatestmixin) | `waldur_core.structure.tests.test_project_metadata` | Shared test setup and utilities for project metadata tests |
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_freeipa.views` | Raise exception if extension is disabled |
 | [`PeriodMixin`](#periodmixin) | `waldur_mastermind.invoices.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`ConnectedResourceMixin`](#connectedresourcemixin) | `waldur_mastermind.marketplace.admin` | Protects object from modification if there are connected resources |
@@ -996,6 +997,13 @@ of primary key relationships. Specifically:
 - Relationships to other instances are hyperlinks, instead of primary keys.
 
 **Base classes:** `HyperlinkedModelSerializer`
+
+### ProjectMetadataTestMixin
+
+**Module:** `waldur_core.structure.tests.test_project_metadata`
+
+**Description:**
+Shared test setup and utilities for project metadata tests.
 
 ### CheckExtensionMixin
 
