@@ -403,6 +403,7 @@ td:nth-child(4) {
 | `add_google_calendar_link` | `Custom Signal (pre_serializer_fields)` | `PublicOfferingDetailsSerializer` | Add a Google Calendar link field to the serializer. |
 | `add_integration_status` | `Custom Signal (pre_serializer_fields)` | `ProviderOfferingDetailsSerializer` | Add an integration status field to the serializer. |
 | `add_issue` | `Custom Signal (pre_serializer_fields)` | `OrderDetailsSerializer` | Add an issue field to the serializer. |
+| `add_maintenance_fields_to_admin_announcement_serializer` | `Custom Signal (pre_serializer_fields)` | `AdminAnnouncementSerializer` | Add maintenance-related fields to AdminAnnouncementSerializer when maintenance is scheduled. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `OpenStackFloatingIPSerializer` | Add marketplace offering related fields to the serializer. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `OpenStackSecurityGroupSerializer` | Add marketplace offering related fields to the serializer. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `OpenStackServerGroupSerializer` | Add marketplace offering related fields to the serializer. |
@@ -455,6 +456,7 @@ td:nth-child(4) {
 | `change_order_state` | `Django Signal (post_save)` | `waldur_rancher.Cluster` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_slurm.Allocation` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_vmware.VirtualMachine` | Change the state of an order based on resource state changes. |
+| `cleanup_admin_announcement_on_maintenance_deletion` | `Django Signal (pre_delete)` | `marketplace.MaintenanceAnnouncement` | Ensure AdminAnnouncement is cleaned up when MaintenanceAnnouncement is deleted. |
 | `close_customer_service_accounts_on_customer_deletion` | `Django Signal (pre_delete)` | `structure.Customer` | Close service accounts associated with a customer when the customer is deleted. |
 | `close_resource_plan_period_when_resource_is_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Handle case when resource has been terminated by service provider. |
 | `close_service_accounts_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | Close service accounts associated with a project when the project is deleted. |
@@ -531,6 +533,7 @@ td:nth-child(4) {
 | `log_resource_user_deleted` | `Django Signal (post_delete)` | `marketplace.ResourceUser` | Log resource user deletion. |
 | `log_service_account_created_or_updated` | `Django Signal (post_save)` | `ScopedServiceAccount` | Log service account creation and updates. |
 | `log_service_account_deleted` | `Django Signal (post_delete)` | `ScopedServiceAccount` | Log service account deletion. |
+| `manage_maintenance_admin_announcements` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncement` | Manage AdminAnnouncement lifecycle based on MaintenanceAnnouncement state changes. |
 | `mark_synced_fields_as_read_only` | `Custom Signal (pre_serializer_fields)` | `OfferingOptionsUpdateSerializer` | No description |
 | `mark_synced_fields_as_read_only` | `Custom Signal (pre_serializer_fields)` | `OfferingOverviewUpdateSerializer` | No description |
 | `notify_about_project_details_update` | `Django Signal (post_save)` | `marketplace_remote.ProjectUpdateRequest` | No description |
@@ -629,6 +632,8 @@ td:nth-child(4) {
 | `update_instances_ip_external_addresses` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `update_invoice_item_on_project_name_update` | `Django Signal (post_save)` | `structure.Project` | No description |
 | `update_invoice_when_usage_is_reported` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Handle usage-based billing when component usage is reported. |
+| `update_maintenance_announcement_on_offering_change` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
+| `update_maintenance_announcement_on_offering_change` | `Django Signal (post_delete)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_marketplace_resource_limits_when_vm_is_updated` | `Custom Signal (vm_updated)` | `—` | No description |
 | `update_offering_user_username_after_freeipa_profile_update` | `Django Signal (post_save)` | `waldur_freeipa.Profile` | Update offering user usernames after FreeIPA profile update. |
 | `update_offering_user_username_after_offering_settings_change` | `Django Signal (post_save)` | `marketplace.Offering` | Update offering user usernames after offering settings change. |
@@ -699,14 +704,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 624
+Total unique handlers found: 629
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 333 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 243 handlers
+- **waldur_mastermind**: 248 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
 - **waldur_rancher**: 12 handlers
