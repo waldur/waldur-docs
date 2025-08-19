@@ -131,6 +131,35 @@ options:
 
 Delete permissions from DB which are no longer in code.
 
+## dump_constance_settings
+
+Dump all settings stored in django-constance to a YAML file.
+  This includes all settings, even those with file/image values.
+
+  Usage:
+    waldur dump_constance_settings output.yaml
+
+  The output format is compatible with override_constance_settings command.
+
+  For image/file fields, you can optionally export the actual files to a directory
+  using --export-media option.
+
+```bash
+usage: waldur dump_constance_settings [--include-secrets] [--include-defaults]
+                                      [--export-media MEDIA_DIR]
+                                      output_file
+
+positional arguments:
+  output_file           Output file path for YAML dump of constance settings
+
+options:
+  --include-secrets     Include sensitive values (passwords, tokens) in the
+                        output
+  --include-defaults    Include settings that are set to their default values
+  --export-media MEDIA_DIR
+                        Export media files (logos, images) to this directory
+```
+
 ## dumpusers
 
 Dumps information about users, their organizations and projects.
