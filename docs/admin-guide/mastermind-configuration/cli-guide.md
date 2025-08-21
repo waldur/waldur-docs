@@ -208,6 +208,35 @@ options:
                         saved.
 ```
 
+## export_roles
+
+Export roles configuration to YAML format.
+
+  This command exports all system roles or optionally only specific roles.
+  The output format is compatible with the import_roles command.
+
+  Usage:
+    waldur export_roles roles.yaml
+    waldur export_roles roles.yaml --system-only
+    waldur export_roles roles.yaml --include-inactive
+
+```bash
+usage: waldur export_roles [--system-only] [--include-inactive]
+                           [--role-names [ROLE_NAMES ...]]
+                           output_file
+
+positional arguments:
+  output_file           Output file path for YAML export of roles
+                        configuration
+
+options:
+  --system-only         Export only system roles (default: all roles)
+  --include-inactive    Include inactive roles in export (default: active
+                        only)
+  --role-names [ROLE_NAMES ...]
+                        Export only specific roles by name
+```
+
 ## import_ami_catalog
 
 Import catalog of Amazon images.
