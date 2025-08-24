@@ -1,0 +1,4291 @@
+# OpenAPI schema diff - 7.7.6
+
+## For version 7.7.6
+
+### New Endpoints: 11
+
+---------------------
+GET /api/marketplace-offering-users/{uuid}/checklist/  
+GET /api/marketplace-offering-users/{uuid}/checklist_review/  
+GET /api/marketplace-offering-users/{uuid}/completion_review_status/  
+GET /api/marketplace-offering-users/{uuid}/completion_status/  
+POST /api/marketplace-offering-users/{uuid}/submit_answers/  
+GET /api/marketplace-service-providers/{service_provider_uuid}/compliance/compliance_overview/  
+GET /api/marketplace-service-providers/{service_provider_uuid}/compliance/offering_users/  
+GET /api/marketplace-service-providers/{service_provider_uuid}/project_service_accounts/  
+GET /api/public-maintenance-announcements/  
+HEAD /api/public-maintenance-announcements/  
+GET /api/public-maintenance-announcements/{uuid}/  
+
+### Deleted Endpoints: None
+
+---------------------------
+
+### Modified Endpoints: 130
+
+---------------------------
+GET /api/admin-announcements/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [maintenance_affected_offerings maintenance_name maintenance_scheduled_end maintenance_scheduled_start maintenance_service_provider maintenance_state maintenance_type maintenance_uuid]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: maintenance_affected_offerings
+              - New property: maintenance_name
+              - New property: maintenance_scheduled_end
+              - New property: maintenance_scheduled_start
+              - New property: maintenance_service_provider
+              - New property: maintenance_state
+              - New property: maintenance_type
+              - New property: maintenance_uuid
+
+POST /api/admin-announcements/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: maintenance_affected_offerings
+            - New property: maintenance_name
+            - New property: maintenance_scheduled_end
+            - New property: maintenance_scheduled_start
+            - New property: maintenance_service_provider
+            - New property: maintenance_state
+            - New property: maintenance_type
+            - New property: maintenance_uuid
+
+GET /api/admin-announcements/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [maintenance_affected_offerings maintenance_name maintenance_scheduled_end maintenance_scheduled_start maintenance_service_provider maintenance_state maintenance_type maintenance_uuid]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: maintenance_affected_offerings
+            - New property: maintenance_name
+            - New property: maintenance_scheduled_end
+            - New property: maintenance_scheduled_start
+            - New property: maintenance_service_provider
+            - New property: maintenance_state
+            - New property: maintenance_type
+            - New property: maintenance_uuid
+
+PATCH /api/admin-announcements/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: maintenance_affected_offerings
+            - New property: maintenance_name
+            - New property: maintenance_scheduled_end
+            - New property: maintenance_scheduled_start
+            - New property: maintenance_service_provider
+            - New property: maintenance_state
+            - New property: maintenance_type
+            - New property: maintenance_uuid
+
+PUT /api/admin-announcements/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: maintenance_affected_offerings
+            - New property: maintenance_name
+            - New property: maintenance_scheduled_end
+            - New property: maintenance_scheduled_start
+            - New property: maintenance_service_provider
+            - New property: maintenance_state
+            - New property: maintenance_type
+            - New property: maintenance_uuid
+
+GET /api/booking-offerings/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: has_compliance_requirements
+
+GET /api/booking-offerings/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/customers/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - Deleted enum values: [organization_groups users_count]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Deleted property: organization_groups
+              - Deleted property: users_count
+
+POST /api/customers/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: organization_groups
+            - Deleted property: users_count
+
+GET /api/customers/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - Deleted enum values: [organization_groups users_count]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: organization_groups
+            - Deleted property: users_count
+
+PATCH /api/customers/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: organization_groups
+            - Deleted property: users_count
+
+PUT /api/customers/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: organization_groups
+            - Deleted property: users_count
+
+POST /api/marketplace-orders/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: attributes
+            - Property 'OneOf' changed
+              - Schemas added: #/components/schemas/AzureVirtualMachineCreateOrderAttributes, #/components/schemas/AzureSQLServerCreateOrderAttributes, #/components/schemas/OpenStackTenantCreateOrderAttributes, #/components/schemas/OpenStackInstanceCreateOrderAttributes, #/components/schemas/OpenStackVolumeCreateOrderAttributes, #/components/schemas/MarketplaceRancherCreateOrderAttributes, #/components/schemas/MarketplaceManagedRancherCreateOrderAttributes, #/components/schemas/SlurmInvoicesSlurmPackageCreateOrderAttributes, #/components/schemas/VMwareVirtualMachineCreateOrderAttributes
+            - Description changed from '' to 'Attributes structure depends on the offering type specified in the parent object'
+
+GET /api/marketplace-orders/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-project-update-requests/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: review_comment
+                - Description changed from '' to 'Optional comment provided during review'
+              - Modified property: reviewed_at
+                - Description changed from '' to 'Timestamp when the review was completed'
+
+GET /api/marketplace-project-update-requests/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: review_comment
+              - Description changed from '' to 'Optional comment provided during review'
+            - Modified property: reviewed_at
+              - Description changed from '' to 'Timestamp when the review was completed'
+
+GET /api/marketplace-provider-offerings/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: has_compliance_requirements
+
+POST /api/marketplace-provider-offerings/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: has_compliance_requirements
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-provider-offerings/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-provider-offerings/{uuid}/list_customer_service_accounts/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-provider-offerings/{uuid}/list_project_service_accounts/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+POST /api/marketplace-provider-offerings/{uuid}/move_offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-provider-offerings/{uuid}/stats/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+POST /api/marketplace-provider-offerings/{uuid}/update_image/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-provider-offerings/{uuid}/user_has_resource_access/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-provider-resources/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-public-offerings/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: has_compliance_requirements
+
+GET /api/marketplace-public-offerings/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [has_compliance_requirements]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-resources/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/marketplace-robot-accounts/
+
+- New query param: field
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - Deleted required property: backend_id
+              - Deleted required property: created
+              - Deleted required property: customer_name
+              - Deleted required property: customer_uuid
+              - Deleted required property: fingerprints
+              - Deleted required property: modified
+              - Deleted required property: offering_customer_uuid
+              - Deleted required property: offering_plugin_options
+              - Deleted required property: project_name
+              - Deleted required property: project_uuid
+              - Deleted required property: resource
+              - Deleted required property: resource_name
+              - Deleted required property: resource_uuid
+              - Deleted required property: responsible_user
+              - Deleted required property: type
+              - Deleted required property: url
+              - Deleted required property: user_keys
+              - Deleted required property: users
+              - Deleted required property: uuid
+            - Properties changed
+              - Modified property: fingerprints
+                - Items changed
+                  - Required changed
+                    - Deleted required property: md5
+                    - Deleted required property: sha256
+                    - Deleted required property: sha512
+              - Modified property: responsible_user
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BasicUser
+                    - Required changed
+                      - Deleted required property: full_name
+                      - Deleted required property: url
+                      - Deleted required property: username
+                      - Deleted required property: uuid
+              - Modified property: users
+                - Items changed
+                  - Required changed
+                    - Deleted required property: full_name
+                    - Deleted required property: url
+                    - Deleted required property: username
+                    - Deleted required property: uuid
+
+POST /api/marketplace-robot-accounts/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+
+GET /api/marketplace-robot-accounts/{uuid}/
+
+- New query param: field
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: backend_id
+            - Deleted required property: created
+            - Deleted required property: customer_name
+            - Deleted required property: customer_uuid
+            - Deleted required property: fingerprints
+            - Deleted required property: modified
+            - Deleted required property: offering_customer_uuid
+            - Deleted required property: offering_plugin_options
+            - Deleted required property: project_name
+            - Deleted required property: project_uuid
+            - Deleted required property: resource
+            - Deleted required property: resource_name
+            - Deleted required property: resource_uuid
+            - Deleted required property: responsible_user
+            - Deleted required property: type
+            - Deleted required property: url
+            - Deleted required property: user_keys
+            - Deleted required property: users
+            - Deleted required property: uuid
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+            - Modified property: responsible_user
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasicUser
+                  - Required changed
+                    - Deleted required property: full_name
+                    - Deleted required property: url
+                    - Deleted required property: username
+                    - Deleted required property: uuid
+            - Modified property: users
+              - Items changed
+                - Required changed
+                  - Deleted required property: full_name
+                  - Deleted required property: url
+                  - Deleted required property: username
+                  - Deleted required property: uuid
+
+PATCH /api/marketplace-robot-accounts/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+
+PUT /api/marketplace-robot-accounts/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_creating/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: backend_id
+            - Deleted required property: created
+            - Deleted required property: customer_name
+            - Deleted required property: customer_uuid
+            - Deleted required property: fingerprints
+            - Deleted required property: modified
+            - Deleted required property: offering_customer_uuid
+            - Deleted required property: offering_plugin_options
+            - Deleted required property: project_name
+            - Deleted required property: project_uuid
+            - Deleted required property: resource
+            - Deleted required property: resource_name
+            - Deleted required property: resource_uuid
+            - Deleted required property: responsible_user
+            - Deleted required property: type
+            - Deleted required property: url
+            - Deleted required property: user_keys
+            - Deleted required property: users
+            - Deleted required property: uuid
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+            - Modified property: responsible_user
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasicUser
+                  - Required changed
+                    - Deleted required property: full_name
+                    - Deleted required property: url
+                    - Deleted required property: username
+                    - Deleted required property: uuid
+            - Modified property: users
+              - Items changed
+                - Required changed
+                  - Deleted required property: full_name
+                  - Deleted required property: url
+                  - Deleted required property: username
+                  - Deleted required property: uuid
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_deleted/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: backend_id
+            - Deleted required property: created
+            - Deleted required property: customer_name
+            - Deleted required property: customer_uuid
+            - Deleted required property: fingerprints
+            - Deleted required property: modified
+            - Deleted required property: offering_customer_uuid
+            - Deleted required property: offering_plugin_options
+            - Deleted required property: project_name
+            - Deleted required property: project_uuid
+            - Deleted required property: resource
+            - Deleted required property: resource_name
+            - Deleted required property: resource_uuid
+            - Deleted required property: responsible_user
+            - Deleted required property: type
+            - Deleted required property: url
+            - Deleted required property: user_keys
+            - Deleted required property: users
+            - Deleted required property: uuid
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+            - Modified property: responsible_user
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasicUser
+                  - Required changed
+                    - Deleted required property: full_name
+                    - Deleted required property: url
+                    - Deleted required property: username
+                    - Deleted required property: uuid
+            - Modified property: users
+              - Items changed
+                - Required changed
+                  - Deleted required property: full_name
+                  - Deleted required property: url
+                  - Deleted required property: username
+                  - Deleted required property: uuid
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_erred/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: backend_id
+            - Deleted required property: created
+            - Deleted required property: customer_name
+            - Deleted required property: customer_uuid
+            - Deleted required property: fingerprints
+            - Deleted required property: modified
+            - Deleted required property: offering_customer_uuid
+            - Deleted required property: offering_plugin_options
+            - Deleted required property: project_name
+            - Deleted required property: project_uuid
+            - Deleted required property: resource
+            - Deleted required property: resource_name
+            - Deleted required property: resource_uuid
+            - Deleted required property: responsible_user
+            - Deleted required property: type
+            - Deleted required property: url
+            - Deleted required property: user_keys
+            - Deleted required property: users
+            - Deleted required property: uuid
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+            - Modified property: responsible_user
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasicUser
+                  - Required changed
+                    - Deleted required property: full_name
+                    - Deleted required property: url
+                    - Deleted required property: username
+                    - Deleted required property: uuid
+            - Modified property: users
+              - Items changed
+                - Required changed
+                  - Deleted required property: full_name
+                  - Deleted required property: url
+                  - Deleted required property: username
+                  - Deleted required property: uuid
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_ok/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: backend_id
+            - Deleted required property: created
+            - Deleted required property: customer_name
+            - Deleted required property: customer_uuid
+            - Deleted required property: fingerprints
+            - Deleted required property: modified
+            - Deleted required property: offering_customer_uuid
+            - Deleted required property: offering_plugin_options
+            - Deleted required property: project_name
+            - Deleted required property: project_uuid
+            - Deleted required property: resource
+            - Deleted required property: resource_name
+            - Deleted required property: resource_uuid
+            - Deleted required property: responsible_user
+            - Deleted required property: type
+            - Deleted required property: url
+            - Deleted required property: user_keys
+            - Deleted required property: users
+            - Deleted required property: uuid
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+            - Modified property: responsible_user
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasicUser
+                  - Required changed
+                    - Deleted required property: full_name
+                    - Deleted required property: url
+                    - Deleted required property: username
+                    - Deleted required property: uuid
+            - Modified property: users
+              - Items changed
+                - Required changed
+                  - Deleted required property: full_name
+                  - Deleted required property: url
+                  - Deleted required property: username
+                  - Deleted required property: uuid
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_request_deletion/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: backend_id
+            - Deleted required property: created
+            - Deleted required property: customer_name
+            - Deleted required property: customer_uuid
+            - Deleted required property: fingerprints
+            - Deleted required property: modified
+            - Deleted required property: offering_customer_uuid
+            - Deleted required property: offering_plugin_options
+            - Deleted required property: project_name
+            - Deleted required property: project_uuid
+            - Deleted required property: resource
+            - Deleted required property: resource_name
+            - Deleted required property: resource_uuid
+            - Deleted required property: responsible_user
+            - Deleted required property: type
+            - Deleted required property: url
+            - Deleted required property: user_keys
+            - Deleted required property: users
+            - Deleted required property: uuid
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Required changed
+                  - Deleted required property: md5
+                  - Deleted required property: sha256
+                  - Deleted required property: sha512
+            - Modified property: responsible_user
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasicUser
+                  - Required changed
+                    - Deleted required property: full_name
+                    - Deleted required property: url
+                    - Deleted required property: username
+                    - Deleted required property: uuid
+            - Modified property: users
+              - Items changed
+                - Required changed
+                  - Deleted required property: full_name
+                  - Deleted required property: url
+                  - Deleted required property: username
+                  - Deleted required property: uuid
+
+POST /api/marketplace-script-dry-run/{uuid}/async_run/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+POST /api/marketplace-script-dry-run/{uuid}/run/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: has_compliance_requirements
+
+GET /api/openstack-backups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: instance
+                - Description changed from '' to 'Instance that this backup is created from'
+              - Modified property: instance_floating_ips
+                - Items changed
+                  - Properties changed
+                    - Modified property: address
+                      - Description changed from '' to 'The public IPv4 address of the floating IP'
+                    - Modified property: port_fixed_ips
+                      - Items changed
+                        - Properties changed
+                          - Modified property: ip_address
+                            - Description changed from '' to 'IP address to assign to the port'
+                          - Modified property: subnet_id
+                            - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                    - Modified property: port_mac_address
+                      - Description changed from '' to 'MAC address of the port'
+                    - Modified property: subnet_cidr
+                      - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+              - Modified property: instance_ports
+                - Items changed
+                  - Properties changed
+                    - Modified property: device_id
+                      - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                    - Modified property: device_owner
+                      - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                    - Modified property: fixed_ips
+                      - Items changed
+                        - Properties changed
+                          - Modified property: ip_address
+                            - Description changed from '' to 'IP address to assign to the port'
+                          - Modified property: subnet_id
+                            - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                    - Modified property: mac_address
+                      - Description changed from '' to 'MAC address of the port'
+                    - Modified property: security_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: rules
+                            - Items changed
+                              - Properties changed
+                                - Modified property: cidr
+                                  - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                                - Modified property: direction
+                                  - Property 'AllOf' changed
+                                    - Schemas added: #/components/schemas/DirectionEnum
+                                  - Type changed from 'string' to ''
+                                  - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                  - Deleted enum values: [ingress egress]
+                                - Modified property: ethertype
+                                  - Property 'AllOf' changed
+                                    - Schemas added: #/components/schemas/EthertypeEnum
+                                  - Type changed from 'string' to ''
+                                  - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                  - Deleted enum values: [IPv4 IPv6]
+                                - Modified property: from_port
+                                  - Description changed from '' to 'Starting port number in the range (1-65535)'
+                                - Modified property: protocol
+                                  - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                                - Modified property: remote_group
+                                  - Description changed from '' to 'Remote security group that this rule references, if any'
+                                - Modified property: to_port
+                                  - Description changed from '' to 'Ending port number in the range (1-65535)'
+                    - Modified property: subnet
+                      - Description changed from '' to 'Subnet to which this port belongs'
+                    - Modified property: subnet_cidr
+                      - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+              - Modified property: instance_security_groups
+                - Items changed
+                  - Properties changed
+                    - Deleted property: description
+                    - Deleted property: name
+                    - Deleted property: rules
+                    - Deleted property: state
+                    - Modified property: url
+                      - Format changed from 'uri' to ''
+                      - ReadOnly changed from true to false
+              - Modified property: restorations
+                - Items changed
+                  - Properties changed
+                    - Modified property: flavor
+                      - Description changed from '' to 'Flavor to be used for the restored instance. If not specified, original instance flavor will be used'
+                    - Modified property: floating_ips
+                      - Description changed from '' to 'Floating IPs that will be assigned to the restored instance'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: address
+                            - Description changed from '' to 'The public IPv4 address of the floating IP'
+                          - Modified property: port_fixed_ips
+                            - Items changed
+                              - Properties changed
+                                - Modified property: ip_address
+                                  - Description changed from '' to 'IP address to assign to the port'
+                                - Modified property: subnet_id
+                                  - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                          - Modified property: port_mac_address
+                            - Description changed from '' to 'MAC address of the port'
+                          - Modified property: subnet_cidr
+                            - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                    - Modified property: instance
+                      - Description changed from '' to 'Instance that is being restored from the backup'
+                    - Modified property: ports
+                      - Description changed from '' to 'Network ports that will be attached to the restored instance'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: device_id
+                            - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                          - Modified property: device_owner
+                            - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                          - Modified property: fixed_ips
+                            - Items changed
+                              - Properties changed
+                                - Modified property: ip_address
+                                  - Description changed from '' to 'IP address to assign to the port'
+                                - Modified property: subnet_id
+                                  - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                          - Modified property: mac_address
+                            - Description changed from '' to 'MAC address of the port'
+                          - Modified property: security_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: rules
+                                  - Items changed
+                                    - Properties changed
+                                      - Modified property: cidr
+                                        - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                                      - Modified property: direction
+                                        - Property 'AllOf' changed
+                                          - Schemas added: #/components/schemas/DirectionEnum
+                                        - Type changed from 'string' to ''
+                                        - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                        - Deleted enum values: [ingress egress]
+                                      - Modified property: ethertype
+                                        - Property 'AllOf' changed
+                                          - Schemas added: #/components/schemas/EthertypeEnum
+                                        - Type changed from 'string' to ''
+                                        - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                        - Deleted enum values: [IPv4 IPv6]
+                                      - Modified property: from_port
+                                        - Description changed from '' to 'Starting port number in the range (1-65535)'
+                                      - Modified property: protocol
+                                        - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                                      - Modified property: remote_group
+                                        - Description changed from '' to 'Remote security group that this rule references, if any'
+                                      - Modified property: to_port
+                                        - Description changed from '' to 'Ending port number in the range (1-65535)'
+                          - Modified property: subnet
+                            - Description changed from '' to 'Subnet to which this port belongs'
+                          - Modified property: subnet_cidr
+                            - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                    - Modified property: security_groups
+                      - Description changed from '' to 'Security groups that will be assigned to the restored instance'
+                      - Items changed
+                        - Properties changed
+                          - Deleted property: description
+                          - Deleted property: name
+                          - Deleted property: rules
+                          - Deleted property: state
+                          - Modified property: url
+                            - Format changed from 'uri' to ''
+                            - ReadOnly changed from true to false
+
+GET /api/openstack-backups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instance
+              - Description changed from '' to 'Instance that this backup is created from'
+            - Modified property: instance_floating_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: address
+                    - Description changed from '' to 'The public IPv4 address of the floating IP'
+                  - Modified property: port_fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: port_mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: instance_ports
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: instance_security_groups
+              - Items changed
+                - Properties changed
+                  - Deleted property: description
+                  - Deleted property: name
+                  - Deleted property: rules
+                  - Deleted property: state
+                  - Modified property: url
+                    - Format changed from 'uri' to ''
+                    - ReadOnly changed from true to false
+            - Modified property: restorations
+              - Items changed
+                - Properties changed
+                  - Modified property: flavor
+                    - Description changed from '' to 'Flavor to be used for the restored instance. If not specified, original instance flavor will be used'
+                  - Modified property: floating_ips
+                    - Description changed from '' to 'Floating IPs that will be assigned to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: address
+                          - Description changed from '' to 'The public IPv4 address of the floating IP'
+                        - Modified property: port_fixed_ips
+                          - Items changed
+                            - Properties changed
+                              - Modified property: ip_address
+                                - Description changed from '' to 'IP address to assign to the port'
+                              - Modified property: subnet_id
+                                - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                        - Modified property: port_mac_address
+                          - Description changed from '' to 'MAC address of the port'
+                        - Modified property: subnet_cidr
+                          - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: instance
+                    - Description changed from '' to 'Instance that is being restored from the backup'
+                  - Modified property: ports
+                    - Description changed from '' to 'Network ports that will be attached to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: device_id
+                          - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                        - Modified property: device_owner
+                          - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                        - Modified property: fixed_ips
+                          - Items changed
+                            - Properties changed
+                              - Modified property: ip_address
+                                - Description changed from '' to 'IP address to assign to the port'
+                              - Modified property: subnet_id
+                                - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                        - Modified property: mac_address
+                          - Description changed from '' to 'MAC address of the port'
+                        - Modified property: security_groups
+                          - Items changed
+                            - Properties changed
+                              - Modified property: rules
+                                - Items changed
+                                  - Properties changed
+                                    - Modified property: cidr
+                                      - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                                    - Modified property: direction
+                                      - Property 'AllOf' changed
+                                        - Schemas added: #/components/schemas/DirectionEnum
+                                      - Type changed from 'string' to ''
+                                      - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                      - Deleted enum values: [ingress egress]
+                                    - Modified property: ethertype
+                                      - Property 'AllOf' changed
+                                        - Schemas added: #/components/schemas/EthertypeEnum
+                                      - Type changed from 'string' to ''
+                                      - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                      - Deleted enum values: [IPv4 IPv6]
+                                    - Modified property: from_port
+                                      - Description changed from '' to 'Starting port number in the range (1-65535)'
+                                    - Modified property: protocol
+                                      - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                                    - Modified property: remote_group
+                                      - Description changed from '' to 'Remote security group that this rule references, if any'
+                                    - Modified property: to_port
+                                      - Description changed from '' to 'Ending port number in the range (1-65535)'
+                        - Modified property: subnet
+                          - Description changed from '' to 'Subnet to which this port belongs'
+                        - Modified property: subnet_cidr
+                          - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: security_groups
+                    - Description changed from '' to 'Security groups that will be assigned to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Deleted property: description
+                        - Deleted property: name
+                        - Deleted property: rules
+                        - Deleted property: state
+                        - Modified property: url
+                          - Format changed from 'uri' to ''
+                          - ReadOnly changed from true to false
+
+PATCH /api/openstack-backups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instance
+              - Description changed from '' to 'Instance that this backup is created from'
+            - Modified property: instance_floating_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: address
+                    - Description changed from '' to 'The public IPv4 address of the floating IP'
+                  - Modified property: port_fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: port_mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: instance_ports
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: instance_security_groups
+              - Items changed
+                - Properties changed
+                  - Deleted property: description
+                  - Deleted property: name
+                  - Deleted property: rules
+                  - Deleted property: state
+                  - Modified property: url
+                    - Format changed from 'uri' to ''
+                    - ReadOnly changed from true to false
+            - Modified property: restorations
+              - Items changed
+                - Properties changed
+                  - Modified property: flavor
+                    - Description changed from '' to 'Flavor to be used for the restored instance. If not specified, original instance flavor will be used'
+                  - Modified property: floating_ips
+                    - Description changed from '' to 'Floating IPs that will be assigned to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: address
+                          - Description changed from '' to 'The public IPv4 address of the floating IP'
+                        - Modified property: port_fixed_ips
+                          - Items changed
+                            - Properties changed
+                              - Modified property: ip_address
+                                - Description changed from '' to 'IP address to assign to the port'
+                              - Modified property: subnet_id
+                                - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                        - Modified property: port_mac_address
+                          - Description changed from '' to 'MAC address of the port'
+                        - Modified property: subnet_cidr
+                          - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: instance
+                    - Description changed from '' to 'Instance that is being restored from the backup'
+                  - Modified property: ports
+                    - Description changed from '' to 'Network ports that will be attached to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: device_id
+                          - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                        - Modified property: device_owner
+                          - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                        - Modified property: fixed_ips
+                          - Items changed
+                            - Properties changed
+                              - Modified property: ip_address
+                                - Description changed from '' to 'IP address to assign to the port'
+                              - Modified property: subnet_id
+                                - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                        - Modified property: mac_address
+                          - Description changed from '' to 'MAC address of the port'
+                        - Modified property: security_groups
+                          - Items changed
+                            - Properties changed
+                              - Modified property: rules
+                                - Items changed
+                                  - Properties changed
+                                    - Modified property: cidr
+                                      - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                                    - Modified property: direction
+                                      - Property 'AllOf' changed
+                                        - Schemas added: #/components/schemas/DirectionEnum
+                                      - Type changed from 'string' to ''
+                                      - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                      - Deleted enum values: [ingress egress]
+                                    - Modified property: ethertype
+                                      - Property 'AllOf' changed
+                                        - Schemas added: #/components/schemas/EthertypeEnum
+                                      - Type changed from 'string' to ''
+                                      - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                      - Deleted enum values: [IPv4 IPv6]
+                                    - Modified property: from_port
+                                      - Description changed from '' to 'Starting port number in the range (1-65535)'
+                                    - Modified property: protocol
+                                      - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                                    - Modified property: remote_group
+                                      - Description changed from '' to 'Remote security group that this rule references, if any'
+                                    - Modified property: to_port
+                                      - Description changed from '' to 'Ending port number in the range (1-65535)'
+                        - Modified property: subnet
+                          - Description changed from '' to 'Subnet to which this port belongs'
+                        - Modified property: subnet_cidr
+                          - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: security_groups
+                    - Description changed from '' to 'Security groups that will be assigned to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Deleted property: description
+                        - Deleted property: name
+                        - Deleted property: rules
+                        - Deleted property: state
+                        - Modified property: url
+                          - Format changed from 'uri' to ''
+                          - ReadOnly changed from true to false
+
+PUT /api/openstack-backups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instance
+              - Description changed from '' to 'Instance that this backup is created from'
+            - Modified property: instance_floating_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: address
+                    - Description changed from '' to 'The public IPv4 address of the floating IP'
+                  - Modified property: port_fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: port_mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: instance_ports
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: instance_security_groups
+              - Items changed
+                - Properties changed
+                  - Deleted property: description
+                  - Deleted property: name
+                  - Deleted property: rules
+                  - Deleted property: state
+                  - Modified property: url
+                    - Format changed from 'uri' to ''
+                    - ReadOnly changed from true to false
+            - Modified property: restorations
+              - Items changed
+                - Properties changed
+                  - Modified property: flavor
+                    - Description changed from '' to 'Flavor to be used for the restored instance. If not specified, original instance flavor will be used'
+                  - Modified property: floating_ips
+                    - Description changed from '' to 'Floating IPs that will be assigned to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: address
+                          - Description changed from '' to 'The public IPv4 address of the floating IP'
+                        - Modified property: port_fixed_ips
+                          - Items changed
+                            - Properties changed
+                              - Modified property: ip_address
+                                - Description changed from '' to 'IP address to assign to the port'
+                              - Modified property: subnet_id
+                                - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                        - Modified property: port_mac_address
+                          - Description changed from '' to 'MAC address of the port'
+                        - Modified property: subnet_cidr
+                          - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: instance
+                    - Description changed from '' to 'Instance that is being restored from the backup'
+                  - Modified property: ports
+                    - Description changed from '' to 'Network ports that will be attached to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: device_id
+                          - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                        - Modified property: device_owner
+                          - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                        - Modified property: fixed_ips
+                          - Items changed
+                            - Properties changed
+                              - Modified property: ip_address
+                                - Description changed from '' to 'IP address to assign to the port'
+                              - Modified property: subnet_id
+                                - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                        - Modified property: mac_address
+                          - Description changed from '' to 'MAC address of the port'
+                        - Modified property: security_groups
+                          - Items changed
+                            - Properties changed
+                              - Modified property: rules
+                                - Items changed
+                                  - Properties changed
+                                    - Modified property: cidr
+                                      - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                                    - Modified property: direction
+                                      - Property 'AllOf' changed
+                                        - Schemas added: #/components/schemas/DirectionEnum
+                                      - Type changed from 'string' to ''
+                                      - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                      - Deleted enum values: [ingress egress]
+                                    - Modified property: ethertype
+                                      - Property 'AllOf' changed
+                                        - Schemas added: #/components/schemas/EthertypeEnum
+                                      - Type changed from 'string' to ''
+                                      - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                      - Deleted enum values: [IPv4 IPv6]
+                                    - Modified property: from_port
+                                      - Description changed from '' to 'Starting port number in the range (1-65535)'
+                                    - Modified property: protocol
+                                      - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                                    - Modified property: remote_group
+                                      - Description changed from '' to 'Remote security group that this rule references, if any'
+                                    - Modified property: to_port
+                                      - Description changed from '' to 'Ending port number in the range (1-65535)'
+                        - Modified property: subnet
+                          - Description changed from '' to 'Subnet to which this port belongs'
+                        - Modified property: subnet_cidr
+                          - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: security_groups
+                    - Description changed from '' to 'Security groups that will be assigned to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Deleted property: description
+                        - Deleted property: name
+                        - Deleted property: rules
+                        - Deleted property: state
+                        - Modified property: url
+                          - Format changed from 'uri' to ''
+                          - ReadOnly changed from true to false
+
+POST /api/openstack-backups/{uuid}/restore/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: security_groups
+          - Modified property: flavor
+            - Description changed from '' to 'Flavor to be used for the restored instance. If not specified, original instance flavor will be used'
+          - Modified property: floating_ips
+            - Description changed from '' to 'Floating IPs that will be assigned to the restored instance'
+          - Modified property: ports
+            - Description changed from '' to 'Network ports that will be attached to the restored instance'
+            - Items changed
+              - Properties changed
+                - Modified property: fixed_ips
+                  - Items changed
+                    - Properties changed
+                      - Modified property: ip_address
+                        - Description changed from '' to 'IP address to assign to the port'
+                      - Modified property: subnet_id
+                        - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                - Modified property: subnet
+                  - Description changed from '' to 'Subnet to which this port belongs'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: action_details
+              - Description changed from '' to 'Details about ongoing or completed actions'
+            - Modified property: availability_zone
+              - Description changed from '' to 'Availability zone where this instance is located'
+            - Modified property: availability_zone_name
+              - Description changed from '' to 'Name of the availability zone where instance is located'
+            - Modified property: backend_id
+              - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: connect_directly_to_external_network
+              - Description changed from '' to 'If True, instance will be connected directly to external network'
+            - Modified property: flavor_name
+              - Description changed from '' to 'Name of the flavor used by this instance'
+            - Modified property: floating_ips
+              - Description changed from '' to 'Floating IPs to assign to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: address
+                    - Description changed from '' to 'The public IPv4 address of the floating IP'
+                  - Modified property: port_fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: port_mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: hypervisor_hostname
+              - Description changed from '' to 'Name of the hypervisor hosting this instance'
+            - Modified property: ports
+              - Description changed from '' to 'Network ports to attach to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: security_groups
+              - Description changed from '' to 'List of security groups to apply to the instance'
+              - Items changed
+                - Properties changed
+                  - Deleted property: description
+                  - Deleted property: name
+                  - Deleted property: rules
+                  - Deleted property: state
+                  - Modified property: url
+                    - Format changed from 'uri' to ''
+                    - ReadOnly changed from true to false
+            - Modified property: server_group
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OpenStackNestedServerGroup
+                  - Properties changed
+                    - Modified property: policy
+                      - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+              - Description changed from '' to 'Server group for instance scheduling policy'
+            - Modified property: service_settings
+              - Description changed from '' to 'OpenStack provider settings'
+            - Modified property: tenant
+              - Description changed from '' to 'The OpenStack tenant to create the instance in'
+            - Modified property: tenant_uuid
+              - Description changed from '' to 'UUID of the OpenStack tenant'
+            - Modified property: volumes
+              - Description changed from '' to 'List of volumes attached to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: bootable
+                    - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+                  - Modified property: image_name
+                    - Description changed from '' to 'Name of the image this volume was created from'
+                  - Modified property: type
+                    - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+GET /api/openstack-floating-ips/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: address
+                - Description changed from '' to 'The public IPv4 address of the floating IP'
+              - Modified property: backend_network_id
+                - Description changed from '' to 'ID of network in OpenStack where this floating IP is allocated'
+              - Modified property: external_address
+                - Description changed from 'An optional address that maps to floating IP's address' to 'Optional address that maps to floating IP's address in external networks'
+              - Modified property: port_fixed_ips
+                - Items changed
+                  - Properties changed
+                    - Modified property: ip_address
+                      - Description changed from '' to 'IP address to assign to the port'
+                    - Modified property: subnet_id
+                      - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+              - Modified property: tenant
+                - Description changed from '' to 'OpenStack tenant this floating IP belongs to'
+
+GET /api/openstack-floating-ips/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: address
+              - Description changed from '' to 'The public IPv4 address of the floating IP'
+            - Modified property: backend_network_id
+              - Description changed from '' to 'ID of network in OpenStack where this floating IP is allocated'
+            - Modified property: external_address
+              - Description changed from 'An optional address that maps to floating IP's address' to 'Optional address that maps to floating IP's address in external networks'
+            - Modified property: port_fixed_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: ip_address
+                    - Description changed from '' to 'IP address to assign to the port'
+                  - Modified property: subnet_id
+                    - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this floating IP belongs to'
+
+GET /api/openstack-instance-availability-zones/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: available
+                - Description changed from '' to 'Indicates whether this availability zone is available for instance provisioning'
+
+GET /api/openstack-instance-availability-zones/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: available
+              - Description changed from '' to 'Indicates whether this availability zone is available for instance provisioning'
+
+GET /api/openstack-instances/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: action_details
+                - Description changed from '' to 'Details about ongoing or completed actions'
+              - Modified property: availability_zone
+                - Description changed from '' to 'Availability zone where this instance is located'
+              - Modified property: availability_zone_name
+                - Description changed from '' to 'Name of the availability zone where instance is located'
+              - Modified property: backend_id
+                - Description changed from '' to 'Instance ID in the OpenStack backend'
+              - Modified property: connect_directly_to_external_network
+                - Description changed from '' to 'If True, instance will be connected directly to external network'
+              - Modified property: flavor_name
+                - Description changed from '' to 'Name of the flavor used by this instance'
+              - Modified property: floating_ips
+                - Description changed from '' to 'Floating IPs to assign to the instance'
+                - Items changed
+                  - Properties changed
+                    - Modified property: address
+                      - Description changed from '' to 'The public IPv4 address of the floating IP'
+                    - Modified property: port_fixed_ips
+                      - Items changed
+                        - Properties changed
+                          - Modified property: ip_address
+                            - Description changed from '' to 'IP address to assign to the port'
+                          - Modified property: subnet_id
+                            - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                    - Modified property: port_mac_address
+                      - Description changed from '' to 'MAC address of the port'
+                    - Modified property: subnet_cidr
+                      - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+              - Modified property: hypervisor_hostname
+                - Description changed from '' to 'Name of the hypervisor hosting this instance'
+              - Modified property: ports
+                - Description changed from '' to 'Network ports to attach to the instance'
+                - Items changed
+                  - Properties changed
+                    - Modified property: device_id
+                      - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                    - Modified property: device_owner
+                      - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                    - Modified property: fixed_ips
+                      - Items changed
+                        - Properties changed
+                          - Modified property: ip_address
+                            - Description changed from '' to 'IP address to assign to the port'
+                          - Modified property: subnet_id
+                            - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                    - Modified property: mac_address
+                      - Description changed from '' to 'MAC address of the port'
+                    - Modified property: security_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: rules
+                            - Items changed
+                              - Properties changed
+                                - Modified property: cidr
+                                  - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                                - Modified property: direction
+                                  - Property 'AllOf' changed
+                                    - Schemas added: #/components/schemas/DirectionEnum
+                                  - Type changed from 'string' to ''
+                                  - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                  - Deleted enum values: [ingress egress]
+                                - Modified property: ethertype
+                                  - Property 'AllOf' changed
+                                    - Schemas added: #/components/schemas/EthertypeEnum
+                                  - Type changed from 'string' to ''
+                                  - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                  - Deleted enum values: [IPv4 IPv6]
+                                - Modified property: from_port
+                                  - Description changed from '' to 'Starting port number in the range (1-65535)'
+                                - Modified property: protocol
+                                  - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                                - Modified property: remote_group
+                                  - Description changed from '' to 'Remote security group that this rule references, if any'
+                                - Modified property: to_port
+                                  - Description changed from '' to 'Ending port number in the range (1-65535)'
+                    - Modified property: subnet
+                      - Description changed from '' to 'Subnet to which this port belongs'
+                    - Modified property: subnet_cidr
+                      - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+              - Modified property: security_groups
+                - Description changed from '' to 'List of security groups to apply to the instance'
+                - Items changed
+                  - Properties changed
+                    - Deleted property: description
+                    - Deleted property: name
+                    - Deleted property: rules
+                    - Deleted property: state
+                    - Modified property: url
+                      - Format changed from 'uri' to ''
+                      - ReadOnly changed from true to false
+              - Modified property: server_group
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OpenStackNestedServerGroup
+                    - Properties changed
+                      - Modified property: policy
+                        - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+                - Description changed from '' to 'Server group for instance scheduling policy'
+              - Modified property: service_settings
+                - Description changed from '' to 'OpenStack provider settings'
+              - Modified property: tenant
+                - Description changed from '' to 'The OpenStack tenant to create the instance in'
+              - Modified property: tenant_uuid
+                - Description changed from '' to 'UUID of the OpenStack tenant'
+              - Modified property: volumes
+                - Description changed from '' to 'List of volumes attached to the instance'
+                - Items changed
+                  - Properties changed
+                    - Modified property: bootable
+                      - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+                    - Modified property: image_name
+                      - Description changed from '' to 'Name of the image this volume was created from'
+                    - Modified property: type
+                      - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+GET /api/openstack-instances/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: action_details
+              - Description changed from '' to 'Details about ongoing or completed actions'
+            - Modified property: availability_zone
+              - Description changed from '' to 'Availability zone where this instance is located'
+            - Modified property: availability_zone_name
+              - Description changed from '' to 'Name of the availability zone where instance is located'
+            - Modified property: backend_id
+              - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: connect_directly_to_external_network
+              - Description changed from '' to 'If True, instance will be connected directly to external network'
+            - Modified property: flavor_name
+              - Description changed from '' to 'Name of the flavor used by this instance'
+            - Modified property: floating_ips
+              - Description changed from '' to 'Floating IPs to assign to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: address
+                    - Description changed from '' to 'The public IPv4 address of the floating IP'
+                  - Modified property: port_fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: port_mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: hypervisor_hostname
+              - Description changed from '' to 'Name of the hypervisor hosting this instance'
+            - Modified property: ports
+              - Description changed from '' to 'Network ports to attach to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: security_groups
+              - Description changed from '' to 'List of security groups to apply to the instance'
+              - Items changed
+                - Properties changed
+                  - Deleted property: description
+                  - Deleted property: name
+                  - Deleted property: rules
+                  - Deleted property: state
+                  - Modified property: url
+                    - Format changed from 'uri' to ''
+                    - ReadOnly changed from true to false
+            - Modified property: server_group
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OpenStackNestedServerGroup
+                  - Properties changed
+                    - Modified property: policy
+                      - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+              - Description changed from '' to 'Server group for instance scheduling policy'
+            - Modified property: service_settings
+              - Description changed from '' to 'OpenStack provider settings'
+            - Modified property: tenant
+              - Description changed from '' to 'The OpenStack tenant to create the instance in'
+            - Modified property: tenant_uuid
+              - Description changed from '' to 'UUID of the OpenStack tenant'
+            - Modified property: volumes
+              - Description changed from '' to 'List of volumes attached to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: bootable
+                    - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+                  - Modified property: image_name
+                    - Description changed from '' to 'Name of the image this volume was created from'
+                  - Modified property: type
+                    - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+PATCH /api/openstack-instances/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: data_volume_type
+            - Description changed from '' to 'Volume type for the data volume'
+          - Modified property: data_volumes
+            - Description changed from '' to 'Additional data volumes to attach to the instance'
+          - Modified property: system_volume_type
+            - Description changed from '' to 'Volume type for the system volume'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: action_details
+              - Description changed from '' to 'Details about ongoing or completed actions'
+            - Modified property: availability_zone
+              - Description changed from '' to 'Availability zone where this instance is located'
+            - Modified property: availability_zone_name
+              - Description changed from '' to 'Name of the availability zone where instance is located'
+            - Modified property: backend_id
+              - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: connect_directly_to_external_network
+              - Description changed from '' to 'If True, instance will be connected directly to external network'
+            - Modified property: flavor_name
+              - Description changed from '' to 'Name of the flavor used by this instance'
+            - Modified property: floating_ips
+              - Description changed from '' to 'Floating IPs to assign to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: address
+                    - Description changed from '' to 'The public IPv4 address of the floating IP'
+                  - Modified property: port_fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: port_mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: hypervisor_hostname
+              - Description changed from '' to 'Name of the hypervisor hosting this instance'
+            - Modified property: ports
+              - Description changed from '' to 'Network ports to attach to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: security_groups
+              - Description changed from '' to 'List of security groups to apply to the instance'
+              - Items changed
+                - Properties changed
+                  - Deleted property: description
+                  - Deleted property: name
+                  - Deleted property: rules
+                  - Deleted property: state
+                  - Modified property: url
+                    - Format changed from 'uri' to ''
+                    - ReadOnly changed from true to false
+            - Modified property: server_group
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OpenStackNestedServerGroup
+                  - Properties changed
+                    - Modified property: policy
+                      - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+              - Description changed from '' to 'Server group for instance scheduling policy'
+            - Modified property: service_settings
+              - Description changed from '' to 'OpenStack provider settings'
+            - Modified property: tenant
+              - Description changed from '' to 'The OpenStack tenant to create the instance in'
+            - Modified property: tenant_uuid
+              - Description changed from '' to 'UUID of the OpenStack tenant'
+            - Modified property: volumes
+              - Description changed from '' to 'List of volumes attached to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: bootable
+                    - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+                  - Modified property: image_name
+                    - Description changed from '' to 'Name of the image this volume was created from'
+                  - Modified property: type
+                    - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+PUT /api/openstack-instances/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: data_volume_type
+            - Description changed from '' to 'Volume type for the data volume'
+          - Modified property: data_volumes
+            - Description changed from '' to 'Additional data volumes to attach to the instance'
+          - Modified property: system_volume_type
+            - Description changed from '' to 'Volume type for the system volume'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: action_details
+              - Description changed from '' to 'Details about ongoing or completed actions'
+            - Modified property: availability_zone
+              - Description changed from '' to 'Availability zone where this instance is located'
+            - Modified property: availability_zone_name
+              - Description changed from '' to 'Name of the availability zone where instance is located'
+            - Modified property: backend_id
+              - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: connect_directly_to_external_network
+              - Description changed from '' to 'If True, instance will be connected directly to external network'
+            - Modified property: flavor_name
+              - Description changed from '' to 'Name of the flavor used by this instance'
+            - Modified property: floating_ips
+              - Description changed from '' to 'Floating IPs to assign to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: address
+                    - Description changed from '' to 'The public IPv4 address of the floating IP'
+                  - Modified property: port_fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: port_mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: hypervisor_hostname
+              - Description changed from '' to 'Name of the hypervisor hosting this instance'
+            - Modified property: ports
+              - Description changed from '' to 'Network ports to attach to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: security_groups
+              - Description changed from '' to 'List of security groups to apply to the instance'
+              - Items changed
+                - Properties changed
+                  - Deleted property: description
+                  - Deleted property: name
+                  - Deleted property: rules
+                  - Deleted property: state
+                  - Modified property: url
+                    - Format changed from 'uri' to ''
+                    - ReadOnly changed from true to false
+            - Modified property: server_group
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OpenStackNestedServerGroup
+                  - Properties changed
+                    - Modified property: policy
+                      - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+              - Description changed from '' to 'Server group for instance scheduling policy'
+            - Modified property: service_settings
+              - Description changed from '' to 'OpenStack provider settings'
+            - Modified property: tenant
+              - Description changed from '' to 'The OpenStack tenant to create the instance in'
+            - Modified property: tenant_uuid
+              - Description changed from '' to 'UUID of the OpenStack tenant'
+            - Modified property: volumes
+              - Description changed from '' to 'List of volumes attached to the instance'
+              - Items changed
+                - Properties changed
+                  - Modified property: bootable
+                    - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+                  - Modified property: image_name
+                    - Description changed from '' to 'Name of the image this volume was created from'
+                  - Modified property: type
+                    - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+POST /api/openstack-instances/{uuid}/backup/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instance
+              - Description changed from '' to 'Instance that this backup is created from'
+            - Modified property: instance_floating_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: address
+                    - Description changed from '' to 'The public IPv4 address of the floating IP'
+                  - Modified property: port_fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: port_mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: instance_ports
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: instance_security_groups
+              - Items changed
+                - Properties changed
+                  - Deleted property: description
+                  - Deleted property: name
+                  - Deleted property: rules
+                  - Deleted property: state
+                  - Modified property: url
+                    - Format changed from 'uri' to ''
+                    - ReadOnly changed from true to false
+            - Modified property: restorations
+              - Items changed
+                - Properties changed
+                  - Modified property: flavor
+                    - Description changed from '' to 'Flavor to be used for the restored instance. If not specified, original instance flavor will be used'
+                  - Modified property: floating_ips
+                    - Description changed from '' to 'Floating IPs that will be assigned to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: address
+                          - Description changed from '' to 'The public IPv4 address of the floating IP'
+                        - Modified property: port_fixed_ips
+                          - Items changed
+                            - Properties changed
+                              - Modified property: ip_address
+                                - Description changed from '' to 'IP address to assign to the port'
+                              - Modified property: subnet_id
+                                - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                        - Modified property: port_mac_address
+                          - Description changed from '' to 'MAC address of the port'
+                        - Modified property: subnet_cidr
+                          - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: instance
+                    - Description changed from '' to 'Instance that is being restored from the backup'
+                  - Modified property: ports
+                    - Description changed from '' to 'Network ports that will be attached to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: device_id
+                          - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                        - Modified property: device_owner
+                          - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                        - Modified property: fixed_ips
+                          - Items changed
+                            - Properties changed
+                              - Modified property: ip_address
+                                - Description changed from '' to 'IP address to assign to the port'
+                              - Modified property: subnet_id
+                                - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                        - Modified property: mac_address
+                          - Description changed from '' to 'MAC address of the port'
+                        - Modified property: security_groups
+                          - Items changed
+                            - Properties changed
+                              - Modified property: rules
+                                - Items changed
+                                  - Properties changed
+                                    - Modified property: cidr
+                                      - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                                    - Modified property: direction
+                                      - Property 'AllOf' changed
+                                        - Schemas added: #/components/schemas/DirectionEnum
+                                      - Type changed from 'string' to ''
+                                      - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                      - Deleted enum values: [ingress egress]
+                                    - Modified property: ethertype
+                                      - Property 'AllOf' changed
+                                        - Schemas added: #/components/schemas/EthertypeEnum
+                                      - Type changed from 'string' to ''
+                                      - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                      - Deleted enum values: [IPv4 IPv6]
+                                    - Modified property: from_port
+                                      - Description changed from '' to 'Starting port number in the range (1-65535)'
+                                    - Modified property: protocol
+                                      - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                                    - Modified property: remote_group
+                                      - Description changed from '' to 'Remote security group that this rule references, if any'
+                                    - Modified property: to_port
+                                      - Description changed from '' to 'Ending port number in the range (1-65535)'
+                        - Modified property: subnet
+                          - Description changed from '' to 'Subnet to which this port belongs'
+                        - Modified property: subnet_cidr
+                          - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: security_groups
+                    - Description changed from '' to 'Security groups that will be assigned to the restored instance'
+                    - Items changed
+                      - Properties changed
+                        - Deleted property: description
+                        - Deleted property: name
+                        - Deleted property: rules
+                        - Deleted property: state
+                        - Modified property: url
+                          - Format changed from 'uri' to ''
+                          - ReadOnly changed from true to false
+
+POST /api/openstack-instances/{uuid}/change_flavor/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: flavor
+            - Description changed from '' to 'The new flavor to use for the instance. Flavor change can only be done when instance is stopped.'
+
+GET /api/openstack-instances/{uuid}/floating_ips/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: address
+                - Description changed from '' to 'The public IPv4 address of the floating IP'
+              - Modified property: port_fixed_ips
+                - Items changed
+                  - Properties changed
+                    - Modified property: ip_address
+                      - Description changed from '' to 'IP address to assign to the port'
+                    - Modified property: subnet_id
+                      - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+              - Modified property: port_mac_address
+                - Description changed from '' to 'MAC address of the port'
+              - Modified property: subnet_cidr
+                - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+
+GET /api/openstack-instances/{uuid}/ports/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: device_id
+                - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+              - Modified property: device_owner
+                - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+              - Modified property: fixed_ips
+                - Items changed
+                  - Properties changed
+                    - Modified property: ip_address
+                      - Description changed from '' to 'IP address to assign to the port'
+                    - Modified property: subnet_id
+                      - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+              - Modified property: mac_address
+                - Description changed from '' to 'MAC address of the port'
+              - Modified property: security_groups
+                - Items changed
+                  - Properties changed
+                    - Modified property: rules
+                      - Items changed
+                        - Properties changed
+                          - Modified property: cidr
+                            - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                          - Modified property: direction
+                            - Property 'AllOf' changed
+                              - Schemas added: #/components/schemas/DirectionEnum
+                            - Type changed from 'string' to ''
+                            - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                            - Deleted enum values: [ingress egress]
+                          - Modified property: ethertype
+                            - Property 'AllOf' changed
+                              - Schemas added: #/components/schemas/EthertypeEnum
+                            - Type changed from 'string' to ''
+                            - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                            - Deleted enum values: [IPv4 IPv6]
+                          - Modified property: from_port
+                            - Description changed from '' to 'Starting port number in the range (1-65535)'
+                          - Modified property: protocol
+                            - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                          - Modified property: remote_group
+                            - Description changed from '' to 'Remote security group that this rule references, if any'
+                          - Modified property: to_port
+                            - Description changed from '' to 'Ending port number in the range (1-65535)'
+              - Modified property: subnet
+                - Description changed from '' to 'Subnet to which this port belongs'
+              - Modified property: subnet_cidr
+                - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+
+POST /api/openstack-instances/{uuid}/update_allowed_address_pairs/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: allowed_address_pairs
+            - Description changed from '' to 'List of allowed address pairs to set on the port. Each pair should contain 'ip_address' and optional 'mac_address'.'
+          - Modified property: subnet
+            - Description changed from '' to 'The subnet to update allowed address pairs for.'
+
+POST /api/openstack-instances/{uuid}/update_ports/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: ports
+            - Items changed
+              - Properties changed
+                - Modified property: fixed_ips
+                  - Items changed
+                    - Properties changed
+                      - Modified property: ip_address
+                        - Description changed from '' to 'IP address to assign to the port'
+                      - Modified property: subnet_id
+                        - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                - Modified property: subnet
+                  - Description changed from '' to 'Subnet to which this port belongs'
+
+POST /api/openstack-instances/{uuid}/update_security_groups/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: security_groups
+            - Description changed from '' to 'List of security groups to be assigned to the instance.'
+
+GET /api/openstack-network-rbac-policies/
+
+- Modified query param: policy_type
+  - Description changed from '' to 'Type of access granted - either shared access or external network access
+
+'
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: policy_type
+                - Description changed from '' to 'Type of access granted - either shared access or external network access'
+
+HEAD /api/openstack-network-rbac-policies/
+
+- Modified query param: policy_type
+  - Description changed from '' to 'Type of access granted - either shared access or external network access
+
+'
+
+GET /api/openstack-network-rbac-policies/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: policy_type
+              - Description changed from '' to 'Type of access granted - either shared access or external network access'
+
+GET /api/openstack-networks/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: is_external
+                - Description changed from '' to 'Defines whether this network is external (public) or internal (private)'
+              - Modified property: rbac_policies
+                - Items changed
+                  - Properties changed
+                    - Modified property: policy_type
+                      - Description changed from '' to 'Type of access granted - either shared access or external network access'
+              - Modified property: subnets
+                - Items changed
+                  - Properties changed
+                    - Modified property: cidr
+                      - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                    - Modified property: enable_dhcp
+                      - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+                    - Modified property: gateway_ip
+                      - Description changed from '' to 'IP address of the gateway for this subnet'
+                    - Modified property: ip_version
+                      - Description changed from '' to 'IP protocol version (4 or 6)'
+              - Modified property: tenant
+                - Description changed from '' to 'OpenStack tenant this network belongs to'
+              - Modified property: type
+                - Description changed from '' to 'Network type, such as local, flat, vlan, vxlan, or gre'
+
+GET /api/openstack-networks/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: is_external
+              - Description changed from '' to 'Defines whether this network is external (public) or internal (private)'
+            - Modified property: rbac_policies
+              - Items changed
+                - Properties changed
+                  - Modified property: policy_type
+                    - Description changed from '' to 'Type of access granted - either shared access or external network access'
+            - Modified property: subnets
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: enable_dhcp
+                    - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+                  - Modified property: gateway_ip
+                    - Description changed from '' to 'IP address of the gateway for this subnet'
+                  - Modified property: ip_version
+                    - Description changed from '' to 'IP protocol version (4 or 6)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this network belongs to'
+            - Modified property: type
+              - Description changed from '' to 'Network type, such as local, flat, vlan, vxlan, or gre'
+
+PATCH /api/openstack-networks/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: is_external
+              - Description changed from '' to 'Defines whether this network is external (public) or internal (private)'
+            - Modified property: rbac_policies
+              - Items changed
+                - Properties changed
+                  - Modified property: policy_type
+                    - Description changed from '' to 'Type of access granted - either shared access or external network access'
+            - Modified property: subnets
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: enable_dhcp
+                    - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+                  - Modified property: gateway_ip
+                    - Description changed from '' to 'IP address of the gateway for this subnet'
+                  - Modified property: ip_version
+                    - Description changed from '' to 'IP protocol version (4 or 6)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this network belongs to'
+            - Modified property: type
+              - Description changed from '' to 'Network type, such as local, flat, vlan, vxlan, or gre'
+
+PUT /api/openstack-networks/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: is_external
+              - Description changed from '' to 'Defines whether this network is external (public) or internal (private)'
+            - Modified property: rbac_policies
+              - Items changed
+                - Properties changed
+                  - Modified property: policy_type
+                    - Description changed from '' to 'Type of access granted - either shared access or external network access'
+            - Modified property: subnets
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: enable_dhcp
+                    - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+                  - Modified property: gateway_ip
+                    - Description changed from '' to 'IP address of the gateway for this subnet'
+                  - Modified property: ip_version
+                    - Description changed from '' to 'IP protocol version (4 or 6)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this network belongs to'
+            - Modified property: type
+              - Description changed from '' to 'Network type, such as local, flat, vlan, vxlan, or gre'
+
+POST /api/openstack-networks/{uuid}/create_subnet/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: disable_gateway
+            - Description changed from '' to 'If True, no gateway IP address will be allocated'
+          - Modified property: gateway_ip
+            - Description changed from '' to 'IP address of the gateway for this subnet'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: disable_gateway
+              - Description changed from '' to 'If True, no gateway IP address will be allocated'
+            - Modified property: enable_dhcp
+              - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+            - Modified property: gateway_ip
+              - Description changed from '' to 'IP address of the gateway for this subnet'
+            - Modified property: ip_version
+              - Description changed from '' to 'IP protocol version (4 or 6)'
+            - Modified property: network
+              - Description changed from '' to 'Network to which this subnet belongs'
+
+POST /api/openstack-networks/{uuid}/rbac_policy_create/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: policy_type
+            - Description changed from '' to 'Type of access granted - either shared access or external network access'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: policy_type
+              - Description changed from '' to 'Type of access granted - either shared access or external network access'
+
+GET /api/openstack-ports/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: admin_state_up
+                - Description changed from '' to 'Administrative state of the port. If down, port does not forward packets'
+              - Modified property: backend_id
+                - Description changed from '' to 'Port ID in OpenStack'
+              - Modified property: device_id
+                - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+              - Modified property: device_owner
+                - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+              - Modified property: fixed_ips
+                - Items changed
+                  - Properties changed
+                    - Modified property: ip_address
+                      - Description changed from '' to 'IP address to assign to the port'
+                    - Modified property: subnet_id
+                      - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+              - Modified property: mac_address
+                - Description changed from '' to 'MAC address of the port'
+              - Modified property: network
+                - Description changed from '' to 'Network to which this port belongs'
+              - Modified property: port_security_enabled
+                - Description changed from '' to 'If True, security groups and rules will be applied to this port'
+              - Modified property: status
+                - Description changed from '' to 'Port status in OpenStack (e.g. ACTIVE, DOWN)'
+              - Modified property: tenant
+                - Description changed from '' to 'OpenStack tenant this port belongs to'
+
+POST /api/openstack-ports/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: fixed_ips
+            - Items changed
+              - Properties changed
+                - Modified property: ip_address
+                  - Description changed from '' to 'IP address to assign to the port'
+                - Modified property: subnet_id
+                  - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+          - Modified property: mac_address
+            - Description changed from '' to 'MAC address of the port'
+          - Modified property: network
+            - Description changed from '' to 'Network to which this port belongs'
+          - Modified property: port_security_enabled
+            - Description changed from '' to 'If True, security groups and rules will be applied to this port'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: admin_state_up
+              - Description changed from '' to 'Administrative state of the port. If down, port does not forward packets'
+            - Modified property: backend_id
+              - Description changed from '' to 'Port ID in OpenStack'
+            - Modified property: device_id
+              - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+            - Modified property: device_owner
+              - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+            - Modified property: fixed_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: ip_address
+                    - Description changed from '' to 'IP address to assign to the port'
+                  - Modified property: subnet_id
+                    - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+            - Modified property: mac_address
+              - Description changed from '' to 'MAC address of the port'
+            - Modified property: network
+              - Description changed from '' to 'Network to which this port belongs'
+            - Modified property: port_security_enabled
+              - Description changed from '' to 'If True, security groups and rules will be applied to this port'
+            - Modified property: status
+              - Description changed from '' to 'Port status in OpenStack (e.g. ACTIVE, DOWN)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this port belongs to'
+
+GET /api/openstack-ports/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: admin_state_up
+              - Description changed from '' to 'Administrative state of the port. If down, port does not forward packets'
+            - Modified property: backend_id
+              - Description changed from '' to 'Port ID in OpenStack'
+            - Modified property: device_id
+              - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+            - Modified property: device_owner
+              - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+            - Modified property: fixed_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: ip_address
+                    - Description changed from '' to 'IP address to assign to the port'
+                  - Modified property: subnet_id
+                    - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+            - Modified property: mac_address
+              - Description changed from '' to 'MAC address of the port'
+            - Modified property: network
+              - Description changed from '' to 'Network to which this port belongs'
+            - Modified property: port_security_enabled
+              - Description changed from '' to 'If True, security groups and rules will be applied to this port'
+            - Modified property: status
+              - Description changed from '' to 'Port status in OpenStack (e.g. ACTIVE, DOWN)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this port belongs to'
+
+PATCH /api/openstack-ports/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: admin_state_up
+              - Description changed from '' to 'Administrative state of the port. If down, port does not forward packets'
+            - Modified property: backend_id
+              - Description changed from '' to 'Port ID in OpenStack'
+            - Modified property: device_id
+              - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+            - Modified property: device_owner
+              - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+            - Modified property: fixed_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: ip_address
+                    - Description changed from '' to 'IP address to assign to the port'
+                  - Modified property: subnet_id
+                    - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+            - Modified property: mac_address
+              - Description changed from '' to 'MAC address of the port'
+            - Modified property: network
+              - Description changed from '' to 'Network to which this port belongs'
+            - Modified property: port_security_enabled
+              - Description changed from '' to 'If True, security groups and rules will be applied to this port'
+            - Modified property: status
+              - Description changed from '' to 'Port status in OpenStack (e.g. ACTIVE, DOWN)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this port belongs to'
+
+PUT /api/openstack-ports/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: fixed_ips
+            - Items changed
+              - Properties changed
+                - Modified property: ip_address
+                  - Description changed from '' to 'IP address to assign to the port'
+                - Modified property: subnet_id
+                  - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+          - Modified property: mac_address
+            - Description changed from '' to 'MAC address of the port'
+          - Modified property: network
+            - Description changed from '' to 'Network to which this port belongs'
+          - Modified property: port_security_enabled
+            - Description changed from '' to 'If True, security groups and rules will be applied to this port'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: admin_state_up
+              - Description changed from '' to 'Administrative state of the port. If down, port does not forward packets'
+            - Modified property: backend_id
+              - Description changed from '' to 'Port ID in OpenStack'
+            - Modified property: device_id
+              - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+            - Modified property: device_owner
+              - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+            - Modified property: fixed_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: ip_address
+                    - Description changed from '' to 'IP address to assign to the port'
+                  - Modified property: subnet_id
+                    - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+            - Modified property: mac_address
+              - Description changed from '' to 'MAC address of the port'
+            - Modified property: network
+              - Description changed from '' to 'Network to which this port belongs'
+            - Modified property: port_security_enabled
+              - Description changed from '' to 'If True, security groups and rules will be applied to this port'
+            - Modified property: status
+              - Description changed from '' to 'Port status in OpenStack (e.g. ACTIVE, DOWN)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this port belongs to'
+
+POST /api/openstack-ports/{uuid}/update_port_ip/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: ip_address
+            - Description changed from '' to 'The IP address to assign within the subnet'
+          - Modified property: subnet
+            - Description changed from '' to 'The subnet where the new IP address will be allocated'
+
+POST /api/openstack-ports/{uuid}/update_security_groups/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: security_groups
+            - Description changed from '' to 'List of security groups to be assigned to the instance.'
+
+GET /api/openstack-routers/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: backend_id
+                - Description changed from '' to 'Router ID in OpenStack'
+              - Modified property: fixed_ips
+                - Items changed
+                  - Properties changed
+                    - Modified property: ip_address
+                      - Description changed from '' to 'IP address to assign to the port'
+                    - Modified property: subnet_id
+                      - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+              - Modified property: ports
+                - Items changed
+                  - Properties changed
+                    - Modified property: device_id
+                      - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                    - Modified property: device_owner
+                      - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                    - Modified property: fixed_ips
+                      - Items changed
+                        - Properties changed
+                          - Modified property: ip_address
+                            - Description changed from '' to 'IP address to assign to the port'
+                          - Modified property: subnet_id
+                            - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                    - Modified property: mac_address
+                      - Description changed from '' to 'MAC address of the port'
+                    - Modified property: security_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: rules
+                            - Items changed
+                              - Properties changed
+                                - Modified property: cidr
+                                  - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                                - Modified property: direction
+                                  - Property 'AllOf' changed
+                                    - Schemas added: #/components/schemas/DirectionEnum
+                                  - Type changed from 'string' to ''
+                                  - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                  - Deleted enum values: [ingress egress]
+                                - Modified property: ethertype
+                                  - Property 'AllOf' changed
+                                    - Schemas added: #/components/schemas/EthertypeEnum
+                                  - Type changed from 'string' to ''
+                                  - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                  - Deleted enum values: [IPv4 IPv6]
+                                - Modified property: from_port
+                                  - Description changed from '' to 'Starting port number in the range (1-65535)'
+                                - Modified property: protocol
+                                  - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                                - Modified property: remote_group
+                                  - Description changed from '' to 'Remote security group that this rule references, if any'
+                                - Modified property: to_port
+                                  - Description changed from '' to 'Ending port number in the range (1-65535)'
+                    - Modified property: subnet
+                      - Description changed from '' to 'Subnet to which this port belongs'
+                    - Modified property: subnet_cidr
+                      - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+              - Modified property: tenant
+                - Description changed from '' to 'OpenStack tenant this router belongs to'
+
+POST /api/openstack-routers/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: tenant
+            - Description changed from '' to 'OpenStack tenant this router belongs to'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this router belongs to'
+
+GET /api/openstack-routers/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'Router ID in OpenStack'
+            - Modified property: fixed_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: ip_address
+                    - Description changed from '' to 'IP address to assign to the port'
+                  - Modified property: subnet_id
+                    - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+            - Modified property: ports
+              - Items changed
+                - Properties changed
+                  - Modified property: device_id
+                    - Description changed from '' to 'ID of device (instance, router etc) to which this port is connected'
+                  - Modified property: device_owner
+                    - Description changed from '' to 'Entity that uses this port (e.g. network:router_interface)'
+                  - Modified property: fixed_ips
+                    - Items changed
+                      - Properties changed
+                        - Modified property: ip_address
+                          - Description changed from '' to 'IP address to assign to the port'
+                        - Modified property: subnet_id
+                          - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+                  - Modified property: mac_address
+                    - Description changed from '' to 'MAC address of the port'
+                  - Modified property: security_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: rules
+                          - Items changed
+                            - Properties changed
+                              - Modified property: cidr
+                                - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                              - Modified property: direction
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/DirectionEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                                - Deleted enum values: [ingress egress]
+                              - Modified property: ethertype
+                                - Property 'AllOf' changed
+                                  - Schemas added: #/components/schemas/EthertypeEnum
+                                - Type changed from 'string' to ''
+                                - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                                - Deleted enum values: [IPv4 IPv6]
+                              - Modified property: from_port
+                                - Description changed from '' to 'Starting port number in the range (1-65535)'
+                              - Modified property: protocol
+                                - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                              - Modified property: remote_group
+                                - Description changed from '' to 'Remote security group that this rule references, if any'
+                              - Modified property: to_port
+                                - Description changed from '' to 'Ending port number in the range (1-65535)'
+                  - Modified property: subnet
+                    - Description changed from '' to 'Subnet to which this port belongs'
+                  - Modified property: subnet_cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this router belongs to'
+
+POST /api/openstack-routers/{uuid}/add_router_interface/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: port
+            - Description changed from '' to 'The port to connect to the router. Either subnet or port must be specified, but not both.'
+          - Modified property: subnet
+            - Description changed from '' to 'The subnet to connect to the router. Either subnet or port must be specified, but not both.'
+
+POST /api/openstack-routers/{uuid}/remove_router_interface/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: port
+            - Description changed from '' to 'The port to connect to the router. Either subnet or port must be specified, but not both.'
+          - Modified property: subnet
+            - Description changed from '' to 'The subnet to connect to the router. Either subnet or port must be specified, but not both.'
+
+GET /api/openstack-security-groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: rules
+                - Items changed
+                  - Properties changed
+                    - Modified property: cidr
+                      - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                    - Modified property: direction
+                      - Property 'AllOf' changed
+                        - Schemas added: #/components/schemas/DirectionEnum
+                      - Type changed from 'string' to ''
+                      - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                      - Deleted enum values: [ingress egress]
+                    - Modified property: ethertype
+                      - Property 'AllOf' changed
+                        - Schemas added: #/components/schemas/EthertypeEnum
+                      - Type changed from 'string' to ''
+                      - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                      - Deleted enum values: [IPv4 IPv6]
+                    - Modified property: from_port
+                      - Description changed from '' to 'Starting port number in the range (1-65535)'
+                    - Modified property: protocol
+                      - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                    - Modified property: remote_group
+                      - Description changed from '' to 'Remote security group that this rule references, if any'
+                    - Modified property: to_port
+                      - Description changed from '' to 'Ending port number in the range (1-65535)'
+
+GET /api/openstack-security-groups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: rules
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                  - Modified property: direction
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/DirectionEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                    - Deleted enum values: [ingress egress]
+                  - Modified property: ethertype
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/EthertypeEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                    - Deleted enum values: [IPv4 IPv6]
+                  - Modified property: from_port
+                    - Description changed from '' to 'Starting port number in the range (1-65535)'
+                  - Modified property: protocol
+                    - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                  - Modified property: remote_group
+                    - Description changed from '' to 'Remote security group that this rule references, if any'
+                  - Modified property: to_port
+                    - Description changed from '' to 'Ending port number in the range (1-65535)'
+
+POST /api/openstack-security-groups/{uuid}/set_rules/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Items changed
+          - Properties changed
+            - Modified property: cidr
+              - Description changed from '' to 'CIDR notation for the source/destination network address range'
+            - Modified property: direction
+              - Property 'AllOf' changed
+                - Schemas added: #/components/schemas/DirectionEnum
+              - Type changed from 'string' to ''
+              - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+              - Deleted enum values: [ingress egress]
+            - Modified property: ethertype
+              - Property 'AllOf' changed
+                - Schemas added: #/components/schemas/EthertypeEnum
+              - Type changed from 'string' to ''
+              - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+              - Deleted enum values: [IPv4 IPv6]
+            - Modified property: from_port
+              - Description changed from '' to 'Starting port number in the range (1-65535)'
+            - Modified property: protocol
+              - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+            - Modified property: remote_group
+              - Description changed from '' to 'Remote security group that this rule references, if any'
+            - Modified property: to_port
+              - Description changed from '' to 'Ending port number in the range (1-65535)'
+
+GET /api/openstack-server-groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: instances
+                - Items changed
+                  - Properties changed
+                    - Modified property: backend_id
+                      - Description changed from '' to 'Instance ID in the OpenStack backend'
+              - Modified property: policy
+                - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+
+POST /api/openstack-server-groups/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: policy
+            - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instances
+              - Items changed
+                - Properties changed
+                  - Modified property: backend_id
+                    - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: policy
+              - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+
+GET /api/openstack-server-groups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instances
+              - Items changed
+                - Properties changed
+                  - Modified property: backend_id
+                    - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: policy
+              - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+
+PATCH /api/openstack-server-groups/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: policy
+            - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instances
+              - Items changed
+                - Properties changed
+                  - Modified property: backend_id
+                    - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: policy
+              - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+
+PUT /api/openstack-server-groups/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: policy
+            - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instances
+              - Items changed
+                - Properties changed
+                  - Modified property: backend_id
+                    - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: policy
+              - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+
+GET /api/openstack-snapshots/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: backend_id
+                - Description changed from '' to 'Snapshot ID in the OpenStack backend'
+              - Modified property: restorations
+                - Items changed
+                  - Properties changed
+                    - Modified property: volume
+                      - Description changed from '' to 'Volume that is being restored from the snapshot'
+              - Modified property: source_volume
+                - Description changed from '' to 'Volume from which this snapshot was created'
+
+GET /api/openstack-snapshots/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'Snapshot ID in the OpenStack backend'
+            - Modified property: restorations
+              - Items changed
+                - Properties changed
+                  - Modified property: volume
+                    - Description changed from '' to 'Volume that is being restored from the snapshot'
+            - Modified property: source_volume
+              - Description changed from '' to 'Volume from which this snapshot was created'
+
+PATCH /api/openstack-snapshots/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'Snapshot ID in the OpenStack backend'
+            - Modified property: restorations
+              - Items changed
+                - Properties changed
+                  - Modified property: volume
+                    - Description changed from '' to 'Volume that is being restored from the snapshot'
+            - Modified property: source_volume
+              - Description changed from '' to 'Volume from which this snapshot was created'
+
+PUT /api/openstack-snapshots/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'Snapshot ID in the OpenStack backend'
+            - Modified property: restorations
+              - Items changed
+                - Properties changed
+                  - Modified property: volume
+                    - Description changed from '' to 'Volume that is being restored from the snapshot'
+            - Modified property: source_volume
+              - Description changed from '' to 'Volume from which this snapshot was created'
+
+GET /api/openstack-snapshots/{uuid}/restorations/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: volume
+                - Description changed from '' to 'Volume that is being restored from the snapshot'
+
+POST /api/openstack-snapshots/{uuid}/restore/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: availability_zone
+              - Description changed from '' to 'Availability zone where this volume is located'
+            - Modified property: backend_id
+              - Description changed from '' to 'Volume ID in the OpenStack backend'
+            - Modified property: bootable
+              - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+            - Modified property: image
+              - Description changed from '' to 'Image that this volume was created from, if any'
+            - Modified property: image_metadata
+              - Description changed from '' to 'Metadata of the image this volume was created from'
+            - Modified property: image_name
+              - Description changed from '' to 'Name of the image this volume was created from'
+            - Modified property: instance
+              - Description changed from '' to 'Instance that this volume is attached to, if any'
+            - Modified property: source_snapshot
+              - Description changed from '' to 'Snapshot that this volume was created from, if any'
+            - Modified property: type
+              - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+GET /api/openstack-subnets/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: disable_gateway
+                - Description changed from '' to 'If True, no gateway IP address will be allocated'
+              - Modified property: enable_dhcp
+                - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+              - Modified property: gateway_ip
+                - Description changed from '' to 'IP address of the gateway for this subnet'
+              - Modified property: ip_version
+                - Description changed from '' to 'IP protocol version (4 or 6)'
+              - Modified property: network
+                - Description changed from '' to 'Network to which this subnet belongs'
+
+GET /api/openstack-subnets/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: disable_gateway
+              - Description changed from '' to 'If True, no gateway IP address will be allocated'
+            - Modified property: enable_dhcp
+              - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+            - Modified property: gateway_ip
+              - Description changed from '' to 'IP address of the gateway for this subnet'
+            - Modified property: ip_version
+              - Description changed from '' to 'IP protocol version (4 or 6)'
+            - Modified property: network
+              - Description changed from '' to 'Network to which this subnet belongs'
+
+PATCH /api/openstack-subnets/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: disable_gateway
+            - Description changed from '' to 'If True, no gateway IP address will be allocated'
+          - Modified property: gateway_ip
+            - Description changed from '' to 'IP address of the gateway for this subnet'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: disable_gateway
+              - Description changed from '' to 'If True, no gateway IP address will be allocated'
+            - Modified property: enable_dhcp
+              - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+            - Modified property: gateway_ip
+              - Description changed from '' to 'IP address of the gateway for this subnet'
+            - Modified property: ip_version
+              - Description changed from '' to 'IP protocol version (4 or 6)'
+            - Modified property: network
+              - Description changed from '' to 'Network to which this subnet belongs'
+
+PUT /api/openstack-subnets/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: disable_gateway
+            - Description changed from '' to 'If True, no gateway IP address will be allocated'
+          - Modified property: gateway_ip
+            - Description changed from '' to 'IP address of the gateway for this subnet'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: disable_gateway
+              - Description changed from '' to 'If True, no gateway IP address will be allocated'
+            - Modified property: enable_dhcp
+              - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+            - Modified property: gateway_ip
+              - Description changed from '' to 'IP address of the gateway for this subnet'
+            - Modified property: ip_version
+              - Description changed from '' to 'IP protocol version (4 or 6)'
+            - Modified property: network
+              - Description changed from '' to 'Network to which this subnet belongs'
+
+GET /api/openstack-tenants/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: backend_id
+                - Description changed from '' to 'ID of tenant in the OpenStack backend'
+              - Modified property: external_network_id
+                - Description changed from '' to 'ID of external network connected to OpenStack tenant'
+              - Modified property: internal_network_id
+                - Description changed from '' to 'ID of internal network in OpenStack tenant'
+
+POST /api/openstack-tenants/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'ID of tenant in the OpenStack backend'
+            - Modified property: external_network_id
+              - Description changed from '' to 'ID of external network connected to OpenStack tenant'
+            - Modified property: internal_network_id
+              - Description changed from '' to 'ID of internal network in OpenStack tenant'
+
+GET /api/openstack-tenants/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'ID of tenant in the OpenStack backend'
+            - Modified property: external_network_id
+              - Description changed from '' to 'ID of external network connected to OpenStack tenant'
+            - Modified property: internal_network_id
+              - Description changed from '' to 'ID of internal network in OpenStack tenant'
+
+PATCH /api/openstack-tenants/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'ID of tenant in the OpenStack backend'
+            - Modified property: external_network_id
+              - Description changed from '' to 'ID of external network connected to OpenStack tenant'
+            - Modified property: internal_network_id
+              - Description changed from '' to 'ID of internal network in OpenStack tenant'
+
+PUT /api/openstack-tenants/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'ID of tenant in the OpenStack backend'
+            - Modified property: external_network_id
+              - Description changed from '' to 'ID of external network connected to OpenStack tenant'
+            - Modified property: internal_network_id
+              - Description changed from '' to 'ID of internal network in OpenStack tenant'
+
+GET /api/openstack-tenants/{uuid}/backend_instances/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: backend_id
+                - Description changed from '' to 'Instance ID in the OpenStack backend'
+              - Modified property: hypervisor_hostname
+                - Description changed from '' to 'Name of the hypervisor hosting this instance'
+
+GET /api/openstack-tenants/{uuid}/backend_volumes/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: backend_id
+                - Description changed from '' to 'Volume ID in the OpenStack backend'
+              - Modified property: bootable
+                - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+              - Modified property: metadata
+                - Description changed from '' to 'Arbitrary key-value pairs associated with the volume'
+
+POST /api/openstack-tenants/{uuid}/create_floating_ip/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: address
+              - Description changed from '' to 'The public IPv4 address of the floating IP'
+            - Modified property: backend_network_id
+              - Description changed from '' to 'ID of network in OpenStack where this floating IP is allocated'
+            - Modified property: external_address
+              - Description changed from 'An optional address that maps to floating IP's address' to 'Optional address that maps to floating IP's address in external networks'
+            - Modified property: port_fixed_ips
+              - Items changed
+                - Properties changed
+                  - Modified property: ip_address
+                    - Description changed from '' to 'IP address to assign to the port'
+                  - Modified property: subnet_id
+                    - Description changed from '' to 'ID of the subnet in which to assign the IP address'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this floating IP belongs to'
+
+POST /api/openstack-tenants/{uuid}/create_network/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: is_external
+              - Description changed from '' to 'Defines whether this network is external (public) or internal (private)'
+            - Modified property: rbac_policies
+              - Items changed
+                - Properties changed
+                  - Modified property: policy_type
+                    - Description changed from '' to 'Type of access granted - either shared access or external network access'
+            - Modified property: subnets
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'IPv4 network address in CIDR format (e.g. 192.168.0.0/24)'
+                  - Modified property: enable_dhcp
+                    - Description changed from '' to 'If True, DHCP service will be enabled on this subnet'
+                  - Modified property: gateway_ip
+                    - Description changed from '' to 'IP address of the gateway for this subnet'
+                  - Modified property: ip_version
+                    - Description changed from '' to 'IP protocol version (4 or 6)'
+            - Modified property: tenant
+              - Description changed from '' to 'OpenStack tenant this network belongs to'
+            - Modified property: type
+              - Description changed from '' to 'Network type, such as local, flat, vlan, vxlan, or gre'
+
+POST /api/openstack-tenants/{uuid}/create_security_group/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: rules
+            - Items changed
+              - Properties changed
+                - Modified property: cidr
+                  - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                - Modified property: direction
+                  - Property 'AllOf' changed
+                    - Schemas added: #/components/schemas/DirectionEnum
+                  - Type changed from 'string' to ''
+                  - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                  - Deleted enum values: [ingress egress]
+                - Modified property: ethertype
+                  - Property 'AllOf' changed
+                    - Schemas added: #/components/schemas/EthertypeEnum
+                  - Type changed from 'string' to ''
+                  - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                  - Deleted enum values: [IPv4 IPv6]
+                - Modified property: from_port
+                  - Description changed from '' to 'Starting port number in the range (1-65535)'
+                - Modified property: protocol
+                  - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                - Modified property: remote_group
+                  - Description changed from '' to 'Remote security group that this rule references, if any'
+                - Modified property: to_port
+                  - Description changed from '' to 'Ending port number in the range (1-65535)'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: rules
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                  - Modified property: direction
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/DirectionEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                    - Deleted enum values: [ingress egress]
+                  - Modified property: ethertype
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/EthertypeEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                    - Deleted enum values: [IPv4 IPv6]
+                  - Modified property: from_port
+                    - Description changed from '' to 'Starting port number in the range (1-65535)'
+                  - Modified property: protocol
+                    - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                  - Modified property: remote_group
+                    - Description changed from '' to 'Remote security group that this rule references, if any'
+                  - Modified property: to_port
+                    - Description changed from '' to 'Ending port number in the range (1-65535)'
+
+POST /api/openstack-tenants/{uuid}/create_server_group/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: policy
+            - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: instances
+              - Items changed
+                - Properties changed
+                  - Modified property: backend_id
+                    - Description changed from '' to 'Instance ID in the OpenStack backend'
+            - Modified property: policy
+              - Description changed from '' to 'Server group policy determining the rules for scheduling servers in this group'
+
+POST /api/openstack-tenants/{uuid}/pull_security_groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'ID of tenant in the OpenStack backend'
+            - Modified property: external_network_id
+              - Description changed from '' to 'ID of external network connected to OpenStack tenant'
+            - Modified property: internal_network_id
+              - Description changed from '' to 'ID of internal network in OpenStack tenant'
+
+POST /api/openstack-tenants/{uuid}/pull_server_groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'ID of tenant in the OpenStack backend'
+            - Modified property: external_network_id
+              - Description changed from '' to 'ID of external network connected to OpenStack tenant'
+            - Modified property: internal_network_id
+              - Description changed from '' to 'ID of internal network in OpenStack tenant'
+
+GET /api/openstack-volumes/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: availability_zone
+                - Description changed from '' to 'Availability zone where this volume is located'
+              - Modified property: backend_id
+                - Description changed from '' to 'Volume ID in the OpenStack backend'
+              - Modified property: bootable
+                - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+              - Modified property: image
+                - Description changed from '' to 'Image that this volume was created from, if any'
+              - Modified property: image_metadata
+                - Description changed from '' to 'Metadata of the image this volume was created from'
+              - Modified property: image_name
+                - Description changed from '' to 'Name of the image this volume was created from'
+              - Modified property: instance
+                - Description changed from '' to 'Instance that this volume is attached to, if any'
+              - Modified property: source_snapshot
+                - Description changed from '' to 'Snapshot that this volume was created from, if any'
+              - Modified property: type
+                - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+GET /api/openstack-volumes/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: availability_zone
+              - Description changed from '' to 'Availability zone where this volume is located'
+            - Modified property: backend_id
+              - Description changed from '' to 'Volume ID in the OpenStack backend'
+            - Modified property: bootable
+              - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+            - Modified property: image
+              - Description changed from '' to 'Image that this volume was created from, if any'
+            - Modified property: image_metadata
+              - Description changed from '' to 'Metadata of the image this volume was created from'
+            - Modified property: image_name
+              - Description changed from '' to 'Name of the image this volume was created from'
+            - Modified property: instance
+              - Description changed from '' to 'Instance that this volume is attached to, if any'
+            - Modified property: source_snapshot
+              - Description changed from '' to 'Snapshot that this volume was created from, if any'
+            - Modified property: type
+              - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+PATCH /api/openstack-volumes/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: bootable
+            - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: availability_zone
+              - Description changed from '' to 'Availability zone where this volume is located'
+            - Modified property: backend_id
+              - Description changed from '' to 'Volume ID in the OpenStack backend'
+            - Modified property: bootable
+              - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+            - Modified property: image
+              - Description changed from '' to 'Image that this volume was created from, if any'
+            - Modified property: image_metadata
+              - Description changed from '' to 'Metadata of the image this volume was created from'
+            - Modified property: image_name
+              - Description changed from '' to 'Name of the image this volume was created from'
+            - Modified property: instance
+              - Description changed from '' to 'Instance that this volume is attached to, if any'
+            - Modified property: source_snapshot
+              - Description changed from '' to 'Snapshot that this volume was created from, if any'
+            - Modified property: type
+              - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+PUT /api/openstack-volumes/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: bootable
+            - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: availability_zone
+              - Description changed from '' to 'Availability zone where this volume is located'
+            - Modified property: backend_id
+              - Description changed from '' to 'Volume ID in the OpenStack backend'
+            - Modified property: bootable
+              - Description changed from '' to 'Indicates if this volume can be used to boot an instance'
+            - Modified property: image
+              - Description changed from '' to 'Image that this volume was created from, if any'
+            - Modified property: image_metadata
+              - Description changed from '' to 'Metadata of the image this volume was created from'
+            - Modified property: image_name
+              - Description changed from '' to 'Name of the image this volume was created from'
+            - Modified property: instance
+              - Description changed from '' to 'Instance that this volume is attached to, if any'
+            - Modified property: source_snapshot
+              - Description changed from '' to 'Snapshot that this volume was created from, if any'
+            - Modified property: type
+              - Description changed from '' to 'Type of the volume (e.g. SSD, HDD)'
+
+POST /api/openstack-volumes/{uuid}/attach/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: instance
+            - Description changed from '' to 'Instance that this volume is attached to, if any'
+
+POST /api/openstack-volumes/{uuid}/snapshot/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: backend_id
+              - Description changed from '' to 'Snapshot ID in the OpenStack backend'
+            - Modified property: restorations
+              - Items changed
+                - Properties changed
+                  - Modified property: volume
+                    - Description changed from '' to 'Volume that is being restored from the snapshot'
+            - Modified property: source_volume
+              - Description changed from '' to 'Volume from which this snapshot was created'
+
+GET /api/projects/{uuid}/other_users/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - Deleted required property: full_name
+              - Deleted required property: url
+              - Deleted required property: username
+              - Deleted required property: uuid
+
+GET /api/rancher-cluster-security-groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: rules
+                - Items changed
+                  - Properties changed
+                    - Modified property: cidr
+                      - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                    - Modified property: direction
+                      - Property 'AllOf' changed
+                        - Schemas added: #/components/schemas/DirectionEnum
+                      - Type changed from 'string' to ''
+                      - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                      - Deleted enum values: [ingress egress]
+                    - Modified property: ethertype
+                      - Property 'AllOf' changed
+                        - Schemas added: #/components/schemas/EthertypeEnum
+                      - Type changed from 'string' to ''
+                      - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                      - Deleted enum values: [IPv4 IPv6]
+                    - Modified property: from_port
+                      - Description changed from '' to 'Starting port number in the range (1-65535)'
+                    - Modified property: protocol
+                      - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                    - Modified property: to_port
+                      - Description changed from '' to 'Ending port number in the range (1-65535)'
+
+GET /api/rancher-cluster-security-groups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: rules
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                  - Modified property: direction
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/DirectionEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                    - Deleted enum values: [ingress egress]
+                  - Modified property: ethertype
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/EthertypeEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                    - Deleted enum values: [IPv4 IPv6]
+                  - Modified property: from_port
+                    - Description changed from '' to 'Starting port number in the range (1-65535)'
+                  - Modified property: protocol
+                    - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                  - Modified property: to_port
+                    - Description changed from '' to 'Ending port number in the range (1-65535)'
+
+PATCH /api/rancher-cluster-security-groups/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: rules
+            - Items changed
+              - Properties changed
+                - Modified property: cidr
+                  - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                - Modified property: direction
+                  - Property 'AllOf' changed
+                    - Schemas added: #/components/schemas/DirectionEnum
+                  - Type changed from 'string' to ''
+                  - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                  - Deleted enum values: [ingress egress]
+                - Modified property: ethertype
+                  - Property 'AllOf' changed
+                    - Schemas added: #/components/schemas/EthertypeEnum
+                  - Type changed from 'string' to ''
+                  - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                  - Deleted enum values: [IPv4 IPv6]
+                - Modified property: from_port
+                  - Description changed from '' to 'Starting port number in the range (1-65535)'
+                - Modified property: protocol
+                  - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                - Modified property: to_port
+                  - Description changed from '' to 'Ending port number in the range (1-65535)'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: rules
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                  - Modified property: direction
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/DirectionEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                    - Deleted enum values: [ingress egress]
+                  - Modified property: ethertype
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/EthertypeEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                    - Deleted enum values: [IPv4 IPv6]
+                  - Modified property: from_port
+                    - Description changed from '' to 'Starting port number in the range (1-65535)'
+                  - Modified property: protocol
+                    - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                  - Modified property: to_port
+                    - Description changed from '' to 'Ending port number in the range (1-65535)'
+
+PUT /api/rancher-cluster-security-groups/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: rules
+            - Items changed
+              - Properties changed
+                - Modified property: cidr
+                  - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                - Modified property: direction
+                  - Property 'AllOf' changed
+                    - Schemas added: #/components/schemas/DirectionEnum
+                  - Type changed from 'string' to ''
+                  - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                  - Deleted enum values: [ingress egress]
+                - Modified property: ethertype
+                  - Property 'AllOf' changed
+                    - Schemas added: #/components/schemas/EthertypeEnum
+                  - Type changed from 'string' to ''
+                  - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                  - Deleted enum values: [IPv4 IPv6]
+                - Modified property: from_port
+                  - Description changed from '' to 'Starting port number in the range (1-65535)'
+                - Modified property: protocol
+                  - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                - Modified property: to_port
+                  - Description changed from '' to 'Ending port number in the range (1-65535)'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: rules
+              - Items changed
+                - Properties changed
+                  - Modified property: cidr
+                    - Description changed from '' to 'CIDR notation for the source/destination network address range'
+                  - Modified property: direction
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/DirectionEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'Traffic direction - either 'ingress' (incoming) or 'egress' (outgoing)'
+                    - Deleted enum values: [ingress egress]
+                  - Modified property: ethertype
+                    - Property 'AllOf' changed
+                      - Schemas added: #/components/schemas/EthertypeEnum
+                    - Type changed from 'string' to ''
+                    - Description changed from '' to 'IP protocol version - either 'IPv4' or 'IPv6''
+                    - Deleted enum values: [IPv4 IPv6]
+                  - Modified property: from_port
+                    - Description changed from '' to 'Starting port number in the range (1-65535)'
+                  - Modified property: protocol
+                    - Description changed from '' to 'The network protocol (TCP, UDP, ICMP, or empty for any protocol)'
+                  - Modified property: to_port
+                    - Description changed from '' to 'Ending port number in the range (1-65535)'
+
+GET /api/user-group-invitations/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - New required property: scope_image
+            - Properties changed
+              - New property: is_public
+              - New property: scope_image
+
+POST /api/user-group-invitations/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: is_public
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: scope_image
+          - Properties changed
+            - New property: is_public
+            - New property: scope_image
+
+GET /api/user-group-invitations/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: scope_image
+          - Properties changed
+            - New property: is_public
+            - New property: scope_image
+
+POST /api/user-group-invitations/{uuid}/submit_request/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: scope_image
+          - Properties changed
+            - New property: is_public
+            - New property: scope_image
+
+GET /api/user-permission-requests/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: review_comment
+                - Description changed from '' to 'Optional comment provided during review'
+              - Modified property: reviewed_at
+                - Description changed from '' to 'Timestamp when the review was completed'
+
+GET /api/user-permission-requests/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: review_comment
+              - Description changed from '' to 'Optional comment provided during review'
+            - Modified property: reviewed_at
+              - Description changed from '' to 'Timestamp when the review was completed'
