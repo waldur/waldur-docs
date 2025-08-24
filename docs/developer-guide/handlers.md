@@ -472,6 +472,7 @@ td:nth-child(4) {
 | `create_marketplace_resource_for_imported_resources` | `Custom Signal (resource_imported)` | `openstack.Tenant` | No description |
 | `create_offering_component_for_volume_type` | `Django Signal (post_save)` | `openstack.VolumeType` | Create marketplace offering component when OpenStack volume type is created. |
 | `create_offering_from_tenant` | `Django Signal (post_save)` | `openstack.Tenant` | No description |
+| `create_offering_user_checklist_completions` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Create checklist completions for OfferingUser when created. |
 | `create_offering_user_for_new_resource` | `Custom Signal (resource_creation_succeeded)` | `marketplace.Resource` | Create an offering user for a new resource. |
 | `create_offering_user_for_rancher_user` | `Django Signal (post_save)` | `waldur_rancher.RancherUser` | No description |
 | `create_offering_user_for_slurm_user` | `Custom Signal (slurm_association_created)` | `waldur_slurm.Allocation` | No description |
@@ -490,6 +491,7 @@ td:nth-child(4) {
 | `delete_checklist_completion` | `Django Signal (pre_delete)` | `proposal.Proposal` | Remove checklist completion tracking when proposal is deleted. |
 | `delete_expired_project_if_every_resource_has_been_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Delete an expired project if all its resources have been terminated. |
 | `delete_offering_component_for_volume_type` | `Django Signal (post_delete)` | `openstack.VolumeType` | No description |
+| `delete_offering_user_checklist_completions` | `Django Signal (pre_delete)` | `marketplace.OfferingUser` | Delete related checklist completions when OfferingUser is deleted. |
 | `delete_remote_project` | `Django Signal (post_delete)` | `structure.Project` | No description |
 | `delete_service_setting_when_offering_is_deleted` | `Django Signal (post_delete)` | `marketplace.Offering` | Delete service settings when an offering is deleted. |
 | `delete_stale_price_estimate` | `Django Signal (pre_delete)` | `structure.Project` | Delete price estimates when customer or project is deleted. |
@@ -705,14 +707,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 630
+Total unique handlers found: 632
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 333 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 249 handlers
+- **waldur_mastermind**: 251 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
 - **waldur_rancher**: 12 handlers
