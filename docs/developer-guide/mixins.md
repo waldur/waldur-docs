@@ -73,7 +73,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ProjectOECDFOS2007CodeMixin`](#projectoecdfos2007codemixin) | `waldur_core.structure.models` | Mixin providing OECD FOS 2007 classification codes for research projects |
 | [`ServiceAccountMixin`](#serviceaccountmixin) | `waldur_core.structure.models` | Mixin for models that support service accounts |
 | [`StructureLoggableMixin`](#structureloggablemixin) | `waldur_core.structure.models` | Extends LoggableMixin with structure-specific permission filtering |
-| [`VATMixin`](#vatmixin) | `waldur_core.structure.models` | Add country, VAT number fields and check results from EU VAT Information Exch... |
+| [`VATMixin`](#vatmixin) | `waldur_core.structure.models` | Add country and VAT number fields for tax compliance and record keeping |
 | [`CountrySerializerMixin`](#countryserializermixin) | `waldur_core.structure.serializers` | The BaseSerializer class provides a minimal class which may be used for writi... |
 | [`FieldFilteringMixin`](#fieldfilteringmixin) | `waldur_core.structure.serializers` | Mixin allowing to filter fields by user |
 | [`PermissionFieldFilteringMixin`](#permissionfieldfilteringmixin) | `waldur_core.structure.serializers` | Mixin allowing to filter related fields |
@@ -923,8 +923,8 @@ structure-specific user permissions and visibility rules.
 **Module:** `waldur_core.structure.models`
 
 **Description:**
-Add country, VAT number fields and check results from EU VAT Information Exchange System.
-Allows to compute VAT charge rate.
+Add country and VAT number fields for tax compliance and record keeping.
+VAT validation is optional and can be done manually or through external services.
 
 **Base classes:** `Model`
 
