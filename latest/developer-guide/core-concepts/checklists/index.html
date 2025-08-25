@@ -2912,6 +2912,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#answer-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Answer Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Answer Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#answer-submission-and-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Answer Submission and Updates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#answer-removal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Answer Removal
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#review-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       Review Workflow
@@ -7065,6 +7098,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#answer-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Answer Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Answer Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#answer-submission-and-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Answer Submission and Updates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#answer-removal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Answer Removal
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#review-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       Review Workflow
@@ -7722,7 +7788,7 @@ to be used in different scenarios, for example:</p>
 <ul>
 <li><code>GET /{app}/{uuid}/checklist/</code> - Get checklist questions with user's answers</li>
 <li><code>GET /{app}/{uuid}/completion_status/</code> - Get completion status</li>
-<li><code>POST /{app}/{uuid}/submit_answers/</code> - Submit answers</li>
+<li><code>POST /{app}/{uuid}/submit_answers/</code> - Submit answers (including answer removal)</li>
 </ul>
 <p><strong>ReviewerChecklistMixin</strong> - For reviewers (with sensitive review logic):</p>
 <ul>
@@ -7744,6 +7810,63 @@ to be used in different scenarios, for example:</p>
 <li><strong>Dynamic Visibility</strong>: Real-time question showing/hiding based on current answers</li>
 </ol>
 <p>Example: A security questionnaire might only show cloud-specific questions if the user indicates they use cloud services.</p>
+<h2 id="answer-management">Answer Management</h2>
+<h3 id="answer-submission-and-updates">Answer Submission and Updates</h3>
+<p>Users can submit, update, and remove answers through the <code>submit_answers</code> endpoint:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/{app}/{uuid}/submit_answers/</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">[</span>
+<span class="err">  {</span>
+<span class="err">    "question_uuid": "123e4567-e89b-12d3-a456-426614174000",</span>
+<span class="err">    "answer_data": "New answer value"</span>
+<span class="err">  },</span>
+<span class="err">  {</span>
+<span class="err">    "question_uuid": "456e7890-e12b-34c5-d678-901234567890",</span>
+<span class="err">    "answer_data": null  // Remove existing answer</span>
+<span class="err">  }</span>
+<span class="err">]</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="answer-removal">Answer Removal</h3>
+<p>Users can remove their answers by submitting <code>null</code> as the <code>answer_data</code> value. This performs a hard deletion of the answer record and automatically:</p>
+<ul>
+<li><strong>Recalculates completion percentage</strong> - Removed answers no longer count toward completion</li>
+<li><strong>Updates completion status</strong> - Required questions with removed answers mark checklist as incomplete</li>
+<li><strong>Updates review requirements</strong> - Removing answers that triggered reviews clears the review flag</li>
+<li><strong>Maintains audit trail</strong> - Through Answer model timestamps before deletion</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li><strong>Safe operations</strong>: Attempting to remove non-existent answers succeeds without errors</li>
+<li><strong>Mixed operations</strong>: Single request can create, update, and remove answers simultaneously</li>
+<li><strong>Validation bypass</strong>: Null values skip validation since they indicate removal intent</li>
+<li><strong>Status synchronization</strong>: Completion and review status automatically updated after changes</li>
+</ul>
+<p><strong>Example - Mixed Operations:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/proposals/{uuid}/submit_answers/</span>
+<span class="err">[</span>
+<span class="err">  {"question_uuid": "q1-uuid", "answer_data": true},        // Create/update</span>
+<span class="err">  {"question_uuid": "q2-uuid", "answer_data": null},        // Remove</span>
+<span class="err">  {"question_uuid": "q3-uuid", "answer_data": "New text"}   // Create/update</span>
+<span class="err">]</span>
+</code></pre></div></td></tr></table></div>
 <h2 id="review-workflow">Review Workflow</h2>
 <p>Questions can be configured to trigger reviews based on answers:</p>
 <ol>
@@ -8737,7 +8860,7 @@ to be used in different scenarios, for example:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-08-11
+    2025-08-25
   </span>
 
     
