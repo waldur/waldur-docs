@@ -4359,6 +4359,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#reusable-configuration-with-yaml-anchors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reusable Configuration with YAML Anchors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reusable Configuration with YAML Anchors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-reusing-a-common-resolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: Reusing a Common Resolver
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-creating-a-reusable-module-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 2: Creating a Reusable Module Template
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6700,6 +6733,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#reusable-configuration-with-yaml-anchors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reusable Configuration with YAML Anchors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reusable Configuration with YAML Anchors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-reusing-a-common-resolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: Reusing a Common Resolver
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-creating-a-reusable-module-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 2: Creating a Reusable Module Template
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7451,6 +7517,199 @@ Run <code>poetry run ansible-waldur-generator --help</code> for a full list of o
 </code></pre></div></td></tr></table></div>
 </li>
 </ul>
+<h3 id="reusable-configuration-with-yaml-anchors">Reusable Configuration with YAML Anchors</h3>
+<p>As your <code>generator_config.yaml</code> file grows, you'll notice that certain configurations, especially for <code>resolvers</code> or <code>update_config</code>, are repeated across multiple modules. To keep your configuration DRY (Don't Repeat Yourself) and improve maintainability, you can use a standard YAML feature called <strong>anchors (<code>&amp;</code>)</strong> and <strong>aliases (<code>*</code>)</strong>.</p>
+<p>The generator's YAML parser supports this out of the box, allowing you to define a configuration block once and reuse it wherever needed.</p>
+<p>A common convention is to create a top-level key (e.g., <code>definitions</code> or <code>x-fragments</code>) to hold your reusable blocks.</p>
+<h4 id="example-1-reusing-a-common-resolver">Example 1: Reusing a Common Resolver</h4>
+<p>Imagine you have two modules that both need to resolve a <code>tenant</code>.</p>
+<p><strong>Before (Repetitive Configuration):</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">collections</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openstack</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0.0</span>
+<span class="w">    </span><span class="nt">modules</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security_group</span>
+<span class="w">        </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">crud</span>
+<span class="w">        </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"security</span><span class="nv"> </span><span class="s">group"</span>
+<span class="w">        </span><span class="c1"># ... other config ...</span>
+<span class="w">        </span><span class="nt">resolvers</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">tenant</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">list</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_tenants_list"</span>
+<span class="w">            </span><span class="nt">retrieve</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_tenants_retrieve"</span>
+<span class="w">            </span><span class="nt">error_message</span><span class="p">:</span><span class="w"> </span><span class="s">"Tenant</span><span class="nv"> </span><span class="s">'{value}'</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">found."</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">volume_facts</span>
+<span class="w">        </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">facts</span>
+<span class="w">        </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"volume"</span>
+<span class="w">        </span><span class="c1"># ... other config ...</span>
+<span class="w">        </span><span class="nt">context_params</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"tenant"</span>
+<span class="w">            </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"The</span><span class="nv"> </span><span class="s">tenant</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">filter</span><span class="nv"> </span><span class="s">volumes</span><span class="nv"> </span><span class="s">by."</span>
+<span class="w">            </span><span class="nt">resolver</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">list</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_tenants_list"</span>
+<span class="w">              </span><span class="nt">retrieve</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_tenants_retrieve"</span>
+<span class="w">              </span><span class="nt">filter_key</span><span class="p">:</span><span class="w"> </span><span class="s">"tenant_uuid"</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>After (Using a Reusable Anchor):</strong></p>
+<p>We define the resolver once under a <code>definitions</code> key and give it an anchor <code>&amp;tenant_resolver</code>. Then, we use the alias <code>*tenant_resolver</code> to insert that block in multiple places.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Define reusable configuration blocks at the top level.</span>
+<span class="nt">definitions</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># This entire block is now anchored with the name 'tenant_resolver'.</span>
+<span class="w">  </span><span class="nt">tenant_resolver</span><span class="p">:</span><span class="w"> </span><span class="nl">&amp;tenant_resolver</span>
+<span class="w">    </span><span class="nt">list</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_tenants_list"</span>
+<span class="w">    </span><span class="nt">retrieve</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_tenants_retrieve"</span>
+<span class="w">    </span><span class="nt">error_message</span><span class="p">:</span><span class="w"> </span><span class="s">"Tenant</span><span class="nv"> </span><span class="s">'{value}'</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">found."</span>
+
+<span class="nt">collections</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openstack</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0.0</span>
+<span class="w">    </span><span class="nt">modules</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security_group</span>
+<span class="w">        </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">crud</span>
+<span class="w">        </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"security</span><span class="nv"> </span><span class="s">group"</span>
+<span class="w">        </span><span class="c1"># ... other config ...</span>
+<span class="w">        </span><span class="nt">resolvers</span><span class="p">:</span>
+<span class="w">          </span><span class="c1"># Use the alias '*' to insert the anchored block here.</span>
+<span class="w">          </span><span class="nt">tenant</span><span class="p">:</span><span class="w"> </span><span class="nv">*tenant_resolver</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">volume_facts</span>
+<span class="w">        </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">facts</span>
+<span class="w">        </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"volume"</span>
+<span class="w">        </span><span class="c1"># ... other config ...</span>
+<span class="w">        </span><span class="nt">context_params</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"tenant"</span>
+<span class="w">            </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"The</span><span class="nv"> </span><span class="s">tenant</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">filter</span><span class="nv"> </span><span class="s">volumes</span><span class="nv"> </span><span class="s">by."</span>
+<span class="w">            </span><span class="c1"># The alias works for nested keys too.</span>
+<span class="w">            </span><span class="nt">resolver</span><span class="p">:</span><span class="w"> </span><span class="nv">*tenant_resolver</span>
+<span class="w">            </span><span class="nt">filter_key</span><span class="p">:</span><span class="w"> </span><span class="s">"tenant_uuid"</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="example-2-creating-a-reusable-module-template">Example 2: Creating a Reusable Module Template</h4>
+<p>You can make entire module definitions reusable by combining anchors with the YAML <strong>merge key (<code>&lt;&lt;</code>)</strong>. This allows you to define a "base" module and then override or extend it for specific cases.</p>
+<p>This is perfect for a set of simple CRUD resources that share the same plugin type and update logic but differ only in their <code>resource_type</code> and API <code>base_operation_id</code>.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">definitions</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># Define a base template for a simple CRUD module.</span>
+<span class="w">  </span><span class="nt">base_crud_module</span><span class="p">:</span><span class="w"> </span><span class="nl">&amp;base_crud_module</span>
+<span class="w">    </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">crud</span>
+<span class="w">    </span><span class="nt">update_config</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">fields</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"name"</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"description"</span>
+
+<span class="nt">collections</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">structure</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0.0</span>
+<span class="w">    </span><span class="nt">modules</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">customer</span>
+<span class="w">        </span><span class="c1"># The '&lt;&lt;: *base_crud_module' line merges the anchored block.</span>
+<span class="w">        </span><span class="c1"># Keys defined here will override any from the base template.</span>
+<span class="w">        </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="nv">*base_crud_module</span>
+<span class="w">        </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"customer"</span>
+<span class="w">        </span><span class="nt">base_operation_id</span><span class="p">:</span><span class="w"> </span><span class="s">"customers"</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Manage</span><span class="nv"> </span><span class="s">Customers</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">Waldur."</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">project</span>
+<span class="w">        </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="nv">*base_crud_module</span>
+<span class="w">        </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"project"</span>
+<span class="w">        </span><span class="nt">base_operation_id</span><span class="p">:</span><span class="w"> </span><span class="s">"projects"</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Manage</span><span class="nv"> </span><span class="s">Projects</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">Waldur."</span>
+<span class="w">        </span><span class="c1"># You can also add keys that don't exist in the base template.</span>
+<span class="w">        </span><span class="nt">resolvers</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">customer</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">list</span><span class="p">:</span><span class="w"> </span><span class="s">"customers_list"</span>
+<span class="w">            </span><span class="nt">retrieve</span><span class="p">:</span><span class="w"> </span><span class="s">"customers_retrieve"</span>
+<span class="w">            </span><span class="nt">error_message</span><span class="p">:</span><span class="w"> </span><span class="s">"Customer</span><span class="nv"> </span><span class="s">'{value}'</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">found."</span>
+</code></pre></div></td></tr></table></div>
+<p>By using these standard YAML features, you can significantly reduce duplication and make your generator configuration cleaner and easier to manage.</p>
 <h2 id="architecture">Architecture</h2>
 <p>The generator's architecture is designed to decouple the Ansible logic from the API implementation details. It achieves this by using the <code>generator_config.yaml</code> as a "bridge" between the OpenAPI specification and the generated code. The generator can produce multiple, self-contained Ansible Collections in a single run.</p>
 <pre class="mermaid"><code>graph TD
