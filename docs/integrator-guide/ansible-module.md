@@ -326,6 +326,131 @@ Below is a detailed explanation of each available plugin.
                 target_key: "tenant_uuid"
     ```
 
+### Reusable Configuration with YAML Anchors
+
+As your `generator_config.yaml` file grows, you'll notice that certain configurations, especially for `resolvers` or `update_config`, are repeated across multiple modules. To keep your configuration DRY (Don't Repeat Yourself) and improve maintainability, you can use a standard YAML feature called **anchors (`&`)** and **aliases (`*`)**.
+
+The generator's YAML parser supports this out of the box, allowing you to define a configuration block once and reuse it wherever needed.
+
+A common convention is to create a top-level key (e.g., `definitions` or `x-fragments`) to hold your reusable blocks.
+
+#### Example 1: Reusing a Common Resolver
+
+Imagine you have two modules that both need to resolve a `tenant`.
+
+**Before (Repetitive Configuration):**
+
+```yaml
+collections:
+  - namespace: waldur
+    name: openstack
+    version: 1.0.0
+    modules:
+      - name: security_group
+        plugin: crud
+        resource_type: "security group"
+        # ... other config ...
+        resolvers:
+          tenant:
+            list: "openstack_tenants_list"
+            retrieve: "openstack_tenants_retrieve"
+            error_message: "Tenant '{value}' not found."
+
+      - name: volume_facts
+        plugin: facts
+        resource_type: "volume"
+        # ... other config ...
+        context_params:
+          - name: "tenant"
+            description: "The tenant to filter volumes by."
+            resolver:
+              list: "openstack_tenants_list"
+              retrieve: "openstack_tenants_retrieve"
+              filter_key: "tenant_uuid"
+```
+
+**After (Using a Reusable Anchor):**
+
+We define the resolver once under a `definitions` key and give it an anchor `&tenant_resolver`. Then, we use the alias `*tenant_resolver` to insert that block in multiple places.
+
+```yaml
+# Define reusable configuration blocks at the top level.
+definitions:
+  # This entire block is now anchored with the name 'tenant_resolver'.
+  tenant_resolver: &tenant_resolver
+    list: "openstack_tenants_list"
+    retrieve: "openstack_tenants_retrieve"
+    error_message: "Tenant '{value}' not found."
+
+collections:
+  - namespace: waldur
+    name: openstack
+    version: 1.0.0
+    modules:
+      - name: security_group
+        plugin: crud
+        resource_type: "security group"
+        # ... other config ...
+        resolvers:
+          # Use the alias '*' to insert the anchored block here.
+          tenant: *tenant_resolver
+
+      - name: volume_facts
+        plugin: facts
+        resource_type: "volume"
+        # ... other config ...
+        context_params:
+          - name: "tenant"
+            description: "The tenant to filter volumes by."
+            # The alias works for nested keys too.
+            resolver: *tenant_resolver
+            filter_key: "tenant_uuid"
+```
+
+#### Example 2: Creating a Reusable Module Template
+
+You can make entire module definitions reusable by combining anchors with the YAML **merge key (`<<`)**. This allows you to define a "base" module and then override or extend it for specific cases.
+
+This is perfect for a set of simple CRUD resources that share the same plugin type and update logic but differ only in their `resource_type` and API `base_operation_id`.
+
+```yaml
+definitions:
+  # Define a base template for a simple CRUD module.
+  base_crud_module: &base_crud_module
+    plugin: crud
+    update_config:
+      fields:
+        - "name"
+        - "description"
+
+collections:
+  - namespace: waldur
+    name: structure
+    version: 1.0.0
+    modules:
+      - name: customer
+        # The '<<: *base_crud_module' line merges the anchored block.
+        # Keys defined here will override any from the base template.
+        <<: *base_crud_module
+        resource_type: "customer"
+        base_operation_id: "customers"
+        description: "Manage Customers in Waldur."
+
+      - name: project
+        <<: *base_crud_module
+        resource_type: "project"
+        base_operation_id: "projects"
+        description: "Manage Projects in Waldur."
+        # You can also add keys that don't exist in the base template.
+        resolvers:
+          customer:
+            list: "customers_list"
+            retrieve: "customers_retrieve"
+            error_message: "Customer '{value}' not found."
+```
+
+By using these standard YAML features, you can significantly reduce duplication and make your generator configuration cleaner and easier to manage.
+
 ## Architecture
 
 The generator's architecture is designed to decouple the Ansible logic from the API implementation details. It achieves this by using the `generator_config.yaml` as a "bridge" between the OpenAPI specification and the generated code. The generator can produce multiple, self-contained Ansible Collections in a single run.
