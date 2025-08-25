@@ -2,7 +2,7 @@
 
 This project is a code generator designed to automate the creation of a self-contained **Ansible Collection** for the Waldur API. By defining a module's behavior and its API interactions in a simple YAML configuration file, you can automatically generate robust, well-documented, and idempotent Ansible modules, perfectly packaged for distribution and use.
 
-The primary goal is to eliminate boilerplate code, enforce consistency, and dramatically speed up the development process for managing Waldur resources with Ansible. The final output is an  Ansible Collection ready for publishing to **Ansible Galaxy**.
+The primary goal is to eliminate boilerplate code, enforce consistency, and dramatically speed up the development process for managing Waldur resources with Ansible. Waldur Ansible Collection is published on [Ansible Galaxy](https://galaxy.ansible.com/ui/repo/published/waldur/openstack/).
 
 ## Core Concept
 
