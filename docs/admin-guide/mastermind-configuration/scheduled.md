@@ -60,6 +60,7 @@ td:nth-child(4) {
 | `pull-service-resources` | `waldur_core.structure.ServiceResourcesListPullTask` | Hourly (at minute 0) | Pull resources from all active service backends. |
 | `pull-support-users` | `waldur_mastermind.support.pull_support_users` | 6 hours | Pull support users from the active support backend. |
 | `remove_deleted_robot_accounts` | `waldur_mastermind.marketplace.remove_deleted_robot_accounts` | 1 day | Remove robot accounts that are in DELETED state.<br> This task runs daily to clean up robot accounts that have been marked for deletion. |
+| `restrict_offering_users_for_revoked_consents` | `waldur_mastermind.marketplace.restrict_offering_users_for_revoked_consents` | 1 day | Task not found in registry |
 | `send-messages-about-pending-orders` | `waldur_mastermind.marketplace_site_agent.send_messages_about_pending_orders` | 1 hour | Send a message about pending orders created 1 hour ago to MQTT |
 | `send-monthly-invoicing-reports-about-customers` | `invoices.send_monthly_invoicing_reports_about_customers` | Cron: `0 0 2 * * (m/h/dM/MY/d)` | Send monthly invoicing reports via email to configured recipients. |
 | `send-notifications-about-upcoming-ends` | `invoices.send_notifications_about_upcoming_ends` | 1 day | Send notifications about upcoming end dates of fixed payment profiles. |
