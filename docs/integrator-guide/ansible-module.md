@@ -253,7 +253,7 @@ Below is a detailed explanation of each available plugin.
         1.  Checks for the existence of the *final resource* (e.g., the volume) using `existence_check_op`.
         2.  If it **does not exist**, it creates a marketplace order via `marketplace_orders_create` and, if `wait: true`, polls for completion.
         2.  If it **does exist**, it checks for changes. It supports two kinds of updates:
-            -   **Synchronous Updates:** For simple fields listed in `update_check_fields`, it sends a direct `PATCH` request.
+            -   **Synchronous Updates:** For simple fields inferred from update request schema, it sends a direct `PATCH` request.
             -   **Asynchronous Actions:** For complex operations defined in `update_actions`, it sends a `POST` request. If this request returns a `202 Accepted` status, the module recognizes it as an asynchronous task. If `wait: true` is set, the module will then poll the *resource's status* (not the order) until it reaches a stable state (e.g., "OK" or "Erred"), which can be configured via `wait_config`.
     -   **`state: absent`**:
         1.  Finds the existing resource.
@@ -664,6 +664,69 @@ Another common scenario is a parameter that accepts a list of resolvable items, 
     4.  Construct the final list of dictionaries in the format required by the API.
 
 This powerful abstraction keeps the Ansible playbook clean and simple, hiding the complexity of the underlying API. The user only needs to provide the list of names, and the resolver handles the rest.
+
+## The Unified Update Architecture
+
+The generator employs a sophisticated, unified architecture for handling resource updates within `state: present` tasks. This system is designed to be both powerful and consistent, ensuring that all generated modules—regardless of their plugin (`crud` or `order`)—behave predictably and correctly, especially when dealing with complex data structures.
+
+The core design principle is **"Specialized Setup, Generic Execution."** Specialized runners (`CrudRunner`, `OrderRunner`) are responsible for preparing a context-specific environment, while a shared `BaseRunner` provides a powerful, generic toolkit of "engine" methods that perform the actual update logic. This maximizes code reuse and enforces consistent behavior.
+
+### Core Components
+
+1.  **`BaseRunner` (The Engine):** This class contains the three central methods that form the update toolkit:
+    *   `_handle_simple_updates()`: Manages direct `PATCH` requests for simple, mutable fields (like `name` or `description`).
+    *   `_handle_action_updates()`: Orchestrates the entire lifecycle for complex, action-based updates (like setting security group rules).
+    *   `_normalize_for_comparison()`: A critical utility that provides robust, order-insensitive idempotency checks for complex data types like lists of dictionaries.
+
+2.  **Specialized Runners (The Orchestrators):**
+    *   **`CrudRunner`:** Uses the `BaseRunner` toolkit directly with minimal setup, as its context is typically straightforward.
+    *   **`OrderRunner`:** Performs crucial, context-specific setup (like priming its cache with the marketplace `offering`) before delegating to the same `BaseRunner` toolkit.
+
+### Deep Dive: The Idempotency Engine (`_normalize_for_comparison`)
+
+The cornerstone of the update architecture is its ability to correctly determine if a change is needed, especially for lists of objects where order does not matter. The `_normalize_for_comparison` method is the "engine" that makes this possible.
+
+**Problem:** How do you compare `[{'subnet': 'A'}]` from a user's playbook with `[{'uuid': '...', 'subnet': 'A', 'name': '...'}]` from the API? How do you compare `['A', 'B']` with `['B', 'A']`?
+
+**Solution:** The method transforms both the desired state and the current state into a **canonical, order-insensitive, and comparable format (a set)** before checking for equality.
+
+#### Mode A: Complex Objects (e.g., a list of `ports`)
+
+When comparing lists of dictionaries, the method uses `idempotency_keys` (provided by the generator plugin based on the API schema) to understand what defines an object's identity.
+
+1.  **Input (Desired State):** `[{'subnet': 'url_A', 'fixed_ips': ['1.1.1.1']}]`
+2.  **Input (Current State):** `[{'uuid': 'p1', 'subnet': 'url_A', 'fixed_ips': ['1.1.1.1']}]`
+3.  **Idempotency Keys:** `['subnet', 'fixed_ips']`
+4.  **Process:**
+    *   For each dictionary, it creates a new one containing *only* the `idempotency_keys`.
+    *   It converts this filtered dictionary into a sorted, compact JSON string (e.g., `'{"fixed_ips":["1.1.1.1"],"subnet":"url_A"}'`). This string is deterministic and hashable.
+    *   It adds these strings to a set.
+5.  **Result:** Both inputs are transformed into the exact same set: `{'{"fixed_ips":["1.1.1.1"],"subnet":"url_A"}'}`. The comparison `set1 == set2` evaluates to `True`, and **no change is triggered.** Idempotency is achieved.
+
+#### Mode B: Simple Values (e.g., a list of `security_group` URLs)
+
+When comparing lists of simple values (strings, numbers), the solution is simpler.
+
+1.  **Input (Desired State):** `['url_A', 'url_B']`
+2.  **Input (Current State):** `['url_B', 'url_A']`
+3.  **Process:** It converts both lists directly into sets.
+4.  **Result:** Both inputs become `{'url_A', 'url_B'}`. The comparison `set1 == set2` is `True`, and **no change is triggered.**
+
+### Handling Critical Edge Cases
+
+The unified architecture is designed to handle two critical, real-world edge cases that often break simpler update logic.
+
+#### Edge Case 1: Asymmetric Data Representation
+
+*   **Problem:** An existing resource might represent a relationship with a "rich" list of objects (e.g., `security_groups: [{'name': 'sg1', 'url': '...'}]`), but the API action to update them requires a "simple" list of strings (e.g., `['url1', 'url2']`).
+*   **Solution:** The `_handle_action_updates` method contains specific logic to detect this asymmetry. If the resolved user payload is a simple list of strings, but the resource's current value is a complex list of objects, it intelligently **transforms the resource's list** by extracting the `url` from each object before passing both simple lists to the normalizer. This ensures a correct, apples-to-apples comparison.
+
+#### Edge Case 2: Varied API Payload Formats
+
+*   **Problem:** Some API action endpoints expect a JSON object as the request body (e.g., `{"rules": [...]}`), while others expect a raw JSON array (e.g., `[...]`).
+*   **Solution:** The generator plugin analyzes the OpenAPI specification for each action endpoint. It passes a boolean flag, `wrap_in_object`, in the runner's context. The `_handle_action_updates` method reads this flag and constructs the `final_api_payload` in the precise format the API endpoint requires, avoiding schema validation errors.
+
+This robust, flexible, and consistent architecture ensures that all generated modules are truly idempotent and can handle the full spectrum of simple and complex update scenarios presented by the Waldur API.
 
 ### Component Responsibilities
 
