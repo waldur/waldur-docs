@@ -325,3 +325,24 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {readonly_us
 -- Revoke access to authtoken_token table
 REVOKE SELECT ON authtoken_token FROM {readonly_username};
 ```
+
+## Migration from bitnami/postgresql to library/postgres DB image
+
+After migration from the bitnami/postgresql to library/postgres DB image, you might notice a working in logs like this:
+
+```log
+...
+WARNING:  database "waldur" has a collation version mismatch
+DETAIL:  The database was created using collation version 2.36, but the operating system provides version 2.41.
+...
+```
+
+In this case, you can simply update the collaction version and reindex the Waldur DB and the public schema:
+
+```postgresql
+-- Run these commands in the psql shell of the waldur-db container
+
+ALTER DATABASE waldur REFRESH COLLATION VERSION;
+REINDEX DATABASE waldur;
+REINDEX SCHEMA public;
+```
