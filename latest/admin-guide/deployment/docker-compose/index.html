@@ -1331,6 +1331,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Readonly PostgreSQL user configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-create-postgresql-readonly-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Create PostgreSQL readonly user
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Configure environment variables
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6702,6 +6726,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Readonly PostgreSQL user configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-create-postgresql-readonly-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Create PostgreSQL readonly user
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Configure environment variables
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6966,7 +7014,8 @@ You can see the list of all whitelabeling options below.</p>
 <li>favicon</li>
 </ul>
 <h2 id="readonly-postgresql-user-configuration">Readonly PostgreSQL user configuration</h2>
-<p>In order to enable /api/query/ endpoint please make sure that read-only user is configured.</p>
+<p>In order to enable /api/query/ endpoint please make sure that read-only user is configured both in PostgreSQL and in the environment variables.</p>
+<h3 id="1-create-postgresql-readonly-user">1. Create PostgreSQL readonly user</h3>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -7001,6 +7050,13 @@ You can see the list of all whitelabeling options below.</p>
 <span class="c1">-- Revoke access to authtoken_token table</span>
 <span class="k">REVOKE</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">authtoken_token</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="err">{</span><span class="n">readonly_username</span><span class="err">}</span><span class="p">;</span>
 </code></pre></div></td></tr></table></div>
+<h3 id="2-configure-environment-variables">2. Configure environment variables</h3>
+<p>Add the following environment variables to your <code>.env</code> file:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">POSTGRESQL_READONLY_USER</span><span class="o">={</span>readonly_username<span class="o">}</span>
+<span class="nv">POSTGRESQL_READONLY_PASSWORD</span><span class="o">={</span>readonly_password<span class="o">}</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Note</strong>: Replace <code>{readonly_password}</code> with the actual password you used when creating the readonly user, and <code>{readonly_username}</code> with your chosen readonly username (e.g., "readonly").</p>
 <h2 id="migration-from-bitnamipostgresql-to-librarypostgres-db-image">Migration from bitnami/postgresql to library/postgres DB image</h2>
 <p>After migration from the bitnami/postgresql to library/postgres DB image, you might notice a working in logs like this:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
