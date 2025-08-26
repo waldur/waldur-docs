@@ -304,7 +304,9 @@ All-together /etc/waldur/icons/file_name_from_whitelabeling_directory
 
 ## Readonly PostgreSQL user configuration
 
-In order to enable /api/query/ endpoint please make sure that read-only user is configured.
+In order to enable /api/query/ endpoint please make sure that read-only user is configured both in PostgreSQL and in the environment variables.
+
+### 1. Create PostgreSQL readonly user
 
 ```sql
 -- Create a read-only user
@@ -325,6 +327,17 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {readonly_us
 -- Revoke access to authtoken_token table
 REVOKE SELECT ON authtoken_token FROM {readonly_username};
 ```
+
+### 2. Configure environment variables
+
+Add the following environment variables to your `.env` file:
+
+```bash
+POSTGRESQL_READONLY_USER={readonly_username}
+POSTGRESQL_READONLY_PASSWORD={readonly_password}
+```
+
+**Note**: Replace `{readonly_password}` with the actual password you used when creating the readonly user, and `{readonly_username}` with your chosen readonly username (e.g., "readonly").
 
 ## Migration from bitnami/postgresql to library/postgres DB image
 
