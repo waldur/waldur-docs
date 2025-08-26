@@ -744,7 +744,7 @@ This robust, flexible, and consistent architecture ensures that all generated mo
     -   **`BasePlugin`**: An abstract base class defining the contract for all plugins. It requires a `generate()` method that receives the module configuration, API parsers, and the current **collection context** (namespace/name) and returns a complete `GenerationContext`.
 
 3.  **Runtime Components (`interfaces/runner.py`, `interfaces/resolver.py`)**:
-    -   **`BaseRunner`**: A concrete base class that provides shared runtime utilities for all runners, such as the `_send_request` helper for making API calls.
+    -   **`BaseRunner`**: A concrete base class that provides shared runtime utilities for all runners, such as the `send_request` helper for making API calls.
     -   **`ParameterResolver`**: A reusable class that encapsulates all logic for converting user inputs (names/UUIDs) into API-ready data. It is instantiated by runners.
 
 4.  **Concrete Plugins and Runners (e.g., `plugins/crud/`)**:
