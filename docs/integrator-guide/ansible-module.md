@@ -43,8 +43,11 @@ poetry run ansible-waldur-generator
 ```
 
 By default, this command will:
+
 -   Read `inputs/generator_config.yaml` and `inputs/waldur_api.yaml`.
+
 -   Use the configured collection name (e.g., `waldur.openstack`) to create a standard Ansible Collections structure.
+
 -   Place the generated collection into the `outputs/` directory.
 
 The final structure will look like this:
@@ -195,16 +198,6 @@ Below is a detailed explanation of each available plugin.
         # Since 'check' and 'delete' follow the convention, they are omitted here.
         operations:
 
-          # Configure the 'update' operation.
-          update:
-            # The 'id' is omitted because the API follows the default convention
-            # of using the '_partial_update' suffix.
-
-            # A list of simple fields that are mutable. If the user provides a
-            # different value for 'name' or 'description', a PATCH request will
-            # be sent to update the resource.
-            fields: ["name", "description"]
-
             # Defines special, non-standard update actions that call dedicated
             # POST endpoints. These are idempotent and schema-aware.
             actions:
@@ -288,15 +281,6 @@ Below is a detailed explanation of each available plugin.
         # The 'order' plugin uses this to automatically enable:
         #  - `check`: via `openstack_volumes_list` (to see if the volume already exists)
         base_operation_id: "openstack_volumes"
-
-        # The 'operations' block is for opt-ins and overrides.
-        operations:
-          # Enable the 'update' operation for existing volumes.
-          update:
-            # The 'id' is omitted because the API follows the default convention
-            # of using the '_partial_update' suffix for updates.
-            # A list of fields that can be changed on an existing volume.
-            fields: ["description"]
 
         # This block defines how to resolve dependencies and filter choices for the
         # module's parameters.
