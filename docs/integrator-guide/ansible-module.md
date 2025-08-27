@@ -170,6 +170,11 @@ Below is a detailed explanation of each available plugin.
         1.  Calls the `list` operation to find the resource.
         2.  If it exists, it calls the `destroy` operation to remove it.
 
+-   **Return Values:**
+    -   `resource`: A dictionary representing the final state of the resource after the operation.
+    -   `commands`: A list of dictionaries detailing the HTTP requests that were made to achieve the desired state. This is useful for auditing and debugging.
+    -   `changed`: A boolean indicating if any changes were made.
+
 -   **Configuration Example (`generator_config.yaml`):**
     This example creates a `security_group` module that is a **nested resource** under a tenant, and supports both simple updates (description) and a special action (set_rules).
 
@@ -258,6 +263,11 @@ Below is a detailed explanation of each available plugin.
     -   **`state: absent`**:
         1.  Finds the existing resource.
         2.  Calls the standard `marketplace_resources_terminate` endpoint, passing any configured termination attributes.
+
+-   **Return Values:**
+    -   `resource`: A dictionary representing the final state of the resource after a successful operation.
+    -   `commands`: A list of dictionaries detailing the HTTP requests that were made.
+    -   `changed`: A boolean indicating if any changes were made.
 
 -   **Configuration Example (`generator_config.yaml`):**
 
@@ -499,33 +509,51 @@ The logic that executes at runtime inside an Ansible module is split between two
     *   Caching of API responses to avoid redundant network calls.
     *   Dependency-based filtering (e.g., filtering flavors by the tenant of a resolved offering).
 
+### The "Plan and Execute" Runtime Model
 
-The diagram below shows how the system processes each module definition.
+While the generator builds the module code, the real intelligence lies in the runtime architecture it creates. All generated modules follow a robust, two-phase **"plan and execute"** workflow orchestrated by a `BaseRunner` class, which is vendored into the collection's `module_utils`.
+
+1.  **Planning Phase**: The `BaseRunner` first determines the current state of the resource (does it exist?). It then calls a `plan_*` method (e.g., `plan_creation`, `plan_update`) corresponding to the desired state. This planning method **does not make any changes** to the system. Instead, it builds a list of `Command` objects. Each `Command` is a simple data structure that encapsulates a single, atomic API request (method, path, body).
+
+2.  **Execution Phase**: If not in check mode, the `BaseRunner` iterates through the generated plan and executes each `Command`, making the actual API calls.
+
+This separation provides key benefits:
+-   **Perfect Check Mode**: Since the planning phase is purely declarative and makes no changes, check mode works perfectly by simply serializing the plan without executing it.
+-   **Clear Auditing**: The final output of a module includes a `commands` key, which is a serialized list of the exact HTTP requests that were planned and executed. This provides complete transparency.
+-   **Consistency**: All module types (`crud`, `order`) use the same underlying `BaseRunner` and `Command` structure, ensuring consistent behavior.
+
+The diagram below illustrates this runtime workflow.
 
 ```mermaid
 sequenceDiagram
-    participant Generator
-    participant PluginManager
-    participant Plugin
-    participant ApiSpecParser
-    participant ReturnBlockGenerator
+    participant Ansible
+    participant Generated Module
+    participant Runner
+    participant API
 
-    Note over Generator, PluginManager: Initialization
-    Generator->>PluginManager: Initialize & discover plugins via entry points
-    PluginManager-->>Plugin: Registers plugins by type
+    Ansible->>+Generated Module: main()
+    Generated Module->>+Runner: run()
+    Runner->>Runner: check_existence()
+    Runner->>API: GET /api/resource/?name=...
+    API-->>Runner: Resource exists / does not exist
 
-    Note over Generator, PluginManager: Generation Loop
-    loop For each module in generator_config.yaml
-        Generator->>PluginManager: Get plugin for module type
-        PluginManager-->>Generator: Return correct plugin instance
+    Note over Runner: Planning Phase (No Changes)
+    Runner->>Runner: plan_creation() / plan_update()
+    Note over Runner: Builds a list of Command objects
 
-        Generator->>Plugin: generate(config, api_parser, ...)
-        Note right of Plugin: Plugin uses ApiSpecParser and ReturnBlockGenerator internally to build context.
-        Plugin-->>Generator: return GenerationContext
-
-        Generator->>Generator: Render module from generic template using context
-        Generator->>Filesystem: Write generated module.py file
+    alt Check Mode
+        Runner->>Generated Module: exit_json(changed=true, commands=[...])
+    else Execution Mode
+        Runner->>Runner: execute_change_plan()
+        loop For each Command in plan
+            Runner->>API: POST/PATCH/DELETE ...
+            API-->>Runner: API Response
+        end
+        Runner->>Generated Module: exit_json(changed=true, resource={...}, commands=[...])
     end
+
+    deactivate Runner
+    Generated Module-->>-Ansible: Final Result
 ```
 
 ### The Resolvers Concept: Bridging the Human-API Gap
@@ -837,6 +865,17 @@ The most straightforward way to test is to tell Ansible where to find your newly
     ```json
     localhost | CHANGED => {
         "changed": true,
+        "commands": [
+            {
+                "body": {
+                    "customer": "https://api.example.com/api/customers/...",
+                    "name": "My AdHoc Project"
+                },
+                "description": "Create new project",
+                "method": "POST",
+                "url": "https://api.example.com/api/projects/"
+            }
+        ],
         "resource": {
             "created": "2024-03-21T12:00:00.000000Z",
             "customer": "https://api.example.com/api/customers/...",
@@ -853,6 +892,7 @@ The most straightforward way to test is to tell Ansible where to find your newly
     ```json
     localhost | SUCCESS => {
         "changed": false,
+        "commands": [],
         "resource": {
             "created": "2024-03-21T12:00:00.000000Z",
             "customer": "https://api.example.com/api/customers/...",
@@ -865,9 +905,10 @@ The most straightforward way to test is to tell Ansible where to find your newly
     }
     ```
 
+
     > **Security Warning**: Passing `access_token` on the command line is insecure. For production, use Ansible Vault or environment variables as shown in the playbook method.
 
-3.  **Use in a Playbook:**
+1.  **Use in a Playbook:**
     This is the standard and recommended way to use the collection for automation.
 
     **`test_playbook.yml`:**
@@ -910,29 +951,44 @@ The most straightforward way to test is to tell Ansible where to find your newly
     ansible-playbook test_playbook.yml
     ```
 
-    **Example Output (Success):**
-    ```
-    PLAY [Manage Waldur Resources with Generated Collection] *************************
+   **Example Output (Success, resource created):**
+   ```
+   PLAY [Manage Waldur Resources with Generated Collection] ******************
 
-    TASK [Ensure 'My Playbook Project' exists] *************************************
-    changed: [localhost]
+   TASK [Ensure 'My Playbook Project' exists] **************************************
+   changed: [localhost]
 
-    TASK [Show the created or found project details] *******************************
-    ok: [localhost] => {
-        "project_info.resource": {
-            "created": "2024-03-21T12:05:00.000000Z",
-            "customer": "https://api.example.com/api/customers/...",
-            "customer_name": "Big Corp",
-            "description": "",
-            "name": "My Playbook Project",
-            "url": "https://api.example.com/api/projects/...",
-            "uuid": "a1b2c3d4e5f67890abcdef1234567890"
-        }
-    }
+   TASK [Show the created or found project details] ********************************
+   ok: [localhost] => {
+       "project_info": {
+           "changed": true,
+           "commands": [
+               {
+                   "body": {
+                       "customer": "https://api.example.com/api/customers/...",
+                       "name": "My Playbook Project"
+                   },
+                   "description": "Create new project",
+                   "method": "POST",
+                   "url": "https://api.example.com/api/projects/"
+               }
+           ],
+           "failed": false,
+           "resource": {
+               "created": "2024-03-21T12:05:00.000000Z",
+               "customer": "https://api.example.com/api/customers/...",
+               "customer_name": "Big Corp",
+               "description": "",
+               "name": "My Playbook Project",
+               "url": "https://api.example.com/api/projects/...",
+               "uuid": "a1b2c3d4e5f67890abcdef1234567890"
+           }
+       }
+   }
 
-    PLAY RECAP *********************************************************************
-    localhost                  : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-    ```
+   PLAY RECAP **********************************************************************
+   localhost                  : ok=2    changed=1    unreachable=0    failed=0    ...
+   ```
 
 
 ## Publishing and Installing
