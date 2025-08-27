@@ -1704,6 +1704,13 @@ State change:
 Project created: {{ project_name }}
 Allocation start date: {{ allocation_date }}
 Duration: {{ duration }} days
+
+Allocated resources:
+{% for resource in allocated_resources %}
+{{ forloop.counter }}. {{ resource.name }} - {{ resource.provider_name }} - {{ resource.plan_name }} - Provisioned
+{% empty %}
+No resources allocated yet.
+{% endfor %}
 {% endif %}
 
 {% if new_state == 'rejected' %}
@@ -2024,6 +2031,16 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
             <li><strong>Allocation start date:</strong> {{ allocation_date }}</li>
             <li><strong>Duration:</strong> {{ duration }} days</li>
         </ul>
+        <div>
+            <h4>Allocated resources:</h4>
+            {% for resource in allocated_resources %}
+            <div>
+                <strong>{{ forloop.counter }}.</strong> {{ resource.name }} - {{ resource.provider_name }} - {{ resource.plan_name }} - Provisioned
+            </div>
+            {% empty %}
+            <p><em>No resources allocated yet.</em></p>
+            {% endfor %}
+        </div>
         {% endif %}
 
         {% if new_state == 'rejected' %}
