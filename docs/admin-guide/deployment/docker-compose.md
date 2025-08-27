@@ -356,6 +356,10 @@ In this case, you can simply update the collaction version and reindex the Waldu
 -- Run these commands in the psql shell of the waldur-db container
 
 ALTER DATABASE waldur REFRESH COLLATION VERSION;
+ALTER DATABASE postgres REFRESH COLLATION VERSION;
+ALTER DATABASE celery_results REFRESH COLLATION VERSION;
+ALTER DATABASE template1 REFRESH COLLATION VERSION;
+
 REINDEX DATABASE waldur;
 REINDEX SCHEMA public;
 ```
