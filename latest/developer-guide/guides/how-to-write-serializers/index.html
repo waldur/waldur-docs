@@ -3237,21 +3237,78 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#optional-fields" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restrictedserializermixin-documentation" class="md-nav__link">
     <span class="md-ellipsis">
-      Optional Fields
+      RestrictedSerializerMixin Documentation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RestrictedSerializerMixin Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Usage
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#restricted-field-rendering" class="md-nav__link">
+  <a href="#feature-1-restricted-field-rendering-whitelisting" class="md-nav__link">
     <span class="md-ellipsis">
-      Restricted Field Rendering
+      Feature 1: Restricted Field Rendering (Whitelisting)
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature-2-optional-fields-blacklisting-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature 2: Optional Fields (Blacklisting by Default)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Behavior
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Behavior">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nested-serializers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nested Serializers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-views-manytrue" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Views (many=True)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -6912,21 +6969,78 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#optional-fields" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restrictedserializermixin-documentation" class="md-nav__link">
     <span class="md-ellipsis">
-      Optional Fields
+      RestrictedSerializerMixin Documentation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RestrictedSerializerMixin Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Usage
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#restricted-field-rendering" class="md-nav__link">
+  <a href="#feature-1-restricted-field-rendering-whitelisting" class="md-nav__link">
     <span class="md-ellipsis">
-      Restricted Field Rendering
+      Feature 1: Restricted Field Rendering (Whitelisting)
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature-2-optional-fields-blacklisting-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature 2: Optional Fields (Blacklisting by Default)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Behavior
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Behavior">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nested-serializers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nested Serializers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-views-manytrue" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Views (many=True)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -7402,18 +7516,172 @@
         <span class="s1">'uuid'</span><span class="p">,</span> <span class="s1">'name'</span><span class="p">,</span> <span class="s1">'created'</span><span class="p">,</span> <span class="s1">'customer__uuid'</span><span class="p">,</span> <span class="s1">'customer__name'</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-<h3 id="optional-fields">Optional Fields</h3>
-<p>Mark expensive computation fields as optional:</p>
+<h2 id="restrictedserializermixin-documentation"><code>RestrictedSerializerMixin</code> Documentation</h2>
+<p>The <code>RestrictedSerializerMixin</code> provides a powerful and flexible way to dynamically control which fields are rendered by a Django REST Framework serializer based on query parameters in the request URL. This is especially useful for optimizing API responses, reducing payload size, and allowing API clients to fetch only the data they need.</p>
+<p>The mixin supports two primary modes of operation:</p>
+<ul>
+<li><strong>Restricted Field Rendering (Whitelisting):</strong> The client specifies exactly which fields they want, and all others are excluded.</li>
+<li><strong>Optional Fields (Blacklisting by Default):</strong> The serializer defines certain "expensive" or non-essential fields that are excluded by default but can be explicitly requested by the client.</li>
+</ul>
+<h3 id="basic-usage">Basic Usage</h3>
+<p>To use the mixin, simply add it to your serializer's inheritance list. The mixin requires the <code>request</code> object to be in the serializer's context, which DRF views typically provide automatically.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_optional_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_optional_fields</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"projects"</span><span class="p">,</span> <span class="s2">"billing_price_estimate"</span><span class="p">]</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">.mixins</span> <span class="kn">import</span> <span class="n">RestrictedSerializerMixin</span>
+<span class="kn">from</span> <span class="nn">rest_framework</span> <span class="kn">import</span> <span class="n">serializers</span>
+
+<span class="k">class</span> <span class="nc">CustomerSerializer</span><span class="p">(</span><span class="n">RestrictedSerializerMixin</span><span class="p">,</span> <span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Customer</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'uuid'</span><span class="p">,</span> <span class="s1">'name'</span><span class="p">,</span> <span class="s1">'email'</span><span class="p">,</span> <span class="s1">'created'</span><span class="p">,</span> <span class="s1">'projects_count'</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-<p>Users can request these fields via <code>?field=projects</code> query parameter.</p>
-<h3 id="restricted-field-rendering">Restricted Field Rendering</h3>
-<p>Use <code>RestrictedSerializerMixin</code> to allow field selection:</p>
+<hr>
+<h3 id="feature-1-restricted-field-rendering-whitelisting">Feature 1: Restricted Field Rendering (Whitelisting)</h3>
+<p>This is the primary feature. By adding the <code>?field=</code> query parameter to the URL, an API client can request a specific subset of fields. The serializer will only render the fields present in the <code>field</code> parameters.</p>
+<p><strong>Example:</strong>
+Imagine a <code>CustomerSerializer</code> with the fields <code>uuid</code>, <code>name</code>, <code>email</code>, and <code>created</code>.</p>
+<p>To request only the <code>name</code> and <code>uuid</code> of a customer:
+<strong>URL:</strong> <code>/api/customers/123/?field=name&amp;field=uuid</code></p>
+<p><strong>Expected JSON Response:</strong></p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># URL: /api/projects/?field=name&amp;field=uuid</span>
-<span class="c1"># Only renders 'name' and 'uuid' fields</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acme Corp"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-1234-567890abcdef"</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<hr>
+<h3 id="feature-2-optional-fields-blacklisting-by-default">Feature 2: Optional Fields (Blacklisting by Default)</h3>
+<p>Some fields can be expensive to compute (e.g., involving extra database queries, aggregations, or external API calls). You can mark these fields as "optional" by overriding the <code>get_optional_fields</code> method. These fields will <strong>not be included</strong> in the response unless they are explicitly requested via the <code>?field=</code> parameter.</p>
+<p><strong>Example:</strong>
+Let's add <code>projects</code> (a related field) and <code>billing_price_estimate</code> (a computed field) to our serializer and mark them as optional.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">CustomerSerializer</span><span class="p">(</span><span class="n">RestrictedSerializerMixin</span><span class="p">,</span> <span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="n">projects</span> <span class="o">=</span> <span class="n">ProjectSerializer</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">billing_price_estimate</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">SerializerMethodField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Customer</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'uuid'</span><span class="p">,</span> <span class="s1">'name'</span><span class="p">,</span> <span class="s1">'email'</span><span class="p">,</span> <span class="s1">'created'</span><span class="p">,</span> <span class="s1">'projects'</span><span class="p">,</span> <span class="s1">'billing_price_estimate'</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_optional_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># These fields will be excluded unless explicitly requested.</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">'projects'</span><span class="p">,</span> <span class="s1">'billing_price_estimate'</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_billing_price_estimate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="c1"># ... some expensive calculation ...</span>
+        <span class="k">return</span> <span class="n">calculate_price</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Behavior:</strong></p>
+<ol>
+<li>
+<p><strong>Standard Request (No <code>field</code> parameter):</strong></p>
+<ul>
+<li><strong>URL:</strong> <code>/api/customers/123/</code></li>
+<li><strong>Result:</strong> The optional fields (<code>projects</code>, <code>billing_price_estimate</code>) are excluded. The expensive <code>get_billing_price_estimate</code> method is never called.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-1234-567890abcdef"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acme Corp"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"contact@acme.corp"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"created"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023-10-27T10:00:00Z"</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</li>
+<li>
+<p><strong>Requesting an Optional Field:</strong></p>
+<ul>
+<li><strong>URL:</strong> <code>/api/customers/123/?field=name&amp;field=projects</code></li>
+<li><strong>Result:</strong> The response is restricted to <code>name</code>, and the optional field <code>projects</code> is included because it was requested.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acme Corp"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"projects"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Project X"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Project Y"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</li>
+</ol>
+<hr>
+<h3 id="advanced-behavior">Advanced Behavior</h3>
+<h4 id="nested-serializers">Nested Serializers</h4>
+<p>The <code>RestrictedSerializerMixin</code> is designed to be "nesting-aware." It will <strong>only apply its filtering logic to the top-level serializer</strong> in a request. Any nested serializers will be rendered completely, ignoring the <code>?field=</code> parameters from the URL. This prevents unintentional and undesirable filtering of nested data structures.</p>
+<p><strong>Example:</strong> A <code>ProjectSerializer</code> that includes a nested <code>CustomerSerializer</code>.</p>
+<p><strong>URL:</strong> <code>/api/projects/abc/?field=name&amp;field=customer</code></p>
+<p><strong>Expected JSON Response:</strong> The <code>ProjectSerializer</code> is filtered to <code>name</code> and <code>customer</code>. The nested <code>CustomerSerializer</code>, however, renders <strong>all</strong> of its fields (excluding its own optional fields, of course), because it is not the top-level serializer.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Project X"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"customer"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-1234-567890abcdef"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acme Corp"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"contact@acme.corp"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"created"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023-10-27T10:00:00Z"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="list-views-manytrue">List Views (<code>many=True</code>)</h4>
+<p>The mixin works seamlessly with list views. The field filtering is applied individually to <strong>each object</strong> in the list.</p>
+<p><strong>Example:</strong>
+<strong>URL:</strong> <code>/api/customers/?field=uuid&amp;field=name</code></p>
+<p><strong>Expected JSON Response:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-1234-567890abcdef"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acme Corp"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"f0e9d8c7-b6a5-4321-fedc-ba9876543210"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Stark Industries"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">]</span>
 </code></pre></div></td></tr></table></div>
 <h2 id="complex-validation-patterns">Complex Validation Patterns</h2>
 <h3 id="hierarchical-validation">Hierarchical Validation</h3>
@@ -7807,7 +8075,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-08-12
+    2025-08-28
   </span>
 
     
