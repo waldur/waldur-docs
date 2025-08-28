@@ -908,7 +908,7 @@ The most straightforward way to test is to tell Ansible where to find your newly
 
       vars:
         waldur_api_url: "https://api.example.com/api/"
-        waldur_access_token: "{{ lookup('env', 'WALDUR_ACCESS_TOKEN') }}"
+        waldur_access_token: "WALDUR_ACCESS_TOKEN"
 
       tasks:
         - name: Ensure 'My Playbook Project' exists
