@@ -236,6 +236,7 @@ Below is a detailed explanation of each available plugin.
           # needed for the API call.
           tenant: "openstack_tenants" # Shorthand for the tenants resolver
     ```
+
 ---
 
 ### 3. The `order` Plugin
