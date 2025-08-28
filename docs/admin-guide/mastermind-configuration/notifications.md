@@ -2376,6 +2376,74 @@ A notification about the proposal state changes (submitted → in review → acc
 
 ```
 
+### proposal.review_assigned
+
+A notification to a reviewer about a new review assignment.
+
+#### Templates
+
+=== "proposal/review_assigned_message.txt"
+
+```txt
+    Dear {{ reviewer_name }},
+
+    You have been assigned to review a proposal in call "{{ call_name }}".
+
+    Proposal details:
+    - Proposal name: {{ proposal_name }}
+    - Submitted by: {{ proposal_creator_name }}
+    - Date submitted: {{ submission_date }}
+    - Review deadline: {{ review_deadline }}
+
+    Please log in to the platform to review the proposal. You can accept or reject this review assignment by visiting:
+
+    {{ link_to_reviews_list }}
+
+    If you accept this assignment, you'll be able to access the full proposal content and submit your review.
+
+    This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/review_assigned_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+    <p>Dear {{ reviewer_name }},</p>
+
+    <p>You have been assigned to review a proposal in call "<strong>{{ call_name }}</strong>".</p>
+
+    <p><strong>Proposal details:</strong></p>
+    <ul>
+        <li><strong>Proposal name:</strong> {{ proposal_name }}</li>
+        <li><strong>Submitted by:</strong> {{ proposal_creator_name }}</li>
+        <li><strong>Date submitted:</strong> {{ submission_date }}</li>
+        <li><strong>Review deadline:</strong> {{ review_deadline }}</li>
+    </ul>
+
+    <p>Please log in to the platform to review the proposal. You can accept or reject this review assignment by visiting:</p>
+
+    <a href="{{ link_to_reviews_list }}">{{ link_to_reviews_list }}</a>
+
+    <p>If you accept this assignment, you'll be able to access the full proposal content and submit your review.</p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+    </body>
+    </html>
+
+```
+
+=== "proposal/review_assigned_subject.txt"
+
+```txt
+    New review assignment: {{ proposal_name }}
+
+```
+
 ### proposal.review_rejected
 
 A notification to the call managers about a rejected review.
