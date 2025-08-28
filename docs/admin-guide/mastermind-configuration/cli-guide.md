@@ -237,6 +237,41 @@ options:
                         Export only specific roles by name
 ```
 
+## generate_mermaid
+
+Generate a Mermaid Class Diagram for specified Django apps and models.
+
+```bash
+usage: waldur generate_mermaid [--output OUTPUT_FILE]
+                               [--include-models INCLUDE_MODELS]
+                               [--exclude-models EXCLUDE_MODELS]
+                               [--exclude-field-types EXCLUDE_FIELD_TYPES]
+                               [--verbose-names] [--no-inheritance]
+                               [--direction {TB,BT,LR,RL}] [--disable-fields]
+                               app_label [app_label ...]
+
+positional arguments:
+  app_label             Name of the application or applications.
+
+options:
+  --output OUTPUT_FILE, -o OUTPUT_FILE
+                        Save the diagram to a file.
+  --include-models INCLUDE_MODELS, -i INCLUDE_MODELS
+                        Models to include (comma-separated, wildcards
+                        supported).
+  --exclude-models EXCLUDE_MODELS, -e EXCLUDE_MODELS
+                        Models to exclude (comma-separated, wildcards
+                        supported).
+  --exclude-field-types EXCLUDE_FIELD_TYPES
+                        Field class names to exclude (e.g.,
+                        'TranslationCharField,JsonField').
+  --verbose-names       Use model and field verbose_names.
+  --no-inheritance      Don't draw inheritance arrows.
+  --direction {TB,BT,LR,RL}, -d {TB,BT,LR,RL}
+                        Direction of the diagram layout.
+  --disable-fields      Don't show fields, only model names and relationships.
+```
+
 ## import_ami_catalog
 
 Import catalog of Amazon images.
