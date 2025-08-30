@@ -3258,6 +3258,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="5. Audit Role Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhanced-logging-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced Logging Context
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-automatic-reasons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Automatic Reasons
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -3474,7 +3498,7 @@
         
   
   <span class="md-ellipsis">
-    Quotas application
+    Quotas Application
   </span>
   
 
@@ -4364,6 +4388,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../plugins/openstack-replication/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenStack Replication Plugin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../plugins/openstack/" class="md-nav__link">
         
   
@@ -4437,10 +4482,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_20_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_20_8" >
         
           
-          <label class="md-nav__link" for="__nav_3_20_7" id="__nav_3_20_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_20_8" id="__nav_3_20_8_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -4451,8 +4496,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_20_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_20_7">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_20_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_20_8">
             <span class="md-nav__icon md-icon"></span>
             Openstack
           </label>
@@ -7198,6 +7243,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="5. Audit Role Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhanced-logging-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced Logging Context
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-automatic-reasons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Automatic Reasons
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -7987,11 +8056,63 @@ Consider these models as authorization aggregates. Other models, such as resourc
     <span class="n">filter_backends</span> <span class="o">=</span> <span class="p">[</span><span class="n">GenericRoleFilter</span><span class="p">,</span> <span class="n">DjangoFilterBackend</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
 <h3 id="5-audit-role-changes">5. Audit Role Changes</h3>
-<p>Role changes are automatically logged via signals (<code>role_granted</code>, <code>role_updated</code>, <code>role_revoked</code>), but always pass <code>current_user</code> for proper audit trails:</p>
+<p>Role changes are automatically logged via signals (<code>role_granted</code>, <code>role_updated</code>, <code>role_revoked</code>) with enhanced context including initiator and reason. Always pass <code>current_user</code> and optional <code>reason</code> for clear audit trails:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">add_user</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">created_by</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Basic usage - uses default reasons</span>
+<span class="n">add_user</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">created_by</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
 <span class="n">delete_user</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">current_user</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+
+<span class="c1"># Enhanced usage with specific reasons</span>
+<span class="n">delete_user</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">current_user</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">"User left organization"</span><span class="p">)</span>
+<span class="n">user_role</span><span class="o">.</span><span class="n">revoke</span><span class="p">(</span><span class="n">current_user</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">"Security policy violation"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
+<h4 id="enhanced-logging-context">Enhanced Logging Context</h4>
+<p>All role change logs now include:</p>
+<ul>
+<li><strong><code>initiated_by</code></strong>: Shows either "System" (for automatic operations) or "User Name (username)" (for manual operations)</li>
+<li><strong><code>reason</code></strong>: Specific reason for the change, with automatic defaults:</li>
+<li>Manual API operations: <code>"Manual role assignment/removal/update via API"</code></li>
+<li>Automatic expiration: <code>"Automatic expiration"</code> or <code>"Automatic expiration cleanup task"</code></li>
+<li>Project deletion: <code>"Project deletion cascade"</code></li>
+<li>Scope changes: <code>"Project moved to different customer"</code>, <code>"Offering moved to different provider"</code></li>
+</ul>
+<h4 id="common-automatic-reasons">Common Automatic Reasons</h4>
+<p>The system automatically assigns these reasons when not explicitly provided:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Default Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API user operations with <code>current_user</code></td>
+<td><code>"Manual [operation] via API"</code></td>
+</tr>
+<tr>
+<td>Expiration task</td>
+<td><code>"Automatic expiration cleanup task"</code></td>
+</tr>
+<tr>
+<td>Project deletion</td>
+<td><code>"Project deletion cascade"</code></td>
+</tr>
+<tr>
+<td>Role expiration detection</td>
+<td><code>"Automatic expiration"</code></td>
+</tr>
+<tr>
+<td>System operations without <code>current_user</code></td>
+<td><code>"System-initiated [operation]"</code></td>
+</tr>
+</tbody>
+</table>
 <h3 id="6-performance-and-accuracy-guidelines">6. Performance and Accuracy Guidelines</h3>
 <h4 id="exact-user-counting">Exact User Counting</h4>
 <p>When counting users across roles, always use exact calculations to avoid double-counting users with multiple roles:</p>
@@ -8312,7 +8433,7 @@ Consider these models as authorization aggregates. Other models, such as resourc
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-08-18
+    2025-08-30
   </span>
 
     
