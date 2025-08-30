@@ -1847,6 +1847,29 @@ You can view the full review details at:
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
 ```
 
+### requested_offering_decision_message.txt (waldur_mastermind.proposal)
+
+``` txt
+Dear call manager,
+
+The provider has {{ decision }} the request to include offering "{{ offering_name }}" in call "{{ call_name }}".
+
+Offering details:
+- Offering: {{ offering_name }}
+- Provider: {{ provider_name }}
+- Decision Date: {{ decision_date }}
+- State: {{ decision }}
+
+{% if decision == "accepted" %}This offering is now available for selection in proposals submitted to this call.{% endif %}
+
+{% if decision == "canceled" %}You may need to look for alternative offerings or contact the provider directly for more information about their decision.{% endif %}
+
+You can view the call details and manage offerings by visiting:
+{{ call_url }}
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
+```
+
 ### review_assigned_subject.txt (waldur_mastermind.proposal)
 
 ``` txt
@@ -1916,6 +1939,43 @@ Please log in to the platform to review the proposal. You can accept or reject t
 If you accept this assignment, you'll be able to access the full proposal content and submit your review.
 
 This is an automated message from {{ site_name }}. Please do not reply to this email.
+```
+
+### requested_offering_decision_message.html (waldur_mastermind.proposal)
+
+``` html
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Proposal Canceled</title>
+</head>
+<body>
+    <p>Dear call manager,</p>
+
+    <p>The provider has <strong>{{ decision }}</strong> the request to include offering "<strong>{{ offering_name }}</strong>" in call "<strong>{{ call_name }}</strong>".</p>
+
+    <p><strong>Offering details:</strong></p>
+    <ul>
+        <li><strong>Offering:</strong> {{ offering_name }}</li>
+        <li><strong>Provider:</strong> {{ provider_name }}</li>
+        <li><strong>Decision Date:</strong> {{ decision_date }}</li>
+        <li><strong>State:</strong> {{ decision }}</li>
+    </ul>
+
+    {% if decision == "accepted" %}
+    <p>This offering is now available for selection in proposals submitted to this call.</p>
+    {% endif %}
+
+    {% if decision == "canceled" %}
+    <p>You may need to look for alternative offerings or contact the provider directly for more information about their decision.</p>
+    {% endif %}
+
+    <p>You can view the call details and manage offerings by visiting:<br>
+    <a href="{{ call_url }}">{{ call_url }}</a></p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+</body>
+</html>
 ```
 
 ### new_proposal_submitted_subject.txt (waldur_mastermind.proposal)
@@ -2111,6 +2171,12 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 
 ``` txt
 Review submitted for proposal: {{ proposal_name }}
+```
+
+### requested_offering_decision_subject.txt (waldur_mastermind.proposal)
+
+``` txt
+Offering request {{ decision }}: {{ offering_name }}
 ```
 
 ### review_assigned_message.html (waldur_mastermind.proposal)

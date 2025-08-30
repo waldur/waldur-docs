@@ -2376,6 +2376,81 @@ A notification about the proposal state changes (submitted → in review → acc
 
 ```
 
+### proposal.requested_offering_decision
+
+A notification to call manager about the decision on requested offering (accepted/rejected).
+
+#### Templates
+
+=== "proposal/requested_offering_decision_message.txt"
+
+```txt
+    Dear call manager,
+
+    The provider has {{ decision }} the request to include offering "{{ offering_name }}" in call "{{ call_name }}".
+
+    Offering details:
+    - Offering: {{ offering_name }}
+    - Provider: {{ provider_name }}
+    - Decision Date: {{ decision_date }}
+    - State: {{ decision }}
+
+    {% if decision == "accepted" %}This offering is now available for selection in proposals submitted to this call.{% endif %}
+
+    {% if decision == "canceled" %}You may need to look for alternative offerings or contact the provider directly for more information about their decision.{% endif %}
+
+    You can view the call details and manage offerings by visiting:
+    {{ call_url }}
+
+    This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/requested_offering_decision_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Proposal Canceled</title>
+    </head>
+    <body>
+        <p>Dear call manager,</p>
+
+        <p>The provider has <strong>{{ decision }}</strong> the request to include offering "<strong>{{ offering_name }}</strong>" in call "<strong>{{ call_name }}</strong>".</p>
+
+        <p><strong>Offering details:</strong></p>
+        <ul>
+            <li><strong>Offering:</strong> {{ offering_name }}</li>
+            <li><strong>Provider:</strong> {{ provider_name }}</li>
+            <li><strong>Decision Date:</strong> {{ decision_date }}</li>
+            <li><strong>State:</strong> {{ decision }}</li>
+        </ul>
+
+        {% if decision == "accepted" %}
+        <p>This offering is now available for selection in proposals submitted to this call.</p>
+        {% endif %}
+
+        {% if decision == "canceled" %}
+        <p>You may need to look for alternative offerings or contact the provider directly for more information about their decision.</p>
+        {% endif %}
+
+        <p>You can view the call details and manage offerings by visiting:<br>
+        <a href="{{ call_url }}">{{ call_url }}</a></p>
+
+        <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+    </body>
+    </html>
+
+```
+
+=== "proposal/requested_offering_decision_subject.txt"
+
+```txt
+    Offering request {{ decision }}: {{ offering_name }}
+
+```
+
 ### proposal.review_assigned
 
 A notification to a reviewer about a new review assignment.
