@@ -1688,6 +1688,27 @@ New limits: {{ new_limits }}.
 Alert: review assignment rejected for {{ proposal_name }}
 ```
 
+### proposal_decision_for_reviewer_message.txt (waldur_mastermind.proposal)
+
+``` txt
+Dear {{ reviewer_name }},
+
+A decision has been made on the proposal "{{ proposal_name }}" in call "{{ call_name }}" that you reviewed.
+
+Decision details:
+- Proposal: {{ proposal_name }}
+- Decision: {{ proposal_state }}
+- Decision date: {{ decision_date }}
+
+{% if proposal_state == "rejected" and rejection_reason %}Reason: {{ rejection_reason }}{% endif %}
+
+Thank you for your valuable contribution to the review process. Your expert assessment helped inform this decision.
+
+View proposal: {{ proposal_url }}
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
+```
+
 ### proposal_state_changed_message.txt (waldur_mastermind.proposal)
 
 ``` txt
@@ -1816,6 +1837,12 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 
 ``` txt
 Proposal state update: {{ proposal_name }} - {{ new_state }}
+```
+
+### proposal_decision_for_reviewer_subject.txt (waldur_mastermind.proposal)
+
+``` txt
+Decision made: Proposal {{ proposal_state }} - {{ proposal_name }}
 ```
 
 ### proposal_cancelled_subject.txt (waldur_mastermind.proposal)
@@ -1947,7 +1974,7 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Proposal Canceled</title>
+    <title>Offering request {{ decision }}</title>
 </head>
 <body>
     <p>Dear call manager,</p>
@@ -2177,6 +2204,39 @@ Review submitted for proposal: {{ proposal_name }}
 
 ``` txt
 Offering request {{ decision }}: {{ offering_name }}
+```
+
+### proposal_decision_for_reviewer_message.html (waldur_mastermind.proposal)
+
+``` html
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Proposal {{ proposal_state }}</title>
+</head>
+<body>
+    <p>Dear {{ reviewer_name }},</p>
+
+    <p>A decision has been made on the proposal "<strong>{{ proposal_name }}</strong>" in call "<strong>{{ call_name }}</strong>" that you reviewed.</p>
+
+    <p><strong>Decision details:</strong></p>
+    <ul>
+        <li><strong>Proposal:</strong> {{ proposal_name }}</li>
+        <li><strong>Decision:</strong> {{ proposal_state }}</li>
+        <li><strong>Decision date:</strong> {{ decision_date }}</li>
+    </ul>
+
+    {% if proposal_state == "rejected" and rejection_reason %}
+    <p><strong>Reason:</strong> {{ rejection_reason }}</p>
+    {% endif %}
+
+    <p>Thank you for your valuable contribution to the review process. Your expert assessment helped inform this decision.</p>
+
+    <p>View proposal: <a href="{{ proposal_url }}">{{ proposal_url }}</a></p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+</body>
+</html>
 ```
 
 ### review_assigned_message.html (waldur_mastermind.proposal)

@@ -2205,6 +2205,75 @@ A notification to proposal creator about the proposal cancellation.
 
 ```
 
+### proposal.proposal_decision_for_reviewer
+
+A notification to the reviewer about the proposal decision (approved/rejected) which they reviewed.
+
+#### Templates
+
+=== "proposal/proposal_decision_for_reviewer_message.txt"
+
+```txt
+    Dear {{ reviewer_name }},
+
+    A decision has been made on the proposal "{{ proposal_name }}" in call "{{ call_name }}" that you reviewed.
+
+    Decision details:
+    - Proposal: {{ proposal_name }}
+    - Decision: {{ proposal_state }}
+    - Decision date: {{ decision_date }}
+
+    {% if proposal_state == "rejected" and rejection_reason %}Reason: {{ rejection_reason }}{% endif %}
+
+    Thank you for your valuable contribution to the review process. Your expert assessment helped inform this decision.
+
+    View proposal: {{ proposal_url }}
+
+    This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/proposal_decision_for_reviewer_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Proposal {{ proposal_state }}</title>
+    </head>
+    <body>
+        <p>Dear {{ reviewer_name }},</p>
+
+        <p>A decision has been made on the proposal "<strong>{{ proposal_name }}</strong>" in call "<strong>{{ call_name }}</strong>" that you reviewed.</p>
+
+        <p><strong>Decision details:</strong></p>
+        <ul>
+            <li><strong>Proposal:</strong> {{ proposal_name }}</li>
+            <li><strong>Decision:</strong> {{ proposal_state }}</li>
+            <li><strong>Decision date:</strong> {{ decision_date }}</li>
+        </ul>
+
+        {% if proposal_state == "rejected" and rejection_reason %}
+        <p><strong>Reason:</strong> {{ rejection_reason }}</p>
+        {% endif %}
+
+        <p>Thank you for your valuable contribution to the review process. Your expert assessment helped inform this decision.</p>
+
+        <p>View proposal: <a href="{{ proposal_url }}">{{ proposal_url }}</a></p>
+
+        <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+    </body>
+    </html>
+
+```
+
+=== "proposal/proposal_decision_for_reviewer_subject.txt"
+
+```txt
+    Decision made: Proposal {{ proposal_state }} - {{ proposal_name }}
+
+```
+
 ### proposal.proposal_state_changed
 
 A notification about the proposal state changes (submitted → in review → accepted/rejected).
@@ -2412,7 +2481,7 @@ A notification to call manager about the decision on requested offering (accepte
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>Proposal Canceled</title>
+        <title>Offering request {{ decision }}</title>
     </head>
     <body>
         <p>Dear call manager,</p>
