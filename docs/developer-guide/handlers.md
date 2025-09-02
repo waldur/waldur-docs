@@ -561,7 +561,7 @@ td:nth-child(4) {
 | `send_issue_updated_notification` | `Django Signal (post_save)` | `support.Issue` | No description |
 | `send_offering_user_username_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | No description |
 | `send_pending_order_to_message_queue` | `Django Signal (post_save)` | `marketplace.Order` | Send pending marketplace order to message queue for site agent processing. |
-| `send_project_service_account_deletion_info` | `Django Signal (pre_delete)` | `marketplace.ProjectServiceAccount` | No description |
+| `send_project_service_account_deletion_info` | `Django Signal (post_save)` | `marketplace.ProjectServiceAccount` | No description |
 | `send_project_service_account_info` | `Django Signal (post_save)` | `marketplace.ProjectServiceAccount` | No description |
 | `send_resource_update_message_to_queue` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
 | `send_role_granted_message_to_queue` | `Custom Signal (role_granted)` | `—` | No description |
