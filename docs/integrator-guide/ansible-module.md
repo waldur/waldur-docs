@@ -341,16 +341,19 @@ Below is a detailed explanation of each available plugin.
         resource_type: "OpenStack subnet"
         description: "Perform actions on OpenStack Subnets."
 
-        # The base operation ID used to infer `_list` and `_retrieve` operations
-        # for finding the target resource.
+        # The base operation ID used to infer `_list`, `_retrieve`, and action operations.
+        # For example, 'connect' becomes 'openstack_subnets_connect'.
         base_operation_id: "openstack_subnets"
 
-        # A map of user-friendly action names to their API operationIds.
-        # These will become the choices for the module's 'action' parameter.
+        # A list of action names. The generator infers the full `operationId` for each
+        # action by appending the name to the `base_operation_id` (e.g.,
+        # `base_operation_id: "openstack_subnets"` and action `"connect"` becomes
+        # `openstack_subnets_connect`). These names become the choices for the
+        # module's `action` parameter.
         actions:
-          connect: "openstack_subnets_connect"
-          disconnect: "openstack_subnets_disconnect"
-          pull: "openstack_subnets_pull"
+          - connect
+          - disconnect
+          - pull
 
         # Optional context parameters to help locate the resource.
         context_params:
