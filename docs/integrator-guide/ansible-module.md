@@ -321,6 +321,45 @@ Below is a detailed explanation of each available plugin.
                 target_key: "tenant_uuid"
     ```
 
+### 4. The `actions` Plugin
+
+-   **Purpose:** For creating modules that execute specific, one-off **actions** on an existing resource. This is ideal for operations that don't fit the standard CRUD lifecycle, such as `reboot`, `connect`, `pull`, or `start`. These modules are essentially command runners for your API.
+
+-   **Workflow:**
+    1.  The module first finds the target resource using an identifier (e.g., `name`) and optional `context_params`. It will fail if the resource is not found.
+    2.  It then executes a `POST` request to the API endpoint corresponding to the user-selected `action`.
+    3.  The module always reports `changed=True` upon successful execution of an action.
+    4.  It re-fetches the resource's state after the action and returns it, allowing users to see the result of the command.
+
+-   **Configuration Example (`generator_config.yaml`):**
+    This example creates a `subnet_action` module to connect or disconnect a subnet in OpenStack.
+
+    ```yaml
+    modules:
+      - name: subnet_action
+        plugin: actions
+        resource_type: "OpenStack subnet"
+        description: "Perform actions on OpenStack Subnets."
+
+        # The base operation ID used to infer `_list` and `_retrieve` operations
+        # for finding the target resource.
+        base_operation_id: "openstack_subnets"
+
+        # A map of user-friendly action names to their API operationIds.
+        # These will become the choices for the module's 'action' parameter.
+        actions:
+          connect: "openstack_subnets_connect"
+          disconnect: "openstack_subnets_disconnect"
+          pull: "openstack_subnets_pull"
+
+        # Optional context parameters to help locate the resource.
+        context_params:
+          - name: "tenant"
+            description: "The name or UUID of the tenant to filter subnets by."
+            resolver: "openstack_tenants"
+            filter_key: "tenant_uuid"
+    ```
+
 ### Reusable Configuration with YAML Anchors
 
 As your `generator_config.yaml` file grows, you'll notice that certain configurations, especially for `resolvers` or `update_config`, are repeated across multiple modules. To keep your configuration DRY (Don't Repeat Yourself) and improve maintainability, you can use a standard YAML feature called **anchors (`&`)** and **aliases (`*`)**.
