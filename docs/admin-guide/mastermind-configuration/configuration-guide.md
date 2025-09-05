@@ -1163,6 +1163,12 @@ Enable reminders to owners about resources of shared offerings that have not gen
 
 Enable mock returns for the service account service
 
+#### ENFORCE_USER_CONSENT_FOR_OFFERINGS
+
+**Type:** bool
+
+If True, users must have active consent to access offerings that have active Terms of Service.
+
 ### Telemetry
 
 #### TELEMETRY_URL
