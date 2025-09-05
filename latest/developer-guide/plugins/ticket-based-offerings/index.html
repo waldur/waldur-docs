@@ -4347,6 +4347,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Status Mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-management-staff-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Management (Staff Only)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#programmatic-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Programmatic Setup
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -6988,6 +7012,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Status Mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-management-staff-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Management (Staff Only)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#programmatic-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Programmatic Setup
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -7121,10 +7169,19 @@
 <h3 id="issuestatus-configuration">IssueStatus Configuration</h3>
 <p>Each status name from the ticketing system maps to one of two types:</p>
 <ul>
-<li><code>IssueStatus.Types.RESOLVED</code> - Successfully completed</li>
-<li><code>IssueStatus.Types.CANCELED</code> - Failed or canceled</li>
+<li><code>IssueStatus.Types.RESOLVED</code> (0) - Successfully completed</li>
+<li><code>IssueStatus.Types.CANCELED</code> (1) - Failed or canceled</li>
 </ul>
-<p>Example configuration:</p>
+<p><strong>Model Structure:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">IssueStatus</span><span class="p">:</span>
+    <span class="n">uuid</span><span class="p">:</span> <span class="n">UUID</span>          <span class="c1"># Unique identifier for API access</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>           <span class="c1"># Exact status name from backend system</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">int</span>           <span class="c1"># 0=RESOLVED, 1=CANCELED</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Example Configuration:</strong></p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -7133,6 +7190,12 @@
 <span class="n">IssueStatus</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Rejected"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">IssueStatus</span><span class="o">.</span><span class="n">Types</span><span class="o">.</span><span class="n">CANCELED</span><span class="p">)</span>
 <span class="n">IssueStatus</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Canceled"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">IssueStatus</span><span class="o">.</span><span class="n">Types</span><span class="o">.</span><span class="n">CANCELED</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
+<p><strong>Access Control:</strong></p>
+<ul>
+<li><strong>Staff users</strong>: Full CRUD access via API and admin interface</li>
+<li><strong>Support users</strong>: Read-only access (can view existing statuses)</li>
+<li><strong>Regular users</strong>: No access</li>
+</ul>
 <h3 id="resolution-logic">Resolution Logic</h3>
 <ol>
 <li>When an issue's status changes (e.g., from backend sync)</li>
@@ -7176,7 +7239,72 @@
 <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
 <h3 id="status-mapping">Status Mapping</h3>
-<p>Ensure IssueStatus objects are configured to map backend statuses correctly:</p>
+<p>IssueStatus objects can be configured through the API or admin interface to map backend statuses correctly.</p>
+<h4 id="api-management-staff-only">API Management (Staff Only)</h4>
+<p>Staff users can manage IssueStatus configurations through the REST API:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># List all status mappings</span>
+<span class="err">GET /api/support-issue-statuses/</span>
+
+<span class="err"># Create a new status mapping</span>
+<span class="err">POST /api/support-issue-statuses/</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">{</span>
+<span class="err">  "name": "Done",</span>
+<span class="err">  "type": 0  // 0 = RESOLVED, 1 = CANCELED</span>
+<span class="err">}</span>
+
+<span class="err"># Update existing status mapping</span>
+<span class="err">PATCH /api/support-issue-statuses/{uuid}/</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">{</span>
+<span class="err">  "name": "Completed",</span>
+<span class="err">  "type": 0</span>
+<span class="err">}</span>
+
+<span class="err"># Delete status mapping</span>
+<span class="err">DELETE /api/support-issue-statuses/{uuid}/</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Response Format:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://waldur.example.com/api/support-issue-statuses/abc123/"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abc123-def456-..."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Done"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type_display"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Resolved"</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="programmatic-setup">Programmatic Setup</h4>
+<p>For automated deployment, use data migrations or management commands:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -7210,10 +7338,18 @@
 <h2 id="best-practices">Best Practices</h2>
 <ol>
 <li><strong>Status Configuration</strong>: Ensure all possible backend statuses are mapped in IssueStatus</li>
-<li><strong>Monitoring</strong>: Regularly sync issues to detect status changes</li>
+<li>Use the <code>/api/support-issue-statuses/</code> API for programmatic management</li>
+<li>Staff users should regularly review and update status mappings</li>
+<li>
+<p>Document your backend's status workflow and map all statuses accordingly</p>
+</li>
+<li>
+<p><strong>Monitoring</strong>: Regularly sync issues to detect status changes</p>
+</li>
 <li><strong>Error Handling</strong>: Implement proper error handling in callbacks</li>
 <li><strong>Logging</strong>: Monitor handler execution through logs for debugging</li>
 <li><strong>Testing</strong>: Test status transitions with different order types</li>
+<li><strong>API Management</strong>: Use the REST API for consistent status configuration across environments</li>
 </ol>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="callbacks-not-firing">Callbacks Not Firing</h3>
@@ -7233,7 +7369,39 @@
 <p>If you see critical log messages about missing statuses:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>"There is no information about statuses of an issue. Please, add resolved and canceled statuses in admin."
 </code></pre></div></td></tr></table></div>
-<p>Add the required IssueStatus entries through the admin interface.</p></div>
+<p><strong>Resolution Options:</strong></p>
+<ol>
+<li><strong>API Management (Recommended)</strong>: Use the REST API to add missing statuses:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/support-issue-statuses/</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">{</span>
+<span class="err">  "name": "YourBackendStatus",</span>
+<span class="err">  "type": 0  // or 1 for CANCELED</span>
+<span class="err">}</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>
+<p><strong>Admin Interface</strong>: Add the required IssueStatus entries through Django admin</p>
+</li>
+<li>
+<p><strong>Identify Missing Statuses</strong>: Check your backend system for all possible status values and ensure each has a corresponding IssueStatus entry</p>
+</li>
+</ol>
+<p><strong>Common Missing Statuses by Backend:</strong></p>
+<ul>
+<li><strong>JIRA</strong>: "To Do", "In Progress", "Done", "Cancelled"</li>
+<li><strong>SMAX</strong>: "Open", "In Progress", "Resolved", "Rejected"</li>
+<li><strong>Zammad</strong>: "new", "open", "pending reminder", "pending close", "closed"</li>
+</ul>
+<p>Use <code>GET /api/support-issue-statuses/</code> to view currently configured statuses and compare against your backend's status list.</p></div>
 
 
 
@@ -7254,7 +7422,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-02
+    2025-09-05
   </span>
 
     
