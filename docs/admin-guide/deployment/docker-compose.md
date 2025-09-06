@@ -64,7 +64,8 @@ setup, so make sure you understand what you are doing.
 
 ```bash
 docker compose pull
-docker compose restart
+docker compose down
+docker compose up -d
 ```
 
 ## Upgrade Instructions for PostgreSQL Images
