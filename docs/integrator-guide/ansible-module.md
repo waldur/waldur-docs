@@ -110,7 +110,7 @@ Below is a detailed explanation of each available plugin.
     1.  The module's primary goal is to find and return resource data based on an identifier (by default, `name`).
     2.  If the `many: true` option is set, the module returns a list of all resources matching the filter criteria.
     3.  If `many: false` (the default), the module expects to find a single resource. It will fail if zero or multiple resources are found, prompting the user to provide a more specific identifier.
-    4.  It can be configured with `context_params` (like `tenant` or `project`) to filter the search within a parent resource.
+    4.  It can filter its search based on parent resources (like a `project` or `tenant`). This is configured using the standard `resolvers` block.
 
 -   **Configuration Example (`generator_config.yaml`):**
     This example creates a `waldur_openstack_security_group_facts` module to get information about security groups within a specific tenant.
@@ -124,62 +124,51 @@ Below is a detailed explanation of each available plugin.
 
         # Defines the base prefix for API operations. The 'facts' plugin uses
         # this to automatically infer the necessary operation IDs:
-        #  - `check`: via `openstack_security_groups_list`
+        #  - `list`: via `openstack_security_groups_list`
         #  - `retrieve`: via `openstack_security_groups_retrieve`
-        # The 'operations' block is therefore not needed for a conventional API.
+        # This avoids the need for an explicit 'operations' block for conventional APIs.
         base_operation_id: "openstack_security_groups"
 
         # If `true`, the module is allowed to return a list of multiple resources
-        # that match the filter criteria.
-        # If `false` (the default), the module would fail if more than one
+        # that match the filter criteria. An empty list is a valid result.
+        # If `false` (the default), the module would fail if zero or more than one
         # resource is found, ensuring a unique result.
         many: true
 
-        # Defines additional parameters that can be used to filter the search.
-        # This is essential for finding resources within a specific scope.
-        context_params:
-          - # The name of the Ansible parameter the user will provide.
-            name: "tenant"
-            description: "The name or UUID of the tenant to filter security groups by."
-
-            # Tells the generator how to resolve the user-provided 'tenant' name
-            # into the UUID needed by the API. The string "openstack_tenants" is
-            # a shorthand that expands to the standard list/retrieve operations for tenants.
-            resolver: "openstack_tenants"
-
-            # Specifies the exact query parameter key to use when calling the 'check'
-            # operation. The generator will construct a query like:
-            # `?tenant_uuid=<resolved_tenant_uuid>`
-            filter_key: "tenant_uuid"
+        # This block defines how to resolve context parameters to filter the search.
+        resolvers:
+          # Using shorthand for the 'tenant' resolver. The generator will infer
+          # 'openstack_tenants_list' and 'openstack_tenants_retrieve' from the base.
+          tenant:
+            base: "openstack_tenants"
+            # This key is crucial. It tells the generator to use the resolved
+            # tenant's UUID as a query parameter named 'tenant_uuid' when calling
+            # the `openstack_security_groups_list` operation.
+            check_filter_key: "tenant_uuid"
     ```
 
 ---
 
 ### 2. The `crud` Plugin
 
--   **Purpose:** For managing the full lifecycle of resources with **simple, direct, synchronous** API calls. This is ideal for resources that have distinct `create`, `list`, `update`, and `destroy` endpoints. The plugin supports both top-level resources (like projects) and nested resources (like security groups under a tenant).
+-   **Purpose:** For managing the full lifecycle of resources with **simple, direct, synchronous** API calls. This is ideal for resources that have distinct `create`, `list`, `update`, and `destroy` endpoints.
 
 -   **Workflow:**
     -   **`state: present`**:
         1.  Calls the `list` operation to check if a resource with the given name already exists.
-        2.  If it **does not exist**, it calls the `create` operation. `resolvers` and `path_param_maps` are used to convert parent resource names into the required API URLs or path UUIDs.
+        2.  If it **does not exist**, it calls the `create` operation.
         3.  If it **does exist**, it checks for changes:
-            -   It compares values for parameters listed in `update_config.fields` and sends a `PATCH` request via the `update` operation if any have changed.
-            -   It checks if any parameters for special `update_config.actions` are provided and calls their respective `POST` operations.
-                -   **Asynchronous Actions**: If the `POST` action returns a `202 Accepted` status code, the module recognizes it as an asynchronous task.
-                -   If the `wait: true` parameter is set (the default), the module will poll the resource's status until it reaches a stable state (e.g., "OK" or "ERRED").
-                -   You can configure the stable/error states and polling parameters in `generator_config.yaml`.
-    -   **`state: absent`**:
-        1.  Calls the `list` operation to find the resource.
-        2.  If it exists, it calls the `destroy` operation to remove it.
+            -   For simple fields in `update_config.fields`, it sends a `PATCH` request if values differ.
+            -   For complex `update_config.actions`, it calls a dedicated `POST` endpoint. If this action is asynchronous (returns `202 Accepted`) and `wait: true`, it will poll the resource until it reaches a stable state.
+    -   **`state: absent`**: Finds the resource and calls the `destroy` operation.
 
 -   **Return Values:**
-    -   `resource`: A dictionary representing the final state of the resource after the operation.
-    -   `commands`: A list of dictionaries detailing the HTTP requests that were made to achieve the desired state. This is useful for auditing and debugging.
+    -   `resource`: A dictionary representing the final state of the resource.
+    -   `commands`: A list detailing the HTTP requests made.
     -   `changed`: A boolean indicating if any changes were made.
 
 -   **Configuration Example (`generator_config.yaml`):**
-    This example creates a `security_group` module that is a **nested resource** under a tenant, and supports both simple updates (description) and a special action (set_rules).
+    This example creates a `security_group` module that is a **nested resource** under a tenant and supports both simple updates (`description`) and a complex, asynchronous action (`set_rules`).
 
     ```yaml
     modules:
@@ -189,81 +178,69 @@ Below is a detailed explanation of each available plugin.
         description: "Manage OpenStack Security Groups and their rules in Waldur."
 
         # The core prefix for inferring standard API operation IDs.
-        # By providing this, the generator automatically enables:
+        # The generator automatically enables:
         #  - `check`: via `openstack_security_groups_list`
-        #  - `delete`: via `openstack_security_groups_destroy`
+        #  - `destroy`: via `openstack_security_groups_destroy`
         base_operation_id: "openstack_security_groups"
 
-        # The 'operations' block is now only for EXCEPTIONS and detailed configuration.
-        # Since 'check' and 'delete' follow the convention, they are omitted here.
+        # The 'operations' block is now for EXCEPTIONS and detailed configuration.
         operations:
-
-            # Defines special, non-standard update actions that call dedicated
-            # POST endpoints. These are idempotent and schema-aware.
-            actions:
-              # 'set_rules' is the logical name for our action.
-              set_rules:
-                # The specific operationId to call when this action is triggered.
-                operation: "openstack_security_groups_set_rules"
-                # The name of the Ansible parameter that triggers this action and
-                # provides its data. The runner will only call the operation if
-                # the user provides the 'rules' parameter AND its value differs
-                # from the resource's current state.
-                param: "rules"
-
-          # Override the 'create' operation.
-          # This is necessary because creating a security group is a NESTED action
-          # under a tenant, so it doesn't follow the standard '[base_id]_create' pattern.
+          # Override the 'create' operation because it's a NESTED action under a
+          # tenant and doesn't follow the standard '[base_id]_create' pattern.
           create:
             id: "openstack_tenants_create_security_group"
-
-            # This block is crucial for nested endpoints. It maps the placeholder
-            # in the API URL path (`/api/openstack-tenants/{uuid}/...`) to the
-            # name of an Ansible parameter (`tenant`).
+            # This block maps the placeholder in the API URL path
+            # (`/api/openstack-tenants/{uuid}/...`) to an Ansible parameter (`tenant`).
             path_params:
               uuid: "tenant"
 
-        wait_config:
-          ok_states: ["OK"] # The state(s) that mean success
-          erred_states: ["ERRED"] # The state(s) that mean failure
-          state_field: "state" # The key in the resource dict that holds the state
+          # Explicitly define the update operation to infer updatable fields from.
+          update:
+            id: "openstack_security_groups_partial_update"
+            # Define a special, idempotent action for managing rules.
+            actions:
+              set_rules:
+                # The specific operationId to call for this action.
+                operation: "openstack_security_groups_set_rules"
+                # The Ansible parameter that triggers this action. The runner only
+                # calls the operation if the user provides 'rules' AND its value
+                # differs from the resource's current state.
+                param: "rules"
 
-        # This block defines how to resolve dependencies.
+        # Define how the module should wait for asynchronous actions to complete.
+        wait_config:
+          ok_states: ["OK"]        # State(s) that mean success.
+          erred_states: ["ERRED"]  # State(s) that mean failure.
+          state_field: "state"     # Key in the resource dict that holds the state.
+
+        # Define how to resolve dependencies.
         resolvers:
-          # We need a resolver for 'tenant' because it's used in `path_params` for
-          # the 'create' operation. This tells the generator how to convert the
-          # user-friendly tenant name or UUID into the internal API URL/UUID
-          # needed for the API call.
-          tenant: "openstack_tenants" # Shorthand for the tenants resolver
+          # A resolver for 'tenant' is required by `path_params` for the 'create'
+          # operation. This tells the generator how to convert a user-friendly
+          # tenant name into the internal UUID needed for the API call.
+          tenant: "openstack_tenants" # Shorthand for the tenants resolver.
     ```
 
 ---
 
 ### 3. The `order` Plugin
 
--   **Purpose:** The most powerful and specialized plugin, designed for resources managed through Waldur's **asynchronous marketplace order workflow**. This is the correct plugin for nearly all major cloud resources like VMs, volumes, databases, etc.
+-   **Purpose:** The most powerful plugin, designed for resources managed through Waldur's **asynchronous marketplace order workflow**. This is for nearly all major cloud resources like VMs, volumes, databases, etc.
 
-**Attribute Inference**: To simplify configuration, you can specify an offering_type. The generator will then look for a corresponding schema in the OpenAPI specification (e.g., Marketplace.Volume becomes MarketplaceVolumeCreateOrderAttributes) and automatically generate all the necessary attribute_params. Any manually defined attribute_params will override the inferred ones, allowing for customization.
+-   **Key Features:**
+    -   **Attribute Inference**: Specify an `offering_type` to have the generator automatically create all necessary Ansible parameters from the API schema, drastically reducing boilerplate.
+    -   **Termination Attributes**: Define optional parameters for deletion (e.g., `force_destroy`) by configuring the `operations.delete` block.
+    -   **Hybrid Updates**: Intelligently handles both simple `PATCH` updates and complex, asynchronous `POST` actions on existing resources.
 
-**Termination Attributes**: You can define a set of optional parameters that will be passed as attributes in the termination order. This is useful for resources that require extra options during deletion, such as forcing destruction or deleting associated sub-resources. This is configured under the `operations.delete` key. You can use the `maps_to` field to define a different name for the attribute in the API payload.
-
--   **Workflow:** This plugin encapsulates a complex, multi-step process:
+-   **Workflow:**
     -   **`state: present`**:
-        1.  Checks for the existence of the *final resource* (e.g., the volume) using `existence_check_op`.
-        2.  If it **does not exist**, it creates a marketplace order via `marketplace_orders_create` and, if `wait: true`, polls for completion.
-        2.  If it **does exist**, it checks for changes. It supports two kinds of updates:
-            -   **Synchronous Updates:** For simple fields inferred from update request schema, it sends a direct `PATCH` request.
-            -   **Asynchronous Actions:** For complex operations defined in `update_actions`, it sends a `POST` request. If this request returns a `202 Accepted` status, the module recognizes it as an asynchronous task. If `wait: true` is set, the module will then poll the *resource's status* (not the order) until it reaches a stable state (e.g., "OK" or "Erred"), which can be configured via `wait_config`.
-    -   **`state: absent`**:
-        1.  Finds the existing resource.
-        2.  Calls the standard `marketplace_resources_terminate` endpoint, passing any configured termination attributes.
-
--   **Return Values:**
-    -   `resource`: A dictionary representing the final state of the resource after a successful operation.
-    -   `commands`: A list of dictionaries detailing the HTTP requests that were made.
-    -   `changed`: A boolean indicating if any changes were made.
+        1.  Checks if the resource exists.
+        2.  If not, it creates a marketplace order and polls for completion.
+        3.  If it exists, it performs direct synchronous (`PATCH`) or asynchronous (`POST` with polling) updates as needed.
+    -   **`state: absent`**: Finds the resource and calls the `marketplace_resources_terminate` endpoint.
 
 -   **Configuration Example (`generator_config.yaml`):**
+    This example creates a marketplace `volume` module.
 
     ```yaml
     modules:
@@ -272,218 +249,142 @@ Below is a detailed explanation of each available plugin.
         resource_type: "OpenStack volume"
         description: "Create, update, or delete an OpenStack Volume via the marketplace."
 
-        # By specifying the offering type, the generator will automatically find the
-        # corresponding schema in the OpenAPI specification (e.g., for volume size,
-        # image, etc.) and generate all the necessary Ansible parameters.
-        # This dramatically reduces the amount of manual configuration required.
+        # The most important key for this plugin. The generator will find the
+        # 'OpenStack.Volume' schema and auto-create Ansible parameters for
+        # 'size', 'type', 'image', 'availability_zone', etc.
         offering_type: "OpenStack.Volume"
 
-        # The base prefix for inferring standard API operation IDs.
-        # The 'order' plugin uses this to automatically enable:
-        #  - `check`: via `openstack_volumes_list` (to see if the volume already exists)
+        # The base prefix for inferring standard API operations. The plugin uses this for:
+        #  - `check`: `openstack_volumes_list` (to see if the volume already exists).
+        #  - `update`: `openstack_volumes_partial_update` (for direct updates).
         base_operation_id: "openstack_volumes"
 
-        # This block defines how to resolve dependencies and filter choices for the
-        # module's parameters.
+        # This block defines how to resolve dependencies and filter choices.
         resolvers:
-          # This resolver is for the 'type' parameter, which was automatically
-          # inferred from the offering_type schema.
+          # This resolver is for the 'type' parameter, which was auto-inferred.
           type:
             # Shorthand for the volume types API endpoints.
             base: "openstack_volume_types"
-            # This is a powerful feature for dependent filtering. It tells the
-            # generator to filter the list of available volume types based on
-            # the cloud settings of the selected 'offering'.
+            # A powerful feature for dependent filtering. It tells the generator
+            # to filter available volume types based on the cloud settings
+            # of the selected 'offering'.
             filter_by:
-              - # The parameter whose resolved value we will use as the filter source.
+              - # Use the resolved 'offering' parameter as the filter source.
                 source_param: "offering"
-                # The key to extract from the resolved offering's API response.
+                # Extract this key from the resolved offering's API response.
                 source_key: "scope_uuid"
-                # The query parameter to use when listing volume types. The final
-                # API call will be something like:
+                # Use it as this query parameter. The final API call will be:
                 # `.../openstack-volume-types/?tenant_uuid=<offering_scope_uuid>`
                 target_key: "tenant_uuid"
-
-          # The same dependent filtering pattern is applied to the 'image' parameter.
-          image:
-            base: "openstack_images"
-            filter_by:
-              - source_param: "offering"
-                source_key: "scope_uuid"
-                target_key: "tenant_uuid"
-
-          # And again for the 'availability_zone' parameter.
-          availability_zone:
-            base: "openstack_volume_availability_zones"
-            filter_by:
-              - source_param: "offering"
-                source_key: "scope_uuid"
-                target_key: "tenant_uuid"
     ```
+
+---
 
 ### 4. The `actions` Plugin
 
--   **Purpose:** For creating modules that execute specific, one-off **actions** on an existing resource. This is ideal for operations that don't fit the standard CRUD lifecycle, such as `reboot`, `connect`, `pull`, or `start`. These modules are essentially command runners for your API.
+-   **Purpose:** For creating modules that execute specific, one-off **actions** on an existing resource (e.g., `reboot`, `pull`, `start`). These modules are essentially command runners for your API.
 
 -   **Workflow:**
-    1.  The module first finds the target resource using an identifier (e.g., `name`) and optional `context_params`. It will fail if the resource is not found.
-    2.  It then executes a `POST` request to the API endpoint corresponding to the user-selected `action`.
-    3.  The module always reports `changed=True` upon successful execution of an action.
-    4.  It re-fetches the resource's state after the action and returns it, allowing users to see the result of the command.
+    1.  Finds the target resource using an identifier and optional context filters. Fails if not found.
+    2.  Executes a `POST` request to the API endpoint corresponding to the user-selected `action`.
+    3.  Always reports `changed=True` on success and returns the resource's state after the action.
 
 -   **Configuration Example (`generator_config.yaml`):**
-    This example creates a `subnet_action` module to connect or disconnect a subnet in OpenStack.
+    This example creates a `vpc_action` module to perform operations on an OpenStack Tenant (VPC).
 
     ```yaml
     modules:
-      - name: subnet_action
+      - name: vpc_action
         plugin: actions
-        resource_type: "OpenStack subnet"
-        description: "Perform actions on OpenStack Subnets."
+        resource_type: "OpenStack tenant"
+        description: "Perform actions on an OpenStack tenant (VPC)."
 
-        # The base operation ID used to infer `_list`, `_retrieve`, and action operations.
-        # For example, 'connect' becomes 'openstack_subnets_connect'.
-        base_operation_id: "openstack_subnets"
+        # The base ID used to infer `_list`, `_retrieve`, and all action operations.
+        # For example, 'pull' becomes 'openstack_tenants_pull'.
+        base_operation_id: "openstack_tenants"
 
-        # A list of action names. The generator infers the full `operationId` for each
-        # action by appending the name to the `base_operation_id` (e.g.,
-        # `base_operation_id: "openstack_subnets"` and action `"connect"` becomes
-        # `openstack_subnets_connect`). These names become the choices for the
-        # module's `action` parameter.
+        # A list of action names. These become the `choices` for the module's
+        # `action` parameter. The generator infers the full `operationId` for each.
         actions:
-          - connect
-          - disconnect
           - pull
+          - unlink
 
-        # Optional context parameters to help locate the resource.
-        context_params:
-          - name: "tenant"
-            description: "The name or UUID of the tenant to filter subnets by."
-            resolver: "openstack_tenants"
-            filter_key: "tenant_uuid"
+        # Use resolvers to help locate the specific resource to act upon.
+        resolvers:
+          project:
+            base: "projects"
+            check_filter_key: "project_uuid"
     ```
+
+---
 
 ### Reusable Configuration with YAML Anchors
 
-As your `generator_config.yaml` file grows, you'll notice that certain configurations, especially for `resolvers` or `update_config`, are repeated across multiple modules. To keep your configuration DRY (Don't Repeat Yourself) and improve maintainability, you can use a standard YAML feature called **anchors (`&`)** and **aliases (`*`)**.
-
-The generator's YAML parser supports this out of the box, allowing you to define a configuration block once and reuse it wherever needed.
-
-A common convention is to create a top-level key (e.g., `definitions` or `x-fragments`) to hold your reusable blocks.
+To keep your `generator_config.yaml` file DRY (Don't Repeat Yourself) and maintainable, you can use YAML's built-in **anchors (`&`)** and **aliases (`*`)**. The generator fully supports this, allowing you to define a configuration block once and reuse it. A common convention is to create a top-level `definitions` key to hold these reusable blocks.
 
 #### Example 1: Reusing a Common Resolver
 
-Imagine you have two modules that both need to resolve a `tenant`.
-
-**Before (Repetitive Configuration):**
-
+**Before (Repetitive):**
 ```yaml
-collections:
-  - namespace: waldur
-    name: openstack
-    version: 1.0.0
-    modules:
-      - name: security_group
-        plugin: crud
-        resource_type: "security group"
-        # ... other config ...
-        resolvers:
-          tenant:
-            list: "openstack_tenants_list"
-            retrieve: "openstack_tenants_retrieve"
-            error_message: "Tenant '{value}' not found."
-
-      - name: volume_facts
-        plugin: facts
-        resource_type: "volume"
-        # ... other config ...
-        context_params:
-          - name: "tenant"
-            description: "The tenant to filter volumes by."
-            resolver:
-              list: "openstack_tenants_list"
-              retrieve: "openstack_tenants_retrieve"
-              filter_key: "tenant_uuid"
+- name: security_group
+  resolvers:
+    tenant: { base: "openstack_tenants" }
+- name: volume_facts
+  resolvers:
+    tenant: { base: "openstack_tenants" }
 ```
 
-**After (Using a Reusable Anchor):**
-
-We define the resolver once under a `definitions` key and give it an anchor `&tenant_resolver`. Then, we use the alias `*tenant_resolver` to insert that block in multiple places.
-
+**After (Reusable):**
+We define the resolver once with an anchor `&tenant_resolver`, then reuse it with the alias `*tenant_resolver`.
 ```yaml
-# Define reusable configuration blocks at the top level.
 definitions:
-  # This entire block is now anchored with the name 'tenant_resolver'.
   tenant_resolver: &tenant_resolver
-    list: "openstack_tenants_list"
-    retrieve: "openstack_tenants_retrieve"
-    error_message: "Tenant '{value}' not found."
+    base: "openstack_tenants"
 
-collections:
-  - namespace: waldur
-    name: openstack
-    version: 1.0.0
-    modules:
-      - name: security_group
-        plugin: crud
-        resource_type: "security group"
-        # ... other config ...
-        resolvers:
-          # Use the alias '*' to insert the anchored block here.
-          tenant: *tenant_resolver
-
-      - name: volume_facts
-        plugin: facts
-        resource_type: "volume"
-        # ... other config ...
-        context_params:
-          - name: "tenant"
-            description: "The tenant to filter volumes by."
-            # The alias works for nested keys too.
-            resolver: *tenant_resolver
-            filter_key: "tenant_uuid"
+modules:
+  - name: security_group
+    resolvers:
+      tenant: *tenant_resolver
+  - name: volume_facts
+    resolvers:
+      tenant: *tenant_resolver
 ```
 
-#### Example 2: Creating a Reusable Module Template
+#### Example 2: Composing Configurations with Merge Keys
 
-You can make entire module definitions reusable by combining anchors with the YAML **merge key (`<<`)**. This allows you to define a "base" module and then override or extend it for specific cases.
-
-This is perfect for a set of simple CRUD resources that share the same plugin type and update logic but differ only in their `resource_type` and API `base_operation_id`.
+You can combine anchors with the YAML **merge key (`<<`)** to build complex configurations from smaller, reusable parts. This is perfect for creating a set of resolvers that apply to most resources in a collection.
 
 ```yaml
 definitions:
-  # Define a base template for a simple CRUD module.
-  base_crud_module: &base_crud_module
-    plugin: crud
-    update_config:
-      fields:
-        - "name"
-        - "description"
+  # Define small, reusable resolver fragments.
+  project_context_resolver: &project_context_resolver
+    project:
+      base: "projects"
+      check_filter_key: "project_uuid"
 
-collections:
-  - namespace: waldur
-    name: structure
-    version: 1.0.0
-    modules:
-      - name: customer
-        # The '<<: *base_crud_module' line merges the anchored block.
-        # Keys defined here will override any from the base template.
-        <<: *base_crud_module
-        resource_type: "customer"
-        base_operation_id: "customers"
-        description: "Manage Customers in Waldur."
+  tenant_context_resolver: &tenant_context_resolver
+    tenant:
+      base: "openstack_tenants"
+      check_filter_key: "tenant_uuid"
 
-      - name: project
-        <<: *base_crud_module
-        resource_type: "project"
-        base_operation_id: "projects"
-        description: "Manage Projects in Waldur."
-        # You can also add keys that don't exist in the base template.
-        resolvers:
-          customer:
-            list: "customers_list"
-            retrieve: "customers_retrieve"
-            error_message: "Customer '{value}' not found."
+  # Create a composite block by merging the fragments.
+  base_openstack_resolvers: &base_openstack_resolvers
+    <<: [ *project_context_resolver, *tenant_context_resolver ]
+
+# ... in your collection definition ...
+modules:
+  - name: volume_facts
+    plugin: facts
+    base_operation_id: "openstack_volumes"
+    # Now, simply merge in the entire block of common resolvers.
+    resolvers:
+      <<: *base_openstack_resolvers
+
+  - name: security_group_facts
+    plugin: facts
+    base_operation_id: "openstack_security_groups"
+    resolvers:
+      <<: *base_openstack_resolvers
 ```
 
 By using these standard YAML features, you can significantly reduce duplication and make your generator configuration cleaner and easier to manage.
@@ -1183,3 +1084,233 @@ class TestProjectModule:
         assert exit_result['changed'] is True
         assert exit_result['resource']['name'] == "E2E New Project"
 ```
+
+## Migration and Usage Guide for Playbook Authors
+
+This guide is for users migrating playbooks from the previous, manually-written Waldur modules to the new, auto-generated collections defined in this project.
+
+The new collections offer significant advantages in consistency, predictability, and feature coverage. The migration process primarily involves updating module names to their **Fully Qualified Collection Names (FQCN)** and, in some cases, adjusting parameters to align with the new standardized approach.
+
+### Core Conceptual Changes
+
+1.  **Collections are Mandatory:** All modules now live inside a collection (e.g., `waldur.openstack`, `waldur.structure`) and **must** be called using their FQCN.
+2.  **Consistent Naming:** All data-gathering modules are now consistently named with a `_facts` suffix (e.g., `security_group_facts`).
+3.  **Predictable Return Values:**
+    *   Modules with `state: present` **always** return the result in a `resource` key.
+    *   `_facts` modules **always** return a list of results in a `resources` key.
+
+### Practical Migration & Usage Patterns
+
+The following examples are based directly on the modules defined in `generator_config.yaml` and demonstrate the primary usage patterns.
+
+#### Pattern 1: Managing Simple Resources (`crud` plugin)
+
+Modules like `waldur.structure.project` and `waldur.openstack.security_group` manage resources with direct, synchronous API endpoints for create, update, and delete.
+
+**Before (`waldur_os_security_group`):**
+```yaml
+- name: Create an old-style security group
+  waldur_os_security_group:
+    access_token: "{{ waldur_access_token }}"
+    api_url: "{{ waldur_api_url }}"
+    state: present
+    tenant: "My-Cloud-Tenant"
+    name: "web-server-sg"
+```
+
+**After (`waldur.openstack.security_group`):**
+```yaml
+  - name: "Ensure 'web-server-sg' exists"
+    waldur.openstack.security_group:
+      api_url: "{{ waldur_api_url }}"
+      access_token: "{{ waldur_access_token }}"
+      state: present
+      project: "Cloud Project"
+      customer: "Big Corp Inc."
+      tenant: "My-Cloud-Tenant"
+      name: "web-server-sg"
+```
+* **Key Change:** The new `security_group` module is more robust and requires the full context (`project`, `customer`, `tenant`) for unambiguous lookups, as defined in its `resolvers` configuration.
+
+---
+
+#### Pattern 2: High-Level Resource Provisioning (`order` plugin)
+
+This is the **recommended pattern** for provisioning cloud resources like VMs and volumes. Modules like `waldur.openstack.instance` abstract away the asynchronous marketplace order workflow entirely.
+
+*   **You define the final resource** (e.g., a VM with a specific flavor and image).
+*   The module handles creating the order, waiting for it to complete, and returns the final, provisioned **resource object**.
+
+**Before (`waldur_marketplace_os_instance`):**
+```yaml
+- name: Provision an old-style VM
+  waldur_marketplace_os_instance:
+    access_token: "{{ waldur_access_token }}"
+    api_url: "{{ waldur_api_url }}"
+    state: present
+    project: "Cloud Project"
+    offering: "Instance in Tenant"
+    name: "My Legacy VM"
+    # ... other VM-specific parameters
+```
+
+**After (`waldur.openstack.instance`):**
+```yaml
+- name: Provision an OpenStack VM
+  hosts: localhost
+  collections:
+    - waldur.openstack
+
+  tasks:
+    - name: "Provision a new VM by creating an order"
+      instance:
+        api_url: "{{ waldur_api_url }}"
+        access_token: "{{ waldur_access_token }}"
+        state: present
+        project: "Cloud Project"
+        offering: "VM in MyCloud"
+        name: "ci-runner-01"
+        flavor: "g-standard-2"
+        image: "Ubuntu 22.04"
+        system_volume_size: 20
+      register: vm_creation
+
+    - name: "Show the final provisioned VM resource"
+      ansible.builtin.debug:
+        var: vm_creation.resource # This contains the VM details, not the order details
+```
+
+---
+
+#### Pattern 3: Low-Level Order Management (`crud` plugin on orders)
+
+This is an **advanced pattern** for users who need to interact directly with the order object itself, similar to the old generic `waldur_marketplace` module. The `waldur.marketplace.order` module is used for this.
+
+*   You define the **order itself**, passing all resource-specific details in the `attributes` dictionary.
+*   The module creates the order and returns the **order object**. It does *not* wait for the resource to be provisioned.
+
+**Before (`waldur_marketplace`):**
+```yaml
+- name: Create a generic old-style order
+  waldur_marketplace:
+    access_token: "{{ waldur_access_token }}"
+    api_url: "{{ waldur_api_url }}"
+    project: "Cloud Project"
+    offering: "VM in MyCloud"
+    plan: "Standard Plan"
+    attributes:
+      name: "my-vm-from-generic-order"
+      flavor: "g-standard-2"
+      image: "Ubuntu 22.04"
+      system_volume_size: 10240
+```
+
+**After (`waldur.marketplace.order`):**
+```yaml
+- name: Create a generic new-style order
+  hosts: localhost
+  collections:
+    - waldur.marketplace
+
+  tasks:
+    - name: "Create a marketplace order object"
+      order:
+        api_url: "{{ waldur_api_url }}"
+        access_token: "{{ waldur_access_token }}"
+        state: present
+        project: "Cloud Project"
+        offering: "VM in MyCloud"
+        plan: "Standard Plan"
+        # The 'name' parameter is for the order object itself
+        name: "Order for my-vm-from-generic-order"
+        attributes:
+          name: "my-vm-from-generic-order"
+          flavor: http://api.example.com/api/openstack-flavors/flavor-uuid/
+          image: http://api.example.com/api/openstack-images/image-uuid/
+          system_volume_size: 10240
+      register: order_result
+
+    - name: "Show the created order object"
+      ansible.builtin.debug:
+        var: order_result.resource # This contains the order details
+```
+
+---
+
+#### Pattern 4: Fetching Information (`facts` modules)
+
+Use a `_facts` module like `waldur.openstack.security_group_facts` to retrieve information without making changes.
+
+**Before (`waldur_os_security_group_gather_facts`):**
+```yaml
+- name: Get old-style security group facts
+  waldur_os_security_group_gather_facts:
+    access_token: "{{ waldur_access_token }}"
+    api_url: "{{ waldur_api_url }}"
+    tenant: "My-Cloud-Tenant"
+  register: sg_facts
+```
+
+**After (`waldur.openstack.security_group_facts`):**
+```yaml
+- name: Get new-style security group facts
+  hosts: localhost
+  collections:
+    - waldur.openstack
+
+  tasks:
+    - name: "Get facts for all security groups in a tenant"
+      security_group_facts:
+        api_url: "{{ waldur_api_url }}"
+        access_token: "{{ waldur_access_token }}"
+        project: "Cloud Project"
+        customer: "Big Corp Inc."
+        tenant: "My-Cloud-Tenant"
+      register: sg_info
+
+    - name: "Display the results"
+      ansible.builtin.debug:
+        var: sg_info.resources # Result is always in the 'resources' key (a list)
+```
+
+---
+
+#### Pattern 5: Executing One-Off Actions (`action` modules)
+
+Modules like `waldur.openstack.instance_action` trigger a specific action on an existing resource (e.g., `start`, `stop`).
+
+**Example: Stop a VM.**
+```yaml
+- name: Perform an Action on an OpenStack VM
+  hosts: localhost
+  collections:
+    - waldur.openstack
+
+  tasks:
+    - name: "Stop the 'ci-runner-01' VM"
+      instance_action:
+        api_url: "{{ waldur_api_url }}"
+        access_token: "{{ waldur_access_token }}"
+        project: "Cloud Project"
+        name: "ci-runner-01"
+        action: stop
+      register: stop_action
+```
+
+---
+
+### Quick Reference: Module Name Changes
+
+| Old Module Name                          | New Module Name (FQCN)                                                                       | Plugin Type |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------- | ----------- |
+| `waldur_marketplace_os_instance`         | `waldur.openstack.instance`                                                                  | `order`     |
+| `waldur_marketplace_os_volume`           | `waldur.openstack.volume`                                                                    | `order`     |
+| `waldur_marketplace` (generic order)     | **Recommended:** `waldur.openstack.instance`, etc. / **Advanced:** `waldur.marketplace.order` | `order`/`crud` |
+| `waldur_os_security_group`               | `waldur.openstack.security_group`                                                            | `crud`      |
+| `waldur_os_subnet`                       | `waldur.openstack.subnet`                                                                    | `crud`      |
+| `waldur_os_floating_ip`                  | `waldur.openstack.floating_ip`                                                               | `crud`      |
+| `waldur_os_snapshot`                     | *Not in config; would be `waldur.openstack.snapshot`*                                        | `crud`      |
+| `waldur_os_instance_volume`              | *Deprecated; manage via `volume` module*                                                     | N/A         |
+| `waldur_os_security_group_gather_facts`  | `waldur.openstack.security_group_facts`                                                      | `facts`     |
+| `waldur_os_subnet_gather_facts`          | `waldur.openstack.subnet_facts`                                                              | `facts`     |
+| `waldur_marketplace_os_get_instance`     | `waldur.openstack.instance_facts`                                                            | `facts`     |
