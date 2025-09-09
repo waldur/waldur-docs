@@ -32,6 +32,10 @@ Conceal civil number in invitation creation dialog.
 
 Show service accounts of the scopes.
 
+## marketplace.allow_display_of_images_in_markdown
+
+Allow display of images in markdown format.
+
 ## marketplace.call_only
 
 Allow marketplace to serve only as aggregator of call info.
