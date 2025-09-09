@@ -1072,7 +1072,7 @@ Once the collection is published, any Ansible user can easily install and use it
             state: present
             name: "Production Project"
             customer: "Customer Name"
-            api_url: "https://api.waldur.com/api/"
+            api_url: "http://127.0.0.1:8000/api/"
             access_token: "{{ my_waldur_token }}"
     ```
 
