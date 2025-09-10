@@ -1,38 +1,51 @@
 # Ansible Waldur Module Generator
 
-This project is a code generator designed to automate the creation of a self-contained **Ansible Collection** for the Waldur API. By defining a module's behavior and its API interactions in a simple YAML configuration file, you can automatically generate robust, well-documented, and idempotent Ansible modules, perfectly packaged for distribution and use.
+This project is a code generator designed to automate the creation of a self-contained **Ansible Collection** for
+the Waldur API. By defining a module's behavior and its API interactions in a simple YAML configuration file, you
+can automatically generate robust, well-documented, and idempotent Ansible modules, perfectly packaged for
+distribution and use.
 
-The primary goal is to eliminate boilerplate code, enforce consistency, and dramatically speed up the development process for managing Waldur resources with Ansible. Waldur Ansible Collection is published on [Ansible Galaxy](https://galaxy.ansible.com/ui/repo/published/waldur/openstack/).
+The primary goal is to eliminate boilerplate code, enforce consistency, and dramatically speed up the
+development process for managing Waldur resources with Ansible. Waldur Ansible Collection is published on
+[Ansible Galaxy](https://galaxy.ansible.com/ui/repo/published/waldur/openstack/).
 
 ## Core Concept
 
 The generator works by combining three main components:
 
-1.  **OpenAPI Specification (`waldur_api.yaml`):** The single source of truth for all available API endpoints, their parameters, and their data models.
-2.  **Generator Configuration (`generator_config.yaml`):** A user-defined YAML file where you describe the Ansible Collection and the modules you want to create. This is where you map high-level logic (like "create a resource") to specific API operations.
-3.  **Plugins:** The engine of the generator. A plugin understands a specific workflow or pattern (e.g., fetching facts, simple CRUD, or complex marketplace orders) and contains the logic to build the corresponding Ansible module code.
+1. **OpenAPI Specification (`waldur_api.yaml`):** The single source of truth for all available API endpoints,
+   their parameters, and their data models.
+2. **Generator Configuration (`generator_config.yaml`):** A user-defined YAML file where you describe the Ansible
+   Collection and the modules you want to create. This is where you map high-level logic (like "create a resource")
+   to specific API operations.
+3. **Plugins:** The engine of the generator. A plugin understands a specific workflow or pattern (e.g., fetching
+   facts, simple CRUD, or complex marketplace orders) and contains the logic to build the corresponding Ansible
+   module code.
 
 ## Getting Started
 
 ### Prerequisites
 
--   Python 3.11+
--   [Poetry](https://python-poetry.org/docs/#installation) (for dependency management and running scripts)
--   Ansible Core (`ansible-core >= 2.14`) for building and using the collection.
+- Python 3.11+
+- [Poetry](https://python-poetry.org/docs/#installation) (for dependency management and running scripts)
+- Ansible Core (`ansible-core >= 2.14`) for building and using the collection.
 
 ### Installation
 
-1.  Clone the repository:
-    ```bash
-    git clone <your-repo-url>
-    cd ansible-waldur-generator
-    ```
+1. Clone the repository:
 
-2.  Install the required Python dependencies using Poetry:
-    ```bash
-    poetry install
-    ```
-    This will create a virtual environment and install packages like `PyYAML`, and `Pytest`.
+   ```bash
+   git clone <your-repo-url>
+   cd ansible-waldur-generator
+   ```
+
+2. Install the required Python dependencies using Poetry:
+
+   ```bash
+   poetry install
+   ```
+
+   This will create a virtual environment and install packages like `PyYAML`, and `Pytest`.
 
 ### Running the Generator
 
@@ -44,14 +57,14 @@ poetry run ansible-waldur-generator
 
 By default, this command will:
 
--   Read `inputs/generator_config.yaml` and `inputs/waldur_api.yaml`.
-
--   Use the configured collection name (e.g., `waldur.openstack`) to create a standard Ansible Collections structure.
-
--   Place the generated collection into the `outputs/` directory.
+- Read `inputs/generator_config.yaml` and `inputs/waldur_api.yaml`.
+- Use the configured collection name (e.g., `waldur.openstack`) to create a standard Ansible Collections
+  structure.
+- Place the generated collection into the `outputs/` directory.
 
 The final structure will look like this:
-```
+
+```text
 outputs/
 └── ansible_collections/
     └── waldur/
@@ -77,14 +90,18 @@ outputs/
 ```
 
 You can customize the path using command-line options:
+
 ```bash
 poetry run generate --config my_config.yaml --output-dir ./dist
 ```
+
 Run `poetry run ansible-waldur-generator --help` for a full list of options.
 
 ## The Plugin System
 
-The generator uses a plugin-based architecture to handle different types of module logic. Each plugin is specialized for a common interaction pattern with the Waldur API. When defining a module in `generator_config.yaml`, the `type` key determines which plugin will be used.
+The generator uses a plugin-based architecture to handle different types of module logic. Each plugin is
+specialized for a common interaction pattern with the Waldur API. When defining a module in
+`generator_config.yaml`, the `type` key determines which plugin will be used.
 
 The header defines Ansible collection namespace, name and version.
 
@@ -104,16 +121,21 @@ Below is a detailed explanation of each available plugin.
 
 ### 1. The `facts` Plugin
 
--   **Purpose:** For creating **read-only** Ansible modules that fetch information about existing resources. These modules never change the state of the system and are analogous to Ansible's `_facts` modules (e.g., `setup_facts`).
+- **Purpose:** For creating **read-only** Ansible modules that fetch information about existing resources.
+  These modules never change the state of the system and are analogous to Ansible's `_facts` modules (e.g.,
+  `setup_facts`).
 
--   **Workflow:**
-    1.  The module's primary goal is to find and return resource data based on an identifier (by default, `name`).
-    2.  If the `many: true` option is set, the module returns a list of all resources matching the filter criteria.
-    3.  If `many: false` (the default), the module expects to find a single resource. It will fail if zero or multiple resources are found, prompting the user to provide a more specific identifier.
-    4.  It can filter its search based on parent resources (like a `project` or `tenant`). This is configured using the standard `resolvers` block.
+- **Workflow:**
+  1. The module's primary goal is to find and return resource data based on an identifier (by default, `name`).
+  2. If the `many: true` option is set, the module returns a list of all resources matching the filter criteria.
+  3. If `many: false` (the default), the module expects to find a single resource. It will fail if zero or
+     multiple resources are found, prompting the user to provide a more specific identifier.
+  4. It can filter its search based on parent resources (like a `project` or `tenant`). This is configured
+     using the standard `resolvers` block.
 
--   **Configuration Example (`generator_config.yaml`):**
-    This example creates a `waldur_openstack_security_group_facts` module to get information about security groups within a specific tenant.
+- **Configuration Example (`generator_config.yaml`):**
+  This example creates a `waldur_openstack_security_group_facts` module to get information about security groups
+  within a specific tenant.
 
     ```yaml
     modules:
@@ -151,24 +173,28 @@ Below is a detailed explanation of each available plugin.
 
 ### 2. The `crud` Plugin
 
--   **Purpose:** For managing the full lifecycle of resources with **simple, direct, synchronous** API calls. This is ideal for resources that have distinct `create`, `list`, `update`, and `destroy` endpoints.
+- **Purpose:** For managing the full lifecycle of resources with **simple, direct, synchronous** API calls.
+  This is ideal for resources that have distinct `create`, `list`, `update`, and `destroy` endpoints.
 
--   **Workflow:**
-    -   **`state: present`**:
-        1.  Calls the `list` operation to check if a resource with the given name already exists.
-        2.  If it **does not exist**, it calls the `create` operation.
-        3.  If it **does exist**, it checks for changes:
-            -   For simple fields in `update_config.fields`, it sends a `PATCH` request if values differ.
-            -   For complex `update_config.actions`, it calls a dedicated `POST` endpoint. If this action is asynchronous (returns `202 Accepted`) and `wait: true`, it will poll the resource until it reaches a stable state.
-    -   **`state: absent`**: Finds the resource and calls the `destroy` operation.
+- **Workflow:**
+  - **`state: present`**:
+    1. Calls the `list` operation to check if a resource with the given name already exists.
+    2. If it **does not exist**, it calls the `create` operation.
+    3. If it **does exist**, it checks for changes:
+       - For simple fields in `update_config.fields`, it sends a `PATCH` request if values differ.
+       - For complex `update_config.actions`, it calls a dedicated `POST` endpoint. If this action is
+         asynchronous (returns `202 Accepted`) and `wait: true`, it will poll the resource until it reaches a
+         stable state.
+  - **`state: absent`**: Finds the resource and calls the `destroy` operation.
 
--   **Return Values:**
-    -   `resource`: A dictionary representing the final state of the resource.
-    -   `commands`: A list detailing the HTTP requests made.
-    -   `changed`: A boolean indicating if any changes were made.
+- **Return Values:**
+  - `resource`: A dictionary representing the final state of the resource.
+  - `commands`: A list detailing the HTTP requests made.
+  - `changed`: A boolean indicating if any changes were made.
 
--   **Configuration Example (`generator_config.yaml`):**
-    This example creates a `security_group` module that is a **nested resource** under a tenant and supports both simple updates (`description`) and a complex, asynchronous action (`set_rules`).
+- **Configuration Example (`generator_config.yaml`):**
+  This example creates a `security_group` module that is a **nested resource** under a tenant and supports both
+  simple updates (`description`) and a complex, asynchronous action (`set_rules`).
 
     ```yaml
     modules:
@@ -225,22 +251,27 @@ Below is a detailed explanation of each available plugin.
 
 ### 3. The `order` Plugin
 
--   **Purpose:** The most powerful plugin, designed for resources managed through Waldur's **asynchronous marketplace order workflow**. This is for nearly all major cloud resources like VMs, volumes, databases, etc.
+- **Purpose:** The most powerful plugin, designed for resources managed through Waldur's **asynchronous
+  marketplace order workflow**. This is for nearly all major cloud resources like VMs, volumes, databases, etc.
 
--   **Key Features:**
-    -   **Attribute Inference**: Specify an `offering_type` to have the generator automatically create all necessary Ansible parameters from the API schema, drastically reducing boilerplate.
-    -   **Termination Attributes**: Define optional parameters for deletion (e.g., `force_destroy`) by configuring the `operations.delete` block.
-    -   **Hybrid Updates**: Intelligently handles both simple `PATCH` updates and complex, asynchronous `POST` actions on existing resources.
+- **Key Features:**
+  - **Attribute Inference**: Specify an `offering_type` to have the generator automatically create all necessary
+    Ansible parameters from the API schema, drastically reducing boilerplate.
+  - **Termination Attributes**: Define optional parameters for deletion (e.g., `force_destroy`) by configuring
+    the `operations.delete` block.
+  - **Hybrid Updates**: Intelligently handles both simple `PATCH` updates and complex, asynchronous `POST`
+    actions on existing resources.
 
--   **Workflow:**
-    -   **`state: present`**:
-        1.  Checks if the resource exists.
-        2.  If not, it creates a marketplace order and polls for completion.
-        3.  If it exists, it performs direct synchronous (`PATCH`) or asynchronous (`POST` with polling) updates as needed.
-    -   **`state: absent`**: Finds the resource and calls the `marketplace_resources_terminate` endpoint.
+- **Workflow:**
+  - **`state: present`**:
+    1. Checks if the resource exists.
+    2. If not, it creates a marketplace order and polls for completion.
+    3. If it exists, it performs direct synchronous (`PATCH`) or asynchronous (`POST` with polling) updates
+       as needed.
+  - **`state: absent`**: Finds the resource and calls the `marketplace_resources_terminate` endpoint.
 
--   **Configuration Example (`generator_config.yaml`):**
-    This example creates a marketplace `volume` module.
+- **Configuration Example (`generator_config.yaml`):**
+  This example creates a marketplace `volume` module.
 
     ```yaml
     modules:
@@ -282,15 +313,16 @@ Below is a detailed explanation of each available plugin.
 
 ### 4. The `actions` Plugin
 
--   **Purpose:** For creating modules that execute specific, one-off **actions** on an existing resource (e.g., `reboot`, `pull`, `start`). These modules are essentially command runners for your API.
+- **Purpose:** For creating modules that execute specific, one-off **actions** on an existing resource
+  (e.g., `reboot`, `pull`, `start`). These modules are essentially command runners for your API.
 
--   **Workflow:**
-    1.  Finds the target resource using an identifier and optional context filters. Fails if not found.
-    2.  Executes a `POST` request to the API endpoint corresponding to the user-selected `action`.
-    3.  Always reports `changed=True` on success and returns the resource's state after the action.
+- **Workflow:**
+  1. Finds the target resource using an identifier and optional context filters. Fails if not found.
+  2. Executes a `POST` request to the API endpoint corresponding to the user-selected `action`.
+  3. Always reports `changed=True` on success and returns the resource's state after the action.
 
--   **Configuration Example (`generator_config.yaml`):**
-    This example creates a `vpc_action` module to perform operations on an OpenStack Tenant (VPC).
+- **Configuration Example (`generator_config.yaml`):**
+  This example creates a `vpc_action` module to perform operations on an OpenStack Tenant (VPC).
 
     ```yaml
     modules:
@@ -320,11 +352,15 @@ Below is a detailed explanation of each available plugin.
 
 ### Reusable Configuration with YAML Anchors
 
-To keep your `generator_config.yaml` file DRY (Don't Repeat Yourself) and maintainable, you can use YAML's built-in **anchors (`&`)** and **aliases (`*`)**. The generator fully supports this, allowing you to define a configuration block once and reuse it. A common convention is to create a top-level `definitions` key to hold these reusable blocks.
+To keep your `generator_config.yaml` file DRY (Don't Repeat Yourself) and maintainable, you can use YAML's
+built-in **anchors (`&`)** and **aliases (`*`)**. The generator fully supports this, allowing you to define a
+configuration block once and reuse it. A common convention is to create a top-level `definitions` key to hold
+these reusable blocks.
 
 #### Example 1: Reusing a Common Resolver
 
 **Before (Repetitive):**
+
 ```yaml
 - name: security_group
   resolvers:
@@ -336,6 +372,7 @@ To keep your `generator_config.yaml` file DRY (Don't Repeat Yourself) and mainta
 
 **After (Reusable):**
 We define the resolver once with an anchor `&tenant_resolver`, then reuse it with the alias `*tenant_resolver`.
+
 ```yaml
 definitions:
   tenant_resolver: &tenant_resolver
@@ -352,7 +389,8 @@ modules:
 
 #### Example 2: Composing Configurations with Merge Keys
 
-You can combine anchors with the YAML **merge key (`<<`)** to build complex configurations from smaller, reusable parts. This is perfect for creating a set of resolvers that apply to most resources in a collection.
+You can combine anchors with the YAML **merge key (`<<`)** to build complex configurations from smaller,
+reusable parts. This is perfect for creating a set of resolvers that apply to most resources in a collection.
 
 ```yaml
 definitions:
@@ -387,11 +425,14 @@ modules:
       <<: *base_openstack_resolvers
 ```
 
-By using these standard YAML features, you can significantly reduce duplication and make your generator configuration cleaner and easier to manage.
+By using these standard YAML features, you can significantly reduce duplication and make your generator
+configuration cleaner and easier to manage.
 
 ## Architecture
 
-The generator's architecture is designed to decouple the Ansible logic from the API implementation details. It achieves this by using the `generator_config.yaml` as a "bridge" between the OpenAPI specification and the generated code. The generator can produce multiple, self-contained Ansible Collections in a single run.
+The generator's architecture is designed to decouple the Ansible logic from the API implementation details. It
+achieves this by using the `generator_config.yaml` as a "bridge" between the OpenAPI specification and the
+generated code. The generator can produce multiple, self-contained Ansible Collections in a single run.
 
 ```mermaid
 graph TD
@@ -415,40 +456,65 @@ graph TD
     D -- Renders final code --> E
 ```
 
-
 ### Plugin-Based Architecture
 
-The system's flexibility comes from its plugin architecture. The `Generator` itself does not know the details of a `crud` module versus an `order` module. It only knows how to interact with the `BasePlugin` interface.
+The system's flexibility comes from its plugin architecture. The `Generator` itself does not know the
+details of a `crud` module versus an `order` module. It only knows how to interact with the `BasePlugin`
+interface.
 
-1.  **Plugin Discovery**: The `PluginManager` uses Python's entry point system to automatically discover and register plugins at startup.
-2.  **Delegation**: The `Generator` reads a module's `plugin` key from the config and asks the `PluginManager` for the corresponding plugin.
-3.  **Encapsulation**: Each plugin fully encapsulates the logic for its type. It knows how to parse its specific YAML configuration, interact with the `ApiSpecParser` to get operation details, and build the final `GenerationContext` needed to render the module.
-4.  **Plugin Contract**: All plugins implement the `BasePlugin` interface, which requires a central `generate()` method. This ensures a consistent interaction pattern between the `Generator` and all plugins.
+1. **Plugin Discovery**: The `PluginManager` uses Python's entry point system to automatically discover and
+   register plugins at startup.
+2. **Delegation**: The `Generator` reads a module's `plugin` key from the config and asks the `PluginManager`
+   for the corresponding plugin.
+3. **Encapsulation**: Each plugin fully encapsulates the logic for its type. It knows how to parse its specific
+   YAML configuration, interact with the `ApiSpecParser` to get operation details, and build the final
+   `GenerationContext` needed to render the module.
+4. **Plugin Contract**: All plugins implement the `BasePlugin` interface, which requires a central `generate()`
+   method. This ensures a consistent interaction pattern between the `Generator` and all plugins.
 
 ### Runtime Logic (Runners and the Resolver)
 
-The logic that executes at runtime inside an Ansible module is split between two key components: **Runners** and the **ParameterResolver**.
+The logic that executes at runtime inside an Ansible module is split between two key components: **Runners**
+and the **ParameterResolver**.
 
-1.  **Runners (`runner.py`)**: Each plugin is paired with a `runner.py` file (e.g., `CrudRunner`, `OrderRunner`). This runner contains the Python logic for the module's state management (create, update, delete). The generated module file (e.g., `project.py`) is a thin wrapper that calls its corresponding runner. The generator copies the runner and a `base_runner.py` into the collection's `plugins/module_utils/` directory and rewrites their imports, making the collection **fully self-contained**.
+1. **Runners (`runner.py`)**: Each plugin is paired with a `runner.py` file (e.g., `CrudRunner`,
+   `OrderRunner`). This runner contains the Python logic for the module's state management (create, update,
+   delete). The generated module file (e.g., `project.py`) is a thin wrapper that calls its corresponding
+   runner. The generator copies the runner and a `base_runner.py` into the collection's `plugins/module_utils/`
+   directory and rewrites their imports, making the collection **fully self-contained**.
 
-2.  **ParameterResolver**: This is a powerful, centralized utility that is composed within each runner. Its sole responsibility is to handle the complex, recursive resolution of user-friendly inputs (like resource names) into the URLs or other data structures required by the API. By centralizing this logic, runners are kept clean and focused on their state-management tasks. The resolver supports:
-    *   Simple name/UUID to URL conversion.
-    *   Recursive resolution of nested dictionaries and lists.
-    *   Caching of API responses to avoid redundant network calls.
-    *   Dependency-based filtering (e.g., filtering flavors by the tenant of a resolved offering).
+2. **ParameterResolver**: This is a powerful, centralized utility that is composed within each runner. Its
+   sole responsibility is to handle the complex, recursive resolution of user-friendly inputs (like resource
+   names) into the URLs or other data structures required by the API. By centralizing this logic, runners are
+   kept clean and focused on their state-management tasks. The resolver supports:
+   - Simple name/UUID to URL conversion.
+   - Recursive resolution of nested dictionaries and lists.
+   - Caching of API responses to avoid redundant network calls.
+   - Dependency-based filtering (e.g., filtering flavors by the tenant of a resolved offering).
 
 ### The "Plan and Execute" Runtime Model
 
-While the generator builds the module code, the real intelligence lies in the runtime architecture it creates. All generated modules follow a robust, two-phase **"plan and execute"** workflow orchestrated by a `BaseRunner` class, which is vendored into the collection's `module_utils`.
+While the generator builds the module code, the real intelligence lies in the runtime architecture it creates.
+All generated modules follow a robust, two-phase **"plan and execute"** workflow orchestrated by a `BaseRunner`
+class, which is vendored into the collection's `module_utils`.
 
-1.  **Planning Phase**: The `BaseRunner` first determines the current state of the resource (does it exist?). It then calls a `plan_*` method (e.g., `plan_creation`, `plan_update`) corresponding to the desired state. This planning method **does not make any changes** to the system. Instead, it builds a list of `Command` objects. Each `Command` is a simple data structure that encapsulates a single, atomic API request (method, path, body).
+1. **Planning Phase**: The `BaseRunner` first determines the current state of the resource (does it exist?).
+   It then calls a `plan_*` method (e.g., `plan_creation`, `plan_update`) corresponding to the desired state.
+   This planning method **does not make any changes** to the system. Instead, it builds a list of `Command`
+   objects. Each `Command` is a simple data structure that encapsulates a single, atomic API request (method,
+   path, body).
 
-2.  **Execution Phase**: If not in check mode, the `BaseRunner` iterates through the generated plan and executes each `Command`, making the actual API calls.
+2. **Execution Phase**: If not in check mode, the `BaseRunner` iterates through the generated plan and executes
+   each `Command`, making the actual API calls.
 
 This separation provides key benefits:
--   **Perfect Check Mode**: Since the planning phase is purely declarative and makes no changes, check mode works perfectly by simply serializing the plan without executing it.
--   **Clear Auditing**: The final output of a module includes a `commands` key, which is a serialized list of the exact HTTP requests that were planned and executed. This provides complete transparency.
--   **Consistency**: All module types (`crud`, `order`) use the same underlying `BaseRunner` and `Command` structure, ensuring consistent behavior.
+
+- **Perfect Check Mode**: Since the planning phase is purely declarative and makes no changes, check mode works
+  perfectly by simply serializing the plan without executing it.
+- **Clear Auditing**: The final output of a module includes a `commands` key, which is a serialized list of the
+  exact HTTP requests that were planned and executed. This provides complete transparency.
+- **Consistency**: All module types (`crud`, `order`) use the same underlying `BaseRunner` and `Command`
+  structure, ensuring consistent behavior.
 
 The diagram below illustrates this runtime workflow.
 
@@ -486,24 +552,34 @@ sequenceDiagram
 
 ### The Resolvers Concept: Bridging the Human-API Gap
 
-At the heart of the generator's power is the **Resolver System**. Its fundamental purpose is to bridge the gap between a human-friendly Ansible playbook and the strict requirements of a machine-focused API.
+At the heart of the generator's power is the **Resolver System**. Its fundamental purpose is to bridge the gap
+between a human-friendly Ansible playbook and the strict requirements of a machine-focused API.
 
--   **The Problem:** An Ansible user wants to write `customer: 'Big Corp Inc.'`. However, the Waldur API requires a full URL for the customer field when creating a new project, like `customer: 'https://api.example.com/api/customers/a1b2-c3d4-e5f6/'`. Asking users to find and hardcode these URLs is cumbersome, error-prone, and goes against the principle of declarative, readable automation.
+- **The Problem:** An Ansible user wants to write `customer: 'Big Corp Inc.'`. However, the Waldur API
+  requires a full URL for the customer field when creating a new project, like
+  `customer: 'https://api.example.com/api/customers/a1b2-c3d4-e5f6/'`. Asking users to find and hardcode these
+  URLs is cumbersome, error-prone, and goes against the principle of declarative, readable automation.
 
--   **The Solution:** Resolvers automate this translation. You define *how* to find a resource (like a customer) by its name or UUID, and the generated module's runtime logic (the "runner") will handle the lookup and substitution for you.
+- **The Solution:** Resolvers automate this translation. You define *how* to find a resource (like a customer)
+  by its name or UUID, and the generated module's runtime logic (the "runner") will handle the lookup and
+  substitution for you.
 
-This system is used by all plugins but is most critical for the `crud` and `order` plugins, which manage resource relationships. Let's explore how it works using examples from our `generator_config.yaml`.
+This system is used by all plugins but is most critical for the `crud` and `order` plugins, which manage
+resource relationships. Let's explore how it works using examples from our `generator_config.yaml`.
 
 #### Simple Resolvers
 
-A simple resolver handles a direct, one-to-one relationship. It takes a name or UUID and finds the corresponding resource's URL. This is common for top-level resources or parent-child relationships.
+A simple resolver handles a direct, one-to-one relationship. It takes a name or UUID and finds the
+corresponding resource's URL. This is common for top-level resources or parent-child relationships.
 
--   **Mechanism:** It works by using two API operations which are inferred from a base string:
-    1.  A `list` operation to search for the resource by its name (e.g., `customers_list` with a `name_exact` filter).
-    2.  A `retrieve` operation to fetch the resource directly if the user provides a UUID (this is a performance optimization).
+- **Mechanism:** It works by using two API operations which are inferred from a base string:
+  1. A `list` operation to search for the resource by its name (e.g., `customers_list` with a `name_exact`
+     filter).
+  2. A `retrieve` operation to fetch the resource directly if the user provides a UUID (this is a performance
+     optimization).
 
--   **Configuration Example (from `waldur.structure`):**
-    This example configures resolvers for the `customer` and `type` parameters in the `project` module.
+- **Configuration Example (from `waldur.structure`):**
+  This example configures resolvers for the `customer` and `type` parameters in the `project` module.
 
     ```yaml
     # In generator_config.yaml
@@ -520,8 +596,8 @@ A simple resolver handles a direct, one-to-one relationship. It takes a name or 
         type: "project_types"
     ```
 
--   **Runtime Workflow:**
-    When a user runs a playbook with `customer: "Big Corp"`, the `project` module's runner executes the following logic:
+- **Runtime Workflow:**
+  When a user runs a playbook with `customer: "Big Corp"`, the `project` module's runner executes the following logic:
 
     ```mermaid
     sequenceDiagram
@@ -543,14 +619,19 @@ A simple resolver handles a direct, one-to-one relationship. It takes a name or 
 
 #### Advanced Resolvers: Dependency Filtering
 
-The true power of the resolver system shines when dealing with nested or context-dependent resources. This is essential for the `order` plugin.
+The true power of the resolver system shines when dealing with nested or context-dependent resources. This is
+essential for the `order` plugin.
 
--   **The Problem:** Many cloud resources are not globally unique. For example, an OpenStack "flavor" named `small` might exist in multiple tenants. To create a VM, you need the *specific* `small` flavor that belongs to the tenant where you are deploying. A simple name lookup is not enough.
+- **The Problem:** Many cloud resources are not globally unique. For example, an OpenStack "flavor" named
+  `small` might exist in multiple tenants. To create a VM, you need the *specific* `small` flavor that belongs
+  to the tenant where you are deploying. A simple name lookup is not enough.
 
--   **The Solution:** The `order` plugin's resolvers support a `filter_by` configuration. This allows one resolver's lookup to be filtered by the results of another, previously resolved parameter.
+- **The Solution:** The `order` plugin's resolvers support a `filter_by` configuration. This allows one
+  resolver's lookup to be filtered by the results of another, previously resolved parameter.
 
--   **Configuration Example (from `waldur.openstack`):**
-    This `instance` module resolves a `flavor`. The list of available flavors *must* be filtered by the tenant, which is derived from the `offering` the user has chosen.
+- **Configuration Example (from `waldur.openstack`):**
+  This `instance` module resolves a `flavor`. The list of available flavors *must* be filtered by the tenant,
+  which is derived from the `offering` the user has chosen.
 
     ```yaml
     # In generator_config.yaml
@@ -577,7 +658,7 @@ The true power of the resolver system shines when dealing with nested or context
               target_key: "tenant_uuid"
     ```
 
--   **Runtime Workflow:** This is a multi-step process managed internally by the runner and resolver.
+- **Runtime Workflow:** This is a multi-step process managed internally by the runner and resolver.
 
     ```mermaid
     sequenceDiagram
@@ -609,126 +690,174 @@ The true power of the resolver system shines when dealing with nested or context
 
 #### Resolving Lists of Items
 
-Another common scenario is a parameter that accepts a list of resolvable items, such as the `security_groups` for a VM.
+Another common scenario is a parameter that accepts a list of resolvable items, such as the `security_groups`
+for a VM.
 
--   **The Problem:** The user wants to provide a simple list of names: `security_groups: ['web', 'ssh']`. The API, however, often requires a more complex structure, like a list of objects: `security_groups: [{ "url": "https://.../sg-web-uuid/" }, { "url": "https://.../sg-ssh-uuid/" }]`.
+- **The Problem:** The user wants to provide a simple list of names: `security_groups: ['web', 'ssh']`. The
+  API, however, often requires a more complex structure, like a list of objects:
+  `security_groups: [{ "url": "https://.../sg-web-uuid/" }, { "url": "https://.../sg-ssh-uuid/" }]`.
 
--   **The Solution:** The resolver system handles this automatically. The generator analyzes the OpenAPI schema for the `offering_type`. When it sees that the `security_groups` attribute is an `array` of objects with a `url` property, it configures the runner to:
-    1.  Iterate through the user's simple list (`['web', 'ssh']`).
-    2.  Resolve each name individually to its full object, using the `security_groups` resolver configuration (which itself uses dependency filtering, as shown above).
-    3.  Extract the `url` from each resolved object.
-    4.  Construct the final list of dictionaries in the format required by the API.
+- **The Solution:** The resolver system handles this automatically. The generator analyzes the OpenAPI schema
+  for the `offering_type`. When it sees that the `security_groups` attribute is an `array` of objects with a
+  `url` property, it configures the runner to:
+  1. Iterate through the user's simple list (`['web', 'ssh']`).
+  2. Resolve each name individually to its full object, using the `security_groups` resolver configuration
+     (which itself uses dependency filtering, as shown above).
+  3. Extract the `url` from each resolved object.
+  4. Construct the final list of dictionaries in the format required by the API.
 
-This powerful abstraction keeps the Ansible playbook clean and simple, hiding the complexity of the underlying API. The user only needs to provide the list of names, and the resolver handles the rest.
+This powerful abstraction keeps the Ansible playbook clean and simple, hiding the complexity of the underlying
+API. The user only needs to provide the list of names, and the resolver handles the rest.
 
 ## The Unified Update Architecture
 
-The generator employs a sophisticated, unified architecture for handling resource updates within `state: present` tasks. This system is designed to be both powerful and consistent, ensuring that all generated modules—regardless of their plugin (`crud` or `order`)—behave predictably and correctly, especially when dealing with complex data structures.
+The generator employs a sophisticated, unified architecture for handling resource updates within `state: present`
+tasks. This system is designed to be both powerful and consistent, ensuring that all generated modules—regardless
+of their plugin (`crud` or `order`)—behave predictably and correctly, especially when dealing with complex data
+structures.
 
-The core design principle is **"Specialized Setup, Generic Execution."** Specialized runners (`CrudRunner`, `OrderRunner`) are responsible for preparing a context-specific environment, while a shared `BaseRunner` provides a powerful, generic toolkit of "engine" methods that perform the actual update logic. This maximizes code reuse and enforces consistent behavior.
+The core design principle is **"Specialized Setup, Generic Execution."** Specialized runners (`CrudRunner`,
+`OrderRunner`) are responsible for preparing a context-specific environment, while a shared `BaseRunner` provides
+a powerful, generic toolkit of "engine" methods that perform the actual update logic. This maximizes code reuse
+and enforces consistent behavior.
 
 ### Core Components
 
-1.  **`BaseRunner` (The Engine):** This class contains the three central methods that form the update toolkit:
-    *   `_handle_simple_updates()`: Manages direct `PATCH` requests for simple, mutable fields (like `name` or `description`).
-    *   `_handle_action_updates()`: Orchestrates the entire lifecycle for complex, action-based updates (like setting security group rules).
-    *   `_normalize_for_comparison()`: A critical utility that provides robust, order-insensitive idempotency checks for complex data types like lists of dictionaries.
+1. **`BaseRunner` (The Engine):** This class contains the three central methods that form the update toolkit:
+   - `_handle_simple_updates()`: Manages direct `PATCH` requests for simple, mutable fields (like `name` or
+     `description`).
+   - `_handle_action_updates()`: Orchestrates the entire lifecycle for complex, action-based updates (like
+     setting security group rules).
+   - `_normalize_for_comparison()`: A critical utility that provides robust, order-insensitive idempotency
+     checks for complex data types like lists of dictionaries.
 
-2.  **Specialized Runners (The Orchestrators):**
-    *   **`CrudRunner`:** Uses the `BaseRunner` toolkit directly with minimal setup, as its context is typically straightforward.
-    *   **`OrderRunner`:** Performs crucial, context-specific setup (like priming its cache with the marketplace `offering`) before delegating to the same `BaseRunner` toolkit.
+2. **Specialized Runners (The Orchestrators):**
+   - **`CrudRunner`:** Uses the `BaseRunner` toolkit directly with minimal setup, as its context is typically
+     straightforward.
+   - **`OrderRunner`:** Performs crucial, context-specific setup (like priming its cache with the marketplace
+     `offering`) before delegating to the same `BaseRunner` toolkit.
 
 ### Deep Dive: The Idempotency Engine (`_normalize_for_comparison`)
 
-The cornerstone of the update architecture is its ability to correctly determine if a change is needed, especially for lists of objects where order does not matter. The `_normalize_for_comparison` method is the "engine" that makes this possible.
+The cornerstone of the update architecture is its ability to correctly determine if a change is needed,
+especially for lists of objects where order does not matter. The `_normalize_for_comparison` method is the
+"engine" that makes this possible.
 
-**Problem:** How do you compare `[{'subnet': 'A'}]` from a user's playbook with `[{'uuid': '...', 'subnet': 'A', 'name': '...'}]` from the API? How do you compare `['A', 'B']` with `['B', 'A']`?
+**Problem:** How do you compare `[{'subnet': 'A'}]` from a user's playbook with
+`[{'uuid': '...', 'subnet': 'A', 'name': '...'}]` from the API? How do you compare `['A', 'B']` with `['B', 'A']`?
 
-**Solution:** The method transforms both the desired state and the current state into a **canonical, order-insensitive, and comparable format (a set)** before checking for equality.
+**Solution:** The method transforms both the desired state and the current state into a **canonical,
+order-insensitive, and comparable format (a set)** before checking for equality.
 
 #### Mode A: Complex Objects (e.g., a list of `ports`)
 
-When comparing lists of dictionaries, the method uses `idempotency_keys` (provided by the generator plugin based on the API schema) to understand what defines an object's identity.
+When comparing lists of dictionaries, the method uses `idempotency_keys` (provided by the generator plugin based
+on the API schema) to understand what defines an object's identity.
 
-1.  **Input (Desired State):** `[{'subnet': 'url_A', 'fixed_ips': ['1.1.1.1']}]`
-2.  **Input (Current State):** `[{'uuid': 'p1', 'subnet': 'url_A', 'fixed_ips': ['1.1.1.1']}]`
-3.  **Idempotency Keys:** `['subnet', 'fixed_ips']`
-4.  **Process:**
-    *   For each dictionary, it creates a new one containing *only* the `idempotency_keys`.
-    *   It converts this filtered dictionary into a sorted, compact JSON string (e.g., `'{"fixed_ips":["1.1.1.1"],"subnet":"url_A"}'`). This string is deterministic and hashable.
-    *   It adds these strings to a set.
-5.  **Result:** Both inputs are transformed into the exact same set: `{'{"fixed_ips":["1.1.1.1"],"subnet":"url_A"}'}`. The comparison `set1 == set2` evaluates to `True`, and **no change is triggered.** Idempotency is achieved.
+1. **Input (Desired State):** `[{'subnet': 'url_A', 'fixed_ips': ['1.1.1.1']}]`
+2. **Input (Current State):** `[{'uuid': 'p1', 'subnet': 'url_A', 'fixed_ips': ['1.1.1.1']}]`
+3. **Idempotency Keys:** `['subnet', 'fixed_ips']`
+4. **Process:**
+   - For each dictionary, it creates a new one containing *only* the `idempotency_keys`.
+   - It converts this filtered dictionary into a sorted, compact JSON string (e.g.,
+     `'{"fixed_ips":["1.1.1.1"],"subnet":"url_A"}'`). This string is deterministic and hashable.
+   - It adds these strings to a set.
+5. **Result:** Both inputs are transformed into the exact same set:
+   `{'{"fixed_ips":["1.1.1.1"],"subnet":"url_A"}'}`. The comparison `set1 == set2` evaluates to
+   `True`, and **no change is triggered.** Idempotency is achieved.
 
 #### Mode B: Simple Values (e.g., a list of `security_group` URLs)
 
 When comparing lists of simple values (strings, numbers), the solution is simpler.
 
-1.  **Input (Desired State):** `['url_A', 'url_B']`
-2.  **Input (Current State):** `['url_B', 'url_A']`
-3.  **Process:** It converts both lists directly into sets.
-4.  **Result:** Both inputs become `{'url_A', 'url_B'}`. The comparison `set1 == set2` is `True`, and **no change is triggered.**
+1. **Input (Desired State):** `['url_A', 'url_B']`
+2. **Input (Current State):** `['url_B', 'url_A']`
+3. **Process:** It converts both lists directly into sets.
+4. **Result:** Both inputs become `{'url_A', 'url_B'}`. The comparison `set1 == set2` is `True`, and **no change
+   is triggered.**
 
 ### Handling Critical Edge Cases
 
-The unified architecture is designed to handle two critical, real-world edge cases that often break simpler update logic.
+The unified architecture is designed to handle two critical, real-world edge cases that often break simpler
+update logic.
 
 #### Edge Case 1: Asymmetric Data Representation
 
-*   **Problem:** An existing resource might represent a relationship with a "rich" list of objects (e.g., `security_groups: [{'name': 'sg1', 'url': '...'}]`), but the API action to update them requires a "simple" list of strings (e.g., `['url1', 'url2']`).
-*   **Solution:** The `_handle_action_updates` method contains specific logic to detect this asymmetry. If the resolved user payload is a simple list of strings, but the resource's current value is a complex list of objects, it intelligently **transforms the resource's list** by extracting the `url` from each object before passing both simple lists to the normalizer. This ensures a correct, apples-to-apples comparison.
+- **Problem:** An existing resource might represent a relationship with a "rich" list of objects (e.g.,
+  `security_groups: [{'name': 'sg1', 'url': '...'}]`), but the API action to update them requires a "simple"
+  list of strings (e.g., `['url1', 'url2']`).
+- **Solution:** The `_handle_action_updates` method contains specific logic to detect this asymmetry. If the
+  resolved user payload is a simple list of strings, but the resource's current value is a complex list of
+  objects, it intelligently **transforms the resource's list** by extracting the `url` from each object before
+  passing both simple lists to the normalizer. This ensures a correct, apples-to-apples comparison.
 
 #### Edge Case 2: Varied API Payload Formats
 
-*   **Problem:** Some API action endpoints expect a JSON object as the request body (e.g., `{"rules": [...]}`), while others expect a raw JSON array (e.g., `[...]`).
-*   **Solution:** The generator plugin analyzes the OpenAPI specification for each action endpoint. It passes a boolean flag, `wrap_in_object`, in the runner's context. The `_handle_action_updates` method reads this flag and constructs the `final_api_payload` in the precise format the API endpoint requires, avoiding schema validation errors.
+- **Problem:** Some API action endpoints expect a JSON object as the request body (e.g., `{"rules": [...]}`),
+  while others expect a raw JSON array (e.g., `[...]`).
+- **Solution:** The generator plugin analyzes the OpenAPI specification for each action endpoint. It passes a
+  boolean flag, `wrap_in_object`, in the runner's context. The `_handle_action_updates` method reads this flag
+  and constructs the `final_api_payload` in the precise format the API endpoint requires, avoiding schema
+  validation errors.
 
-This robust, flexible, and consistent architecture ensures that all generated modules are truly idempotent and can handle the full spectrum of simple and complex update scenarios presented by the Waldur API.
+This robust, flexible, and consistent architecture ensures that all generated modules are truly idempotent and
+can handle the full spectrum of simple and complex update scenarios presented by the Waldur API.
 
 ### Component Responsibilities
 
-1.  **Core System (`generator.py`, `plugin_manager.py`)**:
-    -   **`Generator`**: The main orchestrator. It is type-agnostic. Its job is to:
-        1.  Loop through each **collection** definition in the config.
-        2.  For each collection, create the standard directory skeleton (`galaxy.yml`, etc.).
-        3.  Loop through the **module** definitions within that collection.
-        4.  Delegate to the correct plugin to get a `GenerationContext`.
-        5.  Render the final module file.
-        6.  Copy the plugin's `runner.py` and a shared `base_runner.py` into `module_utils`, rewriting their imports to make the collection self-contained.
-    -   **`PluginManager`**: The discovery service. It finds and loads all available plugins registered via entry points.
+1. **Core System (`generator.py`, `plugin_manager.py`)**:
+   - **`Generator`**: The main orchestrator. It is type-agnostic. Its job is to:
+     1. Loop through each **collection** definition in the config.
+     2. For each collection, create the standard directory skeleton (`galaxy.yml`, etc.).
+     3. Loop through the **module** definitions within that collection.
+     4. Delegate to the correct plugin to get a `GenerationContext`.
+     5. Render the final module file.
+     6. Copy the plugin's `runner.py` and a shared `base_runner.py` into `module_utils`, rewriting their imports
+        to make the collection self-contained.
+   - **`PluginManager`**: The discovery service. It finds and loads all available plugins registered via entry
+     points.
 
-2.  **Plugin Interface (`interfaces/plugin.py`)**:
-    -   **`BasePlugin`**: An abstract base class defining the contract for all plugins. It requires a `generate()` method that receives the module configuration, API parsers, and the current **collection context** (namespace/name) and returns a complete `GenerationContext`.
+2. **Plugin Interface (`interfaces/plugin.py`)**:
+   - **`BasePlugin`**: An abstract base class defining the contract for all plugins. It requires a `generate()`
+     method that receives the module configuration, API parsers, and the current **collection context**
+     (namespace/name) and returns a complete `GenerationContext`.
 
-3.  **Runtime Components (`interfaces/runner.py`, `interfaces/resolver.py`)**:
-    -   **`BaseRunner`**: A concrete base class that provides shared runtime utilities for all runners, such as the `send_request` helper for making API calls.
-    -   **`ParameterResolver`**: A reusable class that encapsulates all logic for converting user inputs (names/UUIDs) into API-ready data. It is instantiated by runners.
+3. **Runtime Components (`interfaces/runner.py`, `interfaces/resolver.py`)**:
+   - **`BaseRunner`**: A concrete base class that provides shared runtime utilities for all runners, such as the
+     `send_request` helper for making API calls.
+   - **`ParameterResolver`**: A reusable class that encapsulates all logic for converting user inputs
+     (names/UUIDs) into API-ready data. It is instantiated by runners.
 
-4.  **Concrete Plugins and Runners (e.g., `plugins/crud/`)**:
-    -   Each plugin is a self-contained directory with:
-        -   **`config.py`**: Pydantic models for validating its specific YAML configuration.
-        -   **`plugin.py`**: The generation-time logic. It implements `BasePlugin` and is responsible for creating the module's documentation, parameters, and runner context.
-        -   **`runner.py`**: The runtime logic. It inherits from `BaseRunner`, uses the `ParameterResolver`, and executes the module's core state management tasks (e.g., creating a resource if it doesn't exist).
-
+4. **Concrete Plugins and Runners (e.g., `plugins/crud/`)**:
+   - Each plugin is a self-contained directory with:
+     - **`config.py`**: Pydantic models for validating its specific YAML configuration.
+     - **`plugin.py`**: The generation-time logic. It implements `BasePlugin` and is responsible for creating
+       the module's documentation, parameters, and runner context.
+     - **`runner.py`**: The runtime logic. It inherits from `BaseRunner`, uses the `ParameterResolver`, and
+       executes the module's core state management tasks (e.g., creating a resource if it doesn't exist).
 
 ### How to Add a New Plugin
 
 This architecture makes adding support for a new module type straightforward:
 
-1.  **Create Plugin Directory**:
-    Create a new directory for your plugin, e.g., `ansible_waldur_generator/plugins/my_type/`.
+1. **Create Plugin Directory**:
+   Create a new directory for your plugin, e.g., `ansible_waldur_generator/plugins/my_type/`.
 
-2.  **Define Configuration Model**:
-    Create `plugins/my_type/config.py` with a Pydantic model inheriting from `BaseModel` to define and validate the YAML structure for your new type.
+2. **Define Configuration Model**:
+   Create `plugins/my_type/config.py` with a Pydantic model inheriting from `BaseModel` to define and validate
+   the YAML structure for your new type.
 
-3.  **Implement the Runner**:
-    Create `plugins/my_type/runner.py`. Define a class (e.g., `MyTypeRunner`) that inherits from `BaseRunner` and implements the runtime logic for your module.
+3. **Implement the Runner**:
+   Create `plugins/my_type/runner.py`. Define a class (e.g., `MyTypeRunner`) that inherits from `BaseRunner`
+   and implements the runtime logic for your module.
 
-4.  **Implement the Plugin Class**:
-    Create `plugins/my_type/plugin.py`:
-    ```python
-    from ansible_waldur_generator.interfaces.plugin import BasePlugin
-    from ansible_waldur_generator.models import GenerationContext
-    # Import your config model and other necessary components
+4. **Implement the Plugin Class**:
+   Create `plugins/my_type/plugin.py`:
+
+   ```python
+   from ansible_waldur_generator.interfaces.plugin import BasePlugin
+   from ansible_waldur_generator.models import GenerationContext
+   # Import your config model and other necessary components
 
     class MyTypePlugin(BasePlugin):
         def get_type_name(self) -> str:
@@ -744,9 +873,10 @@ This architecture makes adding support for a new module type straightforward:
             return GenerationContext(...)
     ```
 
-5.  **Register the Plugin**:
-    Add the new plugin to the entry points section in `pyproject.toml`:
-    ```toml
+5. **Register the Plugin**:
+   Add the new plugin to the entry points section in `pyproject.toml`:
+
+   ```toml
     [tool.poetry.plugins."ansible_waldur_generator"]
     # ... existing plugins
     crud = "ansible_waldur_generator.plugins.crud.plugin:CrudPlugin"
@@ -755,31 +885,41 @@ This architecture makes adding support for a new module type straightforward:
     my_type = "ansible_waldur_generator.plugins.my_type.plugin:MyTypePlugin" # Add this line
     ```
 
-6.  **Update Poetry Environment**:
-    Run `poetry install`. This makes the new entry point available to the `PluginManager`. Your new `my_type` is now ready to be used in `generator_config.yaml`.
+6. **Update Poetry Environment**:
+   Run `poetry install`. This makes the new entry point available to the `PluginManager`. Your new `my_type`
+   is now ready to be used in `generator_config.yaml`.
 
-After these steps, running `poetry install` will make the new `facts` type instantly available to the generator without any changes to the core `generator.py` or `plugin_manager.py` files.
+After these steps, running `poetry install` will make the new `facts` type instantly available to the
+generator without any changes to the core `generator.py` or `plugin_manager.py` files.
 
 ## How to Use the Generated Collection
 
-Once generated, the collection can be used immediately for local testing or packaged for distribution. End-users who are not developing the generator can skip directly to the "Installing from Ansible Galaxy" section.
+Once generated, the collection can be used immediately for local testing or packaged for
+distribution. End-users who are not developing the generator can skip directly to the
+"Installing from Ansible Galaxy" section.
 
 ### Method 1: Local Development and Testing
 
-The most straightforward way to test is to tell Ansible where to find your newly generated collection by setting an environment variable.
+The most straightforward way to test is to tell Ansible where to find your newly generated
+collection by setting an environment variable.
 
-1.  **Set the Collection Path:**
-    From the root of your project, run:
-    ```bash
+1. **Set the Collection Path:**
+   From the root of your project, run:
+
+   ```bash
     export ANSIBLE_COLLECTIONS_PATH=./outputs
-    ```
-    This command tells Ansible to look for collections inside the `outputs` directory. This setting lasts for your current terminal session.
+   ```
 
-2.  **Run an Ad-Hoc Command:**
-    You can now test any module using its **Fully Qualified Collection Name (FQCN)**. This is perfect for a quick check.
+   This command tells Ansible to look for collections inside the `outputs` directory. This setting lasts for
+   your current terminal session.
 
-    **Command:**
-    ```bash
+2. **Run an Ad-Hoc Command:**
+   You can now test any module using its **Fully Qualified Collection Name (FQCN)**. This is perfect for a
+   quick check.
+
+   **Command:**
+
+   ```bash
     # Test the 'waldur.structure.project' module from the 'waldur.structure' collection
     ansible localhost -m waldur.structure.project \
       -a "state=present \
@@ -787,10 +927,11 @@ The most straightforward way to test is to tell Ansible where to find your newly
           customer='Big Corp' \
           api_url='https://api.example.com/api/' \
           access_token='YOUR_SECRET_TOKEN'"
-    ```
+   ```
 
-    **Example Output (Success, resource created):**
-    ```json
+   **Example Output (Success, resource created):**
+
+   ```json
     localhost | CHANGED => {
         "changed": true,
         "commands": [
@@ -817,6 +958,7 @@ The most straightforward way to test is to tell Ansible where to find your newly
     ```
 
     **Example Output (Success, resource already existed):**
+
     ```json
     localhost | SUCCESS => {
         "changed": false,
@@ -833,13 +975,14 @@ The most straightforward way to test is to tell Ansible where to find your newly
     }
     ```
 
+    > **Security Warning**: Passing `access_token` on the command line is insecure. For
+    > production, use Ansible Vault or environment variables as shown in the playbook method.
 
-    > **Security Warning**: Passing `access_token` on the command line is insecure. For production, use Ansible Vault or environment variables as shown in the playbook method.
-
-1.  **Use in a Playbook:**
+3. **Use in a Playbook:**
     This is the standard and recommended way to use the collection for automation.
 
     **`test_playbook.yml`:**
+
     ```yaml
     - name: Manage Waldur Resources with Generated Collection
       hosts: localhost
@@ -850,8 +993,8 @@ The most straightforward way to test is to tell Ansible where to find your newly
         - waldur.structure
 
       vars:
-        waldur_api_url: "https://api.example.com/api/"
-        waldur_access_token: "WALDUR_ACCESS_TOKEN"
+       waldur_api_url: "https://api.example.com/api/"
+       waldur_access_token: "WALDUR_ACCESS_TOKEN"
 
       tasks:
         - name: Ensure 'My Playbook Project' exists
@@ -867,9 +1010,11 @@ The most straightforward way to test is to tell Ansible where to find your newly
         - name: Show the created or found project details
           ansible.builtin.debug:
             var: project_info.resource
+
     ```
 
     **Run the playbook:**
+
     ```bash
     # Set the environment variables first
     export ANSIBLE_COLLECTIONS_PATH=./outputs
@@ -880,7 +1025,8 @@ The most straightforward way to test is to tell Ansible where to find your newly
     ```
 
    **Example Output (Success, resource created):**
-   ```
+
+   ```text
    PLAY [Manage Waldur Resources with Generated Collection] ******************
 
    TASK [Ensure 'My Playbook Project' exists] **************************************
@@ -918,31 +1064,34 @@ The most straightforward way to test is to tell Ansible where to find your newly
    localhost                  : ok=2    changed=1    unreachable=0    failed=0    ...
    ```
 
-
 ## Publishing and Installing
 
 ### Publishing to Ansible Galaxy
 
 The generated output is ready to be published, making your modules available to everyone.
 
-1.  **Build the Collection Archive:**
-    Navigate to the root of the generated collection and run the build command. The output tarball will be placed in the parent directory.
-    ```bash
+1. **Build the Collection Archive:**
+   Navigate to the root of the generated collection and run the build command. The output tarball will be
+   placed in the parent directory.
+
+   ```bash
     # Navigate to the actual collection directory
     cd outputs/ansible_collections/waldur/structure/
 
     # Build the collection, placing the output tarball in the `outputs` directory
     ansible-galaxy collection build --output-path ../../../..
-    ```
-    This will create a file like `outputs/waldur-structure-1.0.0.tar.gz`.
+   ```
 
-2.  **Get a Galaxy API Key:**
-    -   Log in to [galaxy.ansible.com](https://galaxy.ansible.com/).
-    -   Navigate to `Namespaces` and select your namespace.
-    -   Copy your API key from the "API Key" section.
+   This will create a file like `outputs/waldur-structure-1.0.0.tar.gz`.
 
-3.  **Publish the Collection:**
+2. **Get a Galaxy API Key:**
+   - Log in to [galaxy.ansible.com](https://galaxy.ansible.com/).
+   - Navigate to `Namespaces` and select your namespace.
+   - Copy your API key from the "API Key" section.
+
+3. **Publish the Collection:**
     Use the `ansible-galaxy` command to upload your built archive.
+
     ```bash
     # Set the token as an environment variable (note the correct variable name)
     export ANSIBLE_GALAXY_TOKEN="your_copied_api_key"
@@ -956,12 +1105,13 @@ The generated output is ready to be published, making your modules available to 
 
 Once the collection is published, any Ansible user can easily install and use it.
 
-1.  **Install the Collection:**
-    ```bash
-    ansible-galaxy collection install waldur.structure
-    ```
+1. **Install the Collection:**
 
-2.  **Use it in a Playbook:**
+   ```bash
+    ansible-galaxy collection install waldur.structure
+   ```
+
+2. **Use it in a Playbook:**
     After installation, the modules are available globally. Users can simply write playbooks referencing the FQCN.
 
     ```yaml
@@ -979,17 +1129,24 @@ Once the collection is published, any Ansible user can easily install and use it
 
 ## End-to-End Testing with VCR
 
-This project uses a powerful "record and replay" testing strategy for its end-to-end (E2E) tests, powered by `pytest` and the `VCR.py` library. This allows us to create high-fidelity tests based on real API interactions while ensuring our CI/CD pipeline remains fast, reliable, and completely independent of a live API server.
+This project uses a powerful "record and replay" testing strategy for its end-to-end (E2E) tests, powered by
+`pytest` and the `VCR.py` library. This allows us to create high-fidelity tests based on real API interactions
+while ensuring our CI/CD pipeline remains fast, reliable, and completely independent of a live API server.
 
 The E2E tests are located in the `tests/e2e/` directory.
 
 ### Core Concept: Cassette-Based Testing
 
-1.  **Recording Mode:** The first time a test is run, it requires access to a live Waldur API. The test executes its workflow (e.g., creating a VM), and `VCR.py` records every single HTTP request and its corresponding response into a YAML file called a "cassette" (e.g., `tests/e2e/cassettes/test_create_instance.yaml`).
+1. **Recording Mode:** The first time a test is run, it requires access to a live Waldur API. The test
+   executes its workflow (e.g., creating a VM), and `VCR.py` records every single HTTP request and its
+   corresponding response into a YAML file called a "cassette" (e.g., `tests/e2e/cassettes/test_create_instance.yaml`).
 
-2.  **Replaying Mode:** Once a cassette file exists, all subsequent runs of the same test will be completely offline. `VCR.py` intercepts any outgoing HTTP call, finds the matching request in the cassette, and "replays" the saved response. The test runs instantly without any network activity.
+2. **Replaying Mode:** Once a cassette file exists, all subsequent runs of the same test will be completely
+   offline. `VCR.py` intercepts any outgoing HTTP call, finds the matching request in the cassette, and "replays"
+   the saved response. The test runs instantly without any network activity.
 
-This approach gives us the best of both worlds: the realism of integration testing and the speed and reliability of unit testing.
+This approach gives us the best of both worlds: the realism of integration testing and the speed and
+reliability of unit testing.
 
 ### Running the E2E Tests
 
@@ -997,7 +1154,8 @@ The E2E tests are designed to be run in two distinct modes.
 
 #### Mode 1: Replaying (Standard CI/CD and Local Testing)
 
-This is the default mode. If the cassette files exist in `tests/e2e/cassettes/`, the tests will run offline. This is the fastest and most common way to run the tests.
+This is the default mode. If the cassette files exist in `tests/e2e/cassettes/`, the tests will run
+offline. This is the fastest and most common way to run the tests.
 
 ```bash
 # Run all E2E tests using their saved cassettes
@@ -1009,28 +1167,35 @@ This command should complete in a few seconds.
 #### Mode 2: Recording (When Adding or Modifying Tests)
 
 You only need to enter recording mode when you are:
-*   Creating a new E2E test.
-*   Modifying an existing E2E test in a way that changes its API interactions (e.g., adding a new parameter to a module call).
+
+- Creating a new E2E test.
+- Modifying an existing E2E test in a way that changes its API interactions (e.g., adding a new parameter
+  to a module call).
 
 **Workflow for Recording a Test:**
 
-1.  **Prepare the Live Environment:** Ensure you have a live Waldur instance and that all the necessary prerequisite resources for your test exist (e.g., for creating a VM, you need a project, offering, flavor, image, etc.).
+1. **Prepare the Live Environment:** Ensure you have a live Waldur instance and that all the necessary
+   prerequisite resources for your test exist (e.g., for creating a VM, you need a project, offering, flavor,
+   image, etc.).
 
-2.  **Set Environment Variables:** Provide the test runner with the credentials for the live API. **Never hardcode these in the test files.**
+2. **Set Environment Variables:** Provide the test runner with the credentials for the live API. **Never
+   hardcode these in the test files.**
 
     ```bash
     export WALDUR_API_URL="https://your-waldur-instance.com/api/"
     export WALDUR_ACCESS_TOKEN="<your_real_api_token>"
     ```
 
-3.  **Delete the Old Cassette:** To ensure a clean recording, delete the corresponding YAML file for the test you are re-recording. `pytest-vcr` names cassettes based on the test file and function name.
+3. **Delete the Old Cassette:** To ensure a clean recording, delete the corresponding YAML file for the
+   test you are re-recording. `pytest-vcr` names cassettes based on the test file and function name.
 
     ```bash
     # Example for the instance creation test
     rm tests/e2e/cassettes/test_e2e_modules.py::TestInstanceModule::test_create_instance.yaml
     ```
 
-4.  **Run Pytest:** Execute the test. It will now connect to the live API specified by your environment variables.
+4. **Run Pytest:** Execute the test. It will now connect to the live API specified by your environment
+   variables.
 
     ```bash
     # Run a specific test to record its interactions
@@ -1039,25 +1204,31 @@ You only need to enter recording mode when you are:
 
     After the test passes, a new cassette file will be generated.
 
-5.  **Review and Commit:**
-    *   **CRITICAL:** Inspect the newly generated `.yaml` cassette file.
-    *   Verify that sensitive data, like the `Authorization` token, has been automatically scrubbed and replaced with a placeholder (e.g., `DUMMY_TOKEN`). This is configured in `pyproject.toml` or `pytest.ini`.
-    *   Commit the new or updated cassette file to your Git repository along with your test code changes.
+5. **Review and Commit:**
+   - **CRITICAL:** Inspect the newly generated `.yaml` cassette file.
+   - Verify that sensitive data, like the `Authorization` token, has been automatically scrubbed and
+     replaced with a placeholder (e.g., `DUMMY_TOKEN`). This is configured in `pyproject.toml` or `pytest.ini`.
+   - Commit the new or updated cassette file to your Git repository along with your test code changes.
 
 ### Writing a New E2E Test
 
 Follow the pattern established in `tests/e2e/test_e2e_modules.py`:
 
-1.  **Organize with Classes:** Group tests for a specific module into a class (e.g., `TestVolumeModule`).
-2.  **Use the `@pytest.mark.vcr` Decorator:** Add this decorator to your test class or individual test methods to enable VCR.
-3.  **Use the `auth_params` Fixture:** This fixture provides the standard `api_url` and `access_token` parameters, reading them from environment variables during recording and using placeholders during replay.
-4.  **Use the `run_module_harness`:** This generic helper function handles the boilerplate of mocking `AnsibleModule` and running the module's `main()` function.
-5.  **Write Your Test Logic:**
-    *   **Arrange:** Define the `user_params` dictionary that simulates the Ansible playbook input.
-    *   **Act:** Call the `run_module_harness`, passing it the imported module object and the `user_params`.
-    *   **Assert:** Check the `exit_result` and `fail_result` to verify that the module behaved as expected (e.g., `changed` is `True`, the returned `resource` has the correct data).
+1. **Organize with Classes:** Group tests for a specific module into a class (e.g., `TestVolumeModule`).
+2. **Use the `@pytest.mark.vcr` Decorator:** Add this decorator to your test class or individual test methods
+   to enable VCR.
+3. **Use the `auth_params` Fixture:** This fixture provides the standard `api_url` and `access_token`
+   parameters, reading them from environment variables during recording and using placeholders during replay.
+4. **Use the `run_module_harness`:** This generic helper function handles the boilerplate of mocking
+   `AnsibleModule` and running the module's `main()` function.
+5. **Write Your Test Logic:**
+   - **Arrange:** Define the `user_params` dictionary that simulates the Ansible playbook input.
+   - **Act:** Call the `run_module_harness`, passing it the imported module object and the `user_params`.
+   - **Assert:** Check the `exit_result` and `fail_result` to verify that the module behaved as expected
+     (e.g., `changed` is `True`, the returned `resource` has the correct data).
 
 **Example Skeleton:**
+
 ```python
 # In a test file within tests/e2e/
 
@@ -1087,27 +1258,36 @@ class TestProjectModule:
 
 ## Migration and Usage Guide for Playbook Authors
 
-This guide is for users migrating playbooks from the previous, manually-written Waldur modules to the new, auto-generated collections defined in this project.
+This guide is for users migrating playbooks from the previous, manually-written Waldur modules
+to the new, auto-generated collections defined in this project.
 
-The new collections offer significant advantages in consistency, predictability, and feature coverage. The migration process primarily involves updating module names to their **Fully Qualified Collection Names (FQCN)** and, in some cases, adjusting parameters to align with the new standardized approach.
+The new collections offer significant advantages in consistency, predictability, and feature
+coverage. The migration process primarily involves updating module names to their **Fully Qualified
+Collection Names (FQCN)**
+and, in some cases, adjusting parameters to align with the new standardized approach.
 
 ### Core Conceptual Changes
 
-1.  **Collections are Mandatory:** All modules now live inside a collection (e.g., `waldur.openstack`, `waldur.structure`) and **must** be called using their FQCN.
-2.  **Consistent Naming:** All data-gathering modules are now consistently named with a `_facts` suffix (e.g., `security_group_facts`).
-3.  **Predictable Return Values:**
-    *   Modules with `state: present` **always** return the result in a `resource` key.
-    *   `_facts` modules **always** return a list of results in a `resources` key.
+1. **Collections are Mandatory:** All modules now live inside a collection (e.g., `waldur.openstack`,
+   `waldur.structure`) and **must** be called using their FQCN.
+2. **Consistent Naming:** All data-gathering modules are now consistently named with a `_facts` suffix
+   (e.g., `security_group_facts`).
+3. **Predictable Return Values:**
+   - Modules with `state: present` **always** return the result in a `resource` key.
+   - `_facts` modules **always** return a list of results in a `resources` key.
 
 ### Practical Migration & Usage Patterns
 
-The following examples are based directly on the modules defined in `generator_config.yaml` and demonstrate the primary usage patterns.
+The following examples are based directly on the modules defined in `generator_config.yaml` and
+demonstrate the primary usage patterns.
 
 #### Pattern 1: Managing Simple Resources (`crud` plugin)
 
-Modules like `waldur.structure.project` and `waldur.openstack.security_group` manage resources with direct, synchronous API endpoints for create, update, and delete.
+Modules like `waldur.structure.project` and `waldur.openstack.security_group` manage resources with
+direct, synchronous API endpoints for create, update, and delete.
 
 **Before (`waldur_os_security_group`):**
+
 ```yaml
 - name: Create an old-style security group
   waldur_os_security_group:
@@ -1119,6 +1299,7 @@ Modules like `waldur.structure.project` and `waldur.openstack.security_group` ma
 ```
 
 **After (`waldur.openstack.security_group`):**
+
 ```yaml
   - name: "Ensure 'web-server-sg' exists"
     waldur.openstack.security_group:
@@ -1130,18 +1311,23 @@ Modules like `waldur.structure.project` and `waldur.openstack.security_group` ma
       tenant: "My-Cloud-Tenant"
       name: "web-server-sg"
 ```
-* **Key Change:** The new `security_group` module is more robust and requires the full context (`project`, `customer`, `tenant`) for unambiguous lookups, as defined in its `resolvers` configuration.
+
+- **Key Change:** The new `security_group` module is more robust and requires the full context
+  (`project`, `customer`, `tenant`) for unambiguous lookups, as defined in its `resolvers` configuration.
 
 ---
 
 #### Pattern 2: High-Level Resource Provisioning (`order` plugin)
 
-This is the **recommended pattern** for provisioning cloud resources like VMs and volumes. Modules like `waldur.openstack.instance` abstract away the asynchronous marketplace order workflow entirely.
+This is the **recommended pattern** for provisioning cloud resources like VMs and volumes. Modules like
+`waldur.openstack.instance` abstract away the asynchronous marketplace order workflow entirely.
 
-*   **You define the final resource** (e.g., a VM with a specific flavor and image).
-*   The module handles creating the order, waiting for it to complete, and returns the final, provisioned **resource object**.
+- **You define the final resource** (e.g., a VM with a specific flavor and image).
+- The module handles creating the order, waiting for it to complete, and returns the final, provisioned
+  **resource object**.
 
 **Before (`waldur_marketplace_os_instance`):**
+
 ```yaml
 - name: Provision an old-style VM
   waldur_marketplace_os_instance:
@@ -1155,6 +1341,7 @@ This is the **recommended pattern** for provisioning cloud resources like VMs an
 ```
 
 **After (`waldur.openstack.instance`):**
+
 ```yaml
 - name: Provision an OpenStack VM
   hosts: localhost
@@ -1184,12 +1371,15 @@ This is the **recommended pattern** for provisioning cloud resources like VMs an
 
 #### Pattern 3: Low-Level Order Management (`crud` plugin on orders)
 
-This is an **advanced pattern** for users who need to interact directly with the order object itself, similar to the old generic `waldur_marketplace` module. The `waldur.marketplace.order` module is used for this.
+This is an **advanced pattern** for users who need to interact directly with the order object itself, similar
+to the old generic `waldur_marketplace` module. The `waldur.marketplace.order` module is used for this.
 
-*   You define the **order itself**, passing all resource-specific details in the `attributes` dictionary.
-*   The module creates the order and returns the **order object**. It does *not* wait for the resource to be provisioned.
+- You define the **order itself**, passing all resource-specific details in the `attributes` dictionary.
+- The module creates the order and returns the **order object**. It does *not* wait for the resource to be
+  provisioned.
 
 **Before (`waldur_marketplace`):**
+
 ```yaml
 - name: Create a generic old-style order
   waldur_marketplace:
@@ -1206,6 +1396,7 @@ This is an **advanced pattern** for users who need to interact directly with the
 ```
 
 **After (`waldur.marketplace.order`):**
+
 ```yaml
 - name: Create a generic new-style order
   hosts: localhost
@@ -1242,6 +1433,7 @@ This is an **advanced pattern** for users who need to interact directly with the
 Use a `_facts` module like `waldur.openstack.security_group_facts` to retrieve information without making changes.
 
 **Before (`waldur_os_security_group_gather_facts`):**
+
 ```yaml
 - name: Get old-style security group facts
   waldur_os_security_group_gather_facts:
@@ -1252,6 +1444,7 @@ Use a `_facts` module like `waldur.openstack.security_group_facts` to retrieve i
 ```
 
 **After (`waldur.openstack.security_group_facts`):**
+
 ```yaml
 - name: Get new-style security group facts
   hosts: localhost
@@ -1277,9 +1470,11 @@ Use a `_facts` module like `waldur.openstack.security_group_facts` to retrieve i
 
 #### Pattern 5: Executing One-Off Actions (`action` modules)
 
-Modules like `waldur.openstack.instance_action` trigger a specific action on an existing resource (e.g., `start`, `stop`).
+Modules like `waldur.openstack.instance_action` trigger a specific action on an existing resource
+(e.g., `start`, `stop`).
 
 **Example: Stop a VM.**
+
 ```yaml
 - name: Perform an Action on an OpenStack VM
   hosts: localhost
@@ -1301,16 +1496,16 @@ Modules like `waldur.openstack.instance_action` trigger a specific action on an 
 
 ### Quick Reference: Module Name Changes
 
-| Old Module Name                          | New Module Name (FQCN)                                                                       | Plugin Type |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------- | ----------- |
-| `waldur_marketplace_os_instance`         | `waldur.openstack.instance`                                                                  | `order`     |
-| `waldur_marketplace_os_volume`           | `waldur.openstack.volume`                                                                    | `order`     |
-| `waldur_marketplace` (generic order)     | **Recommended:** `waldur.openstack.instance`, etc. / **Advanced:** `waldur.marketplace.order` | `order`/`crud` |
-| `waldur_os_security_group`               | `waldur.openstack.security_group`                                                            | `crud`      |
-| `waldur_os_subnet`                       | `waldur.openstack.subnet`                                                                    | `crud`      |
-| `waldur_os_floating_ip`                  | `waldur.openstack.floating_ip`                                                               | `crud`      |
-| `waldur_os_snapshot`                     | *Not in config; would be `waldur.openstack.snapshot`*                                        | `crud`      |
-| `waldur_os_instance_volume`              | *Deprecated; manage via `volume` module*                                                     | N/A         |
-| `waldur_os_security_group_gather_facts`  | `waldur.openstack.security_group_facts`                                                      | `facts`     |
-| `waldur_os_subnet_gather_facts`          | `waldur.openstack.subnet_facts`                                                              | `facts`     |
-| `waldur_marketplace_os_get_instance`     | `waldur.openstack.instance_facts`                                                            | `facts`     |
+| Old Module Name | New Module Name (FQCN) | Plugin Type |
+| --------------- | ---------------------- | ----------- |
+| `waldur_marketplace_os_instance` | `waldur.openstack.instance` | `order` |
+| `waldur_marketplace_os_volume` | `waldur.openstack.volume` | `order` |
+| `waldur_marketplace` | `waldur.openstack.instance` or `waldur.marketplace.order` | `order`/`crud` |
+| `waldur_os_security_group` | `waldur.openstack.security_group` | `crud` |
+| `waldur_os_subnet` | `waldur.openstack.subnet` | `crud` |
+| `waldur_os_floating_ip` | `waldur.openstack.floating_ip` | `crud` |
+| `waldur_os_snapshot` | *Not in config; would be `waldur.openstack.snapshot`* | `crud` |
+| `waldur_os_instance_volume` | *Deprecated; manage via `volume` module* | N/A |
+| `waldur_os_security_group_gather_facts` | `waldur.openstack.security_group_facts` | `facts` |
+| `waldur_os_subnet_gather_facts` | `waldur.openstack.subnet_facts` | `facts` |
+| `waldur_marketplace_os_get_instance` | `waldur.openstack.instance_facts` | `facts` |
