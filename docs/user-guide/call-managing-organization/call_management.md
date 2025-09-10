@@ -133,10 +133,10 @@ flowchart TD
 1. Navigate to the **Call management** section, in the organisation dashboard.
 2. Go to the **Calls** section, to click **"Create call"**.
 3. Fill in the following details:
-   - Call title
-   - Description and documentation
-   - Submission guidelines
-   - Assign call manager to the call
+      - Call title
+      - Description and documentation
+      - Submission guidelines
+      - Assign call manager to the call
 
 ## Step 3: Configure call rounds  
 
@@ -307,11 +307,11 @@ Effective monitoring ensures the call process runs smoothly and provides valuabl
 **Performed by:** Call manager and Call organiser
 
 - Use dashboard to monitor:
-   - Open/closed calls
-   - Round statuses
-   - Proposal statuses
-   - Review progress
-   - Offering request statuses
+      - Open/closed calls
+      - Round statuses
+      - Proposal statuses
+      - Review progress
+      - Offering request statuses
 
 ![Screenshot: Monitoring Dashboard](../img/call_monitoring_dashboard.png)
 
