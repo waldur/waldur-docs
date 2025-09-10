@@ -28,6 +28,10 @@ Make civil number field mandatory in invitation creation form.
 
 Conceal civil number in invitation creation dialog.
 
+## invitations.show_course_accounts
+
+Show course accounts of the scopes.
+
 ## invitations.show_service_accounts
 
 Show service accounts of the scopes.
