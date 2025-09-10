@@ -318,9 +318,15 @@ Default value:
 WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'AUTHENTICATION_METHODS': ['LOCAL_SIGNIN'],
  'BACKEND_FIELDS_EDITABLE': True,
+ 'COURSE_ACCOUNT_TOKEN_CLIENT_ID': '',
+ 'COURSE_ACCOUNT_TOKEN_SECRET': '',
+ 'COURSE_ACCOUNT_TOKEN_URL': '',
+ 'COURSE_ACCOUNT_URL': '',
+ 'COURSE_ACCOUNT_USE_API': False,
  'CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION': False,
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
+ 'ENABLE_PROJECT_KIND_COURSE': False,
  'EXTENSIONS_AUTOREGISTER': True,
  'EXTERNAL_LINKS': [],
  'GROUP_INVITATION_LIFETIME': datetime.timedelta(days=7),
@@ -403,6 +409,36 @@ Type: bool
 
 Allows to control /admin writable fields. If this flag is disabled it is impossible to edit any field that corresponds to backend value via /admin. Such restriction allows to save information from corruption.
 
+#### COURSE_ACCOUNT_TOKEN_CLIENT_ID
+
+Type: str
+
+Client ID to get access token for course account.
+
+#### COURSE_ACCOUNT_TOKEN_SECRET
+
+Type: str
+
+Client secret to get access for course account.
+
+#### COURSE_ACCOUNT_TOKEN_URL
+
+Type: str
+
+Webhook URL for getting token for further course account management.
+
+#### COURSE_ACCOUNT_URL
+
+Type: str
+
+Webhook URL for course account management.
+
+#### COURSE_ACCOUNT_USE_API
+
+Type: bool
+
+Send course account creation and deletion requests to API.
+
 #### CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION
 
 Type: bool
@@ -420,6 +456,12 @@ Max age of change email request.
 Type: bool
 
 Allows to enable accounting for organizations using value of accounting_start_date field.
+
+#### ENABLE_PROJECT_KIND_COURSE
+
+Type: bool
+
+Enable course kind for projects.
 
 #### EXTENSIONS_AUTOREGISTER
 

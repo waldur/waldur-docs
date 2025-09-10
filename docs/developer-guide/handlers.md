@@ -457,6 +457,7 @@ td:nth-child(4) {
 | `change_order_state` | `Django Signal (post_save)` | `waldur_slurm.Allocation` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_vmware.VirtualMachine` | Change the state of an order based on resource state changes. |
 | `cleanup_admin_announcement_on_maintenance_deletion` | `Django Signal (pre_delete)` | `marketplace.MaintenanceAnnouncement` | Ensure AdminAnnouncement is cleaned up when MaintenanceAnnouncement is deleted. |
+| `close_course_accounts_after_project_removal` | `Django Signal (pre_delete)` | `structure.Project` | No description |
 | `close_customer_service_accounts_on_customer_deletion` | `Django Signal (pre_delete)` | `structure.Customer` | Close service accounts associated with a customer when the customer is deleted. |
 | `close_resource_plan_period_when_resource_is_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Handle case when resource has been terminated by service provider. |
 | `close_service_accounts_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | Close service accounts associated with a project when the project is deleted. |
@@ -557,6 +558,8 @@ td:nth-child(4) {
 | `resource_state_has_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Handle resource state changes. |
 | `run_reset_actions_upon_cost_policy_deletion` | `Django Signal (pre_delete)` | `policy.ProjectEstimatedCostPolicy` | Execute reset actions when a cost policy is deleted. |
 | `send_comment_added_notification` | `Django Signal (post_save)` | `support.Comment` | No description |
+| `send_course_account_deletion_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
+| `send_course_account_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
 | `send_done_order_to_message_queue` | `Django Signal (post_save)` | `marketplace.Order` | Send completed marketplace order to message queue for site agent processing. |
 | `send_issue_updated_notification` | `Django Signal (post_save)` | `support.Issue` | No description |
 | `send_offering_user_username_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | No description |
@@ -708,14 +711,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 633
+Total unique handlers found: 636
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 333 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 252 handlers
+- **waldur_mastermind**: 255 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
 - **waldur_rancher**: 12 handlers
