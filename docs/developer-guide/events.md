@@ -40,6 +40,8 @@
 - create_of_credit_by_staff
 - customer_creation_succeeded
 - customer_deletion_succeeded
+- customer_permission_review_closed
+- customer_permission_review_created
 - customer_update_succeeded
 - payment_added
 - payment_removed
@@ -101,6 +103,8 @@
 - project_creation_succeeded
 - project_deletion_succeeded
 - project_deletion_triggered
+- project_permission_review_closed
+- project_permission_review_created
 - project_update_request_approved
 - project_update_request_created
 - project_update_request_rejected
