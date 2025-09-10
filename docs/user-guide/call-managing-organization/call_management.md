@@ -16,12 +16,12 @@ Different user roles have specific responsibilities within the Call management s
 
 | Role | Assigned by | Primary responsibilities | Access level |
 | --- | --- | --- | --- |
-| Organization owner | Staff | - Register organization as Call managing organization - Assign Call organisers - Oversee overall call management activities | Full access to all calls and organizational data |
-| Call organiser | Organization owner | - Create calls - Define call purpose and guidelines - Assign Call Managers - Supervise call lifecycle | Access to calls they create and oversee |
-| Call manager | Call organiser | - Configure call rounds - Request and manage offerings - Assign reviewers - Make allocation decisions - Monitor call progress | Detailed access to calls they are assigned to |
-| Reviewer | Call manager | - Evaluate assigned proposals - Provide scores and feedback - Recommend approval/rejection | Access limited to assigned proposals |
-| Call Member/Applicant | Self-registration | - Submit proposals - Request resources | Access to own proposals and public call information |
-| Service Provider | Staff | - Provide offerings for calls - Approve/reject offering requests | Access to offering requests |
+| Organization owner | Staff | <ul><li>Register organization as Call managing organization</li><li>Assign Call organisers</li><li>Oversee overall call management activities</li></ul> | Full access to all calls and organizational data |
+| Call organiser | Organization owner | <ul><li>Create calls</li><li>Define call purpose and guidelines</li><li>Assign Call Managers</li><li>Supervise call lifecycle</li></ul> | Access to calls they create and oversee |
+| Call manager | Call organiser | <ul><li>Configure call rounds</li><li>Request and manage offerings</li><li>Assign reviewers</li><li>Make allocation decisions</li><li>Monitor call progress</li></ul> | Detailed access to calls they are assigned to |
+| Reviewer | Call manager | <ul><li>Evaluate assigned proposals</li><li>Provide scores and feedback</li><li>Recommend approval/rejection</li></ul> | Access limited to assigned proposals |
+| Call Member/Applicant | Self-registration | <ul><li>Submit proposals</li><li>Request resources</li></ul> | Access to own proposals and public call information |
+| Service Provider | Staff | <ul><li>Provide offerings for calls</li><li>Approve/reject offering requests</li></ul> | Access to offering requests |
 
 ## Workflow overview
 
@@ -144,14 +144,14 @@ flowchart TD
 
 1. Create a **Round** within the call.
 2. Configure the round settings:
-   - Start and end dates
-   - Review strategy: after round closure or after submission
-   - Review duration (in days)
-   - Minimum number of reviewers
-   - Minimum average score for auto-approval (optional)
-   - Deciding entity: call manager or automatic
-   - Allocation timing: immediate or fixed date
-   - Define the mappings between proposal roles and project roles
+      - Start and end dates
+      - Review strategy: after round closure or after submission
+      - Review duration (in days)
+      - Minimum number of reviewers
+      - Minimum average score for auto-approval (optional)
+      - Deciding entity: call manager or automatic
+      - Allocation timing: immediate or fixed date
+      - Define the mappings between proposal roles and project roles
 3. Assign **reviewers** and **proposal managers**.
 4. Save and activate the round.
 
@@ -203,15 +203,15 @@ Configure project role assignments:
 Once all configurations are complete:
 
 1. **Review all configurations**:
-   - Verify general settings are correct
-   - Confirm team assignments are complete
-   - Check that offerings are properly configured
-   - Ensure role mappings are defined
+      - Verify general settings are correct
+      - Confirm team assignments are complete
+      - Check that offerings are properly configured
+      - Ensure role mappings are defined
 
 2. **Activate the call**:
-   - Click **"Activate call"** to open it for proposal submissions
-   - Once activated, the call becomes visible to potential applicants
-   - Applicants can now submit proposals during active rounds
+      - Click **"Activate call"** to open it for proposal submissions
+      - Once activated, the call becomes visible to potential applicants
+      - Applicants can now submit proposals during active rounds
 
 ![Screenshot: Call Configuration Interface](../img/call_activation.png)
 
@@ -245,9 +245,10 @@ After proposals are submitted, reviews must be created and assigned to reviewers
 ### Automatic review creation
 
 If configured for automatic assignment:
-- System automatically creates reviews
-- Reviews are assigned to available reviewers based on workload
-- Reviewers receive immediate notifications
+
+   - System automatically creates reviews
+   - Reviews are assigned to available reviewers based on workload
+   - Reviewers receive immediate notifications
 
 ### Manual review creation
 
@@ -270,15 +271,15 @@ Reviewers evaluate proposals using a structured assessment process:
 
 1. Reviewer is notified of new assigned proposal.
 2. Reviewer clicks **"View"** to open a preview modal:
-   - Sees brief proposal summary
-   - Can choose to **"Start review"** or **"Reject"** (send back)
+      - Sees brief proposal summary
+      - Can choose to **"Start review"** or **"Reject"** (send back)
 3. On clicking **"Start review"**, reviewer is taken to the full review form.
 4. Provide feedback and scores on:
-   - Project title
-   - Summary and description
-   - Documentation
-   - Resource requests
-   - Team composition
+      - Project title
+      - Summary and description
+      - Documentation
+      - Resource requests
+      - Team composition
 5. Submit the review.
 
 ![Screenshot: Review Form Interface](../img/review_form1.png)
@@ -293,9 +294,9 @@ The final decision process determines which proposals receive resource allocatio
 1. Decision entity evaluates reviews.
 2. Proposal is **accepted** or **rejected**.
 3. If accepted:
-   - A **new project** is created under the proposing organization.
-   - Requested resources are provisioned.
-   - Team members are added to the project.
+      - A **new project** is created under the proposing organization.
+      - Requested resources are provisioned.
+      - Team members are added to the project.
 
 ![Screenshot: Decision Interface](../img/proposal_decision.png)
 
@@ -306,11 +307,11 @@ Effective monitoring ensures the call process runs smoothly and provides valuabl
 **Performed by:** Call manager and Call organiser
 
 - Use dashboard to monitor:
-  - Open/closed calls
-  - Round statuses
-  - Proposal statuses
-  - Review progress
-  - Offering request statuses
+   - Open/closed calls
+   - Round statuses
+   - Proposal statuses
+   - Review progress
+   - Offering request statuses
 
 ![Screenshot: Monitoring Dashboard](../img/call_monitoring_dashboard.png)
 
