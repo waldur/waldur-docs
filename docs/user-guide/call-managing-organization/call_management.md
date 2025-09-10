@@ -1,4 +1,4 @@
-# Call Management
+# Call management
 
 ## Overview
 
@@ -8,238 +8,351 @@ Call management in Waldur enables organizations to manage resource allocation th
 
 Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the proposing organization that initiated the call. Allocations are granted to this project, and team members who submitted the proposal are added to the project, ensuring the resources are immediately ready for use.
 
-## Prerequisites
+This guide walks you through the entire lifecycle of call management in Waldur, from setup to final resource allocation. It is structured in a step-by-step format to help each stakeholder understand their responsibilities in the process.
 
-- Organization must be registered as a Call Managing Organization
-- Marketplace offerings must be available to be requested in calls
+## Stakeholder roles
 
-## Stakeholder Roles
+Different user roles have specific responsibilities within the Call management system:
 
-### Organization Owner
+| Role | Assigned by | Primary responsibilities | Access level |
+| --- | --- | --- | --- |
+| Organization owner | Staff | - Register organization as Call managing organization - Assign Call organisers - Oversee overall call management activities | Full access to all calls and organizational data |
+| Call organiser | Organization owner | - Create calls - Define call purpose and guidelines - Assign Call Managers - Supervise call lifecycle | Access to calls they create and oversee |
+| Call manager | Call organiser | - Configure call rounds - Request and manage offerings - Assign reviewers - Make allocation decisions - Monitor call progress | Detailed access to calls they are assigned to |
+| Reviewer | Call manager | - Evaluate assigned proposals - Provide scores and feedback - Recommend approval/rejection | Access limited to assigned proposals |
+| Call Member/Applicant | Self-registration | - Submit proposals - Request resources | Access to own proposals and public call information |
+| Service Provider | Staff | - Provide offerings for calls - Approve/reject offering requests | Access to offering requests |
 
-- Assign call managers
-- Grant final resource allocations, if defined in round configuration
-- View statistics across all calls in the organization
-- Archive calls when they are no longer active
+## Workflow overview
 
-### Call Manager
+The call management process follows a sequential workflow:
 
-- Create and configure calls
-- Manage call rounds
-- Set review strategies
-- Assign reviewers
-- Make decisions (if configured as deciding entity)
-- Add documentation and descriptions
-- Monitor call progress
-- Close rounds early if needed
-- Manage requested offerings from service providers
+1. **Preparation**: Organization setup and role assignment (Organization owner → Call organiser → Call manager)
+2. **Call setup**: Creation of call framework by Call organiser and detailed configuration by Call Manager
+3. **Resource preparation**: Request and confirmation of offerings from service providers
+4. **Submission period**: Opening call for proposal submissions
+5. **Evaluation**: Review and assessment of submitted proposals
+6. **Decision**: Acceptance or rejection of proposals
+7. **Allocation**: Automatic provisioning of resources for approved proposals
+8. **Monitoring**: Oversight of active allocations and reporting
 
-### Call Member (Applicant)
+```mermaid
+flowchart TD
+    %% Styling
+    classDef orgOwner fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef callOrg fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef callMgr fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef reviewer fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    classDef applicant fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    classDef provider fill:#f1f8e9,stroke:#558b2f,stroke-width:2px,color:#000
+    classDef system fill:#f5f5f5,stroke:#616161,stroke-width:2px,color:#000
+    classDef decision fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#000
+    
+    %% Row 1: Stakeholders (Horizontal)
+    subgraph stakeholders["👥 Key Stakeholders"]
+        direction LR
+        R1["👤 Organization Owner<br/> Organization setup & Role assignment"] --> R2["📋 Call organiser<br/>Create & Oversee calls"] 
+        R2 --> R3["⚙️ Call manager<br/>Configure & Manage"]
+        R3 --> R4["🔍 Reviewer<br/>Evaluate proposals"]
+        R4 --> R5["📝 Applicant<br/>Submit proposals"]
+        R5 --> R6["✅ Service provider<br/>Approve resources"]
+    end
+    
+    %% Row 2: Setup to Submission (Horizontal)
+    subgraph setup["🏗️ Setup & Submission phase"]
+        direction LR
+        A[📋 Call organiser<br/>Create Call] --> B[👨‍💼 Assign<br/>Call Manager]
+        B --> C[⚙️ Configure Round<br/>& Settings]
+        C --> D[📋 Request<br/>Offerings]
+        D --> E[✅ Provider<br/>Approve Resources]
+        E --> F[🚀 Activate<br/>Call]
+        F --> G[📝 Applicants<br/>Submit Proposals]
+    end
+    
+    %% Row 3: Review to Completion (Horizontal)
+    subgraph review["🔍 Review & Allocation Phase"]
+        direction LR
+        H{Review<br/>Assignment} -->|Auto| I[🤖 Auto-assign<br/>Reviews]
+        H -->|Manual| J[👨‍💼 Manual<br/>Assignment]
+        I --> K[🔍 Reviewers<br/>Evaluate]
+        J --> K
+        K --> L{Final<br/>Decision}
+        L -->|Manager| M[👨‍💼 Accept/<br/>Reject]
+        L -->|Auto| N[🤖 Auto-approve<br/>if Score ≥ Threshold]
+        M --> O{Approved?}
+        N --> O
+        O -->|Yes| P[🏗️ Create Project &<br/>Allocate Resources]
+        O -->|No| Q[❌ Notify<br/>Rejection]
+        P --> S[📊 Monitor &<br/>Report]
+        Q --> S
+    end
+    
+    %% Connections between rows
+    stakeholders -.-> A
+    G --> H
+    
+    %% Apply styles
+    class R1,A orgOwner
+    class R2,B callOrg
+    class R3,C,F,J,M callMgr
+    class R4,K reviewer
+    class R5,G applicant
+    class R6,E provider
+    class I,N,P system
+    class H,L,O decision
+```
 
-- Submit proposals to active rounds
-- Upload required documentation
-- Select offerings and allocations
-- Add team members to proposals
-- Track proposal status
-- Provide additional information during revision process
-- View review feedback when available
+## Detailed process guide
 
-### Reviewer
+## Step 1: Organization setup  
 
-- Evaluate assigned proposals
-- Provide scores and feedback
-- Complete reviews within specified duration
-- Accept or reject review assignments
-- Provide both public comments (visible to applicants) and private comments (visible only to call managers)
+**Performed by:** Organization owner
 
-### Service Provider
+1. **Verify organization type**:
+      - Navigate to your organization's profile settings
+      - Confirm your organization is registered as a **Call managing organization**
+      - If not, contact your Waldur administrator to update your organization type
 
-- Accept or reject requests to include their offerings in calls
-- View requested resources related to their offerings
-- Configure parameters for offerings available in calls
+2. **Review available offerings**:
+      - Check that there are **marketplace offerings** available to be requested in calls
+      - These offerings will form the resource pool available for allocation
 
-## Call Structure and Workflow
+3. **Assign Call organisers**:
+      - Go to the **Team** section of your organization
+      - Click on the **Add member** button
+      - Search for users to assign as Call organisers
+      - Select the **Call organiser** role from the dropdown menu
+      - Click **Add** to confirm the assignment
 
-### 1. Call Setup
+![Screenshot: Organization Setup for Call management](../img/org_setup_call_management.png)
 
-1. Organization owner assigns call managers
-2. Call manager or Organization owner creates a call
-3. Call manager configures call rounds
-4. Call manager requests offerings from service providers
-5. Service providers accept or reject offering requests
-6. Call manager activates the call when configuration is complete
+## Step 2: Call creation
 
-### 2. Round Configuration
+**Performed by:** Call organiser or Organization owner
 
-Call manager must configure:
+1. Navigate to the **Call management** section, in the organisation dashboard.
+2. Go to the **Calls** section, to click **"Create call"**.
+3. Fill in the following details:
+   - Call title
+   - Description and documentation
+   - Submission guidelines
+   - Assign call manager to the call
 
-- Start and end dates
-- Review strategy options:
-  - After round closure
-  - After proposal submission
-- Review parameters:
-  - Review duration (in days)
-  - Minimum number of reviewers
-  - Minimal average scoring threshold for automatic approval (if applicable)
-- Decision making:
-  - Deciding entity (call manager or automatic)
-  - Allocation timing (on decision or fixed date)
-  - Allocation date (if fixed date is selected)
-- Round description and documentation
-- Reviewers and managers assignment
-- Default project role for proposal team members
+## Step 3: Configure call rounds  
 
-### 3. Proposal Submission
+**Performed by:** Call manager
 
-Call members should:
+1. Create a **Round** within the call.
+2. Configure the round settings:
+   - Start and end dates
+   - Review strategy: after round closure or after submission
+   - Review duration (in days)
+   - Minimum number of reviewers
+   - Minimum average score for auto-approval (optional)
+   - Deciding entity: call manager or automatic
+   - Allocation timing: immediate or fixed date
+   - Define the mappings between proposal roles and project roles
+3. Assign **reviewers** and **proposal managers**.
+4. Save and activate the round.
 
-- Submit proposals to active rounds
-- Upload required documents
-- Select offerings and allocations
-- Add team members (optional)
-- Provide required details:
-  - Project name
-  - Project summary
-  - Description
-  - OECD FOS 2007 code (Fields of Science classification)
-  - Civilian purpose declaration
-  - Confidentiality requirements
-  - Duration in days
+![Screenshot: Round Configuration Interface](../img/round_creation.png)
 
-### 4. Review Process
+## Step 4: Call configuration and activation
 
-1. Reviewers are assigned to rounds
-2. Reviewers are assigned to specific proposals
-3. Reviews are conducted according to strategy
-4. Feedback and scores are provided on multiple aspects:
+**Performed by:** Call manager
+
+Before activating a call, the Call manager must configure all necessary settings:
+
+### Call configuration settings
+
+#### 1. General configuration
+
+Configure the basic call parameters:
+
+- **Fixed duration**: Set whether the call has a fixed timeframe (Yes/No)
+- **Reviewer identity visible to submitters**: Choose if applicants can see who is reviewing their proposals (Yes/No)
+- **Reviews visible to submitters**: Determine if applicants can view the reviews and feedback (Yes/No)
+
+#### 2. Team management
+
+Assign personnel for the call:
+
+- **Add reviewers**: Select users who will evaluate submitted proposals
+- **Add managers**: Additional managers for proposal oversight
+  
+  *Note: The primary Call manager is added by the Call Organiser during call creation*
+
+#### 3. Offerings configuration
+
+Define available resources:
+
+- **Add Offerings**: Select which service provider offerings will be available for this call
+- Ensure all required offerings have been approved by service providers
+
+#### 4. Role mapping
+
+Configure project role assignments:
+
+- **Proposal project role mappings**: Map each proposal role to corresponding project roles
+- Each proposal role must be mapped to a project role to ensure proper access when projects are created
+
+*Important: The round must be created and configured first. Only after round configuration is complete can the call be fully configured and activated.*
+
+### Call activation process
+
+Once all configurations are complete:
+
+1. **Review all configurations**:
+   - Verify general settings are correct
+   - Confirm team assignments are complete
+   - Check that offerings are properly configured
+   - Ensure role mappings are defined
+
+2. **Activate the call**:
+   - Click **"Activate call"** to open it for proposal submissions
+   - Once activated, the call becomes visible to potential applicants
+   - Applicants can now submit proposals during active rounds
+
+![Screenshot: Call Configuration Interface](../img/call_activation.png)
+
+
+## Step 5: Submit proposal  
+
+**Performed by:** Call member (Applicant)
+
+Applicants follow these steps to request resources through an active call:
+
+1. Navigate to the **active round** under the relevant call.
+2. Click **"Submit proposal"**.
+3. Fill in the required fields.
+4. Select required **offerings and allocations**.
+5. Add **team members** (optional).
+6. Upload required documentation.
+7. Submit the proposal.
+
+![Screenshot: Proposal Submission Form](../img/proposal_submission_form.png)
+
+## Step 6: Review assignment and process  
+
+**Review Assignment:** Call manager or Automatic system
+
+### Review assignment
+
+**Performed by:** Call manager or Automatic system
+
+After proposals are submitted, reviews must be created and assigned to reviewers. This process depends on the call configuration:
+
+### Automatic review creation
+
+If configured for automatic assignment:
+- System automatically creates reviews
+- Reviews are assigned to available reviewers based on workload
+- Reviewers receive immediate notifications
+
+### Manual review creation
+
+If manual assignment is required:
+
+**Performed by:** Call manager
+
+1. Navigate to the **call**
+2. Locate the submitted **proposal** in the proposals list
+3. Click **Actions** next to the proposal
+4. Select **Create review**
+5. Assign the review to specific **reviewers**
+6. Reviewers receive notifications of their assignments
+
+![Screenshot: Review Assignment Interface](../img/assign_reviewer.png)
+
+**Performed by:** Reviewer
+
+Reviewers evaluate proposals using a structured assessment process:
+
+1. Reviewer is notified of new assigned proposal.
+2. Reviewer clicks **"View"** to open a preview modal:
+   - Sees brief proposal summary
+   - Can choose to **"Start review"** or **"Reject"** (send back)
+3. On clicking **"Start review"**, reviewer is taken to the full review form.
+4. Provide feedback and scores on:
    - Project title
-   - Project summary
-   - Project description
-   - Project duration
-   - Supporting documentation
+   - Summary and description
+   - Documentation
    - Resource requests
    - Team composition
-5. Summary score and comments are provided
-6. Reviews are submitted for consideration
+5. Submit the review.
 
-### 5. Decision and Allocation
+![Screenshot: Review Form Interface](../img/review_form1.png)
+![Screenshot: Review Form Interface](../img/review_form2.png)
 
-1. Decision maker (as configured) evaluates reviews
-2. Final decisions are made (allocation or rejection)
-3. For allocated proposals:
-   - A project is automatically created
-   - Requested resources are provisioned in the marketplace
-   - Team members are assigned the configured project role
-   - Resource limits are applied as specified in the proposal
+## Step 7: Decision and allocation  
 
-### 6. Tracking and Reporting
+**Performed by:** Call manager (if configured) or Automatic system
 
-1. Call managers can monitor statistics on:
-   - Open calls
-   - Active rounds
-   - Accepted proposals
-   - Pending proposals
-   - Pending reviews
-   - Rounds closing soon
-   - Pending offering requests
-2. Organization owners can track resource allocation across all calls
+The final decision process determines which proposals receive resource allocations:
 
-## States and Transitions
+1. Decision entity evaluates reviews.
+2. Proposal is **accepted** or **rejected**.
+3. If accepted:
+   - A **new project** is created under the proposing organization.
+   - Requested resources are provisioned.
+   - Team members are added to the project.
 
-### Call States
+![Screenshot: Decision Interface](../img/proposal_decision.png)
 
-- **Draft**: Initial state, call is being configured
-- **Active**: Call is open for submissions
-- **Archived**: Call is completed and no longer active
+## Step 8: Monitoring and reporting  
 
-### Round Statuses
+Effective monitoring ensures the call process runs smoothly and provides valuable insights:
 
-- **Scheduled**: Round start date is in the future
-- **Open**: Round is currently accepting submissions
-- **Ended**: Round cutoff date has passed
+**Performed by:** Call manager and Call organiser
 
-### Proposal States
+- Use dashboard to monitor:
+  - Open/closed calls
+  - Round statuses
+  - Proposal statuses
+  - Review progress
+  - Offering request statuses
 
-- **Draft**: Initial creation, editable by applicant
-- **Submitted**: Sent for review, awaiting reviewer assignment
-- **In Review**: Assigned to reviewers, under evaluation
-- **In Revision**: Sent back to applicant for changes
-- **Accepted**: Approved for resource allocation
-- **Rejected**: Declined for resource allocation
-- **Canceled**: Withdrawn or automatically canceled
+![Screenshot: Monitoring Dashboard](../img/call_monitoring_dashboard.png)
 
-### Review States
+## Additional tips
 
-- **Created**: Review has been assigned
-- **In Review**: Reviewer has accepted and is working on evaluation
-- **Submitted**: Review is complete
-- **Rejected**: Reviewer has declined the assignment
-
-### Requested Offering States
-
-- **Requested**: Initial state, awaiting service provider decision
-- **Accepted**: Service provider has approved use in call
-- **Canceled**: Service provider has declined use in call
-
-## API Endpoints
-
-The system provides RESTful API endpoints for:
-
-- Managing Call Organizations
-- Creating and configuring Calls
-- Managing Rounds
-- Submitting and updating Proposals
-- Assigning and completing Reviews
-- Requesting and approving Offerings
-- Allocating resources
-
-## Best Practices
-
-- Set clear evaluation criteria and communicate them to applicants
-- Provide comprehensive round documentation including resource availability
-- Allow adequate time for review process (recommended: 2+ weeks for reviews)
-- Configure appropriate minimum number of reviewers (recommended: 2-3)
-- Maintain consistent communication with applicants throughout the process
-- Close rounds promptly when cutoff dates are reached
-- Monitor reviewer workload to ensure balanced distribution
-- Configure automatic allocation only when clear scoring criteria are established
-- Provide templates for proposal documentation where applicable
-- Schedule multiple rounds in advance for recurring allocation cycles
+- Always check round and call status before making edits.
+- Assign enough reviewers early to avoid bottlenecks.
+- Communicate with applicants when revisions are needed.
+- Keep documentation clear and up to date.
 
 ## Troubleshooting
 
-### Round Configuration
+Solutions for common issues encountered during the call management process:
 
-- **Issue**: Round dates overlap with existing rounds
-  **Solution**: Adjust dates to ensure no overlap within the same call
+| Issue | Possible Cause | Solution |
+| --- | --- | --- |
+| Unable to create call | Insufficient permissions | Verify user has Call Organiser role |
+| Round cannot be activated | Missing required configuration | Check that all mandatory fields are completed |
+| Offering request pending | Service provider hasn't responded | Contact provider directly or through system notification |
+| Reviewer cannot access proposal | Incorrect assignment | Verify reviewer assignment in call settings |
+| Applicant cannot see active call | Call visibility settings | Check call publication status and visibility settings |
+| Resource allocation failed | Insufficient provider capacity | Contact service provider to resolve capacity issue |
 
-- **Issue**: Unable to create a round
-  **Solution**: Ensure call is in Draft or Active state
+## FAQ
 
-### Proposal Submission
+**Q: What's the difference between a Call Organiser and a Call Manager?**  
+A: A Call Organiser is appointed by the Organization Owner to create calls and assign Call Managers. The Call Manager is responsible for the detailed configuration of calls assigned to them including setting up rounds, assigning reviewers, and managing the review process.
 
-- **Issue**: Unable to submit proposal
-  **Solution**: Verify round is in Open status and required fields are completed
+**Q: Can a call have multiple rounds running simultaneously?**  
+A: No, Waldur supports multiple rounds within a single call, allowing for different resource types or applicant categories to be handled separately, but they cannot be active at the same time.
 
-- **Issue**: Resource requests unavailable
-  **Solution**: Check that service providers have accepted offering requests
+**Q: What happens if insufficient reviewers complete their evaluations?**  
+A: If the minimum number of reviews is not met by the deadline, the Call manager receives a notification and can either extend the review period or reduce the minimum requirement.
 
-### Review Assignment
+**Q: Can applicants edit their proposals after submission?**  
+A: By default, proposals cannot be edited after submission. However, if a reviewer or Call manager rejects a proposal with a request for revisions, the applicant can make the requested changes and resubmit.
 
-- **Issue**: Not enough reviewers available
-  **Solution**: Assign additional reviewers to the call or adjust minimum number requirement
+**Q: Is it possible to transfer allocated resources between approved projects?**  
+A: Resource transfer between projects requires administrative approval. Contact your Call manager to request a resource transfer.
 
-- **Issue**: Reviews not being created
-  **Solution**: Verify review strategy configuration and check reviewer availability
+**Q: How are applicants notified about proposal decisions?**  
+A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is made.
 
-### Allocation Process
-
-- **Issue**: Resources not provisioned after approval
-  **Solution**: Check marketplace availability and quotas
-
-- **Issue**: Team members not added to project
-  **Solution**: Verify default project role configuration
-
-- **Issue**: Unable to allocate proposal
-  **Solution**: Ensure proposal is in correct state (In Review, Submitted) and review requirements are met
-  
+**Q: Can a Call manager override reviewer scores?**  
+A: When configured for Call manager decisions, the manager can approve or reject proposals regardless of review scores, though all reviewer feedback remains visible and documented.
