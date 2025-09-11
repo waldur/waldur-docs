@@ -1205,6 +1205,12 @@ Enable reminders to owners about resources of shared offerings that have not gen
 
 Enable mock returns for the service account service
 
+#### ENABLE_MOCK_COURSE_ACCOUNT_BACKEND
+
+**Type:** bool
+
+Enable mock returns for the course account service
+
 #### ENFORCE_USER_CONSENT_FOR_OFFERINGS
 
 **Type:** bool

@@ -10,7 +10,7 @@ Allows to hide domain field in organization detail.
 
 ## customer.show_permission_reviews
 
-Allows to show permission reviews tab and popups.
+Allows to show permission reviews tab and popups for organisations.
 
 ## deployment.enable_cookie_notice
 
@@ -115,6 +115,10 @@ Show image field in project create dialog.
 ## project.show_industry_flag
 
 Show industry flag.
+
+## project.show_permission_reviews
+
+Allows to show permission reviews tab and popups for projects.
 
 ## project.show_start_date_in_create_dialog
 
