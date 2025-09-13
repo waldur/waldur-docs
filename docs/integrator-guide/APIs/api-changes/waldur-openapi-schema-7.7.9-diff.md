@@ -1027,6 +1027,7 @@ GET /api/support-issues/
               - Modified property: type
                 - Property 'AllOf' changed
                   - Schemas deleted: #/components/schemas/IssueTypeEnum
+                - Type changed from '' to 'string'
                 - Default changed from 'Informational' to null
 
 POST /api/support-issues/
@@ -1041,7 +1042,9 @@ POST /api/support-issues/
           - Modified property: type
             - Property 'AllOf' changed
               - Schemas deleted: #/components/schemas/IssueTypeEnum
+            - Type changed from '' to 'string'
             - Default changed from 'Informational' to null
+            - MinLength changed from 0 to 1
 - Responses changed
   - Modified response: 201
     - Content changed
@@ -1053,6 +1056,7 @@ POST /api/support-issues/
             - Modified property: type
               - Property 'AllOf' changed
                 - Schemas deleted: #/components/schemas/IssueTypeEnum
+              - Type changed from '' to 'string'
               - Default changed from 'Informational' to null
 
 GET /api/support-issues/{uuid}/
@@ -1068,6 +1072,7 @@ GET /api/support-issues/{uuid}/
             - Modified property: type
               - Property 'AllOf' changed
                 - Schemas deleted: #/components/schemas/IssueTypeEnum
+              - Type changed from '' to 'string'
               - Default changed from 'Informational' to null
 
 PATCH /api/support-issues/{uuid}/
@@ -1083,6 +1088,7 @@ PATCH /api/support-issues/{uuid}/
             - Modified property: type
               - Property 'AllOf' changed
                 - Schemas deleted: #/components/schemas/IssueTypeEnum
+              - Type changed from '' to 'string'
               - Default changed from 'Informational' to null
 
 PUT /api/support-issues/{uuid}/
@@ -1097,7 +1103,9 @@ PUT /api/support-issues/{uuid}/
           - Modified property: type
             - Property 'AllOf' changed
               - Schemas deleted: #/components/schemas/IssueTypeEnum
+            - Type changed from '' to 'string'
             - Default changed from 'Informational' to null
+            - MinLength changed from 0 to 1
 - Responses changed
   - Modified response: 200
     - Content changed
@@ -1109,6 +1117,7 @@ PUT /api/support-issues/{uuid}/
             - Modified property: type
               - Property 'AllOf' changed
                 - Schemas deleted: #/components/schemas/IssueTypeEnum
+              - Type changed from '' to 'string'
               - Default changed from 'Informational' to null
 
 POST /api/support-issues/{uuid}/sync/
@@ -1123,7 +1132,9 @@ POST /api/support-issues/{uuid}/sync/
           - Modified property: type
             - Property 'AllOf' changed
               - Schemas deleted: #/components/schemas/IssueTypeEnum
+            - Type changed from '' to 'string'
             - Default changed from 'Informational' to null
+            - MinLength changed from 0 to 1
 - Responses changed
   - Modified response: 200
     - Content changed
@@ -1135,6 +1146,7 @@ POST /api/support-issues/{uuid}/sync/
             - Modified property: type
               - Property 'AllOf' changed
                 - Schemas deleted: #/components/schemas/IssueTypeEnum
+              - Type changed from '' to 'string'
               - Default changed from 'Informational' to null
 
 GET /api/support-templates/
@@ -1147,7 +1159,7 @@ GET /api/support-templates/
           - Items changed
             - Properties changed
               - Modified property: issue_type
-                - Type changed from 'string' to ''
+                - New enum values: [INFORMATIONAL SERVICE_REQUEST CHANGE_REQUEST INCIDENT]
                 - Deleted enum values: [Informational Service Request Change Request Incident]
 
 POST /api/support-templates/
@@ -1158,7 +1170,7 @@ POST /api/support-templates/
       - Schema changed
         - Properties changed
           - Modified property: issue_type
-            - Type changed from 'string' to ''
+            - New enum values: [INFORMATIONAL SERVICE_REQUEST CHANGE_REQUEST INCIDENT]
             - Deleted enum values: [Informational Service Request Change Request Incident]
 - Responses changed
   - Modified response: 201
@@ -1167,7 +1179,7 @@ POST /api/support-templates/
         - Schema changed
           - Properties changed
             - Modified property: issue_type
-              - Type changed from 'string' to ''
+              - New enum values: [INFORMATIONAL SERVICE_REQUEST CHANGE_REQUEST INCIDENT]
               - Deleted enum values: [Informational Service Request Change Request Incident]
 
 GET /api/support-templates/{uuid}/
@@ -1179,7 +1191,7 @@ GET /api/support-templates/{uuid}/
         - Schema changed
           - Properties changed
             - Modified property: issue_type
-              - Type changed from 'string' to ''
+              - New enum values: [INFORMATIONAL SERVICE_REQUEST CHANGE_REQUEST INCIDENT]
               - Deleted enum values: [Informational Service Request Change Request Incident]
 
 PATCH /api/support-templates/{uuid}/
@@ -1190,7 +1202,7 @@ PATCH /api/support-templates/{uuid}/
       - Schema changed
         - Properties changed
           - Modified property: issue_type
-            - Type changed from 'string' to ''
+            - New enum values: [INFORMATIONAL SERVICE_REQUEST CHANGE_REQUEST INCIDENT]
             - Deleted enum values: [Informational Service Request Change Request Incident]
 - Responses changed
   - Modified response: 200
@@ -1199,7 +1211,7 @@ PATCH /api/support-templates/{uuid}/
         - Schema changed
           - Properties changed
             - Modified property: issue_type
-              - Type changed from 'string' to ''
+              - New enum values: [INFORMATIONAL SERVICE_REQUEST CHANGE_REQUEST INCIDENT]
               - Deleted enum values: [Informational Service Request Change Request Incident]
 
 PUT /api/support-templates/{uuid}/
@@ -1210,7 +1222,7 @@ PUT /api/support-templates/{uuid}/
       - Schema changed
         - Properties changed
           - Modified property: issue_type
-            - Type changed from 'string' to ''
+            - New enum values: [INFORMATIONAL SERVICE_REQUEST CHANGE_REQUEST INCIDENT]
             - Deleted enum values: [Informational Service Request Change Request Incident]
 - Responses changed
   - Modified response: 200
@@ -1219,5 +1231,5 @@ PUT /api/support-templates/{uuid}/
         - Schema changed
           - Properties changed
             - Modified property: issue_type
-              - Type changed from 'string' to ''
+              - New enum values: [INFORMATIONAL SERVICE_REQUEST CHANGE_REQUEST INCIDENT]
               - Deleted enum values: [Informational Service Request Change Request Incident]
