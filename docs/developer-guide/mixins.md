@@ -85,7 +85,6 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ParentInlineMixin`](#parentinlinemixin) | `waldur_mastermind.marketplace.admin` | Mixin to get parent object from request in Django admin inline views |
 | [`OfferingFilterMixin`](#offeringfiltermixin) | `waldur_mastermind.marketplace.filters` | Mixin to provide common offering-related filters |
 | [`CostEstimateMixin`](#costestimatemixin) | `waldur_mastermind.marketplace.models` | Mixin for cost estimation functionality |
-| [`RequestTypeMixin`](#requesttypemixin) | `waldur_mastermind.marketplace.models` | Mixin for request type handling |
 | [`ResourceDetailsMixin`](#resourcedetailsmixin) | `waldur_mastermind.marketplace.models` | Mixin combining resource details with cost estimation |
 | [`SafeAttributesMixin`](#safeattributesmixin) | `waldur_mastermind.marketplace.models` | Mixin for safe attribute handling |
 | [`ConnectedOfferingDetailsMixin`](#connectedofferingdetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide offering details action for connected resources |
@@ -1061,19 +1060,6 @@ validation. Used for calculating costs based on limits and plans
 with policy compliance checking.
 
 **Base classes:** `Model`
-
-### RequestTypeMixin
-
-**Module:** `waldur_mastermind.marketplace.models`
-
-**Description:**
-Mixin for request type handling.
-
-Extends CostEstimateMixin with request type-specific cost calculation
-for different operation types (CREATE, UPDATE, etc.). Provides
-pricing logic based on request type and plan switching.
-
-**Base classes:** `CostEstimateMixin`
 
 ### ResourceDetailsMixin
 
