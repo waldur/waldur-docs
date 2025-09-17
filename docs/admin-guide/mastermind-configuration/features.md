@@ -116,6 +116,10 @@ Show image field in project create dialog.
 
 Show industry flag.
 
+## project.show_kind_in_create_dialog
+
+Show kind field in project create dialog.
+
 ## project.show_permission_reviews
 
 Allows to show permission reviews tab and popups for projects.
