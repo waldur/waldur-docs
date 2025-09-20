@@ -1682,6 +1682,12 @@ New limits: {{ new_limits }}.
 
 ## waldur_mastermind.proposal
 
+### round_opening_for_reviewers_subject.txt (waldur_mastermind.proposal)
+
+``` txt
+New review round opening: {{ call_name }}
+```
+
 ### review_rejected_subject.txt (waldur_mastermind.proposal)
 
 ``` txt
@@ -1801,6 +1807,42 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 </html>
 ```
 
+### round_closing_for_managers_message.html (waldur_mastermind.proposal)
+
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Round closed</title>
+</head>
+<body>
+    <p>Dear call manager,</p>
+
+    <p>The round "{{ round_name }}" for call "{{ call_name }}" has now closed.</p>
+
+    <h4>Round summary:</h4>
+    <ul>
+        <li><strong>Total proposals submitted:</strong> {{ total_proposals }}</li>
+        <li><strong>Start date:</strong> {{ start_date }}</li>
+        <li><strong>Closed date:</strong> {{ close_date }}</li>
+    </ul>
+
+    <p>Based on the review strategy selected for this round ({{ review_strategy }}), the system has:</p>
+    <ul>
+        <li>Set all draft proposals to "canceled" state</li>
+        <li>Moved all submitted proposals to "in_review" state</li>
+        <li>Created {{ total_reviews }} review assignments</li>
+    </ul>
+
+    <p>You can view the round details and manage proposals by visiting: <a href="{{ round_url }}">{{ round_url }}</a></p>
+
+    <p>
+        This is an automated message from the {{ site_name }}. Please do not reply to this email.
+    </p>
+</body>
+</html>
+```
+
 ### new_proposal_submitted_message.html (waldur_mastermind.proposal)
 
 ``` html
@@ -1901,6 +1943,36 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 
 ``` txt
 New review assignment: {{ proposal_name }}
+```
+
+### round_opening_for_reviewers_message.html (waldur_mastermind.proposal)
+
+``` html
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New round opening</title>
+</head>
+<body>
+    <p>Dear {{ reviewer_name }},</p>
+
+    <p>A new review round is opening for call "<strong>{{ call_name }}</strong>" where you are registered as a reviewer.</p>
+
+    <h4>Round details:</h4>
+    <ul>
+      <li><strong>Round:</strong> {{ round_name }}</li>
+      <li><strong>Submission period:</strong> {{ start_date }} to {{ end_date }}</li>
+    </ul>
+
+    <p>You may be assigned proposals to review once they are submitted. Please ensure your availability during the review period.</p>
+
+    <p>If you anticipate any conflicts or periods of unavailability during this time, please notify the call manager as soon as possible.</p>
+    <p>View call details: <a href="{{ call_url }}">{{ call_url }}</a></p>
+
+    <p><em>This is an automated message from the {{ site_name }}. Please do not reply to this email.</em></p>
+
+</body>
+</html>
 ```
 
 ### review_rejected_message.html (waldur_mastermind.proposal)
@@ -2005,6 +2077,49 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 </html>
 ```
 
+### round_opening_for_reviewers_message.txt (waldur_mastermind.proposal)
+
+``` txt
+Dear {{ reviewer_name }},
+
+A new review round is opening for call "{{ call_name }}" where you are registered as a reviewer.
+
+Round details:
+- Round: {{ round_name }}
+- Submission period: {{ start_date }} to {{ end_date }}
+
+You may be assigned proposals to review once they are submitted. Please ensure your availability during the review period.
+
+If you anticipate any conflicts or periods of unavailability during this time, please notify the call manager as soon as possible.
+
+View call details: {{ call_url }}
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
+```
+
+### round_closing_for_managers_message.txt (waldur_mastermind.proposal)
+
+``` txt
+Dear call manager,
+
+The round "{{ round_name }}" for call "{{ call_name }}" has now closed.
+
+Round summary:
+- Total proposals submitted: {{ total_proposals }}
+- Start date: {{ start_date }}
+- Closed date: {{ close_date }}
+
+Based on the review strategy selected for this round ({{ review_strategy }}), the system has:
+- Set all draft proposals to "canceled" state
+- Moved all submitted proposals to "in_review" state
+- Created {{ total_reviews }} review assignments
+
+You can view the round details and manage proposals by visiting:
+{{ round_url }}
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
+```
+
 ### new_proposal_submitted_subject.txt (waldur_mastermind.proposal)
 
 ``` txt
@@ -2089,6 +2204,12 @@ You can assign a new reviewer by visiting:
 {{ create_review_link }}
 
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
+```
+
+### round_closing_for_managers_subject.txt (waldur_mastermind.proposal)
+
+``` txt
+Round closed: {{ round_name }} - {{ call_name }}
 ```
 
 ### proposal_state_changed_message.html (waldur_mastermind.proposal)
