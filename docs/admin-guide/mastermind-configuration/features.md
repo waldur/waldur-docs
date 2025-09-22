@@ -52,6 +52,10 @@ Allow marketplace to function as a catalogue only.
 
 Do not render prices in order details.
 
+## marketplace.display_user_tos
+
+Enable display of user terms of service in UI.
+
 ## marketplace.import_resources
 
 Allow to import resources from service provider to project.

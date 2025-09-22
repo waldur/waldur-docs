@@ -1887,6 +1887,36 @@ Proposal state update: {{ proposal_name }} - {{ new_state }}
 Decision made: Proposal {{ proposal_state }} - {{ proposal_name }}
 ```
 
+### reviews_complete_subject.txt (waldur_mastermind.proposal)
+
+``` txt
+All reviews complete for proposal: {{ proposal_name }}
+```
+
+### reviews_complete_message.txt (waldur_mastermind.proposal)
+
+``` txt
+Dear call manager,
+
+All required reviews have been completed for proposal "{{ proposal_name }}" in call "{{ call_name }}".
+
+Review summary:
+- Proposal: {{ proposal_name }}
+- Submitted by: {{ submitter_name }}
+- Number of submitted reviews: {{ reviews_count }}
+- Average score: {{ average_score }}/5
+
+Review details:
+{% for r in reviews %}{{ forloop.counter }}. {{ r.reviewer_name }} - {{ r.score }}/5 - {{ r.submitted_at|date:"Y-m-d H:i" }}
+{% empty %}No individual reviews available.
+{% endfor %}
+ACTION REQUIRED: Please review the evaluation and make a decision on this proposal.
+
+Review & decide: {{ proposal_url }}
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
+```
+
 ### proposal_cancelled_subject.txt (waldur_mastermind.proposal)
 
 ``` txt
@@ -1972,6 +2002,61 @@ New review assignment: {{ proposal_name }}
     <p><em>This is an automated message from the {{ site_name }}. Please do not reply to this email.</em></p>
 
 </body>
+</html>
+```
+
+### reviews_complete_message.html (waldur_mastermind.proposal)
+
+``` html
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reviews completed</title>
+  </head>
+  <body>
+    <p>Dear call manager,</p>
+
+    <p>
+      All required reviews have been completed for proposal
+      "<strong>{{ proposal_name }}</strong>" in call
+      "<strong>{{ call_name }}</strong>".
+    </p>
+
+    <h3>Review summary</h3>
+    <ul>
+      <li><strong>Proposal:</strong> {{ proposal_name }}</li>
+      <li><strong>Submitted by:</strong> {{ submitter_name }}</li>
+      <li><strong>Number of submitted reviews:</strong> {{ reviews_count }}</li>
+      <li><strong>Average score:</strong> {{ average_score }}/5</li>
+    </ul>
+
+    <h3>Review details</h3>
+    <ol>
+      {% for r in reviews %}
+      <li>
+        <strong>{{ r.reviewer_name }}</strong>
+        &nbsp;-&nbsp;{{ r.score }}/5
+        &nbsp;-&nbsp;{{ r.submitted_at|date:"Y-m-d H:i" }}
+      </li>
+      {% empty %}
+      <li>No individual reviews available.</li>
+      {% endfor %}
+    </ol>
+
+    <p>
+      ACTION REQUIRED: Please review the evaluation and make a decision on this proposal.
+    </p>
+
+    <p>
+      <a href="{{ proposal_url }}">
+        {{ proposal_url }}
+      </a>
+    </p>
+
+    <p>
+      This is an automated message from the {{ site_name }}. Please do not reply to this email.
+    </p>
+  </body>
 </html>
 ```
 
