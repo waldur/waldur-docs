@@ -52,8 +52,7 @@ This guide walks you through the entire lifecycle of call management in Waldur, 
       - Deciding entity: call manager or automatic
       - Allocation timing: immediate or fixed date
       - Define the mappings between proposal roles and project roles
-3. Assign **reviewers** and **proposal managers**.
-4. Save and activate the round.
+3. Save and activate the round.
 
 ![Screenshot: Round Configuration Interface](../img/round_creation.png)
 
