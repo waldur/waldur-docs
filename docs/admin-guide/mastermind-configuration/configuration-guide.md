@@ -61,7 +61,7 @@ Indicates if the authentication requests sent should be signed by default
 
 #### CATEGORIES
 
-Type: list
+Type: List[str]
 
 Links to the entity categories
 
@@ -121,13 +121,13 @@ Type: Optional[str]
 
 #### IDP_METADATA_LOCAL
 
-Type: list
+Type: List[str]
 
 IdPs metadata XML files stored locally
 
 #### IDP_METADATA_REMOTE
 
-Type: list
+Type: List[str]
 
 IdPs metadata XML files stored remotely
 
@@ -175,13 +175,13 @@ Identified NameID format to use. None means default, empty string ("") disables 
 
 #### OPTIONAL_ATTRIBUTES
 
-Type: list
+Type: List[str]
 
 SAML attributes that may be useful to have but not required
 
 #### ORGANIZATION
 
-Type: dict
+Type: Mapping[str, Any]
 
 Organization responsible for the service (you can set multilanguage information here)
 
@@ -211,13 +211,13 @@ Registration policy required by mdpi
 
 #### REQUIRED_ATTRIBUTES
 
-Type: list
+Type: List[str]
 
 SAML attributes that are required to identify a user
 
 #### SAML_ATTRIBUTE_MAPPING
 
-Type: dict
+Type: Mapping[str, str]
 
 Mapping between SAML attributes and User fields
 
@@ -238,8 +238,7 @@ Full path to the xmlsec1 binary program
 Default value:
 
 ```python
-WALDUR_AUTH_SOCIAL = {'BLOCK_CREATION_OF_UNINVITED_USERS': False,
- 'ENABLE_EDUTEAMS_SYNC': False,
+WALDUR_AUTH_SOCIAL = {'ENABLE_EDUTEAMS_SYNC': False,
  'REMOTE_EDUTEAMS_CLIENT_ID': '',
  'REMOTE_EDUTEAMS_ENABLED': False,
  'REMOTE_EDUTEAMS_REFRESH_TOKEN': '',
@@ -250,12 +249,6 @@ WALDUR_AUTH_SOCIAL = {'BLOCK_CREATION_OF_UNINVITED_USERS': False,
  'REMOTE_EDUTEAMS_TOKEN_URL': 'https://proxy.acc.researcher-access.org/OIDC/token',
  'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo'}
 ```
-
-#### BLOCK_CREATION_OF_UNINVITED_USERS
-
-Type: bool
-
-If true, block creation of an account on OIDC login if user email is not provided or provided and is not in the list of one of the active invitations.
 
 #### ENABLE_EDUTEAMS_SYNC
 
@@ -634,7 +627,7 @@ Allows to render native name field in customer and user forms.
 
 #### NOTIFICATIONS_PROFILE_CHANGES
 
-Type: dict
+Type: Mapping[str, Any]
 
 Configure notifications about profile changes of organization owners.
 
@@ -802,7 +795,7 @@ List of user email patterns (as regex) that define if the user belongs to extern
 
 #### EXTERNAL_LIMITS
 
-Type: dict
+Type: Mapping[str, Any]
 
 Overrided default values for SLURM offering to be created for users belonging to external organization.
 
@@ -826,7 +819,7 @@ List of user email patterns (as regex) that define if the user belongs to intern
 
 #### INTERNAL_LIMITS
 
-Type: dict
+Type: Mapping[str, Any]
 
 Overrided default values for SLURM offering to be created for users belonging to internal organization.
 
@@ -904,19 +897,19 @@ If true, allow connecting of instances directly to external networks
 
 #### DEFAULT_BLACKLISTED_USERNAMES
 
-Type: list
+Type: List[str]
 
 Usernames that cannot be created by Waldur in OpenStack
 
 #### DEFAULT_SECURITY_GROUPS
 
-Type: tuple
+Type: Tuple[dict[str, str | tuple[dict[str, str | int], ...]], ...]
 
 Default security groups and rules created in each of the provisioned OpenStack tenants
 
 #### MAX_CONCURRENT_PROVISION
 
-Type: dict
+Type: Mapping[str, int]
 
 Maximum parallel executions of provisioning operations for OpenStack resources
 
@@ -928,7 +921,7 @@ If true, specification of availability zone during provisioning will become mand
 
 #### SUBNET
 
-Type: dict
+Type: Mapping[str, str]
 
 Default allocation pool for auto-created internal network
 
@@ -953,7 +946,7 @@ WALDUR_PID = {'DATACITE': {'API_URL': 'https://example.com',
 
 #### DATACITE
 
-Type: dict
+Type: Mapping[str, str]
 
 Settings for integration of Waldur with Datacite PID service. Collection DOI is used to aggregate generated DOIs.
 
@@ -984,7 +977,7 @@ Prefix for SLURM account name corresponding to Waldur organization.
 
 #### DEFAULT_LIMITS
 
-Type: dict
+Type: Mapping[str, int]
 
 Default limits of account that are set when SLURM account is provisioned.
 
@@ -1030,7 +1023,7 @@ Alternative email address to use for email hooks.
 
 Type: bool, default value: True
 
-Controls if resource importing should use database transactions. Using transactions makes imports safer as a failure during import won’t import only part of the data set.
+Controls if resource importing should use database transactions. Using transactions makes imports safer as a failure during import won't import only part of the data set.
 
 #### IPSTACK_ACCESS_KEY
 
@@ -1040,7 +1033,7 @@ Unique authentication key used to gain access to the ipstack API.
 
 #### LANGUAGES
 
-Type: List[tuple[str, str]], default value: (('en', 'English'), ('et', 'Eesti'))
+Type: List[tuple[str, str]], default value: [('en', 'English'), ('et', 'Eesti')]
 
 The list is a list of two-tuples in the format (language code, language name) – for example, ('ja', 'Japanese').
 
@@ -1921,6 +1914,12 @@ Triggers authentication flow at once.
 **Type:** bool
 
 Deactivate user if all roles are revoked (except staff/support)
+
+#### OIDC_BLOCK_CREATION_OF_UNINVITED_USERS
+
+**Type:** bool
+
+If true, block creation of an account on OIDC login if user email is not provided or provided and is not in the list of one of the active invitations.
 
 ### FreeIPA settings
 
