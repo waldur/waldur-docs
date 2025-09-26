@@ -4,7 +4,7 @@
 
 ### structure.change_email_request
 
-A notification sent out when an email change is requested. Recipient is the old email address.
+A notification sent when an email change is requested. Recipient is the old email address.
 
 #### Templates
 
@@ -31,7 +31,7 @@ A notification sent out when an email change is requested. Recipient is the old 
 
 ### structure.notifications_profile_changes_operator
 
-A notification sent out to notify about profile changes. The recipients are Waldur operators.
+A notification sent to Waldur operators when a user's profile is updated.
 
 #### Templates
 
@@ -76,7 +76,7 @@ A notification sent out to notify about profile changes. The recipients are Wald
 
 ### structure.structure_role_granted
 
-A notification sent out when a role is granted. The recipient is the user who received the role.
+A notification sent when a role is granted. The recipient is the user who received the role.
 
 #### Templates
 
@@ -105,7 +105,7 @@ A notification sent out when a role is granted. The recipient is the user who re
 
 ### users.invitation_approved
 
-A notification sent to notify the user that his invitation has been approved. The recipient is the user who's being invited.
+Sent to a new user after their invitation is approved and a new account is created for them.
 
 #### Templates
 
@@ -165,7 +165,7 @@ A notification sent to notify the user that his invitation has been approved. Th
 
 ### users.invitation_created
 
-A notification sent to the user so that he can accept it and receive permissions. The recipient is the user who's being invited.
+Sent to an invited user so they can accept the invitation.
 
 #### Templates
 
@@ -219,7 +219,7 @@ A notification sent to the user so that he can accept it and receive permissions
 
 ### users.invitation_expired
 
-A notification sent out to notify the user that his invitation has expired. The recipient is the user who's being invited.
+Sent to the invitation creator to inform them that an invitation has expired.
 
 #### Templates
 
@@ -264,7 +264,7 @@ A notification sent out to notify the user that his invitation has expired. The 
 
 ### users.invitation_rejected
 
-A notification sent to notify the user that his invitation has been rejected. The recipient is the user who's being invited.
+Sent to the invitation creator to inform them that their invitation has been rejected.
 
 #### Templates
 
@@ -324,7 +324,7 @@ A notification sent to notify the user that his invitation has been rejected. Th
 
 ### users.invitation_requested
 
-A notification sent to staff users so that they can approve or reject invitation. The recipients are active staff users.
+Sent to staff users so they can approve or reject a pending invitation.
 
 #### Templates
 
@@ -442,7 +442,7 @@ A notification sent to staff users so that they can approve or reject invitation
 
 ### users.permission_request_submitted
 
-A notification sent out to notify about submitted permission request. The recipients are active staff users or customer owners.
+Sent to staff or customer owners about a submitted permission request.
 
 #### Templates
 
@@ -491,7 +491,7 @@ A notification sent out to notify about submitted permission request. The recipi
 
 ### booking.notification
 
-A notification sent out to notify about upcoming bookings. The recipients are users who have upcoming bookings.
+Sent to users to notify them about their upcoming bookings.
 
 #### Templates
 
@@ -544,7 +544,7 @@ A notification sent out to notify about upcoming bookings. The recipients are us
 
 ### invoices.notification
 
-A notification of invoice. The recipients are organization owners.
+Sent to organization owners with a new invoice. Includes the invoice as an HTML attachment.
 
 #### Templates
 
@@ -587,7 +587,7 @@ A notification of invoice. The recipients are organization owners.
 
 ### invoices.upcoming_ends_notification
 
-A notification about upcoming contract ending. The recipients are organization owners.
+Notifies organization owners about an upcoming fixed-price contract ending.
 
 #### Templates
 
@@ -664,48 +664,6 @@ A notification of a failed resource creation
     </p>
     <p>
         Resource {{ resource_name }} creation has failed.
-    </p>
-    </body>
-    </html>
-
-```
-
-### marketplace.marketplace_resource_create_succeeded
-
-A notification of a successful resource creation
-
-#### Templates
-
-=== "marketplace/marketplace_resource_create_succeeded_subject.txt"
-
-```txt
-    Resource {{ resource_name }} has been created.
-
-```
-
-=== "marketplace/marketplace_resource_create_succeeded_message.txt"
-
-```txt
-    Hello!
-
-    Resource {{ resource_name }} has been created.
-
-```
-
-=== "marketplace/marketplace_resource_create_succeeded_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>Resource {{ resource_name }} has been created.</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>
-        Resource {{ resource_name }} has been created.
     </p>
     </body>
     </html>
@@ -798,7 +756,7 @@ A notification of a successful resource termination
 
 ### marketplace.marketplace_resource_termination_scheduled
 
-A notification of a scheduled resource termination. The recipients are project administrators and managers
+Notifies project admins/managers that a resource termination was scheduled.
 
 #### Templates
 
@@ -841,7 +799,7 @@ A notification of a scheduled resource termination. The recipients are project a
 
 ### marketplace.marketplace_resource_termination_scheduled_staff
 
-A notification of a resource termination. The recipients are project administrators and managers.
+Notifies project admins/managers that a resource termination was scheduled by a staff member.
 
 #### Templates
 
@@ -1045,7 +1003,7 @@ A notification of a successful resource limit update. The recipients are all the
 
 ### marketplace.marketplace_resource_update_succeeded
 
-A notification of a successful resource update. The recipients are all the users in the project.
+A notification of a successful resource plan update. The recipients are all the users in the project.
 
 #### Templates
 
@@ -1121,7 +1079,7 @@ A notification of a successful resource update. The recipients are all the users
 
 ### marketplace.notification_about_project_ending
 
-A notification about project ending. The recipients are project managers and customer owners.
+Notifies project and customer users about a project that is nearing its end date.
 
 #### Templates
 
@@ -1180,7 +1138,7 @@ A notification about project ending. The recipients are project managers and cus
 
 ### marketplace.notification_about_resource_ending
 
-A notification about resource ending. The recipients are project managers and customer owners.
+Notifies project users about a resource that is nearing its end date.
 
 #### Templates
 
@@ -1230,7 +1188,7 @@ A notification about resource ending. The recipients are project managers and cu
 
 ### marketplace.notification_about_stale_resources
 
-A notification about stale resources. The recipients are organization owners.
+Notifies organization owners about active resources that have not generated costs recently.
 
 #### Templates
 
@@ -1288,7 +1246,7 @@ A notification about stale resources. The recipients are organization owners.
 
 ### marketplace.notification_to_user_that_order_been_rejected
 
-Notification to user whose order been rejected.
+Notifies the user who created an order that it has been rejected.
 
 #### Templates
 
@@ -1328,72 +1286,9 @@ Notification to user whose order been rejected.
 
 ```
 
-### marketplace.notification_usages
-
-A notification about usages. The recipients are organization owners.
-
-#### Templates
-
-=== "marketplace/notification_usages_subject.txt"
-
-```txt
-    Reminder about missing usage reports.
-
-```
-
-=== "marketplace/notification_usages_message.txt"
-
-```txt
-    Hello!
-
-    Please do not forget to add usage for the resources you provide:
-    {% regroup resources by offering as offering_list %}{% for offering in offering_list %}
-    {{forloop.counter}}. {{ offering.grouper.name }}:{% for resource in offering.list %}
-        - {{ resource.name }}
-    {% endfor %}{% endfor %}
-    You can submit resource usage via API or do it manually at {{ public_resources_url }}.
-
-```
-
-=== "marketplace/notification_usages_message.html"
-
-```txt
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>Reminder about missing usage reports.</title>
-    </head>
-    <body>
-    <p>
-        Hello!
-    </p>
-    <p>Please do not forget to add usage for the resources you provide:</p>
-    {% regroup resources by offering as offering_list %}
-
-    <ol>
-    {% for offering in offering_list %}
-        <li>
-            {{ offering.grouper.name }}:
-            <ul>
-                {% for resource in offering.list %}
-                <li>{{ resource.name }}</li>
-                {% endfor %}
-            </ul>
-        </li>
-    {% endfor %}
-    </ol>
-
-    <p>
-        You can submit resource usage via API or do it <a href='{{ public_resources_url }}'>manually</a>.
-    </p>
-    </body>
-    </html>
-
-```
-
 ### marketplace.notify_consumer_about_pending_order
 
-A notification for consumer about pending order. The recipients are users that have permissions to approve the order.
+Notifies project members with approval permissions about a pending order.
 
 #### Templates
 
@@ -1435,7 +1330,7 @@ A notification for consumer about pending order. The recipients are users that h
 
 ### marketplace.notify_provider_about_pending_order
 
-A notification for provider about pending order. The recipients are users that have permissions to approve the order.
+Notifies service provider owners about a pending order for their offering.
 
 #### Templates
 
@@ -1479,7 +1374,7 @@ A notification for provider about pending order. The recipients are users that h
 
 ### marketplace_remote.notification_about_pending_project_updates
 
-A notification about pending project updates. The recipients are customer owners
+Notifies customer owners about pending project update requests.
 
 #### Templates
 
@@ -1533,7 +1428,7 @@ A notification about pending project updates. The recipients are customer owners
 
 ### marketplace_remote.notification_about_project_details_update
 
-A notification about project details update. The recipients the user who requested project details update and the user that reviewed it.
+Notifies users about a completed project update request, detailing the changes.
 
 #### Templates
 
@@ -1647,7 +1542,7 @@ A notification about project details update. The recipients the user who request
 
 ### marketplace_policy.notification_about_project_cost_exceeded_limit
 
-Notification about project cost exceeded limit. The recipients are all customer owners of the project.
+Notifies customer owners when a project's estimated cost has exceeded a defined policy limit.
 
 #### Templates
 
@@ -1690,7 +1585,7 @@ Notification about project cost exceeded limit. The recipients are all customer 
 
 ### support.description
 
-A notification used for issue creation.
+A template used for generating the issue description field during issue creation.
 
 #### Templates
 
@@ -1718,11 +1613,18 @@ A notification used for issue creation.
 
 ### support.notification_comment_added
 
-Notification about a new comment in the issue. The recipient is issue caller.
+Notification about a new comment being added to an issue. The recipient is the issue's caller.
 
 #### Templates
 
-=== "support/notification_comment_added.txt"
+=== "support/notification_comment_added_subject.txt"
+
+```txt
+    The issue ({{ issue.key }}) you have created has a new comment
+
+```
+
+=== "support/notification_comment_added_message.txt"
 
 ```txt
     Hello!
@@ -1731,7 +1633,7 @@ Notification about a new comment in the issue. The recipient is issue caller.
 
 ```
 
-=== "support/notification_comment_added.html"
+=== "support/notification_comment_added_message.html"
 
 ```txt
     <html>
@@ -1758,20 +1660,20 @@ Notification about a new comment in the issue. The recipient is issue caller.
 
 ```
 
-=== "support/notification_comment_added_subject.txt"
-
-```txt
-    The issue ({{ issue.key }}) you have created has a new comment
-
-```
-
 ### support.notification_comment_updated
 
-Notification about an update in the issue comment. The recipient is issue caller.
+Notification about an update to an existing issue comment. The recipient is the issue's caller.
 
 #### Templates
 
-=== "support/notification_comment_updated.txt"
+=== "support/notification_comment_updated_subject.txt"
+
+```txt
+    Issue {{ issue.key }}. The comment has been updated
+
+```
+
+=== "support/notification_comment_updated_message.txt"
 
 ```txt
     Hello!
@@ -1780,7 +1682,7 @@ Notification about an update in the issue comment. The recipient is issue caller
 
 ```
 
-=== "support/notification_comment_updated.html"
+=== "support/notification_comment_updated_message.html"
 
 ```txt
     <html>
@@ -1812,20 +1714,20 @@ Notification about an update in the issue comment. The recipient is issue caller
 
 ```
 
-=== "support/notification_comment_updated_subject.txt"
-
-```txt
-    Issue {{ issue.key }}. The comment has been updated
-
-```
-
 ### support.notification_issue_feedback
 
-Notification about a feedback related to the issue. The recipient is issue caller.
+Notification requesting feedback after an issue has been resolved. The recipient is the issue's caller.
 
 #### Templates
 
-=== "support/notification_issue_feedback.txt"
+=== "support/notification_issue_feedback_subject.txt"
+
+```txt
+    Please share your feedback: {{issue.key}} {{issue.summary}}
+
+```
+
+=== "support/notification_issue_feedback_message.txt"
 
 ```txt
     Hello, {{issue.caller.full_name}}!
@@ -1840,7 +1742,7 @@ Notification about a feedback related to the issue. The recipient is issue calle
 
 ```
 
-=== "support/notification_issue_feedback.html"
+=== "support/notification_issue_feedback_message.html"
 
 ```txt
     <html>
@@ -1890,20 +1792,20 @@ Notification about a feedback related to the issue. The recipient is issue calle
 
 ```
 
-=== "support/notification_issue_feedback_subject.txt"
-
-```txt
-    Please share your feedback: {{issue.key}} {{issue.summary}}
-
-```
-
 ### support.notification_issue_updated
 
-Notification about an update in the issue. The recipient is issue caller.
+Notification about one or more fields of an issue being updated. The recipient is the issue's caller.
 
 #### Templates
 
-=== "support/notification_issue_updated.txt"
+=== "support/notification_issue_updated_subject.txt"
+
+```txt
+    Updated issue: {{issue.key}} {{issue.summary}}
+
+```
+
+=== "support/notification_issue_updated_message.txt"
 
 ```txt
     Hello!
@@ -1927,7 +1829,7 @@ Notification about an update in the issue. The recipient is issue caller.
 
 ```
 
-=== "support/notification_issue_updated.html"
+=== "support/notification_issue_updated_message.html"
 
 ```txt
     <html>
@@ -1967,16 +1869,9 @@ Notification about an update in the issue. The recipient is issue caller.
 
 ```
 
-=== "support/notification_issue_updated_subject.txt"
-
-```txt
-    Updated issue: {{issue.key}} {{issue.summary}}
-
-```
-
 ### support.summary
 
-A notification used for issue creation.
+A template used for generating the issue summary field during issue creation.
 
 #### Templates
 
@@ -1991,9 +1886,16 @@ A notification used for issue creation.
 
 ### proposal.new_proposal_submitted
 
-A notification to the call manager about a new proposal submission.
+Notifies call managers about a new proposal submission.
 
 #### Templates
+
+=== "proposal/new_proposal_submitted_subject.txt"
+
+```txt
+    New proposal submitted: {{ proposal_name }}
+
+```
 
 === "proposal/new_proposal_submitted_message.txt"
 
@@ -2048,18 +1950,18 @@ A notification to the call manager about a new proposal submission.
 
 ```
 
-=== "proposal/new_proposal_submitted_subject.txt"
-
-```txt
-    New proposal submitted: {{ proposal_name }}
-
-```
-
 ### proposal.new_review_submitted
 
-A notification to the call manager about a new review submission.
+Notifies call managers about a new review submission.
 
 #### Templates
+
+=== "proposal/new_review_submitted_subject.txt"
+
+```txt
+    Review submitted for proposal: {{ proposal_name }}
+
+```
 
 === "proposal/new_review_submitted_message.txt"
 
@@ -2125,18 +2027,18 @@ A notification to the call manager about a new review submission.
 
 ```
 
-=== "proposal/new_review_submitted_subject.txt"
-
-```txt
-    Review submitted for proposal: {{ proposal_name }}
-
-```
-
 ### proposal.proposal_cancelled
 
-A notification to proposal creator about the proposal cancellation.
+Notifies the proposal creator that their proposal has been cancelled (e.g., because the round ended).
 
 #### Templates
+
+=== "proposal/proposal_cancelled_subject.txt"
+
+```txt
+    Proposal canceled: {{ proposal_name }}
+
+```
 
 === "proposal/proposal_cancelled_message.txt"
 
@@ -2198,18 +2100,18 @@ A notification to proposal creator about the proposal cancellation.
 
 ```
 
-=== "proposal/proposal_cancelled_subject.txt"
-
-```txt
-    Proposal canceled: {{ proposal_name }}
-
-```
-
 ### proposal.proposal_decision_for_reviewer
 
-A notification to the reviewer about the proposal decision (approved/rejected) which they reviewed.
+Notifies a reviewer about the final decision for a proposal they reviewed.
 
 #### Templates
+
+=== "proposal/proposal_decision_for_reviewer_subject.txt"
+
+```txt
+    Decision made: Proposal {{ proposal_state }} - {{ proposal_name }}
+
+```
 
 === "proposal/proposal_decision_for_reviewer_message.txt"
 
@@ -2267,18 +2169,18 @@ A notification to the reviewer about the proposal decision (approved/rejected) w
 
 ```
 
-=== "proposal/proposal_decision_for_reviewer_subject.txt"
-
-```txt
-    Decision made: Proposal {{ proposal_state }} - {{ proposal_name }}
-
-```
-
 ### proposal.proposal_state_changed
 
-A notification about the proposal state changes (submitted → in review → accepted/rejected).
+Notifies a proposal creator about a change in their proposal's state.
 
 #### Templates
+
+=== "proposal/proposal_state_changed_subject.txt"
+
+```txt
+    Proposal state update: {{ proposal_name }} - {{ new_state }}
+
+```
 
 === "proposal/proposal_state_changed_message.txt"
 
@@ -2438,18 +2340,18 @@ A notification about the proposal state changes (submitted → in review → acc
 
 ```
 
-=== "proposal/proposal_state_changed_subject.txt"
-
-```txt
-    Proposal state update: {{ proposal_name }} - {{ new_state }}
-
-```
-
 ### proposal.requested_offering_decision
 
-A notification to call manager about the decision on requested offering (accepted/rejected).
+Notifies call managers about a decision on a requested offering.
 
 #### Templates
+
+=== "proposal/requested_offering_decision_subject.txt"
+
+```txt
+    Offering request {{ decision }}: {{ offering_name }}
+
+```
 
 === "proposal/requested_offering_decision_message.txt"
 
@@ -2513,18 +2415,18 @@ A notification to call manager about the decision on requested offering (accepte
 
 ```
 
-=== "proposal/requested_offering_decision_subject.txt"
-
-```txt
-    Offering request {{ decision }}: {{ offering_name }}
-
-```
-
 ### proposal.review_assigned
 
-A notification to a reviewer about a new review assignment.
+Notifies a user that they have been assigned to review a proposal.
 
 #### Templates
+
+=== "proposal/review_assigned_subject.txt"
+
+```txt
+    New review assignment: {{ proposal_name }}
+
+```
 
 === "proposal/review_assigned_message.txt"
 
@@ -2581,18 +2483,18 @@ A notification to a reviewer about a new review assignment.
 
 ```
 
-=== "proposal/review_assigned_subject.txt"
-
-```txt
-    New review assignment: {{ proposal_name }}
-
-```
-
 ### proposal.review_rejected
 
-A notification to the call managers about a rejected review.
+Notifies call managers that a review was cancelled or rejected.
 
 #### Templates
+
+=== "proposal/review_rejected_subject.txt"
+
+```txt
+    Alert: review assignment rejected for {{ proposal_name }}
+
+```
 
 === "proposal/review_rejected_message.txt"
 
@@ -2664,18 +2566,18 @@ A notification to the call managers about a rejected review.
 
 ```
 
-=== "proposal/review_rejected_subject.txt"
-
-```txt
-    Alert: review assignment rejected for {{ proposal_name }}
-
-```
-
 ### proposal.reviews_complete
 
-A notification to the call manager about all reviews being completed for a proposal.
+Notifies call managers when all required reviews for a proposal have been submitted, providing a summary.
 
 #### Templates
+
+=== "proposal/reviews_complete_subject.txt"
+
+```txt
+    All reviews complete for proposal: {{ proposal_name }}
+
+```
 
 === "proposal/reviews_complete_message.txt"
 
@@ -2758,18 +2660,18 @@ A notification to the call manager about all reviews being completed for a propo
 
 ```
 
-=== "proposal/reviews_complete_subject.txt"
-
-```txt
-    All reviews complete for proposal: {{ proposal_name }}
-
-```
-
 ### proposal.round_closing_for_managers
 
-A notification to call managers about a call round closing.
+Notifies call managers that a round has ended, with a summary of proposals and reviews.
 
 #### Templates
+
+=== "proposal/round_closing_for_managers_subject.txt"
+
+```txt
+    Round closed: {{ round_name }} - {{ call_name }}
+
+```
 
 === "proposal/round_closing_for_managers_message.txt"
 
@@ -2832,18 +2734,18 @@ A notification to call managers about a call round closing.
 
 ```
 
-=== "proposal/round_closing_for_managers_subject.txt"
-
-```txt
-    Round closed: {{ round_name }} - {{ call_name }}
-
-```
-
 ### proposal.round_opening_for_reviewers
 
-A notification to reviewers about a new call round opening.
+Notifies reviewers that a new call round has started.
 
 #### Templates
+
+=== "proposal/round_opening_for_reviewers_subject.txt"
+
+```txt
+    New review round opening: {{ call_name }}
+
+```
 
 === "proposal/round_opening_for_reviewers_message.txt"
 
@@ -2894,13 +2796,6 @@ A notification to reviewers about a new call round opening.
 
     </body>
     </html>
-
-```
-
-=== "proposal/round_opening_for_reviewers_subject.txt"
-
-```txt
-    New review round opening: {{ call_name }}
 
 ```
 

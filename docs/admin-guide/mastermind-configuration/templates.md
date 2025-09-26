@@ -2500,7 +2500,7 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 
 ## waldur_mastermind.support
 
-### notification_comment_updated.txt (waldur_mastermind.support)
+### notification_comment_updated_message.txt (waldur_mastermind.support)
 
 ``` txt
 Hello!
@@ -2508,18 +2508,35 @@ Hello!
 The comment has been updated. Please go to {{issue_url}} to see it.
 ```
 
-### notification_issue_feedback.txt (waldur_mastermind.support)
+### notification_comment_updated_message.html (waldur_mastermind.support)
 
-``` txt
-Hello, {{issue.caller.full_name}}!
-
-We would like to hear your feedback regarding your recent experience with support for {{issue_url}}.
-
-Click on the evaluations below to provide the feedback.
-
-{% for link in feedback_links%}
-    {{link.label}}: {{link.link}}
-{% endfor %}
+``` html
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>The comment has been updated ({{ issue.key }})</title>
+</head>
+<body>
+<p>
+    {{ comment.author.name }} updated comment.
+</p>
+<p>
+    <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
+</p>
+<p>
+    Old comment:
+</p>
+<p>
+    {{ old_description|safe }}
+</p>
+<p>
+    New comment:
+</p>
+<p>
+    {{ description|safe }}
+</p>
+</body>
+</html>
 ```
 
 ### description.txt (waldur_mastermind.support)
@@ -2555,7 +2572,7 @@ Additional Info:
 Updated issue: {{issue.key}} {{issue.summary}}
 ```
 
-### notification_comment_added.html (waldur_mastermind.support)
+### notification_comment_added_message.html (waldur_mastermind.support)
 
 ``` html
 <html>
@@ -2581,60 +2598,7 @@ Updated issue: {{issue.key}} {{issue.summary}}
 </html>
 ```
 
-### notification_issue_updated.html (waldur_mastermind.support)
-
-``` html
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>The issue you have ({{ issue.key }}) has been updated</title>
-</head>
-<body>
-<p>
-    Hello!
-</p>
-{% if changed.status %}
-<p>
-    Status has been changed from <strong>{{ changed.status }}</strong> to <strong>{{ issue.status }}</strong>.
-</p>
-{% endif %}
-{% if old_description %}
-<p>
-    Description has been changed from <strong>{{ old_description|safe }}</strong> to <strong>{{ description|safe }}</strong>.
-</p>
-{% endif %}
-{% if changed.summary %}
-<p>
-    Summary has been changed from <strong>{{ changed.summary }}</strong> to <strong>{{ issue.summary }}</strong>.
-</p>
-{% endif %}
-{% if changed.priority %}
-<p>
-    Priority has been changed from <strong>{{ changed.priority }}</strong> to <strong>{{ issue.priority }}</strong>.
-</p>
-{% endif %}
-<p>
-    Please visit <a href="{{ issue_url }}">{{ site_name }}</a> to find out more details.
-</p>
-</body>
-</html>
-```
-
-### notification_comment_added.txt (waldur_mastermind.support)
-
-``` txt
-Hello!
-
-The issue you have created has a new comment. Please go to {{issue_url}} to see it.
-```
-
-### notification_issue_feedback_subject.txt (waldur_mastermind.support)
-
-``` txt
-Please share your feedback: {{issue.key}} {{issue.summary}}
-```
-
-### notification_issue_feedback.html (waldur_mastermind.support)
+### notification_issue_feedback_message.html (waldur_mastermind.support)
 
 ``` html
 <html>
@@ -2683,13 +2647,41 @@ Please share your feedback: {{issue.key}} {{issue.summary}}
 </html>
 ```
 
+### notification_issue_feedback_message.txt (waldur_mastermind.support)
+
+``` txt
+Hello, {{issue.caller.full_name}}!
+
+We would like to hear your feedback regarding your recent experience with support for {{issue_url}}.
+
+Click on the evaluations below to provide the feedback.
+
+{% for link in feedback_links%}
+    {{link.label}}: {{link.link}}
+{% endfor %}
+```
+
+### notification_comment_added_message.txt (waldur_mastermind.support)
+
+``` txt
+Hello!
+
+The issue you have created has a new comment. Please go to {{issue_url}} to see it.
+```
+
+### notification_issue_feedback_subject.txt (waldur_mastermind.support)
+
+``` txt
+Please share your feedback: {{issue.key}} {{issue.summary}}
+```
+
 ### notification_comment_added_subject.txt (waldur_mastermind.support)
 
 ``` txt
 The issue ({{ issue.key }}) you have created has a new comment
 ```
 
-### notification_issue_updated.txt (waldur_mastermind.support)
+### notification_issue_updated_message.txt (waldur_mastermind.support)
 
 ``` txt
 Hello!
@@ -2712,32 +2704,40 @@ Priority has been changed from {{ changed.priority }} to {{ issue.priority }}.
 Please go to {{issue_url}} to see it.
 ```
 
-### notification_comment_updated.html (waldur_mastermind.support)
+### notification_issue_updated_message.html (waldur_mastermind.support)
 
 ``` html
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>The comment has been updated ({{ issue.key }})</title>
+    <title>The issue you have ({{ issue.key }}) has been updated</title>
 </head>
 <body>
 <p>
-    {{ comment.author.name }} updated comment.
+    Hello!
 </p>
+{% if changed.status %}
 <p>
-    <a href="{{ issue_url }}">[{{ issue.key }}] {{ issue.summary }}</a>
+    Status has been changed from <strong>{{ changed.status }}</strong> to <strong>{{ issue.status }}</strong>.
 </p>
+{% endif %}
+{% if old_description %}
 <p>
-    Old comment:
+    Description has been changed from <strong>{{ old_description|safe }}</strong> to <strong>{{ description|safe }}</strong>.
 </p>
+{% endif %}
+{% if changed.summary %}
 <p>
-    {{ old_description|safe }}
+    Summary has been changed from <strong>{{ changed.summary }}</strong> to <strong>{{ issue.summary }}</strong>.
 </p>
+{% endif %}
+{% if changed.priority %}
 <p>
-    New comment:
+    Priority has been changed from <strong>{{ changed.priority }}</strong> to <strong>{{ issue.priority }}</strong>.
 </p>
+{% endif %}
 <p>
-    {{ description|safe }}
+    Please visit <a href="{{ issue_url }}">{{ site_name }}</a> to find out more details.
 </p>
 </body>
 </html>

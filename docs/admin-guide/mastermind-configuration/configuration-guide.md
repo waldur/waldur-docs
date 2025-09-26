@@ -238,7 +238,8 @@ Full path to the xmlsec1 binary program
 Default value:
 
 ```python
-WALDUR_AUTH_SOCIAL = {'ENABLE_EDUTEAMS_SYNC': False,
+WALDUR_AUTH_SOCIAL = {'BLOCK_CREATION_OF_UNINVITED_USERS': False,
+ 'ENABLE_EDUTEAMS_SYNC': False,
  'REMOTE_EDUTEAMS_CLIENT_ID': '',
  'REMOTE_EDUTEAMS_ENABLED': False,
  'REMOTE_EDUTEAMS_REFRESH_TOKEN': '',
@@ -249,6 +250,12 @@ WALDUR_AUTH_SOCIAL = {'ENABLE_EDUTEAMS_SYNC': False,
  'REMOTE_EDUTEAMS_TOKEN_URL': 'https://proxy.acc.researcher-access.org/OIDC/token',
  'REMOTE_EDUTEAMS_USERINFO_URL': 'https://proxy.acc.researcher-access.org/api/userinfo'}
 ```
+
+#### BLOCK_CREATION_OF_UNINVITED_USERS
+
+Type: bool
+
+If true, block creation of an account on OIDC login if user email is not provided or provided and is not in the list of one of the active invitations.
 
 #### ENABLE_EDUTEAMS_SYNC
 
