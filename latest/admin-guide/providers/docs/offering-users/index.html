@@ -2694,6 +2694,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#backend-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backend Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#base-abstract-class" class="md-nav__link">
     <span class="md-ellipsis">
       Base Abstract Class
@@ -7295,6 +7304,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#backend-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backend Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#base-abstract-class" class="md-nav__link">
     <span class="md-ellipsis">
       Base Abstract Class
@@ -7545,13 +7563,30 @@ generation, state transitions, and integration with backend systems to ensure us
 <h4 id="update_offering_users"><code>update_offering_users()</code></h4>
 <p>Core processing function that handles username generation and state transitions.</p>
 <p><strong>Process</strong>:
-1. Checks offering's username generation policy
-2. Processes users in REQUESTED state
-3. Handles users in pending states (PENDING_ACCOUNT_LINKING, PENDING_ADDITIONAL_VALIDATION)
-4. Manages state transitions and error handling</p>
+1. Early validation checks (empty users list, username generation policy)
+2. Username management backend validation (skips if UnknownUsernameManagementBackend)
+3. Efficient user grouping by state (single pass through users)
+4. Processes users in REQUESTED state via <code>_process_requested_users()</code>
+5. Handles users in pending states via <code>_process_pending_users()</code>
+6. Manages state transitions and centralized error handling</p>
+<p><strong>New Architecture</strong>: The function has been refactored into focused sub-functions:
+- <code>_can_generate_usernames()</code>: Policy validation
+- <code>_group_users_by_state()</code>: Efficient user categorization
+- <code>_process_requested_users()</code>: Handle new username requests
+- <code>_process_pending_users()</code>: Process retry scenarios
+- <code>_update_user_username()</code>: Individual user processing
+- <code>_handle_account_linking_error()</code>: Account linking error management
+- <code>_handle_validation_error()</code>: Validation error management</p>
 <h3 id="username-management-backend-system">Username Management Backend System</h3>
 <p>The agent uses a pluggable backend architecture for username generation, allowing custom implementations for different
 identity providers and naming conventions.</p>
+<h4 id="backend-validation">Backend Validation</h4>
+<p>The system now includes early validation to skip processing when no valid username management backend is available:</p>
+<ul>
+<li><strong>UnknownUsernameManagementBackend</strong>: Fallback backend that returns empty usernames</li>
+<li><strong>Early Exit</strong>: Processing is skipped if <code>UnknownUsernameManagementBackend</code> is detected</li>
+<li><strong>Performance Optimization</strong>: Prevents unnecessary API calls when username generation isn't possible</li>
+</ul>
 <h4 id="base-abstract-class">Base Abstract Class</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -7564,7 +7599,14 @@ identity providers and naming conventions.</p>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_site_agent.backend.backends</span> <span class="kn">import</span> <span class="n">AbstractUsernameManagementBackend</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_site_agent.backend.backends</span> <span class="kn">import</span> <span class="n">AbstractUsernameManagementBackend</span>
 
 <span class="k">class</span> <span class="nc">CustomUsernameBackend</span><span class="p">(</span><span class="n">AbstractUsernameManagementBackend</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">generate_username</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offering_user</span><span class="p">:</span> <span class="n">OfferingUser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -7576,6 +7618,13 @@ identity providers and naming conventions.</p>
 <span class="w">        </span><span class="sd">"""Retrieve existing username from local identity provider."""</span>
         <span class="c1"># Custom lookup logic here</span>
         <span class="k">return</span> <span class="n">existing_username</span>
+
+    <span class="k">def</span> <span class="nf">get_or_create_username</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offering_user</span><span class="p">:</span> <span class="n">OfferingUser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get existing username or create new one if not found."""</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_username</span><span class="p">(</span><span class="n">offering_user</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">username</span><span class="p">:</span>
+            <span class="n">username</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_username</span><span class="p">(</span><span class="n">offering_user</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">username</span>
 </code></pre></div></td></tr></table></div>
 <h4 id="plugin-registration">Plugin Registration</h4>
 <p>Register your backend via entry points in <code>pyproject.toml</code>:</p>
@@ -7586,7 +7635,10 @@ identity providers and naming conventions.</p>
 <h4 id="built-in-backends">Built-in Backends</h4>
 <ul>
 <li><strong>base</strong>: Basic username management backend (plugins/basic_username_management/)</li>
-<li><strong>UnknownUsernameManagementBackend</strong>: Fallback backend when configuration is missing</li>
+<li><strong>UnknownUsernameManagementBackend</strong>: Fallback backend when configuration is missing or invalid</li>
+<li>Returns empty usernames for all requests</li>
+<li>Triggers early exit from processing to improve performance</li>
+<li>Used automatically when <code>username_management_backend</code> is not properly configured</li>
 </ul>
 <h2 id="configuration">Configuration</h2>
 <h3 id="offering-configuration">Offering Configuration</h3>
@@ -7642,19 +7694,28 @@ identity providers and naming conventions.</p>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Before adding users to a resource</span>
-<span class="n">offering_users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_waldur_offering_users</span><span class="p">()</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">_update_offering_users</span><span class="p">(</span><span class="n">offering_users</span><span class="p">)</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Optimized processing with conditional refresh</span>
+<span class="n">offering_users</span> <span class="o">=</span> <span class="n">user_context</span><span class="p">[</span><span class="s2">"offering_users"</span><span class="p">]</span>
 
-<span class="c1"># Refresh data after username generation</span>
-<span class="n">offering_users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_waldur_offering_users</span><span class="p">()</span>
+<span class="c1"># Only refresh if username generation actually occurred</span>
+<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_offering_users</span><span class="p">(</span><span class="n">offering_users</span><span class="p">):</span>
+    <span class="c1"># Refresh local user_context cache</span>
+    <span class="n">user_context_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_user_context_for_resource</span><span class="p">(</span><span class="n">waldur_resource</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">hex</span><span class="p">)</span>
+    <span class="n">user_context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">user_context_new</span><span class="p">)</span>
 
 <span class="c1"># Use only users with valid usernames</span>
 <span class="n">valid_usernames</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">user</span><span class="o">.</span><span class="n">username</span> <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">offering_users</span>
+    <span class="n">user</span><span class="o">.</span><span class="n">username</span> <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">user_context</span><span class="p">[</span><span class="s2">"offering_users"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">OfferingUserStateEnum</span><span class="o">.</span><span class="n">OK</span> <span class="ow">and</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
+<p><strong>Performance Improvements</strong>:
+- Conditional refresh only when usernames are actually updated
+- Early validation prevents unnecessary processing
+- Efficient user state grouping reduces multiple iterations
+- Backend validation prevents wasted API calls</p>
 <h2 id="error-handling">Error Handling</h2>
 <h3 id="exception-types">Exception Types</h3>
 <p>The system defines specific exceptions for different error scenarios:</p>
@@ -7678,6 +7739,8 @@ other resources needed for error resolution.</p>
 <li><strong>Error Handling</strong>: Raise appropriate exceptions for recoverable errors</li>
 <li><strong>Logging</strong>: Include detailed logging for troubleshooting</li>
 <li><strong>Validation</strong>: Validate generated usernames meet backend system requirements</li>
+<li><strong>Performance Considerations</strong>: Implement efficient lookup mechanisms to avoid blocking operations</li>
+<li><strong>Backend Validation</strong>: Return empty strings when username generation is not supported</li>
 </ol>
 <h3 id="deployment-considerations">Deployment Considerations</h3>
 <ol>
@@ -7685,6 +7748,11 @@ other resources needed for error resolution.</p>
 <li><strong>Monitoring</strong>: Monitor pending user states for manual intervention needs</li>
 <li><strong>Backup Strategy</strong>: Consider username mapping backup for disaster recovery</li>
 <li><strong>Testing</strong>: Test username generation logic thoroughly before production deployment</li>
+<li><strong>Backend Configuration</strong>: Ensure proper
+   <code>username_management_backend</code> configuration to avoid
+   UnknownUsernameManagementBackend fallback</li>
+<li><strong>Performance Tuning</strong>: Monitor processing times and adjust batch sizes if needed</li>
+<li><strong>Error Recovery</strong>: Set up alerting for persistent pending states that may require manual intervention</li>
 </ol>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="diagnostic-commands">Diagnostic Commands</h3>
@@ -7726,7 +7794,7 @@ curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authoriz
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-13
+    2025-09-27
   </span>
 
     
