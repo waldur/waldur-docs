@@ -537,6 +537,8 @@ td:nth-child(4) {
 | `log_resource_user_deleted` | `Django Signal (post_delete)` | `marketplace.ResourceUser` | Log resource user deletion. |
 | `log_service_account_created_or_updated` | `Django Signal (post_save)` | `ScopedServiceAccount` | Log service account creation and updates. |
 | `log_service_account_deleted` | `Django Signal (post_delete)` | `ScopedServiceAccount` | Log service account deletion. |
+| `log_terms_of_service_consent_granted` | `Django Signal (post_save)` | `marketplace.UserOfferingConsent` | Log when a user grants consent to Terms of Service. |
+| `log_terms_of_service_consent_revoked` | `Django Signal (post_save)` | `marketplace.UserOfferingConsent` | Log when a user revokes consent to Terms of Service. |
 | `manage_maintenance_admin_announcements` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncement` | Manage AdminAnnouncement lifecycle based on MaintenanceAnnouncement state changes. |
 | `mark_synced_fields_as_read_only` | `Custom Signal (pre_serializer_fields)` | `OfferingOptionsUpdateSerializer` | No description |
 | `mark_synced_fields_as_read_only` | `Custom Signal (pre_serializer_fields)` | `OfferingOverviewUpdateSerializer` | No description |
@@ -712,14 +714,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 637
+Total unique handlers found: 639
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 333 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 256 handlers
+- **waldur_mastermind**: 258 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
 - **waldur_rancher**: 12 handlers

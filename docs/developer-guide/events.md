@@ -282,6 +282,11 @@
 - issue_deletion_succeeded
 - issue_update_succeeded
 
+## Terms_of_service
+
+- terms_of_service_consent_granted
+- terms_of_service_consent_revoked
+
 ## Users
 
 - auth_logged_in_with_saml2

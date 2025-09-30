@@ -1921,6 +1921,12 @@ Deactivate user if all roles are revoked (except staff/support)
 
 If true, block creation of an account on OIDC login if user email is not provided or provided and is not in the list of one of the active invitations.
 
+#### OIDC_ACCESS_TOKEN_ENABLED
+
+**Type:** bool
+
+If true, OIDC complete view returns access token instead of Waldur token
+
 ### FreeIPA settings
 
 #### FREEIPA_ENABLED
