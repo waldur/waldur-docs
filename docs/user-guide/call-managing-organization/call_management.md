@@ -68,9 +68,15 @@ Before activating a call, the Call manager must configure all necessary settings
 
 Configure the basic call parameters:
 
-- **Fixed duration**: Set whether the call has a fixed timeframe (Yes/No)
+- **Fixed duration**: Set whether the call has a fixed timeframe
+      -     Set a fixed proposal duration (in days) to apply uniformly across all proposals.
+      -     When enabled, the duration field becomes read-only in the proposal submission form.
 - **Reviewer identity visible to submitters**: Choose if applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to submitters**: Determine if applicants can view the reviews and feedback (Yes/No)
+- **Predefined resource templates**: Create templates defining valid offering/plan combinations, that proposal creators will be limited to selecting only from these templates.
+      -     General information: template name and offering
+      -     Predefined attributes and usage limits
+      -     Description
 
 #### 2. Team management
 
@@ -124,7 +130,9 @@ Applicants follow these steps to request resources through an active call:
 1. Navigate to the **active round** under the relevant call.
 2. Click **"Submit proposal"**.
 3. Fill in the required fields.
+      -     When the call round has a fixed duration set by the Call manager, this duration (in days) is automatically applied to all proposals. The duration field becomes read-only for proposal creators in both creation and editing interfaces.
 4. Select required **offerings and allocations**.
+      -     When there is predefined resource templates, proposal creators now select resources based on predefined templates configured by the Call manager. These templates include specific offering and plan combinations, predefined attributes and resource limits.
 5. Add **team members** (optional).
 6. Upload required documentation.
 7. Submit the proposal.
