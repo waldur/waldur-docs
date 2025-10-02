@@ -1677,22 +1677,20 @@ PUT /api/openstack-networks/{uuid}/
 
 POST /api/openstack-networks/{uuid}/rbac_policy_create/
 
-- Request body changed
-  - Content changed
-    - Modified media type: application/json
-      - Schema changed
-        - Required changed
-          - New required property: network
-        - Properties changed
-          - New property: network
 - Responses changed
   - Modified response: 200
     - Content changed
       - Modified media type: application/json
         - Schema changed
-          - Properties changed
-            - Modified property: network
-              - ReadOnly changed from true to false
+          - Required changed
+            - New required property: backend_id
+            - New required property: created
+            - New required property: network
+            - New required property: network_name
+            - New required property: target_tenant
+            - New required property: target_tenant_name
+            - New required property: url
+            - New required property: uuid
 
 POST /api/openstack-tenants/{uuid}/create_network/
 
