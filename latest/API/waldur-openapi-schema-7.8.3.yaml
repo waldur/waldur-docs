@@ -39176,7 +39176,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NetworkRBACPolicyRequest'
+              $ref: '#/components/schemas/DeprecatedNetworkRBACPolicyRequest'
         required: true
       security:
       - tokenAuth: []
@@ -39186,7 +39186,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NetworkRBACPolicy'
+                $ref: '#/components/schemas/DeprecatedNetworkRBACPolicy'
           description: ''
   /api/openstack-networks/{uuid}/rbac_policy_delete/{rbac_policy_uuid}/:
     delete:
@@ -69391,6 +69391,68 @@ components:
       - managed
       type: string
       description: ''
+    DeprecatedNetworkRBACPolicy:
+      type: object
+      description: ''
+      properties:
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        network:
+          type: string
+          format: uri
+          readOnly: true
+        network_name:
+          type: string
+          readOnly: true
+        target_tenant:
+          type: string
+          format: uri
+        target_tenant_name:
+          type: string
+          readOnly: true
+        backend_id:
+          type: string
+          readOnly: true
+        policy_type:
+          allOf:
+          - $ref: '#/components/schemas/PolicyTypeEnum'
+          default: access_as_shared
+          description: Type of access granted - either shared access or external network
+            access
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - backend_id
+      - created
+      - network
+      - network_name
+      - target_tenant
+      - target_tenant_name
+      - url
+      - uuid
+    DeprecatedNetworkRBACPolicyRequest:
+      type: object
+      description: ''
+      properties:
+        target_tenant:
+          type: string
+          format: uri
+        policy_type:
+          allOf:
+          - $ref: '#/components/schemas/PolicyTypeEnum'
+          default: access_as_shared
+          description: Type of access granted - either shared access or external network
+            access
+      required:
+      - target_tenant
     DetailState:
       type: object
       properties:
