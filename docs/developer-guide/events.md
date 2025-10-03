@@ -22,6 +22,7 @@
 ## Credits
 
 - allowed_offerings_have_been_updated
+- automatic_credit_adjustment
 - create_of_credit_by_staff
 - reduction_of_customer_credit
 - reduction_of_customer_credit_due_to_minimal_consumption
@@ -37,6 +38,7 @@
 ## Customers
 
 - allowed_offerings_have_been_updated
+- automatic_credit_adjustment
 - create_of_credit_by_staff
 - customer_creation_succeeded
 - customer_deletion_succeeded
@@ -59,6 +61,7 @@
 ## Invoices
 
 - allowed_offerings_have_been_updated
+- automatic_credit_adjustment
 - create_of_credit_by_staff
 - invoice_canceled
 - invoice_created

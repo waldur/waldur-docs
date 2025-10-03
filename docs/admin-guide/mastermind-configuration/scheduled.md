@@ -78,6 +78,7 @@ td:nth-child(4) {
 | `update-custom-quotas` | `waldur_core.quotas.update_custom_quotas` | 1 hour | Task not found in registry |
 | `update-invoices-total-cost` | `invoices.update_invoices_total_cost` | 1 day | Update cached total cost for current month invoices. |
 | `update-standard-quotas` | `waldur_core.quotas.update_standard_quotas` | 1 day | Task not found in registry |
+| `update_daily_consent_history` | `waldur_mastermind.marketplace.update_daily_consent_history` | 1 day | Daily task to update consent history statistics for dashboard reporting.<br> Uses quota system + DailyQuotaHistory for historical tracking. |
 | `valimo-auth-cleanup-auth-results` | `waldur_auth_valimo.cleanup_auth_results` | 1 hour | Clean up Valimo authentication results older than 7 days. |
 | `waldur-create-invoices` | `invoices.create_monthly_invoices` | Monthly (1st day of month at midnight) | - For every customer change state of the invoices for previous months from "pending" to "billed"<br> and freeze their items.<br> - Create new invoice for every customer in current month if not created yet. |
 | `waldur-create-offering-users-for-site-agent-offerings` | `waldur_mastermind.marketplace_site_agent.sync_offering_users` | 1 day | No description available |
