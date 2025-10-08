@@ -1133,13 +1133,13 @@ This project uses a powerful "record and replay" testing strategy for its end-to
 `pytest` and the `VCR.py` library. This allows us to create high-fidelity tests based on real API interactions
 while ensuring our CI/CD pipeline remains fast, reliable, and completely independent of a live API server.
 
-The E2E tests are located in the `tests/e2e/` directory.
+The E2E tests are located in the `ansible_waldur_generator/tests/e2e/` directory.
 
 ### Core Concept: Cassette-Based Testing
 
 1. **Recording Mode:** The first time a test is run, it requires access to a live Waldur API. The test
    executes its workflow (e.g., creating a VM), and `VCR.py` records every single HTTP request and its
-   corresponding response into a YAML file called a "cassette" (e.g., `tests/e2e/cassettes/test_create_instance.yaml`).
+   corresponding response into a YAML file called a "cassette" (e.g., `ansible_waldur_generator/tests/e2e/cassettes/test_create_instance.yaml`).
 
 2. **Replaying Mode:** Once a cassette file exists, all subsequent runs of the same test will be completely
    offline. `VCR.py` intercepts any outgoing HTTP call, finds the matching request in the cassette, and "replays"
@@ -1154,7 +1154,8 @@ The E2E tests are designed to be run in two distinct modes.
 
 #### Mode 1: Replaying (Standard CI/CD and Local Testing)
 
-This is the default mode. If the cassette files exist in `tests/e2e/cassettes/`, the tests will run
+This is the default mode. If the cassette files exist in
+`ansible_waldur_generator/tests/e2e/cassettes/`, the tests will run
 offline. This is the fastest and most common way to run the tests.
 
 ```bash
@@ -1191,7 +1192,7 @@ You only need to enter recording mode when you are:
 
     ```bash
     # Example for the instance creation test
-    rm tests/e2e/cassettes/test_e2e_modules.py::TestInstanceModule::test_create_instance.yaml
+    rm ansible_waldur_generator/tests/e2e/cassettes/test_e2e_modules.py::TestInstanceModule::test_create_instance.yaml
     ```
 
 4. **Run Pytest:** Execute the test. It will now connect to the live API specified by your environment
@@ -1199,7 +1200,7 @@ You only need to enter recording mode when you are:
 
     ```bash
     # Run a specific test to record its interactions
-    poetry run pytest tests/e2e/test_e2e_modules.py::TestInstanceModule::test_create_instance
+    poetry run pytest ansible_waldur_generator/tests/e2e/test_e2e_modules.py::TestInstanceModule::test_create_instance
     ```
 
     After the test passes, a new cassette file will be generated.
@@ -1212,7 +1213,7 @@ You only need to enter recording mode when you are:
 
 ### Writing a New E2E Test
 
-Follow the pattern established in `tests/e2e/test_e2e_modules.py`:
+Follow the pattern established in `ansible_waldur_generator/tests/e2e/`:
 
 1. **Organize with Classes:** Group tests for a specific module into a class (e.g., `TestVolumeModule`).
 2. **Use the `@pytest.mark.vcr` Decorator:** Add this decorator to your test class or individual test methods
@@ -1230,7 +1231,7 @@ Follow the pattern established in `tests/e2e/test_e2e_modules.py`:
 **Example Skeleton:**
 
 ```python
-# In a test file within tests/e2e/
+# In a test file within ansible_waldur_generator/tests/e2e/
 
 import pytest
 from ansible_collections.waldur.structure.plugins.modules import project as project_module
