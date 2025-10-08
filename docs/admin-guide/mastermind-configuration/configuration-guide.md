@@ -2041,4 +2041,42 @@ Field name from the introspection response to identify the user (e.g., 'username
 
 Number of seconds to cache token introspection results.
 
+### Onboarding settings
+
+#### ONBOARDING_VERIFICATION_EXPIRY_HOURS
+
+**Type:** int
+
+**Default value**: 48
+
+Number of hours after which onboarding verifications expire.
+
+#### ONBOARDING_ARIREGISTER_BASE_URL
+
+**Type:** url_field
+
+**Default value**: https://demo-ariregxmlv6.rik.ee/
+
+Base URL for Estonian Äriregister API endpoint.
+
+#### ONBOARDING_ARIREGISTER_USERNAME
+
+**Type:** text_field
+
+Username for Estonian Äriregister API authentication.
+
+#### ONBOARDING_ARIREGISTER_PASSWORD
+
+**Type:** secret_field
+
+Password for Estonian Äriregister API authentication.
+
+#### ONBOARDING_ARIREGISTER_TIMEOUT
+
+**Type:** int
+
+**Default value**: 30
+
+Timeout in seconds for Estonian Äriregister API requests.
+
 

@@ -4,7 +4,7 @@
 
 ### structure.change_email_request
 
-A notification sent when an email change is requested. Recipient is the old email address.
+A notification sent out when an email change is requested. Recipient is the old email address.
 
 #### Templates
 
@@ -76,7 +76,7 @@ A notification sent to Waldur operators when a user's profile is updated.
 
 ### structure.structure_role_granted
 
-A notification sent when a role is granted. The recipient is the user who received the role.
+A notification sent out when a role is granted. The recipient is the user who received the role.
 
 #### Templates
 
@@ -670,6 +670,48 @@ A notification of a failed resource creation
 
 ```
 
+### marketplace.marketplace_resource_create_succeeded
+
+A notification of a successful resource creation
+
+#### Templates
+
+=== "marketplace/marketplace_resource_create_succeeded_subject.txt"
+
+```txt
+    Resource {{ resource_name }} has been created.
+
+```
+
+=== "marketplace/marketplace_resource_create_succeeded_message.txt"
+
+```txt
+    Hello!
+
+    Resource {{ resource_name }} has been created.
+
+```
+
+=== "marketplace/marketplace_resource_create_succeeded_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Resource {{ resource_name }} has been created.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        Resource {{ resource_name }} has been created.
+    </p>
+    </body>
+    </html>
+
+```
+
 ### marketplace.marketplace_resource_terminate_failed
 
 A notification of a failed resource termination
@@ -799,7 +841,7 @@ Notifies project admins/managers that a resource termination was scheduled.
 
 ### marketplace.marketplace_resource_termination_scheduled_staff
 
-Notifies project admins/managers that a resource termination was scheduled by a staff member.
+A notification of a resource termination. The recipients are project administrators and managers.
 
 #### Templates
 
@@ -1079,7 +1121,7 @@ A notification of a successful resource plan update. The recipients are all the 
 
 ### marketplace.notification_about_project_ending
 
-Notifies project and customer users about a project that is nearing its end date.
+Notifies project users about a resource that is nearing its end date.
 
 #### Templates
 
@@ -1138,7 +1180,7 @@ Notifies project and customer users about a project that is nearing its end date
 
 ### marketplace.notification_about_resource_ending
 
-Notifies project users about a resource that is nearing its end date.
+A notification about resource ending. The recipients are project managers and customer owners.
 
 #### Templates
 
@@ -1246,7 +1288,7 @@ Notifies organization owners about active resources that have not generated cost
 
 ### marketplace.notification_to_user_that_order_been_rejected
 
-Notifies the user who created an order that it has been rejected.
+Notification to user whose order been rejected.
 
 #### Templates
 
@@ -1280,6 +1322,69 @@ Notifies the user who created an order that it has been rejected.
     </p>
     <p>
         Your <a href="{{ link }}">order</a> to {{ order_type }} a resource {{ order.resource.name }} has been rejected.
+    </p>
+    </body>
+    </html>
+
+```
+
+### marketplace.notification_usages
+
+A notification about usages. The recipients are organization owners.
+
+#### Templates
+
+=== "marketplace/notification_usages_subject.txt"
+
+```txt
+    Reminder about missing usage reports.
+
+```
+
+=== "marketplace/notification_usages_message.txt"
+
+```txt
+    Hello!
+
+    Please do not forget to add usage for the resources you provide:
+    {% regroup resources by offering as offering_list %}{% for offering in offering_list %}
+    {{forloop.counter}}. {{ offering.grouper.name }}:{% for resource in offering.list %}
+        - {{ resource.name }}
+    {% endfor %}{% endfor %}
+    You can submit resource usage via API or do it manually at {{ public_resources_url }}.
+
+```
+
+=== "marketplace/notification_usages_message.html"
+
+```txt
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Reminder about missing usage reports.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>Please do not forget to add usage for the resources you provide:</p>
+    {% regroup resources by offering as offering_list %}
+
+    <ol>
+    {% for offering in offering_list %}
+        <li>
+            {{ offering.grouper.name }}:
+            <ul>
+                {% for resource in offering.list %}
+                <li>{{ resource.name }}</li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
+    </ol>
+
+    <p>
+        You can submit resource usage via API or do it <a href='{{ public_resources_url }}'>manually</a>.
     </p>
     </body>
     </html>
@@ -1374,7 +1479,7 @@ Notifies service provider owners about a pending order for their offering.
 
 ### marketplace_remote.notification_about_pending_project_updates
 
-Notifies customer owners about pending project update requests.
+A notification about pending project updates. The recipients are customer owners
 
 #### Templates
 
@@ -1542,7 +1647,7 @@ Notifies users about a completed project update request, detailing the changes.
 
 ### marketplace_policy.notification_about_project_cost_exceeded_limit
 
-Notifies customer owners when a project's estimated cost has exceeded a defined policy limit.
+Notification about project cost exceeded limit. The recipients are all customer owners of the project.
 
 #### Templates
 
@@ -1613,7 +1718,7 @@ A template used for generating the issue description field during issue creation
 
 ### support.notification_comment_added
 
-Notification about a new comment being added to an issue. The recipient is the issue's caller.
+Notification about a new comment in the issue. The recipient is issue caller.
 
 #### Templates
 
@@ -1662,7 +1767,7 @@ Notification about a new comment being added to an issue. The recipient is the i
 
 ### support.notification_comment_updated
 
-Notification about an update to an existing issue comment. The recipient is the issue's caller.
+Notification about an update in the issue comment. The recipient is issue caller.
 
 #### Templates
 
@@ -1716,7 +1821,7 @@ Notification about an update to an existing issue comment. The recipient is the 
 
 ### support.notification_issue_feedback
 
-Notification requesting feedback after an issue has been resolved. The recipient is the issue's caller.
+Notification about a feedback related to the issue. The recipient is issue caller.
 
 #### Templates
 
@@ -1794,7 +1899,7 @@ Notification requesting feedback after an issue has been resolved. The recipient
 
 ### support.notification_issue_updated
 
-Notification about one or more fields of an issue being updated. The recipient is the issue's caller.
+Notification about an update in the issue. The recipient is issue caller.
 
 #### Templates
 
@@ -1952,7 +2057,7 @@ Notifies call managers about a new proposal submission.
 
 ### proposal.new_review_submitted
 
-Notifies call managers about a new review submission.
+A notification to the call manager about a new review submission.
 
 #### Templates
 
@@ -2029,7 +2134,7 @@ Notifies call managers about a new review submission.
 
 ### proposal.proposal_cancelled
 
-Notifies the proposal creator that their proposal has been cancelled (e.g., because the round ended).
+A notification to proposal creator about the proposal cancellation.
 
 #### Templates
 
@@ -2102,7 +2207,7 @@ Notifies the proposal creator that their proposal has been cancelled (e.g., beca
 
 ### proposal.proposal_decision_for_reviewer
 
-Notifies a reviewer about the final decision for a proposal they reviewed.
+A notification to the reviewer about the proposal decision (approved/rejected) which they reviewed.
 
 #### Templates
 
@@ -2171,7 +2276,7 @@ Notifies a reviewer about the final decision for a proposal they reviewed.
 
 ### proposal.proposal_state_changed
 
-Notifies a proposal creator about a change in their proposal's state.
+A notification about the proposal state changes (submitted → in review → accepted/rejected).
 
 #### Templates
 
@@ -2342,7 +2447,7 @@ Notifies a proposal creator about a change in their proposal's state.
 
 ### proposal.requested_offering_decision
 
-Notifies call managers about a decision on a requested offering.
+A notification to call manager about the decision on requested offering (accepted/rejected).
 
 #### Templates
 
@@ -2417,7 +2522,7 @@ Notifies call managers about a decision on a requested offering.
 
 ### proposal.review_assigned
 
-Notifies a user that they have been assigned to review a proposal.
+A notification to a reviewer about a new review assignment.
 
 #### Templates
 
@@ -2485,7 +2590,7 @@ Notifies a user that they have been assigned to review a proposal.
 
 ### proposal.review_rejected
 
-Notifies call managers that a review was cancelled or rejected.
+A notification to the call managers about a rejected review.
 
 #### Templates
 
@@ -2736,7 +2841,7 @@ Notifies call managers that a round has ended, with a summary of proposals and r
 
 ### proposal.round_opening_for_reviewers
 
-Notifies reviewers that a new call round has started.
+A notification to reviewers about a new call round opening.
 
 #### Templates
 

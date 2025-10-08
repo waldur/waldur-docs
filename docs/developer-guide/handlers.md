@@ -642,7 +642,7 @@ td:nth-child(4) {
 | `update_google_calendar_name_if_offering_name_has_been_changed` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `update_instances_ip_external_addresses` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `update_invoice_item_on_project_name_update` | `Django Signal (post_save)` | `structure.Project` | No description |
-| `update_invoice_when_usage_is_reported` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Handle usage-based billing when component usage is reported. |
+| `update_invoice_when_usage_is_reported` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Handles billing when component usage is reported, with integrated prepaid logic. |
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_delete)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_marketplace_resource_limits_when_vm_is_updated` | `Custom Signal (vm_updated)` | `—` | No description |
