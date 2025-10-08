@@ -1159,7 +1159,7 @@ offline. This is the fastest and most common way to run the tests.
 
 ```bash
 # Run all E2E tests using their saved cassettes
-poetry run pytest tests/e2e/
+poetry run pytest ansible_waldur_generator/tests/e2e/
 ```
 
 This command should complete in a few seconds.
