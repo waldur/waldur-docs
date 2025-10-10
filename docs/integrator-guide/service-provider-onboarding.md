@@ -180,7 +180,6 @@ Body:
 
 ```json
     {
-        "backend_id": "",
         "plugin_options": {
             "homedir_prefix": "/home/",
             "initial_uidnumber": 5000,
@@ -192,33 +191,14 @@ Body:
             "supports_pausing": true,
             "supports_downscaling": true,
             "service_provider_can_create_offering_user": true
-        },
-        "secret_options": {},
-        "service_attributes": {},
+        }
     }
 ```
 
 #### Example response
 
 Status code: 200
-
-Body:
-
-```json
-    {
-        "plugin_options": {
-            "homedir_prefix": "/home/",
-            "initial_uidnumber": 5000,
-            "initial_usergroup_number": 6000,
-            "username_anonymized_prefix": "waldur_",
-            "username_generation_policy": "waldur_username",
-            "initial_primarygroup_number": 5000,
-            "account_name_generation_policy": "project_slug",
-            "supports_pausing": true,
-            "supports_downscaling": true
-        }
-    }
-```
+Body: empty
 
 ### Activation of the SLURM Offering
 
