@@ -1533,6 +1533,32 @@ Email for access user
 
 Token for access user
 
+#### ATLASSIAN_PERSONAL_ACCESS_TOKEN
+
+**Type:** secret_field
+
+Personal Access Token for user
+
+#### ATLASSIAN_OAUTH2_CLIENT_ID
+
+**Type:** secret_field
+
+OAuth 2.0 Client ID
+
+#### ATLASSIAN_OAUTH2_ACCESS_TOKEN
+
+**Type:** secret_field
+
+OAuth 2.0 Access Token
+
+#### ATLASSIAN_OAUTH2_TOKEN_TYPE
+
+**Type:** str
+
+**Default value**: Bearer
+
+OAuth 2.0 Token Type
+
 #### ATLASSIAN_PROJECT_ID
 
 **Type:** str
@@ -1687,41 +1713,11 @@ Toggler for SSL verification
 
 Toggler for legacy API usage.
 
-#### ATLASSIAN_USE_TEENAGE_API
-
-**Type:** bool
-
-Toggler for teenage API usage.
-
-#### ATLASSIAN_USE_AUTOMATIC_REQUEST_MAPPING
-
-**Type:** bool
-
-**Default value**: True
-
-Toggler for automatic request mapping.
-
 #### ATLASSIAN_MAP_WALDUR_USERS_TO_SERVICEDESK_AGENTS
 
 **Type:** bool
 
 Toggler for mapping between waldur user and service desk agents.
-
-#### ATLASSIAN_STRANGE_SETTING
-
-**Type:** int
-
-**Default value**: 1
-
-A constant in the API path, sometimes differs
-
-#### ATLASSIAN_PULL_PRIORITIES
-
-**Type:** bool
-
-**Default value**: True
-
-Toggler for pulling priorities from backend
 
 ### Zammad settings
 

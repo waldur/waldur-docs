@@ -37,8 +37,10 @@ td:nth-child(4) {
 | `create-reviews-if-strategy-is-after-round` | `waldur_mastermind.proposal.create_reviews_if_strategy_is_after_round` | 1 hour | Create reviews for active rounds with 'after round' review strategy. |
 | `create_customer_permission_reviews` | `waldur_core.structure.create_customer_permission_reviews` | 1 day | Create customer permission reviews for customers that need periodic review of user permissions. |
 | `create_project_permission_reviews` | `waldur_core.structure.create_project_permission_reviews` | 1 day | Create project permission reviews for projects that need periodic review of user permissions. |
+| `expire-stale-verifications` | `waldur_core.onboarding.expire_stale_verifications` | 1 hour | Task not found in registry |
 | `expired-reviews-should-be-cancelled` | `waldur_mastermind.proposal.expired_reviews_should_be_cancelled` | 1 hour | Cancel reviews that have expired. |
 | `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | No description available |
+| `mark_agent_services_as_inactive` | `waldur_mastermind.marketplace_site_agent.mark_agent_services_as_inactive` | 5 minutes | No description available |
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
 | `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Create marketplace resources for OpenStack instances and volumes that exist in backend but are missing from marketplace. |
 | `marketplace-openstack.refresh-instance-backend-metadata` | `waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata` | 1 day | Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information. |
