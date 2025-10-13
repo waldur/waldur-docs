@@ -566,6 +566,9 @@ td:nth-child(4) {
 | `send_course_account_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
 | `send_done_order_to_message_queue` | `Django Signal (post_save)` | `marketplace.Order` | Send completed marketplace order to message queue for site agent processing. |
 | `send_issue_updated_notification` | `Django Signal (post_save)` | `support.Issue` | No description |
+| `send_offering_user_created_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Send OfferingUser creation message to message queue for external systems. |
+| `send_offering_user_deleted_message` | `Django Signal (post_delete)` | `marketplace.OfferingUser` | Send OfferingUser deletion message to message queue for external systems. |
+| `send_offering_user_updated_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Send OfferingUser update message to message queue for external systems. |
 | `send_offering_user_username_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | No description |
 | `send_pending_order_to_message_queue` | `Django Signal (post_save)` | `marketplace.Order` | Send pending marketplace order to message queue for site agent processing. |
 | `send_project_service_account_deletion_info` | `Django Signal (post_save)` | `marketplace.ProjectServiceAccount` | No description |
@@ -715,14 +718,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 640
+Total unique handlers found: 643
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 333 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 259 handlers
+- **waldur_mastermind**: 262 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
 - **waldur_rancher**: 12 handlers
