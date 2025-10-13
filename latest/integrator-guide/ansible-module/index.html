@@ -4946,6 +4946,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#5-the-link-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. The link Plugin
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. The link Plugin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-link-plugin-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key link Plugin Options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#reusable-configuration-with-yaml-anchors" class="md-nav__link">
     <span class="md-ellipsis">
       Reusable Configuration with YAML Anchors
@@ -7674,6 +7707,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#5-the-link-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. The link Plugin
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. The link Plugin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-link-plugin-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key link Plugin Options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#reusable-configuration-with-yaml-anchors" class="md-nav__link">
     <span class="md-ellipsis">
       Reusable Configuration with YAML Anchors
@@ -8636,6 +8702,126 @@ specialized for a common interaction pattern with the Waldur API. When defining 
 </li>
 </ul>
 <hr>
+<h3 id="5-the-link-plugin">5. The <code>link</code> Plugin</h3>
+<p>The <code>link</code> plugin is designed for a special but common use case: managing the state
+of a relationship between two existing resources. It generates modules that can,
+for example, attach a volume to a server, add a user to a project, or assign a
+floating IP to a port.</p>
+<p>Its core responsibility is to determine if the <code>source</code> resource is currently
+linked to the <code>target</code> resource and execute an API call to create or remove that link
+based on <code>state: present</code> or <code>state: absent</code>.</p>
+<h4 id="configuration-example">Configuration Example</h4>
+<p>Here is a complete configuration for generating a <code>volume_attachment</code> module using
+the <code>link</code> plugin. This module attaches and detaches OpenStack volumes.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># In generator_config.yaml</span>
+
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">volume_attachment</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">link</span>
+<span class="w">  </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"OpenStack</span><span class="nv"> </span><span class="s">volume</span><span class="nv"> </span><span class="s">attachment"</span>
+<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Attach</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">detach</span><span class="nv"> </span><span class="s">OpenStack</span><span class="nv"> </span><span class="s">volumes</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">instances."</span>
+
+<span class="w">  </span><span class="c1"># The "source" is the primary resource on which an action is performed.</span>
+<span class="w">  </span><span class="c1"># For an attachment, this is the volume.</span>
+<span class="w">  </span><span class="nt">source</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="s">"volume"</span>
+<span class="w">    </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"volume"</span>
+<span class="w">    </span><span class="c1"># The plugin needs to fetch the full volume object to check its state.</span>
+<span class="w">    </span><span class="nt">retrieve_op</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_volumes_retrieve"</span>
+
+<span class="w">  </span><span class="c1"># The "target" is the resource being linked to the source.</span>
+<span class="w">  </span><span class="nt">target</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="s">"instance"</span>
+<span class="w">    </span><span class="nt">resource_type</span><span class="p">:</span><span class="w"> </span><span class="s">"instance"</span>
+
+<span class="w">  </span><span class="c1"># The API operations for creating and removing the link.</span>
+<span class="w">  </span><span class="nt">link_op</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_volumes_attach"</span>
+<span class="w">  </span><span class="nt">unlink_op</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_volumes_detach"</span>
+
+<span class="w">  </span><span class="c1"># The key in the source resource's API response that holds the URL</span>
+<span class="w">  </span><span class="c1"># of the target resource when they are linked. This is crucial for idempotency.</span>
+<span class="w">  </span><span class="c1"># For a Waldur volume, this field is named "instance".</span>
+<span class="w">  </span><span class="nt">link_check_key</span><span class="p">:</span><span class="w"> </span><span class="s">"instance"</span>
+
+<span class="w">  </span><span class="c1"># Optional parameters passed only to the link_op.</span>
+<span class="w">  </span><span class="nt">link_params</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"device"</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"string"</span>
+<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Device</span><span class="nv"> </span><span class="s">path</span><span class="nv"> </span><span class="s">on</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">instance</span><span class="nv"> </span><span class="s">(e.g.,</span><span class="nv"> </span><span class="s">/dev/vdb)."</span>
+
+<span class="w">  </span><span class="c1"># Define resolvers to find all involved resources. This allows users</span>
+<span class="w">  </span><span class="c1"># to provide names instead of UUIDs and ensures the lookups are</span>
+<span class="w">  </span><span class="c1"># performed in the correct context (e.g., within a specific tenant).</span>
+<span class="w">  </span><span class="nt">resolvers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">*base_openstack_resolvers</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Includes tenant, project, and customer</span>
+<span class="w">    </span><span class="nt">instance</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">base</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_instances"</span>
+<span class="w">      </span><span class="nt">filter_by</span><span class="p">:</span><span class="w"> </span><span class="nv">*tenant_filter</span>
+<span class="w">    </span><span class="nt">volume</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">base</span><span class="p">:</span><span class="w"> </span><span class="s">"openstack_volumes"</span>
+<span class="w">      </span><span class="nt">filter_by</span><span class="p">:</span><span class="w"> </span><span class="nv">*tenant_filter</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="key-link-plugin-options">Key <code>link</code> Plugin Options</h4>
+<ul>
+<li><strong><code>source</code></strong>: A dictionary defining the "active" resource in the relationship.</li>
+<li><code>param</code>: The name of the Ansible parameter for this resource (e.g., <code>volume</code>).</li>
+<li><code>resource_type</code>: A user-friendly name (e.g., <code>volume</code>).</li>
+<li><code>retrieve_op</code>: The <code>operationId</code> for fetching the full details of this resource.</li>
+<li><strong><code>target</code></strong>: A dictionary defining the "passive" resource being linked to.</li>
+<li><strong><code>link_op</code> / <code>unlink_op</code></strong>: The <code>operationId</code>s for the API calls that
+   create and remove the link (e.g., <code>..._attach</code> and <code>..._detach</code>).</li>
+<li><strong><code>link_check_key</code></strong>: The field name on the <strong>source</strong> resource's data that
+  contains the URL or reference to the <strong>target</strong> when they are linked.
+  This is the heart of the idempotency check.</li>
+<li><strong><code>link_params</code></strong>: A list of additional parameters that are only relevant
+  for the <code>link_op</code> (e.g., the <code>device</code> path for a volume attachment).</li>
+<li><strong><code>resolvers</code></strong>: A standard resolver map used to find the <code>source</code>, <code>target</code>,
+  and any other context resources (like <code>tenant</code> or <code>project</code>).</li>
+</ul>
 <h3 id="reusable-configuration-with-yaml-anchors">Reusable Configuration with YAML Anchors</h3>
 <p>To keep your <code>generator_config.yaml</code> file DRY (Don't Repeat Yourself) and maintainable, you can use YAML's
 built-in <strong>anchors (<code>&amp;</code>)</strong> and <strong>aliases (<code>*</code>)</strong>. The generator fully supports this, allowing you to define a
@@ -10108,7 +10294,7 @@ to the old generic <code>waldur_marketplace</code> module. The <code>waldur.mark
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-10-08
+    2025-10-13
   </span>
 
     
