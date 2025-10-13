@@ -350,6 +350,88 @@ Below is a detailed explanation of each available plugin.
 
 ---
 
+### 5. The `link` Plugin
+
+The `link` plugin is designed for a special but common use case: managing the state
+of a relationship between two existing resources. It generates modules that can,
+for example, attach a volume to a server, add a user to a project, or assign a
+floating IP to a port.
+
+Its core responsibility is to determine if the `source` resource is currently
+linked to the `target` resource and execute an API call to create or remove that link
+based on `state: present` or `state: absent`.
+
+#### Configuration Example
+
+Here is a complete configuration for generating a `volume_attachment` module using
+the `link` plugin. This module attaches and detaches OpenStack volumes.
+
+```yaml
+# In generator_config.yaml
+
+- name: volume_attachment
+  plugin: link
+  resource_type: "OpenStack volume attachment"
+  description: "Attach and detach OpenStack volumes from instances."
+
+  # The "source" is the primary resource on which an action is performed.
+  # For an attachment, this is the volume.
+  source:
+    param: "volume"
+    resource_type: "volume"
+    # The plugin needs to fetch the full volume object to check its state.
+    retrieve_op: "openstack_volumes_retrieve"
+
+  # The "target" is the resource being linked to the source.
+  target:
+    param: "instance"
+    resource_type: "instance"
+
+  # The API operations for creating and removing the link.
+  link_op: "openstack_volumes_attach"
+  unlink_op: "openstack_volumes_detach"
+
+  # The key in the source resource's API response that holds the URL
+  # of the target resource when they are linked. This is crucial for idempotency.
+  # For a Waldur volume, this field is named "instance".
+  link_check_key: "instance"
+
+  # Optional parameters passed only to the link_op.
+  link_params:
+    - name: "device"
+      type: "string"
+      description: "Device path on the instance (e.g., /dev/vdb)."
+
+  # Define resolvers to find all involved resources. This allows users
+  # to provide names instead of UUIDs and ensures the lookups are
+  # performed in the correct context (e.g., within a specific tenant).
+  resolvers:
+    <<: [*base_openstack_resolvers] # Includes tenant, project, and customer
+    instance:
+      base: "openstack_instances"
+      filter_by: *tenant_filter
+    volume:
+      base: "openstack_volumes"
+      filter_by: *tenant_filter
+```
+
+#### Key `link` Plugin Options
+
+- **`source`**: A dictionary defining the "active" resource in the relationship.
+  - `param`: The name of the Ansible parameter for this resource (e.g., `volume`).
+  - `resource_type`: A user-friendly name (e.g., `volume`).
+  - `retrieve_op`: The `operationId` for fetching the full details of this resource.
+- **`target`**: A dictionary defining the "passive" resource being linked to.
+- **`link_op` / `unlink_op`**: The `operationId`s for the API calls that
+   create and remove the link (e.g., `..._attach` and `..._detach`).
+- **`link_check_key`**: The field name on the **source** resource's data that
+  contains the URL or reference to the **target** when they are linked.
+  This is the heart of the idempotency check.
+- **`link_params`**: A list of additional parameters that are only relevant
+  for the `link_op` (e.g., the `device` path for a volume attachment).
+- **`resolvers`**: A standard resolver map used to find the `source`, `target`,
+  and any other context resources (like `tenant` or `project`).
+
 ### Reusable Configuration with YAML Anchors
 
 To keep your `generator_config.yaml` file DRY (Don't Repeat Yourself) and maintainable, you can use YAML's
