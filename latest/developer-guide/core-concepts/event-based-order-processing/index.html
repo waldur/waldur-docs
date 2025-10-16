@@ -2914,6 +2914,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#offering-user-event-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Offering User Event Messages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#subscription-management-agent-side" class="md-nav__link">
     <span class="md-ellipsis">
       Subscription Management (Agent Side)
@@ -7178,6 +7187,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#offering-user-event-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Offering User Event Messages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#subscription-management-agent-side" class="md-nav__link">
     <span class="md-ellipsis">
       Subscription Management (Agent Side)
@@ -7268,16 +7286,52 @@
 <li>The agent communicates with the backend (e.g., SLURM) to execute the necessary actions</li>
 </ol>
 <h2 id="message-types">Message Types</h2>
-<p>The system handles three primary types of events:</p>
+<p>The system handles several types of events:</p>
 <ol>
 <li><strong>Order Messages</strong>: Notifications about marketplace orders (create, update, terminate)</li>
 <li><strong>User Role Messages</strong>: Changes to user permissions in projects</li>
 <li><strong>Resource Messages</strong>: Updates to resource configuration or status</li>
+<li><strong>Offering User Messages</strong>: Creation, updates, and deletion of offering users</li>
+<li><strong>Service Account Messages</strong>: Service account lifecycle events</li>
+<li><strong>Course Account Messages</strong>: Course account management events</li>
+<li><strong>Importable Resources Messages</strong>: Backend resource discovery events</li>
 </ol>
 <h2 id="implementation-details">Implementation Details</h2>
 <h3 id="publishing-messages-waldur-side">Publishing Messages (Waldur Side)</h3>
 <p>When events like order creation occur, Waldur prepares and publishes STOMP messages: <a href="https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_mastermind/marketplace_slurm_remote/utils.py#L12">code link</a></p>
 <p>These messages are then sent via: <a href="https://github.com/waldur/waldur-mastermind/blob/73f2a0a7df04405b1c9ed5d2512d6213d649d398/src/waldur_core/logging/tasks.py#L83">publish_stomp_messages</a></p>
+<h3 id="offering-user-event-messages">Offering User Event Messages</h3>
+<p>Offering user events are published when offering users are created, updated, or deleted. These handlers are located in <a href="https://github.com/waldur/waldur-mastermind/blob/develop/src/waldur_mastermind/marketplace/handlers.py">waldur_mastermind/marketplace/handlers.py</a>:</p>
+<ul>
+<li><code>send_offering_user_created_message</code> - Triggers when an OfferingUser is created</li>
+<li><code>send_offering_user_updated_message</code> - Triggers when an OfferingUser is updated</li>
+<li><code>send_offering_user_deleted_message</code> - Triggers when an OfferingUser is deleted</li>
+</ul>
+<p><strong>Message Payload Structure for OfferingUser Events:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"offering_user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uuid-hex-string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-uuid-hex-string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"generated-username"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK|Requested|Creating|Pending account linking|Pending additional validation|Requested deletion|Deleting|Deleted|Error creating|Error deleting"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"create|update|delete"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"offering_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offering-uuid"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"changed_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"field1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"field2"</span><span class="p">]</span><span class="w">  </span><span class="c1">// Only present for updates</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Event Triggers:</strong></p>
+<ul>
+<li><strong>Create</strong>: When a new offering user account is created for a user in an offering</li>
+<li><strong>Update</strong>: When any field of an existing offering user is modified (username, state, etc.)</li>
+<li><strong>Delete</strong>: When an offering user account is removed from an offering</li>
+</ul>
 <h3 id="subscription-management-agent-side">Subscription Management (Agent Side)</h3>
 <p>The <a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/event_subscription_manager.py#L28">EventSubscriptionManager</a> class handles creation of event subscriptions and setup of STOMP consumers:</p>
 <ul>
@@ -7335,7 +7389,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-29
+    2025-10-16
   </span>
 
     
