@@ -1217,6 +1217,14 @@ Enable mock returns for the course account service
 
 If True, users must have active consent to access offerings that have active Terms of Service.
 
+### Project
+
+#### PROJECT_END_DATE_MANDATORY
+
+**Type:** bool
+
+If true, project end date field becomes mandatory when creating or updating projects.
+
 ### Telemetry
 
 #### TELEMETRY_URL
