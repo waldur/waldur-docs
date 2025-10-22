@@ -4311,27 +4311,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-template-system" class="md-nav__link">
+  <a href="#5-custom-field-integration" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Template System
+      5. Custom Field Integration
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-status-management" class="md-nav__link">
+  <a href="#6-template-system" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Status Management
+      6. Template System
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#7-feedback-system" class="md-nav__link">
+  <a href="#7-status-management" class="md-nav__link">
     <span class="md-ellipsis">
-      7. Feedback System
+      7. Status Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-feedback-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Feedback System
     </span>
   </a>
   
@@ -4692,9 +4701,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-monitoring" class="md-nav__link">
+  <a href="#5-custom-field-integration_1" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Monitoring
+      5. Custom Field Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Monitoring
     </span>
   </a>
   
@@ -4756,6 +4774,15 @@
   <a href="#4-attachment-upload-failures" class="md-nav__link">
     <span class="md-ellipsis">
       4. Attachment Upload Failures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-custom-field-mapping-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Custom Field Mapping Issues
     </span>
   </a>
   
@@ -7725,27 +7752,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-template-system" class="md-nav__link">
+  <a href="#5-custom-field-integration" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Template System
+      5. Custom Field Integration
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-status-management" class="md-nav__link">
+  <a href="#6-template-system" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Status Management
+      6. Template System
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#7-feedback-system" class="md-nav__link">
+  <a href="#7-status-management" class="md-nav__link">
     <span class="md-ellipsis">
-      7. Feedback System
+      7. Status Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-feedback-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Feedback System
     </span>
   </a>
   
@@ -8106,9 +8142,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-monitoring" class="md-nav__link">
+  <a href="#5-custom-field-integration_1" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Monitoring
+      5. Custom Field Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Monitoring
     </span>
   </a>
   
@@ -8170,6 +8215,15 @@
   <a href="#4-attachment-upload-failures" class="md-nav__link">
     <span class="md-ellipsis">
       4. Attachment Upload Failures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-custom-field-mapping-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Custom Field Mapping Issues
     </span>
   </a>
   
@@ -8415,7 +8469,41 @@
     <span class="n">backend_name</span><span class="p">:</span> <span class="nb">str</span>   <span class="c1"># Backend type</span>
     <span class="n">is_active</span><span class="p">:</span> <span class="nb">bool</span>     <span class="c1"># Activity status</span>
 </code></pre></div></td></tr></table></div>
-<h3 id="5-template-system">5. Template System</h3>
+<h3 id="5-custom-field-integration">5. Custom Field Integration</h3>
+<p><strong>Resource Backend ID Synchronization:</strong></p>
+<p>The system supports automatic resource backend_id updates via Service Desk custom fields:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Automatic sync flow during issue updates</span>
+<span class="k">def</span> <span class="nf">_update_resource_backend_id_from_custom_fields</span><span class="p">(</span><span class="n">issue</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Updates connected resource's backend_id from Service Desk custom fields.</span>
+
+<span class="sd">    Triggered during: issue synchronization from helpdesk</span>
+<span class="sd">    Requirements: ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED = True</span>
+<span class="sd">    Custom Field: waldur_backend_id (customfield_10200)</span>
+<span class="sd">    """</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Integration Benefits:</strong></p>
+<ul>
+<li>External systems can update Waldur resource identifiers via Service Desk</li>
+<li>One-way data synchronization from helpdesk to Waldur resources</li>
+<li>Automated resource identifier management from external platforms</li>
+<li>Enhanced integration capabilities for third-party tools</li>
+</ul>
+<p><strong>Supported Resource Types:</strong></p>
+<ul>
+<li>Marketplace Orders (<code>marketplace.Order</code>)</li>
+<li>Marketplace Resources (<code>marketplace.Resource</code>)</li>
+<li>Any resource with <code>backend_id</code> field connected via Issue generic foreign key</li>
+</ul>
+<h3 id="6-template-system">6. Template System</h3>
 <p>Templates enable standardized issue creation:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -8443,7 +8531,7 @@
     <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>         <span class="c1"># Trigger status</span>
     <span class="n">html_template</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Email template</span>
 </code></pre></div></td></tr></table></div>
-<h3 id="6-status-management">6. Status Management</h3>
+<h3 id="7-status-management">7. Status Management</h3>
 <p><code>IssueStatus</code> maps backend statuses to resolution types:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -8510,7 +8598,7 @@
 <span class="err"># Delete status (staff only)</span>
 <span class="err">DELETE /api/support-issue-statuses/{uuid}/</span>
 </code></pre></div></td></tr></table></div>
-<h3 id="7-feedback-system">7. Feedback System</h3>
+<h3 id="8-feedback-system">8. Feedback System</h3>
 <p>Customer satisfaction tracking:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -8529,7 +8617,7 @@
 <li>Request type management</li>
 <li>Customer portal integration</li>
 <li>Webhook support for real-time updates</li>
-<li>Custom field mapping</li>
+<li>Custom field mapping with one-way resource synchronization (Service Desk → Waldur)</li>
 </ul>
 <p><strong>Authentication Methods:</strong></p>
 <p>Supports multiple authentication methods with automatic fallback:</p>
@@ -8577,6 +8665,61 @@ OAuth 2.0 &gt; Personal Access Token &gt; API Token &gt; Basic Authentication</p
 <li>Configure the credentials in your environment variables</li>
 <li>The system will automatically use OAuth 2.0 when configured</li>
 </ol>
+<p><strong>Custom Field Mapping:</strong></p>
+<p>Waldur supports custom field mapping with Atlassian Service Desk for enhanced integration capabilities:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Enable custom field mapping</span>
+<span class="nv">ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>True
+
+<span class="c1"># Standard custom field mappings</span>
+<span class="nv">ATLASSIAN_IMPACT_FIELD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Impact"</span>
+<span class="nv">ATLASSIAN_ORGANISATION_FIELD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Reporter organization"</span>
+<span class="nv">ATLASSIAN_PROJECT_FIELD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Waldur Project"</span>
+<span class="nv">ATLASSIAN_AFFECTED_RESOURCE_FIELD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Affected Resource"</span>
+<span class="nv">ATLASSIAN_REPORTER_FIELD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Original Reporter"</span>
+<span class="nv">ATLASSIAN_CALLER_FIELD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Request participants"</span>
+<span class="nv">ATLASSIAN_TEMPLATE_FIELD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Issue Template"</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Resource Backend ID Synchronization:</strong></p>
+<p>The system automatically synchronizes resource backend IDs using the <code>waldur_backend_id</code> custom field:</p>
+<ol>
+<li><strong>Jira Setup</strong>: Create a custom field named <code>waldur_backend_id</code> (text field, single line)</li>
+<li><strong>Field Mapping</strong>: The system automatically detects field ID <code>customfield_10200</code> or uses field lookup</li>
+<li><strong>Service Desk → Waldur Sync</strong>:</li>
+<li>Issue synchronization reads <code>waldur_backend_id</code> custom field and updates connected resource's <code>backend_id</code></li>
+<li>External systems can update Waldur resources by modifying the custom field in Service Desk tickets</li>
+</ol>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li>External systems can update Waldur resource identifiers via Service Desk</li>
+<li>Cross-platform resource synchronization through helpdesk integration</li>
+<li>Automated data consistency maintenance across integrated systems</li>
+<li>Third-party tool integration via Service Desk custom field updates</li>
+</ul>
+<p><strong>Configuration Example:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Enable custom field integration</span>
+<span class="n">ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># The system will automatically:</span>
+<span class="c1"># 1. Read waldur_backend_id custom field during issue synchronization</span>
+<span class="c1"># 2. Update connected resource's backend_id with the custom field value</span>
+<span class="c1"># 3. Enable external systems to update Waldur resources via Service Desk</span>
+</code></pre></div></td></tr></table></div>
 <h4 id="2-micro-focus-smax">2. Micro Focus SMAX</h4>
 <p>Enterprise ITSM integration:</p>
 <ul>
@@ -8913,15 +9056,37 @@ OAuth 2.0 &gt; Personal Access Token &gt; API Token &gt; Basic Authentication</p
 </code></pre></div></td></tr></table></div>
 <h3 id="constance-settings">Constance Settings</h3>
 <p>Dynamic configuration via admin:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Enable/disable support module</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Enable/disable support module</span>
 <span class="n">WALDUR_SUPPORT_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
 
 <span class="c1"># Select active backend</span>
 <span class="n">WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE</span> <span class="o">=</span> <span class="s1">'atlassian'</span>  <span class="c1"># or 'zammad', 'smax', 'basic'</span>
+
+<span class="c1"># Enable custom field mapping for enhanced integration</span>
+<span class="n">ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># Configure custom field mappings</span>
+<span class="n">ATLASSIAN_IMPACT_FIELD</span> <span class="o">=</span> <span class="s2">"Impact"</span>
+<span class="n">ATLASSIAN_ORGANISATION_FIELD</span> <span class="o">=</span> <span class="s2">"Reporter organization"</span>
+<span class="n">ATLASSIAN_PROJECT_FIELD</span> <span class="o">=</span> <span class="s2">"Waldur Project"</span>
+<span class="n">ATLASSIAN_AFFECTED_RESOURCE_FIELD</span> <span class="o">=</span> <span class="s2">"Affected Resource"</span>
+<span class="n">ATLASSIAN_REPORTER_FIELD</span> <span class="o">=</span> <span class="s2">"Original Reporter"</span>
+<span class="n">ATLASSIAN_TEMPLATE_FIELD</span> <span class="o">=</span> <span class="s2">"Issue Template"</span>
 </code></pre></div></td></tr></table></div>
 <h3 id="backend-configuration">Backend Configuration</h3>
 <h4 id="jira-configuration">JIRA Configuration</h4>
@@ -9085,12 +9250,23 @@ OAuth 2.0 &gt; Personal Access Token &gt; API Token &gt; Basic Authentication</p
 <li>Sanitize user input in comments/descriptions</li>
 <li>Use HTTPS for all backend connections</li>
 </ul>
-<h3 id="5-monitoring">5. Monitoring</h3>
+<h3 id="5-custom-field-integration_1">5. Custom Field Integration</h3>
+<ul>
+<li><strong>Enable custom field mapping</strong>: Set <code>ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED = True</code> for enhanced integration</li>
+<li><strong>Create required custom fields</strong>: Ensure <code>waldur_backend_id</code> custom field exists in Jira/Service Desk</li>
+<li><strong>Test field permissions</strong>: Verify API user can read/write custom fields</li>
+<li><strong>Monitor field updates</strong>: Log resource backend_id changes for audit trails</li>
+<li><strong>Validate field values</strong>: Ensure custom field values are appropriate for resource backend IDs</li>
+<li><strong>Document field usage</strong>: Maintain clear documentation of custom field purposes and expected values</li>
+</ul>
+<h3 id="6-monitoring">6. Monitoring</h3>
 <ul>
 <li>Monitor sync task execution</li>
 <li>Track webhook delivery failures</li>
 <li>Log backend API errors</li>
 <li>Set up alerts for SLA breaches</li>
+<li>Monitor custom field mapping operations</li>
+<li>Track resource backend_id updates via logs</li>
 </ul>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="common-issues">Common Issues</h3>
@@ -9122,6 +9298,46 @@ OAuth 2.0 &gt; Personal Access Token &gt; API Token &gt; Basic Authentication</p
 <li>Review storage permissions</li>
 <li>Monitor backend API limits</li>
 </ul>
+<h4 id="5-custom-field-mapping-issues">5. Custom Field Mapping Issues</h4>
+<ul>
+<li><strong>Field Not Found</strong>: Verify <code>waldur_backend_id</code> custom field exists in Jira (should be <code>customfield_10200</code>)</li>
+<li><strong>Mapping Disabled</strong>: Ensure <code>ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED = True</code></li>
+<li><strong>Resource Not Updated</strong>: Check if issue is properly connected to resource via <code>resource_content_type</code> and <code>resource_object_id</code></li>
+<li><strong>Permission Errors</strong>: Verify Jira user has permission to read/write custom fields</li>
+<li><strong>Field Name Mismatch</strong>: Ensure custom field name matches exactly <code>waldur_backend_id</code></li>
+<li><strong>API Errors</strong>: Check Jira REST API logs for custom field access issues</li>
+</ul>
+<p><strong>Debugging Custom Field Integration:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Check if custom field exists</span>
+<span class="kn">from</span> <span class="nn">waldur_mastermind.support.backend.atlassian</span> <span class="kn">import</span> <span class="n">ServiceDeskBackend</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">ServiceDeskBackend</span><span class="p">()</span>
+
+<span class="c1"># Test field lookup</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">field_id</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">get_field_id_by_name</span><span class="p">(</span><span class="s2">"waldur_backend_id"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found field ID: </span><span class="si">{</span><span class="n">field_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Field lookup failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># Test direct field access</span>
+<span class="n">issue_data</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/rest/api/2/issue/YOUR-TICKET-KEY"</span><span class="p">)</span>
+<span class="n">waldur_field_value</span> <span class="o">=</span> <span class="n">issue_data</span><span class="p">[</span><span class="s2">"fields"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"customfield_10200"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Custom field value: </span><span class="si">{</span><span class="n">waldur_field_value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
 <h2 id="integration-with-marketplace">Integration with Marketplace</h2>
 <p>The support module integrates with the marketplace for ticket-based offerings:</p>
 <ol>
@@ -9129,7 +9345,15 @@ OAuth 2.0 &gt; Personal Access Token &gt; API Token &gt; Basic Authentication</p
 <li>Issue status changes trigger order callbacks</li>
 <li>Resolution status determines order success/failure</li>
 <li>Comments and attachments sync bidirectionally</li>
+<li><strong>Resource backend_id synchronization</strong>: Custom field mapping enables automatic resource identifier updates</li>
 </ol>
+<p><strong>Enhanced Marketplace Integration Features:</strong></p>
+<ul>
+<li><strong>Support.OfferingTemplate Integration</strong>: Marketplace orders for support offerings automatically create connected support issues</li>
+<li><strong>One-way Resource Sync</strong>: Service Desk custom field updates can automatically update connected marketplace resource backend IDs</li>
+<li><strong>Cross-System Data Flow</strong>: External systems can update Waldur resources via Service Desk custom field modifications</li>
+<li><strong>Automated Identifier Management</strong>: Maintains consistent resource identifiers across integrated platforms</li>
+</ul>
 <p>See <a href="../plugins/ticket-based-offerings/">Ticket-Based Offerings Documentation</a> for detailed marketplace integration.</p>
 <h2 id="extension-points">Extension Points</h2>
 <p>The support module provides several extension points:</p>
@@ -9239,7 +9463,7 @@ OAuth 2.0 &gt; Personal Access Token &gt; API Token &gt; Basic Authentication</p
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-10-10
+    2025-10-22
   </span>
 
     
