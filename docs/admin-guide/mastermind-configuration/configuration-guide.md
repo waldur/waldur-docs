@@ -1217,6 +1217,12 @@ Enable mock returns for the course account service
 
 If True, users must have active consent to access offerings that have active Terms of Service.
 
+#### ENABLE_ORDER_START_DATE
+
+**Type:** bool
+
+Allow setting start date to control when resource creation order is processed.
+
 ### Project
 
 #### PROJECT_END_DATE_MANDATORY
@@ -1692,6 +1698,14 @@ Request feedback field name
 **Type:** str
 
 Template field name
+
+#### ATLASSIAN_WALDUR_BACKEND_ID_FIELD
+
+**Type:** str
+
+**Default value**: customfield_10200
+
+Waldur backend ID custom field ID (fallback when field lookup by name fails)
 
 #### ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED
 

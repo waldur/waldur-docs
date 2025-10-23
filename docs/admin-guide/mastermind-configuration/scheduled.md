@@ -61,6 +61,7 @@ td:nth-child(4) {
 | `openstack_mark_stuck_updating_tenants_as_erred` | `openstack.mark_stuck_updating_tenants_as_erred` | 1 hour | No description available |
 | `process-pending-project-invitations` | `waldur_core.users.process_pending_project_invitations` | 2 hours | Process project invitations for projects that have become active. |
 | `process_pending_project_orders` | `waldur_mastermind.marketplace.process_pending_project_orders` | 2 hours | Process orders for projects that have become active. |
+| `process_pending_start_date_orders` | `waldur_mastermind.marketplace.process_pending_start_date_orders` | 2 hours | Finds orders that are pending activation due to a future start date<br> and moves them to the EXECUTING state if the start date has been reached. |
 | `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Cancel proposals for rounds that have ended. |
 | `pull-priorities` | `waldur_mastermind.support.pull_priorities` | 1 day | Pull priority levels from the active support backend. |
 | `pull-service-properties` | `waldur_core.structure.ServicePropertiesListPullTask` | 1 day | Pull service properties from all active service backends. |
