@@ -237,6 +237,25 @@ options:
                         Export only specific roles by name
 ```
 
+## export_structure
+
+Export Waldur structure data to JSON format.
+
+  This command exports Users, Customers, Projects, Offerings, Roles, UserRoles,
+  and RolePermissions to a comprehensive JSON file for analysis or backup.
+
+  Usage:
+    waldur export_structure -o structure.json
+    waldur export_structure --output /path/to/structure.json
+
+```bash
+usage: waldur export_structure -o OUTPUT
+
+options:
+  -o OUTPUT, --output OUTPUT
+                        Path to the output JSON file.
+```
+
 ## generate_mermaid
 
 Generate a Mermaid Class Diagram for specified Django apps and models.
@@ -374,6 +393,31 @@ usage: waldur import_roles roles_file
 
 positional arguments:
   roles_file  Specifies location of roles configuration file.
+```
+
+## import_structure
+
+Import Waldur structure data from JSON format.
+
+  This command imports Users, Customers, Projects, Offerings, Roles, UserRoles,
+  and RolePermissions from a JSON file created by export_structure command.
+
+  Usage:
+    waldur import_structure -i structure.json
+    waldur import_structure --input structure.json --update
+    waldur import_structure -i structure.json --skip-users --dry-run
+
+```bash
+usage: waldur import_structure -i INPUT [--update] [--skip-users]
+                               [--skip-roles] [--dry-run]
+
+options:
+  -i INPUT, --input INPUT
+                        Path to the input JSON file.
+  --update              Update existing objects instead of skipping them.
+  --skip-users          Skip importing users.
+  --skip-roles          Skip importing roles and role permissions.
+  --dry-run             Show what would be imported without making changes.
 ```
 
 ## import_tenant_quotas
