@@ -443,6 +443,30 @@ positional arguments:
   category  List of categories to load
 ```
 
+## load_eessi_catalog
+
+Load EESSI software catalog data into marketplace software catalog models
+
+```bash
+usage: waldur load_eessi_catalog [--json-file JSON_FILE]
+                                 [--catalog-name CATALOG_NAME]
+                                 [--catalog-version CATALOG_VERSION]
+                                 [--dry-run] [--update-existing] [--no-sync]
+
+options:
+  --json-file JSON_FILE
+                        Path to EESSI JSON file (default: eessi.model.json)
+  --catalog-name CATALOG_NAME
+                        Name of the software catalog (default: EESSI)
+  --catalog-version CATALOG_VERSION
+                        EESSI catalog version (e.g., 2023.06). If not
+                        provided, will try to extract from JSON
+  --dry-run             Show what would be done without making changes
+  --update-existing     Update existing catalog data if it exists
+  --no-sync             Do not remove records missing from JSON file (default:
+                        sync enabled)
+```
+
 ## load_features
 
 Import features in JSON format

@@ -1601,6 +1601,14 @@ Comma-separated list of file extenstions not allowed for attachment.
 
 Comma-separated list of enabled issue types. First type is the default one.
 
+#### ATLASSIAN_SUPPORT_TYPE_MAPPING
+
+**Type:** dict_field
+
+**Default value**: {'Informational': 'Get IT help', 'Service Request': 'Request new software', 'Change Request': 'Change Request', 'Incident': 'Report a system problem'}
+
+Mapping from frontend issue types to backend request types
+
 #### ATLASSIAN_AFFECTED_RESOURCE_FIELD
 
 **Type:** str

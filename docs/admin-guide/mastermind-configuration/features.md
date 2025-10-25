@@ -52,6 +52,14 @@ Allow marketplace to function as a catalogue only.
 
 Do not render prices in order details.
 
+## marketplace.display_offering_partitions
+
+Enable display of offering partitions in UI.
+
+## marketplace.display_software_catalog
+
+Enable display of software catalog in UI.
+
 ## marketplace.display_user_tos
 
 Enable display of user terms of service in UI.
