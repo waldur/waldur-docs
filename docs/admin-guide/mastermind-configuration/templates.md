@@ -793,6 +793,12 @@ Phone: {{ support_phone }}
 {% endif %}
 ```
 
+### tos_reconsent_required_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Action required: Updated Terms of Service for {{ offering.name }}
+```
+
 ### marketplace_resource_update_limits_succeeded_subject.txt (waldur_mastermind.marketplace)
 
 ``` txt
@@ -923,6 +929,25 @@ Resource {{ resource_name }} update has failed.
 </p>
 </body>
 </html>
+```
+
+### tos_reconsent_required_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello {{ user.full_name }},
+
+The Terms of Service for {{ offering.name }} have been updated from version {{ old_version }} to version {{ new_version }}.
+
+You need to review and re-accept the updated Terms of Service to continue accessing this offering.
+
+View updated Terms of Service: {{ terms_of_service_link }}
+
+To manage your consents, please visit your profile:
+{{ tos_management_url }}
+
+Thank you for your attention to this matter.
+
+{{ site_name }} Team
 ```
 
 ### marketplace_resource_terminate_failed_subject.txt (waldur_mastermind.marketplace)
@@ -1101,6 +1126,36 @@ A new order by {{ order.created_by.get_full_name }} is waiting for approval.
 </html>
 ```
 
+### tos_consent_required_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <p>Hello {{ user.full_name }},</p>
+
+    <p>You have been granted access to <strong>{{ offering.name }}</strong>, which requires you to accept the <a href="{{ terms_of_service_link }}" style="color: #007bff; text-decoration: underline;">Terms of Service</a>.</p>
+
+    <p>Before you can use this offering, please review and accept the Terms of Service.</p>
+
+    <p>
+        <a href="{{ tos_management_url }}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px;">
+            Manage ToS Consents
+        </a>
+    </p>
+
+    <p>Once you've accepted, you can access all resources from this offering through your project dashboard.</p>
+
+    <p>
+        Thank you,<br>
+        {{ site_name }} Team
+    </p>
+</body>
+</html>
+```
+
 ### marketplace_resource_update_failed_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -1275,6 +1330,26 @@ Hello!
 The resource you have - {{ resource.name }} has not been used for the past 3 months. {{ user.full_name }} has scheduled termination of that resource on {{ resource.end_date|date:"SHORT_DATE_FORMAT" }}. If you feel that you still want to keep it, please remove the resource end date {{ resource_url }}.
 ```
 
+### tos_consent_required_message.txt (waldur_mastermind.marketplace)
+
+``` txt
+Hello {{ user.full_name }},
+
+You have been granted access to {{ offering.name }}, which requires you to accept the Terms of Service.
+
+Before you can use this offering, please review and accept the Terms of Service:
+
+Terms of Service: {{ terms_of_service_link }}
+
+To manage your ToS consents, please visit your profile:
+{{ tos_management_url }}
+
+Once you've accepted, you can access all resources from this offering through your project dashboard.
+
+Thank you,
+{{ site_name }} Team
+```
+
 ### notification_about_resource_ending_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -1350,6 +1425,37 @@ Resource {{ resource_name }} limits update has failed.
 Resource {{ resource.name }} termination has been scheduled.
 ```
 
+### tos_reconsent_required_message.html (waldur_mastermind.marketplace)
+
+``` html
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <p>Hello {{ user.full_name }},</p>
+
+    <p>The Terms of Service for <strong>{{ offering.name }}</strong> have been updated from version <strong>{{ old_version }}</strong> to version <strong>{{ new_version }}</strong>.</p>
+
+    <p>You need to review and re-accept the updated Terms of Service to continue accessing this offering.</p>
+
+    <p><a href="{{ terms_of_service_link }}" style="color: #007bff;">View Updated Terms of Service</a></p>
+
+    <p>
+        <a href="{{ tos_management_url }}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px;">
+            Manage ToS Consents
+        </a>
+    </p>
+
+    <p>Thank you for your attention to this matter.</p>
+
+    <p>
+        {{ site_name }} Team
+    </p>
+</body>
+</html>
+```
+
 ### notify_consumer_about_pending_order_message.html (waldur_mastermind.marketplace)
 
 ``` html
@@ -1422,6 +1528,12 @@ Resource {{ resource_name }} deletion has failed.
 Hello!
 
 Resource {{ resource_name }} creation has failed.
+```
+
+### tos_consent_required_subject.txt (waldur_mastermind.marketplace)
+
+``` txt
+Action required: Accept Terms of Service for {{ offering.name }}
 ```
 
 ### marketplace_resource_termination_scheduled_staff_message.txt (waldur_mastermind.marketplace)

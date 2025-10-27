@@ -1475,6 +1475,136 @@ Notifies service provider owners about a pending order for their offering.
 
 ```
 
+### marketplace.tos_consent_required
+
+Notifies user that ToS consent is required to access a resource.
+
+#### Templates
+
+=== "marketplace/tos_consent_required_subject.txt"
+
+```txt
+    Action required: Accept Terms of Service for {{ offering.name }}
+
+```
+
+=== "marketplace/tos_consent_required_message.txt"
+
+```txt
+    Hello {{ user.full_name }},
+
+    You have been granted access to {{ offering.name }}, which requires you to accept the Terms of Service.
+
+    Before you can use this offering, please review and accept the Terms of Service:
+
+    Terms of Service: {{ terms_of_service_link }}
+
+    To manage your ToS consents, please visit your profile:
+    {{ tos_management_url }}
+
+    Once you've accepted, you can access all resources from this offering through your project dashboard.
+
+    Thank you,
+    {{ site_name }} Team
+
+```
+
+=== "marketplace/tos_consent_required_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <p>Hello {{ user.full_name }},</p>
+
+        <p>You have been granted access to <strong>{{ offering.name }}</strong>, which requires you to accept the <a href="{{ terms_of_service_link }}" style="color: #007bff; text-decoration: underline;">Terms of Service</a>.</p>
+
+        <p>Before you can use this offering, please review and accept the Terms of Service.</p>
+
+        <p>
+            <a href="{{ tos_management_url }}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px;">
+                Manage ToS Consents
+            </a>
+        </p>
+
+        <p>Once you've accepted, you can access all resources from this offering through your project dashboard.</p>
+
+        <p>
+            Thank you,<br>
+            {{ site_name }} Team
+        </p>
+    </body>
+    </html>
+
+```
+
+### marketplace.tos_reconsent_required
+
+Notifies user that ToS has been updated and re-consent is required.
+
+#### Templates
+
+=== "marketplace/tos_reconsent_required_subject.txt"
+
+```txt
+    Action required: Updated Terms of Service for {{ offering.name }}
+
+```
+
+=== "marketplace/tos_reconsent_required_message.txt"
+
+```txt
+    Hello {{ user.full_name }},
+
+    The Terms of Service for {{ offering.name }} have been updated from version {{ old_version }} to version {{ new_version }}.
+
+    You need to review and re-accept the updated Terms of Service to continue accessing this offering.
+
+    View updated Terms of Service: {{ terms_of_service_link }}
+
+    To manage your consents, please visit your profile:
+    {{ tos_management_url }}
+
+    Thank you for your attention to this matter.
+
+    {{ site_name }} Team
+
+```
+
+=== "marketplace/tos_reconsent_required_message.html"
+
+```txt
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <p>Hello {{ user.full_name }},</p>
+
+        <p>The Terms of Service for <strong>{{ offering.name }}</strong> have been updated from version <strong>{{ old_version }}</strong> to version <strong>{{ new_version }}</strong>.</p>
+
+        <p>You need to review and re-accept the updated Terms of Service to continue accessing this offering.</p>
+
+        <p><a href="{{ terms_of_service_link }}" style="color: #007bff;">View Updated Terms of Service</a></p>
+
+        <p>
+            <a href="{{ tos_management_url }}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px;">
+                Manage ToS Consents
+            </a>
+        </p>
+
+        <p>Thank you for your attention to this matter.</p>
+
+        <p>
+            {{ site_name }} Team
+        </p>
+    </body>
+    </html>
+
+```
+
 ## WALDUR_MASTERMIND.MARKETPLACE_REMOTE
 
 ### marketplace_remote.notification_about_pending_project_updates
