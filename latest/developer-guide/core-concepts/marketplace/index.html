@@ -3086,9 +3086,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#marketplaceregistrator-quarterly-logic" class="md-nav__link">
+  <a href="#marketplacebillingservice-quarterly-logic" class="md-nav__link">
     <span class="md-ellipsis">
-      MarketplaceRegistrator QUARTERLY Logic
+      MarketplaceBillingService QUARTERLY Logic
     </span>
   </a>
   
@@ -7683,9 +7683,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#marketplaceregistrator-quarterly-logic" class="md-nav__link">
+  <a href="#marketplacebillingservice-quarterly-logic" class="md-nav__link">
     <span class="md-ellipsis">
-      MarketplaceRegistrator QUARTERLY Logic
+      MarketplaceBillingService QUARTERLY Logic
     </span>
   </a>
   
@@ -8287,26 +8287,7 @@
 <span class="c1"># Invoice period: Q2 (April 1 - June 30)</span>
 <span class="c1"># Quantity calculated using PER_QUARTER unit</span>
 </code></pre></div></td></tr></table></div>
-<h4 id="marketplaceregistrator-quarterly-logic">MarketplaceRegistrator QUARTERLY Logic</h4>
-<p>The <code>MarketplaceRegistrator</code> class implements sophisticated quarterly billing logic in the following methods:</p>
-<p><strong><code>should_process_quarterly_billing(date)</code></strong>: Determines when quarterly billing should be processed</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">should_process_quarterly_billing</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Only process quarterly billing in Q1 (Jan), Q2 (Apr), Q3 (Jul), Q4 (Oct)"""</span>
-    <span class="k">return</span> <span class="n">date</span><span class="o">.</span><span class="n">month</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
-</code></pre></div></td></tr></table></div>
-<p><strong><code>get_quarterly_billing_period(date)</code></strong>: Calculates the complete quarterly period</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_quarterly_billing_period</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Returns (quarter_start, quarter_end) for the quarter containing date"""</span>
-    <span class="n">quarter_start</span> <span class="o">=</span> <span class="n">core_utils</span><span class="o">.</span><span class="n">get_quarter_start</span><span class="p">(</span><span class="n">date</span><span class="p">)</span>
-    <span class="n">quarter_end</span> <span class="o">=</span> <span class="n">core_utils</span><span class="o">.</span><span class="n">get_quarter_end</span><span class="p">(</span><span class="n">date</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">quarter_start</span><span class="p">,</span> <span class="n">quarter_end</span>
-</code></pre></div></td></tr></table></div>
+<h4 id="marketplacebillingservice-quarterly-logic">MarketplaceBillingService QUARTERLY Logic</h4>
 <p><strong><code>get_period_end_for_limit_period(limit_period)</code></strong>: Returns appropriate period end</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -8318,7 +8299,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">get_current_month_end</span><span class="p">()</span>  <span class="c1"># Default for MONTH, ANNUAL, TOTAL</span>
 </code></pre></div></td></tr></table></div>
-<p><strong>Invoice Item Creation</strong>: The registrator handles quarterly components differently:</p>
+<p><strong>Invoice Item Creation</strong>: Quarterly components are processed differently:</p>
 <ol>
 <li><strong>During <code>_create_item()</code></strong>:</li>
 <li>Skips processing in non-quarterly months for QUARTERLY components</li>
@@ -8476,28 +8457,6 @@
 <h3 id="4-enterprise-software-licensing">4. Enterprise Software Licensing</h3>
 <p><strong>Service Type</strong>: Enterprise software with quarterly billing cycles
 <strong>Billing Pattern</strong>: Quarterly licensing with flexible user limits</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">EnterpriseLicenseProcessor</span><span class="p">(</span><span class="n">CreateResourceProcessor</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">validate_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="c1"># Validate license capacity and quarterly billing alignment</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_process_quarterly_billing</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()):</span>
-            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">"Enterprise licenses can only be ordered in quarterly periods"</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">create_component_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">plan_component</span><span class="p">,</span> <span class="n">invoice</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
-        <span class="c1"># Override to use quarterly periods for all license components</span>
-        <span class="n">quarterly_start</span><span class="p">,</span> <span class="n">quarterly_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_quarterly_billing_period</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_component_item</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">plan_component</span><span class="p">,</span> <span class="n">invoice</span><span class="p">,</span>
-                                    <span class="n">quarterly_start</span><span class="p">,</span> <span class="n">quarterly_end</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
 <p><strong>Components</strong>:</p>
 <ul>
 <li>User licenses (limit-based, quarterly reset)</li>
@@ -8758,7 +8717,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-10-23
+    2025-10-28
   </span>
 
     
