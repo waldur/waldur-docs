@@ -5299,21 +5299,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How to Use the Generated Collection">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#method-1-local-development-and-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Method 1: Local Development and Testing
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -5498,6 +5483,39 @@
   <a href="#quick-reference-module-name-changes" class="md-nav__link">
     <span class="md-ellipsis">
       Quick Reference: Module Name Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-modules-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running Modules Locally
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reducing-boilerplate-with-module_defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reducing Boilerplate with module_defaults
     </span>
   </a>
   
@@ -8081,21 +8099,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How to Use the Generated Collection">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#method-1-local-development-and-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Method 1: Local Development and Testing
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -8280,6 +8283,39 @@
   <a href="#quick-reference-module-name-changes" class="md-nav__link">
     <span class="md-ellipsis">
       Quick Reference: Module Name Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-modules-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running Modules Locally
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reducing-boilerplate-with-module_defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reducing Boilerplate with module_defaults
     </span>
   </a>
   
@@ -9546,7 +9582,6 @@ generator without any changes to the core <code>generator.py</code> or <code>plu
 <p>Once generated, the collection can be used immediately for local testing or packaged for
 distribution. End-users who are not developing the generator can skip directly to the
 "Installing from Ansible Galaxy" section.</p>
-<h3 id="method-1-local-development-and-testing">Method 1: Local Development and Testing</h3>
 <p>The most straightforward way to test is to tell Ansible where to find your newly generated
 collection by setting an environment variable.</p>
 <ol>
@@ -10378,7 +10413,273 @@ to the old generic <code>waldur_marketplace</code> module. The <code>waldur.mark
 <td><code>facts</code></td>
 </tr>
 </tbody>
-</table></div>
+</table>
+<h2 id="best-practices">Best practices</h2>
+<h3 id="running-modules-locally">Running Modules Locally</h3>
+<p>Since all Waldur modules interact with a remote API, they are considered "control-plane" modules.
+They should always be executed from the Ansible control node (<code>localhost</code>), not on remote target hosts.</p>
+<p>The recommended way to achieve this is by setting <code>connection: local</code> at the top of your playbook.</p>
+<p><strong><code>manage_waldur.yml</code>:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Manage Waldur Resources</span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<span class="w">  </span><span class="nt">connection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">  </span><span class="nt">gather_facts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">collections</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur.structure</span>
+
+<span class="w">  </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://api.example.com/api/"</span>
+<span class="w">    </span><span class="nt">waldur_access_token</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">lookup('env',</span><span class="nv"> </span><span class="s">'WALDUR_ACCESS_TOKEN')</span><span class="nv"> </span><span class="s">}}"</span>
+
+<span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ensure 'My Ansible-Managed Project' exists</span>
+<span class="w">      </span><span class="nt">project</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"My</span><span class="nv"> </span><span class="s">Ansible-Managed</span><span class="nv"> </span><span class="s">Project"</span>
+<span class="w">        </span><span class="nt">customer</span><span class="p">:</span><span class="w"> </span><span class="s">"Big</span><span class="nv"> </span><span class="s">Corp"</span>
+<span class="w">        </span><span class="nt">api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_api_url</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">access_token</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_access_token</span><span class="nv"> </span><span class="s">}}"</span>
+</code></pre></div></td></tr></table></div>
+<p>This ensures that Ansible runs the tasks on the machine executing the playbook,
+which is the correct context for making API calls.</p>
+<h3 id="reducing-boilerplate-with-module_defaults">Reducing Boilerplate with <code>module_defaults</code></h3>
+<p>To avoid repeating common parameters like <code>api_url</code>, <code>access_token</code>, <code>customer</code>, <code>project</code>, and <code>tenant</code>
+in every task, you can use Ansible's powerful <code>module_defaults</code> feature. Each generated Waldur collection
+comes with a predefined <strong>action group</strong> that includes all of its modules.</p>
+<p>You can set default values for these parameters once at the play or block level,
+making your playbooks dramatically cleaner and easier to maintain.</p>
+<p><strong>Before (Repetitive and Hard to Read):</strong></p>
+<p>Without <code>module_defaults</code>, a typical OpenStack provisioning playbook becomes verbose and error-prone,
+with the same five context parameters repeated in every task.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Provision OpenStack Resources (The Repetitive Way)</span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<span class="w">  </span><span class="nt">connection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+
+<span class="w">  </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># Define common parameters as variables</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://api.example.com/api/"</span>
+<span class="w">    </span><span class="nt">waldur_access_token</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">lookup('env',</span><span class="nv"> </span><span class="s">'WALDUR_ACCESS_TOKEN')</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">    </span><span class="nt">waldur_customer</span><span class="p">:</span><span class="w"> </span><span class="s">"Big</span><span class="nv"> </span><span class="s">Corp</span><span class="nv"> </span><span class="s">Inc."</span>
+<span class="w">    </span><span class="nt">waldur_project</span><span class="p">:</span><span class="w"> </span><span class="s">"Production</span><span class="nv"> </span><span class="s">Project"</span>
+<span class="w">    </span><span class="nt">waldur_tenant</span><span class="p">:</span><span class="w"> </span><span class="s">"Cloud</span><span class="nv"> </span><span class="s">Tenant</span><span class="nv"> </span><span class="s">A"</span>
+
+<span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ensure a security group for web servers exists</span>
+<span class="w">      </span><span class="nt">waldur.openstack.security_group</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"web-servers-sg"</span>
+<span class="w">        </span><span class="c1"># --- Boilerplate ---</span>
+<span class="w">        </span><span class="nt">api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_api_url</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">access_token</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_access_token</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">customer</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_customer</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">project</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_project</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">tenant</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_tenant</span><span class="nv"> </span><span class="s">}}"</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ensure a data volume exists</span>
+<span class="w">      </span><span class="nt">waldur.openstack.volume</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"app-data-volume"</span>
+<span class="w">        </span><span class="nt">offering</span><span class="p">:</span><span class="w"> </span><span class="s">"Volume</span><span class="nv"> </span><span class="s">offering</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">waldur_tenant</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span><span class="w"> </span><span class="c1"># in GiB</span>
+<span class="w">        </span><span class="c1"># --- Boilerplate ---</span>
+<span class="w">        </span><span class="nt">api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_api_url</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">access_token</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_access_token</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">customer</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_customer</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">project</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_project</span><span class="nv"> </span><span class="s">}}"</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Provision the main web server VM</span>
+<span class="w">      </span><span class="nt">waldur.openstack.instance</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"web-server-01"</span>
+<span class="w">        </span><span class="nt">offering</span><span class="p">:</span><span class="w"> </span><span class="s">"VM</span><span class="nv"> </span><span class="s">offering</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">waldur_tenant</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">flavor</span><span class="p">:</span><span class="w"> </span><span class="s">"g-standard-2"</span>
+<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="s">"Ubuntu</span><span class="nv"> </span><span class="s">22.04"</span>
+<span class="w">        </span><span class="nt">system_volume_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">        </span><span class="nt">security_groups</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"web-servers-sg"</span>
+<span class="w">        </span><span class="c1"># --- Boilerplate ---</span>
+<span class="w">        </span><span class="nt">api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_api_url</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">access_token</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_access_token</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">customer</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_customer</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">project</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_project</span><span class="nv"> </span><span class="s">}}"</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>After (Clean, DRY, and Recommended):</strong></p>
+<p>By using <code>module_defaults</code>, you define the shared context once. The tasks become short, readable,
+and focused only on what makes them unique.</p>
+<p>The generator creates a group named after the collection.
+For the <code>waldur.openstack</code> collection, the group name is <code>waldur.openstack.openstack</code>.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Provision OpenStack Resources (The Clean Way)</span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<span class="w">  </span><span class="nt">connection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+
+<span class="w">  </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># Define your common parameters as variables</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://api.example.com/api/"</span>
+<span class="w">    </span><span class="nt">waldur_access_token</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">lookup('env',</span><span class="nv"> </span><span class="s">'WALDUR_ACCESS_TOKEN')</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">    </span><span class="nt">waldur_customer</span><span class="p">:</span><span class="w"> </span><span class="s">"Big</span><span class="nv"> </span><span class="s">Corp</span><span class="nv"> </span><span class="s">Inc."</span>
+<span class="w">    </span><span class="nt">waldur_project</span><span class="p">:</span><span class="w"> </span><span class="s">"Production</span><span class="nv"> </span><span class="s">Project"</span>
+<span class="w">    </span><span class="nt">waldur_tenant</span><span class="p">:</span><span class="w"> </span><span class="s">"Cloud</span><span class="nv"> </span><span class="s">Tenant</span><span class="nv"> </span><span class="s">A"</span>
+
+<span class="w">  </span><span class="c1"># Set defaults for the entire 'waldur.openstack' group of modules.</span>
+<span class="w">  </span><span class="c1"># This applies to security_group, volume, instance, and all others.</span>
+<span class="w">  </span><span class="nt">module_defaults</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">group/waldur.openstack.openstack</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_api_url</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">      </span><span class="nt">access_token</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_access_token</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">      </span><span class="nt">customer</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_customer</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">      </span><span class="nt">project</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_project</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">      </span><span class="c1"># 'tenant' is specific to OpenStack, so we add it here.</span>
+<span class="w">      </span><span class="nt">tenant</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">waldur_tenant</span><span class="nv"> </span><span class="s">}}"</span>
+
+<span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ensure a security group for web servers exists</span>
+<span class="w">      </span><span class="c1"># No boilerplate needed!</span>
+<span class="w">      </span><span class="nt">waldur.openstack.security_group</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"web-servers-sg"</span>
+<span class="w">        </span><span class="c1"># The 'tenant' default is automatically applied.</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ensure a data volume exists</span>
+<span class="w">      </span><span class="nt">waldur.openstack.volume</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"app-data-volume"</span>
+<span class="w">        </span><span class="nt">offering</span><span class="p">:</span><span class="w"> </span><span class="s">"Volume</span><span class="nv"> </span><span class="s">offering</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">waldur_tenant</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span><span class="w"> </span><span class="c1"># in GiB</span>
+<span class="w">        </span><span class="c1"># 'project' and auth parameters are inherited.</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Provision the main web server VM</span>
+<span class="w">      </span><span class="nt">waldur.openstack.instance</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"web-server-01"</span>
+<span class="w">        </span><span class="nt">offering</span><span class="p">:</span><span class="w"> </span><span class="s">"VM</span><span class="nv"> </span><span class="s">offering</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">waldur_tenant</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">        </span><span class="nt">flavor</span><span class="p">:</span><span class="w"> </span><span class="s">"g-standard-2"</span>
+<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="s">"Ubuntu</span><span class="nv"> </span><span class="s">22.04"</span>
+<span class="w">        </span><span class="nt">system_volume_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">        </span><span class="nt">security_groups</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"web-servers-sg"</span>
+<span class="w">        </span><span class="c1"># 'project' and 'tenant' context for resolving security_groups</span>
+<span class="w">        </span><span class="c1"># are also inherited from the module defaults.</span>
+</code></pre></div></td></tr></table></div>
+<p>This approach leverages standard Ansible features to provide the exact convenience you're looking for,
+making the generated collections a pleasure to use in complex, real-world scenarios.</p></div>
 
 
 
@@ -10399,7 +10700,7 @@ to the old generic <code>waldur_marketplace</code> module. The <code>waldur.mark
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-10-13
+    2025-10-29
   </span>
 
     
