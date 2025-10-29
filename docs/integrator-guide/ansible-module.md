@@ -980,8 +980,6 @@ Once generated, the collection can be used immediately for local testing or pack
 distribution. End-users who are not developing the generator can skip directly to the
 "Installing from Ansible Galaxy" section.
 
-### Method 1: Local Development and Testing
-
 The most straightforward way to test is to tell Ansible where to find your newly generated
 collection by setting an environment variable.
 
@@ -1592,3 +1590,172 @@ Modules like `waldur.openstack.instance_action` trigger a specific action on an 
 | `waldur_os_security_group_gather_facts` | `waldur.openstack.security_group_facts` | `facts` |
 | `waldur_os_subnet_gather_facts` | `waldur.openstack.subnet_facts` | `facts` |
 | `waldur_marketplace_os_get_instance` | `waldur.openstack.instance_facts` | `facts` |
+
+## Best practices
+
+### Running Modules Locally
+
+Since all Waldur modules interact with a remote API, they are considered "control-plane" modules.
+They should always be executed from the Ansible control node (`localhost`), not on remote target hosts.
+
+The recommended way to achieve this is by setting `connection: local` at the top of your playbook.
+
+**`manage_waldur.yml`:**
+
+```yaml
+- name: Manage Waldur Resources
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  collections:
+    - waldur.structure
+
+  vars:
+    waldur_api_url: "https://api.example.com/api/"
+    waldur_access_token: "{{ lookup('env', 'WALDUR_ACCESS_TOKEN') }}"
+
+  tasks:
+    - name: Ensure 'My Ansible-Managed Project' exists
+      project:
+        state: present
+        name: "My Ansible-Managed Project"
+        customer: "Big Corp"
+        api_url: "{{ waldur_api_url }}"
+        access_token: "{{ waldur_access_token }}"
+```
+
+This ensures that Ansible runs the tasks on the machine executing the playbook,
+which is the correct context for making API calls.
+
+### Reducing Boilerplate with `module_defaults`
+
+To avoid repeating common parameters like `api_url`, `access_token`, `customer`, `project`, and `tenant`
+in every task, you can use Ansible's powerful `module_defaults` feature. Each generated Waldur collection
+comes with a predefined **action group** that includes all of its modules.
+
+You can set default values for these parameters once at the play or block level,
+making your playbooks dramatically cleaner and easier to maintain.
+
+**Before (Repetitive and Hard to Read):**
+
+Without `module_defaults`, a typical OpenStack provisioning playbook becomes verbose and error-prone,
+with the same five context parameters repeated in every task.
+
+```yaml
+- name: Provision OpenStack Resources (The Repetitive Way)
+  hosts: localhost
+  connection: local
+
+  vars:
+    # Define common parameters as variables
+    waldur_api_url: "https://api.example.com/api/"
+    waldur_access_token: "{{ lookup('env', 'WALDUR_ACCESS_TOKEN') }}"
+    waldur_customer: "Big Corp Inc."
+    waldur_project: "Production Project"
+    waldur_tenant: "Cloud Tenant A"
+
+  tasks:
+    - name: Ensure a security group for web servers exists
+      waldur.openstack.security_group:
+        state: present
+        name: "web-servers-sg"
+        # --- Boilerplate ---
+        api_url: "{{ waldur_api_url }}"
+        access_token: "{{ waldur_access_token }}"
+        customer: "{{ waldur_customer }}"
+        project: "{{ waldur_project }}"
+        tenant: "{{ waldur_tenant }}"
+
+    - name: Ensure a data volume exists
+      waldur.openstack.volume:
+        state: present
+        name: "app-data-volume"
+        offering: "Volume offering in {{ waldur_tenant }}"
+        size: 50 # in GiB
+        # --- Boilerplate ---
+        api_url: "{{ waldur_api_url }}"
+        access_token: "{{ waldur_access_token }}"
+        customer: "{{ waldur_customer }}"
+        project: "{{ waldur_project }}"
+
+    - name: Provision the main web server VM
+      waldur.openstack.instance:
+        state: present
+        name: "web-server-01"
+        offering: "VM offering in {{ waldur_tenant }}"
+        flavor: "g-standard-2"
+        image: "Ubuntu 22.04"
+        system_volume_size: 20
+        security_groups:
+          - "web-servers-sg"
+        # --- Boilerplate ---
+        api_url: "{{ waldur_api_url }}"
+        access_token: "{{ waldur_access_token }}"
+        customer: "{{ waldur_customer }}"
+        project: "{{ waldur_project }}"
+```
+
+**After (Clean, DRY, and Recommended):**
+
+By using `module_defaults`, you define the shared context once. The tasks become short, readable,
+and focused only on what makes them unique.
+
+The generator creates a group named after the collection.
+For the `waldur.openstack` collection, the group name is `waldur.openstack.openstack`.
+
+```yaml
+- name: Provision OpenStack Resources (The Clean Way)
+  hosts: localhost
+  connection: local
+
+  vars:
+    # Define your common parameters as variables
+    waldur_api_url: "https://api.example.com/api/"
+    waldur_access_token: "{{ lookup('env', 'WALDUR_ACCESS_TOKEN') }}"
+    waldur_customer: "Big Corp Inc."
+    waldur_project: "Production Project"
+    waldur_tenant: "Cloud Tenant A"
+
+  # Set defaults for the entire 'waldur.openstack' group of modules.
+  # This applies to security_group, volume, instance, and all others.
+  module_defaults:
+    group/waldur.openstack.openstack:
+      api_url: "{{ waldur_api_url }}"
+      access_token: "{{ waldur_access_token }}"
+      customer: "{{ waldur_customer }}"
+      project: "{{ waldur_project }}"
+      # 'tenant' is specific to OpenStack, so we add it here.
+      tenant: "{{ waldur_tenant }}"
+
+  tasks:
+    - name: Ensure a security group for web servers exists
+      # No boilerplate needed!
+      waldur.openstack.security_group:
+        state: present
+        name: "web-servers-sg"
+        # The 'tenant' default is automatically applied.
+
+    - name: Ensure a data volume exists
+      waldur.openstack.volume:
+        state: present
+        name: "app-data-volume"
+        offering: "Volume offering in {{ waldur_tenant }}"
+        size: 50 # in GiB
+        # 'project' and auth parameters are inherited.
+
+    - name: Provision the main web server VM
+      waldur.openstack.instance:
+        state: present
+        name: "web-server-01"
+        offering: "VM offering in {{ waldur_tenant }}"
+        flavor: "g-standard-2"
+        image: "Ubuntu 22.04"
+        system_volume_size: 20
+        security_groups:
+          - "web-servers-sg"
+        # 'project' and 'tenant' context for resolving security_groups
+        # are also inherited from the module defaults.
+```
+
+This approach leverages standard Ansible features to provide the exact convenience you're looking for,
+making the generated collections a pleasure to use in complex, real-world scenarios.
