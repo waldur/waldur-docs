@@ -107,32 +107,12 @@ post-sync-validation:
     - job: sync-external-docs
       optional: true
 
-# Notification job for sync failures
-notify-sync-failure:
-  stage: postdeploy
-  image: alpine:latest
-  script:
-    - |
-      echo "❌ External documentation sync failed!"
-      echo "Please check the pipeline logs and fix any issues."
-      echo "Common issues:"
-      echo "- Authentication tokens expired or missing"
-      echo "- Network connectivity issues"
-      echo "- Configuration errors in external-sources.yml"
-      echo ""
-      echo "Pipeline: $CI_PIPELINE_URL"
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-      when: on_failure
-  needs:
-    - job: sync-external-docs
-
 # Scheduled sync job
 # Recommended: Run daily or after business hours
 scheduled-sync:
   extends: sync-external-docs
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   # Add additional logging for scheduled runs
   after_script:
     - echo "Scheduled sync completed at $(date)"
