@@ -293,7 +293,7 @@ http://keycloak:8080/auth/realms/<YOUR REALM>/.well-known/openid-configuration
 
 ## Integration with SLURM
 
-The integration is described [here](https://docs.waldur.com/latest/admin-guide/providers/remote-slurm/).
+The integration is described [here](https://docs.waldur.com/latest/admin-guide/providers/site-agent/).
 
 ### Whitelabeling settings
 
