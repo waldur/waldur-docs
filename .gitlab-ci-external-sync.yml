@@ -1,0 +1,144 @@
+# GitLab CI/CD configuration for external documentation synchronization
+
+variables:
+  # Python environment for running sync scripts
+  PYTHON_IMAGE: "python:3.12-slim"
+
+# Validation job - runs on all branches and MRs
+validate-external-sync:
+  stage: test
+  image: $PYTHON_IMAGE
+  before_script:
+    - apt-get update && apt-get install -y git
+    - pip install pyyaml
+  script:
+    - python scripts/validate-external-sync.py
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      allow_failure: true # TODO: remove after testing
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  allow_failure: false
+
+# Dry-run sync job - runs on merge requests to preview changes
+sync-external-docs-dry-run:
+  stage: test
+  image: $PYTHON_IMAGE
+  before_script:
+    - apt-get update && apt-get install -y git
+    - pip install pyyaml
+  script:
+    # Run the sync in dry-run mode
+    - python scripts/sync-external-docs.py --dry-run
+    # Show what would be changed
+    - |
+      if [ -n "$(git status --porcelain)" ]; then
+        echo "📋 Changes that would be committed:"
+        git diff --stat
+        echo ""
+        echo "🔍 Detailed changes:"
+        git diff
+        echo ""
+        echo "ℹ️ This is a dry-run. No changes will be committed on merge requests."
+      else
+        echo "✅ No changes detected - external docs are up to date"
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $GITLAB_TOKEN'
+  allow_failure: true
+
+# Sync job - only runs on master branch or when triggered manually
+sync-external-docs:
+  stage: deploy
+  image: $PYTHON_IMAGE
+  before_script:
+    - apt-get update && apt-get install -y git
+    - pip install pyyaml
+    # Configure git for commits
+    - git config --global user.name "$GITLAB_USER_NAME"
+    - git config --global user.email "$GITLAB_USER_EMAIL"
+    # Configure authentication for pushing
+    - git remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
+  script:
+    # Run the sync
+    - python scripts/sync-external-docs.py
+    # Check if there are any changes
+    - |
+      if [ -n "$(git status --porcelain)" ]; then
+        echo "Changes detected, committing..."
+        git add .
+        git commit -m "Sync external documentation
+
+        Updated documentation from external sources:
+        - HomePort UI docs
+        - MasterMind API docs
+        - Integration docs
+
+        Automated sync from CI/CD pipeline.
+        Pipeline: $CI_PIPELINE_URL"
+        git push origin HEAD:$CI_COMMIT_REF_NAME
+        echo "✅ External documentation synchronized and committed"
+      else
+        echo "✅ No changes detected - external docs are up to date"
+      fi
+  # Only run if token is available
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "schedule"'
+
+# Job to validate sync after changes
+post-sync-validation:
+  stage: postdeploy
+  image: $PYTHON_IMAGE
+  before_script:
+    - apt-get update && apt-get install -y git
+    - pip install pyyaml
+  script:
+    - python scripts/validate-external-sync.py
+    # Also run the documentation linting to ensure everything is still valid
+    - if [ -f "lint-markdown.mjs" ]; then
+        apt-get install -y nodejs npm &&
+        npm install &&
+        node lint-markdown.mjs;
+      fi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      changes:
+        - docs/**/*.md
+  needs:
+    - job: sync-external-docs
+      optional: true
+
+# Notification job for sync failures
+notify-sync-failure:
+  stage: postdeploy
+  image: alpine:latest
+  script:
+    - |
+      echo "❌ External documentation sync failed!"
+      echo "Please check the pipeline logs and fix any issues."
+      echo "Common issues:"
+      echo "- Authentication tokens expired or missing"
+      echo "- Network connectivity issues"
+      echo "- Configuration errors in external-sources.yml"
+      echo ""
+      echo "Pipeline: $CI_PIPELINE_URL"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: on_failure
+  needs:
+    - job: sync-external-docs
+
+# Scheduled sync job
+# Recommended: Run daily or after business hours
+scheduled-sync:
+  extends: sync-external-docs
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  # Add additional logging for scheduled runs
+  after_script:
+    - echo "Scheduled sync completed at $(date)"
+    - python scripts/validate-external-sync.py --report sync-report.txt
+  artifacts:
+    when: always
+    paths:
+      - sync-report.txt
+    expire_in: 7 days

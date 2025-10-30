@@ -6,7 +6,7 @@ Installing Waldur is a simple and straightforward process.
 
 There are 2 supported methods:
 
-- [Using Docker Compose](../admin-guide/deployment/docker-compose.md). Fastest but runs on a single server.
+- [Using Docker Compose](../admin-guide/deployment/docker-compose/index.md). Fastest but runs on a single server.
 - [Using Helm](../admin-guide/deployment/helm/index.md). For deploying on Kubernetes clusters.
 
 ## Configure Waldur
