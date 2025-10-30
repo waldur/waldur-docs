@@ -50,6 +50,8 @@ sync-external-docs-dry-run:
 sync-external-docs:
   stage: deploy
   image: $PYTHON_IMAGE
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "schedule"'
   before_script:
     - apt-get update && apt-get install -y git
     - pip install pyyaml
@@ -80,9 +82,6 @@ sync-external-docs:
       else
         echo "✅ No changes detected - external docs are up to date"
       fi
-  # Only run if token is available
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "schedule"'
 
 # Job to validate sync after changes
 post-sync-validation:
