@@ -7,7 +7,7 @@ share access by creating Slurm accounts and managing permission rights of users.
 ## Important note
 
 This page describes the legacy marketplace plugin for SLURM.
-For the new SLURM plugin, we recommend to check [this page](waldur-site-agent.md)
+For the new SLURM plugin, we recommend to check [this page](site-agent/index.md)
 
 ## Configure Waldur SLURM plugin
 

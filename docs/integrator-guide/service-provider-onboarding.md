@@ -8,7 +8,7 @@ The following steps are specific for SLURM plugin in Waldur.
 
 ### Creation of SLURM Offering in Waldur
 
-This section describes creation of SLURM offering in Waldur, which is managed by [Waldur Site Agent](../admin-guide/providers/waldur-site-agent.md).
+This section describes creation of SLURM offering in Waldur, which is managed by [Waldur Site Agent](../admin-guide/providers/site-agent/index.md).
 
 #### Example request
 
