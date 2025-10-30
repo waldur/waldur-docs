@@ -16,7 +16,7 @@ validate-external-sync:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       allow_failure: true # TODO: remove after testing
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "schedule"'
   allow_failure: false
 
 # Dry-run sync job - runs on merge requests to preview changes
@@ -48,7 +48,7 @@ sync-external-docs-dry-run:
 
 # Sync job - only runs on master branch or when triggered manually
 sync-external-docs:
-  stage: deploy
+  stage: release
   image: $PYTHON_IMAGE
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "schedule"'
@@ -85,13 +85,13 @@ sync-external-docs:
 
 # Job to validate sync after changes
 post-sync-validation:
-  stage: postdeploy
+  stage: validate
   image: $PYTHON_IMAGE
   before_script:
     - apt-get update && apt-get install -y git
     - pip install pyyaml
   script:
-    - python scripts/validate-external-sync.py
+    - python scripts/validate-external-sync.py --report sync-report.txt
     # Also run the documentation linting to ensure everything is still valid
     - if [ -f "lint-markdown.mjs" ]; then
         apt-get install -y nodejs npm &&
@@ -99,25 +99,12 @@ post-sync-validation:
         node lint-markdown.mjs;
       fi
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-      changes:
-        - docs/**/*.md
-  needs:
-    - job: sync-external-docs
-      optional: true
-
-# Scheduled sync job
-# Recommended: Run daily or after business hours
-scheduled-sync:
-  extends: sync-external-docs
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-  # Add additional logging for scheduled runs
-  after_script:
-    - echo "Scheduled sync completed at $(date)"
-    - python scripts/validate-external-sync.py --report sync-report.txt
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "schedule"'
   artifacts:
     when: always
     paths:
       - sync-report.txt
     expire_in: 7 days
+  needs:
+    - job: sync-external-docs
+      optional: true
