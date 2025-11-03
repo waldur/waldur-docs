@@ -46,12 +46,13 @@ sync-external-docs-dry-run:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $GITLAB_TOKEN'
   allow_failure: true
 
-# Sync job - only runs on master branch or when triggered manually
+# Sync job - runs on master branch commits and scheduled pipelines
 sync-external-docs:
   stage: release
   image: $PYTHON_IMAGE
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "push"'
   before_script:
     - apt-get update && apt-get install -y git
     - pip install pyyaml
@@ -100,6 +101,7 @@ post-sync-validation:
     #   fi
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITLAB_TOKEN && $CI_PIPELINE_SOURCE == "push"'
   artifacts:
     when: always
     paths:
