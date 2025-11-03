@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://docs.waldur.com/latest/admin-guide/deployment/helm/docs/minio/">
+        <link rel="canonical" href="https://docs.waldur.com/latest/admin-guide/deployment/helm/docs/rabbitmq-operator/">
       
       
-        <link rel="prev" href="../minikube/">
+        <link rel="prev" href="../proxy-setup/">
       
       
-        <link rel="next" href="../postgres-backup-management/">
+        <link rel="next" href="../rabbitmq/">
       
       
       <link rel="icon" href="../../../../../assets/waldur-logo.svg">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Minio - Waldur Documentation</title>
+        <title>Rabbitmq operator - Waldur Documentation</title>
       
     
     
@@ -105,7 +105,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#minio-configuration" class="md-skip">
+        <a href="#rabbitmq-cluster-operator-production" class="md-skip">
           Skip to content
         </a>
       
@@ -142,7 +142,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Minio
+              Rabbitmq operator
             
           </span>
         </div>
@@ -1652,37 +1652,6 @@
                 
   
   
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
-    Minio
-  </span>
-  
-
-      </a>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
   
   
     <li class="md-nav__item">
@@ -1749,6 +1718,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../postgres-operator/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres operator
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../proxy-setup/" class="md-nav__link">
         
   
@@ -1758,6 +1748,295 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Rabbitmq operator
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Rabbitmq operator
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-install-the-rabbitmq-cluster-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Install the RabbitMQ Cluster Operator
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-create-a-production-rabbitmq-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Create a Production RabbitMQ Cluster
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-for-waldur" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration for Waldur
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration for Waldur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-retrieve-rabbitmq-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Retrieve RabbitMQ Credentials
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-waldur-helm-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Configure Waldur Helm Values
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-availability-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      High Availability Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="High Availability Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pod-disruption-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pod Disruption Budget
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-policy-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network Policy (Optional)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoring
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backup-and-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backup and Recovery
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backup and Recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-backup-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automated Backup Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scaling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-cluster-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Check Cluster Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      View Logs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-from-bitnami-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration from Bitnami Chart
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Tuning
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support-and-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support and Documentation
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -7227,6 +7506,242 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-install-the-rabbitmq-cluster-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Install the RabbitMQ Cluster Operator
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-create-a-production-rabbitmq-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Create a Production RabbitMQ Cluster
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-for-waldur" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration for Waldur
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration for Waldur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-retrieve-rabbitmq-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Retrieve RabbitMQ Credentials
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-waldur-helm-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Configure Waldur Helm Values
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-availability-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      High Availability Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="High Availability Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pod-disruption-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pod Disruption Budget
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-policy-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Network Policy (Optional)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoring
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backup-and-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backup and Recovery
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backup and Recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-backup-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automated Backup Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scaling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-cluster-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Check Cluster Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      View Logs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-from-bitnami-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration from Bitnami Chart
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Tuning
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support-and-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support and Documentation
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -7240,34 +7755,444 @@
                   
 
 
-<div><h1 id="minio-configuration">Min.io configuration</h1>
-<p>Min.io storage is used as a database backup storage.</p>
-<p>Add <code>bitnami</code> repo to helm:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>bitnami<span class="w"> </span>https://charts.bitnami.com/bitnami
+<div><h1 id="rabbitmq-cluster-operator-production">RabbitMQ Cluster Operator (Production)</h1>
+<p>For <strong>production deployments</strong>, it is strongly recommended to use the official <a href="https://www.rabbitmq.com/kubernetes/operator/operator-overview">RabbitMQ Cluster Kubernetes Operator</a> instead of the Bitnami Helm chart. The operator provides better lifecycle management, high availability, and production-grade features.</p>
+<h2 id="overview">Overview</h2>
+<p>The RabbitMQ Cluster Operator automates:
+- Provisioning and management of RabbitMQ clusters
+- Scaling and automated rolling upgrades
+- Monitoring integration with Prometheus and Grafana
+- Backup and recovery operations
+- Network policy and security configurations</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Kubernetes cluster version 1.19 or above</li>
+<li>Configured <code>kubectl</code> access</li>
+<li>Appropriate RBAC permissions</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<h3 id="1-install-the-rabbitmq-cluster-operator">1. Install the RabbitMQ Cluster Operator</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="s2">"https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml"</span>
 </code></pre></div></td></tr></table></div>
-<p>Install <code>minio</code> release:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>minio<span class="w"> </span>bitnami/minio<span class="w"> </span>-f<span class="w"> </span>minio-values.yaml
+<p>Verify the operator is running:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>rabbitmq-system
 </code></pre></div></td></tr></table></div>
-<p>You can change <code>minio</code> config with next vars (in <code>minio.values</code> file):</p>
+<h3 id="2-create-a-production-rabbitmq-cluster">2. Create a Production RabbitMQ Cluster</h3>
+<p>Create a production-ready RabbitMQ cluster configuration:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq.com/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RabbitmqCluster</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># Production recommendation: use odd numbers (3, 5, 7)</span>
+<span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+
+<span class="w">  </span><span class="c1"># Resource configuration</span>
+<span class="w">  </span><span class="nt">resources</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">requests</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000m</span><span class="w">      </span><span class="c1"># 1 CPU core</span>
+<span class="w">      </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2Gi</span><span class="w">     </span><span class="c1"># Keep requests and limits equal for stability</span>
+<span class="w">    </span><span class="nt">limits</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2000m</span><span class="w">      </span><span class="c1"># 2 CPU cores for peak loads</span>
+<span class="w">      </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2Gi</span>
+
+<span class="w">  </span><span class="c1"># Persistence configuration</span>
+<span class="w">  </span><span class="nt">persistence</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="s">"fast-ssd"</span><span class="w">  </span><span class="c1"># Use appropriate storage class</span>
+<span class="w">    </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20Gi</span><span class="w">                 </span><span class="c1"># Adjust based on expected message volume</span>
+
+<span class="w">  </span><span class="c1"># RabbitMQ configuration</span>
+<span class="w">  </span><span class="nt">rabbitmq</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">additionalConfig</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="no"># Memory threshold (80% of available memory)</span>
+<span class="w">      </span><span class="no">vm_memory_high_watermark.relative = 0.8</span>
+
+<span class="w">      </span><span class="no"># Disk threshold (2GB free space)</span>
+<span class="w">      </span><span class="no">disk_free_limit.absolute = 2GB</span>
+
+<span class="w">      </span><span class="no"># Clustering settings</span>
+<span class="w">      </span><span class="no">cluster_formation.peer_discovery_backend = rabbit_peer_discovery_k8s</span>
+<span class="w">      </span><span class="no">cluster_formation.k8s.host = kubernetes.default.svc.cluster.local</span>
+<span class="w">      </span><span class="no">cluster_formation.node_cleanup.interval = 30</span>
+<span class="w">      </span><span class="no">cluster_formation.node_cleanup.only_log_warning = true</span>
+
+<span class="w">      </span><span class="no"># Management plugin</span>
+<span class="w">      </span><span class="no">management.tcp.port = 15672</span>
+
+<span class="w">      </span><span class="no"># Enable additional protocols if needed</span>
+<span class="w">      </span><span class="no">listeners.tcp.default = 5672</span>
+
+<span class="w">      </span><span class="no"># Logging</span>
+<span class="w">      </span><span class="no">log.console = true</span>
+<span class="w">      </span><span class="no">log.console.level = info</span>
+
+<span class="w">      </span><span class="no"># Queue master location policy</span>
+<span class="w">      </span><span class="no">queue_master_locator = balanced</span>
+
+<span class="w">    </span><span class="c1"># Additional plugins</span>
+<span class="w">    </span><span class="nt">additionalPlugins</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq_management</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq_prometheus</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq_auth_backend_ldap</span><span class="w">  </span><span class="c1"># If LDAP auth is needed</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq_mqtt</span><span class="w">               </span><span class="c1"># If MQTT protocol is needed</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq_stomp</span><span class="w">              </span><span class="c1"># If STOMP protocol is needed</span>
+
+<span class="w">  </span><span class="c1"># Service configuration</span>
+<span class="w">  </span><span class="nt">service</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterIP</span>
+<span class="w">    </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">service.beta.kubernetes.io/aws-load-balancer-type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nlb</span><span class="w">  </span><span class="c1"># For AWS</span>
+
+<span class="w">  </span><span class="c1"># Monitoring</span>
+<span class="w">  </span><span class="nt">override</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">statefulSet</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">prometheus.io/scrape</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<span class="w">              </span><span class="nt">prometheus.io/port</span><span class="p">:</span><span class="w"> </span><span class="s">"15692"</span>
+<span class="w">              </span><span class="nt">prometheus.io/path</span><span class="p">:</span><span class="w"> </span><span class="s">"/metrics"</span>
+
+<span class="w">  </span><span class="c1"># Security and networking</span>
+<span class="w">  </span><span class="nt">affinity</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">podAntiAffinity</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">preferredDuringSchedulingIgnoredDuringExecution</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">        </span><span class="nt">podAffinityTerm</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">labelSelector</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app.kubernetes.io/name</span>
+<span class="w">              </span><span class="nt">operator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">In</span>
+<span class="w">              </span><span class="nt">values</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq</span>
+<span class="w">          </span><span class="nt">topologyKey</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes.io/hostname</span>
+</code></pre></div></td></tr></table></div>
+<p>Apply the configuration:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>waldur-rabbitmq-cluster.yaml
+</code></pre></div></td></tr></table></div>
+<h2 id="configuration-for-waldur">Configuration for Waldur</h2>
+<h3 id="1-retrieve-rabbitmq-credentials">1. Retrieve RabbitMQ Credentials</h3>
+<p>Get the auto-generated credentials:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Get username</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>waldur-rabbitmq-default-user<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.data.username}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>--decode
+
+<span class="c1"># Get password</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>waldur-rabbitmq-default-user<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.data.password}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>--decode
+</code></pre></div></td></tr></table></div>
+<h3 id="2-configure-waldur-helm-values">2. Configure Waldur Helm Values</h3>
+<p>Update your Waldur <code>values.yaml</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Disable the bitnami rabbitmq chart</span>
+<span class="nt">rabbitmq</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+
+<span class="c1"># Configure external RabbitMQ connection</span>
+<span class="nt">global</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">waldur</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">rabbitmq</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-rabbitmq.default.svc.cluster.local"</span>
+<span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5672</span>
+<span class="w">      </span><span class="nt">auth</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">"default_user_xxx"</span><span class="w">  </span><span class="c1"># From the secret above</span>
+<span class="w">        </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">"xxx"</span><span class="w">               </span><span class="c1"># From the secret above</span>
+<span class="w">      </span><span class="nt">vhost</span><span class="p">:</span><span class="w"> </span><span class="s">"/"</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="high-availability-configuration">High Availability Configuration</h2>
+<p>For production high availability, consider these additional configurations:</p>
+<h3 id="pod-disruption-budget">Pod Disruption Budget</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">policy/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PodDisruptionBudget</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq-pdb</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">minAvailable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">  </span><span class="c1"># Ensure at least 2 pods are always available</span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">app.kubernetes.io/name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="network-policy-optional">Network Policy (Optional)</h3>
+<p>Restrict network access to RabbitMQ:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">networking.k8s.io/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NetworkPolicy</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq-netpol</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">podSelector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">app.kubernetes.io/name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq</span>
+<span class="w">  </span><span class="nt">policyTypes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ingress</span>
+<span class="w">  </span><span class="nt">ingress</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">from</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">podSelector</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">app.kubernetes.io/name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TCP</span>
+<span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5672</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">from</span><span class="p">:</span><span class="w">  </span><span class="c1"># Allow management interface access</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">podSelector</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monitoring</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TCP</span>
+<span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15672</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TCP</span>
+<span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15692</span><span class="w">  </span><span class="c1"># Prometheus metrics</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="monitoring">Monitoring</h2>
+<p>The operator automatically enables Prometheus metrics. To access them:</p>
 <ol>
-<li><code>accessKey.password</code> - access key id for storage</li>
-<li><code>secretKey.password</code> - secret key itself</li>
-<li><code>serviceAccount.name</code> - name of the service account for MinIO</li>
-<li><code>persistence.enabled</code> - persistence enabling flag</li>
-<li><code>persistence.size</code> - size of storage per each pod</li>
-<li><code>ingress</code> - ingress settings</li>
-<li><code>defaultBuckets</code> - default buckets created after
-    release installation (comma-separated list of strings)</li>
+<li>
+<p><strong>Prometheus Metrics Endpoint:</strong> <code>http://waldur-rabbitmq:15692/metrics</code></p>
+</li>
+<li>
+<p><strong>Management UI Access:</strong>
+   </p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>port-forward<span class="w"> </span>service/waldur-rabbitmq<span class="w"> </span><span class="m">15672</span>:15672
+</code></pre></div></td></tr></table></div>
+   Access at: <code>http://localhost:15672</code>
+</li>
+<li>
+<p><strong>Grafana Dashboard:</strong> Import RabbitMQ dashboard ID <code>10991</code> or similar</p>
+</li>
 </ol>
-<p>For more configuration values follow <a href="https://github.com/bitnami/charts/tree/master/bitnami/minio#parameters">this link</a>.</p>
-<p>In Waldur Helm <code>values.yaml</code> you need to setup:</p>
+<h2 id="backup-and-recovery">Backup and Recovery</h2>
+<h3 id="automated-backup-configuration">Automated Backup Configuration</h3>
+<p>The operator supports backup configurations through definitions:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq.com/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Backup</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq-backup</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rabbitmqClusterReference</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq</span>
+</code></pre></div></td></tr></table></div>
+<p>For production, implement external backup strategies using tools like Velero or cloud-native backup solutions.</p>
+<h2 id="scaling">Scaling</h2>
+<p>Scale the cluster:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>patch<span class="w"> </span>rabbitmqcluster<span class="w"> </span>waldur-rabbitmq<span class="w"> </span>--type<span class="o">=</span><span class="s1">'merge'</span><span class="w"> </span>-p<span class="o">=</span><span class="s1">'{"spec":{"replicas":5}}'</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Important:</strong> Always use odd numbers for replicas (1, 3, 5, 7) to avoid split-brain scenarios.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="check-cluster-status">Check Cluster Status</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Check pods</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>waldur-rabbitmq
+
+<span class="c1"># Check cluster status</span>
+kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>waldur-rabbitmq-server-0<span class="w"> </span>--<span class="w"> </span>rabbitmq-diagnostics<span class="w"> </span>cluster_status
+
+<span class="c1"># Check node health</span>
+kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>waldur-rabbitmq-server-0<span class="w"> </span>--<span class="w"> </span>rabbitmq-diagnostics<span class="w"> </span>check_running
+</code></pre></div></td></tr></table></div>
+<h3 id="view-logs">View Logs</h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># View operator logs</span>
+kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>rabbitmq-system<span class="w"> </span>deployment/rabbitmq-cluster-operator
+
+<span class="c1"># View RabbitMQ logs</span>
+kubectl<span class="w"> </span>logs<span class="w"> </span>waldur-rabbitmq-server-0
+</code></pre></div></td></tr></table></div>
+<h2 id="migration-from-bitnami-chart">Migration from Bitnami Chart</h2>
+<p>If migrating from the Bitnami chart:</p>
 <ol>
-<li><code>minio.accessKey</code> - should be same as <code>accessKey</code> in <code>minio.values.yaml</code></li>
-<li><code>minio.secretKey</code> - should be same as <code>secretKey</code> in <code>minio.values.yaml</code></li>
-<li><code>minio.bucketName</code> - should be same as a value from <code>defaultBuckets</code> list in <code>minio-values.yaml</code></li>
-<li><code>minio.endpoint</code> - access URL to <code>minio</code> storage
-    (<code>minio</code> service host and port). See <a href="../service-endpoint/">this doc</a> for details.</li>
-</ol></div>
+<li><strong>Backup existing data</strong> using RabbitMQ management tools</li>
+<li><strong>Deploy the operator</strong> and create a new cluster</li>
+<li><strong>Export/import</strong> virtual hosts, users, and permissions</li>
+<li><strong>Update Waldur configuration</strong> to point to the new cluster</li>
+<li><strong>Test thoroughly</strong> before decommissioning the old setup</li>
+</ol>
+<h2 id="security-considerations">Security Considerations</h2>
+<ol>
+<li>
+<p><strong>TLS Configuration:</strong> Enable TLS for production:
+   </p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">tls</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">secretName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq-tls</span>
+</code></pre></div></td></tr></table></div>
+</li>
+<li>
+<p><strong>Authentication:</strong> Consider integrating with LDAP or other authentication backends</p>
+</li>
+<li>
+<p><strong>Network Policies:</strong> Implement network policies to restrict access</p>
+</li>
+<li>
+<p><strong>RBAC:</strong> Ensure appropriate Kubernetes RBAC policies are in place</p>
+</li>
+</ol>
+<h2 id="performance-tuning">Performance Tuning</h2>
+<p>For high-throughput scenarios:</p>
+<ol>
+<li><strong>Adjust memory limits</strong> based on message volume</li>
+<li><strong>Configure disk I/O</strong> with appropriate storage classes</li>
+<li><strong>Tune RabbitMQ parameters</strong> in <code>additionalConfig</code></li>
+<li><strong>Monitor resource usage</strong> and scale accordingly</li>
+</ol>
+<h2 id="support-and-documentation">Support and Documentation</h2>
+<ul>
+<li><strong>Official Documentation:</strong> https://www.rabbitmq.com/kubernetes/operator/</li>
+<li><strong>GitHub Repository:</strong> https://github.com/rabbitmq/cluster-operator</li>
+<li><strong>Examples:</strong> https://github.com/rabbitmq/cluster-operator/tree/main/docs/examples</li>
+<li><strong>Community Support:</strong> RabbitMQ Discussions on GitHub</li>
+</ul></div>
 
 
 
@@ -7288,7 +8213,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-10-31
+    2025-11-03
   </span>
 
     
