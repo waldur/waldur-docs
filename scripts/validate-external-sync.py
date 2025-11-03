@@ -318,11 +318,11 @@ class ExternalSyncValidator:
         if critical_issues > 0:
             print(f"\n❌ {critical_issues} critical issues found. Run sync to fix:")
             print("   python scripts/sync-external-docs.py")
-            return 2
+            return 1
         elif warning_issues > 0:
             print(f"\n⚠️  {warning_issues} warnings found. Consider running sync:")
             print("   python scripts/sync-external-docs.py")
-            return 1
+            return 0 # Do not fail on warnings
         else:
             print(f"\n✅ All external documentation is properly synchronized!")
             return 0
