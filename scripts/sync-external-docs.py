@@ -319,6 +319,7 @@ class ExternalDocSyncer:
                     continue
 
                 # Check if file has external marker (indicating it was previously synced)
+                # Only check markdown files for markers
                 if self.has_external_marker(local_file):
                     if self.dry_run:
                         print(f"    [DRY RUN] Would remove obsolete file: {local_file.relative_to(local_path)}")
@@ -326,7 +327,7 @@ class ExternalDocSyncer:
                         print(f"    Removed obsolete external file: {local_file.relative_to(local_path)}")
                         local_file.unlink()
                     stats['removed'] += 1
-                else:
+                elif local_file.suffix.lower() == '.md':
                     print(f"    Warning: Local file without external marker: {local_file.relative_to(local_path)}")
                     stats['warnings'] += 1
 
