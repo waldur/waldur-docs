@@ -90,6 +90,19 @@ class ExternalDocSyncer:
                 return True
         return False
 
+    def is_in_excluded_subdir(self, file_rel_path, excluded_subdirs):
+        """Check if a file is within any of the excluded subdirectories."""
+        file_path = Path(file_rel_path)
+        for excluded_subdir in excluded_subdirs:
+            try:
+                # Check if file_path is relative to excluded_subdir
+                file_path.relative_to(excluded_subdir)
+                return True
+            except ValueError:
+                # Not in this subdirectory
+                continue
+        return False
+
     def is_binary_file(self, file_path):
         """Check if a file is binary by checking its extension."""
         # Common binary file extensions
@@ -136,6 +149,38 @@ class ExternalDocSyncer:
 
         return marker + '\n\n' + content
 
+    def get_subdirectory_mappings(self, source, current_mapping):
+        """Get subdirectories that have their own mappings with different targets."""
+        subdirs_to_exclude = []
+        current_remote = Path(current_mapping['remote'])
+        current_local = Path(current_mapping['local'])
+
+        for mapping in source.get('mappings', []):
+            if mapping == current_mapping:
+                continue
+
+            other_remote = Path(mapping['remote'])
+            other_local = Path(mapping['local'])
+
+            # Check if other mapping is a subdirectory of current mapping
+            try:
+                # If other_remote is relative to current_remote, it's a subdirectory
+                rel_path = other_remote.relative_to(current_remote)
+
+                # Check if the local targets are different (not a subdirectory relationship)
+                try:
+                    other_local.relative_to(current_local)
+                    # If we get here, the local path is a subdirectory, so targets are aligned
+                except ValueError:
+                    # Local targets are different, so we should exclude this subdirectory
+                    subdirs_to_exclude.append(rel_path)
+
+            except ValueError:
+                # Not a subdirectory, skip
+                continue
+
+        return subdirs_to_exclude
+
     def sync_mapping(self, source, mapping, temp_dir):
         """Sync a single mapping from remote to local."""
         remote_path = temp_dir / mapping['remote']
@@ -147,6 +192,11 @@ class ExternalDocSyncer:
 
         stats = {'synced': 0, 'removed': 0, 'warnings': 0}
         excludes = source.get('excludes', [])
+
+        # Get subdirectories that should be excluded from this sync
+        excluded_subdirs = self.get_subdirectory_mappings(source, mapping)
+        if excluded_subdirs:
+            print(f"    Excluding subdirectories with separate mappings: {', '.join(str(s) for s in excluded_subdirs)}")
 
         # Track which local files should remain (those from remote)
         expected_files = set()
@@ -240,6 +290,11 @@ class ExternalDocSyncer:
                     continue
 
                 rel_path = remote_file.relative_to(remote_path)
+
+                # Skip files in subdirectories that have their own mappings with different targets
+                if self.is_in_excluded_subdir(rel_path, excluded_subdirs):
+                    continue
+
                 local_file = local_path / rel_path
                 expected_files.add(local_file)
 
