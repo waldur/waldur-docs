@@ -4023,6 +4023,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../developer-guide/autoprovisioning/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Autoprovisioning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../developer-guide/component-usage/" class="md-nav__link">
         
   
@@ -4516,10 +4537,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_29" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_30" >
         
           
-          <label class="md-nav__link" for="__nav_3_29" id="__nav_3_29_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_30" id="__nav_3_30_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -4530,8 +4551,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_29_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_29">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_30_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_30">
             <span class="md-nav__icon md-icon"></span>
             Plugins
           </label>
@@ -7292,46 +7313,86 @@
 <div><h1 id="postgresql-configuration">PostgreSQL Configuration</h1>
 <h2 id="production-vs-demo-deployments">Production vs Demo Deployments</h2>
 <p>⚠️ <strong>Important:</strong> This document describes PostgreSQL setup for <strong>demo/development environments only</strong>.</p>
-<p><strong>For production deployments</strong>, use the <a href="../postgres-operator/">CloudNativePG Operator</a> instead of the Bitnami Helm chart. The operator provides:
-- Kubernetes-native PostgreSQL cluster management
-- Automated failover and high availability
-- Built-in backup and Point-in-Time Recovery (PITR)
-- Zero-downtime maintenance operations
-- Enhanced monitoring and observability
-- Production-grade security features</p>
+<p><strong>For production deployments</strong>, use the <a href="../postgres-operator/">CloudNativePG Operator</a> instead of the Bitnami Helm chart. The operator provides:</p>
+<ul>
+<li>
+<p>Kubernetes-native PostgreSQL cluster management</p>
+</li>
+<li>
+<p>Automated failover and high availability</p>
+</li>
+<li>
+<p>Built-in backup and Point-in-Time Recovery (PITR)</p>
+</li>
+<li>
+<p>Zero-downtime maintenance operations</p>
+</li>
+<li>
+<p>Enhanced monitoring and observability</p>
+</li>
+<li>
+<p>Production-grade security features</p>
+</li>
+</ul>
 <h2 id="demodevelopment-installation">Demo/Development Installation</h2>
 <p>For development and demo environments,
-<a href="https://github.com/bitnami/charts/tree/master/bitnami/postgresql">bitnami/postgresql chart</a>
+<a href="https://github.com/bitnami/charts/tree/main/bitnami/postgresql">bitnami/postgresql chart</a>
 can be used for quick setup.</p>
 <h2 id="demo-standalone-installation">Demo Standalone Installation</h2>
 <p>Add <code>bitnami</code> repo to helm:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>bitnami<span class="w"> </span>https://charts.bitnami.com/bitnami
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>bitnami<span class="w"> </span>&lt;https://charts.bitnami.com/bitnami&gt;
 </code></pre></div></td></tr></table></div>
 <p>Install PostgreSQL release for demo/development:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>bitnami/postgresql<span class="w"> </span>--version<span class="w"> </span><span class="m">16</span>.0.1<span class="w"> </span>-f<span class="w"> </span>postgresql-values.yaml
 </code></pre></div></td></tr></table></div>
-<p><strong>Note:</strong> 
-- The default configuration in <code>postgresql-values.yaml</code> uses <code>bitnamilegacy</code> Docker images for compatibility
-- This setup is <strong>not recommended for production use</strong></p>
+<p><strong>Note:</strong></p>
+<ul>
+<li>
+<p>The default configuration in <code>postgresql-values.yaml</code> uses <code>bitnamilegacy</code> Docker images for compatibility</p>
+</li>
+<li>
+<p>This setup is <strong>not recommended for production use</strong></p>
+</li>
+</ul>
 <p><strong>NB</strong>: the values <code>postgresql.enabled</code> and <code>postgresqlha.enabled</code> must be <code>false</code>.</p>
 <h3 id="chart-configuration">Chart configuration</h3>
 <p>You can change default PostgreSQL config with the following variables in <code>postgresql-values.yaml</code>:</p>
 <ol>
-<li><code>auth.database</code> - name of a database.
-    <strong>NB</strong>: must match <code>postgresql.database</code> value in <code>waldur/values.yaml</code></li>
-<li><code>auth.username</code> - name of a database user.
-    <strong>NB</strong>: must match <code>postgresql.username</code> value in <code>waldur/values.yaml</code></li>
-<li><code>auth.password</code> - password of a database user</li>
-<li><code>primary.persistence.size</code> - size of a database</li>
-<li><code>image.tag</code> - tag of <code>PostgreSQL</code> image.
-    Possible tags for default image can be found <a href="https://hub.docker.com/r/bitnamilegacy/postgresql/tags">here</a></li>
-<li><code>image.registry</code> - registry of <code>PostgreSQL</code> image.</li>
+<li>
+<p><code>auth.database</code> - name of a database.</p>
+<p><strong>NB</strong>: must match <code>postgresql.database</code> value in <code>waldur/values.yaml</code></p>
+</li>
+<li>
+<p><code>auth.username</code> - name of a database user.</p>
+<p><strong>NB</strong>: must match <code>postgresql.username</code> value in <code>waldur/values.yaml</code></p>
+</li>
+<li>
+<p><code>auth.password</code> - password of a database user</p>
+</li>
+<li>
+<p><code>primary.persistence.size</code> - size of a database</p>
+</li>
+<li>
+<p><code>image.tag</code> - tag of <code>PostgreSQL</code> image.</p>
+<p>Possible tags for default image can be found <a href="https://hub.docker.com/r/bitnami/postgresql/tags">here</a></p>
+</li>
+<li>
+<p><code>image.registry</code> - registry of <code>PostgreSQL</code> image.</p>
+</li>
 </ol>
-<p>More information related to possible values <a href="https://github.com/bitnami/charts/tree/master/bitnami/postgresql#parameters">here</a>.</p>
-<p><strong>Important:</strong> 
-- The PostgreSQL configuration uses legacy Bitnami images (<code>bitnamilegacy/postgresql</code> and <code>bitnamilegacy/postgres-exporter</code>) for demo/development compatibility
-- These images are configured in the <code>postgresql-values.yaml</code> file
-- For production deployments, migrate to the <a href="../postgres-operator/">CloudNativePG Operator</a></p>
+<p>More information related to possible values <a href="https://github.com/bitnami/charts/tree/main/bitnami/postgresql#parameters">here</a>.</p>
+<p><strong>Important:</strong></p>
+<ul>
+<li>
+<p>The PostgreSQL configuration uses legacy Bitnami images (<code>bitnamilegacy/postgresql</code> and <code>bitnamilegacy/postgres-exporter</code>) for demo/development compatibility</p>
+</li>
+<li>
+<p>These images are configured in the <code>postgresql-values.yaml</code> file</p>
+</li>
+<li>
+<p>For production deployments, migrate to the <a href="../postgres-operator/">CloudNativePG Operator</a></p>
+</li>
+</ul>
 <h2 id="demo-dependency-installation">Demo Dependency Installation</h2>
 <p>Waldur Helm chart supports PostgreSQL installation as a dependency.
 For this, set <code>postgresql.enabled</code> to <code>true</code> and update related settings in <code>postgresql</code> section in <code>waldur/values.yaml</code></p>
@@ -7395,7 +7456,7 @@ For this, set <code>postgresql.enabled</code> to <code>true</code> and update re
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-09
+    2025-11-10
   </span>
 
     

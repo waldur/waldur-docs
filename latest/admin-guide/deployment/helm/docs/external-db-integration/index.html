@@ -4083,6 +4083,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../developer-guide/autoprovisioning/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Autoprovisioning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../developer-guide/component-usage/" class="md-nav__link">
         
   
@@ -4576,10 +4597,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_29" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_30" >
         
           
-          <label class="md-nav__link" for="__nav_3_29" id="__nav_3_29_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_30" id="__nav_3_30_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -4590,8 +4611,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_29_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_29">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_30_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_30">
             <span class="md-nav__icon md-icon"></span>
             Plugins
           </label>
@@ -7414,47 +7435,58 @@
 <h2 id="supported-postgresql-operators">Supported PostgreSQL Operators</h2>
 <p>For <strong>production deployments</strong>, see the comprehensive <a href="../postgres-operator/">PostgreSQL Operators documentation</a> which covers:</p>
 <ol>
-<li><strong>CloudNativePG</strong> ⭐ <em>Recommended for new deployments</em></li>
-<li><strong>Zalando PostgreSQL Operator</strong> <em>For existing deployments or specific use cases</em></li>
+<li>
+<p><strong>CloudNativePG</strong> ⭐ <em>Recommended for new deployments</em></p>
+</li>
+<li>
+<p><strong>Zalando PostgreSQL Operator</strong> <em>For existing deployments or specific use cases</em></p>
+</li>
 </ol>
 <h2 id="configuration-variables">Configuration Variables</h2>
 <p>To use external PostgreSQL, set the following variables in <code>values.yaml</code>:</p>
 <ol>
-<li><code>externalDB.enabled</code> - toggler for integration; requires <code>postgresql.enabled</code> and <code>postgresqlha.enabled</code> to be <code>false</code></li>
-<li><code>externalDB.flavor</code> - type of DB management system; supported values:</li>
-<li><code>zalando</code> - for <a href="https://postgres-operator.readthedocs.io/en/latest/">Zalando operator</a></li>
-<li><code>cloudnativepg</code> - for <a href="https://cloudnative-pg.io/">CloudNativePG operator</a> (recommended)</li>
-<li><code>externalDB.secretName</code> - name of the secret with PostgreSQL credentials for Waldur user</li>
-<li><code>externalDB.serviceName</code> - name of the service linked to PostgreSQL primary/master</li>
-<li><code>externalDB.host</code> - database host (alternative to serviceName)</li>
-<li><code>externalDB.port</code> - database port (default: 5432)</li>
-<li><code>externalDB.database</code> - database name (default: waldur)</li>
+<li>
+<p><code>externalDB.enabled</code> - toggler for integration; requires <code>postgresql.enabled</code> and <code>postgresqlha.enabled</code> to be <code>false</code></p>
+</li>
+<li>
+<p><code>externalDB.secretName</code> - name of the secret with PostgreSQL credentials for Waldur user</p>
+</li>
+<li>
+<p><code>externalDB.serviceName</code> - name of the service linked to PostgreSQL primary/master</p>
+</li>
+<li>
+<p><code>externalDB.database</code> - custom database name (optional, defaults to "waldur")</p>
+</li>
+<li>
+<p><code>externalDB.username</code> - custom username (optional, defaults to "waldur")</p>
+</li>
 </ol>
 <h2 id="cloudnativepg-integration-example">CloudNativePG Integration Example</h2>
 <p>For CloudNativePG clusters, use this configuration:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">externalDB</span><span class="p">:</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">externalDB</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">  </span><span class="nt">flavor</span><span class="p">:</span><span class="w"> </span><span class="s">"cloudnativepg"</span>
-<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-postgres-rw.default.svc.cluster.local"</span><span class="w">  </span><span class="c1"># Primary service</span>
-<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432</span>
-<span class="w">  </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
-<span class="w">  </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
-<span class="w">  </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">"your-secure-password"</span>
-
-<span class="w">  </span><span class="c1"># Optional: Read-only connection for reports</span>
-<span class="w">  </span><span class="nt">readonlyHost</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-postgres-ro.default.svc.cluster.local"</span>
+<span class="w">  </span><span class="nt">secretName</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-postgres-app"</span><span class="w">  </span><span class="c1"># CloudNativePG auto-generated secret</span>
+<span class="w">  </span><span class="nt">serviceName</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-postgres-rw"</span><span class="w">  </span><span class="c1"># Primary service</span>
+<span class="w">  </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span><span class="w">                 </span><span class="c1"># Optional: custom database name</span>
+<span class="w">  </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span><span class="w">                 </span><span class="c1"># Optional: custom username</span>
 </code></pre></div></td></tr></table></div>
-<p><strong>Note:</strong> Replace connection details with your actual CloudNativePG cluster configuration. See the <a href="../postgres-operator/">PostgreSQL Operators guide</a> for complete setup instructions.</p>
+<p><strong>CloudNativePG Secret Management:</strong>
+CloudNativePG automatically creates secrets with predictable naming:</p>
+<ul>
+<li>
+<p><code>[cluster-name]-app</code> - Application credentials (recommended for Waldur)</p>
+</li>
+<li>
+<p><code>[cluster-name]-superuser</code> - Administrative credentials (disabled by default)</p>
+</li>
+</ul>
+<p>Each secret contains username, password, database name, host, port, and connection URIs.</p>
+<p><strong>Note:</strong> Replace <code>waldur-postgres</code> with your actual CloudNativePG cluster name. See the <a href="../postgres-operator/">PostgreSQL Operators guide</a> for complete setup instructions.</p>
 <h2 id="zalando-integration-example">Zalando Integration Example</h2>
 <p>Zalando-managed PostgreSQL cluster example:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -7480,7 +7512,10 @@
 <span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
-<span class="normal">24</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"acid.zalan.do/v1"</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"acid.zalan.do/v1"</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql</span>
 <span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-postgresql-&lt;UNIQUE_SUFFIX_EG_CURRENT_DATE&gt;</span>
@@ -7491,8 +7526,11 @@
 <span class="w">  </span><span class="nt">numberOfInstances</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 <span class="w">  </span><span class="nt">users</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">waldur</span><span class="p">:</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">superuser</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">createdb</span>
+
 <span class="w">  </span><span class="nt">databases</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">waldur</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur</span>
 <span class="w">  </span><span class="nt">postgresql</span><span class="p">:</span>
@@ -7513,10 +7551,10 @@
 <span class="normal">5</span>
 <span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">externalDB</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">  </span><span class="nt">flavor</span><span class="p">:</span><span class="w"> </span><span class="s">"zalando"</span>
 <span class="w">  </span><span class="nt">serviceName</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-postgresql-&lt;UNIQUE_SUFFIX_EG_CURRENT_DATE&gt;"</span>
 <span class="w">  </span><span class="nt">secretName</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur.waldur-postgresql-&lt;UNIQUE_SUFFIX_EG_CURRENT_DATE&gt;.credentials.postgresql.acid.zalan.do"</span>
-<span class="w">  </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
+<span class="w">  </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span><span class="w">                 </span><span class="c1"># Optional: custom database name</span>
+<span class="w">  </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span><span class="w">                 </span><span class="c1"># Optional: custom username</span>
 </code></pre></div></td></tr></table></div>
 <h2 id="backup-setup">Backup setup</h2>
 <p>Enable backups for a cluster with the following addition to a manifest file:</p>
@@ -7552,38 +7590,66 @@
 <span class="normal">30</span>
 <span class="normal">31</span>
 <span class="normal">32</span>
-<span class="normal">33</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"acid.zalan.do/v1"</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"acid.zalan.do/v1"</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql</span>
 <span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-postgresql-&lt;UNIQUE_SUFFIX_EG_CURRENT_DATE&gt;</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="c1"># ...</span>
 <span class="w">  </span><span class="nt">env</span><span class="p">:</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS_ENDPOINT</span><span class="w"> </span><span class="c1"># S3-like storage endpoint</span>
+
 <span class="w">      </span><span class="nt">valueFrom</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">secretKeyRef</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">URL</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres-cluster-backups-minio</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS_ACCESS_KEY_ID</span><span class="w"> </span><span class="c1"># Username for S3-like storage</span>
+
 <span class="w">      </span><span class="nt">valueFrom</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">secretKeyRef</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">username</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres-cluster-backups-minio</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS_SECRET_ACCESS_KEY</span><span class="w"> </span><span class="c1"># Password for the storage</span>
+
 <span class="w">      </span><span class="nt">valueFrom</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">secretKeyRef</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">password</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres-cluster-backups-minio</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WAL_S3_BUCKET</span><span class="w"> </span><span class="c1"># Bucket name for the storage</span>
+
 <span class="w">      </span><span class="nt">valueFrom</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">secretKeyRef</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bucket</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres-cluster-backups-minio</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">USE_WALG_BACKUP</span><span class="w"> </span><span class="c1"># Enable backups to the storage</span>
+
 <span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">'true'</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">USE_WALG_RESTORE</span><span class="w"> </span><span class="c1"># Enable restore for replicas using the storage</span>
+
 <span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">'true'</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BACKUP_SCHEDULE</span><span class="w"> </span><span class="c1"># Base backups schedule</span>
+
 <span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">"0</span><span class="nv"> </span><span class="s">2</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*"</span>
 </code></pre></div></td></tr></table></div>
 <p>You also need to create a secret file with the credentials for the storage:</p>
@@ -7597,7 +7663,9 @@
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># puhuri-core-dev</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># puhuri-core-dev</span>
+
 <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Secret</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -7620,12 +7688,18 @@
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code>su<span class="w"> </span>postgres
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>su<span class="w"> </span>postgres
 envdir<span class="w"> </span><span class="s2">"/run/etc/wal-e.d/env"</span><span class="w"> </span>/scripts/postgres_backup.sh<span class="w"> </span><span class="s2">"/home/postgres/pgdata/pgroot/data"</span>
+
 <span class="c1"># Output:</span>
 <span class="c1"># ...</span>
 <span class="c1"># INFO: 2023/08/24 10:27:05.159175 Wrote backup with name base_00000009000000010000009C</span>
+
 envdir<span class="w"> </span><span class="s2">"/run/etc/wal-e.d/env"</span><span class="w"> </span>wal-g<span class="w"> </span>backup-list
+
 <span class="c1"># Output:</span>
 <span class="c1"># name                          modified             wal_segment_backup_start</span>
 <span class="c1"># ...</span>
@@ -7662,7 +7736,15 @@ envdir<span class="w"> </span><span class="s2">"/run/etc/wal-e.d/env"</span><spa
 <span class="normal">26</span>
 <span class="normal">27</span>
 <span class="normal">28</span>
-<span class="normal">29</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"acid.zalan.do/v1"</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"acid.zalan.do/v1"</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql</span>
 <span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-postgresql-&lt;UNIQUE_SUFFIX_EG_CURRENT_DATE&gt;</span>
@@ -7674,19 +7756,27 @@ envdir<span class="w"> </span><span class="s2">"/run/etc/wal-e.d/env"</span><spa
 <span class="w">    </span><span class="nt">s3_force_path_style</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># Use the path above</span>
 <span class="w">    </span><span class="nt">env</span><span class="p">:</span>
 <span class="w">    </span><span class="c1"># ...</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CLONE_METHOD</span><span class="w"> </span><span class="c1"># Enable clone</span>
+
 <span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">"CLONE_WITH_WALE"</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CLONE_AWS_ENDPOINT</span><span class="w"> </span><span class="c1"># S3-like storage endpoint</span>
+
 <span class="w">      </span><span class="nt">valueFrom</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">secretKeyRef</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">URL</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres-cluster-backups-minio</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CLONE_AWS_ACCESS_KEY_ID</span><span class="w"> </span><span class="c1"># Username for S3-like storage</span>
+
 <span class="w">      </span><span class="nt">valueFrom</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">secretKeyRef</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">username</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres-cluster-backups-minio</span>
+
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CLONE_AWS_SECRET_ACCESS_KEY</span><span class="w"> </span><span class="c1"># Password for the storage</span>
+
 <span class="w">      </span><span class="nt">valueFrom</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">secretKeyRef</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">password</span>
@@ -7696,31 +7786,63 @@ envdir<span class="w"> </span><span class="s2">"/run/etc/wal-e.d/env"</span><spa
 <h2 id="migration-recommendations">Migration Recommendations</h2>
 <h3 id="for-new-deployments">For New Deployments</h3>
 <ul>
-<li>Use <strong>CloudNativePG</strong> for modern Kubernetes-native PostgreSQL management</li>
-<li>Follow the <a href="../postgres-operator/">PostgreSQL Operators guide</a> for complete setup</li>
+<li>
+<p>Use <strong>CloudNativePG</strong> for modern Kubernetes-native PostgreSQL management</p>
+</li>
+<li>
+<p>Follow the <a href="../postgres-operator/">PostgreSQL Operators guide</a> for complete setup</p>
+</li>
 </ul>
 <h3 id="for-existing-zalando-deployments">For Existing Zalando Deployments</h3>
 <ul>
-<li>Continue using Zalando if stable and meeting requirements</li>
-<li>Consider migration to CloudNativePG for long-term benefits:</li>
-<li>Active development and community support</li>
-<li>Modern Kubernetes-native architecture</li>
-<li>Enhanced monitoring and backup capabilities</li>
-<li>Better integration with cloud-native ecosystem</li>
+<li>
+<p>Continue using Zalando if stable and meeting requirements</p>
+</li>
+<li>
+<p>Consider migration to CloudNativePG for long-term benefits:</p>
+</li>
+<li>
+<p>Active development and community support</p>
+</li>
+<li>
+<p>Modern Kubernetes-native architecture</p>
+</li>
+<li>
+<p>Enhanced monitoring and backup capabilities</p>
+</li>
+<li>
+<p>Better integration with cloud-native ecosystem</p>
+</li>
 </ul>
 <h3 id="migration-process">Migration Process</h3>
 <ol>
-<li><strong>Backup existing data</strong> using <code>pg_dump</code></li>
-<li><strong>Deploy new operator cluster</strong> (CloudNativePG or updated Zalando)</li>
-<li><strong>Restore data</strong> using <code>pg_restore</code></li>
-<li><strong>Update Waldur configuration</strong> to use new cluster</li>
-<li><strong>Test thoroughly</strong> before decommissioning old cluster</li>
+<li>
+<p><strong>Backup existing data</strong> using <code>pg_dump</code></p>
+</li>
+<li>
+<p><strong>Deploy new operator cluster</strong> (CloudNativePG or updated Zalando)</p>
+</li>
+<li>
+<p><strong>Restore data</strong> using <code>pg_restore</code></p>
+</li>
+<li>
+<p><strong>Update Waldur configuration</strong> to use new cluster</p>
+</li>
+<li>
+<p><strong>Test thoroughly</strong> before decommissioning old cluster</p>
+</li>
 </ol>
 <h2 id="support-and-documentation">Support and Documentation</h2>
 <ul>
-<li><strong>CloudNativePG:</strong> <a href="../postgres-operator/">PostgreSQL Operators documentation</a></li>
-<li><strong>Zalando Operator:</strong> <a href="https://postgres-operator.readthedocs.io/">Official Zalando docs</a></li>
-<li><strong>General guidance:</strong> Both operators are covered in the <a href="../postgres-operator/">PostgreSQL Operators guide</a></li>
+<li>
+<p><strong>CloudNativePG:</strong> <a href="../postgres-operator/">PostgreSQL Operators documentation</a></p>
+</li>
+<li>
+<p><strong>Zalando Operator:</strong> <a href="https://postgres-operator.readthedocs.io/">Official Zalando docs</a></p>
+</li>
+<li>
+<p><strong>General guidance:</strong> Both operators are covered in the <a href="../postgres-operator/">PostgreSQL Operators guide</a></p>
+</li>
 </ul></div>
 
 
@@ -7742,7 +7864,7 @@ envdir<span class="w"> </span><span class="s2">"/run/etc/wal-e.d/env"</span><spa
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-09
+    2025-11-10
   </span>
 
     

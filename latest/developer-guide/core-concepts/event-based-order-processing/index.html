@@ -2938,6 +2938,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#queue-naming-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Queue Naming Strategy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#message-types" class="md-nav__link">
     <span class="md-ellipsis">
       Message Types
@@ -2969,6 +2978,15 @@
   <a href="#offering-user-event-messages" class="md-nav__link">
     <span class="md-ellipsis">
       Offering User Event Messages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-periodic-limits-event-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource Periodic Limits Event Messages
     </span>
   </a>
   
@@ -4064,6 +4082,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../autoprovisioning/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Autoprovisioning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../component-usage/" class="md-nav__link">
         
   
@@ -4557,10 +4596,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_29" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_30" >
         
           
-          <label class="md-nav__link" for="__nav_3_29" id="__nav_3_29_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_30" id="__nav_3_30_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -4571,8 +4610,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_29_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_29">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_30_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_30">
             <span class="md-nav__icon md-icon"></span>
             Plugins
           </label>
@@ -7274,6 +7313,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#queue-naming-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Queue Naming Strategy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#message-types" class="md-nav__link">
     <span class="md-ellipsis">
       Message Types
@@ -7305,6 +7353,15 @@
   <a href="#offering-user-event-messages" class="md-nav__link">
     <span class="md-ellipsis">
       Offering User Event Messages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-periodic-limits-event-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource Periodic Limits Event Messages
     </span>
   </a>
   
@@ -7400,16 +7457,35 @@
 <li>The site agent receives the message and processes it based on the event type</li>
 <li>The agent communicates with the backend (e.g., SLURM) to execute the necessary actions</li>
 </ol>
+<h2 id="queue-naming-strategy">Queue Naming Strategy</h2>
+<p>The system follows an <strong>object-based naming convention</strong> for STOMP queues rather than event-based naming. This design choice provides several benefits:</p>
+<ul>
+<li><strong>Simplified Client Configuration</strong>: Clients subscribe to object types (e.g., <code>resource_periodic_limits</code>) rather than specific event types</li>
+<li><strong>Action Flexibility</strong>: Specific actions (e.g., <code>apply_periodic_settings</code>, <code>update_limits</code>) are stored in the message payload</li>
+<li><strong>Easier Maintenance</strong>: Adding new actions doesn't require queue reconfiguration</li>
+<li><strong>Future Migration Path</strong>: Sets foundation for eventual migration to event-based naming without immediate client changes</li>
+</ul>
+<p><strong>Current Approach:</strong></p>
+<ul>
+<li>Queue: <code>resource_periodic_limits</code></li>
+<li>Payload: <code>{"action": "apply_periodic_settings", "settings": {...}}</code></li>
+</ul>
+<p><strong>Alternative Event-Based Approach</strong> (for future consideration):</p>
+<ul>
+<li>Queue: <code>resource_periodic_limits_update</code></li>
+<li>More specific but requires client reconfiguration for each new event type</li>
+</ul>
 <h2 id="message-types">Message Types</h2>
 <p>The system handles several types of events:</p>
 <ol>
-<li><strong>Order Messages</strong>: Notifications about marketplace orders (create, update, terminate)</li>
-<li><strong>User Role Messages</strong>: Changes to user permissions in projects</li>
-<li><strong>Resource Messages</strong>: Updates to resource configuration or status</li>
-<li><strong>Offering User Messages</strong>: Creation, updates, and deletion of offering users</li>
-<li><strong>Service Account Messages</strong>: Service account lifecycle events</li>
-<li><strong>Course Account Messages</strong>: Course account management events</li>
-<li><strong>Importable Resources Messages</strong>: Backend resource discovery events</li>
+<li><strong>Order Messages</strong> (<code>order</code>): Notifications about marketplace orders (create, update, terminate)</li>
+<li><strong>User Role Messages</strong> (<code>user_role</code>): Changes to user permissions in projects</li>
+<li><strong>Resource Messages</strong> (<code>resource</code>): Updates to resource configuration or status</li>
+<li><strong>Resource Periodic Limits</strong> (<code>resource_periodic_limits</code>): SLURM periodic usage policy updates with allocation and limit settings</li>
+<li><strong>Offering User Messages</strong> (<code>offering_user</code>): Creation, updates, and deletion of offering users</li>
+<li><strong>Service Account Messages</strong> (<code>service_account</code>): Service account lifecycle events</li>
+<li><strong>Course Account Messages</strong> (<code>course_account</code>): Course account management events</li>
+<li><strong>Importable Resources Messages</strong> (<code>importable_resources</code>): Backend resource discovery events</li>
 </ol>
 <h2 id="implementation-details">Implementation Details</h2>
 <h3 id="publishing-messages-waldur-side">Publishing Messages (Waldur Side)</h3>
@@ -7447,6 +7523,75 @@
 <li><strong>Update</strong>: When any field of an existing offering user is modified (username, state, etc.)</li>
 <li><strong>Delete</strong>: When an offering user account is removed from an offering</li>
 </ul>
+<h3 id="resource-periodic-limits-event-messages">Resource Periodic Limits Event Messages</h3>
+<p>Resource periodic limits events are published when SLURM periodic usage policies are applied to resources. These messages contain calculated SLURM settings including allocation limits, fairshare values, and QoS thresholds. The handler is located in <a href="https://github.com/waldur/waldur-mastermind/blob/develop/src/waldur_mastermind/policy/models.py">waldur_mastermind/policy/models.py</a>.</p>
+<p><strong>Message Payload Structure for Resource Periodic Limits:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"resource_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"resource-uuid-hex-string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"backend_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm-account-name"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"offering_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offering-uuid-hex-string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"apply_periodic_settings"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"timestamp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-01-01T00:00:00.000000"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"settings"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"fairshare"</span><span class="p">:</span><span class="w"> </span><span class="mi">333</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"limit_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GrpTRESMins"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"grp_tres_mins"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"billing"</span><span class="p">:</span><span class="w"> </span><span class="mi">119640</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"qos_threshold"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"billing"</span><span class="p">:</span><span class="w"> </span><span class="mi">119640</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"grace_limit"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"billing"</span><span class="p">:</span><span class="w"> </span><span class="mi">143568</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"carryover_details"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"carryover_applied"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"previous_period"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2023-Q4"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"previous_usage"</span><span class="p">:</span><span class="w"> </span><span class="mf">750.0</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"decay_factor"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.015625</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"effective_previous_usage"</span><span class="p">:</span><span class="w"> </span><span class="mf">11.7</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"unused_allocation"</span><span class="p">:</span><span class="w"> </span><span class="mf">988.3</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"base_allocation"</span><span class="p">:</span><span class="w"> </span><span class="mf">1000.0</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"total_allocation"</span><span class="p">:</span><span class="w"> </span><span class="mf">1988.3</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Event Triggers:</strong></p>
+<ul>
+<li><strong>Policy Application</strong>: When a SLURM periodic usage policy calculates new allocation limits and sends them to the site agent</li>
+<li><strong>Carryover Calculation</strong>: When unused allocation from previous periods is calculated with decay factors</li>
+<li><strong>Limit Updates</strong>: When fairshare values, TRES limits, or QoS thresholds need to be updated on the SLURM backend</li>
+</ul>
 <h3 id="subscription-management-agent-side">Subscription Management (Agent Side)</h3>
 <p>The <a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/event_subscription_manager.py#L28">EventSubscriptionManager</a> class handles creation of event subscriptions and setup of STOMP consumers:</p>
 <ul>
@@ -7459,6 +7604,7 @@
 <li><a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L99">on_order_message_stomp</a> - create or update resources on backend</li>
 <li><a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L117">on_user_role_message_stomp</a> - create or update access permissions on backend</li>
 <li><a href="https://github.com/waldur/waldur-site-agent/blob/464b46f287aadffe5f98191221af7fea6e6c0ce1/waldur_site_agent/event_processing/handlers.py#L152C5-L152C30">on_resource_message_stomp</a> - create or update resource configuration on backend</li>
+<li><strong>on_resource_periodic_limits_message_stomp</strong> - apply SLURM periodic usage policies, fairshare values, and allocation limits</li>
 </ul>
 <h2 id="technical-components">Technical Components</h2>
 <ol>
@@ -7504,7 +7650,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-09
+    2025-11-10
   </span>
 
     

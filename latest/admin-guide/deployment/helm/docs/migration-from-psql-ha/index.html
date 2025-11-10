@@ -3933,6 +3933,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../developer-guide/autoprovisioning/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Autoprovisioning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../developer-guide/component-usage/" class="md-nav__link">
         
   
@@ -4426,10 +4447,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_29" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_30" >
         
           
-          <label class="md-nav__link" for="__nav_3_29" id="__nav_3_29_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_30" id="__nav_3_30_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -4440,8 +4461,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_29_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_29">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_30_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_30">
             <span class="md-nav__icon md-icon"></span>
             Plugins
           </label>
@@ -7134,14 +7155,30 @@
 <div><h1 id="migration-from-postgresql-ha">Migration from Postgresql HA</h1>
 <p>Plan:</p>
 <ol>
-<li>Scale api, beat, worker -&gt; 0</li>
-<li>Backup — using backup job</li>
-<li>group_vars/puhuri_core_prd - helm_pg_ha_enabled: no ===&gt; CANCEL THE UPDATING PIPELINE!</li>
-<li>Run dependency update ==&gt; leads to a working single psql</li>
-<li>Restore DB — using recovery job</li>
-<li>Run a common update pipeline</li>
-<li>Validate that login works</li>
-<li>Drop old psql ha, drop pvc</li>
+<li>
+<p>Scale api, beat, worker -&gt; 0</p>
+</li>
+<li>
+<p>Backup — using backup job</p>
+</li>
+<li>
+<p>group_vars/puhuri_core_prd - helm_pg_ha_enabled: no ===&gt; CANCEL THE UPDATING PIPELINE!</p>
+</li>
+<li>
+<p>Run dependency update ==&gt; leads to a working single psql</p>
+</li>
+<li>
+<p>Restore DB — using recovery job</p>
+</li>
+<li>
+<p>Run a common update pipeline</p>
+</li>
+<li>
+<p>Validate that login works</p>
+</li>
+<li>
+<p>Drop old psql ha, drop pvc</p>
+</li>
 </ol>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -7154,15 +7191,21 @@
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Backup</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Backup</span>
+
 kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>postgresql-ha-waldur-postgresql-0<span class="w"> </span>--<span class="w"> </span>env<span class="w"> </span><span class="nv">PGPASSWORD</span><span class="o">=</span>waldur<span class="w"> </span>pg_dump<span class="w"> </span>-h<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>-U<span class="w"> </span>waldur<span class="w"> </span>waldur<span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>-9<span class="w"> </span>&gt;<span class="w"> </span>backup.sql.gz
 
 <span class="c1"># Backup restoration</span>
 <span class="c1"># Locally</span>
+
 kubectl<span class="w"> </span>cp<span class="w"> </span>backup.sql.gz<span class="w"> </span>postgresql-waldur-0:/tmp/backup.sql.gz
 kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>postgresql-waldur-0<span class="w"> </span>--<span class="w"> </span>bash
 
 <span class="c1"># In pgpool pod</span>
+
 gzip<span class="w"> </span>-d<span class="w"> </span>/tmp/backup.sql.gz
 <span class="nb">export</span><span class="w"> </span><span class="nv">PGPASSWORD</span><span class="o">=</span>waldur
 psql<span class="w"> </span>-U<span class="w"> </span>waldur<span class="w"> </span>-h<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>-f<span class="w"> </span>/tmp/backup.sql
@@ -7187,7 +7230,7 @@ psql<span class="w"> </span>-U<span class="w"> </span>waldur<span class="w"> </s
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-09
+    2025-11-10
   </span>
 
     

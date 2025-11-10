@@ -3981,6 +3981,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../developer-guide/autoprovisioning/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Autoprovisioning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../developer-guide/component-usage/" class="md-nav__link">
         
   
@@ -4474,10 +4495,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_29" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_30" >
         
           
-          <label class="md-nav__link" for="__nav_3_29" id="__nav_3_29_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_30" id="__nav_3_30_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -4488,8 +4509,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_29_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_29">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_30_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_30">
             <span class="md-nav__icon md-icon"></span>
             Plugins
           </label>
@@ -7230,25 +7251,35 @@
 <p><code>maxNumber</code> - maximum number of backups to store</p>
 </li>
 <li>
-<p><code>image</code> - Docker image containing <code>potgres</code> and <code>minio</code> (client) binaries
-  (<a href="https://hub.docker.com/r/opennode/postgres-minio">opennode/postgres-minio</a>
-  by default)</p>
+<p><code>image</code> - Docker image containing <code>potgres</code> and <code>minio</code> (client) binaries</p>
 </li>
 </ul>
+<p>(<a href="https://hub.docker.com/r/opennode/postgres-minio">opennode/postgres-minio</a>
+  by default)</p>
 <h2 id="backups-restoration">Backups restoration</h2>
 <p>To restore backups you need to connect to the restoration pod. The major prerequisite for this is stopping the
 Waldur backend pods to avoid errors. <strong>NB: During restoration process, the site will be unavailable</strong>. For this,
 please execute the following lines in the Kubernetes node:</p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Stop all the API pods</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Stop all the API pods</span>
+
 kubectl<span class="w"> </span>scale<span class="w"> </span>--replicas<span class="o">=</span><span class="m">0</span><span class="w"> </span>deployment/waldur-mastermind-api
+
 <span class="c1"># Stop all the Celery worker pods</span>
+
 kubectl<span class="w"> </span>scale<span class="w"> </span>--replicas<span class="o">=</span><span class="m">0</span><span class="w"> </span>deployment/waldur-mastermind-worker
+
 <span class="c1"># Connect to the restoration pod</span>
+
 kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>deployment/waldur-db-restore<span class="w"> </span>--<span class="w"> </span>bash
 </code></pre></div></td></tr></table></div>
 <p>This will give you access to a terminal of a restoration pod. In this shell, please, execute the command:</p>
@@ -7268,7 +7299,7 @@ kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </sp
 <span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code>root@waldur-db-restore-ff7f586bb-nb8jt:/#<span class="w"> </span>db-backup-minio-auth
 <span class="o">[</span>+<span class="o">]</span><span class="w"> </span>LOCAL_PG_BACKUPS_DIR<span class="w"> </span>:
 <span class="o">[</span>+<span class="o">]</span><span class="w"> </span>MINIO_PG_BACKUPS_DIR<span class="w"> </span>:<span class="w"> </span>pg/data/backups/postgres
-<span class="o">[</span>+<span class="o">]</span><span class="w"> </span>Setting<span class="w"> </span>up<span class="w"> </span>the<span class="w"> </span>postgres<span class="w"> </span><span class="nb">alias</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>minio<span class="w"> </span>server<span class="w"> </span><span class="o">(</span>http://minio.default.svc.cluster.local:9000<span class="o">)</span>
+<span class="o">[</span>+<span class="o">]</span><span class="w"> </span>Setting<span class="w"> </span>up<span class="w"> </span>the<span class="w"> </span>postgres<span class="w"> </span><span class="nb">alias</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>minio<span class="w"> </span>server<span class="w"> </span><span class="o">(</span>&lt;http://minio.default.svc.cluster.local:9000<span class="o">)</span>&gt;
 <span class="o">[</span>+<span class="o">]</span><span class="w"> </span>Last<span class="w"> </span><span class="m">5</span><span class="w"> </span>backups
 <span class="o">[</span><span class="m">2022</span>-12-01<span class="w"> </span><span class="m">05</span>:00:02<span class="w"> </span>UTC<span class="o">]</span><span class="w">  </span>91KiB<span class="w"> </span>backup-2022-12-01-05-00.sql.gz
 <span class="o">[</span><span class="m">2022</span>-11-30<span class="w"> </span><span class="m">05</span>:00:02<span class="w"> </span>UTC<span class="o">]</span><span class="w">  </span>91KiB<span class="w"> </span>backup-2022-11-30-05-00.sql.gz
@@ -7301,7 +7332,9 @@ kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </sp
 <h2 id="restoration-from-external-backup">Restoration from external backup</h2>
 <p>If you want to use a pre-created backup from an external system, copy the backup file:</p>
 <ol>
-<li>Copy the backup file to your local machine</li>
+<li>
+<p>Copy the backup file to your local machine</p>
+</li>
 <li>
 <p>Copy the file to pod</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -7352,7 +7385,7 @@ rm<span class="w"> </span>/tmp/backup.sql
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-09
+    2025-11-10
   </span>
 
     
