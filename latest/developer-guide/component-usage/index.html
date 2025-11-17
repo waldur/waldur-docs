@@ -6761,7 +6761,7 @@
         
   
   <span class="md-ellipsis">
-    Ansible Waldur Module Generator
+    Index
   </span>
   
 
@@ -6841,7 +6841,7 @@
         
   
   <span class="md-ellipsis">
-    Modele author guide
+    Modules
   </span>
   
 
@@ -6862,7 +6862,7 @@
         
   
   <span class="md-ellipsis">
-    Plugin author guide
+    Plugins
   </span>
   
 
@@ -6883,7 +6883,7 @@
         
   
   <span class="md-ellipsis">
-    Test author guide
+    Tests
   </span>
   
 
@@ -15856,20 +15856,58 @@
 </code></pre></div></td></tr></table></div>
 <h3 id="3-via-api-endpoint">3. Via API Endpoint</h3>
 <p><strong>POST</strong> <code>/api/marketplace-component-usages/set_usage/</code></p>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
 <span class="w">    </span><span class="nt">"resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"resource-uuid"</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"component-uuid"</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">"usage"</span><span class="p">:</span><span class="w"> </span><span class="mf">100.50</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-01-15T10:30:00Z"</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">"recurring"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="nt">"usages"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"amount"</span><span class="p">:</span><span class="w"> </span><span class="mf">100.50</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Optional description"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"recurring"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
+<p><strong>Alternative format using plan_period:</strong></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">"plan_period"</span><span class="p">:</span><span class="w"> </span><span class="s2">"plan-period-uuid"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"usages"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"amount"</span><span class="p">:</span><span class="w"> </span><span class="mf">100.50</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"recurring"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Either <code>resource</code> or <code>plan_period</code> must be provided (not both)</li>
+<li><code>usages</code> is an array - you can submit multiple component usages in one request</li>
+<li><code>type</code> is the component type string (e.g., "cpu", "ram", "storage"), not a UUID</li>
+<li><code>amount</code> is the usage value (not <code>usage</code>)</li>
+<li><code>date</code> is automatically set to the current time - you don't need to provide it</li>
+<li><code>description</code> and <code>recurring</code> are optional fields</li>
+</ul>
 <h3 id="4-via-utility-function">4. Via Utility Function</h3>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -15882,7 +15920,7 @@
 <h2 id="usage-patterns">Usage Patterns</h2>
 <h3 id="automatic-usage-import">Automatic Usage Import</h3>
 <p>The <code>import_current_usages()</code> function automatically creates/updates ComponentUsage records:</p>
-<p><strong>File</strong>: <code>src/waldur_mastermind/marketplace/utils.py:2273</code></p>
+<p><strong>File</strong>: <code>src/waldur_mastermind/marketplace/utils.py:941</code></p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
