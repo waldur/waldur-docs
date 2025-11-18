@@ -3414,6 +3414,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../developer-guide/guides/slurm-periodic-usage-policy-configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Slurm periodic usage policy configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../developer-guide/guides/waldur-architecture/" class="md-nav__link">
         
   
@@ -15048,6 +15069,11 @@
 <td></td>
 </tr>
 <tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
+</tr>
+<tr>
 <td><code>component_limits_set</code></td>
 <td>array of objects</td>
 <td></td>
@@ -15243,6 +15269,11 @@
 <td></td>
 </tr>
 <tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
+</tr>
+<tr>
 <td><code>component_limits_set</code></td>
 <td>array of objects</td>
 <td></td>
@@ -15283,14 +15314,12 @@
 <span class="normal">4</span>
 <span class="normal">5</span>
 <span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>POST<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>https://api.example.com/api/marketplace-offering-usage-policies/<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="nv">scope</span><span class="o">=</span><span class="s2">"https://api.example.com/api/scope/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="nv">actions</span><span class="o">=</span><span class="s2">"string-value"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>organization_groups:<span class="o">=</span><span class="s1">'[]'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>component_limits_set:<span class="o">=</span><span class="s1">'[]'</span>
 </code></pre></div></td></tr></table></div>
 </div>
@@ -15313,8 +15342,7 @@
 <span class="normal">16</span>
 <span class="normal">17</span>
 <span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
 <span class="kn">from</span> <span class="nn">waldur_api_client.models.offering_usage_policy_request</span> <span class="kn">import</span> <span class="n">OfferingUsagePolicyRequest</span> <span class="c1"># (1)</span>
 <span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_offering_usage_policies</span> <span class="kn">import</span> <span class="n">marketplace_offering_usage_policies_create</span> <span class="c1"># (2)</span>
 
@@ -15325,7 +15353,6 @@
 <span class="n">body_data</span> <span class="o">=</span> <span class="n">OfferingUsagePolicyRequest</span><span class="p">(</span>
     <span class="n">scope</span><span class="o">=</span><span class="s2">"https://api.example.com/api/scope/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="p">,</span>
     <span class="n">actions</span><span class="o">=</span><span class="s2">"string-value"</span><span class="p">,</span>
-    <span class="n">organization_groups</span><span class="o">=</span><span class="p">[],</span>
     <span class="n">component_limits_set</span><span class="o">=</span><span class="p">[]</span>
 <span class="p">)</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_offering_usage_policies_create</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
@@ -15355,8 +15382,7 @@
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">marketplaceOfferingUsagePoliciesCreate</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">marketplaceOfferingUsagePoliciesCreate</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
 
 <span class="k">try</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">marketplaceOfferingUsagePoliciesCreate</span><span class="p">({</span>
@@ -15364,7 +15390,6 @@
 <span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="s2">"scope"</span><span class="o">:</span><span class="w"> </span><span class="s2">"https://api.example.com/api/scope/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="p">,</span>
 <span class="w">    </span><span class="s2">"actions"</span><span class="o">:</span><span class="w"> </span><span class="s2">"string-value"</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">"organization_groups"</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
 <span class="w">    </span><span class="s2">"component_limits_set"</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">});</span>
@@ -15406,8 +15431,14 @@
 <tr>
 <td><code>organization_groups</code></td>
 <td>array of string (uri)s</td>
-<td>✓</td>
 <td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td></td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
 </tr>
 <tr>
 <td><code>component_limits_set</code></td>
@@ -15513,6 +15544,11 @@
 <td></td>
 </tr>
 <tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
+</tr>
+<tr>
 <td><code>component_limits_set</code></td>
 <td>array of objects</td>
 <td></td>
@@ -15553,14 +15589,12 @@
 <span class="normal">4</span>
 <span class="normal">5</span>
 <span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>PUT<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>https://api.example.com/api/marketplace-offering-usage-policies/a1b2c3d4-e5f6-7890-abcd-ef1234567890/<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="nv">scope</span><span class="o">=</span><span class="s2">"https://api.example.com/api/scope/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="nv">actions</span><span class="o">=</span><span class="s2">"string-value"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>organization_groups:<span class="o">=</span><span class="s1">'[]'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>component_limits_set:<span class="o">=</span><span class="s1">'[]'</span>
 </code></pre></div></td></tr></table></div>
 </div>
@@ -15584,8 +15618,7 @@
 <span class="normal">17</span>
 <span class="normal">18</span>
 <span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
 <span class="kn">from</span> <span class="nn">waldur_api_client.models.offering_usage_policy_request</span> <span class="kn">import</span> <span class="n">OfferingUsagePolicyRequest</span> <span class="c1"># (1)</span>
 <span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_offering_usage_policies</span> <span class="kn">import</span> <span class="n">marketplace_offering_usage_policies_update</span> <span class="c1"># (2)</span>
 
@@ -15596,7 +15629,6 @@
 <span class="n">body_data</span> <span class="o">=</span> <span class="n">OfferingUsagePolicyRequest</span><span class="p">(</span>
     <span class="n">scope</span><span class="o">=</span><span class="s2">"https://api.example.com/api/scope/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="p">,</span>
     <span class="n">actions</span><span class="o">=</span><span class="s2">"string-value"</span><span class="p">,</span>
-    <span class="n">organization_groups</span><span class="o">=</span><span class="p">[],</span>
     <span class="n">component_limits_set</span><span class="o">=</span><span class="p">[]</span>
 <span class="p">)</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_offering_usage_policies_update</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
@@ -15630,8 +15662,7 @@
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">marketplaceOfferingUsagePoliciesUpdate</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">marketplaceOfferingUsagePoliciesUpdate</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
 
 <span class="k">try</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">marketplaceOfferingUsagePoliciesUpdate</span><span class="p">({</span>
@@ -15642,7 +15673,6 @@
 <span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="s2">"scope"</span><span class="o">:</span><span class="w"> </span><span class="s2">"https://api.example.com/api/scope/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="p">,</span>
 <span class="w">    </span><span class="s2">"actions"</span><span class="o">:</span><span class="w"> </span><span class="s2">"string-value"</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">"organization_groups"</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
 <span class="w">    </span><span class="s2">"component_limits_set"</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">});</span>
@@ -15702,8 +15732,14 @@
 <tr>
 <td><code>organization_groups</code></td>
 <td>array of string (uri)s</td>
-<td>✓</td>
 <td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td></td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
 </tr>
 <tr>
 <td><code>component_limits_set</code></td>
@@ -15807,6 +15843,11 @@
 <td><code>organization_groups</code></td>
 <td>array of string (uri)s</td>
 <td></td>
+</tr>
+<tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
 </tr>
 <tr>
 <td><code>component_limits_set</code></td>
@@ -15972,6 +16013,12 @@
 <td></td>
 </tr>
 <tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td></td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
+</tr>
+<tr>
 <td><code>component_limits_set</code></td>
 <td>array of objects</td>
 <td></td>
@@ -16073,6 +16120,11 @@
 <td><code>organization_groups</code></td>
 <td>array of string (uri)s</td>
 <td></td>
+</tr>
+<tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
 </tr>
 <tr>
 <td><code>component_limits_set</code></td>
@@ -16333,6 +16385,11 @@
 <td><code>organization_groups</code></td>
 <td>array of string (uri)s</td>
 <td></td>
+</tr>
+<tr>
+<td><code>apply_to_all</code></td>
+<td>boolean</td>
+<td>If True, policy applies to all customers. Mutually exclusive with organization_groups.</td>
 </tr>
 <tr>
 <td><code>component_limits_set</code></td>
