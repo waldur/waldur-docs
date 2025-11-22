@@ -13,10 +13,10 @@
         <link rel="canonical" href="https://docs.waldur.com/latest/admin-guide/providers/site-agent/docs/offering-users/">
       
       
-        <link rel="prev" href="../architecture/">
+        <link rel="prev" href="../installation/">
       
       
-        <link rel="next" href="../slurm-usage-reporting-setup/">
+        <link rel="next" href="../rocky9-python313-validation/">
       
       
       <link rel="icon" href="../../../../../assets/waldur-logo.svg">
@@ -2614,6 +2614,111 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deployment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation-rocky9/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation rocky9
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation-ubuntu24/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation ubuntu24
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -2975,11 +3080,95 @@
   
   
     <li class="md-nav__item">
+      <a href="../rocky9-python313-validation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rocky9 python313 validation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rocky9-validation-results-final/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rocky9 validation results final
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rocky9-validation-results/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rocky9 validation results
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../slurm-usage-reporting-setup/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Slurm usage reporting setup
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ubuntu24-validation-results/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ubuntu24 validation results
   </span>
   
 
@@ -15272,21 +15461,25 @@ generation, state transitions, and integration with backend systems to ensure us
 </ul>
 <h4 id="update_offering_users"><code>update_offering_users()</code></h4>
 <p>Core processing function that handles username generation and state transitions.</p>
-<p><strong>Process</strong>:
-1. Early validation checks (empty users list, username generation policy)
-2. Username management backend validation (skips if UnknownUsernameManagementBackend)
-3. Efficient user grouping by state (single pass through users)
-4. Processes users in REQUESTED state via <code>_process_requested_users()</code>
-5. Handles users in pending states via <code>_process_pending_users()</code>
-6. Manages state transitions and centralized error handling</p>
-<p><strong>New Architecture</strong>: The function has been refactored into focused sub-functions:
-- <code>_can_generate_usernames()</code>: Policy validation
-- <code>_group_users_by_state()</code>: Efficient user categorization
-- <code>_process_requested_users()</code>: Handle new username requests
-- <code>_process_pending_users()</code>: Process retry scenarios
-- <code>_update_user_username()</code>: Individual user processing
-- <code>_handle_account_linking_error()</code>: Account linking error management
-- <code>_handle_validation_error()</code>: Validation error management</p>
+<p><strong>Process</strong>:</p>
+<ol>
+<li>Early validation checks (empty users list, username generation policy)</li>
+<li>Username management backend validation (skips if UnknownUsernameManagementBackend)</li>
+<li>Efficient user grouping by state (single pass through users)</li>
+<li>Processes users in REQUESTED state via <code>_process_requested_users()</code></li>
+<li>Handles users in pending states via <code>_process_pending_users()</code></li>
+<li>Manages state transitions and centralized error handling</li>
+</ol>
+<p><strong>New Architecture</strong>: The function has been refactored into focused sub-functions:</p>
+<ul>
+<li><code>_can_generate_usernames()</code>: Policy validation</li>
+<li><code>_group_users_by_state()</code>: Efficient user categorization</li>
+<li><code>_process_requested_users()</code>: Handle new username requests</li>
+<li><code>_process_pending_users()</code>: Process retry scenarios</li>
+<li><code>_update_user_username()</code>: Individual user processing</li>
+<li><code>_handle_account_linking_error()</code>: Account linking error management</li>
+<li><code>_handle_validation_error()</code>: Validation error management</li>
+</ul>
 <h3 id="username-management-backend-system">Username Management Backend System</h3>
 <p>The agent uses a pluggable backend architecture for username generation, allowing custom implementations for different
 identity providers and naming conventions.</p>
@@ -15381,10 +15574,12 @@ identity providers and naming conventions.</p>
 <h2 id="integration-with-order-processing">Integration with Order Processing</h2>
 <p>The async user creation system is seamlessly integrated with the agent's order processing workflows:</p>
 <h3 id="automatic-processing">Automatic Processing</h3>
-<p>Username generation is automatically triggered during:
-- Resource creation orders
-- User addition to existing resources
-- Membership synchronization operations</p>
+<p>Username generation is automatically triggered during:</p>
+<ul>
+<li>Resource creation orders</li>
+<li>User addition to existing resources</li>
+<li>Membership synchronization operations</li>
+</ul>
 <h3 id="implementation-in-processors">Implementation in Processors</h3>
 <p>The <code>OfferingBaseProcessor</code> class provides <code>_update_offering_users()</code> method that:</p>
 <ol>
@@ -15421,11 +15616,13 @@ identity providers and naming conventions.</p>
     <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">OfferingUserState</span><span class="o">.</span><span class="n">OK</span> <span class="ow">and</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
-<p><strong>Performance Improvements</strong>:
-- Conditional refresh only when usernames are actually updated
-- Early validation prevents unnecessary processing
-- Efficient user state grouping reduces multiple iterations
-- Backend validation prevents wasted API calls</p>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li>Conditional refresh only when usernames are actually updated</li>
+<li>Early validation prevents unnecessary processing</li>
+<li>Efficient user state grouping reduces multiple iterations</li>
+<li>Backend validation prevents wasted API calls</li>
+</ul>
 <h2 id="error-handling">Error Handling</h2>
 <h3 id="exception-types">Exception Types</h3>
 <p>The system defines specific exceptions for different error scenarios:</p>
@@ -15436,12 +15633,14 @@ identity providers and naming conventions.</p>
 <p>Both exceptions support an optional <code>comment_url</code> parameter to provide links to forms, documentation, or
 other resources needed for error resolution.</p>
 <h3 id="error-recovery">Error Recovery</h3>
-<p>When exceptions occur:
-1. User state transitions to appropriate pending state
-2. Error details are logged with context
-3. Comment field is updated with error message and comment_url field with any provided URL
-4. Processing continues for other users
-5. Pending users are retried in subsequent runs</p>
+<p>When exceptions occur:</p>
+<ol>
+<li>User state transitions to appropriate pending state</li>
+<li>Error details are logged with context</li>
+<li>Comment field is updated with error message and comment_url field with any provided URL</li>
+<li>Processing continues for other users</li>
+<li>Pending users are retried in subsequent runs</li>
+</ol>
 <h2 id="best-practices">Best Practices</h2>
 <h3 id="username-backend-implementation">Username Backend Implementation</h3>
 <ol>
@@ -15504,7 +15703,7 @@ curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authoriz
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-21
+    2025-11-22
   </span>
 
     
