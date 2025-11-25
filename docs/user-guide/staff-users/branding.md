@@ -93,6 +93,7 @@ These images are used across the platform. Images larger than the suggested size
 - Scales well across desktop and mobile.
 
 **Favicon**
+
 - Displayed in browser tab.
 - Recommended size: 32×32 px or 64×64 px
 - Format: PNG
