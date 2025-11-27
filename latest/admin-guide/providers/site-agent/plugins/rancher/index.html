@@ -17395,12 +17395,14 @@ Keycloak user group integration.</p>
 <li><strong>Keycloak Parent Group</strong>: <code>c_{cluster_uuid_hex}</code> (cluster access)</li>
 <li><strong>Keycloak Child Group</strong>: <code>project_{project_uuid_hex}_{role_name}</code> (project + role access)</li>
 </ul>
-<p>Where:
-- <code>{project_prefix}</code> is configurable (default: <code>waldur-</code>)
-- <code>{waldur_resource_slug}</code> is the Waldur resource slug (more specific than project slug)
-- <code>{cluster_uuid_hex}</code> is the cluster UUID in hex format
-- <code>{project_uuid_hex}</code> is the Waldur project UUID in hex format (for permissions)
-- <code>{role_name}</code> is configurable (default: <code>project-member</code>)</p>
+<p>Where:</p>
+<ul>
+<li><code>{project_prefix}</code> is configurable (default: <code>waldur-</code>)</li>
+<li><code>{waldur_resource_slug}</code> is the Waldur resource slug (more specific than project slug)</li>
+<li><code>{cluster_uuid_hex}</code> is the cluster UUID in hex format</li>
+<li><code>{project_uuid_hex}</code> is the Waldur project UUID in hex format (for permissions)</li>
+<li><code>{role_name}</code> is configurable (default: <code>project-member</code>)</li>
+</ul>
 <h2 id="supported-components-and-accounting-model">Supported Components and Accounting Model</h2>
 <p>The plugin supports the following resource components (all with <code>billing_type: "limit"</code>):</p>
 <ul>
@@ -17409,14 +17411,18 @@ Keycloak user group integration.</p>
 <li><strong>Storage</strong>: Measured in GB</li>
 </ul>
 <h3 id="accounting-model">Accounting Model</h3>
-<p><strong>Project Limits (Quotas)</strong>:
-- Only <strong>CPU and memory limits</strong> are set as Rancher project quotas
-- Storage is not enforced as quotas (reported only)</p>
-<p><strong>Usage Reporting</strong> (for all components):
-All components report <strong>actual allocated resources</strong>:
-- <strong>CPU</strong>: Sum of all container CPU requests in the project
-- <strong>Memory</strong>: Sum of all container memory requests in the project
-- <strong>Storage</strong>: Sum of all persistent volume claims in the project</p>
+<p><strong>Project Limits (Quotas)</strong>:</p>
+<ul>
+<li>Only <strong>CPU and memory limits</strong> are set as Rancher project quotas</li>
+<li>Storage is not enforced as quotas (reported only)</li>
+</ul>
+<p><strong>Usage Reporting</strong> (for all components):</p>
+<p>All components report <strong>actual allocated resources</strong>:</p>
+<ul>
+<li><strong>CPU</strong>: Sum of all container CPU requests in the project</li>
+<li><strong>Memory</strong>: Sum of all container memory requests in the project</li>
+<li><strong>Storage</strong>: Sum of all persistent volume claims in the project</li>
+</ul>
 <h3 id="accounting-flow">Accounting Flow</h3>
 <ol>
 <li><strong>Project Creation</strong>: CPU and memory limits → Rancher project quotas</li>
@@ -17476,32 +17482,40 @@ All components report <strong>actual allocated resources</strong>:
 <h4 id="2-rancher-authentication-fails-401-unauthorized">2. Rancher Authentication Fails (401 Unauthorized)</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>401 Client Error: Unauthorized for url: https://rancher.../v3
 </code></pre></div></td></tr></table></div>
-<p><strong>Solutions</strong>:
-- Verify access key and secret key are correct
-- Ensure token is <strong>unscoped</strong> (not cluster-specific)
-- Check token hasn't expired
-- Verify API URL format: <code>https://your-rancher.com</code> (without <code>/v3</code>)</p>
+<p><strong>Solutions</strong>:</p>
+<ul>
+<li>Verify access key and secret key are correct</li>
+<li>Ensure token is <strong>unscoped</strong> (not cluster-specific)</li>
+<li>Check token hasn't expired</li>
+<li>Verify API URL format: <code>https://your-rancher.com</code> (without <code>/v3</code>)</li>
+</ul>
 <h4 id="3-keycloak-connection-fails-404">3. Keycloak Connection Fails (404)</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>404: "Unable to find matching target resource method"
 </code></pre></div></td></tr></table></div>
-<p><strong>Solutions</strong>:
-- Verify Keycloak URL (try with/without <code>/auth/</code> suffix)
-- Check realm name is correct
-- Ensure user exists in the specified realm</p>
+<p><strong>Solutions</strong>:</p>
+<ul>
+<li>Verify Keycloak URL (try with/without <code>/auth/</code> suffix)</li>
+<li>Check realm name is correct</li>
+<li>Ensure user exists in the specified realm</li>
+</ul>
 <h4 id="4-keycloak-group-creation-fails-403-forbidden">4. Keycloak Group Creation Fails (403 Forbidden)</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>403: "HTTP 403 Forbidden"
 </code></pre></div></td></tr></table></div>
-<p><strong>Solution</strong>: Grant user <code>manage-users</code> role:
-- <strong>Realm</strong>: Select target realm
-- <strong>Users</strong> → Your service user
-- <strong>Role Mappings</strong> → <strong>Client Roles</strong> → <code>realm-management</code>
-- <strong>Add</strong>: <code>manage-users</code></p>
+<p><strong>Solution</strong>: Grant user <code>manage-users</code> role:</p>
+<ul>
+<li><strong>Realm</strong>: Select target realm</li>
+<li><strong>Users</strong> → Your service user</li>
+<li><strong>Role Mappings</strong> → <strong>Client Roles</strong> → <code>realm-management</code></li>
+<li><strong>Add</strong>: <code>manage-users</code></li>
+</ul>
 <h4 id="5-cluster-id-format-error">5. Cluster ID Format Error</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>Cluster not found or invalid cluster ID
 </code></pre></div></td></tr></table></div>
-<p><strong>Solution</strong>: Use correct format:
-- ✅ <strong>Correct</strong>: <code>c-j8276</code> (cluster ID only)
-- ❌ <strong>Incorrect</strong>: <code>c-j8276:p-xxxxx</code> (project reference)</p>
+<p><strong>Solution</strong>: Use correct format:</p>
+<ul>
+<li>✅ <strong>Correct</strong>: <code>c-j8276</code> (cluster ID only)</li>
+<li>❌ <strong>Incorrect</strong>: <code>c-j8276:p-xxxxx</code> (project reference)</li>
+</ul>
 <h4 id="6-component-loading-fails">6. Component Loading Fails</h4>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>KeyError: 'accounting_type'
 </code></pre></div></td></tr></table></div>
@@ -17530,12 +17544,14 @@ All components report <strong>actual allocated resources</strong>:
 <p>Run comprehensive diagnostics:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>waldur_site_diagnostics<span class="w"> </span>-c<span class="w"> </span>your-config.yaml
 </code></pre></div></td></tr></table></div>
-<p>This will test:
-- Rancher API connectivity and authentication
-- Keycloak connectivity and permissions (if enabled)
-- Project listing capabilities
-- Backend discovery and initialization
-- Component configuration validity</p>
+<p>This will test:</p>
+<ul>
+<li>Rancher API connectivity and authentication</li>
+<li>Keycloak connectivity and permissions (if enabled)</li>
+<li>Project listing capabilities</li>
+<li>Backend discovery and initialization</li>
+<li>Component configuration validity</li>
+</ul>
 <h3 id="verification-commands">Verification Commands</h3>
 <p>Test individual components:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -17578,7 +17594,7 @@ curl<span class="w"> </span>-u<span class="w"> </span><span class="s2">"token-xx
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-26
+    2025-11-27
   </span>
 
     
