@@ -87,9 +87,7 @@ Test Helm deployment before tagging:
     waldur/waldur-helm
 
 Test changelog generation:
-  image:
-    name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
-    entrypoint: [""]
+  image: registry.hpc.ut.ee/mirror/library/python:3.12
   stage: test
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -99,40 +97,19 @@ Test changelog generation:
     CI_COMMIT_TAG: "v10.0.0"
   script:
     - export VERSION=${CI_COMMIT_TAG}
-    - echo $CI_COMMIT_TAG_MESSAGE
-    - echo $CI_RELEASE_DESCRIPTION
-    - export TIMESTAMP=$(date)
     - PREV_TAG=$(grep -m 1 "##" docs/about/CHANGELOG.md | sed "s/## //" )
-    - echo $PREV_TAG
-    - sed -i -E -e "s/# Changelog//" docs/about/CHANGELOG.md
-    - |
-      echo -e "# Changelog
-
-      ## $VERSION
-
-      Notes: ${CI_RELEASE_DESCRIPTION:-None}
-
-      * Waldur Mastermind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Homeport: [tag diff](https://github.com/waldur/waldur-homeport/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Python SDK: [tag diff](https://github.com/waldur/py-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur TypeScript/JavaScript SDK: [tag diff](https://github.com/waldur/js-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Go SDK: [tag diff](https://github.com/waldur/go-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
-
-      Date: $TIMESTAMP\n" | cat - docs/about/CHANGELOG.md > tmp
-    - cat tmp
-    - mv -f tmp docs/about/CHANGELOG.md
+    - echo "Testing enhanced changelog generation for $VERSION (since $PREV_TAG)"
+    - python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | grep -A 100 "^## " | head -n -4 > /tmp/new_entry.md
+    - echo "Generated enhanced changelog entry:"
+    - cat /tmp/new_entry.md
 
 Tag all repositories:
-  image:
-    name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
-    entrypoint: [""]
+  image: registry.hpc.ut.ee/mirror/library/python:3.12
   stage: deploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   before_script:
+    - apt-get update && apt-get install -y git
     - git config --global user.name "$GITLAB_USER_NAME"
     - git config --global user.email "$GITLAB_USER_EMAIL"
     - git remote set-url origin "https://gitlab-ci-token:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
@@ -144,42 +121,30 @@ Tag all repositories:
     - export VERSION=${CI_COMMIT_TAG}
     - echo $CI_COMMIT_TAG_MESSAGE
     - echo $CI_RELEASE_DESCRIPTION
-    - export TIMESTAMP=$(date)
     - PREV_TAG=$(grep -m 1 "##" docs/about/CHANGELOG.md | sed "s/## //" )
-    - echo $PREV_TAG
-    # Drop first 2 lines from the changelog
-    - sed -i '1,2d' docs/about/CHANGELOG.md
+    - echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
+    # Generate enhanced changelog entry
+    - python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | grep -A 100 "^## " | head -n -4 > /tmp/new_entry.md
+    - echo "Generated enhanced changelog entry:"
+    - cat /tmp/new_entry.md
+    # Update changelog with rotation (keep only last 20 entries)
     - |
-      echo -e "# Changelog
-
-      ## $VERSION
-
-      Notes: ${CI_COMMIT_TAG_MESSAGE:-None}
-
-      * Waldur MasterMind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/$PREV_TAG...$CI_COMMIT_TAG)
-          * Image SBOM: [waldur-mastermind-$CI_COMMIT_TAG-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-mastermind-$CI_COMMIT_TAG-image.cyclonedx.tar.gz)
-          * Source SBOM: [waldur-mastermind-$CI_COMMIT_TAG-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-mastermind-$CI_COMMIT_TAG-source.cyclonedx.tar.gz)
-          * OpenAPI specification for version $CI_COMMIT_TAG (YAML): [View API schema in OpenAPI](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml)
-          * API changes: [View changes](/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-${CI_COMMIT_TAG}-diff)
-      * Waldur HomePort: [tag diff](https://github.com/waldur/waldur-homeport/compare/$PREV_TAG...$CI_COMMIT_TAG)
-          * Image SBOM: [waldur-homeport-$CI_COMMIT_TAG-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-homeport-$CI_COMMIT_TAG-image.cyclonedx.tar.gz)
-          * Source SBOM: [waldur-homeport-$CI_COMMIT_TAG-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-homeport-$CI_COMMIT_TAG-source.cyclonedx.tar.gz)
-      * Waldur Helm: [tag diff](https://github.com/waldur/waldur-helm/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Docker Compose: [tag diff](https://github.com/waldur/waldur-docker-compose/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Prometheus Exporter: [tag diff](https://github.com/waldur/waldur-prometheus-exporter/compare/$PREV_TAG...$CI_COMMIT_TAG)
-          * Image SBOM: [waldur-prometheus-exporter-$CI_COMMIT_TAG-image.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/images/waldur-prometheus-exporter-$CI_COMMIT_TAG-image.cyclonedx.tar.gz)
-          * Source SBOM: [waldur-prometheus-exporter-$CI_COMMIT_TAG-source.cyclonedx.tar.gz](https://github.com/waldur/waldur-docs/raw/refs/heads/master/docs/assets/sboms/source/waldur-prometheus-exporter-$CI_COMMIT_TAG-source.cyclonedx.tar.gz)
-      * Waldur Python SDK: [tag diff](https://github.com/waldur/py-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur TypeScript/JavaScript SDK: [tag diff](https://github.com/waldur/js-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
-      * Waldur Go SDK: [tag diff](https://github.com/waldur/go-client/compare/$PREV_TAG...$CI_COMMIT_TAG)
-
-      Date: $TIMESTAMP\n" | cat - docs/about/CHANGELOG.md > tmp
-    - cat tmp
-    - mv -f tmp docs/about/CHANGELOG.md
-    - git --no-pager diff
+      if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
+        echo "Rotating old changelog entries to archive..."
+        # Archive old entries (entries are preserved in git history)
+        head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
+        mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
+      fi
+    # Add new entry to top of changelog
+    - echo -e "# Changelog\n" > /tmp/final_changelog.md
+    - cat /tmp/new_entry.md >> /tmp/final_changelog.md
+    - echo "" >> /tmp/final_changelog.md
+    - tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md  # Skip "# Changelog" header
+    - mv /tmp/final_changelog.md docs/about/CHANGELOG.md
+    - git --no-pager diff docs/about/CHANGELOG.md | head -50  # Show first 50 lines of diff
     - git add docs/about/CHANGELOG.md
-    - git commit -m "Update changelog for $CI_COMMIT_TAG"
-    - git --no-pager show
+    - git commit -m "Update changelog for $CI_COMMIT_TAG with enhanced analysis"
+    - git --no-pager show --stat
     - git push origin master
     - cd ../
   script:

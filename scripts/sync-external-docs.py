@@ -584,6 +584,64 @@ class ExternalDocSyncer:
             for mapping in source.get('mappings', []):
                 print(f"    {mapping['remote']} -> {mapping['local']}")
 
+    def list_local_docs(self, docs_path='docs'):
+        """List documentation that is purely local (not from external sources)."""
+        from pathlib import Path
+        
+        docs_path = Path(docs_path)
+        if not docs_path.exists():
+            print(f"Error: Documentation directory {docs_path} does not exist")
+            return
+
+        external_paths = set()
+        for source in self.config['sources'].values():
+            for mapping in source.get('mappings', []):
+                external_paths.add(Path(mapping['local']))
+
+        local_files = []
+        external_files = []
+
+        for md_file in docs_path.rglob('*.md'):
+            if md_file.name.startswith('.'):
+                continue
+                
+            has_marker = self.has_external_marker(md_file)
+            
+            if has_marker:
+                external_files.append(md_file.relative_to(docs_path))
+            else:
+                # Check if under any external path but still local
+                is_under_external = any(
+                    self._is_under_path(md_file, ext_path) 
+                    for ext_path in external_paths
+                )
+                local_files.append((md_file.relative_to(docs_path), is_under_external))
+
+        print("Local Documentation Files (not imported from external sources):")
+        print(f"{'='*60}")
+        print(f"Total local files: {len(local_files)}")
+        print(f"Total external files: {len(external_files)}")
+        print()
+
+        if local_files:
+            print("LOCAL FILES:")
+            print("-" * 40)
+            for rel_path, under_external in sorted(local_files):
+                if under_external:
+                    print(f"  {rel_path} (in external directory - may need review)")
+                else:
+                    print(f"  {rel_path}")
+        else:
+            print("No local documentation files found.")
+
+    def _is_under_path(self, file_path, dir_path):
+        """Check if file_path is under dir_path."""
+        try:
+            file_path.relative_to(dir_path)
+            return True
+        except ValueError:
+            return False
+
 def main():
     parser = argparse.ArgumentParser(description='Sync external documentation')
     parser.add_argument('--config', '-c', default='external-sources.yml',
@@ -592,6 +650,8 @@ def main():
                         help='Specific sources to sync (default: all)')
     parser.add_argument('--list', '-l', action='store_true',
                         help='List configured sources and exit')
+    parser.add_argument('--list-local', action='store_true',
+                        help='List local documentation files (not from external sources)')
     parser.add_argument('--dry-run', '-n', action='store_true',
                         help='Show what would be synced without making changes')
 
@@ -602,6 +662,10 @@ def main():
 
         if args.list:
             syncer.list_sources()
+            return 0
+
+        if args.list_local:
+            syncer.list_local_docs()
             return 0
 
         return syncer.sync_all(args.sources)
