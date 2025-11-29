@@ -125,7 +125,28 @@ class ExternalDocSyncer:
         except (IOError, UnicodeDecodeError):
             return False
 
-    def add_external_marker(self, content, source, mapping, remote_file, temp_dir):
+    def extract_content_without_marker(self, content):
+        """Extract content without the external marker and timestamp."""
+        if '<!-- EXTERNAL DOCUMENT' not in content:
+            return content
+        
+        # Find the end of the marker
+        pattern = r'<!-- EXTERNAL DOCUMENT.*?-->\s*'
+        return re.sub(pattern, '', content, flags=re.DOTALL)
+    
+    def extract_existing_marker_timestamp(self, content):
+        """Extract the existing timestamp from an external marker."""
+        if '<!-- EXTERNAL DOCUMENT' not in content:
+            return None
+        
+        # Find Last Sync timestamp
+        pattern = r'Last Sync: ([^\n\r]+)'
+        match = re.search(pattern, content)
+        if match:
+            return match.group(1)
+        return None
+
+    def add_external_marker(self, content, source, mapping, remote_file, temp_dir, sync_time=None):
         """Add external document marker to file content."""
         # Calculate the relative path from the temp_dir's remote path
         remote_base = temp_dir / mapping['remote']
@@ -134,12 +155,16 @@ class ExternalDocSyncer:
         # Construct the clean remote path
         clean_remote_path = f"{mapping['remote']}/{rel_file_path}".replace('\\', '/')
 
+        # Use provided timestamp or generate new one
+        if sync_time is None:
+            sync_time = datetime.now().isoformat()
+
         marker = self.external_marker.format(
             repository=source['repository'],
             branch=source['branch'],
             remote_path=clean_remote_path,
             local_path=mapping['local'],
-            sync_time=datetime.now().isoformat()
+            sync_time=sync_time
         )
 
         # Remove existing marker if present
@@ -245,29 +270,61 @@ class ExternalDocSyncer:
                 else:
                     # Handle text files
                     with open(remote_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
+                        remote_content = f.read()
 
-                    # Add external marker for markdown files
+                    # Check if local file exists and compare content without timestamp
+                    existing_content = None
+                    existing_timestamp = None
+                    content_changed = True
+                    
+                    if local_path.exists():
+                        try:
+                            with open(local_path, 'r', encoding='utf-8') as f:
+                                existing_content = f.read()
+                            
+                            if remote_path.suffix.lower() == '.md':
+                                # Extract content without marker for comparison
+                                existing_content_clean = self.extract_content_without_marker(existing_content)
+                                # Compare with new content
+                                content_changed = existing_content_clean != remote_content
+                                if not content_changed:
+                                    # Content hasn't changed, preserve existing timestamp
+                                    existing_timestamp = self.extract_existing_marker_timestamp(existing_content)
+                            else:
+                                content_changed = existing_content != remote_content
+                        except (IOError, UnicodeDecodeError):
+                            content_changed = True  # If we can't read, assume changed
+
+                    # Only add marker and timestamp if content changed or file doesn't exist
                     if remote_path.suffix.lower() == '.md':
-                        content = self.add_external_marker(content, source, mapping, remote_path, temp_dir)
+                        if content_changed:
+                            content = self.add_external_marker(remote_content, source, mapping, remote_path, temp_dir)
+                        else:
+                            # Content unchanged, preserve existing timestamp
+                            content = self.add_external_marker(remote_content, source, mapping, remote_path, temp_dir, existing_timestamp)
+                    else:
+                        content = remote_content
 
                     # Write to local file (or simulate in dry-run mode)
                     if self.dry_run:
                         if local_path.exists():
-                            with open(local_path, 'r', encoding='utf-8') as f:
-                                existing_content = f.read()
-                            if existing_content != content:
+                            if content_changed:
                                 print(f"    [DRY RUN] Would update: {local_path.name}")
                             else:
                                 print(f"    [DRY RUN] No change: {local_path.name}")
                         else:
                             print(f"    [DRY RUN] Would create: {local_path.name}")
                     else:
-                        with open(local_path, 'w', encoding='utf-8') as f:
-                            f.write(content)
-                        print(f"    Synced: {local_path.name}")
+                        if content_changed or not local_path.exists():
+                            with open(local_path, 'w', encoding='utf-8') as f:
+                                f.write(content)
+                            print(f"    Synced: {local_path.name}")
+                        else:
+                            print(f"    No change: {local_path.name}")
 
-                stats['synced'] += 1
+                # Only count as synced if content actually changed
+                if content_changed or not local_path.exists():
+                    stats['synced'] += 1
 
             except (IOError, UnicodeDecodeError) as e:
                 print(f"    Error processing {local_path.name}: {e}")
@@ -330,30 +387,61 @@ class ExternalDocSyncer:
                     else:
                         # Handle text files
                         with open(remote_file, 'r', encoding='utf-8') as f:
-                            content = f.read()
+                            remote_content = f.read()
 
-                        # Add external marker for markdown files
+                        # Check if local file exists and compare content without timestamp
+                        existing_content = None
+                        existing_timestamp = None
+                        content_changed = True
+                        
+                        if local_file.exists():
+                            try:
+                                with open(local_file, 'r', encoding='utf-8') as f:
+                                    existing_content = f.read()
+                                
+                                if remote_file.suffix.lower() == '.md':
+                                    # Extract content without marker for comparison
+                                    existing_content_clean = self.extract_content_without_marker(existing_content)
+                                    # Compare with new content
+                                    content_changed = existing_content_clean != remote_content
+                                    if not content_changed:
+                                        # Content hasn't changed, preserve existing timestamp
+                                        existing_timestamp = self.extract_existing_marker_timestamp(existing_content)
+                                else:
+                                    content_changed = existing_content != remote_content
+                            except (IOError, UnicodeDecodeError):
+                                content_changed = True  # If we can't read, assume changed
+
+                        # Only add marker and timestamp if content changed or file doesn't exist
                         if remote_file.suffix.lower() == '.md':
-                            content = self.add_external_marker(content, source, mapping, remote_file, temp_dir)
+                            if content_changed:
+                                content = self.add_external_marker(remote_content, source, mapping, remote_file, temp_dir)
+                            else:
+                                # Content unchanged, preserve existing timestamp
+                                content = self.add_external_marker(remote_content, source, mapping, remote_file, temp_dir, existing_timestamp)
+                        else:
+                            content = remote_content
 
                         # Write to local file (or simulate in dry-run mode)
                         if self.dry_run:
-                            # Check if file exists and content differs
                             if local_file.exists():
-                                with open(local_file, 'r', encoding='utf-8') as f:
-                                    existing_content = f.read()
-                                if existing_content != content:
+                                if content_changed:
                                     print(f"    [DRY RUN] Would update: {rel_path}")
                                 else:
                                     print(f"    [DRY RUN] No change: {rel_path}")
                             else:
                                 print(f"    [DRY RUN] Would create: {rel_path}")
                         else:
-                            with open(local_file, 'w', encoding='utf-8') as f:
-                                f.write(content)
-                            print(f"    Synced: {rel_path}")
+                            if content_changed or not local_file.exists():
+                                with open(local_file, 'w', encoding='utf-8') as f:
+                                    f.write(content)
+                                print(f"    Synced: {rel_path}")
+                            else:
+                                print(f"    No change: {rel_path}")
 
-                    stats['synced'] += 1
+                    # Only count as synced if content actually changed
+                    if content_changed or not local_file.exists():
+                        stats['synced'] += 1
 
                 except (IOError, UnicodeDecodeError) as e:
                     print(f"    Error processing {rel_path}: {e}")
