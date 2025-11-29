@@ -383,46 +383,50 @@ class MultiRepoChangelogGenerator:
             changelog_parts.append(f"## {current_tag} - {date_str}")
             changelog_parts.append("")
             
-            changelog_parts.append("**Release Notes:** Multi-repository release with enhanced analysis")
-            changelog_parts.append("")
-            
-            # Release impact summary (only count core repositories)
+            # Release summary in proper list format
             active_core_repos = len([a for repo, a in all_analyses.items() if a['has_changes'] and repo in self.core_repositories])
             active_sdk_repos = len([a for repo, a in all_analyses.items() if a['has_changes'] and repo in self.generated_repositories])
             
             if core_commits > 0:
-                changelog_parts.append(f"📈 **Release Impact:** {core_commits} commits across {active_core_repos} core repositories")
+                changelog_parts.append("### Release Summary")
+                changelog_parts.append("")
+                changelog_parts.append(f"- **Release Impact:** {core_commits} commits across {active_core_repos} core repositories")
                 if core_files > 0:
-                    changelog_parts.append(f"📁 **Functional Changes:** {core_files} files · +{core_added}/-{core_removed} lines *(excludes tests, auto-generated files)*")
+                    changelog_parts.append(f"- **Functional Changes:** {core_files} files changed with +{core_added}/-{core_removed} lines")
                 if active_sdk_repos > 0:
-                    changelog_parts.append(f"🔄 **SDK Updates:** {active_sdk_repos} auto-generated clients updated")
+                    changelog_parts.append(f"- **SDK Updates:** {active_sdk_repos} auto-generated clients updated from OpenAPI schema")
+                changelog_parts.append("")
+                changelog_parts.append("!!! note \"Statistics Note\"")
+                changelog_parts.append("    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.")
+                changelog_parts.append("")
             else:
-                changelog_parts.append("📈 **Release Impact:** Minor release with configuration and documentation updates")
+                changelog_parts.append("### Release Summary")
+                changelog_parts.append("")
+                changelog_parts.append("- **Release Impact:** Minor release with configuration and documentation updates")
                 if active_sdk_repos > 0:
-                    changelog_parts.append(f"🔄 **SDK Updates:** {active_sdk_repos} auto-generated clients updated")
-            changelog_parts.append("")
+                    changelog_parts.append(f"- **SDK Updates:** {active_sdk_repos} auto-generated clients updated")
+                changelog_parts.append("")
 
-            # Component status - separate core from generated
-            changelog_parts.append("🔗 **Core Component Activity:**")
+            # Component status - separate core from generated with improved formatting
+            changelog_parts.append("### Core Component Activity")
+            changelog_parts.append("")
             for repo_name, analysis in all_analyses.items():
                 if repo_name in self.core_repositories:
+                    display_name = repo_name.replace('-', ' ').title()
                     if analysis['has_changes']:
-                        display_name = repo_name.replace('-', ' ').title()
                         commit_count = analysis['commit_count']
                         files_count = analysis['file_changes'].get('files_changed', 0)
                         lines_added = analysis['file_changes'].get('lines_added', 0)
                         lines_removed = analysis['file_changes'].get('lines_removed', 0)
                         
-                        # Format the component line with detailed changes
-                        component_line = f"- **{display_name}**: [{commit_count} commits](https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag})"
+                        component_info = f"- **{display_name}**: [{commit_count} commits](https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag})"
                         if files_count > 0:
-                            component_line += f" · {files_count} files"
+                            component_info += f" · {files_count} files changed"
                             if lines_added > 0 or lines_removed > 0:
-                                component_line += f" (+{lines_added}/-{lines_removed} lines)"
+                                component_info += f" (+{lines_added}/-{lines_removed} lines)"
                         
-                        changelog_parts.append(component_line)
+                        changelog_parts.append(component_info)
                     else:
-                        display_name = repo_name.replace('-', ' ').title()
                         changelog_parts.append(f"- **{display_name}**: No changes")
             
             # Show SDK status separately if any were updated
@@ -430,11 +434,13 @@ class MultiRepoChangelogGenerator:
                           if repo in self.generated_repositories and analysis['has_changes']]
             if sdk_updates:
                 changelog_parts.append("")
-                changelog_parts.append("🔄 **SDK Updates (Auto-generated):**")
+                changelog_parts.append("### SDK Updates (Auto-generated)")
+                changelog_parts.append("")
                 for repo_name in sdk_updates:
                     analysis = all_analyses[repo_name]
                     display_name = repo_name.replace('-', ' ').title().replace('Py ', 'Python ').replace('Js ', 'JavaScript ')
                     commit_count = analysis['commit_count']
+                    
                     changelog_parts.append(f"- **{display_name}**: [{commit_count} commits](https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag})")
             
             changelog_parts.append("")
@@ -448,15 +454,19 @@ class MultiRepoChangelogGenerator:
                         all_notable_changes.append((commit, repo_name))
             
             if all_notable_changes:
-                changelog_parts.append("**✨ Notable Changes:**")
+                changelog_parts.append("### Notable Changes")
+                changelog_parts.append("")
                 # Sort by date and limit to most recent/important ones
-                sorted_changes = sorted(all_notable_changes, key=lambda x: x[0]['date'])[-8:]  # Latest 8
+                sorted_changes = sorted(all_notable_changes, key=lambda x: x[0]['date'])[-6:]  # Latest 6 for better readability
                 
                 for change, repo_name in sorted_changes:
                     clean_subject = self._clean_commit_subject(change['subject'], 'general')
                     commit_hash = change['hash']
-                    # Add commit link without category icons
-                    changelog_parts.append(f"- {clean_subject} *([{commit_hash}](https://github.com/waldur/{repo_name}/commit/{commit_hash}) - {repo_name})*")
+                    display_repo = repo_name.replace('-', ' ').title()
+                    
+                    # Use proper markdown list format
+                    changelog_parts.append(f"- **{clean_subject}** ([{commit_hash}](https://github.com/waldur/{repo_name}/commit/{commit_hash}) - {display_repo})")
+                
                 changelog_parts.append("")
 
             # Repository-specific highlights
@@ -470,12 +480,10 @@ class MultiRepoChangelogGenerator:
                     changelog_parts.append("")
 
             # Resources
-            changelog_parts.append("**📚 Resources:**")
-            changelog_parts.append(f"- [API Schema](../API/waldur-openapi-schema-{current_tag}.yaml)")
-            changelog_parts.append(f"- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-{current_tag}-diff.md)")
-            changelog_parts.append(f"- [Full Release Comparison](https://github.com/waldur/waldur-mastermind/compare/{prev_tag}...{current_tag})")
+            changelog_parts.append("### Resources")
             changelog_parts.append("")
-            changelog_parts.append(f"**⏱️ Released:** {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}")
+            changelog_parts.append(f"- [OpenAPI Schema](../API/waldur-openapi-schema-{current_tag}.yaml)")
+            changelog_parts.append(f"- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-{current_tag}-diff.md)")
             changelog_parts.append("")
             changelog_parts.append("---")
 
