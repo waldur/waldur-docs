@@ -247,6 +247,9 @@ class MultiRepoChangelogGenerator:
                 'docs/marketplace_catalog.mmd',  # Auto-generated Mermaid diagram
                 'docs/marketplace_provision.mmd',  # Auto-generated Mermaid diagram
             ],
+            'waldur-docker-compose': [
+                '.env.example',  # Auto-updated example environment file
+            ],
             'py-client': [
                 'waldur_client/',  # Auto-generated from OpenAPI
                 'docs/',  # Auto-generated docs
