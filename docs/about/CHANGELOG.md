@@ -1,11 +1,11 @@
 # Changelog
 
-## 7.9.0 - 2025-11-29
+## 7.9.0 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 16 commits across 4 core repositories
-- **Functional Changes:** 115 files changed with +1407/-929 lines
+- **Functional Changes:** 114 files changed with +1405/-927 lines
 - **SDK Updates:** 3 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -16,7 +16,7 @@
 - **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/7.8.9...7.9.0) · 11 files changed (+377/-7 lines)
 - **Waldur Homeport**: [3 commits](https://github.com/waldur/waldur-homeport/compare/7.8.9...7.9.0) · 99 files changed (+1023/-915 lines)
 - **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/7.8.9...7.9.0) · 4 files changed (+5/-5 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.9...7.9.0) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.9...7.9.0)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -34,7 +34,8 @@
 - **Revert "Remove leftover path modifications".** ([d8dd890](https://github.com/waldur/waldur-helm/commit/d8dd890) - Waldur Helm)
 - **Set target version to 7.9.0.** ([58ceaa9](https://github.com/waldur/waldur-docker-compose/commit/58ceaa9) - Waldur Docker Compose)
 
-**Waldur Mastermind Highlights:**
+### Waldur Mastermind Highlights
+
 - Cleanup unused migration.
 - Add readonly viewset to list checklists for call organizers.
 - Expose additional fields for invoice items.
@@ -46,12 +47,12 @@
 
 ---
 
-## 7.8.9 - 2025-11-29
+## 7.8.9 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 4 commits across 3 core repositories
-- **Functional Changes:** 9 files changed with +245/-40 lines
+- **Functional Changes:** 8 files changed with +243/-38 lines
 - **SDK Updates:** 2 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -62,7 +63,7 @@
 - **Waldur Mastermind**: [2 commits](https://github.com/waldur/waldur-mastermind/compare/7.8.8...7.8.9) · 6 files changed (+240/-35 lines)
 - **Waldur Homeport**: No changes
 - **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.8.8...7.8.9) · 2 files changed (+3/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.8...7.8.9) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.8...7.8.9)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -84,12 +85,12 @@
 
 ---
 
-## 7.8.8 - 2025-11-29
+## 7.8.8 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 123 commits across 4 core repositories
-- **Functional Changes:** 668 files changed with +36184/-3238 lines
+- **Functional Changes:** 667 files changed with +36182/-3236 lines
 - **SDK Updates:** 3 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -100,7 +101,7 @@
 - **Waldur Mastermind**: [74 commits](https://github.com/waldur/waldur-mastermind/compare/7.8.7...7.8.8) · 118 files changed (+22512/-916 lines)
 - **Waldur Homeport**: [31 commits](https://github.com/waldur/waldur-homeport/compare/7.8.7...7.8.8) · 517 files changed (+13369/-2145 lines)
 - **Waldur Helm**: [17 commits](https://github.com/waldur/waldur-helm/compare/7.8.7...7.8.8) · 32 files changed (+301/-175 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.7...7.8.8) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.7...7.8.8)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -118,32 +119,38 @@
 - **Add orders documentation.** ([65a4924](https://github.com/waldur/waldur-mastermind/commit/65a4924) - Waldur Mastermind)
 - **Disable rendering of email vars as they crash ansible installer.** ([9bde6ca](https://github.com/waldur/waldur-helm/commit/9bde6ca) - Waldur Helm)
 
-**Waldur Mastermind Highlights:**
+### Waldur Mastermind Highlights
+
 - Extend migration to handle both broken and new migrations.
 - Fix mermaid typos.
 - Add orders documentation.
 
-**Waldur Homeport Highlights:**
+### Waldur Homeport Highlights
+
 - Expose uploaded purchase order in order details [WAL-9356].
 - Implement frontend for site agent diagnostics.
 - Add form field use_user_organization_as_customer_name.
 
-**Waldur Helm Highlights:**
+### Waldur Helm Highlights
+
 - Disable rendering of email vars as they crash ansible installer.
 - Set target version to 7.8.8.
 - Fix template.
 
-**Py Client Highlights:**
+### Py Client Highlights
+
 - Release: bump version to 7.8.8.
 - Update Waldur Python SDK.
 - Update Waldur Python SDK.
 
-**Js Client Highlights:**
+### Js Client Highlights
+
 - Release: bump version to 7.8.8.
 - 7.8.8-dev.17.
 - Update Waldur TypeScript SDK.
 
-**Go Client Highlights:**
+### Go Client Highlights
+
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
@@ -155,12 +162,12 @@
 
 ---
 
-## 7.8.7 - 2025-11-29
+## 7.8.7 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 78 commits across 4 core repositories
-- **Functional Changes:** 187 files changed with +6889/-1418 lines
+- **Functional Changes:** 186 files changed with +6887/-1416 lines
 - **SDK Updates:** 3 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -171,7 +178,7 @@
 - **Waldur Mastermind**: [49 commits](https://github.com/waldur/waldur-mastermind/compare/7.8.6...7.8.7) · 46 files changed (+3070/-210 lines)
 - **Waldur Homeport**: [25 commits](https://github.com/waldur/waldur-homeport/compare/7.8.6...7.8.7) · 113 files changed (+3140/-1040 lines)
 - **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/7.8.6...7.8.7) · 27 files changed (+677/-166 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.6...7.8.7) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.6...7.8.7)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -189,27 +196,32 @@
 - **Add support to set external db name and username configuration.** ([eb63a40](https://github.com/waldur/waldur-helm/commit/eb63a40) - Waldur Helm)
 - **Set target version to 7.8.7.** ([85107e8](https://github.com/waldur/waldur-docker-compose/commit/85107e8) - Waldur Docker Compose)
 
-**Waldur Mastermind Highlights:**
+### Waldur Mastermind Highlights
+
 - Add autoprovisioning docs.
 - Handle adding/removal of offering compliance checklists.
 - Add unique constraint on slurm periodic policy.
 
-**Waldur Homeport Highlights:**
+### Waldur Homeport Highlights
+
 - Implement UI to configure organization-specific component usage limits.
 - Fix project credit modal crashing issue.
 - Improve UI of add component modal.
 
-**Py Client Highlights:**
+### Py Client Highlights
+
 - Release: bump version to 7.8.7.
 - Update Waldur Python SDK.
 - Update Waldur Python SDK.
 
-**Js Client Highlights:**
+### Js Client Highlights
+
 - Release: bump version to 7.8.7.
 - 7.8.7-dev.13.
 - Update Waldur TypeScript SDK.
 
-**Go Client Highlights:**
+### Go Client Highlights
+
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
@@ -221,12 +233,12 @@
 
 ---
 
-## 7.8.6 - 2025-11-29
+## 7.8.6 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 37 commits across 4 core repositories
-- **Functional Changes:** 153 files changed with +6126/-731 lines
+- **Functional Changes:** 152 files changed with +6124/-729 lines
 - **SDK Updates:** 3 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -237,7 +249,7 @@
 - **Waldur Mastermind**: [5 commits](https://github.com/waldur/waldur-mastermind/compare/7.8.5...7.8.6)
 - **Waldur Homeport**: [22 commits](https://github.com/waldur/waldur-homeport/compare/7.8.5...7.8.6) · 129 files changed (+4549/-597 lines)
 - **Waldur Helm**: [7 commits](https://github.com/waldur/waldur-helm/compare/7.8.5...7.8.6) · 20 files changed (+1574/-107 lines)
-- **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.5...7.8.6) · 4 files changed (+3/-27 lines)
+- **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.5...7.8.6) · 3 files changed (+1/-25 lines)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -252,25 +264,29 @@
 - **Add filter to exclude transitional resources with early pending orders.** ([b216f24](https://github.com/waldur/waldur-mastermind/commit/b216f24) - Waldur Mastermind)
 - **Improve filters labels.** ([fc5b9a1](https://github.com/waldur/waldur-mastermind/commit/fc5b9a1) - Waldur Mastermind)
 - **Update configuration, CLI and developer guide.** ([0287336](https://github.com/waldur/waldur-mastermind/commit/0287336) - Waldur Mastermind)
-- **Improve labels for filters.** ([92b4a4c](https://github.com/waldur/waldur-mastermind/commit/92b4a4c) - Waldur Mastermind)
+- **Workarkound for changed API.** ([23c6904](https://github.com/waldur/waldur-mastermind/commit/23c6904) - Waldur Mastermind)
 - **Extend export/import of data.** ([9f50656](https://github.com/waldur/waldur-mastermind/commit/9f50656) - Waldur Mastermind)
 
-**Waldur Homeport Highlights:**
+### Waldur Homeport Highlights
+
 - Add multiplier configuration options [WAL-9373].
 - Add staff notes.
 - Add new end date setting to recovery view.
 
-**Waldur Helm Highlights:**
+### Waldur Helm Highlights
+
 - Set target version to 7.8.6.
 - Update documentation.
 - Remove leftover path modifications.
 
-**Py Client Highlights:**
+### Py Client Highlights
+
 - Release: bump version to 7.8.6.
 - Update Waldur Python SDK.
 - Update Waldur Python SDK.
 
-**Go Client Highlights:**
+### Go Client Highlights
+
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
@@ -282,12 +298,12 @@
 
 ---
 
-## 7.8.5 - 2025-11-29
+## 7.8.5 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 65 commits across 3 core repositories
-- **Functional Changes:** 503 files changed with +8118/-4037 lines
+- **Functional Changes:** 502 files changed with +8116/-4035 lines
 - **SDK Updates:** 2 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -298,7 +314,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: [59 commits](https://github.com/waldur/waldur-homeport/compare/7.8.4...7.8.5) · 496 files changed (+8027/-4010 lines)
 - **Waldur Helm**: [5 commits](https://github.com/waldur/waldur-helm/compare/7.8.4...7.8.5) · 6 files changed (+89/-25 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.4...7.8.5) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.4...7.8.5)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -315,17 +331,20 @@
 - **Set target version to 7.8.5.** ([bc1f90d](https://github.com/waldur/waldur-helm/commit/bc1f90d) - Waldur Helm)
 - **Set target version to 7.8.5.** ([943480b](https://github.com/waldur/waldur-docker-compose/commit/943480b) - Waldur Docker Compose)
 
-**Waldur Homeport Highlights:**
+### Waldur Homeport Highlights
+
 - Add support for display and management of terminated projects [WAL-9212].
 - Fix sentry crash.
 - Update enums and descriptions from Waldur Mastermind.
 
-**Py Client Highlights:**
+### Py Client Highlights
+
 - Release: bump version to 7.8.5.
 - Update Waldur Python SDK.
 - Update Waldur Python SDK.
 
-**Go Client Highlights:**
+### Go Client Highlights
+
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
@@ -337,12 +356,12 @@
 
 ---
 
-## 7.8.4 - 2025-11-29
+## 7.8.4 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 10 commits across 3 core repositories
-- **Functional Changes:** 4 files changed with +69/-54 lines
+- **Functional Changes:** 3 files changed with +67/-52 lines
 - **SDK Updates:** 1 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -353,7 +372,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: [5 commits](https://github.com/waldur/waldur-homeport/compare/7.8.3...7.8.4)
 - **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/7.8.3...7.8.4) · 2 files changed (+3/-3 lines)
-- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.3...7.8.4) · 2 files changed (+66/-51 lines)
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.3...7.8.4) · 1 files changed (+64/-49 lines)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -369,7 +388,8 @@
 - **Fix either toggle or specific organization can be selected.** ([c506659](https://github.com/waldur/waldur-homeport/commit/c506659) - Waldur Homeport)
 - **Check if WALDUR_OPENPORTAL during routes permission check.** ([349cad4](https://github.com/waldur/waldur-homeport/commit/349cad4) - Waldur Homeport)
 
-**Py Client Highlights:**
+### Py Client Highlights
+
 - Release: bump version to 7.8.4.
 - Update Waldur Python SDK.
 - Update Waldur Python SDK.
@@ -381,12 +401,12 @@
 
 ---
 
-## 7.8.3 - 2025-11-29
+## 7.8.3 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 2 commits across 2 core repositories
-- **Functional Changes:** 3 files changed with +5/-5 lines
+- **Functional Changes:** 2 files changed with +3/-3 lines
 - **SDK Updates:** 2 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -397,7 +417,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: No changes
 - **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.8.2...7.8.3) · 2 files changed (+3/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.2...7.8.3) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.2...7.8.3)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -417,12 +437,12 @@
 
 ---
 
-## 7.8.2 - 2025-11-29
+## 7.8.2 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 2 commits across 2 core repositories
-- **Functional Changes:** 3 files changed with +5/-5 lines
+- **Functional Changes:** 2 files changed with +3/-3 lines
 - **SDK Updates:** 2 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -433,7 +453,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: No changes
 - **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.8.1...7.8.2) · 2 files changed (+3/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.1...7.8.2) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.1...7.8.2)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -446,7 +466,8 @@
 - **Set target version to 7.8.2.** ([8b9a3c2](https://github.com/waldur/waldur-helm/commit/8b9a3c2) - Waldur Helm)
 - **Set target version to 7.8.2.** ([19ef652](https://github.com/waldur/waldur-docker-compose/commit/19ef652) - Waldur Docker Compose)
 
-**Go Client Highlights:**
+### Go Client Highlights
+
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
@@ -458,12 +479,12 @@
 
 ---
 
-## 7.8.1 - 2025-11-29
+## 7.8.1 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 2 commits across 2 core repositories
-- **Functional Changes:** 3 files changed with +5/-5 lines
+- **Functional Changes:** 2 files changed with +3/-3 lines
 
 !!! note "Statistics Note"
     Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
@@ -473,7 +494,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: No changes
 - **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.8.0...7.8.1) · 2 files changed (+3/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.0...7.8.1) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.0...7.8.1)
 - **Waldur Prometheus Exporter**: No changes
 
 ### Notable Changes
@@ -488,12 +509,12 @@
 
 ---
 
-## 7.8.0 - 2025-11-29
+## 7.8.0 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 4 commits across 2 core repositories
-- **Functional Changes:** 5 files changed with +297/-5 lines
+- **Functional Changes:** 4 files changed with +295/-3 lines
 - **SDK Updates:** 1 auto-generated clients updated from OpenAPI schema
 
 !!! note "Statistics Note"
@@ -504,7 +525,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: No changes
 - **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/7.7.9...7.8.0) · 4 files changed (+295/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.9...7.8.0) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.9...7.8.0)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -525,12 +546,12 @@
 
 ---
 
-## 7.7.9 - 2025-11-29
+## 7.7.9 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 2 commits across 2 core repositories
-- **Functional Changes:** 3 files changed with +5/-5 lines
+- **Functional Changes:** 2 files changed with +3/-3 lines
 
 !!! note "Statistics Note"
     Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
@@ -540,7 +561,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: No changes
 - **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.7.8...7.7.9) · 2 files changed (+3/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.8...7.7.9) · 1 files changed (+2/-2 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.8...7.7.9)
 - **Waldur Prometheus Exporter**: No changes
 
 ### Notable Changes
@@ -555,12 +576,12 @@
 
 ---
 
-## 7.7.8 - 2025-11-29
+## 7.7.8 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 8 commits across 2 core repositories
-- **Functional Changes:** 9 files changed with +79/-24 lines
+- **Functional Changes:** 8 files changed with +77/-22 lines
 
 !!! note "Statistics Note"
     Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
@@ -570,7 +591,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: No changes
 - **Waldur Helm**: [6 commits](https://github.com/waldur/waldur-helm/compare/7.7.7...7.7.8) · 7 files changed (+75/-21 lines)
-- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.7...7.7.8) · 2 files changed (+4/-3 lines)
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.7...7.7.8) · 1 files changed (+2/-1 lines)
 - **Waldur Prometheus Exporter**: No changes
 
 ### Notable Changes
@@ -582,7 +603,8 @@
 - **Add settings for course accounts.** ([e9ba76f](https://github.com/waldur/waldur-helm/commit/e9ba76f) - Waldur Helm)
 - **Set target version to 7.7.8.** ([f7cbdf5](https://github.com/waldur/waldur-docker-compose/commit/f7cbdf5) - Waldur Docker Compose)
 
-**Waldur Helm Highlights:**
+### Waldur Helm Highlights
+
 - Set target version to 7.7.8.
 - Add settings for course accounts.
 - Add resources settings to initContainers of waldur beat deployment.
@@ -594,12 +616,12 @@
 
 ---
 
-## 7.7.7 - 2025-11-29
+## 7.7.7 - 2025-11-30
 
 ### Release Summary
 
 - **Release Impact:** 7 commits across 2 core repositories
-- **Functional Changes:** 6 files changed with +54/-10 lines
+- **Functional Changes:** 5 files changed with +47/-8 lines
 
 !!! note "Statistics Note"
     Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
@@ -609,7 +631,7 @@
 - **Waldur Mastermind**: No changes
 - **Waldur Homeport**: No changes
 - **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/7.7.6...7.7.7) · 3 files changed (+7/-7 lines)
-- **Waldur Docker Compose**: [5 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.6...7.7.7) · 3 files changed (+47/-3 lines)
+- **Waldur Docker Compose**: [5 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.6...7.7.7) · 2 files changed (+40/-1 lines)
 - **Waldur Prometheus Exporter**: No changes
 
 ### Notable Changes

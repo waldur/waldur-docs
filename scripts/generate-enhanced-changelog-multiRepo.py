@@ -475,7 +475,8 @@ class MultiRepoChangelogGenerator:
             # Repository-specific highlights
             for repo_name, analysis in all_analyses.items():
                 if analysis['has_changes'] and analysis['commit_count'] > 5:  # Only show repos with significant changes
-                    changelog_parts.append(f"**{repo_name.replace('-', ' ').title()} Highlights:**")
+                    changelog_parts.append(f"### {repo_name.replace('-', ' ').title()} Highlights")
+                    changelog_parts.append("")
                     top_commits = analysis['commits'][:3]  # Top 3 commits
                     for commit in top_commits:
                         clean_subject = self._clean_commit_subject(commit['subject'], 'general')
