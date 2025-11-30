@@ -99,7 +99,7 @@ Test changelog generation:
     - export VERSION=${CI_COMMIT_TAG}
     - PREV_TAG=$(grep -m 1 "##" docs/about/CHANGELOG.md | sed "s/## //" )
     - echo "Testing enhanced changelog generation for $VERSION (since $PREV_TAG)"
-    - python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | grep -A 100 "^## " | head -n -4 > /tmp/new_entry.md
+    - python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
     - echo "Generated enhanced changelog entry:"
     - cat /tmp/new_entry.md
 
@@ -124,7 +124,7 @@ Tag all repositories:
     - PREV_TAG=$(grep -m 1 "##" docs/about/CHANGELOG.md | sed "s/## //" )
     - echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
     # Generate enhanced changelog entry
-    - python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | grep -A 100 "^## " | head -n -4 > /tmp/new_entry.md
+    - python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
     - echo "Generated enhanced changelog entry:"
     - cat /tmp/new_entry.md
     # Update changelog with rotation (keep only last 20 entries)

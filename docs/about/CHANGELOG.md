@@ -4,15 +4,19 @@
 
 ### Release Summary
 
-- **Release Impact:** Minor release with configuration and documentation updates
-- **SDK Updates:** 3 auto-generated clients updated
+- **Release Impact:** 23 commits across 4 core repositories
+- **Functional Changes:** 82 files changed with +4925/-1030 lines
+- **SDK Updates:** 3 auto-generated clients updated from OpenAPI schema
+
+!!! note "Statistics Note"
+    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: No changes
-- **Waldur Homeport**: No changes
-- **Waldur Helm**: No changes
-- **Waldur Docker Compose**: No changes
+- **Waldur Mastermind**: [11 commits](https://github.com/waldur/waldur-mastermind/compare/7.9.0...7.9.1) · 21 files changed (+2791/-557 lines)
+- **Waldur Homeport**: [9 commits](https://github.com/waldur/waldur-homeport/compare/7.9.0...7.9.1) · 54 files changed (+2125/-465 lines)
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/7.9.0...7.9.1) · 7 files changed (+9/-8 lines)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.9.0...7.9.1)
 - **Waldur Prometheus Exporter**: No changes
 
 ### SDK Updates (Auto-generated)
@@ -20,6 +24,27 @@
 - **Python Client**: [3 commits](https://github.com/waldur/py-client/compare/7.9.0...7.9.1)
 - **JavaScript Client**: [7 commits](https://github.com/waldur/js-client/compare/7.9.0...7.9.1)
 - **Go Client**: [3 commits](https://github.com/waldur/go-client/compare/7.9.0...7.9.1)
+
+### Notable Changes
+
+- **Check if WALDUR_OPENPORTAL during routes permission check.** ([349cad4](https://github.com/waldur/waldur-homeport/commit/349cad4) - Waldur Homeport)
+- **Allow set of custom cluster issuer name for cert manager.** ([7ee2d14](https://github.com/waldur/waldur-helm/commit/7ee2d14) - Waldur Helm)
+- **Workarkound for changed API.** ([23c6904](https://github.com/waldur/waldur-mastermind/commit/23c6904) - Waldur Mastermind)
+- **Extend export/import of data.** ([9f50656](https://github.com/waldur/waldur-mastermind/commit/9f50656) - Waldur Mastermind)
+- **Set target version to 7.9.1.** ([7fc5104](https://github.com/waldur/waldur-helm/commit/7fc5104) - Waldur Helm)
+- **Set target version to 7.9.1.** ([c7dc4e7](https://github.com/waldur/waldur-docker-compose/commit/c7dc4e7) - Waldur Docker Compose)
+
+### Waldur Mastermind Highlights
+
+- Workarkound for changed API.
+- Extend export/import of data.
+- Add filter to exclude transitional resources with early pending orders.
+
+### Waldur Homeport Highlights
+
+- Fix bad error message when applying for a an available organization with already open request.
+- Migrate invitation form to react final form.
+- Reallocation limits UI changes.
 
 ### Js Client Highlights
 
@@ -33,18 +58,6 @@
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.1-diff.md)
 
 ---
-================================================================================
-
-SUMMARY:
-Active repositories: 3/8
-Total commits analyzed: 13
-Changelog length: 33 lines
-
-REPOSITORY BREAKDOWN:
-  waldur-mastermind: No changes
-  waldur-homeport: No changes
-  waldur-helm: No changes
-  waldur-docker-compose: No changes
 
 ## 7.9.0 - 2025-11-30
 

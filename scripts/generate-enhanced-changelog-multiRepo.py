@@ -550,26 +550,8 @@ def main():
     try:
         enhanced_changelog, analyses = generator.generate_enhanced_changelog(current_tag, prev_tag)
         
-        print("=" * 80)
-        print("ENHANCED MULTI-REPOSITORY CHANGELOG OUTPUT:")
-        print("=" * 80)
+        # For GitLab CI, just output the changelog without debug info
         print(enhanced_changelog)
-        print("=" * 80)
-        
-        # Summary statistics
-        active_repos = sum(1 for a in analyses.values() if a['has_changes'])
-        total_commits = sum(a['commit_count'] for a in analyses.values())
-        
-        print(f"\nSUMMARY:")
-        print(f"Active repositories: {active_repos}/{len(analyses)}")
-        print(f"Total commits analyzed: {total_commits}")
-        print(f"Changelog length: {len(enhanced_changelog.split(chr(10)))} lines")
-        
-        # Show repository breakdown
-        print(f"\nREPOSITORY BREAKDOWN:")
-        for repo_name, analysis in analyses.items():
-            status = f"{analysis['commit_count']} commits" if analysis['has_changes'] else "No changes"
-            print(f"  {repo_name}: {status}")
         
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
