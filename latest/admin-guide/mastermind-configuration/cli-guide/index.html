@@ -2555,6 +2555,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#load_spack_catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      load_spack_catalog
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#load_user_agreements" class="md-nav__link">
     <span class="md-ellipsis">
       load_user_agreements
@@ -16585,6 +16594,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#load_spack_catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      load_spack_catalog
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#load_user_agreements" class="md-nav__link">
     <span class="md-ellipsis">
       load_user_agreements
@@ -16932,8 +16950,16 @@ positional<span class="w"> </span>arguments:
 <p>Cleanup stale event types in all hooks.</p>
 <h2 id="cleanup_structure">cleanup_structure</h2>
 <p>Delete all Waldur structure data from the database.</p>
-<p>This command removes all Users, Customers, Projects, Offerings, Roles, UserRoles,
-  RolePermissions, Events, Feeds, and related marketplace objects.</p>
+<p>This command removes ALL data including:
+  - Users, Customers, Service Providers, Projects
+  - Marketplace: Categories, Offerings, Plans, Components, Resources, Orders
+  - Permissions: Roles, User Roles, Role Permissions
+  - Accounts: Project/Customer Service Accounts, Course Accounts
+  - Billing: Invoices, Invoice Items, Component Usages
+  - Checklists: Categories, Checklists, Questions, Completions, Answers
+  - System: Events, Feeds, Offering Users</p>
+<p>The cleanup follows reverse dependency order to prevent foreign key violations.
+  Invoice item signals are temporarily disconnected to avoid race conditions.</p>
 <p>IMPORTANT: This is a destructive operation that deletes ALL data. Use --dry-run to preview changes.</p>
 <p>Usage:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -16941,7 +16967,7 @@ positional<span class="w"> </span>arguments:
 <span class="normal">3</span>
 <span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">waldur cleanup_structure --dry-run</span>
 <span class="l l-Scalar l-Scalar-Plain">waldur cleanup_structure</span>
-<span class="l l-Scalar l-Scalar-Plain">waldur cleanup_structure --skip-users</span>
+<span class="l l-Scalar l-Scalar-Plain">waldur cleanup_structure --skip-users --skip-roles</span>
 <span class="l l-Scalar l-Scalar-Plain">waldur cleanup_structure --skip-rabbitmq-messages</span>
 </code></pre></div></td></tr></table></div>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -17149,9 +17175,17 @@ options:
 <span class="w">                        </span>Export<span class="w"> </span>only<span class="w"> </span>specific<span class="w"> </span>roles<span class="w"> </span>by<span class="w"> </span>name
 </code></pre></div></td></tr></table></div>
 <h2 id="export_structure">export_structure</h2>
-<p>Export Waldur structure data to JSON format.</p>
-<p>This command exports Users, Customers, Projects, Offerings, Roles, UserRoles,
-  and RolePermissions to a comprehensive JSON file for analysis or backup.</p>
+<p>Export comprehensive Waldur structure data to JSON format.</p>
+<p>This command exports a complete Waldur system structure including:
+  - Users, Customers, Service Providers, Projects
+  - Marketplace: Categories, Offerings, Plans, Components, Resources, Orders
+  - Permissions: Roles, User Roles, Role Permissions
+  - Accounts: Project/Customer Service Accounts, Course Accounts
+  - Billing: Invoices, Invoice Items, Component Usages, Resource Plan Periods
+  - Checklists: Categories, Checklists, Questions, Completions, Answers
+  - System: Authentication Tokens, Offering Users</p>
+<p>The exported JSON file can be used for backup, migration, analysis, or import
+  using the import_structure command. All UUIDs and relationships are preserved.</p>
 <p>Usage:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">waldur export_structure -o structure.json</span>
@@ -17354,9 +17388,17 @@ positional<span class="w"> </span>arguments:
 <span class="w">  </span>roles_file<span class="w">  </span>Specifies<span class="w"> </span>location<span class="w"> </span>of<span class="w"> </span>roles<span class="w"> </span>configuration<span class="w"> </span>file.
 </code></pre></div></td></tr></table></div>
 <h2 id="import_structure">import_structure</h2>
-<p>Import Waldur structure data from JSON format.</p>
-<p>This command imports Users, Customers, Projects, Offerings, Roles, UserRoles,
-  and RolePermissions from a JSON file created by export_structure command.</p>
+<p>Import comprehensive Waldur structure data from JSON format.</p>
+<p>This command imports a complete Waldur system structure including:
+  - Users, Customers, Service Providers, Projects
+  - Marketplace: Categories, Offerings, Plans, Components, Resources, Orders
+  - Permissions: Roles, User Roles, Role Permissions
+  - Accounts: Project/Customer Service Accounts, Course Accounts
+  - Billing: Invoices, Invoice Items, Component Usages, Resource Plan Periods
+  - Checklists: Categories, Checklists, Questions, Completions, Answers
+  - System: Authentication Tokens, Offering Users</p>
+<p>The import maintains dependency order and uses transaction isolation for safety.
+  RabbitMQ messages are automatically disabled during import to prevent billing issues.</p>
 <p>Usage:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -17364,7 +17406,7 @@ positional<span class="w"> </span>arguments:
 <span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">waldur import_structure -i structure.json</span>
 <span class="l l-Scalar l-Scalar-Plain">waldur import_structure --input structure.json --update</span>
 <span class="l l-Scalar l-Scalar-Plain">waldur import_structure -i structure.json --skip-users --dry-run</span>
-<span class="l l-Scalar l-Scalar-Plain">waldur import_structure -i structure.json --skip-rabbitmq-messages</span>
+<span class="l l-Scalar l-Scalar-Plain">waldur import_structure -i structure.json --skip-rabbitmq-messages --skip-roles</span>
 </code></pre></div></td></tr></table></div>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -17379,9 +17421,10 @@ positional<span class="w"> </span>arguments:
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
-<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>import_structure<span class="w"> </span>-i<span class="w"> </span>INPUT<span class="w"> </span><span class="o">[</span>--update<span class="o">]</span><span class="w"> </span><span class="o">[</span>--skip-users<span class="o">]</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>import_structure<span class="w"> </span>-i<span class="w"> </span>INPUT<span class="w"> </span><span class="o">[</span>--update<span class="o">]</span><span class="w"> </span><span class="o">[</span>--skip-users<span class="o">]</span>
 <span class="w">                               </span><span class="o">[</span>--skip-roles<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span>
-<span class="w">                               </span><span class="o">[</span>--skip-rabbitmq-messages<span class="o">]</span>
+<span class="w">                               </span><span class="o">[</span>--skip-rabbitmq-messages<span class="o">]</span><span class="w"> </span><span class="o">[</span>--skip-user-sync<span class="o">]</span>
 
 options:
 <span class="w">  </span>-i<span class="w"> </span>INPUT,<span class="w"> </span>--input<span class="w"> </span>INPUT
@@ -17393,6 +17436,7 @@ options:
 <span class="w">  </span>--skip-rabbitmq-messages
 <span class="w">                        </span>Skip<span class="w"> </span>sending<span class="w"> </span>RabbitMQ<span class="w"> </span>messages<span class="w"> </span>during<span class="w"> </span>import
 <span class="w">                        </span><span class="o">(</span>recommended<span class="w"> </span><span class="k">for</span><span class="w"> </span>large<span class="w"> </span>imports<span class="o">)</span>.
+<span class="w">  </span>--skip-user-sync<span class="w">      </span>Skip<span class="w"> </span>syncing<span class="w"> </span>user<span class="w"> </span>activation<span class="w"> </span>status<span class="w"> </span>after<span class="w"> </span>import.
 </code></pre></div></td></tr></table></div>
 <h2 id="import_tenant_quotas">import_tenant_quotas</h2>
 <p>Import OpenStack tenant quotas to marketplace.</p>
@@ -17417,7 +17461,7 @@ positional<span class="w"> </span>arguments:
 <span class="w">  </span>category<span class="w">  </span>List<span class="w"> </span>of<span class="w"> </span>categories<span class="w"> </span>to<span class="w"> </span>load
 </code></pre></div></td></tr></table></div>
 <h2 id="load_eessi_catalog">load_eessi_catalog</h2>
-<p>Load EESSI software catalog data into marketplace software catalog models</p>
+<p>Load EESSI software catalog data using the unified catalog loader</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -17434,23 +17478,29 @@ positional<span class="w"> </span>arguments:
 <span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>load_eessi_catalog<span class="w"> </span><span class="o">[</span>--json-file<span class="w"> </span>JSON_FILE<span class="o">]</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>load_eessi_catalog<span class="w"> </span><span class="o">[</span>--json-file<span class="w"> </span>JSON_FILE<span class="o">]</span>
 <span class="w">                                 </span><span class="o">[</span>--catalog-name<span class="w"> </span>CATALOG_NAME<span class="o">]</span>
 <span class="w">                                 </span><span class="o">[</span>--catalog-version<span class="w"> </span>CATALOG_VERSION<span class="o">]</span>
-<span class="w">                                 </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--update-existing<span class="o">]</span><span class="w"> </span><span class="o">[</span>--no-sync<span class="o">]</span>
+<span class="w">                                 </span><span class="o">[</span>--api-url<span class="w"> </span>API_URL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--include-extensions<span class="o">]</span>
+<span class="w">                                 </span><span class="o">[</span>--no-extensions<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span>
+<span class="w">                                 </span><span class="o">[</span>--update-existing<span class="o">]</span><span class="w"> </span><span class="o">[</span>--no-sync<span class="o">]</span>
 
 options:
 <span class="w">  </span>--json-file<span class="w"> </span>JSON_FILE
-<span class="w">                        </span>Path<span class="w"> </span>to<span class="w"> </span>EESSI<span class="w"> </span>JSON<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>eessi.model.json<span class="o">)</span>
+<span class="w">                        </span>Path<span class="w"> </span>to<span class="w"> </span>JSON<span class="w"> </span>file<span class="w"> </span>containing<span class="w"> </span>EESSI<span class="w"> </span>catalog<span class="w"> </span>data
 <span class="w">  </span>--catalog-name<span class="w"> </span>CATALOG_NAME
 <span class="w">                        </span>Name<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>software<span class="w"> </span>catalog<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>EESSI<span class="o">)</span>
 <span class="w">  </span>--catalog-version<span class="w"> </span>CATALOG_VERSION
-<span class="w">                        </span>EESSI<span class="w"> </span>catalog<span class="w"> </span>version<span class="w"> </span><span class="o">(</span>e.g.,<span class="w"> </span><span class="m">2023</span>.06<span class="o">)</span>.<span class="w"> </span>If<span class="w"> </span>not
-<span class="w">                        </span>provided,<span class="w"> </span>will<span class="w"> </span>try<span class="w"> </span>to<span class="w"> </span>extract<span class="w"> </span>from<span class="w"> </span>JSON
+<span class="w">                        </span>EESSI<span class="w"> </span>catalog<span class="w"> </span>version<span class="w"> </span><span class="o">(</span>auto-detect<span class="w"> </span><span class="k">if</span><span class="w"> </span>not<span class="w"> </span>provided<span class="o">)</span>
+<span class="w">  </span>--api-url<span class="w"> </span>API_URL<span class="w">     </span>Base<span class="w"> </span>URL<span class="w"> </span><span class="k">for</span><span class="w"> </span>EESSI<span class="w"> </span>API<span class="w"> </span>data
+<span class="w">  </span>--include-extensions<span class="w">  </span>Include<span class="w"> </span>extension<span class="w"> </span>packages<span class="w"> </span><span class="o">(</span>Python,<span class="w"> </span>R<span class="w"> </span>packages,<span class="w"> </span>etc.<span class="o">)</span>
+<span class="w">  </span>--no-extensions<span class="w">       </span>Exclude<span class="w"> </span>extension<span class="w"> </span>packages
 <span class="w">  </span>--dry-run<span class="w">             </span>Show<span class="w"> </span>what<span class="w"> </span>would<span class="w"> </span>be<span class="w"> </span><span class="k">done</span><span class="w"> </span>without<span class="w"> </span>making<span class="w"> </span>changes
-<span class="w">  </span>--update-existing<span class="w">     </span>Update<span class="w"> </span>existing<span class="w"> </span>catalog<span class="w"> </span>data<span class="w"> </span><span class="k">if</span><span class="w"> </span>it<span class="w"> </span>exists
-<span class="w">  </span>--no-sync<span class="w">             </span>Do<span class="w"> </span>not<span class="w"> </span>remove<span class="w"> </span>records<span class="w"> </span>missing<span class="w"> </span>from<span class="w"> </span>JSON<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>default:
-<span class="w">                        </span>sync<span class="w"> </span>enabled<span class="o">)</span>
+<span class="w">  </span>--update-existing<span class="w">     </span>Update<span class="w"> </span>existing<span class="w"> </span>catalog<span class="w"> </span>data
+<span class="w">  </span>--no-sync<span class="w">             </span>Preserve<span class="w"> </span>existing<span class="w"> </span>records<span class="w"> </span>not<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>data
 </code></pre></div></td></tr></table></div>
 <h2 id="load_features">load_features</h2>
 <p>Import features in JSON format</p>
@@ -17479,6 +17529,34 @@ options:
 
 positional<span class="w"> </span>arguments:
 <span class="w">  </span>notifications_file<span class="w">  </span>Specifies<span class="w"> </span>location<span class="w"> </span>of<span class="w"> </span>notifications<span class="w"> </span>file.
+</code></pre></div></td></tr></table></div>
+<h2 id="load_spack_catalog">load_spack_catalog</h2>
+<p>Load Spack software catalog data using the unified catalog loader</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>load_spack_catalog<span class="w"> </span><span class="o">[</span>--catalog-name<span class="w"> </span>CATALOG_NAME<span class="o">]</span>
+<span class="w">                                 </span><span class="o">[</span>--catalog-version<span class="w"> </span>CATALOG_VERSION<span class="o">]</span>
+<span class="w">                                 </span><span class="o">[</span>--data-url<span class="w"> </span>DATA_URL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span>
+<span class="w">                                 </span><span class="o">[</span>--update-existing<span class="o">]</span>
+
+options:
+<span class="w">  </span>--catalog-name<span class="w"> </span>CATALOG_NAME
+<span class="w">                        </span>Name<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>software<span class="w"> </span>catalog<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>Spack<span class="o">)</span>
+<span class="w">  </span>--catalog-version<span class="w"> </span>CATALOG_VERSION
+<span class="w">                        </span>Spack<span class="w"> </span>catalog<span class="w"> </span>version<span class="w"> </span><span class="o">(</span>auto-detect<span class="w"> </span><span class="k">if</span><span class="w"> </span>not<span class="w"> </span>provided<span class="o">)</span>
+<span class="w">  </span>--data-url<span class="w"> </span>DATA_URL<span class="w">   </span>URL<span class="w"> </span><span class="k">for</span><span class="w"> </span>Spack<span class="w"> </span>repology.json<span class="w"> </span>data
+<span class="w">  </span>--dry-run<span class="w">             </span>Show<span class="w"> </span>what<span class="w"> </span>would<span class="w"> </span>be<span class="w"> </span><span class="k">done</span><span class="w"> </span>without<span class="w"> </span>making<span class="w"> </span>changes
+<span class="w">  </span>--update-existing<span class="w">     </span>Update<span class="w"> </span>existing<span class="w"> </span>catalog<span class="w"> </span>data<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="nb">true</span><span class="o">)</span>
 </code></pre></div></td></tr></table></div>
 <h2 id="load_user_agreements">load_user_agreements</h2>
 <p>Imports privacy policy and terms of service into DB</p>
@@ -17842,7 +17920,7 @@ options:
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-29
+    2025-12-02
   </span>
 
     
