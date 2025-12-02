@@ -14337,6 +14337,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restore
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#set-resource-state-to-erred" class="md-nav__link">
     <span class="md-ellipsis">
       Set resource state to erred
@@ -16129,6 +16138,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restore
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#set-resource-state-to-erred" class="md-nav__link">
     <span class="md-ellipsis">
       Set resource state to erred
@@ -16365,6 +16383,11 @@
 <td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
 <td style="text-align: left;"><code>/api/marketplace-provider-resources/{uuid}/refresh_last_sync/</code></td>
 <td style="text-align: left;"><a href="#refresh-last-sync-time">Refresh last sync time</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
+<td style="text-align: left;"><code>/api/marketplace-provider-resources/{uuid}/restore/</code></td>
+<td style="text-align: left;"><a href="#restore">Restore</a></td>
 </tr>
 <tr>
 <td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
@@ -20867,9 +20890,602 @@
 </div>
 </div>
 <hr>
+<h3 id="restore">Restore</h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="17:6"><input checked id="__tabbed_17_1" name="__tabbed_17" type="radio"><input id="__tabbed_17_2" name="__tabbed_17" type="radio"><input id="__tabbed_17_3" name="__tabbed_17" type="radio"><input id="__tabbed_17_4" name="__tabbed_17" type="radio"><input id="__tabbed_17_5" name="__tabbed_17" type="radio"><input id="__tabbed_17_6" name="__tabbed_17" type="radio"><div class="tabbed-labels"><label for="__tabbed_17_1">HTTPie</label><label for="__tabbed_17_2">Python</label><label for="__tabbed_17_3">TypeScript</label><label for="__tabbed_17_4">Path Parameters</label><label for="__tabbed_17_5">Request Body (required)</label><label for="__tabbed_17_6">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/marketplace-provider-resources/a1b2c3d4-e5f6-7890-abcd-ef1234567890/restore/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">offering</span><span class="o">=</span><span class="s2">"https://api.example.com/api/offering/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">name</span><span class="o">=</span><span class="s2">"my-awesome-marketplace-provider-resource"</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.resource_request</span> <span class="kn">import</span> <span class="n">ResourceRequest</span> <span class="c1"># (1)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_provider_resources</span> <span class="kn">import</span> <span class="n">marketplace_provider_resources_restore</span> <span class="c1"># (2)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+
+<span class="n">body_data</span> <span class="o">=</span> <span class="n">ResourceRequest</span><span class="p">(</span>
+    <span class="n">offering</span><span class="o">=</span><span class="s2">"https://api.example.com/api/offering/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"my-awesome-marketplace-provider-resource"</span>
+<span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_provider_resources_restore</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">body</span><span class="o">=</span><span class="n">body_data</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Model Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/models/resource_request.py"><code>ResourceRequest</code></a></li>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/marketplace_provider_resources/marketplace_provider_resources_restore.py"><code>marketplace_provider_resources_restore</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">marketplaceProviderResourcesRestore</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">marketplaceProviderResourcesRestore</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">"uuid"</span><span class="o">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">"offering"</span><span class="o">:</span><span class="w"> </span><span class="s2">"https://api.example.com/api/offering/a1b2c3d4-e5f6-7890-abcd-ef1234567890/"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"name"</span><span class="o">:</span><span class="w"> </span><span class="s2">"my-awesome-marketplace-provider-resource"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uuid</code></td>
+<td>string (uuid)</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>offering</code></td>
+<td>string (uri)</td>
+<td>✓</td>
+<td></td>
+</tr>
+<tr>
+<td><code>plan</code></td>
+<td>string (uri)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>✓</td>
+<td></td>
+</tr>
+<tr>
+<td><code>slug</code></td>
+<td>string</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>string (date)</td>
+<td></td>
+<td>The date is inclusive. Once reached, a resource will be scheduled for termination.</td>
+</tr>
+<tr>
+<td><code>downscaled</code></td>
+<td>boolean</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>paused</code></td>
+<td>boolean</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>200</code></strong> - </p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>offering</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_description</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_image</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_thumbnail</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_type</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_shared</code></td>
+<td>boolean</td>
+<td>Accessible to all customers.</td>
+</tr>
+<tr>
+<td><code>offering_billable</code></td>
+<td>boolean</td>
+<td>Purchase and usage is invoiced.</td>
+</tr>
+<tr>
+<td><code>offering_plugin_options</code></td>
+<td>any</td>
+<td>Public data used by specific plugin, such as storage mode for OpenStack.</td>
+</tr>
+<tr>
+<td><code>provider_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>provider_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>provider_slug</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>category_title</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>category_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>category_icon</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>plan</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>plan_unit</code></td>
+<td>any</td>
+<td></td>
+</tr>
+<tr>
+<td><code>plan_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>plan_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>plan_description</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>attributes</code></td>
+<td>object (free-form)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>limits</code></td>
+<td>object (free-form)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created</code></td>
+<td>string (date-time)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>modified</code></td>
+<td>string (date-time)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>state</code></td>
+<td>any</td>
+<td></td>
+</tr>
+<tr>
+<td><code>resource_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>backend_id</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>effective_id</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>resource_type</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project_description</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project_end_date</code></td>
+<td>string (date)</td>
+<td>The date is inclusive. Once reached, all project resource will be scheduled for termination.</td>
+</tr>
+<tr>
+<td><code>project_end_date_requested_by</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_slug</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_offering_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_offering_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_offering_slug</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>backend_metadata</code></td>
+<td>any</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_usage_based</code></td>
+<td>boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_limit_based</code></td>
+<td>boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>slug</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>current_usages</code></td>
+<td>object (free-form)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>can_terminate</code></td>
+<td>boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>report</code></td>
+<td>array of objects</td>
+<td></td>
+</tr>
+<tr>
+<td><code>report.header</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>report.body</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>string (date)</td>
+<td>The date is inclusive. Once reached, a resource will be scheduled for termination.</td>
+</tr>
+<tr>
+<td><code>end_date_requested_by</code></td>
+<td>string (uri)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>username</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>limit_usage</code></td>
+<td>object (free-form)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>downscaled</code></td>
+<td>boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>restrict_member_access</code></td>
+<td>boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>paused</code></td>
+<td>boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>endpoints</code></td>
+<td>array of objects</td>
+<td></td>
+</tr>
+<tr>
+<td><code>endpoints.uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>endpoints.name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>endpoints.url</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>error_message</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>error_traceback</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td>any</td>
+<td></td>
+</tr>
+<tr>
+<td><code>available_actions</code></td>
+<td>array of strings</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_sync</code></td>
+<td>string (date-time)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>order_in_progress</code></td>
+<td>any</td>
+<td></td>
+</tr>
+<tr>
+<td><code>creation_order</code></td>
+<td>any</td>
+<td></td>
+</tr>
+<tr>
+<td><code>service_settings_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project_slug</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_slug</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_requires_reconsent</code></td>
+<td>boolean</td>
+<td>Check if the current user needs to re-consent for this resource's offering.</td>
+</tr>
+<tr>
+<td><code>renewal_date</code></td>
+<td>object (free-form)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<hr>
 <h3 id="set-resource-state-to-erred">Set resource state to erred</h3>
 <p>Allows a service provider to manually set the state of a resource to 'erred'. An error message and traceback can be provided.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="17:6"><input checked id="__tabbed_17_1" name="__tabbed_17" type="radio"><input id="__tabbed_17_2" name="__tabbed_17" type="radio"><input id="__tabbed_17_3" name="__tabbed_17" type="radio"><input id="__tabbed_17_4" name="__tabbed_17" type="radio"><input id="__tabbed_17_5" name="__tabbed_17" type="radio"><input id="__tabbed_17_6" name="__tabbed_17" type="radio"><div class="tabbed-labels"><label for="__tabbed_17_1">HTTPie</label><label for="__tabbed_17_2">Python</label><label for="__tabbed_17_3">TypeScript</label><label for="__tabbed_17_4">Path Parameters</label><label for="__tabbed_17_5">Request Body</label><label for="__tabbed_17_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="18:6"><input checked id="__tabbed_18_1" name="__tabbed_18" type="radio"><input id="__tabbed_18_2" name="__tabbed_18" type="radio"><input id="__tabbed_18_3" name="__tabbed_18" type="radio"><input id="__tabbed_18_4" name="__tabbed_18" type="radio"><input id="__tabbed_18_5" name="__tabbed_18" type="radio"><input id="__tabbed_18_6" name="__tabbed_18" type="radio"><div class="tabbed-labels"><label for="__tabbed_18_1">HTTPie</label><label for="__tabbed_18_2">Python</label><label for="__tabbed_18_3">TypeScript</label><label for="__tabbed_18_4">Path Parameters</label><label for="__tabbed_18_5">Request Body</label><label for="__tabbed_18_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -20996,7 +21612,7 @@
 <hr>
 <h3 id="set-resource-state-to-ok">Set resource state to OK</h3>
 <p>Allows a service provider to manually set the state of a resource to 'OK', clearing any previous error messages.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="18:5"><input checked id="__tabbed_18_1" name="__tabbed_18" type="radio"><input id="__tabbed_18_2" name="__tabbed_18" type="radio"><input id="__tabbed_18_3" name="__tabbed_18" type="radio"><input id="__tabbed_18_4" name="__tabbed_18" type="radio"><input id="__tabbed_18_5" name="__tabbed_18" type="radio"><div class="tabbed-labels"><label for="__tabbed_18_1">HTTPie</label><label for="__tabbed_18_2">Python</label><label for="__tabbed_18_3">TypeScript</label><label for="__tabbed_18_4">Path Parameters</label><label for="__tabbed_18_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="19:5"><input checked id="__tabbed_19_1" name="__tabbed_19" type="radio"><input id="__tabbed_19_2" name="__tabbed_19" type="radio"><input id="__tabbed_19_3" name="__tabbed_19" type="radio"><input id="__tabbed_19_4" name="__tabbed_19" type="radio"><input id="__tabbed_19_5" name="__tabbed_19" type="radio"><div class="tabbed-labels"><label for="__tabbed_19_1">HTTPie</label><label for="__tabbed_19_2">Python</label><label for="__tabbed_19_3">TypeScript</label><label for="__tabbed_19_4">Path Parameters</label><label for="__tabbed_19_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -21091,7 +21707,7 @@
 <hr>
 <h3 id="set-resource-backend-id">Set resource backend ID</h3>
 <p>Allows a service provider to set or update the backend ID for a resource, linking it to an external system's identifier.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="19:6"><input checked id="__tabbed_19_1" name="__tabbed_19" type="radio"><input id="__tabbed_19_2" name="__tabbed_19" type="radio"><input id="__tabbed_19_3" name="__tabbed_19" type="radio"><input id="__tabbed_19_4" name="__tabbed_19" type="radio"><input id="__tabbed_19_5" name="__tabbed_19" type="radio"><input id="__tabbed_19_6" name="__tabbed_19" type="radio"><div class="tabbed-labels"><label for="__tabbed_19_1">HTTPie</label><label for="__tabbed_19_2">Python</label><label for="__tabbed_19_3">TypeScript</label><label for="__tabbed_19_4">Path Parameters</label><label for="__tabbed_19_5">Request Body</label><label for="__tabbed_19_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="20:6"><input checked id="__tabbed_20_1" name="__tabbed_20" type="radio"><input id="__tabbed_20_2" name="__tabbed_20" type="radio"><input id="__tabbed_20_3" name="__tabbed_20" type="radio"><input id="__tabbed_20_4" name="__tabbed_20" type="radio"><input id="__tabbed_20_5" name="__tabbed_20" type="radio"><input id="__tabbed_20_6" name="__tabbed_20" type="radio"><div class="tabbed-labels"><label for="__tabbed_20_1">HTTPie</label><label for="__tabbed_20_2">Python</label><label for="__tabbed_20_3">TypeScript</label><label for="__tabbed_20_4">Path Parameters</label><label for="__tabbed_20_5">Request Body</label><label for="__tabbed_20_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -21227,7 +21843,7 @@
 <hr>
 <h3 id="set-resource-backend-metadata">Set resource backend metadata</h3>
 <p>Allows a service provider to set or update the backend-specific metadata for a resource.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="20:6"><input checked id="__tabbed_20_1" name="__tabbed_20" type="radio"><input id="__tabbed_20_2" name="__tabbed_20" type="radio"><input id="__tabbed_20_3" name="__tabbed_20" type="radio"><input id="__tabbed_20_4" name="__tabbed_20" type="radio"><input id="__tabbed_20_5" name="__tabbed_20" type="radio"><input id="__tabbed_20_6" name="__tabbed_20" type="radio"><div class="tabbed-labels"><label for="__tabbed_20_1">HTTPie</label><label for="__tabbed_20_2">Python</label><label for="__tabbed_20_3">TypeScript</label><label for="__tabbed_20_4">Path Parameters</label><label for="__tabbed_20_5">Request Body (required)</label><label for="__tabbed_20_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="21:6"><input checked id="__tabbed_21_1" name="__tabbed_21" type="radio"><input id="__tabbed_21_2" name="__tabbed_21" type="radio"><input id="__tabbed_21_3" name="__tabbed_21" type="radio"><input id="__tabbed_21_4" name="__tabbed_21" type="radio"><input id="__tabbed_21_5" name="__tabbed_21" type="radio"><input id="__tabbed_21_6" name="__tabbed_21" type="radio"><div class="tabbed-labels"><label for="__tabbed_21_1">HTTPie</label><label for="__tabbed_21_2">Python</label><label for="__tabbed_21_3">TypeScript</label><label for="__tabbed_21_4">Path Parameters</label><label for="__tabbed_21_5">Request Body (required)</label><label for="__tabbed_21_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -21375,7 +21991,7 @@
 <hr>
 <h3 id="set-downscaled-flag-for-resource">Set downscaled flag for resource</h3>
 <p>Sets the 'downscaled' flag for a resource. Requires staff permissions.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="21:6"><input checked id="__tabbed_21_1" name="__tabbed_21" type="radio"><input id="__tabbed_21_2" name="__tabbed_21" type="radio"><input id="__tabbed_21_3" name="__tabbed_21" type="radio"><input id="__tabbed_21_4" name="__tabbed_21" type="radio"><input id="__tabbed_21_5" name="__tabbed_21" type="radio"><input id="__tabbed_21_6" name="__tabbed_21" type="radio"><div class="tabbed-labels"><label for="__tabbed_21_1">HTTPie</label><label for="__tabbed_21_2">Python</label><label for="__tabbed_21_3">TypeScript</label><label for="__tabbed_21_4">Path Parameters</label><label for="__tabbed_21_5">Request Body</label><label for="__tabbed_21_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="22:6"><input checked id="__tabbed_22_1" name="__tabbed_22" type="radio"><input id="__tabbed_22_2" name="__tabbed_22" type="radio"><input id="__tabbed_22_3" name="__tabbed_22" type="radio"><input id="__tabbed_22_4" name="__tabbed_22" type="radio"><input id="__tabbed_22_5" name="__tabbed_22" type="radio"><input id="__tabbed_22_6" name="__tabbed_22" type="radio"><div class="tabbed-labels"><label for="__tabbed_22_1">HTTPie</label><label for="__tabbed_22_2">Python</label><label for="__tabbed_22_3">TypeScript</label><label for="__tabbed_22_4">Path Parameters</label><label for="__tabbed_22_5">Request Body</label><label for="__tabbed_22_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -21511,7 +22127,7 @@
 <hr>
 <h3 id="set-end-date-by-provider">Set end date by provider</h3>
 <p>Allows a service provider to set or update the end date for a resource, scheduling it for termination. A notification is sent to the consumer.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="22:6"><input checked id="__tabbed_22_1" name="__tabbed_22" type="radio"><input id="__tabbed_22_2" name="__tabbed_22" type="radio"><input id="__tabbed_22_3" name="__tabbed_22" type="radio"><input id="__tabbed_22_4" name="__tabbed_22" type="radio"><input id="__tabbed_22_5" name="__tabbed_22" type="radio"><input id="__tabbed_22_6" name="__tabbed_22" type="radio"><div class="tabbed-labels"><label for="__tabbed_22_1">HTTPie</label><label for="__tabbed_22_2">Python</label><label for="__tabbed_22_3">TypeScript</label><label for="__tabbed_22_4">Path Parameters</label><label for="__tabbed_22_5">Request Body</label><label for="__tabbed_22_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="23:6"><input checked id="__tabbed_23_1" name="__tabbed_23" type="radio"><input id="__tabbed_23_2" name="__tabbed_23" type="radio"><input id="__tabbed_23_3" name="__tabbed_23" type="radio"><input id="__tabbed_23_4" name="__tabbed_23" type="radio"><input id="__tabbed_23_5" name="__tabbed_23" type="radio"><input id="__tabbed_23_6" name="__tabbed_23" type="radio"><div class="tabbed-labels"><label for="__tabbed_23_1">HTTPie</label><label for="__tabbed_23_2">Python</label><label for="__tabbed_23_3">TypeScript</label><label for="__tabbed_23_4">Path Parameters</label><label for="__tabbed_23_5">Request Body</label><label for="__tabbed_23_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -21635,7 +22251,7 @@
 <hr>
 <h3 id="set-end-date-of-the-resource-by-staff">Set end date of the resource by staff</h3>
 <p>Allows a staff user to set or update the end date for a resource, which will schedule it for termination.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="23:6"><input checked id="__tabbed_23_1" name="__tabbed_23" type="radio"><input id="__tabbed_23_2" name="__tabbed_23" type="radio"><input id="__tabbed_23_3" name="__tabbed_23" type="radio"><input id="__tabbed_23_4" name="__tabbed_23" type="radio"><input id="__tabbed_23_5" name="__tabbed_23" type="radio"><input id="__tabbed_23_6" name="__tabbed_23" type="radio"><div class="tabbed-labels"><label for="__tabbed_23_1">HTTPie</label><label for="__tabbed_23_2">Python</label><label for="__tabbed_23_3">TypeScript</label><label for="__tabbed_23_4">Path Parameters</label><label for="__tabbed_23_5">Request Body</label><label for="__tabbed_23_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="24:6"><input checked id="__tabbed_24_1" name="__tabbed_24" type="radio"><input id="__tabbed_24_2" name="__tabbed_24" type="radio"><input id="__tabbed_24_3" name="__tabbed_24" type="radio"><input id="__tabbed_24_4" name="__tabbed_24" type="radio"><input id="__tabbed_24_5" name="__tabbed_24" type="radio"><input id="__tabbed_24_6" name="__tabbed_24" type="radio"><div class="tabbed-labels"><label for="__tabbed_24_1">HTTPie</label><label for="__tabbed_24_2">Python</label><label for="__tabbed_24_3">TypeScript</label><label for="__tabbed_24_4">Path Parameters</label><label for="__tabbed_24_5">Request Body</label><label for="__tabbed_24_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -21759,7 +22375,7 @@
 <hr>
 <h3 id="set-resource-limits">Set resource limits</h3>
 <p>Allows a service provider to directly set the limits for a resource. This is typically used for administrative changes or backend synchronization, bypassing the normal order process.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="24:6"><input checked id="__tabbed_24_1" name="__tabbed_24" type="radio"><input id="__tabbed_24_2" name="__tabbed_24" type="radio"><input id="__tabbed_24_3" name="__tabbed_24" type="radio"><input id="__tabbed_24_4" name="__tabbed_24" type="radio"><input id="__tabbed_24_5" name="__tabbed_24" type="radio"><input id="__tabbed_24_6" name="__tabbed_24" type="radio"><div class="tabbed-labels"><label for="__tabbed_24_1">HTTPie</label><label for="__tabbed_24_2">Python</label><label for="__tabbed_24_3">TypeScript</label><label for="__tabbed_24_4">Path Parameters</label><label for="__tabbed_24_5">Request Body (required)</label><label for="__tabbed_24_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="25:6"><input checked id="__tabbed_25_1" name="__tabbed_25" type="radio"><input id="__tabbed_25_2" name="__tabbed_25" type="radio"><input id="__tabbed_25_3" name="__tabbed_25" type="radio"><input id="__tabbed_25_4" name="__tabbed_25" type="radio"><input id="__tabbed_25_5" name="__tabbed_25" type="radio"><input id="__tabbed_25_6" name="__tabbed_25" type="radio"><div class="tabbed-labels"><label for="__tabbed_25_1">HTTPie</label><label for="__tabbed_25_2">Python</label><label for="__tabbed_25_3">TypeScript</label><label for="__tabbed_25_4">Path Parameters</label><label for="__tabbed_25_5">Request Body (required)</label><label for="__tabbed_25_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -21907,7 +22523,7 @@
 <hr>
 <h3 id="set-paused-flag-for-resource">Set paused flag for resource</h3>
 <p>Sets the 'paused' flag for a resource. Requires staff permissions.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="25:6"><input checked id="__tabbed_25_1" name="__tabbed_25" type="radio"><input id="__tabbed_25_2" name="__tabbed_25" type="radio"><input id="__tabbed_25_3" name="__tabbed_25" type="radio"><input id="__tabbed_25_4" name="__tabbed_25" type="radio"><input id="__tabbed_25_5" name="__tabbed_25" type="radio"><input id="__tabbed_25_6" name="__tabbed_25" type="radio"><div class="tabbed-labels"><label for="__tabbed_25_1">HTTPie</label><label for="__tabbed_25_2">Python</label><label for="__tabbed_25_3">TypeScript</label><label for="__tabbed_25_4">Path Parameters</label><label for="__tabbed_25_5">Request Body</label><label for="__tabbed_25_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="26:6"><input checked id="__tabbed_26_1" name="__tabbed_26" type="radio"><input id="__tabbed_26_2" name="__tabbed_26" type="radio"><input id="__tabbed_26_3" name="__tabbed_26" type="radio"><input id="__tabbed_26_4" name="__tabbed_26" type="radio"><input id="__tabbed_26_5" name="__tabbed_26" type="radio"><input id="__tabbed_26_6" name="__tabbed_26" type="radio"><div class="tabbed-labels"><label for="__tabbed_26_1">HTTPie</label><label for="__tabbed_26_2">Python</label><label for="__tabbed_26_3">TypeScript</label><label for="__tabbed_26_4">Path Parameters</label><label for="__tabbed_26_5">Request Body</label><label for="__tabbed_26_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -22043,7 +22659,7 @@
 <hr>
 <h3 id="set-restrict-member-access-flag">Set restrict member access flag</h3>
 <p>Sets the 'restrict_member_access' flag for a resource. Requires staff permissions.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="26:6"><input checked id="__tabbed_26_1" name="__tabbed_26" type="radio"><input id="__tabbed_26_2" name="__tabbed_26" type="radio"><input id="__tabbed_26_3" name="__tabbed_26" type="radio"><input id="__tabbed_26_4" name="__tabbed_26" type="radio"><input id="__tabbed_26_5" name="__tabbed_26" type="radio"><input id="__tabbed_26_6" name="__tabbed_26" type="radio"><div class="tabbed-labels"><label for="__tabbed_26_1">HTTPie</label><label for="__tabbed_26_2">Python</label><label for="__tabbed_26_3">TypeScript</label><label for="__tabbed_26_4">Path Parameters</label><label for="__tabbed_26_5">Request Body</label><label for="__tabbed_26_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="27:6"><input checked id="__tabbed_27_1" name="__tabbed_27" type="radio"><input id="__tabbed_27_2" name="__tabbed_27" type="radio"><input id="__tabbed_27_3" name="__tabbed_27" type="radio"><input id="__tabbed_27_4" name="__tabbed_27" type="radio"><input id="__tabbed_27_5" name="__tabbed_27" type="radio"><input id="__tabbed_27_6" name="__tabbed_27" type="radio"><div class="tabbed-labels"><label for="__tabbed_27_1">HTTPie</label><label for="__tabbed_27_2">Python</label><label for="__tabbed_27_3">TypeScript</label><label for="__tabbed_27_4">Path Parameters</label><label for="__tabbed_27_5">Request Body</label><label for="__tabbed_27_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -22179,7 +22795,7 @@
 <hr>
 <h3 id="set-resource-slug">Set resource slug</h3>
 <p>Updates the slug for a resource. Requires staff permissions.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="27:6"><input checked id="__tabbed_27_1" name="__tabbed_27" type="radio"><input id="__tabbed_27_2" name="__tabbed_27" type="radio"><input id="__tabbed_27_3" name="__tabbed_27" type="radio"><input id="__tabbed_27_4" name="__tabbed_27" type="radio"><input id="__tabbed_27_5" name="__tabbed_27" type="radio"><input id="__tabbed_27_6" name="__tabbed_27" type="radio"><div class="tabbed-labels"><label for="__tabbed_27_1">HTTPie</label><label for="__tabbed_27_2">Python</label><label for="__tabbed_27_3">TypeScript</label><label for="__tabbed_27_4">Path Parameters</label><label for="__tabbed_27_5">Request Body (required)</label><label for="__tabbed_27_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="28:6"><input checked id="__tabbed_28_1" name="__tabbed_28" type="radio"><input id="__tabbed_28_2" name="__tabbed_28" type="radio"><input id="__tabbed_28_3" name="__tabbed_28" type="radio"><input id="__tabbed_28_4" name="__tabbed_28" type="radio"><input id="__tabbed_28_5" name="__tabbed_28" type="radio"><input id="__tabbed_28_6" name="__tabbed_28" type="radio"><div class="tabbed-labels"><label for="__tabbed_28_1">HTTPie</label><label for="__tabbed_28_2">Python</label><label for="__tabbed_28_3">TypeScript</label><label for="__tabbed_28_4">Path Parameters</label><label for="__tabbed_28_5">Request Body (required)</label><label for="__tabbed_28_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -22327,7 +22943,7 @@
 <hr>
 <h3 id="submit-a-report-for-a-resource">Submit a report for a resource</h3>
 <p>Allows a service provider to submit a report (e.g., usage or status report) for a resource.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="28:6"><input checked id="__tabbed_28_1" name="__tabbed_28" type="radio"><input id="__tabbed_28_2" name="__tabbed_28" type="radio"><input id="__tabbed_28_3" name="__tabbed_28" type="radio"><input id="__tabbed_28_4" name="__tabbed_28" type="radio"><input id="__tabbed_28_5" name="__tabbed_28" type="radio"><input id="__tabbed_28_6" name="__tabbed_28" type="radio"><div class="tabbed-labels"><label for="__tabbed_28_1">HTTPie</label><label for="__tabbed_28_2">Python</label><label for="__tabbed_28_3">TypeScript</label><label for="__tabbed_28_4">Path Parameters</label><label for="__tabbed_28_5">Request Body (required)</label><label for="__tabbed_28_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="29:6"><input checked id="__tabbed_29_1" name="__tabbed_29" type="radio"><input id="__tabbed_29_2" name="__tabbed_29" type="radio"><input id="__tabbed_29_3" name="__tabbed_29" type="radio"><input id="__tabbed_29_4" name="__tabbed_29" type="radio"><input id="__tabbed_29_5" name="__tabbed_29" type="radio"><input id="__tabbed_29_6" name="__tabbed_29" type="radio"><div class="tabbed-labels"><label for="__tabbed_29_1">HTTPie</label><label for="__tabbed_29_2">Python</label><label for="__tabbed_29_3">TypeScript</label><label for="__tabbed_29_4">Path Parameters</label><label for="__tabbed_29_5">Request Body (required)</label><label for="__tabbed_29_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -22485,7 +23101,7 @@
 <hr>
 <h3 id="terminate-a-resource">Terminate a resource</h3>
 <p>Creates a marketplace order to terminate the resource. This action is asynchronous and may require approval.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="29:6"><input checked id="__tabbed_29_1" name="__tabbed_29" type="radio"><input id="__tabbed_29_2" name="__tabbed_29" type="radio"><input id="__tabbed_29_3" name="__tabbed_29" type="radio"><input id="__tabbed_29_4" name="__tabbed_29" type="radio"><input id="__tabbed_29_5" name="__tabbed_29" type="radio"><input id="__tabbed_29_6" name="__tabbed_29" type="radio"><div class="tabbed-labels"><label for="__tabbed_29_1">HTTPie</label><label for="__tabbed_29_2">Python</label><label for="__tabbed_29_3">TypeScript</label><label for="__tabbed_29_4">Path Parameters</label><label for="__tabbed_29_5">Request Body</label><label for="__tabbed_29_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="30:6"><input checked id="__tabbed_30_1" name="__tabbed_30" type="radio"><input id="__tabbed_30_2" name="__tabbed_30" type="radio"><input id="__tabbed_30_3" name="__tabbed_30" type="radio"><input id="__tabbed_30_4" name="__tabbed_30" type="radio"><input id="__tabbed_30_5" name="__tabbed_30" type="radio"><input id="__tabbed_30_6" name="__tabbed_30" type="radio"><div class="tabbed-labels"><label for="__tabbed_30_1">HTTPie</label><label for="__tabbed_30_2">Python</label><label for="__tabbed_30_3">TypeScript</label><label for="__tabbed_30_4">Path Parameters</label><label for="__tabbed_30_5">Request Body</label><label for="__tabbed_30_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -22639,7 +23255,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-29
+    2025-12-01
   </span>
 
     
