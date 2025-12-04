@@ -11431,6 +11431,33 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#update-user-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update user invitation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partially-update-user-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Partially update user invitation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-user-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete user invitation
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -15834,6 +15861,33 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#update-user-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update user invitation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partially-update-user-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Partially update user invitation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-user-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete user invitation
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -15971,6 +16025,21 @@
 <td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
 <td style="text-align: left;"><code>/api/user-invitations/</code></td>
 <td style="text-align: left;"><a href="#create-user-invitation">Create user invitation</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-put">PUT</span></td>
+<td style="text-align: left;"><code>/api/user-invitations/{uuid}/</code></td>
+<td style="text-align: left;"><a href="#update-user-invitation">Update user invitation</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-patch">PATCH</span></td>
+<td style="text-align: left;"><code>/api/user-invitations/{uuid}/</code></td>
+<td style="text-align: left;"><a href="#partially-update-user-invitation">Partially update user invitation</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-delete">DELETE</span></td>
+<td style="text-align: left;"><code>/api/user-invitations/{uuid}/</code></td>
+<td style="text-align: left;"><a href="#delete-user-invitation">Delete user invitation</a></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Other Actions</strong></td>
@@ -16876,10 +16945,419 @@
 </div>
 </div>
 <hr>
+<h3 id="update-user-invitation">Update user invitation</h3>
+<p>Update an existing user invitation. Only pending invitations can be edited. Allows changing email and role within the same scope.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:6"><input checked id="__tabbed_4_1" name="__tabbed_4" type="radio"><input id="__tabbed_4_2" name="__tabbed_4" type="radio"><input id="__tabbed_4_3" name="__tabbed_4" type="radio"><input id="__tabbed_4_4" name="__tabbed_4" type="radio"><input id="__tabbed_4_5" name="__tabbed_4" type="radio"><input id="__tabbed_4_6" name="__tabbed_4" type="radio"><div class="tabbed-labels"><label for="__tabbed_4_1">HTTPie</label><label for="__tabbed_4_2">Python</label><label for="__tabbed_4_3">TypeScript</label><label for="__tabbed_4_4">Path Parameters</label><label for="__tabbed_4_5">Request Body (required)</label><label for="__tabbed_4_6">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>PUT<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/user-invitations/a1b2c3d4-e5f6-7890-abcd-ef1234567890/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">email</span><span class="o">=</span><span class="s2">"alice@example.com"</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.invitation_update_request</span> <span class="kn">import</span> <span class="n">InvitationUpdateRequest</span> <span class="c1"># (1)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.user_invitations</span> <span class="kn">import</span> <span class="n">user_invitations_update</span> <span class="c1"># (2)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+
+<span class="n">body_data</span> <span class="o">=</span> <span class="n">InvitationUpdateRequest</span><span class="p">(</span>
+    <span class="n">email</span><span class="o">=</span><span class="s2">"alice@example.com"</span>
+<span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">user_invitations_update</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">body</span><span class="o">=</span><span class="n">body_data</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Model Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/models/invitation_update_request.py"><code>InvitationUpdateRequest</code></a></li>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/user_invitations/user_invitations_update.py"><code>user_invitations_update</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">userInvitationsUpdate</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">userInvitationsUpdate</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">"uuid"</span><span class="o">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">"email"</span><span class="o">:</span><span class="w"> </span><span class="s2">"alice@example.com"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uuid</code></td>
+<td>string (uuid)</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>email</code></td>
+<td>string (email)</td>
+<td>✓</td>
+<td>Invitation link will be sent to this email. Note that user can accept invitation with different email.</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td>string (uuid)</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>200</code></strong> - </p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>email</code></td>
+<td>string (email)</td>
+<td>Invitation link will be sent to this email. Note that user can accept invitation with different email.</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<hr>
+<h3 id="partially-update-user-invitation">Partially update user invitation</h3>
+<p>Partially update an existing user invitation. Only pending invitations can be edited. Allows changing email and role within the same scope.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:6"><input checked id="__tabbed_5_1" name="__tabbed_5" type="radio"><input id="__tabbed_5_2" name="__tabbed_5" type="radio"><input id="__tabbed_5_3" name="__tabbed_5" type="radio"><input id="__tabbed_5_4" name="__tabbed_5" type="radio"><input id="__tabbed_5_5" name="__tabbed_5" type="radio"><input id="__tabbed_5_6" name="__tabbed_5" type="radio"><div class="tabbed-labels"><label for="__tabbed_5_1">HTTPie</label><label for="__tabbed_5_2">Python</label><label for="__tabbed_5_3">TypeScript</label><label for="__tabbed_5_4">Path Parameters</label><label for="__tabbed_5_5">Request Body</label><label for="__tabbed_5_6">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>PATCH<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/user-invitations/a1b2c3d4-e5f6-7890-abcd-ef1234567890/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.patched_invitation_update_request</span> <span class="kn">import</span> <span class="n">PatchedInvitationUpdateRequest</span> <span class="c1"># (1)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.user_invitations</span> <span class="kn">import</span> <span class="n">user_invitations_partial_update</span> <span class="c1"># (2)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+
+<span class="n">body_data</span> <span class="o">=</span> <span class="n">PatchedInvitationUpdateRequest</span><span class="p">()</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">user_invitations_partial_update</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">body</span><span class="o">=</span><span class="n">body_data</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Model Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/models/patched_invitation_update_request.py"><code>PatchedInvitationUpdateRequest</code></a></li>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/user_invitations/user_invitations_partial_update.py"><code>user_invitations_partial_update</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">userInvitationsPartialUpdate</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">userInvitationsPartialUpdate</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">"uuid"</span><span class="o">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uuid</code></td>
+<td>string (uuid)</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>email</code></td>
+<td>string (email)</td>
+<td></td>
+<td>Invitation link will be sent to this email. Note that user can accept invitation with different email.</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td>string (uuid)</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>200</code></strong> - </p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>email</code></td>
+<td>string (email)</td>
+<td>Invitation link will be sent to this email. Note that user can accept invitation with different email.</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<hr>
+<h3 id="delete-user-invitation">Delete user invitation</h3>
+<p>Delete a user invitation. Only users with invitation management permissions can delete invitations.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:5"><input checked id="__tabbed_6_1" name="__tabbed_6" type="radio"><input id="__tabbed_6_2" name="__tabbed_6" type="radio"><input id="__tabbed_6_3" name="__tabbed_6" type="radio"><input id="__tabbed_6_4" name="__tabbed_6" type="radio"><input id="__tabbed_6_5" name="__tabbed_6" type="radio"><div class="tabbed-labels"><label for="__tabbed_6_1">HTTPie</label><label for="__tabbed_6_2">Python</label><label for="__tabbed_6_3">TypeScript</label><label for="__tabbed_6_4">Path Parameters</label><label for="__tabbed_6_5">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>DELETE<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/user-invitations/a1b2c3d4-e5f6-7890-abcd-ef1234567890/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.user_invitations</span> <span class="kn">import</span> <span class="n">user_invitations_destroy</span> <span class="c1"># (1)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">user_invitations_destroy</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/user_invitations/user_invitations_destroy.py"><code>user_invitations_destroy</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">userInvitationsDestroy</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">userInvitationsDestroy</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">"uuid"</span><span class="o">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uuid</code></td>
+<td>string (uuid)</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>204</code></strong> - No response body</p>
+</div>
+</div>
+</div>
+<hr>
 <h2 id="other-actions">Other Actions</h2>
 <h3 id="get-public-invitation-details">Get public invitation details</h3>
 <p>Retrieves public-facing details of an invitation. This is used to show information to a user before they accept it.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="4:5"><input checked id="__tabbed_4_1" name="__tabbed_4" type="radio"><input id="__tabbed_4_2" name="__tabbed_4" type="radio"><input id="__tabbed_4_3" name="__tabbed_4" type="radio"><input id="__tabbed_4_4" name="__tabbed_4" type="radio"><input id="__tabbed_4_5" name="__tabbed_4" type="radio"><div class="tabbed-labels"><label for="__tabbed_4_1">HTTPie</label><label for="__tabbed_4_2">Python</label><label for="__tabbed_4_3">TypeScript</label><label for="__tabbed_4_4">Path Parameters</label><label for="__tabbed_4_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="7:5"><input checked id="__tabbed_7_1" name="__tabbed_7" type="radio"><input id="__tabbed_7_2" name="__tabbed_7" type="radio"><input id="__tabbed_7_3" name="__tabbed_7" type="radio"><input id="__tabbed_7_4" name="__tabbed_7" type="radio"><input id="__tabbed_7_5" name="__tabbed_7" type="radio"><div class="tabbed-labels"><label for="__tabbed_7_1">HTTPie</label><label for="__tabbed_7_2">Python</label><label for="__tabbed_7_3">TypeScript</label><label for="__tabbed_7_4">Path Parameters</label><label for="__tabbed_7_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17060,7 +17538,7 @@
 <hr>
 <h3 id="accept-an-invitation">Accept an invitation</h3>
 <p>Accepts an invitation for the currently authenticated user. This grants the user the specified role in the invitation's scope.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="5:5"><input checked id="__tabbed_5_1" name="__tabbed_5" type="radio"><input id="__tabbed_5_2" name="__tabbed_5" type="radio"><input id="__tabbed_5_3" name="__tabbed_5" type="radio"><input id="__tabbed_5_4" name="__tabbed_5" type="radio"><input id="__tabbed_5_5" name="__tabbed_5" type="radio"><div class="tabbed-labels"><label for="__tabbed_5_1">HTTPie</label><label for="__tabbed_5_2">Python</label><label for="__tabbed_5_3">TypeScript</label><label for="__tabbed_5_4">Path Parameters</label><label for="__tabbed_5_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:5"><input checked id="__tabbed_8_1" name="__tabbed_8" type="radio"><input id="__tabbed_8_2" name="__tabbed_8" type="radio"><input id="__tabbed_8_3" name="__tabbed_8" type="radio"><input id="__tabbed_8_4" name="__tabbed_8" type="radio"><input id="__tabbed_8_5" name="__tabbed_8" type="radio"><div class="tabbed-labels"><label for="__tabbed_8_1">HTTPie</label><label for="__tabbed_8_2">Python</label><label for="__tabbed_8_3">TypeScript</label><label for="__tabbed_8_4">Path Parameters</label><label for="__tabbed_8_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17158,7 +17636,7 @@
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>    For user's convenience invitation approval is performed without authentication.
     User UUID and invitation UUID is encoded into cryptographically signed token.
 </code></pre></div></td></tr></table></div>
-<div class="tabbed-set tabbed-alternate" data-tabs="6:5"><input checked id="__tabbed_6_1" name="__tabbed_6" type="radio"><input id="__tabbed_6_2" name="__tabbed_6" type="radio"><input id="__tabbed_6_3" name="__tabbed_6" type="radio"><input id="__tabbed_6_4" name="__tabbed_6" type="radio"><input id="__tabbed_6_5" name="__tabbed_6" type="radio"><div class="tabbed-labels"><label for="__tabbed_6_1">HTTPie</label><label for="__tabbed_6_2">Python</label><label for="__tabbed_6_3">TypeScript</label><label for="__tabbed_6_4">Request Body (required)</label><label for="__tabbed_6_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:5"><input checked id="__tabbed_9_1" name="__tabbed_9" type="radio"><input id="__tabbed_9_2" name="__tabbed_9" type="radio"><input id="__tabbed_9_3" name="__tabbed_9" type="radio"><input id="__tabbed_9_4" name="__tabbed_9" type="radio"><input id="__tabbed_9_5" name="__tabbed_9" type="radio"><div class="tabbed-labels"><label for="__tabbed_9_1">HTTPie</label><label for="__tabbed_9_2">Python</label><label for="__tabbed_9_3">TypeScript</label><label for="__tabbed_9_4">Request Body (required)</label><label for="__tabbed_9_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17266,7 +17744,7 @@
 <hr>
 <h3 id="cancel-an-invitation">Cancel an invitation</h3>
 <p>Cancels a pending or planned (pending_project) invitation.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="7:5"><input checked id="__tabbed_7_1" name="__tabbed_7" type="radio"><input id="__tabbed_7_2" name="__tabbed_7" type="radio"><input id="__tabbed_7_3" name="__tabbed_7" type="radio"><input id="__tabbed_7_4" name="__tabbed_7" type="radio"><input id="__tabbed_7_5" name="__tabbed_7" type="radio"><div class="tabbed-labels"><label for="__tabbed_7_1">HTTPie</label><label for="__tabbed_7_2">Python</label><label for="__tabbed_7_3">TypeScript</label><label for="__tabbed_7_4">Path Parameters</label><label for="__tabbed_7_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="10:5"><input checked id="__tabbed_10_1" name="__tabbed_10" type="radio"><input id="__tabbed_10_2" name="__tabbed_10" type="radio"><input id="__tabbed_10_3" name="__tabbed_10" type="radio"><input id="__tabbed_10_4" name="__tabbed_10" type="radio"><input id="__tabbed_10_5" name="__tabbed_10" type="radio"><div class="tabbed-labels"><label for="__tabbed_10_1">HTTPie</label><label for="__tabbed_10_2">Python</label><label for="__tabbed_10_3">TypeScript</label><label for="__tabbed_10_4">Path Parameters</label><label for="__tabbed_10_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17361,7 +17839,7 @@
 <hr>
 <h3 id="check-invitation-validity">Check invitation validity</h3>
 <p>Checks if an invitation is pending and returns its email and whether a civil number is required for acceptance. This endpoint is public and does not require authentication.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="8:5"><input checked id="__tabbed_8_1" name="__tabbed_8" type="radio"><input id="__tabbed_8_2" name="__tabbed_8" type="radio"><input id="__tabbed_8_3" name="__tabbed_8" type="radio"><input id="__tabbed_8_4" name="__tabbed_8" type="radio"><input id="__tabbed_8_5" name="__tabbed_8" type="radio"><div class="tabbed-labels"><label for="__tabbed_8_1">HTTPie</label><label for="__tabbed_8_2">Python</label><label for="__tabbed_8_3">TypeScript</label><label for="__tabbed_8_4">Path Parameters</label><label for="__tabbed_8_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="11:5"><input checked id="__tabbed_11_1" name="__tabbed_11" type="radio"><input id="__tabbed_11_2" name="__tabbed_11" type="radio"><input id="__tabbed_11_3" name="__tabbed_11" type="radio"><input id="__tabbed_11_4" name="__tabbed_11" type="radio"><input id="__tabbed_11_5" name="__tabbed_11" type="radio"><div class="tabbed-labels"><label for="__tabbed_11_1">HTTPie</label><label for="__tabbed_11_2">Python</label><label for="__tabbed_11_3">TypeScript</label><label for="__tabbed_11_4">Path Parameters</label><label for="__tabbed_11_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17474,7 +17952,7 @@
 <hr>
 <h3 id="delete-an-invitation-staff-only">Delete an invitation (staff only)</h3>
 <p>Deletes an invitation. This action is restricted to staff users.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="9:5"><input checked id="__tabbed_9_1" name="__tabbed_9" type="radio"><input id="__tabbed_9_2" name="__tabbed_9" type="radio"><input id="__tabbed_9_3" name="__tabbed_9" type="radio"><input id="__tabbed_9_4" name="__tabbed_9" type="radio"><input id="__tabbed_9_5" name="__tabbed_9" type="radio"><div class="tabbed-labels"><label for="__tabbed_9_1">HTTPie</label><label for="__tabbed_9_2">Python</label><label for="__tabbed_9_3">TypeScript</label><label for="__tabbed_9_4">Path Parameters</label><label for="__tabbed_9_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="12:5"><input checked id="__tabbed_12_1" name="__tabbed_12" type="radio"><input id="__tabbed_12_2" name="__tabbed_12" type="radio"><input id="__tabbed_12_3" name="__tabbed_12" type="radio"><input id="__tabbed_12_4" name="__tabbed_12" type="radio"><input id="__tabbed_12_5" name="__tabbed_12" type="radio"><div class="tabbed-labels"><label for="__tabbed_12_1">HTTPie</label><label for="__tabbed_12_2">Python</label><label for="__tabbed_12_3">TypeScript</label><label for="__tabbed_12_4">Path Parameters</label><label for="__tabbed_12_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17572,7 +18050,7 @@
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>    For user's convenience invitation reject action is performed without authentication.
     User UUID and invitation UUID is encoded into cryptographically signed token.
 </code></pre></div></td></tr></table></div>
-<div class="tabbed-set tabbed-alternate" data-tabs="10:5"><input checked id="__tabbed_10_1" name="__tabbed_10" type="radio"><input id="__tabbed_10_2" name="__tabbed_10" type="radio"><input id="__tabbed_10_3" name="__tabbed_10" type="radio"><input id="__tabbed_10_4" name="__tabbed_10" type="radio"><input id="__tabbed_10_5" name="__tabbed_10" type="radio"><div class="tabbed-labels"><label for="__tabbed_10_1">HTTPie</label><label for="__tabbed_10_2">Python</label><label for="__tabbed_10_3">TypeScript</label><label for="__tabbed_10_4">Request Body (required)</label><label for="__tabbed_10_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="13:5"><input checked id="__tabbed_13_1" name="__tabbed_13" type="radio"><input id="__tabbed_13_2" name="__tabbed_13" type="radio"><input id="__tabbed_13_3" name="__tabbed_13" type="radio"><input id="__tabbed_13_4" name="__tabbed_13" type="radio"><input id="__tabbed_13_5" name="__tabbed_13" type="radio"><div class="tabbed-labels"><label for="__tabbed_13_1">HTTPie</label><label for="__tabbed_13_2">Python</label><label for="__tabbed_13_3">TypeScript</label><label for="__tabbed_13_4">Request Body (required)</label><label for="__tabbed_13_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17680,7 +18158,7 @@
 <hr>
 <h3 id="resend-an-invitation">Resend an invitation</h3>
 <p>Resends an email for a pending, expired, or canceled invitation. If the invitation was expired or canceled, its state is reset to 'pending' and its creation time is updated.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="11:5"><input checked id="__tabbed_11_1" name="__tabbed_11" type="radio"><input id="__tabbed_11_2" name="__tabbed_11" type="radio"><input id="__tabbed_11_3" name="__tabbed_11" type="radio"><input id="__tabbed_11_4" name="__tabbed_11" type="radio"><input id="__tabbed_11_5" name="__tabbed_11" type="radio"><div class="tabbed-labels"><label for="__tabbed_11_1">HTTPie</label><label for="__tabbed_11_2">Python</label><label for="__tabbed_11_3">TypeScript</label><label for="__tabbed_11_4">Path Parameters</label><label for="__tabbed_11_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="14:5"><input checked id="__tabbed_14_1" name="__tabbed_14" type="radio"><input id="__tabbed_14_2" name="__tabbed_14" type="radio"><input id="__tabbed_14_3" name="__tabbed_14" type="radio"><input id="__tabbed_14_4" name="__tabbed_14" type="radio"><input id="__tabbed_14_5" name="__tabbed_14" type="radio"><div class="tabbed-labels"><label for="__tabbed_14_1">HTTPie</label><label for="__tabbed_14_2">Python</label><label for="__tabbed_14_3">TypeScript</label><label for="__tabbed_14_4">Path Parameters</label><label for="__tabbed_14_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17793,7 +18271,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-29
+    2025-12-04
   </span>
 
     
