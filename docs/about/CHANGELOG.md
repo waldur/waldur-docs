@@ -1,5 +1,50 @@
 # Changelog
 
+## 7.9.2 - 2025-12-07
+
+### Release Summary
+
+- **Release Impact:** Minor release with configuration and documentation updates
+- **SDK Updates:** 3 auto-generated clients updated
+
+### Core Component Activity
+
+- **Waldur Mastermind**: No changes
+- **Waldur Homeport**: No changes
+- **Waldur Helm**: No changes
+- **Waldur Docker Compose**: No changes
+- **Waldur Prometheus Exporter**: No changes
+
+### SDK Updates (Auto-generated)
+
+- **Python Client**: [12 commits](https://github.com/waldur/py-client/compare/7.9.1...7.9.2)
+- **JavaScript Client**: [19 commits](https://github.com/waldur/js-client/compare/7.9.1...7.9.2)
+- **Go Client**: [9 commits](https://github.com/waldur/go-client/compare/7.9.1...7.9.2)
+
+### Py Client Highlights
+
+- Release: bump version to 7.9.2.
+- Update Waldur Python SDK.
+- Update Waldur Python SDK.
+
+### Js Client Highlights
+
+- Release: bump version to 7.9.2.
+- 7.9.2-dev.8.
+- Update Waldur TypeScript SDK.
+
+### Go Client Highlights
+
+- Update Waldur Go SDK.
+- Update Waldur Go SDK.
+- Update Waldur Go SDK.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.2.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.2-diff.md)
+
+
 ## 7.9.1 - 2025-11-30
 
 ### Release Summary
