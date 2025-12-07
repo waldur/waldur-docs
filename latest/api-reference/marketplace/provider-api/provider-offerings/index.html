@@ -15068,6 +15068,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#export-offering-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export offering data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-offering-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Import offering data
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -17295,6 +17313,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#export-offering-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export offering data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-offering-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Import offering data
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -17680,6 +17716,16 @@
 <td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
 <td style="text-align: left;"><code>/api/marketplace-provider-offerings/{uuid}/check_unique_backend_id/</code></td>
 <td style="text-align: left;"><a href="#check-if-backendid-is-unique">Check if backend_id is unique</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
+<td style="text-align: left;"><code>/api/marketplace-provider-offerings/{uuid}/export_offering/</code></td>
+<td style="text-align: left;"><a href="#export-offering-data">Export offering data</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
+<td style="text-align: left;"><code>/api/marketplace-provider-offerings/import_offering/</code></td>
+<td style="text-align: left;"><a href="#import-offering-data">Import offering data</a></td>
 </tr>
 </tbody>
 </table>
@@ -33670,7 +33716,7 @@
 </tr>
 <tr>
 <td><code>old_cost_estimate</code></td>
-<td>string (decimal)</td>
+<td>number (double)</td>
 <td></td>
 </tr>
 <tr>
@@ -33700,6 +33746,11 @@
 </tr>
 <tr>
 <td><code>backend_id</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>order_subtype</code></td>
 <td>string</td>
 <td></td>
 </tr>
@@ -34150,7 +34201,7 @@
 </tr>
 <tr>
 <td><code>old_cost_estimate</code></td>
-<td>string (decimal)</td>
+<td>number (double)</td>
 <td></td>
 </tr>
 <tr>
@@ -34180,6 +34231,11 @@
 </tr>
 <tr>
 <td><code>backend_id</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>order_subtype</code></td>
 <td>string</td>
 <td></td>
 </tr>
@@ -35439,6 +35495,462 @@
 </div>
 </div>
 </div>
+<hr>
+<h3 id="export-offering-data">Export offering data</h3>
+<p>Exports an offering and all its connected parts to YAML format. Allows configuration of which components to include in the export.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="61:6"><input checked id="__tabbed_61_1" name="__tabbed_61" type="radio"><input id="__tabbed_61_2" name="__tabbed_61" type="radio"><input id="__tabbed_61_3" name="__tabbed_61" type="radio"><input id="__tabbed_61_4" name="__tabbed_61" type="radio"><input id="__tabbed_61_5" name="__tabbed_61" type="radio"><input id="__tabbed_61_6" name="__tabbed_61" type="radio"><div class="tabbed-labels"><label for="__tabbed_61_1">HTTPie</label><label for="__tabbed_61_2">Python</label><label for="__tabbed_61_3">TypeScript</label><label for="__tabbed_61_4">Path Parameters</label><label for="__tabbed_61_5">Request Body</label><label for="__tabbed_61_6">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/marketplace-provider-offerings/a1b2c3d4-e5f6-7890-abcd-ef1234567890/export_offering/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.offering_export_parameters_request</span> <span class="kn">import</span> <span class="n">OfferingExportParametersRequest</span> <span class="c1"># (1)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_provider_offerings</span> <span class="kn">import</span> <span class="n">marketplace_provider_offerings_export_offering</span> <span class="c1"># (2)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+
+<span class="n">body_data</span> <span class="o">=</span> <span class="n">OfferingExportParametersRequest</span><span class="p">()</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_provider_offerings_export_offering</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">body</span><span class="o">=</span><span class="n">body_data</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Model Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/models/offering_export_parameters_request.py"><code>OfferingExportParametersRequest</code></a></li>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/marketplace_provider_offerings/marketplace_provider_offerings_export_offering.py"><code>marketplace_provider_offerings_export_offering</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">marketplaceProviderOfferingsExportOffering</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">marketplaceProviderOfferingsExportOffering</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">"uuid"</span><span class="o">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uuid</code></td>
+<td>string (uuid)</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>include_components</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include offering components in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_plans</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include offering plans in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_screenshots</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include offering screenshots in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_files</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include offering files in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_endpoints</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include offering access endpoints in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_organization_groups</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include organization groups associations in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_terms_of_service</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include terms of service configurations in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_plugin_options</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include plugin options in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_secret_options</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include secret options in export (WARNING: sensitive data)<br><em>Constraints: default: <code>False</code></em></td>
+</tr>
+<tr>
+<td><code>include_attributes</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include offering attributes in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_options</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include offering options in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>include_resource_options</code></td>
+<td>boolean</td>
+<td></td>
+<td>Include resource options in export<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>200</code></strong> - </p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>offering_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>offering_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>export_data</code></td>
+<td>any</td>
+<td>Complete export data containing the offering structure</td>
+</tr>
+<tr>
+<td><code>exported_components</code></td>
+<td>array of strings</td>
+<td>List of exported component types</td>
+</tr>
+<tr>
+<td><code>export_timestamp</code></td>
+<td>string (date-time)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<hr>
+<h3 id="import-offering-data">Import offering data</h3>
+<p>Imports an offering and all its connected parts from YAML format. Allows configuration of which components to import and how to handle conflicts.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="62:5"><input checked id="__tabbed_62_1" name="__tabbed_62" type="radio"><input id="__tabbed_62_2" name="__tabbed_62" type="radio"><input id="__tabbed_62_3" name="__tabbed_62" type="radio"><input id="__tabbed_62_4" name="__tabbed_62" type="radio"><input id="__tabbed_62_5" name="__tabbed_62" type="radio"><div class="tabbed-labels"><label for="__tabbed_62_1">HTTPie</label><label for="__tabbed_62_2">Python</label><label for="__tabbed_62_3">TypeScript</label><label for="__tabbed_62_4">Request Body (required)</label><label for="__tabbed_62_5">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/marketplace-provider-offerings/import_offering/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">offering_data</span><span class="o">=</span>null
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.offering_import_parameters_request</span> <span class="kn">import</span> <span class="n">OfferingImportParametersRequest</span> <span class="c1"># (1)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_provider_offerings</span> <span class="kn">import</span> <span class="n">marketplace_provider_offerings_import_offering</span> <span class="c1"># (2)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+
+<span class="n">body_data</span> <span class="o">=</span> <span class="n">OfferingImportParametersRequest</span><span class="p">(</span>
+    <span class="n">offering_data</span><span class="o">=</span><span class="n">null</span>
+<span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_provider_offerings_import_offering</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">body</span><span class="o">=</span><span class="n">body_data</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>Model Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/models/offering_import_parameters_request.py"><code>OfferingImportParametersRequest</code></a></li>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/marketplace_provider_offerings/marketplace_provider_offerings_import_offering.py"><code>marketplace_provider_offerings_import_offering</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">marketplaceProviderOfferingsImportOffering</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">marketplaceProviderOfferingsImportOffering</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">"offering_data"</span><span class="o">:</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>customer</code></td>
+<td>string (uuid)</td>
+<td></td>
+<td>Target customer for imported offering. If not provided, uses current user's customer</td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td>string</td>
+<td></td>
+<td>Target category name for imported offering. If not provided, uses category from export data</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>string (uuid)</td>
+<td></td>
+<td>Target project for imported offering (optional)</td>
+</tr>
+<tr>
+<td><code>import_components</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import offering components<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>import_plans</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import offering plans<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>import_screenshots</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import offering screenshots<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>import_files</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import offering files<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>import_endpoints</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import offering access endpoints<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>import_organization_groups</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import organization groups associations (may fail if groups don't exist)<br><em>Constraints: default: <code>False</code></em></td>
+</tr>
+<tr>
+<td><code>import_terms_of_service</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import terms of service configurations<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>import_plugin_options</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import plugin options<br><em>Constraints: default: <code>True</code></em></td>
+</tr>
+<tr>
+<td><code>import_secret_options</code></td>
+<td>boolean</td>
+<td></td>
+<td>Import secret options (WARNING: will overwrite existing secrets)<br><em>Constraints: default: <code>False</code></em></td>
+</tr>
+<tr>
+<td><code>overwrite_existing</code></td>
+<td>boolean</td>
+<td></td>
+<td>Overwrite existing offering if one with the same name exists<br><em>Constraints: default: <code>False</code></em></td>
+</tr>
+<tr>
+<td><code>preserve_state</code></td>
+<td>boolean</td>
+<td></td>
+<td>Preserve offering state from export, otherwise set to 'Draft'<br><em>Constraints: default: <code>False</code></em></td>
+</tr>
+<tr>
+<td><code>offering_data</code></td>
+<td>any</td>
+<td>✓</td>
+<td>The exported offering data to import</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>200</code></strong> - </p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>imported_offering_uuid</code></td>
+<td>string (uuid)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>imported_offering_name</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>imported_components</code></td>
+<td>array of strings</td>
+<td>List of imported component types</td>
+</tr>
+<tr>
+<td><code>warnings</code></td>
+<td>array of strings</td>
+<td>List of warnings encountered during import</td>
+</tr>
+<tr>
+<td><code>import_timestamp</code></td>
+<td>string (date-time)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
 <hr></div>
 
 
@@ -35460,7 +35972,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-04
+    2025-12-07
   </span>
 
     
