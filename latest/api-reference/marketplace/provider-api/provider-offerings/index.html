@@ -15120,9 +15120,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#import-offering-data" class="md-nav__link">
+  <a href="#import-offering-data-with-configurable-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Import offering data
+      Import offering data with configurable parameters
     </span>
   </a>
   
@@ -17630,9 +17630,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#import-offering-data" class="md-nav__link">
+  <a href="#import-offering-data-with-configurable-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Import offering data
+      Import offering data with configurable parameters
     </span>
   </a>
   
@@ -18050,7 +18050,7 @@
 <tr>
 <td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
 <td style="text-align: left;"><code>/api/marketplace-provider-offerings/import_offering/</code></td>
-<td style="text-align: left;"><a href="#import-offering-data">Import offering data</a></td>
+<td style="text-align: left;"><a href="#import-offering-data-with-configurable-parameters">Import offering data with configurable parameters</a></td>
 </tr>
 <tr>
 <td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
@@ -36057,8 +36057,8 @@
 </div>
 </div>
 <hr>
-<h3 id="import-offering-data">Import offering data</h3>
-<p>Imports an offering and all its connected parts from YAML format. Allows configuration of which components to import and how to handle conflicts.</p>
+<h3 id="import-offering-data-with-configurable-parameters">Import offering data with configurable parameters</h3>
+<p>Import offering data with configurable parameters.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="62:5"><input checked id="__tabbed_62_1" name="__tabbed_62" type="radio"><input id="__tabbed_62_2" name="__tabbed_62" type="radio"><input id="__tabbed_62_3" name="__tabbed_62" type="radio"><input id="__tabbed_62_4" name="__tabbed_62" type="radio"><input id="__tabbed_62_5" name="__tabbed_62" type="radio"><div class="tabbed-labels"><label for="__tabbed_62_1">HTTPie</label><label for="__tabbed_62_2">Python</label><label for="__tabbed_62_3">TypeScript</label><label for="__tabbed_62_4">Request Body (required)</label><label for="__tabbed_62_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -36231,12 +36231,6 @@
 <td>Overwrite existing offering if one with the same name exists<br><em>Constraints: default: <code>False</code></em></td>
 </tr>
 <tr>
-<td><code>preserve_state</code></td>
-<td>boolean</td>
-<td></td>
-<td>Preserve offering state from export, otherwise set to 'Draft'<br><em>Constraints: default: <code>False</code></em></td>
-</tr>
-<tr>
 <td><code>offering_data</code></td>
 <td>any</td>
 <td>✓</td>
@@ -36257,29 +36251,74 @@
 </thead>
 <tbody>
 <tr>
-<td><code>imported_offering_uuid</code></td>
+<td><code>customer</code></td>
 <td>string (uuid)</td>
-<td></td>
+<td>Target customer for imported offering. If not provided, uses current user's customer</td>
 </tr>
 <tr>
-<td><code>imported_offering_name</code></td>
+<td><code>category</code></td>
 <td>string</td>
-<td></td>
+<td>Target category name for imported offering. If not provided, uses category from export data</td>
 </tr>
 <tr>
-<td><code>imported_components</code></td>
-<td>array of strings</td>
-<td>List of imported component types</td>
+<td><code>project</code></td>
+<td>string (uuid)</td>
+<td>Target project for imported offering (optional)</td>
 </tr>
 <tr>
-<td><code>warnings</code></td>
-<td>array of strings</td>
-<td>List of warnings encountered during import</td>
+<td><code>import_components</code></td>
+<td>boolean</td>
+<td>Import offering components</td>
 </tr>
 <tr>
-<td><code>import_timestamp</code></td>
-<td>string (date-time)</td>
-<td></td>
+<td><code>import_plans</code></td>
+<td>boolean</td>
+<td>Import offering plans</td>
+</tr>
+<tr>
+<td><code>import_screenshots</code></td>
+<td>boolean</td>
+<td>Import offering screenshots</td>
+</tr>
+<tr>
+<td><code>import_files</code></td>
+<td>boolean</td>
+<td>Import offering files</td>
+</tr>
+<tr>
+<td><code>import_endpoints</code></td>
+<td>boolean</td>
+<td>Import offering access endpoints</td>
+</tr>
+<tr>
+<td><code>import_organization_groups</code></td>
+<td>boolean</td>
+<td>Import organization groups associations (may fail if groups don't exist)</td>
+</tr>
+<tr>
+<td><code>import_terms_of_service</code></td>
+<td>boolean</td>
+<td>Import terms of service configurations</td>
+</tr>
+<tr>
+<td><code>import_plugin_options</code></td>
+<td>boolean</td>
+<td>Import plugin options</td>
+</tr>
+<tr>
+<td><code>import_secret_options</code></td>
+<td>boolean</td>
+<td>Import secret options (WARNING: will overwrite existing secrets)</td>
+</tr>
+<tr>
+<td><code>overwrite_existing</code></td>
+<td>boolean</td>
+<td>Overwrite existing offering if one with the same name exists</td>
+</tr>
+<tr>
+<td><code>offering_data</code></td>
+<td>any</td>
+<td>The exported offering data to import</td>
 </tr>
 </tbody>
 </table>
@@ -36533,7 +36572,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-07
+    2025-12-12
   </span>
 
     
