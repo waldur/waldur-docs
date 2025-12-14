@@ -1,5 +1,25 @@
 # Changelog
 
+## 7.9.3 - 2025-12-14
+
+### Release Summary
+
+- **Release Impact:** Minor release with configuration and documentation updates
+
+### Core Component Activity
+
+- **Waldur Mastermind**: No changes
+- **Waldur Homeport**: No changes
+- **Waldur Helm**: No changes
+- **Waldur Docker Compose**: No changes
+- **Waldur Prometheus Exporter**: No changes
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.3.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.3-diff.md)
+
+
 ## 7.9.2 - 2025-12-07
 
 ### Release Summary
