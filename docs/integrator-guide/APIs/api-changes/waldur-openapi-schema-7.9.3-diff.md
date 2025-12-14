@@ -1,0 +1,8618 @@
+# OpenAPI schema diff - 7.9.3
+
+## For version 7.9.3
+
+### New Endpoints: 16
+
+---------------------
+GET /api/user-action-executions/  
+HEAD /api/user-action-executions/  
+GET /api/user-action-executions/{id}/  
+GET /api/user-action-providers/  
+HEAD /api/user-action-providers/  
+GET /api/user-action-providers/{id}/  
+GET /api/user-actions/  
+HEAD /api/user-actions/  
+POST /api/user-actions/bulk_silence/  
+GET /api/user-actions/summary/  
+HEAD /api/user-actions/summary/  
+POST /api/user-actions/update_actions/  
+GET /api/user-actions/{id}/  
+POST /api/user-actions/{id}/execute_action/  
+POST /api/user-actions/{id}/silence/  
+POST /api/user-actions/{id}/unsilence/  
+
+### Deleted Endpoints: 2
+
+------------------------
+POST /api/openstack-tenants/  
+DELETE /api/openstack-tenants/{uuid}/  
+
+### Modified Endpoints: 245
+
+---------------------------
+POST /api-auth/logout/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: logout_url
+              - Description changed from '' to 'URL to redirect to after logout'
+
+POST /api-auth/password/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: password
+            - Description changed from '' to 'Password for authentication'
+          - Modified property: username
+            - Description changed from '' to 'Username for authentication'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: token
+              - Description changed from '' to 'Authentication token for API access'
+
+POST /api/backend-resources/{uuid}/import_resource/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/booking-offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: country
+                - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+              - Modified property: endpoints
+                - Items changed
+                  - Properties changed
+                    - Modified property: url
+                      - Description changed from '' to 'URL of the access endpoint'
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - New property: default_configs
+                            - Modified property: type
+                              - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+              - Modified property: organization_groups
+                - Items changed
+                  - Properties changed
+                    - Modified property: customers_count
+                      - Description changed from '' to 'Number of customers in this organization group'
+                    - Modified property: parent_name
+                      - Description changed from '' to 'Name of the parent organization group'
+                    - Modified property: parent_uuid
+                      - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: plans
+                - Items changed
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: plugin_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedPluginOptions
+                    - Properties changed
+                      - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                        - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                        - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_flavor_name
+                        - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_server_data_volume_size_gb
+                        - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                      - Modified property: managed_rancher_server_data_volume_type_name
+                        - Description changed from '' to 'Data volume type name for managed Rancher server'
+                      - Modified property: managed_rancher_server_flavor_name
+                        - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                      - Modified property: managed_rancher_server_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                      - Modified property: managed_rancher_server_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher server'
+                      - Modified property: managed_rancher_worker_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                      - Modified property: managed_rancher_worker_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+              - Modified property: resource_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - New property: default_configs
+                            - Modified property: type
+                              - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+              - Modified property: scope_state
+                - Property 'OneOf' changed
+                  - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                - Property 'AllOf' changed
+                  - Schemas deleted: #/components/schemas/CoreStates
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/booking-offerings/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/booking-resources/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: offering_components
+              - New property: offering_state
+              - Modified property: backend_metadata
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BackendMetadata
+                    - Properties changed
+                      - Modified property: action
+                        - Description changed from '' to 'Current action being performed'
+                      - Modified property: instance_name
+                        - Description changed from '' to 'Name of the backend instance'
+                      - Modified property: runtime_state
+                        - Description changed from '' to 'Runtime state of the backend resource'
+                      - Modified property: state
+                        - Description changed from '' to 'Backend resource state'
+              - Modified property: endpoints
+                - Items changed
+                  - Properties changed
+                    - Modified property: url
+                      - Description changed from '' to 'URL of the access endpoint'
+              - Modified property: report
+                - Items changed
+                  - Properties changed
+                    - Modified property: body
+                      - Description changed from '' to 'Section body content'
+                    - Modified property: header
+                      - Description changed from '' to 'Section header text'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/booking-resources/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/customers/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - Deleted enum values: [projects]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Deleted property: projects
+              - Modified property: country
+                - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+              - Modified property: country_name
+                - Description changed from '' to 'Human-readable country name'
+              - Modified property: display_name
+                - Description changed from '' to 'Display name of the organization (includes native name if available)'
+              - Modified property: organization_groups
+                - Description changed from '' to 'Organization groups this customer belongs to'
+                - Items changed
+                  - Properties changed
+                    - Modified property: customers_count
+                      - Description changed from '' to 'Number of customers in this organization group'
+                    - Modified property: parent_name
+                      - Description changed from '' to 'Name of the parent organization group'
+                    - Modified property: parent_uuid
+                      - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: project_metadata_checklist
+                - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+              - Modified property: projects_count
+                - Description changed from '' to 'Number of projects in this organization'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+              - Modified property: users_count
+                - Description changed from '' to 'Number of users with access to this organization'
+
+POST /api/customers/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: projects
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: country_name
+              - Description changed from '' to 'Human-readable country name'
+            - Modified property: display_name
+              - Description changed from '' to 'Display name of the organization (includes native name if available)'
+            - Modified property: organization_groups
+              - Description changed from '' to 'Organization groups this customer belongs to'
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: project_metadata_checklist
+              - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+            - Modified property: projects_count
+              - Description changed from '' to 'Number of projects in this organization'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: users_count
+              - Description changed from '' to 'Number of users with access to this organization'
+
+GET /api/customers/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - Deleted enum values: [projects]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: projects
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: country_name
+              - Description changed from '' to 'Human-readable country name'
+            - Modified property: display_name
+              - Description changed from '' to 'Display name of the organization (includes native name if available)'
+            - Modified property: organization_groups
+              - Description changed from '' to 'Organization groups this customer belongs to'
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: project_metadata_checklist
+              - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+            - Modified property: projects_count
+              - Description changed from '' to 'Number of projects in this organization'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: users_count
+              - Description changed from '' to 'Number of users with access to this organization'
+
+PATCH /api/customers/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: projects
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: country_name
+              - Description changed from '' to 'Human-readable country name'
+            - Modified property: display_name
+              - Description changed from '' to 'Display name of the organization (includes native name if available)'
+            - Modified property: organization_groups
+              - Description changed from '' to 'Organization groups this customer belongs to'
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: project_metadata_checklist
+              - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+            - Modified property: projects_count
+              - Description changed from '' to 'Number of projects in this organization'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: users_count
+              - Description changed from '' to 'Number of users with access to this organization'
+
+PUT /api/customers/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: project_metadata_checklist
+            - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: projects
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: country_name
+              - Description changed from '' to 'Human-readable country name'
+            - Modified property: display_name
+              - Description changed from '' to 'Display name of the organization (includes native name if available)'
+            - Modified property: organization_groups
+              - Description changed from '' to 'Organization groups this customer belongs to'
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: project_metadata_checklist
+              - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+            - Modified property: projects_count
+              - Description changed from '' to 'Number of projects in this organization'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: users_count
+              - Description changed from '' to 'Number of users with access to this organization'
+
+GET /api/database-stats/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: data_size
+                - Description changed from '' to 'Size of the actual data in bytes'
+              - Modified property: external_size
+                - Description changed from '' to 'Size of external data (e.g., TOAST) in bytes'
+              - Modified property: table_name
+                - Description changed from '' to 'Name of the database table'
+              - Modified property: total_size
+                - Description changed from '' to 'Total size of the table in bytes'
+
+GET /api/google-auth/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: organization_groups
+                - Items changed
+                  - Properties changed
+                    - Modified property: customers_count
+                      - Description changed from '' to 'Number of customers in this organization group'
+                    - Modified property: parent_name
+                      - Description changed from '' to 'Name of the parent organization group'
+                    - Modified property: parent_uuid
+                      - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/google-auth/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/google-auth/{uuid}/authorize/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/invoice-items/total_price/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: total_price
+              - Description changed from '' to 'Total price for the invoice item'
+
+POST /api/invoice-items/{uuid}/create_compensation/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: offering_component_name
+            - Description changed from '' to 'Name of the offering component for compensation'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offering_component_name
+              - Description changed from '' to 'Name of the offering component for compensation'
+
+GET /api/invoices/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: items
+                - Items changed
+                  - Properties changed
+                    - Modified property: details
+                      - Properties changed
+                        - Modified property: offering_component_name
+                          - Description changed from '' to 'Name of the offering component'
+                        - Modified property: offering_component_type
+                          - Description changed from '' to 'Type of the offering component'
+                        - Modified property: offering_name
+                          - Description changed from '' to 'Name of the offering'
+                        - Modified property: offering_type
+                          - Description changed from '' to 'Type of the offering'
+                        - Modified property: offering_uuid
+                          - Description changed from '' to 'UUID of the offering'
+                        - Modified property: plan_component_id
+                          - Description changed from '' to 'ID of the plan component'
+                        - Modified property: plan_name
+                          - Description changed from '' to 'Name of the pricing plan'
+                        - Modified property: plan_uuid
+                          - Description changed from '' to 'UUID of the pricing plan'
+                        - Modified property: resource_limit_periods
+                          - Description changed from '' to 'List of resource limit periods for this invoice item'
+                          - Items changed
+                            - Properties changed
+                              - Modified property: billing_periods
+                                - Description changed from '' to 'Number of billing periods'
+                              - Modified property: end
+                                - Description changed from '' to 'End date of the resource limit period'
+                              - Modified property: quantity
+                                - Description changed from '' to 'Quantity of resources consumed during this period'
+                              - Modified property: start
+                                - Description changed from '' to 'Start date of the resource limit period'
+                              - Modified property: total
+                                - Description changed from '' to 'Total amount for this period'
+                        - Modified property: resource_name
+                          - Description changed from '' to 'Name of the marketplace resource'
+                        - Modified property: resource_uuid
+                          - Description changed from '' to 'UUID of the marketplace resource'
+                        - Modified property: service_provider_name
+                          - Description changed from '' to 'Name of the service provider'
+                        - Modified property: service_provider_uuid
+                          - Description changed from '' to 'UUID of the service provider'
+
+GET /api/invoices/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: items
+              - Items changed
+                - Properties changed
+                  - Modified property: details
+                    - Properties changed
+                      - Modified property: offering_component_name
+                        - Description changed from '' to 'Name of the offering component'
+                      - Modified property: offering_component_type
+                        - Description changed from '' to 'Type of the offering component'
+                      - Modified property: offering_name
+                        - Description changed from '' to 'Name of the offering'
+                      - Modified property: offering_type
+                        - Description changed from '' to 'Type of the offering'
+                      - Modified property: offering_uuid
+                        - Description changed from '' to 'UUID of the offering'
+                      - Modified property: plan_component_id
+                        - Description changed from '' to 'ID of the plan component'
+                      - Modified property: plan_name
+                        - Description changed from '' to 'Name of the pricing plan'
+                      - Modified property: plan_uuid
+                        - Description changed from '' to 'UUID of the pricing plan'
+                      - Modified property: resource_limit_periods
+                        - Description changed from '' to 'List of resource limit periods for this invoice item'
+                        - Items changed
+                          - Properties changed
+                            - Modified property: billing_periods
+                              - Description changed from '' to 'Number of billing periods'
+                            - Modified property: end
+                              - Description changed from '' to 'End date of the resource limit period'
+                            - Modified property: quantity
+                              - Description changed from '' to 'Quantity of resources consumed during this period'
+                            - Modified property: start
+                              - Description changed from '' to 'Start date of the resource limit period'
+                            - Modified property: total
+                              - Description changed from '' to 'Total amount for this period'
+                      - Modified property: resource_name
+                        - Description changed from '' to 'Name of the marketplace resource'
+                      - Modified property: resource_uuid
+                        - Description changed from '' to 'UUID of the marketplace resource'
+                      - Modified property: service_provider_name
+                        - Description changed from '' to 'Name of the service provider'
+                      - Modified property: service_provider_uuid
+                        - Description changed from '' to 'UUID of the service provider'
+
+GET /api/invoices/{uuid}/items/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: details
+              - Properties changed
+                - Modified property: offering_component_name
+                  - Description changed from '' to 'Name of the offering component'
+                - Modified property: offering_component_type
+                  - Description changed from '' to 'Type of the offering component'
+                - Modified property: offering_name
+                  - Description changed from '' to 'Name of the offering'
+                - Modified property: offering_type
+                  - Description changed from '' to 'Type of the offering'
+                - Modified property: offering_uuid
+                  - Description changed from '' to 'UUID of the offering'
+                - Modified property: plan_component_id
+                  - Description changed from '' to 'ID of the plan component'
+                - Modified property: plan_name
+                  - Description changed from '' to 'Name of the pricing plan'
+                - Modified property: plan_uuid
+                  - Description changed from '' to 'UUID of the pricing plan'
+                - Modified property: resource_limit_periods
+                  - Description changed from '' to 'List of resource limit periods for this invoice item'
+                  - Items changed
+                    - Properties changed
+                      - Modified property: billing_periods
+                        - Description changed from '' to 'Number of billing periods'
+                      - Modified property: end
+                        - Description changed from '' to 'End date of the resource limit period'
+                      - Modified property: quantity
+                        - Description changed from '' to 'Quantity of resources consumed during this period'
+                      - Modified property: start
+                        - Description changed from '' to 'Start date of the resource limit period'
+                      - Modified property: total
+                        - Description changed from '' to 'Total amount for this period'
+                - Modified property: resource_name
+                  - Description changed from '' to 'Name of the marketplace resource'
+                - Modified property: resource_uuid
+                  - Description changed from '' to 'UUID of the marketplace resource'
+                - Modified property: service_provider_name
+                  - Description changed from '' to 'Name of the service provider'
+                - Modified property: service_provider_uuid
+                  - Description changed from '' to 'UUID of the service provider'
+
+POST /api/invoices/{uuid}/paid/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: items
+              - Items changed
+                - Properties changed
+                  - Modified property: details
+                    - Properties changed
+                      - Modified property: offering_component_name
+                        - Description changed from '' to 'Name of the offering component'
+                      - Modified property: offering_component_type
+                        - Description changed from '' to 'Type of the offering component'
+                      - Modified property: offering_name
+                        - Description changed from '' to 'Name of the offering'
+                      - Modified property: offering_type
+                        - Description changed from '' to 'Type of the offering'
+                      - Modified property: offering_uuid
+                        - Description changed from '' to 'UUID of the offering'
+                      - Modified property: plan_component_id
+                        - Description changed from '' to 'ID of the plan component'
+                      - Modified property: plan_name
+                        - Description changed from '' to 'Name of the pricing plan'
+                      - Modified property: plan_uuid
+                        - Description changed from '' to 'UUID of the pricing plan'
+                      - Modified property: resource_limit_periods
+                        - Description changed from '' to 'List of resource limit periods for this invoice item'
+                        - Items changed
+                          - Properties changed
+                            - Modified property: billing_periods
+                              - Description changed from '' to 'Number of billing periods'
+                            - Modified property: end
+                              - Description changed from '' to 'End date of the resource limit period'
+                            - Modified property: quantity
+                              - Description changed from '' to 'Quantity of resources consumed during this period'
+                            - Modified property: start
+                              - Description changed from '' to 'Start date of the resource limit period'
+                            - Modified property: total
+                              - Description changed from '' to 'Total amount for this period'
+                      - Modified property: resource_name
+                        - Description changed from '' to 'Name of the marketplace resource'
+                      - Modified property: resource_uuid
+                        - Description changed from '' to 'UUID of the marketplace resource'
+                      - Modified property: service_provider_name
+                        - Description changed from '' to 'Name of the service provider'
+                      - Modified property: service_provider_uuid
+                        - Description changed from '' to 'UUID of the service provider'
+
+GET /api/managed-rancher-cluster-resources/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: offering_components
+              - New property: offering_state
+              - Modified property: backend_metadata
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BackendMetadata
+                    - Properties changed
+                      - Modified property: action
+                        - Description changed from '' to 'Current action being performed'
+                      - Modified property: instance_name
+                        - Description changed from '' to 'Name of the backend instance'
+                      - Modified property: runtime_state
+                        - Description changed from '' to 'Runtime state of the backend resource'
+                      - Modified property: state
+                        - Description changed from '' to 'Backend resource state'
+              - Modified property: endpoints
+                - Items changed
+                  - Properties changed
+                    - Modified property: url
+                      - Description changed from '' to 'URL of the access endpoint'
+              - Modified property: report
+                - Items changed
+                  - Properties changed
+                    - Modified property: body
+                      - Description changed from '' to 'Section body content'
+                    - Modified property: header
+                      - Description changed from '' to 'Section header text'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/managed-rancher-cluster-resources/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-component-usages/set_usage/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: date
+            - Description changed from 'Date for usage reporting (staff only). If not provided, current date is used.' to 'Date for usage reporting (staff and service providers for limit-based components). If not provided, current date is used.'
+          - Modified property: plan_period
+            - Description changed from '' to 'UUID of the specific resource plan period for usage reporting'
+          - Modified property: resource
+            - Description changed from '' to 'UUID of the resource for usage reporting (required if plan_period not provided)'
+          - Modified property: usages
+            - Description changed from '' to 'List of component usage items to report'
+            - Items changed
+              - Properties changed
+                - Modified property: amount
+                  - Description changed from '' to 'Usage amount'
+                - Modified property: description
+                  - Description changed from '' to 'Optional description of usage'
+                - Modified property: recurring
+                  - Description changed from '' to 'Whether this usage is recurring'
+                - Modified property: type
+                  - Description changed from '' to 'Type of the component'
+
+POST /api/marketplace-component-usages/{uuid}/set_user_usage/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: date
+            - Description changed from 'Date for usage reporting (staff only). If not provided, current date is used.' to 'Date for usage reporting (staff and service providers for limit-based components). If not provided, current date is used.'
+
+POST /api/marketplace-offering-users/{uuid}/set_pending_account_linking/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: comment
+            - Description changed from '' to 'Comment explaining the state transition'
+          - Modified property: comment_url
+            - Description changed from '' to 'URL reference related to the state transition comment'
+
+POST /api/marketplace-offering-users/{uuid}/set_pending_additional_validation/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: comment
+            - Description changed from '' to 'Comment explaining the state transition'
+          - Modified property: comment_url
+            - Description changed from '' to 'URL reference related to the state transition comment'
+
+POST /api/marketplace-offering-users/{uuid}/update_restricted/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: is_restricted
+            - Description changed from '' to 'Whether the offering user should be restricted from accessing resources'
+
+POST /api/marketplace-orders/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-orders/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-plans/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: organization_groups
+                - Items changed
+                  - Properties changed
+                    - Modified property: customers_count
+                      - Description changed from '' to 'Number of customers in this organization group'
+                    - Modified property: parent_name
+                      - Description changed from '' to 'Name of the parent organization group'
+                    - Modified property: parent_uuid
+                      - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/marketplace-plans/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/marketplace-plans/usage_stats/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: limit
+                - Description changed from '' to 'Usage limit'
+              - Modified property: plan_name
+                - Description changed from '' to 'Name of the plan'
+              - Modified property: plan_uuid
+                - Description changed from '' to 'UUID of the plan'
+              - Modified property: remaining
+                - Description changed from '' to 'Remaining usage'
+              - Modified property: usage
+                - Description changed from '' to 'Current usage count'
+
+GET /api/marketplace-plans/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+PATCH /api/marketplace-plans/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+PUT /api/marketplace-plans/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/marketplace-plans/{uuid}/update_quotas/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: quotas
+            - Description changed from '' to 'Dictionary of quotas to update'
+
+GET /api/marketplace-plugins/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: components
+                - Items changed
+                  - Properties changed
+                    - Modified property: billing_type
+                      - Property 'AllOf' changed
+                        - Schemas added: #/components/schemas/BillingTypeEnum
+                      - Type changed from 'string' to ''
+                      - Description changed from '' to 'Billing type for the component'
+                      - Deleted enum values: [fixed usage limit one few]
+                    - Modified property: measured_unit
+                      - Description changed from '' to 'Unit of measurement for the component'
+                    - Modified property: name
+                      - Description changed from '' to 'Display name of the component'
+                    - Modified property: type
+                      - Description changed from '' to 'Type identifier of the component'
+
+POST /api/marketplace-project-update-requests/{uuid}/approve/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: comment
+            - Description changed from '' to 'Optional comment for review'
+
+POST /api/marketplace-project-update-requests/{uuid}/reject/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: comment
+            - Description changed from '' to 'Optional comment for review'
+
+GET /api/marketplace-provider-offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: country
+                - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+              - Modified property: endpoints
+                - Items changed
+                  - Properties changed
+                    - Modified property: url
+                      - Description changed from '' to 'URL of the access endpoint'
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - New property: default_configs
+                            - Modified property: type
+                              - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+              - Modified property: organization_groups
+                - Items changed
+                  - Properties changed
+                    - Modified property: customers_count
+                      - Description changed from '' to 'Number of customers in this organization group'
+                    - Modified property: parent_name
+                      - Description changed from '' to 'Name of the parent organization group'
+                    - Modified property: parent_uuid
+                      - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: plans
+                - Items changed
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: plugin_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedPluginOptions
+                    - Properties changed
+                      - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                        - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                        - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_flavor_name
+                        - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_server_data_volume_size_gb
+                        - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                      - Modified property: managed_rancher_server_data_volume_type_name
+                        - Description changed from '' to 'Data volume type name for managed Rancher server'
+                      - Modified property: managed_rancher_server_flavor_name
+                        - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                      - Modified property: managed_rancher_server_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                      - Modified property: managed_rancher_server_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher server'
+                      - Modified property: managed_rancher_worker_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                      - Modified property: managed_rancher_worker_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+              - Modified property: resource_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - New property: default_configs
+                            - Modified property: type
+                              - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+              - Modified property: scope_state
+                - Property 'OneOf' changed
+                  - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                - Property 'AllOf' changed
+                  - Schemas deleted: #/components/schemas/CoreStates
+              - Modified property: secret_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedSecretOptions
+                    - Properties changed
+                      - Modified property: cloud_init_template
+                        - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                      - Modified property: managed_rancher_load_balancer_cloud_init_template
+                        - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                      - Modified property: openstack_api_tls_certificate
+                        - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-provider-offerings/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: limits
+            - AdditionalProperties changed
+              - Properties changed
+                - Modified property: max
+                  - Description changed from '' to 'Maximum allowed value'
+                - Modified property: max_available_limit
+                  - Description changed from '' to 'Maximum available limit across all resources'
+                - Modified property: min
+                  - Description changed from '' to 'Minimum allowed value'
+          - Modified property: options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - New property: default_configs
+                    - Modified property: type
+                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+          - Modified property: resource_options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - New property: default_configs
+                    - Modified property: type
+                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: limits
+            - AdditionalProperties changed
+              - Properties changed
+                - Modified property: max
+                  - Description changed from '' to 'Maximum allowed value'
+                - Modified property: max_available_limit
+                  - Description changed from '' to 'Maximum available limit across all resources'
+                - Modified property: min
+                  - Description changed from '' to 'Minimum allowed value'
+          - Modified property: options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - New property: default_configs
+                    - Modified property: type
+                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+          - Modified property: resource_options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - New property: default_configs
+                    - Modified property: type
+                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: country
+            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+          - Modified property: limits
+            - AdditionalProperties changed
+              - Properties changed
+                - Modified property: max
+                  - Description changed from '' to 'Maximum allowed value'
+                - Modified property: max_available_limit
+                  - Description changed from '' to 'Maximum available limit across all resources'
+                - Modified property: min
+                  - Description changed from '' to 'Minimum allowed value'
+          - Modified property: options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - New property: default_configs
+                    - Modified property: type
+                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+          - Modified property: resource_options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - New property: default_configs
+                    - Modified property: type
+                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: secret_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedSecretOptions
+                  - Properties changed
+                    - Modified property: cloud_init_template
+                      - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                    - Modified property: managed_rancher_load_balancer_cloud_init_template
+                      - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                    - Modified property: openstack_api_tls_certificate
+                      - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-provider-offerings/groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: offerings
+                - Items changed
+                  - Properties changed
+                    - Modified property: offering_name
+                      - Description changed from '' to 'Name of the offering'
+                    - Modified property: offering_uuid
+                      - Description changed from '' to 'UUID of the offering'
+
+POST /api/marketplace-provider-offerings/import_offering/
+
+- Description changed from 'Imports an offering and all its connected parts from YAML format. Allows configuration of which components to import and how to handle conflicts.' to 'Imports an offering and all its connected parts from YAML format. Allows configuration of which components to import and how to handle conflicts. Imported offerings are always created in DRAFT state for security.'
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Deleted property: preserve_state
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: import_timestamp
+              - Description changed from '' to 'Timestamp when the import was completed'
+            - Modified property: imported_offering_name
+              - Description changed from '' to 'Name of the imported offering'
+            - Modified property: imported_offering_uuid
+              - Description changed from '' to 'UUID of the imported offering'
+
+GET /api/marketplace-provider-offerings/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: secret_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedSecretOptions
+                  - Properties changed
+                    - Modified property: cloud_init_template
+                      - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                    - Modified property: managed_rancher_load_balancer_cloud_init_template
+                      - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                    - Modified property: openstack_api_tls_certificate
+                      - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-provider-offerings/{uuid}/add_endpoint/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: url
+            - Description changed from '' to 'URL of the access endpoint'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: uuid
+              - Description changed from '' to 'UUID of the access endpoint'
+
+POST /api/marketplace-provider-offerings/{uuid}/add_software_catalog/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: uuid
+              - Description changed from '' to 'UUID of the software catalog'
+
+POST /api/marketplace-provider-offerings/{uuid}/check_unique_backend_id/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: backend_id
+            - Description changed from '' to 'Backend identifier to check'
+          - Modified property: check_all_offerings
+            - Description changed from '' to 'Check across all offerings'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: is_unique
+              - Description changed from '' to 'Whether the backend ID is unique'
+
+GET /api/marketplace-provider-offerings/{uuid}/costs/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: period
+                - Description changed from '' to 'Billing period (YYYY-MM)'
+              - Modified property: price
+                - Description changed from '' to 'Price amount excluding tax'
+              - Modified property: tax
+                - Description changed from '' to 'Tax amount'
+              - Modified property: total
+                - Description changed from '' to 'Total amount including tax'
+
+POST /api/marketplace-provider-offerings/{uuid}/delete_endpoint/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: uuid
+            - Description changed from '' to 'UUID of the access endpoint'
+
+POST /api/marketplace-provider-offerings/{uuid}/export_offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: export_timestamp
+              - Description changed from '' to 'Timestamp when the export was completed'
+            - Modified property: offering_name
+              - Description changed from '' to 'Name of the exported offering'
+            - Modified property: offering_uuid
+              - Description changed from '' to 'UUID of the exported offering'
+
+POST /api/marketplace-provider-offerings/{uuid}/import_resource/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: backend_id
+            - Description changed from '' to 'Backend identifier of the resource'
+          - Modified property: project
+            - Description changed from '' to 'Target project for the resource'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-provider-offerings/{uuid}/importable_resources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: backend_id
+                - Description changed from '' to 'Backend identifier of the resource'
+              - Modified property: description
+                - Description changed from '' to 'Description of the resource'
+              - Modified property: name
+                - Description changed from '' to 'Name of the resource'
+              - Modified property: type
+                - Description changed from '' to 'Type of the resource'
+
+GET /api/marketplace-provider-offerings/{uuid}/list_customer_projects/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: description
+                - Description changed from '' to 'Project description (HTML content will be sanitized)'
+              - Modified property: end_date
+                - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+              - Modified property: oecd_fos_2007_label
+                - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+              - Modified property: resources_count
+                - Description changed from '' to 'Number of active resources in this project'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+              - Modified property: staff_notes
+                - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+              - Modified property: start_date
+                - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+              - Modified property: termination_metadata
+                - Description changed from '' to 'Metadata about project termination (read-only)'
+
+GET /api/marketplace-provider-offerings/{uuid}/list_customer_users/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-provider-offerings/{uuid}/move_offering/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: customer
+            - Description changed from '' to 'Target customer URL with service provider profile where the offering should be moved'
+          - Modified property: preserve_permissions
+            - Description changed from '' to 'Whether to preserve existing permissions when moving the offering'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-provider-offerings/{uuid}/refresh_offering_usernames/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: status
+              - Description changed from '' to 'Status of the resource response'
+
+POST /api/marketplace-provider-offerings/{uuid}/remove_offering_component/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: uuid
+            - Description changed from '' to 'UUID of the component to remove'
+
+POST /api/marketplace-provider-offerings/{uuid}/remove_software_catalog/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: offering_catalog_uuid
+            - Description changed from '' to 'UUID of the offering catalog to remove'
+
+GET /api/marketplace-provider-offerings/{uuid}/tos_stats/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: accepted_consents_count
+              - Description changed from '' to 'Number of accepted consents'
+            - Modified property: active_users_count
+              - Description changed from '' to 'Number of active users'
+            - Modified property: active_users_over_time
+              - Items changed
+                - Properties changed
+                  - Modified property: count
+                    - Description changed from '' to 'Count for the date'
+                  - Modified property: date
+                    - Description changed from '' to 'Date of the data point'
+            - Modified property: active_users_percentage
+              - Description changed from '' to 'Percentage of active users'
+            - Modified property: revoked_consents_count
+              - Description changed from '' to 'Number of revoked consents'
+            - Modified property: revoked_consents_over_time
+              - Items changed
+                - Properties changed
+                  - Modified property: count
+                    - Description changed from '' to 'Count for the date'
+                  - Modified property: date
+                    - Description changed from '' to 'Date of the data point'
+            - Modified property: tos_version_adoption
+              - Items changed
+                - Properties changed
+                  - Modified property: users_count
+                    - Description changed from '' to 'Number of users on this version'
+                  - Modified property: version
+                    - Description changed from '' to 'Version identifier'
+            - Modified property: total_consents_count
+              - Description changed from '' to 'Total number of consents'
+            - Modified property: total_users_count
+              - Description changed from '' to 'Total number of users'
+
+POST /api/marketplace-provider-offerings/{uuid}/update_integration/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: plugin_options
+            - Properties changed
+              - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+              - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+              - Modified property: managed_rancher_load_balancer_flavor_name
+                - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+              - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+              - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+              - Modified property: managed_rancher_server_data_volume_size_gb
+                - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+              - Modified property: managed_rancher_server_data_volume_type_name
+                - Description changed from '' to 'Data volume type name for managed Rancher server'
+              - Modified property: managed_rancher_server_flavor_name
+                - Description changed from '' to 'Flavor name for managed Rancher server instances'
+              - Modified property: managed_rancher_server_system_volume_size_gb
+                - Description changed from '' to 'System volume size in GB for managed Rancher server'
+              - Modified property: managed_rancher_server_system_volume_type_name
+                - Description changed from '' to 'System volume type name for managed Rancher server'
+              - Modified property: managed_rancher_worker_system_volume_size_gb
+                - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+              - Modified property: managed_rancher_worker_system_volume_type_name
+                - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+          - Modified property: secret_options
+            - Properties changed
+              - Modified property: cloud_init_template
+                - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+              - Modified property: managed_rancher_load_balancer_cloud_init_template
+                - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+              - Modified property: openstack_api_tls_certificate
+                - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+
+POST /api/marketplace-provider-offerings/{uuid}/update_options/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - New property: default_configs
+                    - Modified property: type
+                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+
+POST /api/marketplace-provider-offerings/{uuid}/update_overview/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-provider-offerings/{uuid}/update_resource_options/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: resource_options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - New property: default_configs
+                    - Modified property: type
+                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+
+GET /api/marketplace-provider-offerings/{uuid}/user_has_resource_access/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: secret_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedSecretOptions
+                  - Properties changed
+                    - Modified property: cloud_init_template
+                      - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                    - Modified property: managed_rancher_load_balancer_cloud_init_template
+                      - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                    - Modified property: openstack_api_tls_certificate
+                      - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-provider-resources/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: offering_components
+              - New property: offering_state
+              - Modified property: backend_metadata
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BackendMetadata
+                    - Properties changed
+                      - Modified property: action
+                        - Description changed from '' to 'Current action being performed'
+                      - Modified property: instance_name
+                        - Description changed from '' to 'Name of the backend instance'
+                      - Modified property: runtime_state
+                        - Description changed from '' to 'Runtime state of the backend resource'
+                      - Modified property: state
+                        - Description changed from '' to 'Backend resource state'
+              - Modified property: endpoints
+                - Items changed
+                  - Properties changed
+                    - Modified property: url
+                      - Description changed from '' to 'URL of the access endpoint'
+              - Modified property: report
+                - Items changed
+                  - Properties changed
+                    - Modified property: body
+                      - Description changed from '' to 'Section body content'
+                    - Modified property: header
+                      - Description changed from '' to 'Section header text'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-provider-resources/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-provider-resources/{uuid}/move_resource/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: project
+            - Description changed from '' to 'Target project URL where the resource should be moved'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-provider-resources/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-provider-resources/{uuid}/offering_for_subresources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: type
+                - Description changed from '' to 'Type of the offering'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID of the offering'
+
+POST /api/marketplace-provider-resources/{uuid}/restore/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-provider-resources/{uuid}/set_backend_id/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: status
+              - Description changed from '' to 'Status of the resource response'
+
+POST /api/marketplace-provider-resources/{uuid}/set_backend_metadata/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: status
+              - Description changed from '' to 'Status of the resource response'
+
+POST /api/marketplace-provider-resources/{uuid}/set_limits/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: limits
+            - Description changed from '' to 'Dictionary mapping component types to their new limit values'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: status
+              - Description changed from '' to 'Status of the resource response'
+
+POST /api/marketplace-provider-resources/{uuid}/submit_report/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: report
+            - Items changed
+              - Properties changed
+                - Modified property: body
+                  - Description changed from '' to 'Section body content'
+                - Modified property: header
+                  - Description changed from '' to 'Section header text'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: status
+              - Description changed from '' to 'Status of the resource response'
+
+POST /api/marketplace-provider-resources/{uuid}/terminate/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: attributes
+            - Description changed from '' to 'Optional attributes/parameters to pass to the termination operation'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: order_uuid
+              - Description changed from '' to 'UUID of the created or updated order'
+
+POST /api/marketplace-provider-resources/{uuid}/update_options/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: status
+              - Description changed from '' to 'Status of the resource response'
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: order_uuid
+              - Description changed from '' to 'UUID of the created or updated order'
+
+POST /api/marketplace-provider-resources/{uuid}/update_options_direct/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: status
+              - Description changed from '' to 'Status of the resource response'
+
+POST /api/marketplace-public-api/check_signature/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: customer
+            - Description changed from '' to 'Service provider customer UUID'
+          - Modified property: data
+            - Description changed from '' to 'JWT-encoded data signed with the service provider's API secret code'
+          - Modified property: dry_run
+            - Description changed from '' to 'If true, validates the signature without executing the operation'
+
+POST /api/marketplace-public-api/set_usage/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: customer
+            - Description changed from '' to 'Service provider customer UUID'
+          - Modified property: data
+            - Description changed from '' to 'JWT-encoded data signed with the service provider's API secret code'
+          - Modified property: dry_run
+            - Description changed from '' to 'If true, validates the signature without executing the operation'
+
+GET /api/marketplace-public-offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: country
+                - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+              - Modified property: endpoints
+                - Items changed
+                  - Properties changed
+                    - Modified property: url
+                      - Description changed from '' to 'URL of the access endpoint'
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - New property: default_configs
+                            - Modified property: type
+                              - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+              - Modified property: organization_groups
+                - Items changed
+                  - Properties changed
+                    - Modified property: customers_count
+                      - Description changed from '' to 'Number of customers in this organization group'
+                    - Modified property: parent_name
+                      - Description changed from '' to 'Name of the parent organization group'
+                    - Modified property: parent_uuid
+                      - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: plans
+                - Items changed
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: plugin_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedPluginOptions
+                    - Properties changed
+                      - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                        - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                        - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_flavor_name
+                        - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_server_data_volume_size_gb
+                        - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                      - Modified property: managed_rancher_server_data_volume_type_name
+                        - Description changed from '' to 'Data volume type name for managed Rancher server'
+                      - Modified property: managed_rancher_server_flavor_name
+                        - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                      - Modified property: managed_rancher_server_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                      - Modified property: managed_rancher_server_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher server'
+                      - Modified property: managed_rancher_worker_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                      - Modified property: managed_rancher_worker_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+              - Modified property: resource_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - New property: default_configs
+                            - Modified property: type
+                              - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+              - Modified property: scope_state
+                - Property 'OneOf' changed
+                  - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                - Property 'AllOf' changed
+                  - Schemas deleted: #/components/schemas/CoreStates
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-public-offerings/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-public-offerings/{uuid}/plans/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: organization_groups
+                - Items changed
+                  - Properties changed
+                    - Modified property: customers_count
+                      - Description changed from '' to 'Number of customers in this organization group'
+                    - Modified property: parent_name
+                      - Description changed from '' to 'Name of the parent organization group'
+                    - Modified property: parent_uuid
+                      - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/marketplace-public-offerings/{uuid}/plans/{plan_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/marketplace-resources/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: offering_components
+              - New property: offering_state
+              - Modified property: backend_metadata
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BackendMetadata
+                    - Properties changed
+                      - Modified property: action
+                        - Description changed from '' to 'Current action being performed'
+                      - Modified property: instance_name
+                        - Description changed from '' to 'Name of the backend instance'
+                      - Modified property: runtime_state
+                        - Description changed from '' to 'Runtime state of the backend resource'
+                      - Modified property: state
+                        - Description changed from '' to 'Backend resource state'
+              - Modified property: endpoints
+                - Items changed
+                  - Properties changed
+                    - Modified property: url
+                      - Description changed from '' to 'URL of the access endpoint'
+              - Modified property: report
+                - Items changed
+                  - Properties changed
+                    - Modified property: body
+                      - Description changed from '' to 'Section body content'
+                    - Modified property: header
+                      - Description changed from '' to 'Section header text'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-resources/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-resources/{uuid}/move_resource/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: project
+            - Description changed from '' to 'Target project URL where the resource should be moved'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-resources/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-resources/{uuid}/offering_for_subresources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: type
+                - Description changed from '' to 'Type of the offering'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID of the offering'
+
+POST /api/marketplace-resources/{uuid}/reallocate_limits/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: source_order_uuid
+              - Description changed from '' to 'UUID of the source order for limit reallocation'
+            - Modified property: target_order_uuids
+              - Description changed from '' to 'List of UUIDs for target orders receiving the reallocated limits'
+
+POST /api/marketplace-resources/{uuid}/renew/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: order_uuid
+              - Description changed from '' to 'UUID of the created or updated order'
+
+POST /api/marketplace-resources/{uuid}/restore/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_components
+            - New property: offering_state
+            - Modified property: backend_metadata
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BackendMetadata
+                  - Properties changed
+                    - Modified property: action
+                      - Description changed from '' to 'Current action being performed'
+                    - Modified property: instance_name
+                      - Description changed from '' to 'Name of the backend instance'
+                    - Modified property: runtime_state
+                      - Description changed from '' to 'Runtime state of the backend resource'
+                    - Modified property: state
+                      - Description changed from '' to 'Backend resource state'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: report
+              - Items changed
+                - Properties changed
+                  - Modified property: body
+                    - Description changed from '' to 'Section body content'
+                  - Modified property: header
+                    - Description changed from '' to 'Section header text'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-resources/{uuid}/switch_plan/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: order_uuid
+              - Description changed from '' to 'UUID of the created or updated order'
+
+POST /api/marketplace-resources/{uuid}/terminate/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: attributes
+            - Description changed from '' to 'Optional attributes/parameters to pass to the termination operation'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: order_uuid
+              - Description changed from '' to 'UUID of the created or updated order'
+
+POST /api/marketplace-resources/{uuid}/update_limits/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: order_uuid
+              - Description changed from '' to 'UUID of the created or updated order'
+
+POST /api/marketplace-resources/{uuid}/update_options/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: status
+              - Description changed from '' to 'Status of the resource response'
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: order_uuid
+              - Description changed from '' to 'UUID of the created or updated order'
+
+GET /api/marketplace-robot-accounts/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: fingerprints
+                - Items changed
+                  - Properties changed
+                    - Modified property: md5
+                      - Description changed from '' to 'MD5 fingerprint of SSH key'
+                    - Modified property: sha256
+                      - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                    - Modified property: sha512
+                      - Description changed from '' to 'SHA512 fingerprint of SSH key'
+              - Modified property: offering_plugin_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedPluginOptions
+                    - Properties changed
+                      - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                        - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                        - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_flavor_name
+                        - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                      - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                      - Modified property: managed_rancher_server_data_volume_size_gb
+                        - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                      - Modified property: managed_rancher_server_data_volume_type_name
+                        - Description changed from '' to 'Data volume type name for managed Rancher server'
+                      - Modified property: managed_rancher_server_flavor_name
+                        - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                      - Modified property: managed_rancher_server_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                      - Modified property: managed_rancher_server_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher server'
+                      - Modified property: managed_rancher_worker_system_volume_size_gb
+                        - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                      - Modified property: managed_rancher_worker_system_volume_type_name
+                        - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+
+POST /api/marketplace-robot-accounts/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+
+GET /api/marketplace-robot-accounts/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+
+PATCH /api/marketplace-robot-accounts/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+
+PUT /api/marketplace-robot-accounts/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_creating/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_deleted/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_erred/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_ok/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_request_deletion/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: fingerprints
+              - Items changed
+                - Properties changed
+                  - Modified property: md5
+                    - Description changed from '' to 'MD5 fingerprint of SSH key'
+                  - Modified property: sha256
+                    - Description changed from '' to 'SHA256 fingerprint of SSH key'
+                  - Modified property: sha512
+                    - Description changed from '' to 'SHA512 fingerprint of SSH key'
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+
+GET /api/marketplace-runtime-states/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: label
+                - Description changed from '' to 'Human-readable label for the runtime state'
+              - Modified property: value
+                - Description changed from '' to 'Value of the runtime state'
+
+POST /api/marketplace-script-dry-run/{uuid}/async_run/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/marketplace-script-dry-run/{uuid}/run/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: endpoints
+              - Items changed
+                - Properties changed
+                  - Modified property: url
+                    - Description changed from '' to 'URL of the access endpoint'
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plans
+              - Items changed
+                - Properties changed
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                    - Modified property: managed_rancher_server_data_volume_size_gb
+                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_data_volume_type_name
+                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_server_flavor_name
+                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                    - Modified property: managed_rancher_server_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                    - Modified property: managed_rancher_server_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                    - Modified property: managed_rancher_worker_system_volume_type_name
+                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: scope_state
+              - Property 'OneOf' changed
+                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+              - Property 'AllOf' changed
+                - Schemas deleted: #/components/schemas/CoreStates
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-service-providers/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: organization_groups
+                - Items changed
+                  - Properties changed
+                    - Modified property: customers_count
+                      - Description changed from '' to 'Number of customers in this organization group'
+                    - Modified property: parent_name
+                      - Description changed from '' to 'Name of the parent organization group'
+                    - Modified property: parent_uuid
+                      - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/marketplace-service-providers/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/marketplace-service-providers/{service_provider_uuid}/offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: plans
+                - Items changed
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: secret_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedSecretOptions
+                    - Properties changed
+                      - Modified property: cloud_init_template
+                        - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                      - Modified property: managed_rancher_load_balancer_cloud_init_template
+                        - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                      - Modified property: openstack_api_tls_certificate
+                        - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/marketplace-service-providers/{service_provider_uuid}/projects/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: description
+                - Description changed from '' to 'Project description (HTML content will be sanitized)'
+              - Modified property: end_date
+                - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+              - Modified property: oecd_fos_2007_label
+                - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+              - Modified property: resources_count
+                - Description changed from '' to 'Number of active resources in this project'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+              - Modified property: staff_notes
+                - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+              - Modified property: start_date
+                - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+              - Modified property: termination_metadata
+                - Description changed from '' to 'Metadata about project termination (read-only)'
+
+GET /api/marketplace-service-providers/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+PATCH /api/marketplace-service-providers/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+PUT /api/marketplace-service-providers/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: organization_groups
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/marketplace-service-providers/{uuid}/api_secret_code/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: api_secret_code
+              - Description changed from '' to 'API secret code for authenticating service provider requests'
+
+POST /api/marketplace-service-providers/{uuid}/api_secret_code/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: api_secret_code
+              - Description changed from '' to 'API secret code for authenticating service provider requests'
+
+GET /api/marketplace-service-providers/{uuid}/revenue/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: month
+                - Description changed from '' to 'Invoice month'
+              - Modified property: total
+                - Description changed from '' to 'Total revenue amount'
+              - Modified property: year
+                - Description changed from '' to 'Invoice year'
+
+GET /api/marketplace-service-providers/{uuid}/robot_account_customers/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: name
+                - Description changed from '' to 'Name of the entity'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID of the entity'
+
+GET /api/marketplace-service-providers/{uuid}/robot_account_projects/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: name
+                - Description changed from '' to 'Name of the entity'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID of the entity'
+
+POST /api/marketplace-service-providers/{uuid}/set_offerings_username/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: user_uuid
+            - Description changed from '' to 'UUID of the user'
+          - Modified property: username
+            - Description changed from '' to 'Username for offering access'
+
+GET /api/marketplace-service-providers/{uuid}/stat/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: active_and_paused_offerings
+              - Description changed from '' to 'Number of active and paused offerings'
+            - Modified property: active_campaigns
+              - Description changed from '' to 'Number of active campaigns'
+            - Modified property: active_resources
+              - Description changed from '' to 'Number of active resources'
+            - Modified property: current_customers
+              - Description changed from '' to 'Number of current customers'
+            - Modified property: customers_number_change
+              - Description changed from '' to 'Change in number of customers'
+            - Modified property: erred_resources
+              - Description changed from '' to 'Number of resources in error state'
+            - Modified property: pending_orders
+              - Description changed from '' to 'Number of pending orders'
+            - Modified property: resources_number_change
+              - Description changed from '' to 'Change in number of resources'
+            - Modified property: unresolved_tickets
+              - Description changed from '' to 'Number of unresolved support tickets'
+
+GET /api/marketplace-stats/component_usages/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: component_type
+                - Description changed from '' to 'Type of the component'
+              - Modified property: offering_country
+                - Description changed from '' to 'Country of the offering'
+              - Modified property: offering_uuid
+                - Description changed from '' to 'UUID of the offering'
+              - Modified property: organization_group_name
+                - Description changed from '' to 'Name of the organization group'
+              - Modified property: organization_group_uuid
+                - Description changed from '' to 'UUID of the organization group'
+              - Modified property: usage
+                - Description changed from '' to 'Total usage amount'
+
+GET /api/marketplace-stats/component_usages_per_month/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: component_type
+                - Description changed from '' to 'Type of the component'
+              - Modified property: month
+                - Description changed from '' to 'Month of the billing period'
+              - Modified property: offering_country
+                - Description changed from '' to 'Country of the offering'
+              - Modified property: offering_uuid
+                - Description changed from '' to 'UUID of the offering'
+              - Modified property: organization_group_name
+                - Description changed from '' to 'Name of the organization group'
+              - Modified property: organization_group_uuid
+                - Description changed from '' to 'UUID of the organization group'
+              - Modified property: usage
+                - Description changed from '' to 'Total usage amount'
+              - Modified property: year
+                - Description changed from '' to 'Year of the billing period'
+
+GET /api/marketplace-stats/component_usages_per_project/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: component_type
+                - Description changed from '' to 'Type of the component'
+              - Modified property: project_uuid
+                - Description changed from '' to 'UUID of the project'
+              - Modified property: usage
+                - Description changed from '' to 'Total usage for the component'
+
+GET /api/marketplace-stats/count_active_resources_grouped_by_offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: count
+                - Description changed from '' to 'Number of resources for the offering'
+              - Modified property: country
+                - Description changed from '' to 'Country of the offering'
+              - Modified property: name
+                - Description changed from '' to 'Name of the offering'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID of the offering'
+
+GET /api/marketplace-stats/count_active_resources_grouped_by_offering_country/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: count
+                - Description changed from '' to 'Number of offerings in this country'
+              - Modified property: country
+                - Description changed from '' to 'Country code of the offering'
+
+GET /api/marketplace-stats/count_active_resources_grouped_by_organization_group/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: count
+                - Description changed from '' to 'Count value from the record'
+              - Modified property: name
+                - Description changed from '' to 'Name from the record'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID from the record'
+
+GET /api/marketplace-stats/count_projects_grouped_by_provider_and_industry_flag/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: abbreviation
+                - Description changed from '' to 'Customer abbreviation from the record'
+              - Modified property: count
+                - Description changed from '' to 'Count value from the record'
+              - Modified property: is_industry
+                - Description changed from '' to 'Industry classification flag'
+              - Modified property: name
+                - Description changed from '' to 'Name from the record'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID from the record'
+
+GET /api/marketplace-stats/count_projects_grouped_by_provider_and_oecd/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: abbreviation
+                - Description changed from '' to 'Customer abbreviation from the record'
+              - Modified property: count
+                - Description changed from '' to 'Count value from the record'
+              - Modified property: name
+                - Description changed from '' to 'Name from the record'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID from the record'
+
+GET /api/marketplace-stats/count_projects_of_service_providers/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: count
+                - Description changed from '' to 'Count value'
+              - Modified property: customer_name
+                - Description changed from '' to 'Name of the customer'
+              - Modified property: customer_organization_group_name
+                - Description changed from '' to 'Name of the customer's organization group'
+              - Modified property: customer_organization_group_uuid
+                - Description changed from '' to 'UUID of the customer's organization group'
+              - Modified property: customer_uuid
+                - Description changed from '' to 'UUID of the customer'
+              - Modified property: service_provider_uuid
+                - Description changed from '' to 'UUID of the service provider'
+
+GET /api/marketplace-stats/count_projects_of_service_providers_grouped_by_oecd/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: count
+                - Description changed from '' to 'Count value'
+              - Modified property: customer_name
+                - Description changed from '' to 'Name of the customer'
+              - Modified property: customer_organization_group_name
+                - Description changed from '' to 'Name of the customer's organization group'
+              - Modified property: customer_organization_group_uuid
+                - Description changed from '' to 'UUID of the customer's organization group'
+              - Modified property: customer_uuid
+                - Description changed from '' to 'UUID of the customer'
+              - Modified property: service_provider_uuid
+                - Description changed from '' to 'UUID of the service provider'
+
+GET /api/marketplace-stats/count_unique_users_connected_with_active_resources_of_service_provider/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: count_users
+                - Description changed from '' to 'Number of unique users'
+              - Modified property: customer_name
+                - Description changed from '' to 'Name of the customer'
+              - Modified property: customer_uuid
+                - Description changed from '' to 'UUID of the customer'
+
+GET /api/marketplace-stats/count_users_of_service_providers/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: count
+                - Description changed from '' to 'Count value'
+              - Modified property: customer_name
+                - Description changed from '' to 'Name of the customer'
+              - Modified property: customer_organization_group_name
+                - Description changed from '' to 'Name of the customer's organization group'
+              - Modified property: customer_organization_group_uuid
+                - Description changed from '' to 'UUID of the customer's organization group'
+              - Modified property: customer_uuid
+                - Description changed from '' to 'UUID of the customer'
+              - Modified property: service_provider_uuid
+                - Description changed from '' to 'UUID of the service provider'
+
+GET /api/marketplace-stats/customer_member_count/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: abbreviation
+                - Description changed from '' to 'Abbreviation of the customer'
+              - Modified property: count
+                - Description changed from '' to 'Number of members'
+              - Modified property: has_resources
+                - Description changed from '' to 'Whether the customer has resources'
+              - Modified property: name
+                - Description changed from '' to 'Name of the customer'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID of the customer'
+
+GET /api/marketplace-stats/offerings_counter_stats/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: category_title
+                - Description changed from '' to 'Title of the category'
+              - Modified property: category_uuid
+                - Description changed from '' to 'UUID of the category'
+              - Modified property: count
+                - Description changed from '' to 'Number of offerings'
+              - Modified property: service_provider_name
+                - Description changed from '' to 'Name of the service provider'
+              - Modified property: service_provider_uuid
+                - Description changed from '' to 'UUID of the service provider'
+
+GET /api/marketplace-stats/organization_project_count/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: abbreviation
+                - Description changed from '' to 'Customer abbreviation from the record'
+              - Modified property: count
+                - Description changed from '' to 'Count value from the record'
+              - Modified property: name
+                - Description changed from '' to 'Name from the record'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID from the record'
+
+GET /api/marketplace-stats/organization_resource_count/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: abbreviation
+                - Description changed from '' to 'Customer abbreviation from the record'
+              - Modified property: count
+                - Description changed from '' to 'Count value from the record'
+              - Modified property: name
+                - Description changed from '' to 'Name from the record'
+              - Modified property: uuid
+                - Description changed from '' to 'UUID from the record'
+
+GET /api/marketplace-stats/projects_limits_grouped_by_industry_flag/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: limits
+              - Description changed from '' to 'Nested dictionary of resource limits by category and component type'
+
+GET /api/marketplace-stats/projects_limits_grouped_by_oecd/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: limits
+              - Description changed from '' to 'Nested dictionary of resource limits by category and component type'
+
+GET /api/marketplace-stats/projects_usages_grouped_by_industry_flag/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: usages
+              - Description changed from '' to 'Nested dictionary of usage values by category and component type'
+
+GET /api/marketplace-stats/projects_usages_grouped_by_oecd/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: usages
+              - Description changed from '' to 'Nested dictionary of usage values by category and component type'
+
+GET /api/marketplace-stats/resources_limits/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: name
+                - Description changed from '' to 'Name of the limit'
+              - Modified property: offering_country
+                - Description changed from '' to 'Country of the offering'
+              - Modified property: offering_uuid
+                - Description changed from '' to 'UUID of the offering'
+              - Modified property: organization_group_name
+                - Description changed from '' to 'Name of the organization group'
+              - Modified property: organization_group_uuid
+                - Description changed from '' to 'UUID of the organization group'
+              - Modified property: value
+                - Description changed from '' to 'Limit value'
+
+GET /api/marketplace-stats/total_cost_of_active_resources_per_offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: cost
+                - Description changed from '' to 'Total cost for the offering'
+              - Modified property: offering_uuid
+                - Description changed from '' to 'UUID of the offering'
+
+GET /api/onboarding-verifications/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - New required property: can_customer_be_created
+              - New required property: customer_creation_error_message
+            - Properties changed
+              - New property: can_customer_be_created
+              - New property: customer_creation_error_message
+
+POST /api/onboarding-verifications/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: can_customer_be_created
+            - New required property: customer_creation_error_message
+          - Properties changed
+            - New property: can_customer_be_created
+            - New property: customer_creation_error_message
+
+POST /api/onboarding-verifications/start_verification/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: can_customer_be_created
+            - New required property: customer_creation_error_message
+          - Properties changed
+            - New property: can_customer_be_created
+            - New property: customer_creation_error_message
+
+GET /api/onboarding-verifications/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: can_customer_be_created
+            - New required property: customer_creation_error_message
+          - Properties changed
+            - New property: can_customer_be_created
+            - New property: customer_creation_error_message
+
+PATCH /api/onboarding-verifications/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: can_customer_be_created
+            - New required property: customer_creation_error_message
+          - Properties changed
+            - New property: can_customer_be_created
+            - New property: customer_creation_error_message
+
+PUT /api/onboarding-verifications/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: can_customer_be_created
+            - New required property: customer_creation_error_message
+          - Properties changed
+            - New property: can_customer_be_created
+            - New property: customer_creation_error_message
+
+POST /api/onboarding-verifications/{uuid}/create_customer/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Deleted property: projects
+            - Modified property: country
+              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+            - Modified property: country_name
+              - Description changed from '' to 'Human-readable country name'
+            - Modified property: display_name
+              - Description changed from '' to 'Display name of the organization (includes native name if available)'
+            - Modified property: organization_groups
+              - Description changed from '' to 'Organization groups this customer belongs to'
+              - Items changed
+                - Properties changed
+                  - Modified property: customers_count
+                    - Description changed from '' to 'Number of customers in this organization group'
+                  - Modified property: parent_name
+                    - Description changed from '' to 'Name of the parent organization group'
+                  - Modified property: parent_uuid
+                    - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: project_metadata_checklist
+              - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+            - Modified property: projects_count
+              - Description changed from '' to 'Number of projects in this organization'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: users_count
+              - Description changed from '' to 'Number of users with access to this organization'
+
+POST /api/onboarding-verifications/{uuid}/run_validation/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: can_customer_be_created
+            - New required property: customer_creation_error_message
+          - Properties changed
+            - New property: can_customer_be_created
+            - New property: customer_creation_error_message
+
+GET /api/openportal-managed-projects/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: project_data
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/Project
+                    - Properties changed
+                      - Modified property: description
+                        - Description changed from '' to 'Project description (HTML content will be sanitized)'
+                      - Modified property: end_date
+                        - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+                      - Modified property: oecd_fos_2007_label
+                        - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+                      - Modified property: resources_count
+                        - Description changed from '' to 'Number of active resources in this project'
+                      - Modified property: slug
+                        - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                      - Modified property: staff_notes
+                        - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+                      - Modified property: start_date
+                        - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+                      - Modified property: termination_metadata
+                        - Description changed from '' to 'Metadata about project termination (read-only)'
+              - Modified property: project_template_data
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/ProjectTemplate
+                    - Properties changed
+                      - Modified property: customer_data
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/Customer
+                            - Properties changed
+                              - Deleted property: projects
+                              - Modified property: country
+                                - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                              - Modified property: country_name
+                                - Description changed from '' to 'Human-readable country name'
+                              - Modified property: display_name
+                                - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                              - Modified property: organization_groups
+                                - Description changed from '' to 'Organization groups this customer belongs to'
+                                - Items changed
+                                  - Properties changed
+                                    - Modified property: customers_count
+                                      - Description changed from '' to 'Number of customers in this organization group'
+                                    - Modified property: parent_name
+                                      - Description changed from '' to 'Name of the parent organization group'
+                                    - Modified property: parent_uuid
+                                      - Description changed from '' to 'UUID of the parent organization group'
+                              - Modified property: project_metadata_checklist
+                                - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                              - Modified property: projects_count
+                                - Description changed from '' to 'Number of projects in this organization'
+                              - Modified property: slug
+                                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                              - Modified property: users_count
+                                - Description changed from '' to 'Number of users with access to this organization'
+                      - Modified property: offerings_data
+                        - Items changed
+                          - Properties changed
+                            - Modified property: country
+                              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                            - Modified property: endpoints
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: url
+                                    - Description changed from '' to 'URL of the access endpoint'
+                            - Modified property: options
+                              - Property 'AllOf' changed
+                                - Modified schema: #/components/schemas/OfferingOptions
+                                  - Properties changed
+                                    - Modified property: options
+                                      - AdditionalProperties changed
+                                        - Properties changed
+                                          - New property: default_configs
+                                          - Modified property: type
+                                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+                            - Modified property: plans
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: organization_groups
+                                    - Items changed
+                                      - Properties changed
+                                        - Modified property: customers_count
+                                          - Description changed from '' to 'Number of customers in this organization group'
+                                        - Modified property: parent_name
+                                          - Description changed from '' to 'Name of the parent organization group'
+                                        - Modified property: parent_uuid
+                                          - Description changed from '' to 'UUID of the parent organization group'
+                            - Modified property: plugin_options
+                              - Property 'AllOf' changed
+                                - Modified schema: #/components/schemas/MergedPluginOptions
+                                  - Properties changed
+                                    - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                                      - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                                    - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                                      - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                                    - Modified property: managed_rancher_load_balancer_flavor_name
+                                      - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                                    - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                                      - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                                    - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                                      - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                                    - Modified property: managed_rancher_server_data_volume_size_gb
+                                      - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                                    - Modified property: managed_rancher_server_data_volume_type_name
+                                      - Description changed from '' to 'Data volume type name for managed Rancher server'
+                                    - Modified property: managed_rancher_server_flavor_name
+                                      - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                                    - Modified property: managed_rancher_server_system_volume_size_gb
+                                      - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                                    - Modified property: managed_rancher_server_system_volume_type_name
+                                      - Description changed from '' to 'System volume type name for managed Rancher server'
+                                    - Modified property: managed_rancher_worker_system_volume_size_gb
+                                      - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                                    - Modified property: managed_rancher_worker_system_volume_type_name
+                                      - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+                            - Modified property: resource_options
+                              - Property 'AllOf' changed
+                                - Modified schema: #/components/schemas/OfferingOptions
+                                  - Properties changed
+                                    - Modified property: options
+                                      - AdditionalProperties changed
+                                        - Properties changed
+                                          - New property: default_configs
+                                          - Modified property: type
+                                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                            - Modified property: scope_state
+                              - Property 'OneOf' changed
+                                - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                              - Property 'AllOf' changed
+                                - Schemas deleted: #/components/schemas/CoreStates
+                            - Modified property: secret_options
+                              - Property 'AllOf' changed
+                                - Modified schema: #/components/schemas/MergedSecretOptions
+                                  - Properties changed
+                                    - Modified property: cloud_init_template
+                                      - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                                    - Modified property: managed_rancher_load_balancer_cloud_init_template
+                                      - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                                    - Modified property: openstack_api_tls_certificate
+                                      - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+                            - Modified property: slug
+                              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                      - Modified property: provider_data
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/Customer
+                            - Properties changed
+                              - Deleted property: projects
+                              - Modified property: country
+                                - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                              - Modified property: country_name
+                                - Description changed from '' to 'Human-readable country name'
+                              - Modified property: display_name
+                                - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                              - Modified property: organization_groups
+                                - Description changed from '' to 'Organization groups this customer belongs to'
+                                - Items changed
+                                  - Properties changed
+                                    - Modified property: customers_count
+                                      - Description changed from '' to 'Number of customers in this organization group'
+                                    - Modified property: parent_name
+                                      - Description changed from '' to 'Name of the parent organization group'
+                                    - Modified property: parent_uuid
+                                      - Description changed from '' to 'UUID of the parent organization group'
+                              - Modified property: project_metadata_checklist
+                                - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                              - Modified property: projects_count
+                                - Description changed from '' to 'Number of projects in this organization'
+                              - Modified property: slug
+                                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                              - Modified property: users_count
+                                - Description changed from '' to 'Number of users with access to this organization'
+
+GET /api/openportal-managed-projects/{identifier}/{destination}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: project_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Project
+                  - Properties changed
+                    - Modified property: description
+                      - Description changed from '' to 'Project description (HTML content will be sanitized)'
+                    - Modified property: end_date
+                      - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+                    - Modified property: oecd_fos_2007_label
+                      - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+                    - Modified property: resources_count
+                      - Description changed from '' to 'Number of active resources in this project'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: staff_notes
+                      - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+                    - Modified property: start_date
+                      - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+                    - Modified property: termination_metadata
+                      - Description changed from '' to 'Metadata about project termination (read-only)'
+            - Modified property: project_template_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/ProjectTemplate
+                  - Properties changed
+                    - Modified property: customer_data
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/Customer
+                          - Properties changed
+                            - Deleted property: projects
+                            - Modified property: country
+                              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                            - Modified property: country_name
+                              - Description changed from '' to 'Human-readable country name'
+                            - Modified property: display_name
+                              - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                            - Modified property: organization_groups
+                              - Description changed from '' to 'Organization groups this customer belongs to'
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+                            - Modified property: project_metadata_checklist
+                              - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                            - Modified property: projects_count
+                              - Description changed from '' to 'Number of projects in this organization'
+                            - Modified property: slug
+                              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                            - Modified property: users_count
+                              - Description changed from '' to 'Number of users with access to this organization'
+                    - Modified property: offerings_data
+                      - Items changed
+                        - Properties changed
+                          - Modified property: country
+                            - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                          - Modified property: endpoints
+                            - Items changed
+                              - Properties changed
+                                - Modified property: url
+                                  - Description changed from '' to 'URL of the access endpoint'
+                          - Modified property: options
+                            - Property 'AllOf' changed
+                              - Modified schema: #/components/schemas/OfferingOptions
+                                - Properties changed
+                                  - Modified property: options
+                                    - AdditionalProperties changed
+                                      - Properties changed
+                                        - New property: default_configs
+                                        - Modified property: type
+                                          - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+                          - Modified property: plans
+                            - Items changed
+                              - Properties changed
+                                - Modified property: organization_groups
+                                  - Items changed
+                                    - Properties changed
+                                      - Modified property: customers_count
+                                        - Description changed from '' to 'Number of customers in this organization group'
+                                      - Modified property: parent_name
+                                        - Description changed from '' to 'Name of the parent organization group'
+                                      - Modified property: parent_uuid
+                                        - Description changed from '' to 'UUID of the parent organization group'
+                          - Modified property: plugin_options
+                            - Property 'AllOf' changed
+                              - Modified schema: #/components/schemas/MergedPluginOptions
+                                - Properties changed
+                                  - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                                    - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                                  - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                                    - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                                  - Modified property: managed_rancher_load_balancer_flavor_name
+                                    - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                                  - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                                    - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                                  - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                                    - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                                  - Modified property: managed_rancher_server_data_volume_size_gb
+                                    - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                                  - Modified property: managed_rancher_server_data_volume_type_name
+                                    - Description changed from '' to 'Data volume type name for managed Rancher server'
+                                  - Modified property: managed_rancher_server_flavor_name
+                                    - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                                  - Modified property: managed_rancher_server_system_volume_size_gb
+                                    - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                                  - Modified property: managed_rancher_server_system_volume_type_name
+                                    - Description changed from '' to 'System volume type name for managed Rancher server'
+                                  - Modified property: managed_rancher_worker_system_volume_size_gb
+                                    - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                                  - Modified property: managed_rancher_worker_system_volume_type_name
+                                    - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+                          - Modified property: resource_options
+                            - Property 'AllOf' changed
+                              - Modified schema: #/components/schemas/OfferingOptions
+                                - Properties changed
+                                  - Modified property: options
+                                    - AdditionalProperties changed
+                                      - Properties changed
+                                        - New property: default_configs
+                                        - Modified property: type
+                                          - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                          - Modified property: scope_state
+                            - Property 'OneOf' changed
+                              - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                            - Property 'AllOf' changed
+                              - Schemas deleted: #/components/schemas/CoreStates
+                          - Modified property: secret_options
+                            - Property 'AllOf' changed
+                              - Modified schema: #/components/schemas/MergedSecretOptions
+                                - Properties changed
+                                  - Modified property: cloud_init_template
+                                    - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                                  - Modified property: managed_rancher_load_balancer_cloud_init_template
+                                    - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                                  - Modified property: openstack_api_tls_certificate
+                                    - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+                          - Modified property: slug
+                            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: provider_data
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/Customer
+                          - Properties changed
+                            - Deleted property: projects
+                            - Modified property: country
+                              - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                            - Modified property: country_name
+                              - Description changed from '' to 'Human-readable country name'
+                            - Modified property: display_name
+                              - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                            - Modified property: organization_groups
+                              - Description changed from '' to 'Organization groups this customer belongs to'
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+                            - Modified property: project_metadata_checklist
+                              - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                            - Modified property: projects_count
+                              - Description changed from '' to 'Number of projects in this organization'
+                            - Modified property: slug
+                              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                            - Modified property: users_count
+                              - Description changed from '' to 'Number of users with access to this organization'
+
+POST /api/openportal-managed-projects/{identifier}/{destination}/approve/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: comment
+            - Description changed from '' to 'Optional comment for review'
+
+POST /api/openportal-managed-projects/{identifier}/{destination}/reject/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: comment
+            - Description changed from '' to 'Optional comment for review'
+
+GET /api/openportal-project-template/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: customer_data
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/Customer
+                    - Properties changed
+                      - Deleted property: projects
+                      - Modified property: country
+                        - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                      - Modified property: country_name
+                        - Description changed from '' to 'Human-readable country name'
+                      - Modified property: display_name
+                        - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                      - Modified property: organization_groups
+                        - Description changed from '' to 'Organization groups this customer belongs to'
+                        - Items changed
+                          - Properties changed
+                            - Modified property: customers_count
+                              - Description changed from '' to 'Number of customers in this organization group'
+                            - Modified property: parent_name
+                              - Description changed from '' to 'Name of the parent organization group'
+                            - Modified property: parent_uuid
+                              - Description changed from '' to 'UUID of the parent organization group'
+                      - Modified property: project_metadata_checklist
+                        - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                      - Modified property: projects_count
+                        - Description changed from '' to 'Number of projects in this organization'
+                      - Modified property: slug
+                        - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                      - Modified property: users_count
+                        - Description changed from '' to 'Number of users with access to this organization'
+              - Modified property: offerings_data
+                - Items changed
+                  - Properties changed
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: endpoints
+                      - Items changed
+                        - Properties changed
+                          - Modified property: url
+                            - Description changed from '' to 'URL of the access endpoint'
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: plans
+                      - Items changed
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: plugin_options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/MergedPluginOptions
+                          - Properties changed
+                            - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                              - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                            - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                              - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                            - Modified property: managed_rancher_load_balancer_flavor_name
+                              - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                            - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                              - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                            - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                              - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                            - Modified property: managed_rancher_server_data_volume_size_gb
+                              - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                            - Modified property: managed_rancher_server_data_volume_type_name
+                              - Description changed from '' to 'Data volume type name for managed Rancher server'
+                            - Modified property: managed_rancher_server_flavor_name
+                              - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                            - Modified property: managed_rancher_server_system_volume_size_gb
+                              - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                            - Modified property: managed_rancher_server_system_volume_type_name
+                              - Description changed from '' to 'System volume type name for managed Rancher server'
+                            - Modified property: managed_rancher_worker_system_volume_size_gb
+                              - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                            - Modified property: managed_rancher_worker_system_volume_type_name
+                              - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+                    - Modified property: resource_options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: scope_state
+                      - Property 'OneOf' changed
+                        - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                      - Property 'AllOf' changed
+                        - Schemas deleted: #/components/schemas/CoreStates
+                    - Modified property: secret_options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/MergedSecretOptions
+                          - Properties changed
+                            - Modified property: cloud_init_template
+                              - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                            - Modified property: managed_rancher_load_balancer_cloud_init_template
+                              - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                            - Modified property: openstack_api_tls_certificate
+                              - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+              - Modified property: provider_data
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/Customer
+                    - Properties changed
+                      - Deleted property: projects
+                      - Modified property: country
+                        - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                      - Modified property: country_name
+                        - Description changed from '' to 'Human-readable country name'
+                      - Modified property: display_name
+                        - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                      - Modified property: organization_groups
+                        - Description changed from '' to 'Organization groups this customer belongs to'
+                        - Items changed
+                          - Properties changed
+                            - Modified property: customers_count
+                              - Description changed from '' to 'Number of customers in this organization group'
+                            - Modified property: parent_name
+                              - Description changed from '' to 'Name of the parent organization group'
+                            - Modified property: parent_uuid
+                              - Description changed from '' to 'UUID of the parent organization group'
+                      - Modified property: project_metadata_checklist
+                        - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                      - Modified property: projects_count
+                        - Description changed from '' to 'Number of projects in this organization'
+                      - Modified property: slug
+                        - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                      - Modified property: users_count
+                        - Description changed from '' to 'Number of users with access to this organization'
+
+POST /api/openportal-project-template/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customer_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - Deleted property: projects
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: country_name
+                      - Description changed from '' to 'Human-readable country name'
+                    - Modified property: display_name
+                      - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                    - Modified property: organization_groups
+                      - Description changed from '' to 'Organization groups this customer belongs to'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: project_metadata_checklist
+                      - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                    - Modified property: projects_count
+                      - Description changed from '' to 'Number of projects in this organization'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: users_count
+                      - Description changed from '' to 'Number of users with access to this organization'
+            - Modified property: offerings_data
+              - Items changed
+                - Properties changed
+                  - Modified property: country
+                    - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                  - Modified property: endpoints
+                    - Items changed
+                      - Properties changed
+                        - Modified property: url
+                          - Description changed from '' to 'URL of the access endpoint'
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+                  - Modified property: plans
+                    - Items changed
+                      - Properties changed
+                        - Modified property: organization_groups
+                          - Items changed
+                            - Properties changed
+                              - Modified property: customers_count
+                                - Description changed from '' to 'Number of customers in this organization group'
+                              - Modified property: parent_name
+                                - Description changed from '' to 'Name of the parent organization group'
+                              - Modified property: parent_uuid
+                                - Description changed from '' to 'UUID of the parent organization group'
+                  - Modified property: plugin_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedPluginOptions
+                        - Properties changed
+                          - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                            - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                            - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_flavor_name
+                            - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_server_data_volume_size_gb
+                            - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                          - Modified property: managed_rancher_server_data_volume_type_name
+                            - Description changed from '' to 'Data volume type name for managed Rancher server'
+                          - Modified property: managed_rancher_server_flavor_name
+                            - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                          - Modified property: managed_rancher_server_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                          - Modified property: managed_rancher_server_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher server'
+                          - Modified property: managed_rancher_worker_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                          - Modified property: managed_rancher_worker_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+                  - Modified property: resource_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: scope_state
+                    - Property 'OneOf' changed
+                      - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                    - Property 'AllOf' changed
+                      - Schemas deleted: #/components/schemas/CoreStates
+                  - Modified property: secret_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedSecretOptions
+                        - Properties changed
+                          - Modified property: cloud_init_template
+                            - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                          - Modified property: managed_rancher_load_balancer_cloud_init_template
+                            - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                          - Modified property: openstack_api_tls_certificate
+                            - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+                  - Modified property: slug
+                    - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: provider_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - Deleted property: projects
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: country_name
+                      - Description changed from '' to 'Human-readable country name'
+                    - Modified property: display_name
+                      - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                    - Modified property: organization_groups
+                      - Description changed from '' to 'Organization groups this customer belongs to'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: project_metadata_checklist
+                      - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                    - Modified property: projects_count
+                      - Description changed from '' to 'Number of projects in this organization'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: users_count
+                      - Description changed from '' to 'Number of users with access to this organization'
+
+GET /api/openportal-project-template/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customer_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - Deleted property: projects
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: country_name
+                      - Description changed from '' to 'Human-readable country name'
+                    - Modified property: display_name
+                      - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                    - Modified property: organization_groups
+                      - Description changed from '' to 'Organization groups this customer belongs to'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: project_metadata_checklist
+                      - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                    - Modified property: projects_count
+                      - Description changed from '' to 'Number of projects in this organization'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: users_count
+                      - Description changed from '' to 'Number of users with access to this organization'
+            - Modified property: offerings_data
+              - Items changed
+                - Properties changed
+                  - Modified property: country
+                    - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                  - Modified property: endpoints
+                    - Items changed
+                      - Properties changed
+                        - Modified property: url
+                          - Description changed from '' to 'URL of the access endpoint'
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+                  - Modified property: plans
+                    - Items changed
+                      - Properties changed
+                        - Modified property: organization_groups
+                          - Items changed
+                            - Properties changed
+                              - Modified property: customers_count
+                                - Description changed from '' to 'Number of customers in this organization group'
+                              - Modified property: parent_name
+                                - Description changed from '' to 'Name of the parent organization group'
+                              - Modified property: parent_uuid
+                                - Description changed from '' to 'UUID of the parent organization group'
+                  - Modified property: plugin_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedPluginOptions
+                        - Properties changed
+                          - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                            - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                            - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_flavor_name
+                            - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_server_data_volume_size_gb
+                            - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                          - Modified property: managed_rancher_server_data_volume_type_name
+                            - Description changed from '' to 'Data volume type name for managed Rancher server'
+                          - Modified property: managed_rancher_server_flavor_name
+                            - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                          - Modified property: managed_rancher_server_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                          - Modified property: managed_rancher_server_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher server'
+                          - Modified property: managed_rancher_worker_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                          - Modified property: managed_rancher_worker_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+                  - Modified property: resource_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: scope_state
+                    - Property 'OneOf' changed
+                      - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                    - Property 'AllOf' changed
+                      - Schemas deleted: #/components/schemas/CoreStates
+                  - Modified property: secret_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedSecretOptions
+                        - Properties changed
+                          - Modified property: cloud_init_template
+                            - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                          - Modified property: managed_rancher_load_balancer_cloud_init_template
+                            - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                          - Modified property: openstack_api_tls_certificate
+                            - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+                  - Modified property: slug
+                    - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: provider_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - Deleted property: projects
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: country_name
+                      - Description changed from '' to 'Human-readable country name'
+                    - Modified property: display_name
+                      - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                    - Modified property: organization_groups
+                      - Description changed from '' to 'Organization groups this customer belongs to'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: project_metadata_checklist
+                      - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                    - Modified property: projects_count
+                      - Description changed from '' to 'Number of projects in this organization'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: users_count
+                      - Description changed from '' to 'Number of users with access to this organization'
+
+PATCH /api/openportal-project-template/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customer_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - Deleted property: projects
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: country_name
+                      - Description changed from '' to 'Human-readable country name'
+                    - Modified property: display_name
+                      - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                    - Modified property: organization_groups
+                      - Description changed from '' to 'Organization groups this customer belongs to'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: project_metadata_checklist
+                      - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                    - Modified property: projects_count
+                      - Description changed from '' to 'Number of projects in this organization'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: users_count
+                      - Description changed from '' to 'Number of users with access to this organization'
+            - Modified property: offerings_data
+              - Items changed
+                - Properties changed
+                  - Modified property: country
+                    - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                  - Modified property: endpoints
+                    - Items changed
+                      - Properties changed
+                        - Modified property: url
+                          - Description changed from '' to 'URL of the access endpoint'
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+                  - Modified property: plans
+                    - Items changed
+                      - Properties changed
+                        - Modified property: organization_groups
+                          - Items changed
+                            - Properties changed
+                              - Modified property: customers_count
+                                - Description changed from '' to 'Number of customers in this organization group'
+                              - Modified property: parent_name
+                                - Description changed from '' to 'Name of the parent organization group'
+                              - Modified property: parent_uuid
+                                - Description changed from '' to 'UUID of the parent organization group'
+                  - Modified property: plugin_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedPluginOptions
+                        - Properties changed
+                          - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                            - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                            - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_flavor_name
+                            - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_server_data_volume_size_gb
+                            - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                          - Modified property: managed_rancher_server_data_volume_type_name
+                            - Description changed from '' to 'Data volume type name for managed Rancher server'
+                          - Modified property: managed_rancher_server_flavor_name
+                            - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                          - Modified property: managed_rancher_server_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                          - Modified property: managed_rancher_server_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher server'
+                          - Modified property: managed_rancher_worker_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                          - Modified property: managed_rancher_worker_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+                  - Modified property: resource_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: scope_state
+                    - Property 'OneOf' changed
+                      - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                    - Property 'AllOf' changed
+                      - Schemas deleted: #/components/schemas/CoreStates
+                  - Modified property: secret_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedSecretOptions
+                        - Properties changed
+                          - Modified property: cloud_init_template
+                            - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                          - Modified property: managed_rancher_load_balancer_cloud_init_template
+                            - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                          - Modified property: openstack_api_tls_certificate
+                            - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+                  - Modified property: slug
+                    - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: provider_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - Deleted property: projects
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: country_name
+                      - Description changed from '' to 'Human-readable country name'
+                    - Modified property: display_name
+                      - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                    - Modified property: organization_groups
+                      - Description changed from '' to 'Organization groups this customer belongs to'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: project_metadata_checklist
+                      - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                    - Modified property: projects_count
+                      - Description changed from '' to 'Number of projects in this organization'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: users_count
+                      - Description changed from '' to 'Number of users with access to this organization'
+
+PUT /api/openportal-project-template/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customer_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - Deleted property: projects
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: country_name
+                      - Description changed from '' to 'Human-readable country name'
+                    - Modified property: display_name
+                      - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                    - Modified property: organization_groups
+                      - Description changed from '' to 'Organization groups this customer belongs to'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: project_metadata_checklist
+                      - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                    - Modified property: projects_count
+                      - Description changed from '' to 'Number of projects in this organization'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: users_count
+                      - Description changed from '' to 'Number of users with access to this organization'
+            - Modified property: offerings_data
+              - Items changed
+                - Properties changed
+                  - Modified property: country
+                    - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                  - Modified property: endpoints
+                    - Items changed
+                      - Properties changed
+                        - Modified property: url
+                          - Description changed from '' to 'URL of the access endpoint'
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: organization_groups
+                    - Items changed
+                      - Properties changed
+                        - Modified property: customers_count
+                          - Description changed from '' to 'Number of customers in this organization group'
+                        - Modified property: parent_name
+                          - Description changed from '' to 'Name of the parent organization group'
+                        - Modified property: parent_uuid
+                          - Description changed from '' to 'UUID of the parent organization group'
+                  - Modified property: plans
+                    - Items changed
+                      - Properties changed
+                        - Modified property: organization_groups
+                          - Items changed
+                            - Properties changed
+                              - Modified property: customers_count
+                                - Description changed from '' to 'Number of customers in this organization group'
+                              - Modified property: parent_name
+                                - Description changed from '' to 'Name of the parent organization group'
+                              - Modified property: parent_uuid
+                                - Description changed from '' to 'UUID of the parent organization group'
+                  - Modified property: plugin_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedPluginOptions
+                        - Properties changed
+                          - Modified property: managed_rancher_load_balancer_data_volume_size_gb
+                            - Description changed from '' to 'Data volume size in GB for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_data_volume_type_name
+                            - Description changed from '' to 'Data volume type name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_flavor_name
+                            - Description changed from '' to 'Flavor name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher load balancer'
+                          - Modified property: managed_rancher_load_balancer_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher load balancer'
+                          - Modified property: managed_rancher_server_data_volume_size_gb
+                            - Description changed from '' to 'Data volume size in GB for managed Rancher server'
+                          - Modified property: managed_rancher_server_data_volume_type_name
+                            - Description changed from '' to 'Data volume type name for managed Rancher server'
+                          - Modified property: managed_rancher_server_flavor_name
+                            - Description changed from '' to 'Flavor name for managed Rancher server instances'
+                          - Modified property: managed_rancher_server_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher server'
+                          - Modified property: managed_rancher_server_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher server'
+                          - Modified property: managed_rancher_worker_system_volume_size_gb
+                            - Description changed from '' to 'System volume size in GB for managed Rancher worker nodes'
+                          - Modified property: managed_rancher_worker_system_volume_type_name
+                            - Description changed from '' to 'System volume type name for managed Rancher worker nodes'
+                  - Modified property: resource_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: scope_state
+                    - Property 'OneOf' changed
+                      - Schemas added: #/components/schemas/CoreStates, #/components/schemas/NullEnum
+                    - Property 'AllOf' changed
+                      - Schemas deleted: #/components/schemas/CoreStates
+                  - Modified property: secret_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedSecretOptions
+                        - Properties changed
+                          - Modified property: cloud_init_template
+                            - Description changed from '' to 'Cloud-init template for Rancher cluster node initialization'
+                          - Modified property: managed_rancher_load_balancer_cloud_init_template
+                            - Description changed from '' to 'Cloud-init template for managed Rancher load balancer initialization'
+                          - Modified property: openstack_api_tls_certificate
+                            - Description changed from '' to 'TLS certificate for OpenStack API connection verification'
+                  - Modified property: slug
+                    - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: provider_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - Deleted property: projects
+                    - Modified property: country
+                      - Description changed from '' to 'Country code (ISO 3166-1 alpha-2)'
+                    - Modified property: country_name
+                      - Description changed from '' to 'Human-readable country name'
+                    - Modified property: display_name
+                      - Description changed from '' to 'Display name of the organization (includes native name if available)'
+                    - Modified property: organization_groups
+                      - Description changed from '' to 'Organization groups this customer belongs to'
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+                    - Modified property: project_metadata_checklist
+                      - Description changed from '' to 'Checklist to be used for project metadata validation in this organization'
+                    - Modified property: projects_count
+                      - Description changed from '' to 'Number of projects in this organization'
+                    - Modified property: slug
+                      - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+                    - Modified property: users_count
+                      - Description changed from '' to 'Number of users with access to this organization'
+
+GET /api/openportal-unmanaged-projects/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: description
+                - Description changed from '' to 'Project description (HTML content will be sanitized)'
+              - Modified property: end_date
+                - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+              - Modified property: oecd_fos_2007_label
+                - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+              - Modified property: resources_count
+                - Description changed from '' to 'Number of active resources in this project'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+              - Modified property: staff_notes
+                - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+              - Modified property: start_date
+                - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+              - Modified property: termination_metadata
+                - Description changed from '' to 'Metadata about project termination (read-only)'
+
+POST /api/openportal-unmanaged-projects/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+GET /api/openportal-unmanaged-projects/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+PATCH /api/openportal-unmanaged-projects/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+PUT /api/openportal-unmanaged-projects/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+POST /api/openportal-unmanaged-projects/{uuid}/move_project/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+POST /api/openportal-unmanaged-projects/{uuid}/recover/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+PUT /api/openstack-tenants/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Required changed
+          - Deleted required property: project
+          - Deleted required property: service_settings
+        - Properties changed
+          - Deleted property: project
+          - Deleted property: service_settings
+          - Deleted property: subnet_cidr
+          - Deleted property: user_password
+          - Deleted property: user_username
+
+GET /api/organization-groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: customers_count
+                - Description changed from '' to 'Number of customers in this organization group'
+              - Modified property: parent_name
+                - Description changed from '' to 'Name of the parent organization group'
+              - Modified property: parent_uuid
+                - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/organization-groups/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customers_count
+              - Description changed from '' to 'Number of customers in this organization group'
+            - Modified property: parent_name
+              - Description changed from '' to 'Name of the parent organization group'
+            - Modified property: parent_uuid
+              - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/organization-groups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customers_count
+              - Description changed from '' to 'Number of customers in this organization group'
+            - Modified property: parent_name
+              - Description changed from '' to 'Name of the parent organization group'
+            - Modified property: parent_uuid
+              - Description changed from '' to 'UUID of the parent organization group'
+
+PATCH /api/organization-groups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customers_count
+              - Description changed from '' to 'Number of customers in this organization group'
+            - Modified property: parent_name
+              - Description changed from '' to 'Name of the parent organization group'
+            - Modified property: parent_uuid
+              - Description changed from '' to 'UUID of the parent organization group'
+
+PUT /api/organization-groups/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customers_count
+              - Description changed from '' to 'Number of customers in this organization group'
+            - Modified property: parent_name
+              - Description changed from '' to 'Name of the parent organization group'
+            - Modified property: parent_uuid
+              - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/override-settings/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: ONBOARDING_ARIREGISTER_USERNAME
+            - MinLength changed from 1 to 0
+          - Modified property: ONBOARDING_BOLAGSVERKET_CLIENT_ID
+            - MinLength changed from 1 to 0
+          - Modified property: ONBOARDING_COUNTRY
+            - MinLength changed from 1 to 0
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: ONBOARDING_ARIREGISTER_USERNAME
+            - MinLength changed from 1 to 0
+          - Modified property: ONBOARDING_BOLAGSVERKET_CLIENT_ID
+            - MinLength changed from 1 to 0
+          - Modified property: ONBOARDING_COUNTRY
+            - MinLength changed from 1 to 0
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: ONBOARDING_ARIREGISTER_USERNAME
+            - MinLength changed from 1 to 0
+          - Modified property: ONBOARDING_BOLAGSVERKET_CLIENT_ID
+            - MinLength changed from 1 to 0
+          - Modified property: ONBOARDING_COUNTRY
+            - MinLength changed from 1 to 0
+
+GET /api/projects/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: description
+                - Description changed from '' to 'Project description (HTML content will be sanitized)'
+              - Modified property: end_date
+                - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+              - Modified property: oecd_fos_2007_label
+                - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+              - Modified property: resources_count
+                - Description changed from '' to 'Number of active resources in this project'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+              - Modified property: staff_notes
+                - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+              - Modified property: start_date
+                - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+              - Modified property: termination_metadata
+                - Description changed from '' to 'Metadata about project termination (read-only)'
+
+POST /api/projects/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+GET /api/projects/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+PATCH /api/projects/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+PUT /api/projects/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: description
+            - Description changed from '' to 'Project description (HTML content will be sanitized)'
+          - Modified property: end_date
+            - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+          - Modified property: staff_notes
+            - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+          - Modified property: start_date
+            - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+POST /api/projects/{uuid}/move_project/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+POST /api/projects/{uuid}/recover/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: description
+              - Description changed from '' to 'Project description (HTML content will be sanitized)'
+            - Modified property: end_date
+              - Description changed from '' to 'Project end date. Setting this field requires DELETE_PROJECT permission.'
+            - Modified property: oecd_fos_2007_label
+              - Description changed from '' to 'Human-readable label for the OECD FOS 2007 classification code'
+            - Modified property: resources_count
+              - Description changed from '' to 'Number of active resources in this project'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+            - Modified property: staff_notes
+              - Description changed from '' to 'Internal notes visible only to staff and support users (HTML content will be sanitized)'
+            - Modified property: start_date
+              - Description changed from '' to 'Project start date. Cannot be edited after the start date has arrived.'
+            - Modified property: termination_metadata
+              - Description changed from '' to 'Metadata about project termination (read-only)'
+
+GET /api/promotions-campaigns/{uuid}/resources/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [offering_components offering_state]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: offering_components
+              - New property: offering_state
+              - Modified property: backend_metadata
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BackendMetadata
+                    - Properties changed
+                      - Modified property: action
+                        - Description changed from '' to 'Current action being performed'
+                      - Modified property: instance_name
+                        - Description changed from '' to 'Name of the backend instance'
+                      - Modified property: runtime_state
+                        - Description changed from '' to 'Runtime state of the backend resource'
+                      - Modified property: state
+                        - Description changed from '' to 'Backend resource state'
+              - Modified property: endpoints
+                - Items changed
+                  - Properties changed
+                    - Modified property: url
+                      - Description changed from '' to 'URL of the access endpoint'
+              - Modified property: report
+                - Items changed
+                  - Properties changed
+                    - Modified property: body
+                      - Description changed from '' to 'Section body content'
+                    - Modified property: header
+                      - Description changed from '' to 'Section header text'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/proposal-proposals/{uuid}/resources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: requested_offering
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/NestedRequestedOffering
+                    - Properties changed
+                      - Modified property: options
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/OfferingOptions
+                            - Properties changed
+                              - Modified property: options
+                                - AdditionalProperties changed
+                                  - Properties changed
+                                    - New property: default_configs
+                                    - Modified property: type
+                                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                      - Modified property: plan_details
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/BasePublicPlan
+                            - Properties changed
+                              - Modified property: organization_groups
+                                - Items changed
+                                  - Properties changed
+                                    - Modified property: customers_count
+                                      - Description changed from '' to 'Number of customers in this organization group'
+                                    - Modified property: parent_name
+                                      - Description changed from '' to 'Name of the parent organization group'
+                                    - Modified property: parent_uuid
+                                      - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/proposal-proposals/{uuid}/resources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: plan_details
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/proposal-proposals/{uuid}/resources/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: plan_details
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+
+PATCH /api/proposal-proposals/{uuid}/resources/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: plan_details
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+
+PUT /api/proposal-proposals/{uuid}/resources/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: plan_details
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/proposal-protected-calls/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: offerings
+                - Items changed
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: plan_details
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: resource_templates
+                - Items changed
+                  - Properties changed
+                    - Modified property: requested_offering_plan
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/proposal-protected-calls/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: plan_details
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: resource_templates
+              - Items changed
+                - Properties changed
+                  - Modified property: requested_offering_plan
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/proposal-protected-calls/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: plan_details
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: resource_templates
+              - Items changed
+                - Properties changed
+                  - Modified property: requested_offering_plan
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+PATCH /api/proposal-protected-calls/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: plan_details
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: resource_templates
+              - Items changed
+                - Properties changed
+                  - Modified property: requested_offering_plan
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+PUT /api/proposal-protected-calls/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: plan_details
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: resource_templates
+              - Items changed
+                - Properties changed
+                  - Modified property: requested_offering_plan
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/proposal-protected-calls/{uuid}/activate/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: plan_details
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: resource_templates
+              - Items changed
+                - Properties changed
+                  - Modified property: requested_offering_plan
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/proposal-protected-calls/{uuid}/archive/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: plan_details
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: resource_templates
+              - Items changed
+                - Properties changed
+                  - Modified property: requested_offering_plan
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/proposal-protected-calls/{uuid}/offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - New property: default_configs
+                            - Modified property: type
+                              - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+              - Modified property: plan_details
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BasePublicPlan
+                    - Properties changed
+                      - Modified property: organization_groups
+                        - Items changed
+                          - Properties changed
+                            - Modified property: customers_count
+                              - Description changed from '' to 'Number of customers in this organization group'
+                            - Modified property: parent_name
+                              - Description changed from '' to 'Name of the parent organization group'
+                            - Modified property: parent_uuid
+                              - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/proposal-protected-calls/{uuid}/offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: plan_details
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/proposal-protected-calls/{uuid}/offerings/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: plan_details
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+PATCH /api/proposal-protected-calls/{uuid}/offerings/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: plan_details
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+PUT /api/proposal-protected-calls/{uuid}/offerings/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: plan_details
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/proposal-protected-calls/{uuid}/resource_templates/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: requested_offering_plan
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BasePublicPlan
+                    - Properties changed
+                      - Modified property: organization_groups
+                        - Items changed
+                          - Properties changed
+                            - Modified property: customers_count
+                              - Description changed from '' to 'Number of customers in this organization group'
+                            - Modified property: parent_name
+                              - Description changed from '' to 'Name of the parent organization group'
+                            - Modified property: parent_uuid
+                              - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/proposal-protected-calls/{uuid}/resource_templates/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering_plan
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/proposal-protected-calls/{uuid}/resource_templates/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering_plan
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+PATCH /api/proposal-protected-calls/{uuid}/resource_templates/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering_plan
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+PUT /api/proposal-protected-calls/{uuid}/resource_templates/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering_plan
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+POST /api/proposal-protected-calls/{uuid}/rounds/{obj_uuid}/close/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: plan_details
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: resource_templates
+              - Items changed
+                - Properties changed
+                  - Modified property: requested_offering_plan
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/proposal-public-calls/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: offerings
+                - Items changed
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: plan_details
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: resource_templates
+                - Items changed
+                  - Properties changed
+                    - Modified property: requested_offering_plan
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/proposal-public-calls/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - New property: default_configs
+                                - Modified property: type
+                                  - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                  - Modified property: plan_details
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: resource_templates
+              - Items changed
+                - Properties changed
+                  - Modified property: requested_offering_plan
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/BasePublicPlan
+                        - Properties changed
+                          - Modified property: organization_groups
+                            - Items changed
+                              - Properties changed
+                                - Modified property: customers_count
+                                  - Description changed from '' to 'Number of customers in this organization group'
+                                - Modified property: parent_name
+                                  - Description changed from '' to 'Name of the parent organization group'
+                                - Modified property: parent_uuid
+                                  - Description changed from '' to 'UUID of the parent organization group'
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/proposal-requested-offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - New property: default_configs
+                            - Modified property: type
+                              - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+              - Modified property: plan_details
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/BasePublicPlan
+                    - Properties changed
+                      - Modified property: organization_groups
+                        - Items changed
+                          - Properties changed
+                            - Modified property: customers_count
+                              - Description changed from '' to 'Number of customers in this organization group'
+                            - Modified property: parent_name
+                              - Description changed from '' to 'Name of the parent organization group'
+                            - Modified property: parent_uuid
+                              - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/proposal-requested-offerings/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - New property: default_configs
+                          - Modified property: type
+                            - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+            - Modified property: plan_details
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/BasePublicPlan
+                  - Properties changed
+                    - Modified property: organization_groups
+                      - Items changed
+                        - Properties changed
+                          - Modified property: customers_count
+                            - Description changed from '' to 'Number of customers in this organization group'
+                          - Modified property: parent_name
+                            - Description changed from '' to 'Name of the parent organization group'
+                          - Modified property: parent_uuid
+                            - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/proposal-requested-resources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: requested_offering
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/NestedRequestedOffering
+                    - Properties changed
+                      - Modified property: options
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/OfferingOptions
+                            - Properties changed
+                              - Modified property: options
+                                - AdditionalProperties changed
+                                  - Properties changed
+                                    - New property: default_configs
+                                    - Modified property: type
+                                      - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                      - Modified property: plan_details
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/BasePublicPlan
+                            - Properties changed
+                              - Modified property: organization_groups
+                                - Items changed
+                                  - Properties changed
+                                    - Modified property: customers_count
+                                      - Description changed from '' to 'Number of customers in this organization group'
+                                    - Modified property: parent_name
+                                      - Description changed from '' to 'Name of the parent organization group'
+                                    - Modified property: parent_uuid
+                                      - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/proposal-requested-resources/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - New property: default_configs
+                                  - Modified property: type
+                                    - New enum values: [single_datacenter_k8s_config multi_datacenter_k8s_config]
+                    - Modified property: plan_details
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/BasePublicPlan
+                          - Properties changed
+                            - Modified property: organization_groups
+                              - Items changed
+                                - Properties changed
+                                  - Modified property: customers_count
+                                    - Description changed from '' to 'Number of customers in this organization group'
+                                  - Modified property: parent_name
+                                    - Description changed from '' to 'Name of the parent organization group'
+                                  - Modified property: parent_uuid
+                                    - Description changed from '' to 'UUID of the parent organization group'
+
+GET /api/provider-invoice-items/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: details
+                - Properties changed
+                  - Modified property: offering_component_name
+                    - Description changed from '' to 'Name of the offering component'
+                  - Modified property: offering_component_type
+                    - Description changed from '' to 'Type of the offering component'
+                  - Modified property: offering_name
+                    - Description changed from '' to 'Name of the offering'
+                  - Modified property: offering_type
+                    - Description changed from '' to 'Type of the offering'
+                  - Modified property: offering_uuid
+                    - Description changed from '' to 'UUID of the offering'
+                  - Modified property: plan_component_id
+                    - Description changed from '' to 'ID of the plan component'
+                  - Modified property: plan_name
+                    - Description changed from '' to 'Name of the pricing plan'
+                  - Modified property: plan_uuid
+                    - Description changed from '' to 'UUID of the pricing plan'
+                  - Modified property: resource_limit_periods
+                    - Description changed from '' to 'List of resource limit periods for this invoice item'
+                    - Items changed
+                      - Properties changed
+                        - Modified property: billing_periods
+                          - Description changed from '' to 'Number of billing periods'
+                        - Modified property: end
+                          - Description changed from '' to 'End date of the resource limit period'
+                        - Modified property: quantity
+                          - Description changed from '' to 'Quantity of resources consumed during this period'
+                        - Modified property: start
+                          - Description changed from '' to 'Start date of the resource limit period'
+                        - Modified property: total
+                          - Description changed from '' to 'Total amount for this period'
+                  - Modified property: resource_name
+                    - Description changed from '' to 'Name of the marketplace resource'
+                  - Modified property: resource_uuid
+                    - Description changed from '' to 'UUID of the marketplace resource'
+                  - Modified property: service_provider_name
+                    - Description changed from '' to 'Name of the service provider'
+                  - Modified property: service_provider_uuid
+                    - Description changed from '' to 'UUID of the service provider'
+
+GET /api/provider-invoice-items/{id}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: details
+              - Properties changed
+                - Modified property: offering_component_name
+                  - Description changed from '' to 'Name of the offering component'
+                - Modified property: offering_component_type
+                  - Description changed from '' to 'Type of the offering component'
+                - Modified property: offering_name
+                  - Description changed from '' to 'Name of the offering'
+                - Modified property: offering_type
+                  - Description changed from '' to 'Type of the offering'
+                - Modified property: offering_uuid
+                  - Description changed from '' to 'UUID of the offering'
+                - Modified property: plan_component_id
+                  - Description changed from '' to 'ID of the plan component'
+                - Modified property: plan_name
+                  - Description changed from '' to 'Name of the pricing plan'
+                - Modified property: plan_uuid
+                  - Description changed from '' to 'UUID of the pricing plan'
+                - Modified property: resource_limit_periods
+                  - Description changed from '' to 'List of resource limit periods for this invoice item'
+                  - Items changed
+                    - Properties changed
+                      - Modified property: billing_periods
+                        - Description changed from '' to 'Number of billing periods'
+                      - Modified property: end
+                        - Description changed from '' to 'End date of the resource limit period'
+                      - Modified property: quantity
+                        - Description changed from '' to 'Quantity of resources consumed during this period'
+                      - Modified property: start
+                        - Description changed from '' to 'Start date of the resource limit period'
+                      - Modified property: total
+                        - Description changed from '' to 'Total amount for this period'
+                - Modified property: resource_name
+                  - Description changed from '' to 'Name of the marketplace resource'
+                - Modified property: resource_uuid
+                  - Description changed from '' to 'UUID of the marketplace resource'
+                - Modified property: service_provider_name
+                  - Description changed from '' to 'Name of the service provider'
+                - Modified property: service_provider_uuid
+                  - Description changed from '' to 'UUID of the service provider'
+
+POST /api/query/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: query
+            - Description changed from '' to 'Search query string'
+
+GET /api/support-issues/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: feedback
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/NestedFeedback
+                    - Properties changed
+                      - Modified property: evaluation
+                        - Description changed from '' to 'Customer satisfaction rating (1-5 stars)'
+                      - Modified property: evaluation_number
+                        - Description changed from '' to 'Numeric value of the rating'
+                      - Modified property: state
+                        - Description changed from '' to 'Current state of the feedback'
+
+POST /api/support-issues/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: feedback
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedFeedback
+                  - Properties changed
+                    - Modified property: evaluation
+                      - Description changed from '' to 'Customer satisfaction rating (1-5 stars)'
+                    - Modified property: evaluation_number
+                      - Description changed from '' to 'Numeric value of the rating'
+                    - Modified property: state
+                      - Description changed from '' to 'Current state of the feedback'
+
+GET /api/support-issues/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: feedback
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedFeedback
+                  - Properties changed
+                    - Modified property: evaluation
+                      - Description changed from '' to 'Customer satisfaction rating (1-5 stars)'
+                    - Modified property: evaluation_number
+                      - Description changed from '' to 'Numeric value of the rating'
+                    - Modified property: state
+                      - Description changed from '' to 'Current state of the feedback'
+
+PATCH /api/support-issues/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: feedback
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedFeedback
+                  - Properties changed
+                    - Modified property: evaluation
+                      - Description changed from '' to 'Customer satisfaction rating (1-5 stars)'
+                    - Modified property: evaluation_number
+                      - Description changed from '' to 'Numeric value of the rating'
+                    - Modified property: state
+                      - Description changed from '' to 'Current state of the feedback'
+
+PUT /api/support-issues/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: feedback
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedFeedback
+                  - Properties changed
+                    - Modified property: evaluation
+                      - Description changed from '' to 'Customer satisfaction rating (1-5 stars)'
+                    - Modified property: evaluation_number
+                      - Description changed from '' to 'Numeric value of the rating'
+                    - Modified property: state
+                      - Description changed from '' to 'Current state of the feedback'
+
+POST /api/support-issues/{uuid}/sync/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: feedback
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedFeedback
+                  - Properties changed
+                    - Modified property: evaluation
+                      - Description changed from '' to 'Customer satisfaction rating (1-5 stars)'
+                    - Modified property: evaluation_number
+                      - Description changed from '' to 'Numeric value of the rating'
+                    - Modified property: state
+                      - Description changed from '' to 'Current state of the feedback'
+
+POST /api/support-jira-webhook/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: changelog
+            - Properties changed
+              - Modified property: items
+                - Description changed from '' to 'List of changelog items'
+          - Modified property: comment
+            - Properties changed
+              - Modified property: id
+                - Description changed from '' to 'Jira comment ID'
+          - Modified property: issue
+            - Properties changed
+              - Modified property: fields
+                - Properties changed
+                  - Modified property: project
+                    - Properties changed
+                      - Modified property: id
+                        - Description changed from '' to 'Jira field ID'
+                      - Modified property: key
+                        - Description changed from '' to 'Jira project key'
+                      - Modified property: name
+                        - Description changed from '' to 'Jira field name'
+              - Modified property: key
+                - Description changed from '' to 'Jira issue key'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: changelog
+              - Properties changed
+                - Modified property: items
+                  - Description changed from '' to 'List of changelog items'
+            - Modified property: comment
+              - Properties changed
+                - Modified property: id
+                  - Description changed from '' to 'Jira comment ID'
+            - Modified property: issue
+              - Properties changed
+                - Modified property: fields
+                  - Properties changed
+                    - Modified property: project
+                      - Properties changed
+                        - Modified property: id
+                          - Description changed from '' to 'Jira field ID'
+                        - Modified property: key
+                          - Description changed from '' to 'Jira project key'
+                        - Modified property: name
+                          - Description changed from '' to 'Jira field name'
+                - Modified property: key
+                  - Description changed from '' to 'Jira issue key'
+
+POST /api/support-templates/{uuid}/create_attachments/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: attachments
+            - Description changed from '' to 'List of files to attach'
+
+GET /api/user-group-invitations/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: created_by_full_name
+                - Description changed from '' to 'Full name of the user who created this invitation'
+              - Modified property: created_by_image
+                - Description changed from '' to 'Profile image of the user who created this invitation'
+              - Modified property: created_by_username
+                - Description changed from '' to 'Username of the user who created this invitation'
+              - Modified property: customer_name
+                - Description changed from '' to 'Name of the customer organization'
+              - Modified property: customer_uuid
+                - Description changed from '' to 'UUID of the customer organization'
+              - Modified property: expires
+                - Description changed from '' to 'Expiration date and time of the invitation'
+              - Modified property: project_role
+                - Description changed from '' to 'UUID of the project role to grant if auto_create_project is enabled'
+              - Modified property: role
+                - Description changed from '' to 'UUID of the role to grant to the invited user'
+              - Modified property: role_description
+                - Description changed from '' to 'Description of the role being granted'
+              - Modified property: role_name
+                - Description changed from '' to 'Name of the role being granted (e.g., 'PROJECT.ADMIN')'
+              - Modified property: scope_description
+                - Description changed from 'Get the description field from the scope if it exists.
+Returns empty string if scope doesn't have a description field.' to 'Description of the invitation scope'
+              - Modified property: scope_image
+                - Description changed from '' to 'Image URL of the invitation scope (Customer or Project)'
+              - Modified property: scope_name
+                - Description changed from '' to 'Name of the invitation scope'
+              - Modified property: scope_type
+                - Description changed from '' to 'Type of the invitation scope (e.g., 'customer', 'project')'
+              - Modified property: scope_uuid
+                - Description changed from '' to 'UUID of the invitation scope (Customer or Project)'
+
+POST /api/user-group-invitations/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: project_role
+            - Description changed from '' to 'UUID of the project role to grant if auto_create_project is enabled'
+          - Modified property: role
+            - Description changed from '' to 'UUID of the role to grant to the invited user'
+          - Modified property: scope
+            - Description changed from '' to 'URL of the scope (Customer or Project) for this invitation'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: created_by_full_name
+              - Description changed from '' to 'Full name of the user who created this invitation'
+            - Modified property: created_by_image
+              - Description changed from '' to 'Profile image of the user who created this invitation'
+            - Modified property: created_by_username
+              - Description changed from '' to 'Username of the user who created this invitation'
+            - Modified property: customer_name
+              - Description changed from '' to 'Name of the customer organization'
+            - Modified property: customer_uuid
+              - Description changed from '' to 'UUID of the customer organization'
+            - Modified property: expires
+              - Description changed from '' to 'Expiration date and time of the invitation'
+            - Modified property: project_role
+              - Description changed from '' to 'UUID of the project role to grant if auto_create_project is enabled'
+            - Modified property: role
+              - Description changed from '' to 'UUID of the role to grant to the invited user'
+            - Modified property: role_description
+              - Description changed from '' to 'Description of the role being granted'
+            - Modified property: role_name
+              - Description changed from '' to 'Name of the role being granted (e.g., 'PROJECT.ADMIN')'
+            - Modified property: scope_description
+              - Description changed from 'Get the description field from the scope if it exists.
+Returns empty string if scope doesn't have a description field.' to 'Description of the invitation scope'
+            - Modified property: scope_image
+              - Description changed from '' to 'Image URL of the invitation scope (Customer or Project)'
+            - Modified property: scope_name
+              - Description changed from '' to 'Name of the invitation scope'
+            - Modified property: scope_type
+              - Description changed from '' to 'Type of the invitation scope (e.g., 'customer', 'project')'
+            - Modified property: scope_uuid
+              - Description changed from '' to 'UUID of the invitation scope (Customer or Project)'
+
+GET /api/user-group-invitations/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: created_by_full_name
+              - Description changed from '' to 'Full name of the user who created this invitation'
+            - Modified property: created_by_image
+              - Description changed from '' to 'Profile image of the user who created this invitation'
+            - Modified property: created_by_username
+              - Description changed from '' to 'Username of the user who created this invitation'
+            - Modified property: customer_name
+              - Description changed from '' to 'Name of the customer organization'
+            - Modified property: customer_uuid
+              - Description changed from '' to 'UUID of the customer organization'
+            - Modified property: expires
+              - Description changed from '' to 'Expiration date and time of the invitation'
+            - Modified property: project_role
+              - Description changed from '' to 'UUID of the project role to grant if auto_create_project is enabled'
+            - Modified property: role
+              - Description changed from '' to 'UUID of the role to grant to the invited user'
+            - Modified property: role_description
+              - Description changed from '' to 'Description of the role being granted'
+            - Modified property: role_name
+              - Description changed from '' to 'Name of the role being granted (e.g., 'PROJECT.ADMIN')'
+            - Modified property: scope_description
+              - Description changed from 'Get the description field from the scope if it exists.
+Returns empty string if scope doesn't have a description field.' to 'Description of the invitation scope'
+            - Modified property: scope_image
+              - Description changed from '' to 'Image URL of the invitation scope (Customer or Project)'
+            - Modified property: scope_name
+              - Description changed from '' to 'Name of the invitation scope'
+            - Modified property: scope_type
+              - Description changed from '' to 'Type of the invitation scope (e.g., 'customer', 'project')'
+            - Modified property: scope_uuid
+              - Description changed from '' to 'UUID of the invitation scope (Customer or Project)'
+
+GET /api/user-invitations/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: created_by_full_name
+                - Description changed from '' to 'Full name of the user who created this invitation'
+              - Modified property: created_by_image
+                - Description changed from '' to 'Profile image of the user who created this invitation'
+              - Modified property: created_by_username
+                - Description changed from '' to 'Username of the user who created this invitation'
+              - Modified property: customer_name
+                - Description changed from '' to 'Name of the customer organization'
+              - Modified property: customer_uuid
+                - Description changed from '' to 'UUID of the customer organization'
+              - Modified property: expires
+                - Description changed from '' to 'Expiration date and time of the invitation'
+              - Modified property: role
+                - Description changed from '' to 'UUID of the role to grant to the invited user'
+              - Modified property: role_description
+                - Description changed from '' to 'Description of the role being granted'
+              - Modified property: role_name
+                - Description changed from '' to 'Name of the role being granted (e.g., 'PROJECT.ADMIN')'
+              - Modified property: scope_description
+                - Description changed from 'Get the description field from the scope if it exists.
+Returns empty string if scope doesn't have a description field.' to 'Description of the invitation scope'
+              - Modified property: scope_name
+                - Description changed from '' to 'Name of the invitation scope'
+              - Modified property: scope_type
+                - Description changed from '' to 'Type of the invitation scope (e.g., 'customer', 'project')'
+              - Modified property: scope_uuid
+                - Description changed from '' to 'UUID of the invitation scope (Customer or Project)'
+
+POST /api/user-invitations/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: role
+            - Description changed from '' to 'UUID of the role to grant to the invited user'
+          - Modified property: scope
+            - Description changed from '' to 'URL of the scope (Customer or Project) for this invitation'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: created_by_full_name
+              - Description changed from '' to 'Full name of the user who created this invitation'
+            - Modified property: created_by_image
+              - Description changed from '' to 'Profile image of the user who created this invitation'
+            - Modified property: created_by_username
+              - Description changed from '' to 'Username of the user who created this invitation'
+            - Modified property: customer_name
+              - Description changed from '' to 'Name of the customer organization'
+            - Modified property: customer_uuid
+              - Description changed from '' to 'UUID of the customer organization'
+            - Modified property: expires
+              - Description changed from '' to 'Expiration date and time of the invitation'
+            - Modified property: role
+              - Description changed from '' to 'UUID of the role to grant to the invited user'
+            - Modified property: role_description
+              - Description changed from '' to 'Description of the role being granted'
+            - Modified property: role_name
+              - Description changed from '' to 'Name of the role being granted (e.g., 'PROJECT.ADMIN')'
+            - Modified property: scope_description
+              - Description changed from 'Get the description field from the scope if it exists.
+Returns empty string if scope doesn't have a description field.' to 'Description of the invitation scope'
+            - Modified property: scope_name
+              - Description changed from '' to 'Name of the invitation scope'
+            - Modified property: scope_type
+              - Description changed from '' to 'Type of the invitation scope (e.g., 'customer', 'project')'
+            - Modified property: scope_uuid
+              - Description changed from '' to 'UUID of the invitation scope (Customer or Project)'
+
+POST /api/user-invitations/approve/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: token
+            - Description changed from '' to 'Authentication token for invitation acceptance'
+
+POST /api/user-invitations/reject/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: token
+            - Description changed from '' to 'Authentication token for invitation acceptance'
+
+GET /api/user-invitations/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: created_by_full_name
+              - Description changed from '' to 'Full name of the user who created this invitation'
+            - Modified property: created_by_image
+              - Description changed from '' to 'Profile image of the user who created this invitation'
+            - Modified property: created_by_username
+              - Description changed from '' to 'Username of the user who created this invitation'
+            - Modified property: customer_name
+              - Description changed from '' to 'Name of the customer organization'
+            - Modified property: customer_uuid
+              - Description changed from '' to 'UUID of the customer organization'
+            - Modified property: expires
+              - Description changed from '' to 'Expiration date and time of the invitation'
+            - Modified property: role
+              - Description changed from '' to 'UUID of the role to grant to the invited user'
+            - Modified property: role_description
+              - Description changed from '' to 'Description of the role being granted'
+            - Modified property: role_name
+              - Description changed from '' to 'Name of the role being granted (e.g., 'PROJECT.ADMIN')'
+            - Modified property: scope_description
+              - Description changed from 'Get the description field from the scope if it exists.
+Returns empty string if scope doesn't have a description field.' to 'Description of the invitation scope'
+            - Modified property: scope_name
+              - Description changed from '' to 'Name of the invitation scope'
+            - Modified property: scope_type
+              - Description changed from '' to 'Type of the invitation scope (e.g., 'customer', 'project')'
+            - Modified property: scope_uuid
+              - Description changed from '' to 'UUID of the invitation scope (Customer or Project)'
+
+PATCH /api/user-invitations/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: role
+            - Description changed from '' to 'UUID of the new role to assign. Must be compatible with the invitation scope.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: role
+              - Description changed from '' to 'UUID of the new role to assign. Must be compatible with the invitation scope.'
+
+PUT /api/user-invitations/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: role
+            - Description changed from '' to 'UUID of the new role to assign. Must be compatible with the invitation scope.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: role
+              - Description changed from '' to 'UUID of the new role to assign. Must be compatible with the invitation scope.'
+
+POST /api/user-invitations/{uuid}/check/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: civil_number_required
+              - Description changed from '' to 'Whether civil number verification is required'
+            - Modified property: email
+              - Description changed from '' to 'Email address to check for existing invitations'
+
+GET /api/user-invitations/{uuid}/details/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: created_by_full_name
+              - Description changed from '' to 'Full name of the user who created this invitation'
+            - Modified property: created_by_image
+              - Description changed from '' to 'Profile image of the user who created this invitation'
+            - Modified property: created_by_username
+              - Description changed from '' to 'Username of the user who created this invitation'
+            - Modified property: customer_name
+              - Description changed from '' to 'Name of the customer organization'
+            - Modified property: customer_uuid
+              - Description changed from '' to 'UUID of the customer organization'
+            - Modified property: role_description
+              - Description changed from '' to 'Description of the role being granted'
+            - Modified property: role_name
+              - Description changed from '' to 'Name of the role being granted (e.g., 'PROJECT.ADMIN')'
+            - Modified property: scope_description
+              - Description changed from 'Get the description field from the scope if it exists.
+Returns empty string if scope doesn't have a description field.' to 'Description of the invitation scope'
+            - Modified property: scope_name
+              - Description changed from '' to 'Name of the invitation scope'
+            - Modified property: scope_type
+              - Description changed from '' to 'Type of the invitation scope (e.g., 'customer', 'project')'
+            - Modified property: scope_uuid
+              - Description changed from '' to 'UUID of the invitation scope (Customer or Project)'
+            - Modified property: state
+              - Description changed from '' to 'Current state of the invitation (e.g., 'pending', 'accepted', 'rejected')'
+
+POST /api/user-permission-requests/{uuid}/approve/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: comment
+            - Description changed from '' to 'Optional comment for review'
+
+POST /api/user-permission-requests/{uuid}/reject/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: comment
+            - Description changed from '' to 'Optional comment for review'
+
+GET /api/users/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: slug
+                - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+POST /api/users/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/users/me/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+GET /api/users/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+PATCH /api/users/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+
+PUT /api/users/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: slug
+            - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: slug
+              - Description changed from '' to 'URL-friendly identifier. Only editable by staff users.'
