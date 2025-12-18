@@ -29,6 +29,28 @@ az account show --query id --output tsv
 
 Save this value - you'll need it for Waldur configuration.
 
+## Register Resource Providers
+
+To avoid errors when creating Virtual Machines and related resources, register the necessary resource providers:
+
+```bash
+# Register Network
+az provider register --namespace Microsoft.Network
+
+# Register Compute
+az provider register --namespace Microsoft.Compute
+
+# Register Storage
+az provider register --namespace Microsoft.Storage
+```
+
+**Verify registration:**
+
+```bash
+az provider show -n Microsoft.Network --query "registrationState"
+# Should output: "Registered"
+```
+
 ## Create Service Principal with Role Assignment
 
 Run the following command to create a service principal with **Contributor** access to your subscription:
