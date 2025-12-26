@@ -19002,7 +19002,7 @@
 <hr>
 <h3 id="reject-an-order-consumer">Reject an order (consumer)</h3>
 <p>Rejects a pending order from the consumer's side. This moves the order to the 'rejected' state.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="9:5"><input checked id="__tabbed_9_1" name="__tabbed_9" type="radio"><input id="__tabbed_9_2" name="__tabbed_9" type="radio"><input id="__tabbed_9_3" name="__tabbed_9" type="radio"><input id="__tabbed_9_4" name="__tabbed_9" type="radio"><input id="__tabbed_9_5" name="__tabbed_9" type="radio"><div class="tabbed-labels"><label for="__tabbed_9_1">HTTPie</label><label for="__tabbed_9_2">Python</label><label for="__tabbed_9_3">TypeScript</label><label for="__tabbed_9_4">Path Parameters</label><label for="__tabbed_9_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:6"><input checked id="__tabbed_9_1" name="__tabbed_9" type="radio"><input id="__tabbed_9_2" name="__tabbed_9" type="radio"><input id="__tabbed_9_3" name="__tabbed_9" type="radio"><input id="__tabbed_9_4" name="__tabbed_9" type="radio"><input id="__tabbed_9_5" name="__tabbed_9" type="radio"><input id="__tabbed_9_6" name="__tabbed_9" type="radio"><div class="tabbed-labels"><label for="__tabbed_9_1">HTTPie</label><label for="__tabbed_9_2">Python</label><label for="__tabbed_9_3">TypeScript</label><label for="__tabbed_9_4">Path Parameters</label><label for="__tabbed_9_5">Request Body</label><label for="__tabbed_9_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -19026,20 +19026,29 @@
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
-<span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_orders</span> <span class="kn">import</span> <span class="n">marketplace_orders_reject_by_consumer</span> <span class="c1"># (1)</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.order_error_details_request</span> <span class="kn">import</span> <span class="n">OrderErrorDetailsRequest</span> <span class="c1"># (1)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_orders</span> <span class="kn">import</span> <span class="n">marketplace_orders_reject_by_consumer</span> <span class="c1"># (2)</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
 <span class="p">)</span>
+
+<span class="n">body_data</span> <span class="o">=</span> <span class="n">OrderErrorDetailsRequest</span><span class="p">()</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_orders_reject_by_consumer</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
     <span class="n">uuid</span><span class="o">=</span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">body</span><span class="o">=</span><span class="n">body_data</span>
 <span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <ol>
+<li><strong>Model Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/models/order_error_details_request.py"><code>OrderErrorDetailsRequest</code></a></li>
 <li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/marketplace_orders/marketplace_orders_reject_by_consumer.py"><code>marketplace_orders_reject_by_consumer</code></a></li>
 </ol>
 </div>
@@ -19085,6 +19094,29 @@
 <td><code>uuid</code></td>
 <td>string (uuid)</td>
 <td>✓</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>error_message</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>error_traceback</code></td>
+<td>string</td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -19316,14 +19348,14 @@
 <span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
-<span class="kn">from</span> <span class="nn">waldur_api_client.models.order_set_state_erred_request</span> <span class="kn">import</span> <span class="n">OrderSetStateErredRequest</span> <span class="c1"># (1)</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.models.order_error_details_request</span> <span class="kn">import</span> <span class="n">OrderErrorDetailsRequest</span> <span class="c1"># (1)</span>
 <span class="kn">from</span> <span class="nn">waldur_api_client.api.marketplace_orders</span> <span class="kn">import</span> <span class="n">marketplace_orders_set_state_erred</span> <span class="c1"># (2)</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
 <span class="p">)</span>
 
-<span class="n">body_data</span> <span class="o">=</span> <span class="n">OrderSetStateErredRequest</span><span class="p">()</span>
+<span class="n">body_data</span> <span class="o">=</span> <span class="n">OrderErrorDetailsRequest</span><span class="p">()</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_orders_set_state_erred</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
     <span class="n">uuid</span><span class="o">=</span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">,</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
@@ -19333,7 +19365,7 @@
 <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <ol>
-<li><strong>Model Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/models/order_set_state_erred_request.py"><code>OrderSetStateErredRequest</code></a></li>
+<li><strong>Model Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/models/order_error_details_request.py"><code>OrderErrorDetailsRequest</code></a></li>
 <li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/marketplace_orders/marketplace_orders_set_state_erred.py"><code>marketplace_orders_set_state_erred</code></a></li>
 </ol>
 </div>
@@ -20989,7 +21021,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-17
+    2025-12-25
   </span>
 
     
