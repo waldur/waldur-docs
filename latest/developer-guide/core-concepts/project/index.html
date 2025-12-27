@@ -4411,6 +4411,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#user-restrictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Restrictions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#resource-management" class="md-nav__link">
     <span class="md-ellipsis">
       Resource Management
@@ -16648,6 +16657,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#user-restrictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Restrictions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#resource-management" class="md-nav__link">
     <span class="md-ellipsis">
       Resource Management
@@ -16749,13 +16767,15 @@ billing organization for all provisioned resources and services.</p>
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
-<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Project</span><span class="p">(</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Project</span><span class="p">(</span>
     <span class="n">core_models</span><span class="o">.</span><span class="n">DescribableMixin</span><span class="p">,</span>          <span class="c1"># Name, description, slug</span>
     <span class="n">ProjectOECDFOS2007CodeMixin</span><span class="p">,</span>           <span class="c1"># Research classification</span>
     <span class="n">core_models</span><span class="o">.</span><span class="n">UuidMixin</span><span class="p">,</span>                <span class="c1"># UUID primary key</span>
     <span class="n">core_models</span><span class="o">.</span><span class="n">DescendantMixin</span><span class="p">,</span>          <span class="c1"># Hierarchical relationships</span>
     <span class="n">core_models</span><span class="o">.</span><span class="n">BackendMixin</span><span class="p">,</span>             <span class="c1"># Backend integration</span>
     <span class="n">core_models</span><span class="o">.</span><span class="n">SlugMixin</span><span class="p">,</span>                <span class="c1"># URL-friendly slug</span>
+    <span class="n">core_models</span><span class="o">.</span><span class="n">UserDetailsMatchMixin</span><span class="p">,</span>    <span class="c1"># User email/affiliation restrictions</span>
     <span class="n">quotas_models</span><span class="o">.</span><span class="n">ExtendableQuotaModelMixin</span><span class="p">,</span> <span class="c1"># Quota management</span>
     <span class="n">PermissionMixin</span><span class="p">,</span>                      <span class="c1"># Access control</span>
     <span class="n">StructureLoggableMixin</span><span class="p">,</span>               <span class="c1"># Event logging</span>
@@ -16814,6 +16834,21 @@ billing organization for all provisioned resources and services.</p>
 <td><code>termination_metadata</code></td>
 <td>JSONField</td>
 <td>Recovery metadata for terminated projects</td>
+</tr>
+<tr>
+<td><code>user_email_patterns</code></td>
+<td>JSONField</td>
+<td>Regex patterns for allowed user emails</td>
+</tr>
+<tr>
+<td><code>user_affiliations</code></td>
+<td>JSONField</td>
+<td>List of allowed user affiliations</td>
+</tr>
+<tr>
+<td><code>user_identity_sources</code></td>
+<td>JSONField</td>
+<td>List of allowed identity providers</td>
 </tr>
 </tbody>
 </table>
@@ -16932,6 +16967,46 @@ billing organization for all provisioned resources and services.</p>
 <li><strong>Scope</strong>: Project instance</li>
 <li><strong>Roles</strong>: PROJECT_ADMIN, PROJECT_MANAGER, PROJECT_MEMBER</li>
 </ul>
+<h3 id="user-restrictions">User Restrictions</h3>
+<p>Projects can restrict which users can be added as members based on email patterns, affiliations, or identity sources. These restrictions are enforced during:</p>
+<ul>
+<li>Direct membership via API (<code>add_user</code> endpoint)</li>
+<li>Invitation acceptance</li>
+<li>GroupInvitation request approval</li>
+</ul>
+<p><strong>Restriction Fields</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user_email_patterns</code></td>
+<td>Regex patterns for allowed emails (e.g., <code>[".*@university.edu"]</code>)</td>
+</tr>
+<tr>
+<td><code>user_affiliations</code></td>
+<td>List of allowed affiliations (e.g., <code>["staff", "faculty"]</code>)</td>
+</tr>
+<tr>
+<td><code>user_identity_sources</code></td>
+<td>List of allowed identity providers (e.g., <code>["eduGAIN", "SAML"]</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Validation Logic</strong>:</p>
+<ul>
+<li><strong>OR within restrictions</strong>: User matches if ANY email pattern OR ANY affiliation OR ANY identity source matches</li>
+<li><strong>AND with parent</strong>: Project restrictions are checked AFTER customer restrictions pass</li>
+<li><strong>Empty allows all</strong>: If no restrictions are set, any user is allowed</li>
+<li><strong>Staff NOT exempt</strong>: Restrictions apply to all users including staff</li>
+</ul>
+<p><strong>Permission to Set Restrictions</strong>:</p>
+<p>Only users with <code>CREATE_PROJECT</code> permission on the customer can set or modify project user restrictions.</p>
+<p>For detailed documentation on user restrictions, see <a href="../invitations/#user-restrictions">Invitations - User Restrictions</a>.</p>
 <h3 id="resource-management">Resource Management</h3>
 <p><strong>Base Model</strong>: <code>BaseResource</code></p>
 <p>All resources are connected to projects:</p>
@@ -17055,7 +17130,7 @@ billing organization for all provisioned resources and services.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-14
+    2025-12-26
   </span>
 
     

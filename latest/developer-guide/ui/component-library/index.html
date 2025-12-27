@@ -4971,6 +4971,48 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#button-factory-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Button Factory Components
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Button Factory Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#createmodalbutton-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      CreateModalButton Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editmodalbutton-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      EditModalButton Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deletebutton-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      DeleteButton Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#navigation-components" class="md-nav__link">
     <span class="md-ellipsis">
       Navigation Components
@@ -16693,6 +16735,48 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#button-factory-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Button Factory Components
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Button Factory Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#createmodalbutton-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      CreateModalButton Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editmodalbutton-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      EditModalButton Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deletebutton-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      DeleteButton Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#navigation-components" class="md-nav__link">
     <span class="md-ellipsis">
       Navigation Components
@@ -17172,6 +17256,129 @@
 </tr>
 </tbody>
 </table>
+<h3 id="button-factory-components">Button Factory Components</h3>
+<p>Generic button factories that reduce boilerplate for common CRUD operations:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Location</th>
+<th>Description</th>
+<th>Key Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CreateModalButton</strong></td>
+<td><code>src/core/buttons/CreateModalButton.tsx</code></td>
+<td>Factory for create buttons</td>
+<td>Opens dialog with resolve props, primary variant</td>
+</tr>
+<tr>
+<td><strong>EditModalButton</strong></td>
+<td><code>src/core/buttons/EditModalButton.tsx</code></td>
+<td>Factory for edit buttons</td>
+<td>Supports buildResolve, getInitialValues, action-item or button mode</td>
+</tr>
+<tr>
+<td><strong>DeleteButton</strong></td>
+<td><code>src/core/buttons/DeleteButton.tsx</code></td>
+<td>Factory for delete buttons</td>
+<td>Confirmation dialog, API call, success/error notifications</td>
+</tr>
+</tbody>
+</table>
+<h4 id="createmodalbutton-usage">CreateModalButton Usage</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code>import { CreateModalButton } from '@waldur/core/buttons';
+import { lazyComponent } from '@waldur/core/lazyComponent';
+
+const MyDialog = lazyComponent(() =&gt;
+  import('./MyDialog').then((m) =&gt; ({ default: m.MyDialog })),
+);
+
+export const MyCreateButton = ({ refetch }) =&gt; (
+  &lt;CreateModalButton
+    dialog={MyDialog}
+    resolve={{ refetch }}
+    size="lg"
+  /&gt;
+);
+</code></pre></div></td></tr></table></div>
+<h4 id="editmodalbutton-usage">EditModalButton Usage</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code>import { EditModalButton } from '@waldur/core/buttons';
+
+export const MyEditButton = ({ row, refetch }) =&gt; (
+  &lt;EditModalButton
+    dialog={MyUpdateDialog}
+    row={row}
+    buildResolve={(r) =&gt; ({ uuid: r.uuid, refetch })}
+    getInitialValues={(r) =&gt; ({ name: r.name })}
+    size="lg"
+    title={translate('Update')}
+  /&gt;
+);
+</code></pre></div></td></tr></table></div>
+<h4 id="deletebutton-usage">DeleteButton Usage</h4>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code>import { DeleteButton } from '@waldur/core/buttons';
+import { myItemDestroy } from 'waldur-js-client';
+
+export const MyDeleteButton = ({ row, refetch }) =&gt; (
+  &lt;DeleteButton
+    row={row}
+    apiFunction={(r) =&gt; myItemDestroy({ path: { uuid: r.uuid } })}
+    confirmTitle={translate('Delete item')}
+    confirmMessage={(r) =&gt; translate(
+      'Are you sure you want to delete {name}?',
+      { name: &lt;strong&gt;{r.name}&lt;/strong&gt; },
+      formatJsxTemplate
+    )}
+    successMessage={translate('Item deleted.')}
+    errorMessage={translate('Unable to delete item.')}
+    refetch={refetch}
+  /&gt;
+);
+</code></pre></div></td></tr></table></div>
 <h3 id="navigation-components">Navigation Components</h3>
 <table>
 <thead>
@@ -17817,7 +18024,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-25
+    2025-12-26
   </span>
 
     
