@@ -1,0 +1,5425 @@
+# OpenAPI schema diff - 7.9.6
+
+## For version 7.9.6
+
+### New Endpoints: 44
+
+---------------------
+GET /api/marketplace-demo-presets/info/{name}/  
+HEAD /api/marketplace-demo-presets/info/{name}/  
+GET /api/marketplace-demo-presets/list/  
+HEAD /api/marketplace-demo-presets/list/  
+POST /api/marketplace-demo-presets/load/{name}/  
+GET /api/marketplace-stats/resource_provisioning_stats/  
+HEAD /api/marketplace-stats/resource_provisioning_stats/  
+GET /api/marketplace-stats/user_affiliation_count/  
+HEAD /api/marketplace-stats/user_affiliation_count/  
+GET /api/marketplace-stats/user_auth_method_count/  
+HEAD /api/marketplace-stats/user_auth_method_count/  
+GET /api/marketplace-stats/user_identity_source_count/  
+HEAD /api/marketplace-stats/user_identity_source_count/  
+GET /api/marketplace-stats/user_organization_count/  
+HEAD /api/marketplace-stats/user_organization_count/  
+POST /api/proposal-proposals/{uuid}/detach_documents/  
+GET /api/support-request-types-admin/  
+HEAD /api/support-request-types-admin/  
+POST /api/support-request-types-admin/  
+POST /api/support-request-types-admin/reorder/  
+DELETE /api/support-request-types-admin/{uuid}/  
+GET /api/support-request-types-admin/{uuid}/  
+PATCH /api/support-request-types-admin/{uuid}/  
+PUT /api/support-request-types-admin/{uuid}/  
+POST /api/support-request-types-admin/{uuid}/activate/  
+POST /api/support-request-types-admin/{uuid}/deactivate/  
+GET /api/support-request-types/  
+HEAD /api/support-request-types/  
+GET /api/support-request-types/{uuid}/  
+GET /api/support/settings/atlassian/  
+POST /api/support/settings/atlassian/  
+GET /api/support/settings/atlassian/current_settings/  
+POST /api/support/settings/atlassian/discover_custom_fields/  
+POST /api/support/settings/atlassian/discover_priorities/  
+POST /api/support/settings/atlassian/discover_projects/  
+POST /api/support/settings/atlassian/discover_request_types/  
+POST /api/support/settings/atlassian/preview_settings/  
+POST /api/support/settings/atlassian/save_settings/  
+POST /api/support/settings/atlassian/validate_credentials/  
+DELETE /api/support/settings/atlassian/{id}/  
+GET /api/support/settings/atlassian/{id}/  
+PATCH /api/support/settings/atlassian/{id}/  
+PUT /api/support/settings/atlassian/{id}/  
+DELETE /api/user-group-invitations/{uuid}/  
+
+### Deleted Endpoints: None
+
+---------------------------
+
+### Modified Endpoints: 157
+
+---------------------------
+GET /api/booking-offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - Modified property: default_configs
+                              - Properties changed
+                                - Modified property: default_controller_etcd_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_controller_ram_gb
+                                  - Max changed from 64 to 128
+                                - Modified property: default_controller_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_controller_vcpus
+                                  - Max changed from 16 to 64
+                                - Modified property: default_lb_logs_disk_gb
+                                  - Min changed from 10 to 1
+                                  - Max changed from 1000 to 2000
+                                - Modified property: default_lb_ram_gb
+                                  - Max changed from 64 to 256
+                                - Modified property: default_lb_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_lb_vcpus
+                                  - Max changed from 16 to 32
+                                - Modified property: default_storage_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_storage_san_disk_gb
+                                  - Min changed from 100 to 1
+                                - Modified property: default_worker_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: minimal_worker_vcpus
+                                  - Max changed from 16 to 32
+              - Modified property: plugin_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedPluginOptions
+                    - Properties changed
+                      - New property: disable_autoapprove
+                      - Modified property: auto_approve_marketplace_script
+                        - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+              - Modified property: resource_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - Modified property: default_configs
+                              - Properties changed
+                                - Modified property: default_controller_etcd_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_controller_ram_gb
+                                  - Max changed from 64 to 128
+                                - Modified property: default_controller_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_controller_vcpus
+                                  - Max changed from 16 to 64
+                                - Modified property: default_lb_logs_disk_gb
+                                  - Min changed from 10 to 1
+                                  - Max changed from 1000 to 2000
+                                - Modified property: default_lb_ram_gb
+                                  - Max changed from 64 to 256
+                                - Modified property: default_lb_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_lb_vcpus
+                                  - Max changed from 16 to 32
+                                - Modified property: default_storage_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_storage_san_disk_gb
+                                  - Min changed from 100 to 1
+                                - Modified property: default_worker_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: minimal_worker_vcpus
+                                  - Max changed from 16 to 32
+
+GET /api/booking-offerings/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/booking-resources/
+
+- New query param: is_attached
+
+HEAD /api/booking-resources/
+
+- New query param: is_attached
+
+GET /api/celery-stats/
+
+- Description changed from 'Provides a snapshot of the Celery workers' status, including active, scheduled, reserved, and revoked tasks, as well as worker-specific statistics. Requires support user permissions.' to 'Provides a comprehensive snapshot of all Celery workers' status.
+
+This endpoint returns detailed information about:
+
+- **active**: Tasks currently being executed by workers
+- **scheduled**: Tasks scheduled for future execution (with ETA)
+- **reserved**: Tasks received by workers but not yet started
+- **revoked**: Task IDs that have been cancelled/revoked
+- **query_task**: Results of task queries (if any)
+- **stats**: Detailed worker statistics including uptime, pool info, and broker connection
+
+Each field is a dictionary where keys are worker names (e.g., 'celery@hostname').
+If no workers are available, fields will be `null`.
+
+Requires support user permissions.'
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: active
+            - New required property: query_task
+            - New required property: reserved
+            - New required property: revoked
+            - New required property: scheduled
+            - New required property: stats
+          - Properties changed
+            - New property: active
+            - New property: query_task
+            - New property: reserved
+            - New property: revoked
+            - New property: scheduled
+            - New property: stats
+          - AdditionalProperties changed
+            - Schema deleted
+        - Examples changed
+          - New example: CeleryStatsWithActiveWorkers
+          - New example: NoWorkersAvailable
+
+GET /api/checklists-admin-questions/
+
+- New query param: has_onboarding_mapping
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: max_value
+                - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+              - Modified property: min_value
+                - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+              - Modified property: question_type
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/QuestionTypeEnum
+                    - New enum values: [phone_number year email url country rating datetime]
+
+HEAD /api/checklists-admin-questions/
+
+- New query param: has_onboarding_mapping
+
+POST /api/checklists-admin-questions/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: max_value
+            - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+          - Modified property: min_value
+            - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+          - Modified property: question_type
+            - Property 'AllOf' changed
+              - Modified schema: #/components/schemas/QuestionTypeEnum
+                - New enum values: [phone_number year email url country rating datetime]
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: max_value
+              - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+            - Modified property: min_value
+              - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+            - Modified property: question_type
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/QuestionTypeEnum
+                  - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/checklists-admin-questions/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: max_value
+              - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+            - Modified property: min_value
+              - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+            - Modified property: question_type
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/QuestionTypeEnum
+                  - New enum values: [phone_number year email url country rating datetime]
+
+PATCH /api/checklists-admin-questions/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: max_value
+            - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+          - Modified property: min_value
+            - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+          - Modified property: question_type
+            - Property 'AllOf' changed
+              - Modified schema: #/components/schemas/QuestionTypeEnum
+                - New enum values: [phone_number year email url country rating datetime]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: max_value
+              - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+            - Modified property: min_value
+              - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+            - Modified property: question_type
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/QuestionTypeEnum
+                  - New enum values: [phone_number year email url country rating datetime]
+
+PUT /api/checklists-admin-questions/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: max_value
+            - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+          - Modified property: min_value
+            - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+          - Modified property: question_type
+            - Property 'AllOf' changed
+              - Modified schema: #/components/schemas/QuestionTypeEnum
+                - New enum values: [phone_number year email url country rating datetime]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: max_value
+              - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+            - Modified property: min_value
+              - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+            - Modified property: question_type
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/QuestionTypeEnum
+                  - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/checklists-admin/{uuid}/questions/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: max_value
+                - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+              - Modified property: min_value
+                - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+              - Modified property: question_type
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/QuestionTypeEnum
+                    - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/customers/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [user_affiliations user_email_patterns user_identity_sources]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: user_affiliations
+              - New property: user_email_patterns
+              - New property: user_identity_sources
+
+POST /api/customers/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+GET /api/customers/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [user_affiliations user_email_patterns user_identity_sources]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+PATCH /api/customers/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+PUT /api/customers/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+GET /api/marketplace-offering-users/checklist-template/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: initial_visible_questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/marketplace-offering-users/{uuid}/checklist/
+
+- New query param: include_all
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Required changed
+                  - New required property: dependencies_info
+                - Properties changed
+                  - New property: dependencies_info
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/marketplace-offering-users/{uuid}/checklist_review/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Required changed
+                  - New required property: dependencies_info
+                - Properties changed
+                  - New property: dependencies_info
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+POST /api/marketplace-orders/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: attributes
+            - Property 'OneOf' changed
+              - Modified schema: #/components/schemas/OpenStackTenantCreateOrderAttributes
+                - Properties changed
+                  - New property: skip_creation_of_default_subnet
+
+GET /api/marketplace-orders/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+POST /api/marketplace-orders/{uuid}/reject_by_consumer/
+
+- Request body changed
+
+GET /api/marketplace-provider-offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - Modified property: default_configs
+                              - Properties changed
+                                - Modified property: default_controller_etcd_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_controller_ram_gb
+                                  - Max changed from 64 to 128
+                                - Modified property: default_controller_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_controller_vcpus
+                                  - Max changed from 16 to 64
+                                - Modified property: default_lb_logs_disk_gb
+                                  - Min changed from 10 to 1
+                                  - Max changed from 1000 to 2000
+                                - Modified property: default_lb_ram_gb
+                                  - Max changed from 64 to 256
+                                - Modified property: default_lb_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_lb_vcpus
+                                  - Max changed from 16 to 32
+                                - Modified property: default_storage_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_storage_san_disk_gb
+                                  - Min changed from 100 to 1
+                                - Modified property: default_worker_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: minimal_worker_vcpus
+                                  - Max changed from 16 to 32
+              - Modified property: plugin_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedPluginOptions
+                    - Properties changed
+                      - New property: disable_autoapprove
+                      - Modified property: auto_approve_marketplace_script
+                        - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+              - Modified property: resource_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - Modified property: default_configs
+                              - Properties changed
+                                - Modified property: default_controller_etcd_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_controller_ram_gb
+                                  - Max changed from 64 to 128
+                                - Modified property: default_controller_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_controller_vcpus
+                                  - Max changed from 16 to 64
+                                - Modified property: default_lb_logs_disk_gb
+                                  - Min changed from 10 to 1
+                                  - Max changed from 1000 to 2000
+                                - Modified property: default_lb_ram_gb
+                                  - Max changed from 64 to 256
+                                - Modified property: default_lb_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_lb_vcpus
+                                  - Max changed from 16 to 32
+                                - Modified property: default_storage_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_storage_san_disk_gb
+                                  - Min changed from 100 to 1
+                                - Modified property: default_worker_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: minimal_worker_vcpus
+                                  - Max changed from 16 to 32
+
+POST /api/marketplace-provider-offerings/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - Modified property: default_configs
+                      - Properties changed
+                        - Modified property: default_controller_etcd_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_controller_ram_gb
+                          - Max changed from 64 to 128
+                        - Modified property: default_controller_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_controller_vcpus
+                          - Max changed from 16 to 64
+                        - Modified property: default_lb_logs_disk_gb
+                          - Min changed from 10 to 1
+                          - Max changed from 1000 to 2000
+                        - Modified property: default_lb_ram_gb
+                          - Max changed from 64 to 256
+                        - Modified property: default_lb_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_lb_vcpus
+                          - Max changed from 16 to 32
+                        - Modified property: default_storage_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_storage_san_disk_gb
+                          - Min changed from 100 to 1
+                        - Modified property: default_worker_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: minimal_worker_vcpus
+                          - Max changed from 16 to 32
+          - Modified property: resource_options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - Modified property: default_configs
+                      - Properties changed
+                        - Modified property: default_controller_etcd_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_controller_ram_gb
+                          - Max changed from 64 to 128
+                        - Modified property: default_controller_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_controller_vcpus
+                          - Max changed from 16 to 64
+                        - Modified property: default_lb_logs_disk_gb
+                          - Min changed from 10 to 1
+                          - Max changed from 1000 to 2000
+                        - Modified property: default_lb_ram_gb
+                          - Max changed from 64 to 256
+                        - Modified property: default_lb_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_lb_vcpus
+                          - Max changed from 16 to 32
+                        - Modified property: default_storage_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_storage_san_disk_gb
+                          - Min changed from 100 to 1
+                        - Modified property: default_worker_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: minimal_worker_vcpus
+                          - Max changed from 16 to 32
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - Modified property: options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - Modified property: default_configs
+                      - Properties changed
+                        - Modified property: default_controller_etcd_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_controller_ram_gb
+                          - Max changed from 64 to 128
+                        - Modified property: default_controller_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_controller_vcpus
+                          - Max changed from 16 to 64
+                        - Modified property: default_lb_logs_disk_gb
+                          - Min changed from 10 to 1
+                          - Max changed from 1000 to 2000
+                        - Modified property: default_lb_ram_gb
+                          - Max changed from 64 to 256
+                        - Modified property: default_lb_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_lb_vcpus
+                          - Max changed from 16 to 32
+                        - Modified property: default_storage_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_storage_san_disk_gb
+                          - Min changed from 100 to 1
+                        - Modified property: default_worker_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: minimal_worker_vcpus
+                          - Max changed from 16 to 32
+          - Modified property: resource_options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - Modified property: default_configs
+                      - Properties changed
+                        - Modified property: default_controller_etcd_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_controller_ram_gb
+                          - Max changed from 64 to 128
+                        - Modified property: default_controller_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_controller_vcpus
+                          - Max changed from 16 to 64
+                        - Modified property: default_lb_logs_disk_gb
+                          - Min changed from 10 to 1
+                          - Max changed from 1000 to 2000
+                        - Modified property: default_lb_ram_gb
+                          - Max changed from 64 to 256
+                        - Modified property: default_lb_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_lb_vcpus
+                          - Max changed from 16 to 32
+                        - Modified property: default_storage_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_storage_san_disk_gb
+                          - Min changed from 100 to 1
+                        - Modified property: default_worker_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: minimal_worker_vcpus
+                          - Max changed from 16 to 32
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - Modified property: options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - Modified property: default_configs
+                      - Properties changed
+                        - Modified property: default_controller_etcd_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_controller_ram_gb
+                          - Max changed from 64 to 128
+                        - Modified property: default_controller_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_controller_vcpus
+                          - Max changed from 16 to 64
+                        - Modified property: default_lb_logs_disk_gb
+                          - Min changed from 10 to 1
+                          - Max changed from 1000 to 2000
+                        - Modified property: default_lb_ram_gb
+                          - Max changed from 64 to 256
+                        - Modified property: default_lb_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_lb_vcpus
+                          - Max changed from 16 to 32
+                        - Modified property: default_storage_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_storage_san_disk_gb
+                          - Min changed from 100 to 1
+                        - Modified property: default_worker_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: minimal_worker_vcpus
+                          - Max changed from 16 to 32
+          - Modified property: resource_options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - Modified property: default_configs
+                      - Properties changed
+                        - Modified property: default_controller_etcd_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_controller_ram_gb
+                          - Max changed from 64 to 128
+                        - Modified property: default_controller_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_controller_vcpus
+                          - Max changed from 16 to 64
+                        - Modified property: default_lb_logs_disk_gb
+                          - Min changed from 10 to 1
+                          - Max changed from 1000 to 2000
+                        - Modified property: default_lb_ram_gb
+                          - Max changed from 64 to 256
+                        - Modified property: default_lb_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_lb_vcpus
+                          - Max changed from 16 to 32
+                        - Modified property: default_storage_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_storage_san_disk_gb
+                          - Min changed from 100 to 1
+                        - Modified property: default_worker_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: minimal_worker_vcpus
+                          - Max changed from 16 to 32
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/marketplace-provider-offerings/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/marketplace-provider-offerings/{uuid}/list_customer_projects/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [user_affiliations user_email_patterns user_identity_sources]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: user_affiliations
+              - New property: user_email_patterns
+              - New property: user_identity_sources
+
+POST /api/marketplace-provider-offerings/{uuid}/move_offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+POST /api/marketplace-provider-offerings/{uuid}/update_integration/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: plugin_options
+            - Properties changed
+              - New property: disable_autoapprove
+              - Modified property: auto_approve_marketplace_script
+                - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+
+POST /api/marketplace-provider-offerings/{uuid}/update_options/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - Modified property: default_configs
+                      - Properties changed
+                        - Modified property: default_controller_etcd_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_controller_ram_gb
+                          - Max changed from 64 to 128
+                        - Modified property: default_controller_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_controller_vcpus
+                          - Max changed from 16 to 64
+                        - Modified property: default_lb_logs_disk_gb
+                          - Min changed from 10 to 1
+                          - Max changed from 1000 to 2000
+                        - Modified property: default_lb_ram_gb
+                          - Max changed from 64 to 256
+                        - Modified property: default_lb_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_lb_vcpus
+                          - Max changed from 16 to 32
+                        - Modified property: default_storage_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_storage_san_disk_gb
+                          - Min changed from 100 to 1
+                        - Modified property: default_worker_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: minimal_worker_vcpus
+                          - Max changed from 16 to 32
+
+POST /api/marketplace-provider-offerings/{uuid}/update_resource_options/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: resource_options
+            - Properties changed
+              - Modified property: options
+                - AdditionalProperties changed
+                  - Properties changed
+                    - Modified property: default_configs
+                      - Properties changed
+                        - Modified property: default_controller_etcd_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_controller_ram_gb
+                          - Max changed from 64 to 128
+                        - Modified property: default_controller_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_controller_vcpus
+                          - Max changed from 16 to 64
+                        - Modified property: default_lb_logs_disk_gb
+                          - Min changed from 10 to 1
+                          - Max changed from 1000 to 2000
+                        - Modified property: default_lb_ram_gb
+                          - Max changed from 64 to 256
+                        - Modified property: default_lb_system_disk_gb
+                          - Min changed from 20 to 1
+                        - Modified property: default_lb_vcpus
+                          - Max changed from 16 to 32
+                        - Modified property: default_storage_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: default_storage_san_disk_gb
+                          - Min changed from 100 to 1
+                        - Modified property: default_worker_data_disk_gb
+                          - Min changed from 10 to 1
+                        - Modified property: minimal_worker_vcpus
+                          - Max changed from 16 to 32
+
+GET /api/marketplace-provider-offerings/{uuid}/user_has_resource_access/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/marketplace-provider-resources/
+
+- New query param: is_attached
+
+HEAD /api/marketplace-provider-resources/
+
+- New query param: is_attached
+
+GET /api/marketplace-provider-resources/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/marketplace-public-offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - Modified property: default_configs
+                              - Properties changed
+                                - Modified property: default_controller_etcd_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_controller_ram_gb
+                                  - Max changed from 64 to 128
+                                - Modified property: default_controller_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_controller_vcpus
+                                  - Max changed from 16 to 64
+                                - Modified property: default_lb_logs_disk_gb
+                                  - Min changed from 10 to 1
+                                  - Max changed from 1000 to 2000
+                                - Modified property: default_lb_ram_gb
+                                  - Max changed from 64 to 256
+                                - Modified property: default_lb_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_lb_vcpus
+                                  - Max changed from 16 to 32
+                                - Modified property: default_storage_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_storage_san_disk_gb
+                                  - Min changed from 100 to 1
+                                - Modified property: default_worker_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: minimal_worker_vcpus
+                                  - Max changed from 16 to 32
+              - Modified property: plugin_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedPluginOptions
+                    - Properties changed
+                      - New property: disable_autoapprove
+                      - Modified property: auto_approve_marketplace_script
+                        - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+              - Modified property: resource_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - Modified property: default_configs
+                              - Properties changed
+                                - Modified property: default_controller_etcd_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_controller_ram_gb
+                                  - Max changed from 64 to 128
+                                - Modified property: default_controller_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_controller_vcpus
+                                  - Max changed from 16 to 64
+                                - Modified property: default_lb_logs_disk_gb
+                                  - Min changed from 10 to 1
+                                  - Max changed from 1000 to 2000
+                                - Modified property: default_lb_ram_gb
+                                  - Max changed from 64 to 256
+                                - Modified property: default_lb_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_lb_vcpus
+                                  - Max changed from 16 to 32
+                                - Modified property: default_storage_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_storage_san_disk_gb
+                                  - Min changed from 100 to 1
+                                - Modified property: default_worker_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: minimal_worker_vcpus
+                                  - Max changed from 16 to 32
+
+GET /api/marketplace-public-offerings/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/marketplace-resources/
+
+- New query param: is_attached
+
+HEAD /api/marketplace-resources/
+
+- New query param: is_attached
+
+GET /api/marketplace-resources/{uuid}/offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/marketplace-robot-accounts/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: offering_plugin_options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/MergedPluginOptions
+                    - Properties changed
+                      - New property: disable_autoapprove
+                      - Modified property: auto_approve_marketplace_script
+                        - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+
+GET /api/marketplace-robot-accounts/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_creating/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_deleted/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_erred/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_ok/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+
+POST /api/marketplace-robot-accounts/{uuid}/set_state_request_deletion/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offering_plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+
+POST /api/marketplace-script-dry-run/{uuid}/async_run/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+POST /api/marketplace-script-dry-run/{uuid}/run/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+            - Modified property: plugin_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/MergedPluginOptions
+                  - Properties changed
+                    - New property: disable_autoapprove
+                    - Modified property: auto_approve_marketplace_script
+                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+            - Modified property: resource_options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/marketplace-service-providers/{service_provider_uuid}/projects/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [user_affiliations user_email_patterns user_identity_sources]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: user_affiliations
+              - New property: user_email_patterns
+              - New property: user_identity_sources
+
+GET /api/marketplace-stats/total_cost_of_active_resources_per_offering/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - New required property: offering_name
+            - Properties changed
+              - New property: offering_name
+
+GET /api/onboarding-country-configs/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: questions
+                - Items changed
+                  - Properties changed
+                    - Modified property: max_value
+                      - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                    - Modified property: min_value
+                      - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                    - Modified property: question_type
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/QuestionTypeEnum
+                          - New enum values: [phone_number year email url country rating datetime]
+
+POST /api/onboarding-country-configs/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/onboarding-country-configs/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+PATCH /api/onboarding-country-configs/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+PUT /api/onboarding-country-configs/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/onboarding-verifications/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - New required property: justifications
+            - Properties changed
+              - New property: justifications
+
+POST /api/onboarding-verifications/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: justifications
+          - Properties changed
+            - New property: justifications
+
+GET /api/onboarding-verifications/checklist-template/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: initial_visible_questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+POST /api/onboarding-verifications/start_verification/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: justifications
+          - Properties changed
+            - New property: justifications
+
+GET /api/onboarding-verifications/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: justifications
+          - Properties changed
+            - New property: justifications
+
+PATCH /api/onboarding-verifications/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: justifications
+          - Properties changed
+            - New property: justifications
+
+PUT /api/onboarding-verifications/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: justifications
+          - Properties changed
+            - New property: justifications
+
+GET /api/onboarding-verifications/{uuid}/checklist/
+
+- New query param: include_all
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Required changed
+                  - New required property: dependencies_info
+                - Properties changed
+                  - New property: dependencies_info
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+POST /api/onboarding-verifications/{uuid}/create_customer/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+POST /api/onboarding-verifications/{uuid}/run_validation/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: justifications
+          - Properties changed
+            - New property: justifications
+
+GET /api/openportal-managed-projects/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: project_data
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/Project
+                    - Properties changed
+                      - New property: user_affiliations
+                      - New property: user_email_patterns
+                      - New property: user_identity_sources
+              - Modified property: project_template_data
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/ProjectTemplate
+                    - Properties changed
+                      - Modified property: customer_data
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/Customer
+                            - Properties changed
+                              - New property: user_affiliations
+                              - New property: user_email_patterns
+                              - New property: user_identity_sources
+                      - Modified property: offerings_data
+                        - Items changed
+                          - Properties changed
+                            - Modified property: options
+                              - Property 'AllOf' changed
+                                - Modified schema: #/components/schemas/OfferingOptions
+                                  - Properties changed
+                                    - Modified property: options
+                                      - AdditionalProperties changed
+                                        - Properties changed
+                                          - Modified property: default_configs
+                                            - Properties changed
+                                              - Modified property: default_controller_etcd_disk_gb
+                                                - Min changed from 10 to 1
+                                              - Modified property: default_controller_ram_gb
+                                                - Max changed from 64 to 128
+                                              - Modified property: default_controller_system_disk_gb
+                                                - Min changed from 20 to 1
+                                              - Modified property: default_controller_vcpus
+                                                - Max changed from 16 to 64
+                                              - Modified property: default_lb_logs_disk_gb
+                                                - Min changed from 10 to 1
+                                                - Max changed from 1000 to 2000
+                                              - Modified property: default_lb_ram_gb
+                                                - Max changed from 64 to 256
+                                              - Modified property: default_lb_system_disk_gb
+                                                - Min changed from 20 to 1
+                                              - Modified property: default_lb_vcpus
+                                                - Max changed from 16 to 32
+                                              - Modified property: default_storage_data_disk_gb
+                                                - Min changed from 10 to 1
+                                              - Modified property: default_storage_san_disk_gb
+                                                - Min changed from 100 to 1
+                                              - Modified property: default_worker_data_disk_gb
+                                                - Min changed from 10 to 1
+                                              - Modified property: minimal_worker_vcpus
+                                                - Max changed from 16 to 32
+                            - Modified property: plugin_options
+                              - Property 'AllOf' changed
+                                - Modified schema: #/components/schemas/MergedPluginOptions
+                                  - Properties changed
+                                    - New property: disable_autoapprove
+                                    - Modified property: auto_approve_marketplace_script
+                                      - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+                            - Modified property: resource_options
+                              - Property 'AllOf' changed
+                                - Modified schema: #/components/schemas/OfferingOptions
+                                  - Properties changed
+                                    - Modified property: options
+                                      - AdditionalProperties changed
+                                        - Properties changed
+                                          - Modified property: default_configs
+                                            - Properties changed
+                                              - Modified property: default_controller_etcd_disk_gb
+                                                - Min changed from 10 to 1
+                                              - Modified property: default_controller_ram_gb
+                                                - Max changed from 64 to 128
+                                              - Modified property: default_controller_system_disk_gb
+                                                - Min changed from 20 to 1
+                                              - Modified property: default_controller_vcpus
+                                                - Max changed from 16 to 64
+                                              - Modified property: default_lb_logs_disk_gb
+                                                - Min changed from 10 to 1
+                                                - Max changed from 1000 to 2000
+                                              - Modified property: default_lb_ram_gb
+                                                - Max changed from 64 to 256
+                                              - Modified property: default_lb_system_disk_gb
+                                                - Min changed from 20 to 1
+                                              - Modified property: default_lb_vcpus
+                                                - Max changed from 16 to 32
+                                              - Modified property: default_storage_data_disk_gb
+                                                - Min changed from 10 to 1
+                                              - Modified property: default_storage_san_disk_gb
+                                                - Min changed from 100 to 1
+                                              - Modified property: default_worker_data_disk_gb
+                                                - Min changed from 10 to 1
+                                              - Modified property: minimal_worker_vcpus
+                                                - Max changed from 16 to 32
+                      - Modified property: provider_data
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/Customer
+                            - Properties changed
+                              - New property: user_affiliations
+                              - New property: user_email_patterns
+                              - New property: user_identity_sources
+
+GET /api/openportal-managed-projects/{identifier}/{destination}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: project_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Project
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+            - Modified property: project_template_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/ProjectTemplate
+                  - Properties changed
+                    - Modified property: customer_data
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/Customer
+                          - Properties changed
+                            - New property: user_affiliations
+                            - New property: user_email_patterns
+                            - New property: user_identity_sources
+                    - Modified property: offerings_data
+                      - Items changed
+                        - Properties changed
+                          - Modified property: options
+                            - Property 'AllOf' changed
+                              - Modified schema: #/components/schemas/OfferingOptions
+                                - Properties changed
+                                  - Modified property: options
+                                    - AdditionalProperties changed
+                                      - Properties changed
+                                        - Modified property: default_configs
+                                          - Properties changed
+                                            - Modified property: default_controller_etcd_disk_gb
+                                              - Min changed from 10 to 1
+                                            - Modified property: default_controller_ram_gb
+                                              - Max changed from 64 to 128
+                                            - Modified property: default_controller_system_disk_gb
+                                              - Min changed from 20 to 1
+                                            - Modified property: default_controller_vcpus
+                                              - Max changed from 16 to 64
+                                            - Modified property: default_lb_logs_disk_gb
+                                              - Min changed from 10 to 1
+                                              - Max changed from 1000 to 2000
+                                            - Modified property: default_lb_ram_gb
+                                              - Max changed from 64 to 256
+                                            - Modified property: default_lb_system_disk_gb
+                                              - Min changed from 20 to 1
+                                            - Modified property: default_lb_vcpus
+                                              - Max changed from 16 to 32
+                                            - Modified property: default_storage_data_disk_gb
+                                              - Min changed from 10 to 1
+                                            - Modified property: default_storage_san_disk_gb
+                                              - Min changed from 100 to 1
+                                            - Modified property: default_worker_data_disk_gb
+                                              - Min changed from 10 to 1
+                                            - Modified property: minimal_worker_vcpus
+                                              - Max changed from 16 to 32
+                          - Modified property: plugin_options
+                            - Property 'AllOf' changed
+                              - Modified schema: #/components/schemas/MergedPluginOptions
+                                - Properties changed
+                                  - New property: disable_autoapprove
+                                  - Modified property: auto_approve_marketplace_script
+                                    - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+                          - Modified property: resource_options
+                            - Property 'AllOf' changed
+                              - Modified schema: #/components/schemas/OfferingOptions
+                                - Properties changed
+                                  - Modified property: options
+                                    - AdditionalProperties changed
+                                      - Properties changed
+                                        - Modified property: default_configs
+                                          - Properties changed
+                                            - Modified property: default_controller_etcd_disk_gb
+                                              - Min changed from 10 to 1
+                                            - Modified property: default_controller_ram_gb
+                                              - Max changed from 64 to 128
+                                            - Modified property: default_controller_system_disk_gb
+                                              - Min changed from 20 to 1
+                                            - Modified property: default_controller_vcpus
+                                              - Max changed from 16 to 64
+                                            - Modified property: default_lb_logs_disk_gb
+                                              - Min changed from 10 to 1
+                                              - Max changed from 1000 to 2000
+                                            - Modified property: default_lb_ram_gb
+                                              - Max changed from 64 to 256
+                                            - Modified property: default_lb_system_disk_gb
+                                              - Min changed from 20 to 1
+                                            - Modified property: default_lb_vcpus
+                                              - Max changed from 16 to 32
+                                            - Modified property: default_storage_data_disk_gb
+                                              - Min changed from 10 to 1
+                                            - Modified property: default_storage_san_disk_gb
+                                              - Min changed from 100 to 1
+                                            - Modified property: default_worker_data_disk_gb
+                                              - Min changed from 10 to 1
+                                            - Modified property: minimal_worker_vcpus
+                                              - Max changed from 16 to 32
+                    - Modified property: provider_data
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/Customer
+                          - Properties changed
+                            - New property: user_affiliations
+                            - New property: user_email_patterns
+                            - New property: user_identity_sources
+
+GET /api/openportal-project-template/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: customer_data
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/Customer
+                    - Properties changed
+                      - New property: user_affiliations
+                      - New property: user_email_patterns
+                      - New property: user_identity_sources
+              - Modified property: offerings_data
+                - Items changed
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+                    - Modified property: plugin_options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/MergedPluginOptions
+                          - Properties changed
+                            - New property: disable_autoapprove
+                            - Modified property: auto_approve_marketplace_script
+                              - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+                    - Modified property: resource_options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+              - Modified property: provider_data
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/Customer
+                    - Properties changed
+                      - New property: user_affiliations
+                      - New property: user_email_patterns
+                      - New property: user_identity_sources
+
+POST /api/openportal-project-template/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customer_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+            - Modified property: offerings_data
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+                  - Modified property: plugin_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedPluginOptions
+                        - Properties changed
+                          - New property: disable_autoapprove
+                          - Modified property: auto_approve_marketplace_script
+                            - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+                  - Modified property: resource_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+            - Modified property: provider_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+
+GET /api/openportal-project-template/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customer_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+            - Modified property: offerings_data
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+                  - Modified property: plugin_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedPluginOptions
+                        - Properties changed
+                          - New property: disable_autoapprove
+                          - Modified property: auto_approve_marketplace_script
+                            - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+                  - Modified property: resource_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+            - Modified property: provider_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+
+PATCH /api/openportal-project-template/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customer_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+            - Modified property: offerings_data
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+                  - Modified property: plugin_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedPluginOptions
+                        - Properties changed
+                          - New property: disable_autoapprove
+                          - Modified property: auto_approve_marketplace_script
+                            - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+                  - Modified property: resource_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+            - Modified property: provider_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+
+PUT /api/openportal-project-template/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: customer_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+            - Modified property: offerings_data
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+                  - Modified property: plugin_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/MergedPluginOptions
+                        - Properties changed
+                          - New property: disable_autoapprove
+                          - Modified property: auto_approve_marketplace_script
+                            - Description changed from 'If set to False, an order requires manual provider approval' to 'If set to False, all orders require manual provider approval, including for service provider owners and staff'
+                  - Modified property: resource_options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+            - Modified property: provider_data
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/Customer
+                  - Properties changed
+                    - New property: user_affiliations
+                    - New property: user_email_patterns
+                    - New property: user_identity_sources
+
+GET /api/openportal-unmanaged-projects/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [user_affiliations user_email_patterns user_identity_sources]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: user_affiliations
+              - New property: user_email_patterns
+              - New property: user_identity_sources
+
+POST /api/openportal-unmanaged-projects/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+GET /api/openportal-unmanaged-projects/checklist-template/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: initial_visible_questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/openportal-unmanaged-projects/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [user_affiliations user_email_patterns user_identity_sources]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+PATCH /api/openportal-unmanaged-projects/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+PUT /api/openportal-unmanaged-projects/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+GET /api/openportal-unmanaged-projects/{uuid}/checklist/
+
+- New query param: include_all
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Required changed
+                  - New required property: dependencies_info
+                - Properties changed
+                  - New property: dependencies_info
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+POST /api/openportal-unmanaged-projects/{uuid}/move_project/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+POST /api/openportal-unmanaged-projects/{uuid}/recover/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+GET /api/openstack-tenants/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [skip_creation_of_default_router skip_creation_of_default_subnet]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: skip_creation_of_default_router
+
+GET /api/openstack-tenants/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [skip_creation_of_default_router skip_creation_of_default_subnet]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: skip_creation_of_default_router
+
+PATCH /api/openstack-tenants/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: skip_creation_of_default_router
+          - New property: skip_creation_of_default_subnet
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: skip_creation_of_default_router
+
+PUT /api/openstack-tenants/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: skip_creation_of_default_router
+          - New property: skip_creation_of_default_subnet
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: skip_creation_of_default_router
+
+POST /api/openstack-tenants/{uuid}/pull_security_groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: skip_creation_of_default_router
+
+POST /api/openstack-tenants/{uuid}/pull_server_groups/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: skip_creation_of_default_router
+
+GET /api/override-settings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: LOGIN_LOGO_MULTILINGUAL
+            - New property: LOGIN_PAGE_CAROUSEL_SLIDES
+            - New property: LOGIN_PAGE_LAYOUT
+            - New property: LOGIN_PAGE_NEWS
+            - New property: LOGIN_PAGE_STATS
+            - New property: LOGIN_PAGE_VIDEO_URL
+            - Deleted property: ATLASSIAN_ISSUE_TYPES
+            - Deleted property: ATLASSIAN_SUPPORT_TYPE_MAPPING
+
+POST /api/override-settings/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: LOGIN_LOGO_MULTILINGUAL
+          - New property: LOGIN_PAGE_CAROUSEL_SLIDES
+          - New property: LOGIN_PAGE_LAYOUT
+          - New property: LOGIN_PAGE_NEWS
+          - New property: LOGIN_PAGE_STATS
+          - New property: LOGIN_PAGE_VIDEO_URL
+          - Deleted property: ATLASSIAN_ISSUE_TYPES
+          - Deleted property: ATLASSIAN_SUPPORT_TYPE_MAPPING
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: LOGIN_LOGO_MULTILINGUAL
+          - New property: LOGIN_PAGE_CAROUSEL_SLIDES
+          - New property: LOGIN_PAGE_LAYOUT
+          - New property: LOGIN_PAGE_NEWS
+          - New property: LOGIN_PAGE_STATS
+          - New property: LOGIN_PAGE_VIDEO_URL
+          - Deleted property: ATLASSIAN_ISSUE_TYPES
+          - Deleted property: ATLASSIAN_SUPPORT_TYPE_MAPPING
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: LOGIN_LOGO_MULTILINGUAL
+          - New property: LOGIN_PAGE_CAROUSEL_SLIDES
+          - New property: LOGIN_PAGE_LAYOUT
+          - New property: LOGIN_PAGE_NEWS
+          - New property: LOGIN_PAGE_STATS
+          - New property: LOGIN_PAGE_VIDEO_URL
+          - Deleted property: ATLASSIAN_ISSUE_TYPES
+          - Deleted property: ATLASSIAN_SUPPORT_TYPE_MAPPING
+
+GET /api/projects/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [user_affiliations user_email_patterns user_identity_sources]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: user_affiliations
+              - New property: user_email_patterns
+              - New property: user_identity_sources
+
+POST /api/projects/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+GET /api/projects/checklist-template/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: initial_visible_questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/projects/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [user_affiliations user_email_patterns user_identity_sources]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+PATCH /api/projects/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+PUT /api/projects/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: application/x-www-form-urlencoded
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+    - Modified media type: multipart/form-data
+      - Schema changed
+        - Properties changed
+          - New property: user_affiliations
+          - New property: user_email_patterns
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+GET /api/projects/{uuid}/checklist/
+
+- New query param: include_all
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Required changed
+                  - New required property: dependencies_info
+                - Properties changed
+                  - New property: dependencies_info
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+POST /api/projects/{uuid}/move_project/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+POST /api/projects/{uuid}/recover/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: user_affiliations
+            - New property: user_email_patterns
+            - New property: user_identity_sources
+
+GET /api/proposal-proposals/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: supporting_documentation
+                - Items changed
+                  - Required changed
+                    - New required property: uuid
+                  - Properties changed
+                    - New property: uuid
+
+POST /api/proposal-proposals/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: supporting_documentation
+              - Items changed
+                - Required changed
+                  - New required property: uuid
+                - Properties changed
+                  - New property: uuid
+
+GET /api/proposal-proposals/checklist-template/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: initial_visible_questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+            - Modified property: questions
+              - Items changed
+                - Properties changed
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/proposal-proposals/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: supporting_documentation
+              - Items changed
+                - Required changed
+                  - New required property: uuid
+                - Properties changed
+                  - New property: uuid
+
+GET /api/proposal-proposals/{uuid}/checklist/
+
+- New query param: include_all
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Required changed
+                  - New required property: dependencies_info
+                - Properties changed
+                  - New property: dependencies_info
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/proposal-proposals/{uuid}/checklist_review/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: questions
+              - Items changed
+                - Required changed
+                  - New required property: dependencies_info
+                - Properties changed
+                  - New property: dependencies_info
+                  - Modified property: max_value
+                    - Description changed from 'Maximum value allowed for NUMBER type questions' to 'Maximum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: min_value
+                    - Description changed from 'Minimum value allowed for NUMBER type questions' to 'Minimum value allowed for NUMBER, YEAR, and RATING type questions'
+                  - Modified property: question_type
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/QuestionTypeEnum
+                        - New enum values: [phone_number year email url country rating datetime]
+
+GET /api/proposal-proposals/{uuid}/resources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: requested_offering
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/NestedRequestedOffering
+                    - Properties changed
+                      - Modified property: options
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/OfferingOptions
+                            - Properties changed
+                              - Modified property: options
+                                - AdditionalProperties changed
+                                  - Properties changed
+                                    - Modified property: default_configs
+                                      - Properties changed
+                                        - Modified property: default_controller_etcd_disk_gb
+                                          - Min changed from 10 to 1
+                                        - Modified property: default_controller_ram_gb
+                                          - Max changed from 64 to 128
+                                        - Modified property: default_controller_system_disk_gb
+                                          - Min changed from 20 to 1
+                                        - Modified property: default_controller_vcpus
+                                          - Max changed from 16 to 64
+                                        - Modified property: default_lb_logs_disk_gb
+                                          - Min changed from 10 to 1
+                                          - Max changed from 1000 to 2000
+                                        - Modified property: default_lb_ram_gb
+                                          - Max changed from 64 to 256
+                                        - Modified property: default_lb_system_disk_gb
+                                          - Min changed from 20 to 1
+                                        - Modified property: default_lb_vcpus
+                                          - Max changed from 16 to 32
+                                        - Modified property: default_storage_data_disk_gb
+                                          - Min changed from 10 to 1
+                                        - Modified property: default_storage_san_disk_gb
+                                          - Min changed from 100 to 1
+                                        - Modified property: default_worker_data_disk_gb
+                                          - Min changed from 10 to 1
+                                        - Modified property: minimal_worker_vcpus
+                                          - Max changed from 16 to 32
+
+POST /api/proposal-proposals/{uuid}/resources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+
+GET /api/proposal-proposals/{uuid}/resources/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+
+PATCH /api/proposal-proposals/{uuid}/resources/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+
+PUT /api/proposal-proposals/{uuid}/resources/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+
+GET /api/proposal-protected-calls/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [proposal_slug_template]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: proposal_slug_template
+              - Modified property: offerings
+                - Items changed
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+
+POST /api/proposal-protected-calls/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: proposal_slug_template
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: proposal_slug_template
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+
+GET /api/proposal-protected-calls/{uuid}/
+
+- Modified query param: field
+  - Schema changed
+    - Items changed
+      - New enum values: [proposal_slug_template]
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: proposal_slug_template
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+
+PATCH /api/proposal-protected-calls/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: proposal_slug_template
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: proposal_slug_template
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+
+PUT /api/proposal-protected-calls/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: proposal_slug_template
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: proposal_slug_template
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+
+POST /api/proposal-protected-calls/{uuid}/activate/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: proposal_slug_template
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+
+POST /api/proposal-protected-calls/{uuid}/archive/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: proposal_slug_template
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+
+GET /api/proposal-protected-calls/{uuid}/offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - Modified property: default_configs
+                              - Properties changed
+                                - Modified property: default_controller_etcd_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_controller_ram_gb
+                                  - Max changed from 64 to 128
+                                - Modified property: default_controller_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_controller_vcpus
+                                  - Max changed from 16 to 64
+                                - Modified property: default_lb_logs_disk_gb
+                                  - Min changed from 10 to 1
+                                  - Max changed from 1000 to 2000
+                                - Modified property: default_lb_ram_gb
+                                  - Max changed from 64 to 256
+                                - Modified property: default_lb_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_lb_vcpus
+                                  - Max changed from 16 to 32
+                                - Modified property: default_storage_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_storage_san_disk_gb
+                                  - Min changed from 100 to 1
+                                - Modified property: default_worker_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: minimal_worker_vcpus
+                                  - Max changed from 16 to 32
+
+POST /api/proposal-protected-calls/{uuid}/offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/proposal-protected-calls/{uuid}/offerings/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+PATCH /api/proposal-protected-calls/{uuid}/offerings/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+PUT /api/proposal-protected-calls/{uuid}/offerings/{obj_uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+POST /api/proposal-protected-calls/{uuid}/rounds/{obj_uuid}/close/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: proposal_slug_template
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: proposal_slug_template
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+
+GET /api/proposal-public-calls/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: offerings
+                - Items changed
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+
+GET /api/proposal-public-calls/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: offerings
+              - Items changed
+                - Properties changed
+                  - Modified property: options
+                    - Property 'AllOf' changed
+                      - Modified schema: #/components/schemas/OfferingOptions
+                        - Properties changed
+                          - Modified property: options
+                            - AdditionalProperties changed
+                              - Properties changed
+                                - Modified property: default_configs
+                                  - Properties changed
+                                    - Modified property: default_controller_etcd_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_controller_ram_gb
+                                      - Max changed from 64 to 128
+                                    - Modified property: default_controller_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_controller_vcpus
+                                      - Max changed from 16 to 64
+                                    - Modified property: default_lb_logs_disk_gb
+                                      - Min changed from 10 to 1
+                                      - Max changed from 1000 to 2000
+                                    - Modified property: default_lb_ram_gb
+                                      - Max changed from 64 to 256
+                                    - Modified property: default_lb_system_disk_gb
+                                      - Min changed from 20 to 1
+                                    - Modified property: default_lb_vcpus
+                                      - Max changed from 16 to 32
+                                    - Modified property: default_storage_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: default_storage_san_disk_gb
+                                      - Min changed from 100 to 1
+                                    - Modified property: default_worker_data_disk_gb
+                                      - Min changed from 10 to 1
+                                    - Modified property: minimal_worker_vcpus
+                                      - Max changed from 16 to 32
+
+GET /api/proposal-requested-offerings/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: options
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/OfferingOptions
+                    - Properties changed
+                      - Modified property: options
+                        - AdditionalProperties changed
+                          - Properties changed
+                            - Modified property: default_configs
+                              - Properties changed
+                                - Modified property: default_controller_etcd_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_controller_ram_gb
+                                  - Max changed from 64 to 128
+                                - Modified property: default_controller_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_controller_vcpus
+                                  - Max changed from 16 to 64
+                                - Modified property: default_lb_logs_disk_gb
+                                  - Min changed from 10 to 1
+                                  - Max changed from 1000 to 2000
+                                - Modified property: default_lb_ram_gb
+                                  - Max changed from 64 to 256
+                                - Modified property: default_lb_system_disk_gb
+                                  - Min changed from 20 to 1
+                                - Modified property: default_lb_vcpus
+                                  - Max changed from 16 to 32
+                                - Modified property: default_storage_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: default_storage_san_disk_gb
+                                  - Min changed from 100 to 1
+                                - Modified property: default_worker_data_disk_gb
+                                  - Min changed from 10 to 1
+                                - Modified property: minimal_worker_vcpus
+                                  - Max changed from 16 to 32
+
+GET /api/proposal-requested-offerings/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: options
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/OfferingOptions
+                  - Properties changed
+                    - Modified property: options
+                      - AdditionalProperties changed
+                        - Properties changed
+                          - Modified property: default_configs
+                            - Properties changed
+                              - Modified property: default_controller_etcd_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_controller_ram_gb
+                                - Max changed from 64 to 128
+                              - Modified property: default_controller_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_controller_vcpus
+                                - Max changed from 16 to 64
+                              - Modified property: default_lb_logs_disk_gb
+                                - Min changed from 10 to 1
+                                - Max changed from 1000 to 2000
+                              - Modified property: default_lb_ram_gb
+                                - Max changed from 64 to 256
+                              - Modified property: default_lb_system_disk_gb
+                                - Min changed from 20 to 1
+                              - Modified property: default_lb_vcpus
+                                - Max changed from 16 to 32
+                              - Modified property: default_storage_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: default_storage_san_disk_gb
+                                - Min changed from 100 to 1
+                              - Modified property: default_worker_data_disk_gb
+                                - Min changed from 10 to 1
+                              - Modified property: minimal_worker_vcpus
+                                - Max changed from 16 to 32
+
+GET /api/proposal-requested-resources/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: requested_offering
+                - Property 'AllOf' changed
+                  - Modified schema: #/components/schemas/NestedRequestedOffering
+                    - Properties changed
+                      - Modified property: options
+                        - Property 'AllOf' changed
+                          - Modified schema: #/components/schemas/OfferingOptions
+                            - Properties changed
+                              - Modified property: options
+                                - AdditionalProperties changed
+                                  - Properties changed
+                                    - Modified property: default_configs
+                                      - Properties changed
+                                        - Modified property: default_controller_etcd_disk_gb
+                                          - Min changed from 10 to 1
+                                        - Modified property: default_controller_ram_gb
+                                          - Max changed from 64 to 128
+                                        - Modified property: default_controller_system_disk_gb
+                                          - Min changed from 20 to 1
+                                        - Modified property: default_controller_vcpus
+                                          - Max changed from 16 to 64
+                                        - Modified property: default_lb_logs_disk_gb
+                                          - Min changed from 10 to 1
+                                          - Max changed from 1000 to 2000
+                                        - Modified property: default_lb_ram_gb
+                                          - Max changed from 64 to 256
+                                        - Modified property: default_lb_system_disk_gb
+                                          - Min changed from 20 to 1
+                                        - Modified property: default_lb_vcpus
+                                          - Max changed from 16 to 32
+                                        - Modified property: default_storage_data_disk_gb
+                                          - Min changed from 10 to 1
+                                        - Modified property: default_storage_san_disk_gb
+                                          - Min changed from 100 to 1
+                                        - Modified property: default_worker_data_disk_gb
+                                          - Min changed from 10 to 1
+                                        - Modified property: minimal_worker_vcpus
+                                          - Max changed from 16 to 32
+
+GET /api/proposal-requested-resources/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: requested_offering
+              - Property 'AllOf' changed
+                - Modified schema: #/components/schemas/NestedRequestedOffering
+                  - Properties changed
+                    - Modified property: options
+                      - Property 'AllOf' changed
+                        - Modified schema: #/components/schemas/OfferingOptions
+                          - Properties changed
+                            - Modified property: options
+                              - AdditionalProperties changed
+                                - Properties changed
+                                  - Modified property: default_configs
+                                    - Properties changed
+                                      - Modified property: default_controller_etcd_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_controller_ram_gb
+                                        - Max changed from 64 to 128
+                                      - Modified property: default_controller_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_controller_vcpus
+                                        - Max changed from 16 to 64
+                                      - Modified property: default_lb_logs_disk_gb
+                                        - Min changed from 10 to 1
+                                        - Max changed from 1000 to 2000
+                                      - Modified property: default_lb_ram_gb
+                                        - Max changed from 64 to 256
+                                      - Modified property: default_lb_system_disk_gb
+                                        - Min changed from 20 to 1
+                                      - Modified property: default_lb_vcpus
+                                        - Max changed from 16 to 32
+                                      - Modified property: default_storage_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: default_storage_san_disk_gb
+                                        - Min changed from 100 to 1
+                                      - Modified property: default_worker_data_disk_gb
+                                        - Min changed from 10 to 1
+                                      - Modified property: minimal_worker_vcpus
+                                        - Max changed from 16 to 32
+
+GET /api/support-issue-statuses/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - Modified property: type
+                - Property 'AllOf' changed
+                  - Schemas added: #/components/schemas/IssueStatusType
+                  - Schemas deleted: #/components/schemas/IssueStatusTypeEnum
+
+POST /api/support-issue-statuses/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: type
+            - Property 'AllOf' changed
+              - Schemas added: #/components/schemas/IssueStatusType
+              - Schemas deleted: #/components/schemas/IssueStatusTypeEnum
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: type_display
+            - Deleted required property: url
+            - Deleted required property: uuid
+          - Properties changed
+            - Deleted property: type_display
+            - Deleted property: url
+            - Deleted property: uuid
+            - Modified property: type
+              - Property 'AllOf' changed
+                - Schemas added: #/components/schemas/IssueStatusType
+                - Schemas deleted: #/components/schemas/IssueStatusTypeEnum
+
+GET /api/support-issue-statuses/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: type
+              - Property 'AllOf' changed
+                - Schemas added: #/components/schemas/IssueStatusType
+                - Schemas deleted: #/components/schemas/IssueStatusTypeEnum
+
+PATCH /api/support-issue-statuses/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: type
+            - Property 'AllOf' changed
+              - Schemas added: #/components/schemas/IssueStatusType
+              - Schemas deleted: #/components/schemas/IssueStatusTypeEnum
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: type
+              - Property 'AllOf' changed
+                - Schemas added: #/components/schemas/IssueStatusType
+                - Schemas deleted: #/components/schemas/IssueStatusTypeEnum
+
+PUT /api/support-issue-statuses/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: type
+            - Property 'AllOf' changed
+              - Schemas added: #/components/schemas/IssueStatusType
+              - Schemas deleted: #/components/schemas/IssueStatusTypeEnum
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: type_display
+            - Deleted required property: url
+            - Deleted required property: uuid
+          - Properties changed
+            - Deleted property: type_display
+            - Deleted property: url
+            - Deleted property: uuid
+            - Modified property: type
+              - Property 'AllOf' changed
+                - Schemas added: #/components/schemas/IssueStatusType
+                - Schemas deleted: #/components/schemas/IssueStatusTypeEnum
+
+GET /api/support-issues/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - New required property: order_customer_uuid
+              - New required property: order_project_uuid
+              - New required property: order_resource_name
+              - New required property: order_uuid
+              - New required property: processing_log
+            - Properties changed
+              - New property: order_customer_uuid
+              - New property: order_project_uuid
+              - New property: order_resource_name
+              - New property: order_uuid
+              - New property: processing_log
+
+POST /api/support-issues/
+
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: order_customer_uuid
+            - New required property: order_project_uuid
+            - New required property: order_resource_name
+            - New required property: order_uuid
+            - New required property: processing_log
+          - Properties changed
+            - New property: order_customer_uuid
+            - New property: order_project_uuid
+            - New property: order_resource_name
+            - New property: order_uuid
+            - New property: processing_log
+
+GET /api/support-issues/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: order_customer_uuid
+            - New required property: order_project_uuid
+            - New required property: order_resource_name
+            - New required property: order_uuid
+            - New required property: processing_log
+          - Properties changed
+            - New property: order_customer_uuid
+            - New property: order_project_uuid
+            - New property: order_resource_name
+            - New property: order_uuid
+            - New property: processing_log
+
+PATCH /api/support-issues/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: order_customer_uuid
+            - New required property: order_project_uuid
+            - New required property: order_resource_name
+            - New required property: order_uuid
+            - New required property: processing_log
+          - Properties changed
+            - New property: order_customer_uuid
+            - New property: order_project_uuid
+            - New property: order_resource_name
+            - New property: order_uuid
+            - New property: processing_log
+
+PUT /api/support-issues/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: order_customer_uuid
+            - New required property: order_project_uuid
+            - New required property: order_resource_name
+            - New required property: order_uuid
+            - New required property: processing_log
+          - Properties changed
+            - New property: order_customer_uuid
+            - New property: order_project_uuid
+            - New property: order_resource_name
+            - New property: order_uuid
+            - New property: processing_log
+
+POST /api/support-issues/{uuid}/sync/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: order_customer_uuid
+            - New required property: order_project_uuid
+            - New required property: order_resource_name
+            - New required property: order_uuid
+            - New required property: processing_log
+          - Properties changed
+            - New property: order_customer_uuid
+            - New property: order_project_uuid
+            - New property: order_resource_name
+            - New property: order_uuid
+            - New property: processing_log
+
+POST /api/support-jira-webhook/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - Modified property: webhookEvent
+            - Deleted enum values: [jira:issue_updated jira:issue_deleted comment_created comment_updated comment_deleted]
+            - MinLength changed from 0 to 1
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - Modified property: webhookEvent
+              - Deleted enum values: [jira:issue_updated jira:issue_deleted comment_created comment_updated comment_deleted]
+
+GET /api/user-actions/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Properties changed
+              - New property: offering_name
+              - New property: offering_type
+              - New property: organization_name
+              - New property: organization_uuid
+              - New property: project_name
+              - New property: project_uuid
+              - New property: route_name
+              - New property: route_params
+              - Deleted property: action_url
+              - Deleted property: metadata
+              - Modified property: corrective_actions
+                - Items changed
+                  - Required changed
+                    - Deleted required property: url
+                  - Properties changed
+                    - New property: route_name
+                    - New property: route_params
+                    - Deleted property: url
+
+POST /api/user-actions/update_actions/
+
+- Description changed from 'Trigger update of user actions (admin only)' to 'Trigger update of user actions'
+
+GET /api/user-actions/{id}/
+
+- Modified path param: id
+  - Name changed from 'id' to 'uuid'
+  - Description changed from 'A unique integer value identifying this user action.' to ''
+  - Schema changed
+    - Type changed from 'integer' to 'string'
+    - Format changed from '' to 'uuid'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Properties changed
+            - New property: offering_name
+            - New property: offering_type
+            - New property: organization_name
+            - New property: organization_uuid
+            - New property: project_name
+            - New property: project_uuid
+            - New property: route_name
+            - New property: route_params
+            - Deleted property: action_url
+            - Deleted property: metadata
+            - Modified property: corrective_actions
+              - Items changed
+                - Required changed
+                  - Deleted required property: url
+                - Properties changed
+                  - New property: route_name
+                  - New property: route_params
+                  - Deleted property: url
+
+POST /api/user-actions/{id}/execute_action/
+
+- Modified path param: id
+  - Name changed from 'id' to 'uuid'
+  - Description changed from 'A unique integer value identifying this user action.' to ''
+  - Schema changed
+    - Type changed from 'integer' to 'string'
+    - Format changed from '' to 'uuid'
+
+POST /api/user-actions/{id}/silence/
+
+- Modified path param: id
+  - Name changed from 'id' to 'uuid'
+  - Description changed from 'A unique integer value identifying this user action.' to ''
+  - Schema changed
+    - Type changed from 'integer' to 'string'
+    - Format changed from '' to 'uuid'
+
+POST /api/user-actions/{id}/unsilence/
+
+- Modified path param: id
+  - Name changed from 'id' to 'uuid'
+  - Description changed from 'A unique integer value identifying this user action.' to ''
+  - Schema changed
+    - Type changed from 'integer' to 'string'
+    - Format changed from '' to 'uuid'
+
+GET /api/user-agreements/
+
+- Summary changed from '' to 'List user agreements'
+- Description changed from '' to 'Retrieve a list of user agreements (Terms of Service and Privacy Policy). Supports filtering by agreement type and language with fallback behavior.'
+- New query param: language
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - New required property: language
+            - Properties changed
+              - New property: language
+
+HEAD /api/user-agreements/
+
+- Summary changed from '' to 'List user agreements'
+- New query param: language
+
+POST /api/user-agreements/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Required changed
+          - New required property: language
+        - Properties changed
+          - New property: language
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: language
+          - Properties changed
+            - New property: language
+
+GET /api/user-agreements/{uuid}/
+
+- Summary changed from '' to 'Retrieve user agreement'
+- Description changed from '' to 'Fetch the details of a specific user agreement by its UUID.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: language
+          - Properties changed
+            - New property: language
+
+PATCH /api/user-agreements/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: language
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: language
+          - Properties changed
+            - New property: language
+
+PUT /api/user-agreements/{uuid}/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Required changed
+          - New required property: language
+        - Properties changed
+          - New property: language
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: language
+          - Properties changed
+            - New property: language
+
+GET /api/user-group-invitations/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Items changed
+            - Required changed
+              - Deleted required property: expires
+            - Properties changed
+              - New property: auto_approve
+              - New property: user_identity_sources
+              - Deleted property: expires
+
+POST /api/user-group-invitations/
+
+- Request body changed
+  - Content changed
+    - Modified media type: application/json
+      - Schema changed
+        - Properties changed
+          - New property: auto_approve
+          - New property: user_identity_sources
+- Responses changed
+  - Modified response: 201
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: expires
+          - Properties changed
+            - New property: auto_approve
+            - New property: user_identity_sources
+            - Deleted property: expires
+
+GET /api/user-group-invitations/{uuid}/
+
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - Deleted required property: expires
+          - Properties changed
+            - New property: auto_approve
+            - New property: user_identity_sources
+            - Deleted property: expires
+
+POST /api/user-group-invitations/{uuid}/submit_request/
+
+- Description changed from 'Creates a permission request based on a group invitation for the currently authenticated user.' to 'Creates a permission request based on a group invitation for the currently authenticated user. If the invitation has auto_approve enabled and the user matches the required patterns, the request is automatically approved.'
+- Responses changed
+  - Modified response: 200
+    - Content changed
+      - Modified media type: application/json
+        - Schema changed
+          - Required changed
+            - New required property: auto_approved
+          - Properties changed
+            - New property: auto_approved
