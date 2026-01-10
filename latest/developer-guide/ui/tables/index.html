@@ -5235,6 +5235,75 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#filter-positions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter positions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-storage-and-badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter storage and badges
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#url-query-parameter-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      URL query parameter sync
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="URL query parameter sync">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#url-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      URL format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigation-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Navigation behavior
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#defaultinitial-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default/initial filters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-page-filters-resources-sidebar" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cross-page filters (Resources sidebar)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#inline-filters" class="md-nav__link">
     <span class="md-ellipsis">
       Inline filters
@@ -16847,6 +16916,75 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#filter-positions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter positions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-storage-and-badges" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter storage and badges
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#url-query-parameter-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      URL query parameter sync
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="URL query parameter sync">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#url-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      URL format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigation-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Navigation behavior
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#defaultinitial-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default/initial filters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-page-filters-resources-sidebar" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cross-page filters (Resources sidebar)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#inline-filters" class="md-nav__link">
     <span class="md-ellipsis">
       Inline filters
@@ -17368,6 +17506,178 @@
 <span class="w">  </span><span class="p">);</span>
 <span class="p">};</span>
 </code></pre></div></td></tr></table></div>
+<h3 id="filter-positions">Filter positions</h3>
+<p>The <code>filterPosition</code> prop controls where filters are displayed:</p>
+<table>
+<thead>
+<tr>
+<th>Position</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>header</code></td>
+<td>Filters always visible in card header</td>
+</tr>
+<tr>
+<td><code>menu</code></td>
+<td>Filters in dropdown menu, toggled with filter button</td>
+</tr>
+<tr>
+<td><code>sidebar</code></td>
+<td>Filters in drawer/sidebar panel</td>
+</tr>
+</tbody>
+</table>
+<h3 id="filter-storage-and-badges">Filter storage and badges</h3>
+<p>When filters are applied, they are stored in <code>filtersStorage</code> (Redux state) which is used to:</p>
+<ul>
+<li>Display filter badges/chips in the filter bar</li>
+<li>Show filter count on the filter toggle button</li>
+<li>Auto-expand the filter bar when filters are loaded from URL</li>
+</ul>
+<p>The flow:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code>User changes filter field
+    ↓
+Redux Form stores value
+    ↓
+TableFilterItem calls setFilter() → updates filtersStorage[]
+    ↓
+Table re-fetches with new filter
+    ↓
+Filter badges rendered from filtersStorage
+</code></pre></div></td></tr></table></div>
+<h3 id="url-query-parameter-sync">URL query parameter sync</h3>
+<p>Filters can be synced to URL query parameters for shareable links. Use utilities from <code>@waldur/core/filters</code>:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">syncFiltersToURL</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">useReinitializeFilterFromUrl</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">getQueryParams</span><span class="p">,</span>
+<span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@waldur/core/filters'</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">FILTER_FORM_ID</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'MyFilterForm'</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">MyList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// Load filters from URL on mount and route changes</span>
+<span class="w">  </span><span class="nx">useReinitializeFilterFromUrl</span><span class="p">(</span><span class="nx">FILTER_FORM_ID</span><span class="p">);</span>
+
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">formValues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useSelector</span><span class="p">(</span><span class="nx">getFormValues</span><span class="p">(</span><span class="nx">FILTER_FORM_ID</span><span class="p">));</span>
+
+<span class="w">  </span><span class="c1">// Sync filter changes to URL</span>
+<span class="w">  </span><span class="nx">useEffect</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">formValues</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">syncFiltersToURL</span><span class="p">(</span><span class="nx">formValues</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="p">[</span><span class="nx">formValues</span><span class="p">]);</span>
+
+<span class="w">  </span><span class="c1">// ... rest of component</span>
+<span class="p">};</span>
+</code></pre></div></td></tr></table></div>
+<h4 id="url-format">URL format</h4>
+<p>Filters are stored in URL query parameters with compact encoding:</p>
+<table>
+<thead>
+<tr>
+<th>Value type</th>
+<th>URL format</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>String</td>
+<td>Direct value</td>
+<td><code>?name=test</code></td>
+</tr>
+<tr>
+<td>Object with uuid</td>
+<td><code>uuid::name</code></td>
+<td><code>?org=abc123::My+Org</code></td>
+</tr>
+<tr>
+<td>Array</td>
+<td>JSON encoded</td>
+<td><code>?tags=["a","b"]</code></td>
+</tr>
+<tr>
+<td>Boolean</td>
+<td><code>true</code>/<code>false</code></td>
+<td><code>?active=true</code></td>
+</tr>
+</tbody>
+</table>
+<p>The compact <code>uuid::name</code> format keeps URLs shorter while preserving display names for filter badges.</p>
+<h4 id="navigation-behavior">Navigation behavior</h4>
+<p>When navigating between pages in the SPA:</p>
+<ol>
+<li><strong>URL params persist</strong> - query string is preserved during navigation</li>
+<li><strong>Form re-initialization</strong> - <code>useReinitializeFilterFromUrl</code> re-populates the form when route changes</li>
+<li><strong>Auto-show filter bar</strong> - when <code>filtersStorage</code> has items, the filter bar auto-expands</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>Page A with filter → Navigate to Page B → Navigate back to Page A
+     ↓                      ↓                      ↓
+URL updated            URL preserved         URL read, form populated
+with filters           (SPA routing)         filtersStorage updated
+                                             Table re-fetches
+</code></pre></div></td></tr></table></div>
+<h3 id="defaultinitial-filters">Default/initial filters</h3>
+<p>To set default filter values that can be overridden by URL params:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">defaultValues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="s1">'active'</span><span class="w"> </span><span class="p">};</span>
+
+<span class="c1">// URL params take precedence over defaults</span>
+<span class="nx">useReinitializeFilterFromUrl</span><span class="p">(</span><span class="nx">FILTER_FORM_ID</span><span class="p">,</span><span class="w"> </span><span class="nx">defaultValues</span><span class="p">);</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="cross-page-filters-resources-sidebar">Cross-page filters (Resources sidebar)</h3>
+<p>The Resources sidebar filter (<code>src/navigation/sidebar/resources-filter/</code>) is a special case that:</p>
+<ol>
+<li>Syncs <code>organization</code> and <code>project</code> filters across multiple resource tables</li>
+<li>Persists to <strong>localStorage</strong> for session persistence</li>
+<li>Syncs to URL for shareable links</li>
+</ol>
+<p>Priority order:</p>
+<ol>
+<li><strong>URL params</strong> (highest) - for shareable links</li>
+<li><strong>localStorage</strong> - for session persistence</li>
+<li><strong>No filter</strong> - shows all resources</li>
+</ol>
 <h3 id="inline-filters">Inline filters</h3>
 <p>The feature allows users to quickly filter table data by clicking values directly in the table cells, without manually setting filters. When column has <code>inlineFilter</code> property enabled:</p>
 <ol>
@@ -17475,7 +17785,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-01-08
+    2026-01-09
   </span>
 
     
