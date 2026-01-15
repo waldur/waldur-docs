@@ -4337,6 +4337,57 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#manual-resource-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Manual Resource Synchronization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manual Resource Synchronization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pull-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pull Endpoint
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#site-agent-resource-sync-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Site Agent Resource Sync Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-site-agent-pull-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How Site Agent Pull Works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Cases
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -18062,6 +18113,57 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#manual-resource-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Manual Resource Synchronization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manual Resource Synchronization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pull-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pull Endpoint
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#site-agent-resource-sync-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Site Agent Resource Sync Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-site-agent-pull-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How Site Agent Pull Works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Cases
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -18566,6 +18668,92 @@
 <li>Process marketplace orders to create external resources</li>
 <li>Use simple subscription patterns for specific event types</li>
 <li>Demonstrate flexible integration approaches</li>
+</ol>
+<h2 id="manual-resource-synchronization">Manual Resource Synchronization</h2>
+<p>While the STOMP-based event system handles automatic synchronization, there are cases where manual synchronization is needed—for example, when investigating desynchronization issues or after network outages.</p>
+<h3 id="pull-endpoint">Pull Endpoint</h3>
+<p>The marketplace provides a manual sync endpoint for resources:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/marketplace-resources/{uuid}/pull/
+</code></pre></div></td></tr></table></div>
+<p><strong>Response Codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>202 Accepted</td>
+<td>Pull operation was successfully scheduled</td>
+</tr>
+<tr>
+<td>409 Conflict</td>
+<td>Pull operation is not implemented for this offering type</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li>Resource state must be <code>OK</code> or <code>ERRED</code></li>
+<li>Resource must have a <code>backend_id</code> set</li>
+</ul>
+<h3 id="site-agent-resource-sync-flow">Site Agent Resource Sync Flow</h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant User
+    participant Frontend as Homeport UI
+    participant WaldurAPI
+    participant Celery
+    participant STOMP as Message Queue
+    participant SiteAgent as Site Agent
+
+    User-&gt;&gt;Frontend: Click "Sync" button
+    Frontend-&gt;&gt;WaldurAPI: POST /api/marketplace-resources/{uuid}/pull/
+    WaldurAPI-&gt;&gt;WaldurAPI: Validate resource state
+    WaldurAPI-&gt;&gt;Celery: Schedule AgentResourcePullExecutor
+    WaldurAPI--&gt;&gt;Frontend: 202 Accepted
+
+    Celery-&gt;&gt;STOMP: Publish resource sync request
+    STOMP-&gt;&gt;SiteAgent: Deliver message
+    SiteAgent-&gt;&gt;SiteAgent: Fetch current resource state
+    SiteAgent-&gt;&gt;WaldurAPI: PUT /api/marketplace-resources/{uuid}/
+    WaldurAPI--&gt;&gt;SiteAgent: Resource updated
+
+    Note over User,SiteAgent: Resource now synchronized</code></pre>
+<h3 id="how-site-agent-pull-works">How Site Agent Pull Works</h3>
+<p>The pull operation for site agent resources works differently from direct backend integrations:</p>
+<ol>
+<li><strong>No Direct Backend Access</strong>: Waldur doesn't have direct access to site agent backends (e.g., SLURM clusters)</li>
+<li><strong>Message-Based Sync</strong>: Instead, a sync request message is published to the STOMP queue</li>
+<li><strong>Agent Response</strong>: The site agent receives the message, queries the actual backend, and reports the current state back to Waldur</li>
+</ol>
+<p><strong>Backend Registration</strong> (in <code>marketplace_site_agent/apps.py</code>):</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">manager</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">SITE_AGENT_OFFERING</span><span class="p">,</span>
+    <span class="c1"># ... other processors ...</span>
+    <span class="n">pull_resource_executor</span><span class="o">=</span><span class="n">executors</span><span class="o">.</span><span class="n">AgentResourcePullExecutor</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p><strong>Executor Implementation</strong> (in <code>marketplace_site_agent/executors.py</code>):</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">AgentResourcePullExecutor</span><span class="p">(</span><span class="n">MarketplaceActionExecutor</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_task_signature</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">serialized_instance</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tasks</span><span class="o">.</span><span class="n">sync_resource</span><span class="o">.</span><span class="n">si</span><span class="p">(</span><span class="n">serialized_instance</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="use-cases">Use Cases</h3>
+<ol>
+<li><strong>L1 Support</strong>: Quickly verify resource state matches backend during incident investigation</li>
+<li><strong>Post-Outage Recovery</strong>: Manually trigger sync after network or service disruptions</li>
+<li><strong>Debugging</strong>: Confirm that the STOMP messaging pipeline is working correctly</li>
+<li><strong>Data Reconciliation</strong>: Force update when automatic sync may have missed changes</li>
 </ol></div>
 
 
@@ -18587,7 +18775,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-17
+    2026-01-14
   </span>
 
     
