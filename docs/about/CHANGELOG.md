@@ -1,5 +1,50 @@
 # Changelog
 
+## 7.9.7 - 2026-01-17
+
+### Release Summary
+
+- **Release Impact:** Minor release with configuration and documentation updates
+- **SDK Updates:** 3 auto-generated clients updated
+
+### Core Component Activity
+
+- **Waldur Mastermind**: No changes
+- **Waldur Homeport**: No changes
+- **Waldur Helm**: No changes
+- **Waldur Docker Compose**: No changes
+- **Waldur Prometheus Exporter**: No changes
+
+### SDK Updates (Auto-generated)
+
+- **Python Client**: [12 commits](https://github.com/waldur/py-client/compare/7.9.6...7.9.7)
+- **JavaScript Client**: [23 commits](https://github.com/waldur/js-client/compare/7.9.6...7.9.7)
+- **Go Client**: [11 commits](https://github.com/waldur/go-client/compare/7.9.6...7.9.7)
+
+### Py Client Highlights
+
+- Release: bump version to 7.9.7.
+- Update Waldur Python SDK.
+- Update Waldur Python SDK.
+
+### Js Client Highlights
+
+- Release: bump version to 7.9.7.
+- 7.9.7-dev.10.
+- Update Waldur TypeScript SDK.
+
+### Go Client Highlights
+
+- Update Waldur Go SDK.
+- Update Waldur Go SDK.
+- Update Waldur Go SDK.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.7.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.7-diff.md)
+
+
 ## 7.9.6 - 2026-01-07
 
 ### Release Summary
@@ -838,40 +883,3 @@
 
 ---
 
-## 7.7.7 - 2025-11-30
-
-### Release Summary
-
-- **Release Impact:** 7 commits across 2 core repositories
-- **Functional Changes:** 5 files changed with +47/-8 lines
-
-!!! note "Statistics Note"
-    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: No changes
-- **Waldur Homeport**: No changes
-- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/7.7.6...7.7.7) · 3 files changed (+7/-7 lines)
-- **Waldur Docker Compose**: [5 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.6...7.7.7) · 2 files changed (+40/-1 lines)
-- **Waldur Prometheus Exporter**: No changes
-
-### Notable Changes
-
-- **Update docs for readonly setup to include env vars.** ([31a51ad](https://github.com/waldur/waldur-docker-compose/commit/31a51ad) - Waldur Docker Compose)
-- **Add instructions for fixing migration from bitnami DB image to a regular one.** ([793bcda](https://github.com/waldur/waldur-docker-compose/commit/793bcda) - Waldur Docker Compose)
-- **Additional fixes for DB collation.** ([78512c9](https://github.com/waldur/waldur-docker-compose/commit/78512c9) - Waldur Docker Compose)
-- **Set target version to 7.7.7.** ([f2c23d6](https://github.com/waldur/waldur-helm/commit/f2c23d6) - Waldur Helm)
-- **Increase default RMQ resources.** ([6520aa1](https://github.com/waldur/waldur-helm/commit/6520aa1) - Waldur Helm)
-- **Set target version to 7.7.7.** ([d0922c7](https://github.com/waldur/waldur-docker-compose/commit/d0922c7) - Waldur Docker Compose)
-
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.7.7.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.7.7-diff.md)
-
----
-
-## Archived Releases
-
-*Older releases have been archived to maintain file size. Historical entries are available in the git history.*
