@@ -8,6 +8,7 @@ Before setting up onboarding checklists, configure the global onboarding setting
 
 **Navigation path:** Administration → **Organizations & compliance** → **Onboarding settings**
 
+![type:image](../img/onboarding_settings.png)
 
 ### Required configuration
 
@@ -30,6 +31,7 @@ Organization onboarding uses checklists to collect data from users. Two checklis
 - **Onboarding customer data**
 - **Onboarding intent data**
 
+
 **Navigation path:** Administration → **Organizations & compliance** → **Checklist management**
 
 
@@ -38,6 +40,10 @@ Organization onboarding uses checklists to collect data from users. Two checklis
    - **Onboarding customer data** – for organization details.  
    - **Onboarding intent data** – for intent and purpose questions.  
 3. Optionally, assign a description.
+
+![type:image](../img/onboarding_checklist1.png)
+
+![type:image](../img/onboarding_checklist2.png)
 
 ## Step 3: Configure onboarding questions
 
@@ -53,10 +59,14 @@ For every question:
 4. Mark the question as **required**, if needed.  
 5. Configure **visibility rules**, if applicable.  
 
+![type:image](../img/checklist_qs1.png)
+
 
 ### Field mapping (mandatory)
 
 Each question must be mapped to the correct backend field.
+
+![type:image](../img/checklist_qs2.png)
 
 **Example**
 
@@ -93,6 +103,8 @@ The **Justifications** tab shows manual onboarding attempts. Staff users can:
 - Approve or reject applications  
 
 Approving a justification allows the organization to be created in the system.
+
+![type:image](../img/onboarding_tables.png)
 
 ## Step 5: Outcome
 

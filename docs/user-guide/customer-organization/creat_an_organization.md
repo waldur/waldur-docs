@@ -9,12 +9,16 @@ From your dashboard:
 1. Click **Create organization**.
 2. Start the organization onboarding wizard.
 
+![type:image](../img/start_onboarding.png)
+
 ## Step 2: Choose verification method
 
 Select how you want to verify your organization:
 
 - **Automatic verification** (via supported business registries)
 - **Manual verification**
+
+![type:image](../img/choose_onb_method.png)
 
 !!! note
     Automatic verification provides instant results if your organization is found in the selected registry.
@@ -23,9 +27,11 @@ Select how you want to verify your organization:
 
 To confirm that you are authorized to represent the organization, provide the requested identity information (for example, national identification data via authentication services).
 
-## Step 4: Enter organization information
+## Step 4: If Manual verification chosen, the next step is to enter organization information
 
 Fill in the organization details requested in the form.
+
+![type:image](../img/customer_form.png)
 
 ### Automatic verification
 
@@ -43,6 +49,8 @@ Complete the intent form to help service providers understand:
 - How you plan to use the services
 - What kind of support or resources you need
 
+ ![type:image](../img/intent_form.png)
+
 !!! note
     This information is always filled in manually.
 
@@ -58,6 +66,8 @@ Complete the intent form to help service providers understand:
 - Your application is submitted for review.
 - You can view the application details and status from your dashboard.
 - You will be notified once the review is completed.
+
+![type:image](../img/onboarding_applications.png)
 
 ## Step 7: After approval
 
