@@ -427,4 +427,4 @@ The `allowed_redirects` field enforces strict validation:
 7. **Empty arrays**: Valid (falls back to `HOMEPORT_URL` setting)
 
 ## See Also
-- [OIDC Authentication Configuration](./admin/configuration-guide.md#waldur_auth_social-plugin)
+- [OIDC Authentication Configuration](../admin-guide/mastermind-configuration/configuration-guide.md#waldur_auth_social-plugin)
