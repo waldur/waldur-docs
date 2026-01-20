@@ -39,10 +39,10 @@
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
 
-### Resources
+<!-- ### Resources
 
 - [OpenAPI Schema](../API/waldur-openapi-schema-7.9.7.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.7-diff.md)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.7-diff.md) -->
 
 
 ## 7.9.6 - 2026-01-07
