@@ -35,7 +35,7 @@ This document outlines the recommended hardware requirements for deploying Waldu
 | Component      | Minimal Size | Recommended Size | Notes                                                     |
 |----------------|--------------|------------------|-----------------------------------------------------------|
 | **PostgreSQL** | 10Gi         | 40Gi             | Main database storage, grows with user and resource count |
-| **RabbitMQ**   | 2Gi          | 5Gi              | Message queue persistence                                 |
+| **RabbitMQ**   | 5Gi          | 10Gi             | Message queue persistence                                 |
 | **Backups**    | 20Gi         | 50Gi             | Separate storage for database backups                     |
 
 ## Scaling Recommendations
