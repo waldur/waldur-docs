@@ -13,7 +13,7 @@ Before setting up onboarding checklists, configure the global onboarding setting
 ### Required configuration
 
 - **Onboarding validation methods**  
-    - Select the automatic validation methods enabled for your portal (for example: `airregister`, `wirtschaftscompass`, `bolagsverket`).  
+    - Select the automatic validation methods enabled for your portal (for example: `ariregister`, `wirtschaftscompass`, `bolagsverket`).  
     - These values must match the backend validation method names.
 
 - **Onboarding verification expiry hours**  
