@@ -12673,6 +12673,33 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#get-user-counts-by-active-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get user counts by active status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-user-counts-by-preferred-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get user counts by preferred language
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-user-registration-trends-by-month" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get user registration trends by month
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cancel-email-change-request" class="md-nav__link">
     <span class="md-ellipsis">
       Cancel email change request
@@ -18581,6 +18608,33 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#get-user-counts-by-active-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get user counts by active status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-user-counts-by-preferred-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get user counts by preferred language
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-user-registration-trends-by-month" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get user registration trends by month
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cancel-email-change-request" class="md-nav__link">
     <span class="md-ellipsis">
       Cancel email change request
@@ -18726,6 +18780,21 @@
 <td style="text-align: left;"><span class="http-badge http-get">GET</span></td>
 <td style="text-align: left;"><code>/api/users/{uuid}/token/</code></td>
 <td style="text-align: left;"><a href="#get-user-auth-token">Get user auth token</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-get">GET</span></td>
+<td style="text-align: left;"><code>/api/users/user_active_status_count/</code></td>
+<td style="text-align: left;"><a href="#get-user-counts-by-active-status">Get user counts by active status</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-get">GET</span></td>
+<td style="text-align: left;"><code>/api/users/user_language_count/</code></td>
+<td style="text-align: left;"><a href="#get-user-counts-by-preferred-language">Get user counts by preferred language</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="http-badge http-get">GET</span></td>
+<td style="text-align: left;"><code>/api/users/user_registration_trend/</code></td>
+<td style="text-align: left;"><a href="#get-user-registration-trends-by-month">Get user registration trends by month</a></td>
 </tr>
 <tr>
 <td style="text-align: left;"><span class="http-badge http-post">POST</span></td>
@@ -22813,9 +22882,696 @@
 </div>
 </div>
 <hr>
+<h3 id="get-user-counts-by-active-status">Get user counts by active status</h3>
+<p>Returns aggregated counts of users by active/inactive status. Staff or support only.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="12:5"><input checked id="__tabbed_12_1" name="__tabbed_12" type="radio"><input id="__tabbed_12_2" name="__tabbed_12" type="radio"><input id="__tabbed_12_3" name="__tabbed_12" type="radio"><input id="__tabbed_12_4" name="__tabbed_12" type="radio"><input id="__tabbed_12_5" name="__tabbed_12" type="radio"><div class="tabbed-labels"><label for="__tabbed_12_1">HTTPie</label><label for="__tabbed_12_2">Python</label><label for="__tabbed_12_3">TypeScript</label><label for="__tabbed_12_4">Query Parameters</label><label for="__tabbed_12_5">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>GET<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/users/user_active_status_count/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.users</span> <span class="kn">import</span> <span class="n">users_user_active_status_count_list</span> <span class="c1"># (1)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">users_user_active_status_count_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/users/users_user_active_status_count_list.py"><code>users_user_active_status_count_list</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">usersUserActiveStatusCountList</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">usersUserActiveStatusCountList</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agreement_date</code></td>
+<td>string (date-time)</td>
+<td>Agreement date after</td>
+</tr>
+<tr>
+<td><code>civil_number</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_uuid</code></td>
+<td>string (uuid)</td>
+<td>Customer UUID</td>
+</tr>
+<tr>
+<td><code>date_joined</code></td>
+<td>string (date-time)</td>
+<td>Date joined after</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>string</td>
+<td>Email</td>
+</tr>
+<tr>
+<td><code>full_name</code></td>
+<td>string</td>
+<td>Full name</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>boolean</td>
+<td>Is active</td>
+</tr>
+<tr>
+<td><code>is_staff</code></td>
+<td>boolean</td>
+<td>Is staff</td>
+</tr>
+<tr>
+<td><code>is_support</code></td>
+<td>boolean</td>
+<td>Is support</td>
+</tr>
+<tr>
+<td><code>job_title</code></td>
+<td>string</td>
+<td>Job title</td>
+</tr>
+<tr>
+<td><code>modified</code></td>
+<td>string (date-time)</td>
+<td>Date modified after</td>
+</tr>
+<tr>
+<td><code>native_name</code></td>
+<td>string</td>
+<td>Native name</td>
+</tr>
+<tr>
+<td><code>o</code></td>
+<td>array</td>
+<td>Ordering<br><br></td>
+</tr>
+<tr>
+<td><code>organization</code></td>
+<td>string</td>
+<td>Organization</td>
+</tr>
+<tr>
+<td><code>organization_roles</code></td>
+<td>string</td>
+<td>Organization roles</td>
+</tr>
+<tr>
+<td><code>page</code></td>
+<td>integer</td>
+<td>A page number within the paginated result set.</td>
+</tr>
+<tr>
+<td><code>page_size</code></td>
+<td>integer</td>
+<td>Number of results to return per page.</td>
+</tr>
+<tr>
+<td><code>phone_number</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project_roles</code></td>
+<td>string</td>
+<td>Project roles</td>
+</tr>
+<tr>
+<td><code>project_uuid</code></td>
+<td>string (uuid)</td>
+<td>Project UUID</td>
+</tr>
+<tr>
+<td><code>query</code></td>
+<td>string</td>
+<td>Filter by first name, last name, civil number, username or email</td>
+</tr>
+<tr>
+<td><code>registration_method</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_keyword</code></td>
+<td>string</td>
+<td>User keyword</td>
+</tr>
+<tr>
+<td><code>username</code></td>
+<td>string</td>
+<td>Username (exact)</td>
+</tr>
+<tr>
+<td><code>username_list</code></td>
+<td>string</td>
+<td>Comma-separated usernames</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>200</code></strong> - </p>
+<p>The response body is an array of objects, where each object has the following structure:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td>string</td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td>integer</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<hr>
+<h3 id="get-user-counts-by-preferred-language">Get user counts by preferred language</h3>
+<p>Returns aggregated counts of users by preferred language. Staff or support only.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="13:5"><input checked id="__tabbed_13_1" name="__tabbed_13" type="radio"><input id="__tabbed_13_2" name="__tabbed_13" type="radio"><input id="__tabbed_13_3" name="__tabbed_13" type="radio"><input id="__tabbed_13_4" name="__tabbed_13" type="radio"><input id="__tabbed_13_5" name="__tabbed_13" type="radio"><div class="tabbed-labels"><label for="__tabbed_13_1">HTTPie</label><label for="__tabbed_13_2">Python</label><label for="__tabbed_13_3">TypeScript</label><label for="__tabbed_13_4">Query Parameters</label><label for="__tabbed_13_5">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>GET<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/users/user_language_count/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.users</span> <span class="kn">import</span> <span class="n">users_user_language_count_list</span> <span class="c1"># (1)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">users_user_language_count_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/users/users_user_language_count_list.py"><code>users_user_language_count_list</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">usersUserLanguageCountList</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">usersUserLanguageCountList</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agreement_date</code></td>
+<td>string (date-time)</td>
+<td>Agreement date after</td>
+</tr>
+<tr>
+<td><code>civil_number</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_uuid</code></td>
+<td>string (uuid)</td>
+<td>Customer UUID</td>
+</tr>
+<tr>
+<td><code>date_joined</code></td>
+<td>string (date-time)</td>
+<td>Date joined after</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>string</td>
+<td>Email</td>
+</tr>
+<tr>
+<td><code>full_name</code></td>
+<td>string</td>
+<td>Full name</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>boolean</td>
+<td>Is active</td>
+</tr>
+<tr>
+<td><code>is_staff</code></td>
+<td>boolean</td>
+<td>Is staff</td>
+</tr>
+<tr>
+<td><code>is_support</code></td>
+<td>boolean</td>
+<td>Is support</td>
+</tr>
+<tr>
+<td><code>job_title</code></td>
+<td>string</td>
+<td>Job title</td>
+</tr>
+<tr>
+<td><code>modified</code></td>
+<td>string (date-time)</td>
+<td>Date modified after</td>
+</tr>
+<tr>
+<td><code>native_name</code></td>
+<td>string</td>
+<td>Native name</td>
+</tr>
+<tr>
+<td><code>o</code></td>
+<td>array</td>
+<td>Ordering<br><br></td>
+</tr>
+<tr>
+<td><code>organization</code></td>
+<td>string</td>
+<td>Organization</td>
+</tr>
+<tr>
+<td><code>organization_roles</code></td>
+<td>string</td>
+<td>Organization roles</td>
+</tr>
+<tr>
+<td><code>page</code></td>
+<td>integer</td>
+<td>A page number within the paginated result set.</td>
+</tr>
+<tr>
+<td><code>page_size</code></td>
+<td>integer</td>
+<td>Number of results to return per page.</td>
+</tr>
+<tr>
+<td><code>phone_number</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project_roles</code></td>
+<td>string</td>
+<td>Project roles</td>
+</tr>
+<tr>
+<td><code>project_uuid</code></td>
+<td>string (uuid)</td>
+<td>Project UUID</td>
+</tr>
+<tr>
+<td><code>query</code></td>
+<td>string</td>
+<td>Filter by first name, last name, civil number, username or email</td>
+</tr>
+<tr>
+<td><code>registration_method</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_keyword</code></td>
+<td>string</td>
+<td>User keyword</td>
+</tr>
+<tr>
+<td><code>username</code></td>
+<td>string</td>
+<td>Username (exact)</td>
+</tr>
+<tr>
+<td><code>username_list</code></td>
+<td>string</td>
+<td>Comma-separated usernames</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>200</code></strong> - </p>
+<p>The response body is an array of objects, where each object has the following structure:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>language</code></td>
+<td>string</td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td>integer</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<hr>
+<h3 id="get-user-registration-trends-by-month">Get user registration trends by month</h3>
+<p>Returns user registration counts aggregated by month. Staff or support only.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="14:5"><input checked id="__tabbed_14_1" name="__tabbed_14" type="radio"><input id="__tabbed_14_2" name="__tabbed_14" type="radio"><input id="__tabbed_14_3" name="__tabbed_14" type="radio"><input id="__tabbed_14_4" name="__tabbed_14" type="radio"><input id="__tabbed_14_5" name="__tabbed_14" type="radio"><div class="tabbed-labels"><label for="__tabbed_14_1">HTTPie</label><label for="__tabbed_14_2">Python</label><label for="__tabbed_14_3">TypeScript</label><label for="__tabbed_14_4">Query Parameters</label><label for="__tabbed_14_5">Responses</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>http<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>GET<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://api.example.com/api/users/user_registration_trend/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>Authorization:<span class="s2">"Token YOUR_API_TOKEN"</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">waldur_api_client.client</span> <span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+<span class="kn">from</span> <span class="nn">waldur_api_client.api.users</span> <span class="kn">import</span> <span class="n">users_user_registration_trend_list</span> <span class="c1"># (1)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.example.com"</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">"YOUR_API_TOKEN"</span>
+<span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">users_user_registration_trend_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li><strong>API Source:</strong> <a href="https://github.com/waldur/py-client/blob/main/waldur_api_client/api/users/users_user_registration_trend_list.py"><code>users_user_registration_trend_list</code></a></li>
+</ol>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">usersUserRegistrationTrendList</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-js-client'</span><span class="p">;</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">usersUserRegistrationTrendList</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">auth</span><span class="o">:</span><span class="w"> </span><span class="s2">"Token YOUR_API_TOKEN"</span>
+<span class="p">});</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Success:'</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agreement_date</code></td>
+<td>string (date-time)</td>
+<td>Agreement date after</td>
+</tr>
+<tr>
+<td><code>civil_number</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_uuid</code></td>
+<td>string (uuid)</td>
+<td>Customer UUID</td>
+</tr>
+<tr>
+<td><code>date_joined</code></td>
+<td>string (date-time)</td>
+<td>Date joined after</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>string</td>
+<td>Email</td>
+</tr>
+<tr>
+<td><code>full_name</code></td>
+<td>string</td>
+<td>Full name</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>boolean</td>
+<td>Is active</td>
+</tr>
+<tr>
+<td><code>is_staff</code></td>
+<td>boolean</td>
+<td>Is staff</td>
+</tr>
+<tr>
+<td><code>is_support</code></td>
+<td>boolean</td>
+<td>Is support</td>
+</tr>
+<tr>
+<td><code>job_title</code></td>
+<td>string</td>
+<td>Job title</td>
+</tr>
+<tr>
+<td><code>modified</code></td>
+<td>string (date-time)</td>
+<td>Date modified after</td>
+</tr>
+<tr>
+<td><code>native_name</code></td>
+<td>string</td>
+<td>Native name</td>
+</tr>
+<tr>
+<td><code>o</code></td>
+<td>array</td>
+<td>Ordering<br><br></td>
+</tr>
+<tr>
+<td><code>organization</code></td>
+<td>string</td>
+<td>Organization</td>
+</tr>
+<tr>
+<td><code>organization_roles</code></td>
+<td>string</td>
+<td>Organization roles</td>
+</tr>
+<tr>
+<td><code>page</code></td>
+<td>integer</td>
+<td>A page number within the paginated result set.</td>
+</tr>
+<tr>
+<td><code>page_size</code></td>
+<td>integer</td>
+<td>Number of results to return per page.</td>
+</tr>
+<tr>
+<td><code>phone_number</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>project_roles</code></td>
+<td>string</td>
+<td>Project roles</td>
+</tr>
+<tr>
+<td><code>project_uuid</code></td>
+<td>string (uuid)</td>
+<td>Project UUID</td>
+</tr>
+<tr>
+<td><code>query</code></td>
+<td>string</td>
+<td>Filter by first name, last name, civil number, username or email</td>
+</tr>
+<tr>
+<td><code>registration_method</code></td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_keyword</code></td>
+<td>string</td>
+<td>User keyword</td>
+</tr>
+<tr>
+<td><code>username</code></td>
+<td>string</td>
+<td>Username (exact)</td>
+</tr>
+<tr>
+<td><code>username_list</code></td>
+<td>string</td>
+<td>Comma-separated usernames</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<p><strong><code>200</code></strong> - </p>
+<p>The response body is an array of objects, where each object has the following structure:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>month</code></td>
+<td>string</td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td>integer</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<hr>
 <h3 id="cancel-email-change-request">Cancel email change request</h3>
 <p>Cancel email update request</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="12:5"><input checked id="__tabbed_12_1" name="__tabbed_12" type="radio"><input id="__tabbed_12_2" name="__tabbed_12" type="radio"><input id="__tabbed_12_3" name="__tabbed_12" type="radio"><input id="__tabbed_12_4" name="__tabbed_12" type="radio"><input id="__tabbed_12_5" name="__tabbed_12" type="radio"><div class="tabbed-labels"><label for="__tabbed_12_1">HTTPie</label><label for="__tabbed_12_2">Python</label><label for="__tabbed_12_3">TypeScript</label><label for="__tabbed_12_4">Path Parameters</label><label for="__tabbed_12_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="15:5"><input checked id="__tabbed_15_1" name="__tabbed_15" type="radio"><input id="__tabbed_15_2" name="__tabbed_15" type="radio"><input id="__tabbed_15_3" name="__tabbed_15" type="radio"><input id="__tabbed_15_4" name="__tabbed_15" type="radio"><input id="__tabbed_15_5" name="__tabbed_15" type="radio"><div class="tabbed-labels"><label for="__tabbed_15_1">HTTPie</label><label for="__tabbed_15_2">Python</label><label for="__tabbed_15_3">TypeScript</label><label for="__tabbed_15_4">Path Parameters</label><label for="__tabbed_15_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -22910,7 +23666,7 @@
 <hr>
 <h3 id="request-email-change">Request email change</h3>
 <p>Allows to change email for user.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="13:6"><input checked id="__tabbed_13_1" name="__tabbed_13" type="radio"><input id="__tabbed_13_2" name="__tabbed_13" type="radio"><input id="__tabbed_13_3" name="__tabbed_13" type="radio"><input id="__tabbed_13_4" name="__tabbed_13" type="radio"><input id="__tabbed_13_5" name="__tabbed_13" type="radio"><input id="__tabbed_13_6" name="__tabbed_13" type="radio"><div class="tabbed-labels"><label for="__tabbed_13_1">HTTPie</label><label for="__tabbed_13_2">Python</label><label for="__tabbed_13_3">TypeScript</label><label for="__tabbed_13_4">Path Parameters</label><label for="__tabbed_13_5">Request Body (required)</label><label for="__tabbed_13_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="16:6"><input checked id="__tabbed_16_1" name="__tabbed_16" type="radio"><input id="__tabbed_16_2" name="__tabbed_16" type="radio"><input id="__tabbed_16_3" name="__tabbed_16" type="radio"><input id="__tabbed_16_4" name="__tabbed_16" type="radio"><input id="__tabbed_16_5" name="__tabbed_16" type="radio"><input id="__tabbed_16_6" name="__tabbed_16" type="radio"><div class="tabbed-labels"><label for="__tabbed_16_1">HTTPie</label><label for="__tabbed_16_2">Python</label><label for="__tabbed_16_3">TypeScript</label><label for="__tabbed_16_4">Path Parameters</label><label for="__tabbed_16_5">Request Body (required)</label><label for="__tabbed_16_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -23044,7 +23800,7 @@
 <hr>
 <h3 id="change-user-password">Change user password</h3>
 <p>Allows staff user to change password for any user.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="14:6"><input checked id="__tabbed_14_1" name="__tabbed_14" type="radio"><input id="__tabbed_14_2" name="__tabbed_14" type="radio"><input id="__tabbed_14_3" name="__tabbed_14" type="radio"><input id="__tabbed_14_4" name="__tabbed_14" type="radio"><input id="__tabbed_14_5" name="__tabbed_14" type="radio"><input id="__tabbed_14_6" name="__tabbed_14" type="radio"><div class="tabbed-labels"><label for="__tabbed_14_1">HTTPie</label><label for="__tabbed_14_2">Python</label><label for="__tabbed_14_3">TypeScript</label><label for="__tabbed_14_4">Path Parameters</label><label for="__tabbed_14_5">Request Body (required)</label><label for="__tabbed_14_6">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="17:6"><input checked id="__tabbed_17_1" name="__tabbed_17" type="radio"><input id="__tabbed_17_2" name="__tabbed_17" type="radio"><input id="__tabbed_17_3" name="__tabbed_17" type="radio"><input id="__tabbed_17_4" name="__tabbed_17" type="radio"><input id="__tabbed_17_5" name="__tabbed_17" type="radio"><input id="__tabbed_17_6" name="__tabbed_17" type="radio"><div class="tabbed-labels"><label for="__tabbed_17_1">HTTPie</label><label for="__tabbed_17_2">Python</label><label for="__tabbed_17_3">TypeScript</label><label for="__tabbed_17_4">Path Parameters</label><label for="__tabbed_17_5">Request Body (required)</label><label for="__tabbed_17_6">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -23178,7 +23934,7 @@
 <hr>
 <h3 id="confirm-email-change">Confirm email change</h3>
 <p>Confirm email update using code</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="15:5"><input checked id="__tabbed_15_1" name="__tabbed_15" type="radio"><input id="__tabbed_15_2" name="__tabbed_15" type="radio"><input id="__tabbed_15_3" name="__tabbed_15" type="radio"><input id="__tabbed_15_4" name="__tabbed_15" type="radio"><input id="__tabbed_15_5" name="__tabbed_15" type="radio"><div class="tabbed-labels"><label for="__tabbed_15_1">HTTPie</label><label for="__tabbed_15_2">Python</label><label for="__tabbed_15_3">TypeScript</label><label for="__tabbed_15_4">Request Body (required)</label><label for="__tabbed_15_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="18:5"><input checked id="__tabbed_18_1" name="__tabbed_18" type="radio"><input id="__tabbed_18_2" name="__tabbed_18" type="radio"><input id="__tabbed_18_3" name="__tabbed_18" type="radio"><input id="__tabbed_18_4" name="__tabbed_18" type="radio"><input id="__tabbed_18_5" name="__tabbed_18" type="radio"><div class="tabbed-labels"><label for="__tabbed_18_1">HTTPie</label><label for="__tabbed_18_2">Python</label><label for="__tabbed_18_3">TypeScript</label><label for="__tabbed_18_4">Request Body (required)</label><label for="__tabbed_18_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -23285,7 +24041,7 @@
 </div>
 <hr>
 <h3 id="refresh-user-auth-token">Refresh user auth token</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="16:5"><input checked id="__tabbed_16_1" name="__tabbed_16" type="radio"><input id="__tabbed_16_2" name="__tabbed_16" type="radio"><input id="__tabbed_16_3" name="__tabbed_16" type="radio"><input id="__tabbed_16_4" name="__tabbed_16" type="radio"><input id="__tabbed_16_5" name="__tabbed_16" type="radio"><div class="tabbed-labels"><label for="__tabbed_16_1">HTTPie</label><label for="__tabbed_16_2">Python</label><label for="__tabbed_16_3">TypeScript</label><label for="__tabbed_16_4">Path Parameters</label><label for="__tabbed_16_5">Responses</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="19:5"><input checked id="__tabbed_19_1" name="__tabbed_19" type="radio"><input id="__tabbed_19_2" name="__tabbed_19" type="radio"><input id="__tabbed_19_3" name="__tabbed_19" type="radio"><input id="__tabbed_19_4" name="__tabbed_19" type="radio"><input id="__tabbed_19_5" name="__tabbed_19" type="radio"><div class="tabbed-labels"><label for="__tabbed_19_1">HTTPie</label><label for="__tabbed_19_2">Python</label><label for="__tabbed_19_3">TypeScript</label><label for="__tabbed_19_4">Path Parameters</label><label for="__tabbed_19_5">Responses</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -23444,7 +24200,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-01-24
+    2026-01-25
   </span>
 
     
