@@ -10,6 +10,7 @@ The Waldur SDK is available on PyPI and can be installed using either `pip` or `
 
 ```bash
 pip install waldur-api-client
+uv add waldur-api-client
 poetry add waldur-api-client
 ```
 

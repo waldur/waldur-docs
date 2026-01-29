@@ -13,7 +13,7 @@ Documentation for Waldur, an open-source hybrid cloud management platform. This 
 
 ## Prerequisites
 
-- [Poetry](https://python-poetry.org/docs/#installation) for Python dependency management
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) for Python dependency management
 - Node.js (for markdown linting)
 
 ## Local Development
@@ -21,14 +21,14 @@ Documentation for Waldur, an open-source hybrid cloud management platform. This 
 1. Install dependencies:
 
     ```bash
-    poetry install
+    uv sync
     npm install
     ```
 
 2. Start the development server:
 
     ```bash
-    poetry run mkdocs serve
+    uv run mkdocs serve
     ```
 
     The documentation will be available at `http://127.0.0.1:8000`.
@@ -39,10 +39,10 @@ Documentation for Waldur, an open-source hybrid cloud management platform. This 
 
 ```bash
 # Standard build
-poetry run mkdocs build
+uv run mkdocs build
 
 # Strict build (catches errors)
-poetry run mkdocs build --strict --verbose
+uv run mkdocs build --strict --verbose
 ```
 
 ### Lint Markdown Files
@@ -55,10 +55,10 @@ node lint-markdown.mjs
 
 ```bash
 # Deploy as latest
-poetry run mike deploy latest -p
+uv run mike deploy latest -p
 
 # Deploy specific version
-poetry run mike deploy 7.8.3 -p
+uv run mike deploy 7.8.3 -p
 ```
 
 ## Management Scripts
