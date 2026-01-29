@@ -24,10 +24,9 @@ Test mkdocs:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
-    - pip install poetry
-    - poetry config virtualenvs.create false
-    - poetry install
-    - mkdocs build --strict --site-dir test
+    - pip install uv
+    - uv sync --frozen
+    - uv run mkdocs build --strict --site-dir test
 
 .build_before_script: &build_before_script
   - echo "[+] Adding SSH keys to the home directory"
@@ -44,9 +43,8 @@ Test mkdocs:
 .build_script_steps: &build_script_steps
   - git remote add github_waldur git@github.com:waldur/waldur-docs.git || true
   - git remote -v
-  - pip install poetry
-  - poetry config virtualenvs.create false
-  - poetry install
+  - pip install uv
+  - uv sync --frozen
   - cd $CI_PROJECT_DIR
   - export ENABLE_PDF_EXPORT=1
   - git branch -D gh-pages || true
@@ -59,7 +57,7 @@ Build latest pages:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
     - *build_script_steps
-    - mike deploy latest -p -r github_waldur -b gh-pages
+    - uv run mike deploy latest -p -r github_waldur -b gh-pages
   before_script: *build_before_script
 
 Build tagged pages:
@@ -69,7 +67,7 @@ Build tagged pages:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   script:
     - *build_script_steps
-    - mike deploy $CI_COMMIT_TAG -p -r github_waldur -b gh-pages
+    - uv run mike deploy $CI_COMMIT_TAG -p -r github_waldur -b gh-pages
   before_script: *build_before_script
 
 Test Docker Compose deployment before tagging:
