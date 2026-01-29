@@ -3777,6 +3777,57 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#account-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Account Diagnostics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Account Diagnostics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diagnostic-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Diagnostic Data Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagnostic-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Diagnostic Output
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unit-conversions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Conversions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLI Options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -9829,6 +9880,57 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#account-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Account Diagnostics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Account Diagnostics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diagnostic-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Diagnostic Data Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagnostic-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Diagnostic Output
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unit-conversions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Conversions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLI Options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10431,6 +10533,231 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_load_historical
 <li><strong>Monitors thresholds</strong> and adjusts QoS based on current usage</li>
 <li><strong>Reports status</strong> back to Waldur</li>
 </ol>
+<h3 id="account-diagnostics">Account Diagnostics</h3>
+<p>The <code>waldur_site_diagnose_slurm_account</code> command provides diagnostic information for SLURM
+accounts by comparing local cluster state with Waldur Mastermind configuration.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Basic diagnostic</span>
+waldur_site_diagnose_slurm_account<span class="w"> </span>alloc_myproject<span class="w"> </span>-c<span class="w"> </span>config.yaml
+
+<span class="c1"># JSON output for scripting</span>
+waldur_site_diagnose_slurm_account<span class="w"> </span>alloc_myproject<span class="w"> </span>--json
+
+<span class="c1"># Verbose output with reasoning</span>
+waldur_site_diagnose_slurm_account<span class="w"> </span>alloc_myproject<span class="w"> </span>-v
+</code></pre></div></td></tr></table></div>
+<h4 id="diagnostic-data-flow">Diagnostic Data Flow</h4>
+<pre class="mermaid"><code>flowchart TB
+    subgraph Input
+        ACCOUNT[Account Name&lt;br/&gt;e.g., alloc_myproject]
+        CONFIG[Configuration&lt;br/&gt;config.yaml]
+    end
+
+    subgraph "Local SLURM Cluster"
+        SACCTMGR_Q[sacctmgr queries]
+        SLURM_DATA[Account Data&lt;br/&gt;• Fairshare&lt;br/&gt;• QoS&lt;br/&gt;• GrpTRESMins&lt;br/&gt;• Users]
+    end
+
+    subgraph "Waldur Mastermind API"
+        RESOURCE_API[Resources API&lt;br/&gt;GET /marketplace-provider-resources/]
+        POLICY_API[Policy API&lt;br/&gt;GET /marketplace-slurm-periodic-usage-policies/]
+        WALDUR_DATA[Resource Data&lt;br/&gt;• Limits&lt;br/&gt;• State&lt;br/&gt;• Offering]
+        POLICY_DATA[Policy Data&lt;br/&gt;• Limit Type&lt;br/&gt;• TRES Billing&lt;br/&gt;• Grace Ratio&lt;br/&gt;• Component Limits]
+    end
+
+    subgraph "Diagnostic Service"
+        FETCH_SLURM[Get SLURM&lt;br/&gt;Account Info]
+        FETCH_WALDUR[Get Waldur&lt;br/&gt;Resource Info]
+        FETCH_POLICY[Get SLURM&lt;br/&gt;Policy Info]
+        CALCULATE[Calculate&lt;br/&gt;Expected Settings]
+        COMPARE[Compare&lt;br/&gt;Actual vs Expected]
+        GENERATE[Generate&lt;br/&gt;Fix Commands]
+    end
+
+    subgraph Output
+        HUMAN[Human-Readable&lt;br/&gt;Report]
+        JSON[JSON&lt;br/&gt;Output]
+        FIX_CMDS[sacctmgr&lt;br/&gt;Fix Commands]
+    end
+
+    %% Flow
+    ACCOUNT --&gt; FETCH_SLURM
+    CONFIG --&gt; FETCH_SLURM
+    CONFIG --&gt; FETCH_WALDUR
+
+    FETCH_SLURM --&gt; SACCTMGR_Q
+    SACCTMGR_Q --&gt; SLURM_DATA
+    SLURM_DATA --&gt; COMPARE
+
+    FETCH_WALDUR --&gt; RESOURCE_API
+    RESOURCE_API --&gt; WALDUR_DATA
+    WALDUR_DATA --&gt; FETCH_POLICY
+    WALDUR_DATA --&gt; CALCULATE
+
+    FETCH_POLICY --&gt; POLICY_API
+    POLICY_API --&gt; POLICY_DATA
+    POLICY_DATA --&gt; CALCULATE
+
+    CALCULATE --&gt; COMPARE
+    COMPARE --&gt; GENERATE
+    GENERATE --&gt; HUMAN
+    GENERATE --&gt; JSON
+    GENERATE --&gt; FIX_CMDS
+
+    %% Styling
+    classDef input fill:#e8f5e9
+    classDef slurm fill:#f3e5f5
+    classDef waldur fill:#fff3e0
+    classDef service fill:#e3f2fd
+    classDef output fill:#fce4ec
+
+    class ACCOUNT,CONFIG input
+    class SACCTMGR_Q,SLURM_DATA slurm
+    class RESOURCE_API,POLICY_API,WALDUR_DATA,POLICY_DATA waldur
+    class FETCH_SLURM,FETCH_WALDUR,FETCH_POLICY,CALCULATE,COMPARE,GENERATE service
+    class HUMAN,JSON,FIX_CMDS output</code></pre>
+<h4 id="diagnostic-output">Diagnostic Output</h4>
+<p>The diagnostic provides:</p>
+<ol>
+<li><strong>SLURM Cluster Status</strong>: Account existence, fairshare, QoS, limits, users</li>
+<li><strong>Waldur Mastermind Status</strong>: Resource state, offering, configured limits</li>
+<li><strong>SLURM Policy Status</strong>: Period, limit type, TRES billing, grace ratio</li>
+<li><strong>Expected vs Actual Comparison</strong>: Field-by-field comparison with status</li>
+<li><strong>Unit Conversion Info</strong>: Shows how Waldur units convert to SLURM units</li>
+<li><strong>Remediation Commands</strong>: <code>sacctmgr</code> commands to fix any mismatches</li>
+</ol>
+<h4 id="unit-conversions">Unit Conversions</h4>
+<p>Waldur and SLURM may use different units for resource limits. The diagnostic shows:</p>
+<ul>
+<li><strong>Waldur units</strong>: e.g., Hours, GB-Hours (from offering configuration)</li>
+<li><strong>SLURM units</strong>: e.g., TRES-minutes (from limit type: GrpTRESMins, MaxTRESMins)</li>
+<li><strong>Conversion factor</strong>: The <code>unit_factor</code> from backend component configuration</li>
+</ul>
+<p>For example, if Waldur uses "k-Hours" (kilo-hours) and SLURM uses "TRES-minutes", with a
+<code>unit_factor</code> of 60000:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>Waldur: 100 k-Hours -&gt; SLURM: 6000000 TRES-minutes (factor: 60000)
+</code></pre></div></td></tr></table></div>
+<p>Use <code>-v/--verbose</code> to see detailed unit conversion information for each component.</p>
+<p>Example output:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span></pre></div></td><td class="code"><div><pre><span></span><code>================================================================================
+SLURM Account Diagnostic: alloc_myproject_abc123
+================================================================================
+
+SLURM CLUSTER
+--------------------------------------------------------------------------------
+  Account Exists:     Yes
+  Fairshare:          1000
+  QoS:                normal
+  GrpTRESMins:        cpu=6000000,mem=10000000
+
+WALDUR MASTERMIND
+--------------------------------------------------------------------------------
+  Resource Found:     Yes
+  Resource Name:      My Project Allocation
+  State:              OK
+  Limits:             cpu=100, mem=10
+
+SLURM POLICY
+--------------------------------------------------------------------------------
+  Policy Found:       Yes
+  Period:             quarterly
+  Limit Type:         GrpTRESMins
+  TRES Billing:       Enabled
+
+EXPECTED vs ACTUAL
+--------------------------------------------------------------------------------
+  [OK]       qos: normal == normal
+  [OK]       GrpTRESMins[cpu]: 6000000 == 6000000
+             Units: Waldur: 100.0 k-Hours -&gt; SLURM: 6000000 TRES-minutes (factor: 60000.0)
+  [MISMATCH] GrpTRESMins[mem]: 8000000 != 10000000
+             Units: Waldur: 10.0 k-GB-Hours -&gt; SLURM: 10000000 TRES-minutes (factor: 1000000.0)
+
+REMEDIATION COMMANDS
+--------------------------------------------------------------------------------
+  sacctmgr -i modify account alloc_myproject_abc123 set GrpTRESMins=cpu=6000000,mem=10000000
+
+OVERALL: MISMATCH (1 issue found)
+================================================================================
+</code></pre></div></td></tr></table></div>
+<h4 id="cli-options">CLI Options</h4>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>account_name</code></td>
+<td>SLURM account name to diagnose (required)</td>
+</tr>
+<tr>
+<td><code>-c, --config</code></td>
+<td>Path to configuration file (default: waldur-site-agent-config.yaml)</td>
+</tr>
+<tr>
+<td><code>--offering-uuid</code></td>
+<td>Specific offering UUID (auto-detected if not specified)</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>Output in JSON format for scripting</td>
+</tr>
+<tr>
+<td><code>-v, --verbose</code></td>
+<td>Include detailed reasoning in output</td>
+</tr>
+<tr>
+<td><code>--no-color</code></td>
+<td>Disable colored output</td>
+</tr>
+</tbody>
+</table>
 <h2 id="architecture">Architecture</h2>
 <h3 id="component-overview">Component Overview</h3>
 <pre class="mermaid"><code>graph TB
@@ -10588,7 +10915,8 @@ sacctmgr<span class="w"> </span>modify<span class="w"> </span>account<span class
 <span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code>plugins/slurm/tests/
+<span class="normal">17</span>
+<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code>plugins/slurm/tests/
 ├── test_periodic_limits/          # Periodic limits functionality
 │   ├── test_periodic_limits_plugin.py
 │   ├── test_backend_integration.py
@@ -10601,6 +10929,7 @@ sacctmgr<span class="w"> </span>modify<span class="w"> </span>account<span class
 │   ├── test_slurm_client_historical.py
 │   ├── test_slurm_backend_historical.py
 │   └── README.md
+├── test_diagnostics.py            # Account diagnostics CLI
 ├── test_order_processing.py       # Core functionality
 ├── test_reporing.py               # Usage reporting
 ├── test_membership_sync.py        # User management
@@ -10902,7 +11231,7 @@ python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span
 <p>For issues, bug reports, or feature requests related to the SLURM plugin, please check:</p>
 <ol>
 <li><strong>Plugin documentation</strong> - This README and test documentation</li>
-<li><strong>Main project documentation</strong> - <a href="../../docs/">Waldur Site Agent docs</a></li>
+<li><strong>Main project documentation</strong> - <a href="../../">Waldur Site Agent docs</a></li>
 <li><strong>Test coverage</strong> - Run tests to verify expected behavior</li>
 <li><strong>Debug logging</strong> - Enable debug mode for detailed troubleshooting</li>
 </ol>
@@ -10929,7 +11258,7 @@ production HPC environments.</p></div>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-01-15
+    2026-01-29
   </span>
 
     
