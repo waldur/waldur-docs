@@ -1,5 +1,74 @@
 # Changelog
 
+## 8.0.1 - 2026-02-03
+
+### Release Summary
+
+- **Release Impact:** 176 commits across 4 core repositories
+- **SDK Updates:** 3 auto-generated clients updated from OpenAPI schema
+
+!!! note "Statistics Note"
+    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [94 commits](https://github.com/waldur/waldur-mastermind/compare/7.9.8...8.0.1)
+- **Waldur Homeport**: [80 commits](https://github.com/waldur/waldur-homeport/compare/7.9.8...8.0.1)
+- **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.9.8...8.0.1)
+- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.9.8...8.0.1)
+- **Waldur Prometheus Exporter**: No changes
+
+### SDK Updates (Auto-generated)
+
+- **Python Client**: [30 commits](https://github.com/waldur/py-client/compare/7.9.8...8.0.1)
+- **JavaScript Client**: [63 commits](https://github.com/waldur/js-client/compare/7.9.8...8.0.1)
+- **Go Client**: [28 commits](https://github.com/waldur/go-client/compare/7.9.8...8.0.1)
+
+### Notable Changes
+
+- **Fix Add filter icon button size.** ([4486a23](https://github.com/waldur/waldur-homeport/commit/4486a23) - Waldur Homeport)
+- **Add button in offering edit actions dropdown to allow deleteion of an offering.** ([fd48b0a](https://github.com/waldur/waldur-homeport/commit/fd48b0a) - Waldur Homeport)
+- **Fix/filter icon button size.** ([341eb2b](https://github.com/waldur/waldur-homeport/commit/341eb2b) - Waldur Homeport)
+- **Expose SCIM settings.** ([45588c0](https://github.com/waldur/waldur-homeport/commit/45588c0) - Waldur Homeport)
+- **Set target version to 8.0.0.** ([7a7e696](https://github.com/waldur/waldur-helm/commit/7a7e696) - Waldur Helm)
+- **Set target version to 8.0.0.** ([852f3c2](https://github.com/waldur/waldur-docker-compose/commit/852f3c2) - Waldur Docker Compose)
+
+### Waldur Mastermind Highlights
+
+- Add set_erred and set_ok staff-only actions to ResourceViewSet and RouterViewSet.
+- Fix migrations.
+- Handle case where network is None in TenantCreateErrorTask.
+
+### Waldur Homeport Highlights
+
+- Add staff-only set_erred and set_ok row actions for all OpenStack resources.
+- Render username instead of full name as fallback in resource state header.
+- Fix Add filter icon-button icon size.
+
+### Py Client Highlights
+
+- Release: bump version to 8.0.0.
+- Update Waldur Python SDK.
+- Update Waldur Python SDK.
+
+### Js Client Highlights
+
+- Release: bump version to 8.0.0.
+- 7.9.10-dev.16.
+- Update Waldur TypeScript SDK.
+
+### Go Client Highlights
+
+- Update Waldur Go SDK.
+- Update Waldur Go SDK.
+- Update Waldur Go SDK.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.1.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.1-diff.md)
+
+
 ## 7.9.8 - 2026-01-21
 
 ### Release Summary
@@ -830,76 +899,6 @@
 
 - [OpenAPI Schema](../API/waldur-openapi-schema-7.8.0.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.0-diff.md)
-
----
-
-## 7.7.9 - 2025-11-30
-
-### Release Summary
-
-- **Release Impact:** 2 commits across 2 core repositories
-- **Functional Changes:** 2 files changed with +3/-3 lines
-
-!!! note "Statistics Note"
-    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: No changes
-- **Waldur Homeport**: No changes
-- **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.7.8...7.7.9) · 2 files changed (+3/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.8...7.7.9)
-- **Waldur Prometheus Exporter**: No changes
-
-### Notable Changes
-
-- **Set target version to 7.7.9.** ([f2c09cc](https://github.com/waldur/waldur-helm/commit/f2c09cc) - Waldur Helm)
-- **Set target version to 7.7.9.** ([cbdebc3](https://github.com/waldur/waldur-docker-compose/commit/cbdebc3) - Waldur Docker Compose)
-
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.7.9.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.7.9-diff.md)
-
----
-
-## 7.7.8 - 2025-11-30
-
-### Release Summary
-
-- **Release Impact:** 8 commits across 2 core repositories
-- **Functional Changes:** 8 files changed with +77/-22 lines
-
-!!! note "Statistics Note"
-    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: No changes
-- **Waldur Homeport**: No changes
-- **Waldur Helm**: [6 commits](https://github.com/waldur/waldur-helm/compare/7.7.7...7.7.8) · 7 files changed (+75/-21 lines)
-- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.7...7.7.8) · 1 files changed (+2/-1 lines)
-- **Waldur Prometheus Exporter**: No changes
-
-### Notable Changes
-
-- **Implement support for RabbitMQ operator (Season 1, episode 2).** ([49d1f0c](https://github.com/waldur/waldur-helm/commit/49d1f0c) - Waldur Helm)
-- **Add resources settings to initContainers of waldur beat deployment.** ([8ea8f0f](https://github.com/waldur/waldur-helm/commit/8ea8f0f) - Waldur Helm)
-- **Make upgrade instructions more reliable.** ([ac45b19](https://github.com/waldur/waldur-docker-compose/commit/ac45b19) - Waldur Docker Compose)
-- **Set target version to 7.7.8.** ([0d827b1](https://github.com/waldur/waldur-helm/commit/0d827b1) - Waldur Helm)
-- **Add settings for course accounts.** ([e9ba76f](https://github.com/waldur/waldur-helm/commit/e9ba76f) - Waldur Helm)
-- **Set target version to 7.7.8.** ([f7cbdf5](https://github.com/waldur/waldur-docker-compose/commit/f7cbdf5) - Waldur Docker Compose)
-
-### Waldur Helm Highlights
-
-- Set target version to 7.7.8.
-- Add settings for course accounts.
-- Add resources settings to initContainers of waldur beat deployment.
-
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.7.8.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.7.8-diff.md)
 
 ---
 
