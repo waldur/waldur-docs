@@ -1,5 +1,44 @@
 # Changelog
 
+## 8.0.2 - 2026-02-05
+
+### Release Summary
+
+- **Release Impact:** Minor release with configuration and documentation updates
+- **SDK Updates:** 3 auto-generated clients updated
+
+### Core Component Activity
+
+- **Waldur Mastermind**: No changes
+- **Waldur Homeport**: No changes
+- **Waldur Helm**: No changes
+- **Waldur Docker Compose**: No changes
+- **Waldur Prometheus Exporter**: No changes
+
+### SDK Updates (Auto-generated)
+
+- **Python Client**: [6 commits](https://github.com/waldur/py-client/compare/8.0.1...8.0.2)
+- **JavaScript Client**: [11 commits](https://github.com/waldur/js-client/compare/8.0.1...8.0.2)
+- **Go Client**: [5 commits](https://github.com/waldur/go-client/compare/8.0.1...8.0.2)
+
+### Py Client Highlights
+
+- Release: bump version to 8.0.2.
+- Update Waldur Python SDK.
+- Update Waldur Python SDK.
+
+### Js Client Highlights
+
+- Release: bump version to 8.0.2.
+- 8.0.2-dev.4.
+- Update Waldur TypeScript SDK.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.2.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.2-diff.md)
+
+
 ## 8.0.1 - 2026-02-03
 
 ### Release Summary
