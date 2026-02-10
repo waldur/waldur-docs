@@ -6691,10 +6691,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-integration-vs-unit-test-strategy" class="md-nav__link">
+  <a href="#6-test-base-class-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Integration vs Unit Test Strategy
+        6. Test Base Class Selection
       
     </span>
   </a>
@@ -6728,6 +6728,39 @@
     <span class="md-ellipsis">
       
         9. Edge Case Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-http-mocking-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. HTTP Mocking Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-multiple-inheritance-pitfall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Multiple Inheritance Pitfall
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-openstack-backend-test-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. OpenStack Backend Test Patterns
       
     </span>
   </a>
@@ -7655,6 +7688,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../identity-bridge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../maintenance-announcement/" class="md-nav__link">
         
   
@@ -8170,10 +8231,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_33">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_34">
         
           
-          <label class="md-nav__link" for="__nav_3_33" id="__nav_3_33_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_34" id="__nav_3_34_label" tabindex="0">
             
   
   
@@ -8191,8 +8252,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_33_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_33">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_34_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_34">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -12371,10 +12432,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-integration-vs-unit-test-strategy" class="md-nav__link">
+  <a href="#6-test-base-class-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Integration vs Unit Test Strategy
+        6. Test Base Class Selection
       
     </span>
   </a>
@@ -12408,6 +12469,39 @@
     <span class="md-ellipsis">
       
         9. Edge Case Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-http-mocking-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. HTTP Mocking Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-multiple-inheritance-pitfall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Multiple Inheritance Pitfall
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-openstack-backend-test-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. OpenStack Backend Test Patterns
       
     </span>
   </a>
@@ -12493,13 +12587,37 @@
 <li>Test boundary conditions: exact expiration time, microseconds past expiration</li>
 <li>Create roles with <code>timezone.now() ± timedelta()</code> for realistic time testing</li>
 </ul>
-<h3 id="6-integration-vs-unit-test-strategy">6. Integration vs Unit Test Strategy</h3>
+<h3 id="6-test-base-class-selection">6. Test Base Class Selection</h3>
+<p>Choose the right test base class for each test:</p>
 <ul>
-<li><strong>Use integration tests for workflows</strong>, unit tests for utilities</li>
-<li>Test complete permission flows: role creation → permission assignment → permission checking</li>
-<li>Use <code>APITransactionTestCase</code> for integration tests requiring database transactions</li>
-<li>Use <code>TestCase</code> for simple unit tests of utility functions</li>
+<li><strong>Default: <code>test.APITestCase</code></strong> — uses transaction rollback, much faster</li>
+<li><strong>Use <code>test.APITransactionTestCase</code></strong> only when:</li>
+<li><code>transaction.on_commit()</code> callbacks must fire (e.g., Celery task dispatch)</li>
+<li><code>IntegrityError</code> is deliberately triggered (breaks TestCase's wrapping transaction)</li>
+<li>Threading or multi-process database access is needed</li>
+<li><code>responses.start()</code> in <code>setUp</code> for class-wide HTTP mocking (leaks across TestCase classes)</li>
 </ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># GOOD: Default to APITestCase</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITestCase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_something</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+<span class="c1"># GOOD: Use APITransactionTestCase when on_commit is needed</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderProcessingTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITransactionTestCase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_order_triggers_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># on_commit callback fires Celery task</span>
+        <span class="o">...</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>A CI lint job (<code>scripts/analyze_transaction_test_cases.py --ci --baseline N</code>) enforces this — adding new unjustified <code>APITransactionTestCase</code> classes will fail the pipeline. The baseline is lowered as classes are migrated.</p>
 <h3 id="7-performance-testing-considerations">7. Performance Testing Considerations</h3>
 <ul>
 <li><strong>Include query optimization tests</strong> where appropriate</li>
@@ -12520,6 +12638,96 @@
 <li>Test with inactive users, deleted roles, removed permissions</li>
 <li>Verify behavior with complex nested object hierarchies</li>
 </ul>
+<h3 id="10-http-mocking-patterns">10. HTTP Mocking Patterns</h3>
+<p><strong>Preferred: <code>@responses.activate</code> per method</strong> — fully isolated, no cleanup needed:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MyTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITestCase</span><span class="p">):</span>
+    <span class="nd">@responses</span><span class="o">.</span><span class="n">activate</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_external_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">responses</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">responses</span><span class="o">.</span><span class="n">GET</span><span class="p">,</span> <span class="s2">"https://api.example.com/data"</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">"ok"</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">my_function</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="p">{</span><span class="s2">"ok"</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Class-wide mocking with <code>responses.start()</code></strong> — requires <code>APITransactionTestCase</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ExternalAPITest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITransactionTestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""responses.start() in setUp leaks state across TestCase classes."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
+        <span class="n">responses</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">responses</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">responses</span><span class="o">.</span><span class="n">GET</span><span class="p">,</span> <span class="s2">"https://api.example.com/data"</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">"ok"</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">responses</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="n">responses</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">tearDown</span><span class="p">()</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Using <code>responses.start()</code> in <code>setUp</code> with <code>APITestCase</code> causes leaked mock state across test classes because <code>TestCase</code> doesn't fully reset process-level state between classes.</p>
+<h3 id="11-multiple-inheritance-pitfall">11. Multiple Inheritance Pitfall</h3>
+<p>When combining <code>APITransactionTestCase</code> with a mixin that extends <code>APITestCase</code>, Python's MRO can silently break <code>TransactionTestCase</code> behavior:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># BAD: MRO puts TestCase._fixture_teardown first</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITransactionTestCase</span><span class="p">,</span> <span class="n">SomeTestMixin</span><span class="p">):</span>
+    <span class="o">...</span>  <span class="c1"># SomeTestMixin extends APITestCase — TransactionTestCase teardown is skipped</span>
+
+<span class="c1"># GOOD: Ensure all parents use TransactionTestCase, or use standalone setup</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITransactionTestCase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
+        <span class="c1"># Set up mocks directly instead of inheriting from a TestCase mixin</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="12-openstack-backend-test-patterns">12. OpenStack Backend Test Patterns</h3>
+<p>When writing standalone backend tests that don't inherit from <code>BaseBackendTestCase</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StandaloneBackendTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITransactionTestCase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixture</span> <span class="o">=</span> <span class="n">openstack_fixtures</span><span class="o">.</span><span class="n">OpenStackFixture</span><span class="p">()</span>
+        <span class="c1"># Mock all 5 OpenStack clients</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mock_admin</span> <span class="o">=</span> <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s2">"waldur_openstack.openstack_base.backend.AdminSession"</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mock_session</span> <span class="o">=</span> <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s2">"waldur_openstack.openstack_base.backend.SessionManager"</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mock_nova</span> <span class="o">=</span> <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s2">"waldur_openstack.openstack_base.backend.NovaClient"</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mock_neutron</span> <span class="o">=</span> <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s2">"waldur_openstack.openstack_base.backend.NeutronClient"</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mock_cinder</span> <span class="o">=</span> <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s2">"waldur_openstack.openstack_base.backend.CinderClient"</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">stopall</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">tearDown</span><span class="p">()</span>
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="test-guidelines">Test Guidelines</h2>
 <ul>
 <li>Test behavior, not implementation</li>
@@ -12580,7 +12788,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-01-29
+    2026-02-09
   </span>
 
     
