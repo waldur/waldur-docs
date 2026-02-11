@@ -6003,6 +6003,84 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#provider-consumer-messaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider-Consumer Messaging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider-Consumer Messaging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apimarketplace-ordersuuidset_provider_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/marketplace-orders/{uuid}/set_provider_info/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apimarketplace-ordersuuidset_consumer_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/marketplace-orders/{uuid}/set_consumer_info/
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#best-practices-for-processor-implementation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13044,6 +13122,84 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#provider-consumer-messaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider-Consumer Messaging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider-Consumer Messaging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apimarketplace-ordersuuidset_provider_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/marketplace-orders/{uuid}/set_provider_info/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-apimarketplace-ordersuuidset_consumer_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/marketplace-orders/{uuid}/set_consumer_info/
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#best-practices-for-processor-implementation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13587,6 +13743,55 @@
 <li>Audit log creation</li>
 <li>External system synchronization</li>
 </ul>
+<h2 id="provider-consumer-messaging">Provider-Consumer Messaging</h2>
+<p>While an order is in the <code>PENDING_PROVIDER</code> state, providers and consumers can exchange messages. This enables workflows like requesting signed documents, sharing additional information, or asking clarifying questions — all without leaving the order approval flow.</p>
+<h3 id="enabling">Enabling</h3>
+<p>Messaging is controlled by two per-offering <code>plugin_options</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enable_provider_consumer_messaging</code></td>
+<td><code>false</code></td>
+<td>Enable the messaging endpoints on orders for this offering</td>
+</tr>
+<tr>
+<td><code>notify_about_provider_consumer_messages</code></td>
+<td><code>false</code></td>
+<td>Send email notifications when messages are exchanged</td>
+</tr>
+</tbody>
+</table>
+<h3 id="api-endpoints">API Endpoints</h3>
+<p>Both endpoints require the order to be in <code>PENDING_PROVIDER</code> state.</p>
+<h4 id="post-apimarketplace-ordersuuidset_provider_info"><code>POST /api/marketplace-orders/{uuid}/set_provider_info/</code></h4>
+<p>Allows the service provider to send a message to the consumer. Accepts:</p>
+<ul>
+<li><code>provider_message</code> (string) — text message</li>
+<li><code>provider_message_url</code> (URL, optional) — link to external resource</li>
+<li><code>provider_message_attachment</code> (file, optional) — PDF attachment</li>
+</ul>
+<p><strong>Permission:</strong> <code>APPROVE_ORDER</code> on <code>offering.customer</code></p>
+<h4 id="post-apimarketplace-ordersuuidset_consumer_info"><code>POST /api/marketplace-orders/{uuid}/set_consumer_info/</code></h4>
+<p>Allows the consumer to respond. Accepts:</p>
+<ul>
+<li><code>consumer_message</code> (string) — text message</li>
+<li><code>consumer_message_attachment</code> (file, optional) — PDF attachment</li>
+</ul>
+<p><strong>Permission:</strong> <code>APPROVE_ORDER</code> on <code>project</code> or <code>project.customer</code></p>
+<h3 id="notifications">Notifications</h3>
+<p>When <code>notify_about_provider_consumer_messages</code> is enabled on the offering:</p>
+<ul>
+<li><strong>Provider sends a message</strong> → email sent to the order creator (and consumer reviewer if present)</li>
+<li><strong>Consumer responds</strong> → email sent to all users with <code>APPROVE_ORDER</code> permission on the offering's organization</li>
+</ul>
+<p>Email subjects include the offering and resource name to prevent grouping by email clients.</p>
 <h2 id="best-practices-for-processor-implementation">Best Practices for Processor Implementation</h2>
 <h3 id="1-inherit-from-appropriate-base-class">1. Inherit from Appropriate Base Class</h3>
 <ul>
@@ -13640,7 +13845,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-01-29
+    2026-02-11
   </span>
 
     
