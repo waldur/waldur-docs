@@ -5908,6 +5908,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#backend_id_rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        backend_id_rules
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6085,6 +6096,17 @@
     <span class="md-ellipsis">
       
         Order Creation Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend-id-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend ID Validation
       
     </span>
   </a>
@@ -12670,6 +12692,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#backend_id_rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        backend_id_rules
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12847,6 +12880,17 @@
     <span class="md-ellipsis">
       
         Order Creation Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend-id-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend ID Validation
       
     </span>
   </a>
@@ -13116,6 +13160,136 @@
 </ol>
 <h3 id="plugin_options">plugin_options</h3>
 <p>Defines behavioral rules, constraints, and provider-specific settings. This is where most operational configuration lives.</p>
+<h3 id="backend_id_rules">backend_id_rules</h3>
+<p>Defines per-offering validation rules for the <code>backend_id</code> field on resources. Supports format validation via regex and configurable uniqueness scopes. Default is <code>{}</code> (no validation, backward compatible). Empty <code>backend_id</code> values always bypass validation.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"backend_id_rules"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"format"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"regex"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^[A-Z]{2}-\\d{6}$"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Must be 2 uppercase letters, dash, 6 digits"</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"uniqueness"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"scope"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offering"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"include_terminated"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Both <code>format</code> and <code>uniqueness</code> are optional top-level keys.</p>
+<p><strong>Format validation:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format.regex</code></td>
+<td>string</td>
+<td>Python regex pattern validated with <code>re.fullmatch</code>. Max 200 characters. Patterns with nested/adjacent quantifiers are rejected (ReDoS protection)</td>
+</tr>
+<tr>
+<td><code>format.description</code></td>
+<td>string</td>
+<td>Human-readable description shown in validation errors. Falls back to displaying the regex pattern</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Uniqueness configuration:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uniqueness.scope</code></td>
+<td>string</td>
+<td>—</td>
+<td>Scope for uniqueness check (see table below)</td>
+</tr>
+<tr>
+<td><code>uniqueness.include_terminated</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether terminated resources are included in the uniqueness check</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Uniqueness scopes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>offering</code></td>
+<td>Unique across resources of this offering</td>
+</tr>
+<tr>
+<td><code>offering_group</code></td>
+<td>Unique across all offerings that share the same <code>offering.backend_id</code> (e.g. offerings attached to the same vcluster). Falls back to <code>offering</code> scope if the offering has no <code>backend_id</code></td>
+</tr>
+<tr>
+<td><code>service_provider</code></td>
+<td>Unique across all offerings of the same customer/service provider</td>
+</tr>
+<tr>
+<td><code>service_provider_category</code></td>
+<td>Unique across all offerings of the same provider in the same category</td>
+</tr>
+</tbody>
+</table>
+<p><strong>API endpoints:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/marketplace-provider-offerings/{uuid}/update_backend_id_rules/</code></td>
+<td>POST</td>
+<td>Configure rules. Requires <code>UPDATE_OFFERING_OPTIONS</code> permission</td>
+</tr>
+<tr>
+<td><code>/api/marketplace-provider-offerings/{uuid}/check_unique_backend_id/</code></td>
+<td>POST</td>
+<td>Check a backend ID. Set <code>use_offering_rules: true</code> to validate format and uniqueness per configured rules</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Enforcement points:</strong></p>
+<ul>
+<li><code>set_backend_id</code> action (manual backend ID assignment)</li>
+<li><code>import_resource</code> action (resource import from external systems)</li>
+<li>Not applied when backend systems automatically set <code>backend_id</code> via processors</li>
+</ul>
+<p><strong>Visibility:</strong> <code>backend_id_rules</code> is exposed on the provider offering serializer but excluded from the public offering serializer.</p>
 <h2 id="plugin-options-reference">Plugin Options Reference</h2>
 <h3 id="approval-and-auto-processing">Approval and Auto-Processing</h3>
 <table>
@@ -13628,6 +13802,14 @@
 <li><strong><code>minimal_team_count_for_provisioning</code></strong>: Validates project team size</li>
 <li><strong><code>required_team_role_for_provisioning</code></strong>: Validates user has required role</li>
 </ol>
+<h3 id="backend-id-validation">Backend ID Validation</h3>
+<p>When <code>backend_id_rules</code> is configured on the offering, the following checks run on <code>set_backend_id</code> and <code>import_resource</code>:</p>
+<ol>
+<li>If <code>backend_id</code> is empty, all validation is skipped</li>
+<li><strong>Format check</strong>: If <code>format.regex</code> is set, the value must match using <code>re.fullmatch</code></li>
+<li><strong>Uniqueness check</strong>: If <code>uniqueness.scope</code> is set, a duplicate query runs against the configured scope</li>
+</ol>
+<p>The <code>check_unique_backend_id</code> endpoint performs the same checks when <code>use_offering_rules</code> is <code>true</code>, returning <code>is_unique</code> and <code>is_valid_format</code> fields in the response.</p>
 <h3 id="approval-flow">Approval Flow</h3>
 <p>The approval flow is determined by:</p>
 <ol>
@@ -13656,7 +13838,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-11
+    2026-02-13
   </span>
 
     
