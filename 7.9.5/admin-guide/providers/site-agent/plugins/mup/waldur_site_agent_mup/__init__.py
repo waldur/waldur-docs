@@ -1,1 +1,0 @@
-"""MUP backend module."""
