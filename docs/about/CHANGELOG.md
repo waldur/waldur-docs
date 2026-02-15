@@ -1,5 +1,43 @@
 # Changelog
 
+## 8.0.3 - 2026-02-15
+
+### Release Summary
+
+- **Release Impact:** Minor release with configuration and documentation updates
+- **SDK Updates:** 2 auto-generated clients updated
+
+### Core Component Activity
+
+- **Waldur Mastermind**: No changes
+- **Waldur Homeport**: No changes
+- **Waldur Helm**: No changes
+- **Waldur Docker Compose**: No changes
+- **Waldur Prometheus Exporter**: No changes
+
+### SDK Updates (Auto-generated)
+
+- **JavaScript Client**: [35 commits](https://github.com/waldur/js-client/compare/8.0.2...8.0.3)
+- **Go Client**: [17 commits](https://github.com/waldur/go-client/compare/8.0.2...8.0.3)
+
+### Js Client Highlights
+
+- Release: bump version to 8.0.3.
+- 8.0.3-dev.16.
+- Update Waldur TypeScript SDK.
+
+### Go Client Highlights
+
+- Update Waldur Go SDK.
+- Update Waldur Go SDK.
+- Update Waldur Go SDK.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.3.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.3-diff.md)
+
+
 ## 8.0.2 - 2026-02-05
 
 ### Release Summary
@@ -871,73 +909,6 @@
 
 - [OpenAPI Schema](../API/waldur-openapi-schema-7.8.2.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.2-diff.md)
-
----
-
-## 7.8.1 - 2025-11-30
-
-### Release Summary
-
-- **Release Impact:** 2 commits across 2 core repositories
-- **Functional Changes:** 2 files changed with +3/-3 lines
-
-!!! note "Statistics Note"
-    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: No changes
-- **Waldur Homeport**: No changes
-- **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.8.0...7.8.1) · 2 files changed (+3/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.8.0...7.8.1)
-- **Waldur Prometheus Exporter**: No changes
-
-### Notable Changes
-
-- **Set target version to 7.8.1.** ([df73b4c](https://github.com/waldur/waldur-helm/commit/df73b4c) - Waldur Helm)
-- **Set target version to 7.8.1.** ([4b13d32](https://github.com/waldur/waldur-docker-compose/commit/4b13d32) - Waldur Docker Compose)
-
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.1.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.1-diff.md)
-
----
-
-## 7.8.0 - 2025-11-30
-
-### Release Summary
-
-- **Release Impact:** 4 commits across 2 core repositories
-- **Functional Changes:** 4 files changed with +295/-3 lines
-- **SDK Updates:** 1 auto-generated clients updated from OpenAPI schema
-
-!!! note "Statistics Note"
-    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: No changes
-- **Waldur Homeport**: No changes
-- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/7.7.9...7.8.0) · 4 files changed (+295/-3 lines)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.7.9...7.8.0)
-- **Waldur Prometheus Exporter**: No changes
-
-### SDK Updates (Auto-generated)
-
-- **Go Client**: [5 commits](https://github.com/waldur/go-client/compare/7.7.9...7.8.0)
-
-### Notable Changes
-
-- **Add ENABLE_PROJECT_KIND_COURSE field.** ([36404b1](https://github.com/waldur/waldur-helm/commit/36404b1) - Waldur Helm)
-- **Basic overview of helm components.** ([0037b29](https://github.com/waldur/waldur-helm/commit/0037b29) - Waldur Helm)
-- **Set target version to 7.8.0.** ([38bbe0d](https://github.com/waldur/waldur-helm/commit/38bbe0d) - Waldur Helm)
-- **Set target version to 7.8.0.** ([e1b89ee](https://github.com/waldur/waldur-docker-compose/commit/e1b89ee) - Waldur Docker Compose)
-
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.0.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.0-diff.md)
 
 ---
 
