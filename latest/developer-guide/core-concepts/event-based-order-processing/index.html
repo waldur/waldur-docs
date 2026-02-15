@@ -13344,8 +13344,10 @@
 <li><code>send_offering_user_created_message</code> - Triggers when an OfferingUser is created</li>
 <li><code>send_offering_user_updated_message</code> - Triggers when an OfferingUser is updated</li>
 <li><code>send_offering_user_deleted_message</code> - Triggers when an OfferingUser is deleted</li>
+<li><code>send_user_attribute_update_message</code> - Triggers when a User's profile attributes change
+  (connected to <code>core.User</code> post_save, not <code>OfferingUser</code>)</li>
 </ul>
-<p><strong>Message Payload Structure for OfferingUser Events:</strong></p>
+<p><strong>Message Payload Structure for create/update/delete Events:</strong></p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -13358,10 +13360,30 @@
 <span class="w">  </span><span class="nt">"offering_user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uuid-hex-string"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-uuid-hex-string"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"generated-username"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK|Requested|Creating|Pending account linking|Pending additional validation|Requested deletion|Deleting|Deleted|Error creating|Error deleting"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK|Requested|Creating|..."</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"create|update|delete"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"offering_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offering-uuid"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"changed_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"field1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"field2"</span><span class="p">]</span><span class="w">  </span><span class="c1">// Only present for updates</span>
+<span class="w">  </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user@example.com"</span><span class="p">,</span><span class="w"> </span><span class="nt">"first_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Alice"</span><span class="p">},</span><span class="w">  </span><span class="c1">// create only</span>
+<span class="w">  </span><span class="nt">"changed_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"field1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"field2"</span><span class="p">]</span><span class="w">  </span><span class="c1">// update only</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Message Payload Structure for attribute_update Events:</strong></p>
+<p>When a User's profile fields change, a separate event is published for each offering
+the user belongs to. The <code>OfferingUserAttributeConfig</code> for the offering determines which
+changed fields are included.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"offering_user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uuid-hex-string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-uuid-hex-string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"generated-username"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"attribute_update"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"changed_attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"email"</span><span class="p">,</span><span class="w"> </span><span class="s2">"first_name"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"new@example.com"</span><span class="p">,</span><span class="w"> </span><span class="nt">"first_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Alice"</span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p><strong>Event Triggers:</strong></p>
@@ -13369,6 +13391,7 @@
 <li><strong>Create</strong>: When a new offering user account is created for a user in an offering</li>
 <li><strong>Update</strong>: When any field of an existing offering user is modified (username, state, etc.)</li>
 <li><strong>Delete</strong>: When an offering user account is removed from an offering</li>
+<li><strong>Attribute Update</strong>: When a User's profile fields change, filtered through each offering's <code>OfferingUserAttributeConfig</code></li>
 </ul>
 <h3 id="resource-periodic-limits-event-messages">Resource Periodic Limits Event Messages</h3>
 <p>Resource periodic limits events are published when SLURM periodic usage policies are applied to resources. These messages contain calculated SLURM settings including allocation limits, fairshare values, and QoS thresholds. The handler is located in <a href="https://github.com/waldur/waldur-mastermind/blob/develop/src/waldur_mastermind/policy/models.py">waldur_mastermind/policy/models.py</a>.</p>
@@ -14034,7 +14057,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-03
+    2026-02-15
   </span>
 
     

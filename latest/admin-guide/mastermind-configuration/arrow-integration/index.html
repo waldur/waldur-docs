@@ -3099,10 +3099,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#classification-filter-fallback" class="md-nav__link">
+  <a href="#customer-grouping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Classification Filter Fallback
+        Customer Grouping
       
     </span>
   </a>
@@ -3110,10 +3110,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#customer-grouping" class="md-nav__link">
+  <a href="#export-type-compatibility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Customer Grouping
+        Export Type Compatibility
       
     </span>
   </a>
@@ -13087,10 +13087,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#classification-filter-fallback" class="md-nav__link">
+  <a href="#customer-grouping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Classification Filter Fallback
+        Customer Grouping
       
     </span>
   </a>
@@ -13098,10 +13098,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#customer-grouping" class="md-nav__link">
+  <a href="#export-type-compatibility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Customer Grouping
+        Export Type Compatibility
       
     </span>
   </a>
@@ -13329,7 +13329,7 @@ via the API or setup wizard (see Setup Workflow below). Key fields:</p>
 <tbody>
 <tr>
 <td><code>api_url</code></td>
-<td>Arrow API base URL</td>
+<td>Arrow API base URL (e.g., <code>https://xsp.arrow.com/index.php/api/</code>)</td>
 </tr>
 <tr>
 <td><code>api_key</code></td>
@@ -13338,10 +13338,6 @@ via the API or setup wizard (see Setup Workflow below). Key fields:</p>
 <tr>
 <td><code>export_type_reference</code></td>
 <td>Billing export template reference (discovered from API)</td>
-</tr>
-<tr>
-<td><code>classification_filter</code></td>
-<td>Filter for IaaS/SaaS classification (default: <code>IAAS</code>). If the Arrow API rejects requests with this filter, the system automatically retries without it.</td>
 </tr>
 <tr>
 <td><code>invoice_price_source</code></td>
@@ -13369,7 +13365,7 @@ via the API or setup wizard (see Setup Workflow below). Key fields:</p>
 <span class="normal">4</span>
 <span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/admin/arrow/settings/validate_credentials/
 {
-    "api_url": "https://xsp.arrow.com/api/",
+    "api_url": "https://xsp.arrow.com/index.php/api/",
     "api_key": "your-api-key"
 }
 </code></pre></div></td></tr></tbody></table></div>
@@ -13384,13 +13380,11 @@ via the API or setup wizard (see Setup Workflow below). Key fields:</p>
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/admin/arrow/settings/save_settings/
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/admin/arrow/settings/save_settings/
 {
-    "api_url": "https://xsp.arrow.com/api/",
+    "api_url": "https://xsp.arrow.com/index.php/api/",
     "api_key": "your-api-key",
     "export_type_reference": "DJ284LDZ-standard",
-    "classification_filter": "IAAS",
     "sync_enabled": true,
     "customer_mappings": [
         {"arrow_reference": "XSP661245", "waldur_customer_uuid": "..."}
@@ -13405,12 +13399,16 @@ via the API or setup wizard (see Setup Workflow below). Key fields:</p>
 <span class="normal">4</span>
 <span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/admin/arrow/settings/discover_customers/
 {
-    "api_url": "https://xsp.arrow.com/api/",
+    "api_url": "https://xsp.arrow.com/index.php/api/",
     "api_key": "your-api-key"
 }
 </code></pre></div></td></tr></tbody></table></div>
-<p>The response includes fuzzy-matched suggestions between Arrow company names and Waldur
-organizations. Create mappings via:</p>
+<p>The response includes:</p>
+<ul>
+<li>Fuzzy-matched suggestions between Arrow company names and Waldur organizations</li>
+<li>Export type compatibility information showing which export types have the required and important fields used by Waldur (see Export Type Compatibility below)</li>
+</ul>
+<p>Create mappings via:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -13429,20 +13427,22 @@ organizations. Create mappings via:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/admin/arrow/customer-mappings/sync_from_arrow/
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="step-4-map-vendors-to-offerings">Step 4: Map Vendors to Offerings</h3>
-<p>Map Arrow vendor names to Waldur marketplace offerings:</p>
+<p>Map Arrow vendor names to Waldur marketplace offerings and plans:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/admin/arrow/vendor-offering-mappings/
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/admin/arrow/vendor-offering-mappings/
 {
     "settings": "&lt;settings-uuid&gt;",
     "arrow_vendor_name": "Microsoft",
-    "offering": "&lt;offering-uuid&gt;"
+    "offering": "&lt;offering-uuid&gt;",
+    "plan": "&lt;plan-uuid&gt;"
 }
 </code></pre></div></td></tr></tbody></table></div>
-<p>Use the <code>vendor_choices</code> endpoint to list available vendor names:</p>
+<p>The <code>plan</code> field is mandatory and must reference a plan belonging to the selected offering. Use the <code>vendor_choices</code> endpoint to list available vendor names:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>GET /api/admin/arrow/vendor-offering-mappings/vendor_choices/
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="step-5-sync-billing-data">Step 5: Sync Billing Data</h3>
@@ -13463,9 +13463,7 @@ This enables hourly consumption sync from the Arrow Consumption API.</p>
 <p>Resources must have their <code>backend_id</code> field set to the Arrow license reference (e.g., <code>XSP12345</code>).
 The license reference is stored in the resource's <code>arrow_license_reference</code> attribute.
 Use the <code>discover_licenses</code> and <code>link_resource</code> actions on customer mappings to link resources.</p>
-<p>During consumption sync, matching uses both <code>License Reference</code> and <code>ARS Subscription ID</code>
-fields from the Arrow billing export, so resources are found regardless of which field the
-export type populates.</p>
+<p>During consumption sync, resources are matched by <code>ARS Subscription ID</code> from the Arrow billing export.</p>
 <h2 id="api-endpoints">API Endpoints</h2>
 <p>All endpoints require staff permissions and are located under <code>/api/admin/arrow/</code>.</p>
 <h3 id="settings-apiadminarrowsettings">Settings (<code>/api/admin/arrow/settings/</code>)</h3>
@@ -13487,7 +13485,7 @@ export type populates.</p>
 <tr>
 <td><code>discover_customers</code></td>
 <td>POST</td>
-<td>Fetch Arrow customers with mapping suggestions</td>
+<td>Fetch Arrow customers with mapping suggestions and export type compatibility</td>
 </tr>
 <tr>
 <td><code>preview_settings</code></td>
@@ -13746,8 +13744,13 @@ check <code>ARROW_CONSUMPTION_SYNC_ENABLED</code>.</p>
 <p><strong>Example - force import</strong>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>sync_arrow_resources<span class="w"> </span>--force-import
 </code></pre></div></td></tr></tbody></table></div>
-<p>In force-import mode, each Arrow customer gets a Waldur Customer with an
-"Arrow Azure Subscriptions" project automatically created.</p>
+<p>In force-import mode, the system:</p>
+<ol>
+<li>Creates a Waldur Customer for each Arrow customer (with an "Arrow Azure Subscriptions" project)</li>
+<li>Creates a usage-based plan ("Arrow Cloud Cost") on the offering with a <code>cloud_cost</code> component</li>
+<li>Assigns each resource to this plan and creates a <code>ResourcePlanPeriod</code> record</li>
+<li>Records <code>ComponentUsage</code> for each billing period, enabling proper billing integration</li>
+</ol>
 <h2 id="invoice-price-source">Invoice Price Source</h2>
 <p>The <code>invoice_price_source</code> setting controls which Arrow price is used for Waldur invoice items:</p>
 <ul>
@@ -13762,7 +13765,7 @@ check <code>ARROW_CONSUMPTION_SYNC_ENABLED</code>.</p>
 </ul>
 <h2 id="billing-export-field-mapping">Billing Export Field Mapping</h2>
 <p>Different Arrow export types use different column names. The system handles this with fallback
-chains — it tries the first field name and falls back to alternatives:</p>
+chains -- it tries the first field name and falls back to alternatives:</p>
 <table>
 <thead>
 <tr>
@@ -13774,8 +13777,8 @@ chains — it tries the first field name and falls back to alternatives:</p>
 <tbody>
 <tr>
 <td>Line reference</td>
-<td><code>Line Reference</code></td>
-<td><code>Sequence</code> → <code>Order Id</code></td>
+<td><code>Sequence</code></td>
+<td><code>Order Id</code></td>
 </tr>
 <tr>
 <td>Sell price</td>
@@ -13800,37 +13803,45 @@ chains — it tries the first field name and falls back to alternatives:</p>
 <tr>
 <td>Product</td>
 <td><code>Product Name</code></td>
-<td><code>Friendly Name</code> → <code>Description</code></td>
+<td><code>Friendly Name</code> -&gt; <code>Description</code></td>
 </tr>
 <tr>
 <td>License reference</td>
-<td><code>License Reference</code></td>
 <td><code>ARS Subscription ID</code></td>
+<td>--</td>
 </tr>
 <tr>
 <td>Customer grouping</td>
-<td><code>Customer Reference</code></td>
-<td><code>End User Company Name</code> (matched via <code>arrow_company_name</code>)</td>
+<td><code>End User Company Name</code></td>
+<td>--</td>
+</tr>
+<tr>
+<td>Subscription reference</td>
+<td><code>Vendor Subscription ID</code></td>
+<td>--</td>
+</tr>
+<tr>
+<td>SKU</td>
+<td><code>Arrow SKU</code></td>
+<td>--</td>
 </tr>
 </tbody>
 </table>
-<h3 id="classification-filter-fallback">Classification Filter Fallback</h3>
-<p>When <code>classification_filter</code> is set (e.g., <code>IAAS</code>), the system first requests billing data
-filtered by classification. If the Arrow API rejects the filter (HTTP 400), the system
-automatically retries the request without the classification filter. This applies to:</p>
-<ul>
-<li>Billing sync (<code>sync_arrow_billing</code>)</li>
-<li>Billing reconciliation (<code>reconcile_arrow_billing</code>)</li>
-<li>Consumption reconciliation (<code>check_and_reconcile_billing</code>)</li>
-</ul>
 <h3 id="customer-grouping">Customer Grouping</h3>
-<p>Billing lines are grouped by customer using two strategies:</p>
-<ol>
-<li><strong>By <code>Customer Reference</code></strong>: Lines with a <code>Customer Reference</code> field are matched to
-   <code>ArrowCustomerMapping.arrow_reference</code></li>
-<li><strong>By company name</strong> (fallback): If no lines match by reference, lines with an
-   <code>End User Company Name</code> are matched to <code>ArrowCustomerMapping.arrow_company_name</code></li>
-</ol>
+<p>Billing lines are grouped by <code>End User Company Name</code>, matched against
+<code>ArrowCustomerMapping.arrow_company_name</code>. Each mapping's <code>arrow_company_name</code> field must
+match the company name that appears in the billing export for that customer.</p>
+<h3 id="export-type-compatibility">Export Type Compatibility</h3>
+<p>The <code>discover_customers</code> endpoint checks each available export type for compatibility by
+inspecting its column headers. For each export type, the response includes:</p>
+<ul>
+<li><code>compatible</code>: Whether all required fields are present</li>
+<li><code>recommended</code>: Whether the export type has both required and most important fields</li>
+<li><code>missing_required_fields</code>: List of missing required fields</li>
+<li><code>missing_important_fields</code>: List of missing important fields</li>
+</ul>
+<p>The compatible export type is typically "MSP (Extended)". Choose an export type where
+<code>compatible</code> is <code>true</code> and <code>recommended</code> is <code>true</code> for best results.</p>
 <h2 id="billing-sync-lifecycle">Billing Sync Lifecycle</h2>
 <p>Arrow billing sync records follow a finite-state machine:</p>
 <pre class="mermaid"><code>graph LR
@@ -13867,9 +13878,9 @@ automatically retries the request without the classification filter. This applie
 <p>When billing moves from Synced to Validated, the system can automatically apply compensations
 if <code>ARROW_AUTO_RECONCILIATION</code> is enabled. Otherwise, use the <code>reconcile</code> action to trigger
 reconciliation manually.</p>
-<p>During reconciliation, license references are matched using a fallback chain: first by
-<code>License Reference</code>, then by <code>ARS Subscription ID</code>. The price fields used for comparison
-depend on which columns are present in the export (see Field Mapping above).</p>
+<p>During reconciliation, license references are matched by <code>ARS Subscription ID</code>. The price
+fields used for comparison depend on which columns are present in the export (see Field
+Mapping above).</p>
 <h3 id="consumption-based-reconciliation">Consumption-Based Reconciliation</h3>
 <p>When consumption tracking is enabled, the flow is:</p>
 <ol>
@@ -13886,13 +13897,10 @@ setup wizard.</p>
 <h3 id="billing-sync-runs-but-creates-no-items">Billing sync runs but creates no items</h3>
 <ul>
 <li>Verify customer mappings exist and are active</li>
-<li>Check that <code>export_type_reference</code> is set correctly (use <code>validate_credentials</code> to discover types)</li>
-<li>Confirm the <code>classification_filter</code> matches your subscriptions (default: <code>IAAS</code>). The system
-  retries without the filter if the Arrow API rejects it, but verify in logs.</li>
-<li>Check that <code>arrow_company_name</code> is set on customer mappings — some export types don't include
-  <code>Customer Reference</code> and rely on company name matching instead</li>
-<li>Different export types use different column names (e.g., <code>Customer Total Price</code> vs
-  <code>Sell Total Price</code>). The system handles this with fallback chains, but check logs for warnings.</li>
+<li>Ensure <code>arrow_company_name</code> is set correctly on customer mappings -- billing lines are matched by company name</li>
+<li>Check that <code>export_type_reference</code> is set correctly (use <code>discover_customers</code> to see export type compatibility)</li>
+<li>Use an export type where <code>compatible</code> is <code>true</code> (typically "MSP (Extended)")</li>
+<li>Different export types use different column names (e.g., <code>Customer Total Price</code> vs <code>Sell Total Price</code>). The system handles this with fallback chains, but check logs for warnings.</li>
 </ul>
 <h3 id="consumption-sync-not-running">Consumption sync not running</h3>
 <ul>
@@ -13907,7 +13915,7 @@ create new ones.</p>
 <h3 id="api-authentication-failures">API authentication failures</h3>
 <ul>
 <li>Verify the API key is valid using <code>validate_credentials</code></li>
-<li>Check that the Arrow API URL includes the correct base path</li>
+<li>Check that the Arrow API URL includes the correct base path (e.g., <code>https://xsp.arrow.com/index.php/api/</code>)</li>
 <li>Review Waldur logs for detailed error messages from the Arrow API</li>
 </ul>
 <h2 id="related-files">Related Files</h2>
@@ -13939,7 +13947,7 @@ create new ones.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-03
+    2026-02-15
   </span>
 
     
