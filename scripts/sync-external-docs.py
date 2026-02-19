@@ -103,6 +103,84 @@ class ExternalDocSyncer:
                 continue
         return False
 
+    def rewrite_links(self, content, source, current_mapping, rel_file_path):
+        """Rewrite relative markdown links that cross mapping boundaries.
+
+        When source directories are remapped to different local paths, relative
+        links between them break. This resolves each relative link in the source
+        tree and rewrites it to the correct relative path in the local tree.
+        """
+        mappings = source.get('mappings', [])
+        if len(mappings) < 2:
+            return content
+
+        current_remote = Path(current_mapping['remote'])
+        current_local = Path(current_mapping['local'])
+
+        # Build list of other mappings, sorted longest-remote-first for specificity
+        other_mappings = []
+        for m in mappings:
+            if m is current_mapping:
+                continue
+            other_mappings.append({
+                'remote': Path(m['remote']),
+                'local': Path(m['local']),
+            })
+        other_mappings.sort(key=lambda m: len(m['remote'].parts), reverse=True)
+
+        if not other_mappings:
+            return content
+
+        file_source_dir = current_remote / Path(rel_file_path).parent
+        file_local_dir = current_local / Path(rel_file_path).parent
+
+        def rewrite_match(match):
+            prefix = match.group(1)
+            url = match.group(2)
+            suffix = match.group(3)
+
+            # Skip non-relative links
+            if url.startswith(('http://', 'https://', 'mailto:', '#', '/')):
+                return match.group(0)
+
+            # Split anchor/query from path
+            anchor = ''
+            path_part = url
+            for sep in ('#', '?'):
+                if sep in path_part:
+                    idx = path_part.index(sep)
+                    anchor = path_part[idx:]
+                    path_part = path_part[:idx]
+                    break
+
+            if not path_part:
+                return match.group(0)
+
+            # Resolve the link target in the source tree
+            resolved = os.path.normpath(os.path.join(str(file_source_dir), path_part))
+
+            # Check against each other mapping (most specific first)
+            for other in other_mappings:
+                try:
+                    rel_in_other = Path(resolved).relative_to(other['remote'])
+                    new_target = other['local'] / rel_in_other
+                    new_rel = os.path.relpath(str(new_target), str(file_local_dir))
+                    new_rel = new_rel.replace('\\', '/')
+                    return prefix + new_rel + anchor + suffix
+                except ValueError:
+                    continue
+
+            return match.group(0)
+
+        # Rewrite inline and image links: [text](url) and ![alt](url)
+        content = re.sub(
+            r'(!?\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))',
+            rewrite_match,
+            content
+        )
+
+        return content
+
     def is_binary_file(self, file_path):
         """Check if a file is binary by checking its extension."""
         # Common binary file extensions
@@ -388,6 +466,12 @@ class ExternalDocSyncer:
                         # Handle text files
                         with open(remote_file, 'r', encoding='utf-8') as f:
                             remote_content = f.read()
+
+                        # Rewrite cross-mapping links for markdown files
+                        if remote_file.suffix.lower() == '.md':
+                            remote_content = self.rewrite_links(
+                                remote_content, source, mapping, str(rel_path)
+                            )
 
                         # Check if local file exists and compare content without timestamp
                         existing_content = None
