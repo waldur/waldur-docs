@@ -58,140 +58,186 @@ This release introduces Keycloak-based user role management for marketplace offe
 
 ## 8.0.3 - 2026-02-15
 
-### Release Summary
+This release introduces two-way messaging between providers and consumers on pending orders, a new Identity Bridge API for push-based user attribute synchronization, and a system logs view for administrators. Multiple N+1 query fixes significantly improve API performance on key endpoints, and new feature toggles give operators finer control over marketplace visibility and offering lifecycle management.
 
-- **Release Impact:** Minor release with configuration and documentation updates
-- **SDK Updates:** 2 auto-generated clients updated
+### What's New
+
+- **Two-way provider-consumer messaging on pending orders.** Providers and consumers can now exchange messages while an order is pending review, with email notifications for both sides. This allows clarifying order details without rejecting and re-submitting.
+- **Identity Bridge API.** A new push-based API enables external identity services to synchronize user profile attributes (organization, registry code) into Waldur without polling.
+- **System logs view.** Administrators can now view and filter recent Mastermind system logs directly from the admin panel and support view.
+- **Order rejection comments.** When rejecting an order, both providers and consumers can now include a reason, which is shown in the order details.
+- **Provider approval with option modification.** Service providers can review and modify resource options when approving an order via a dedicated approval dialog.
+- **Renewal cost breakdown.** The resource renewal flow now shows a detailed cost estimate via a new `estimate_renewal` API endpoint before the user confirms.
+- **Offering-level backend_id validation rules.** Operators can configure regex-based validation patterns for backend IDs on a per-offering basis.
+- **Configurable disclaimer area.** A new footer disclaimer area can display a custom logo and text, controlled via feature toggle and branding settings.
+- **Group invitation custom text.** Group invitations now support a custom welcome message, and the creator is hidden on public invitation pages.
+
+### Improvements
+
+- **Service provider offering lifecycle controls.** New configuration options allow operators to gate offering activation, pausing, and archival to service providers via feature flags, including restricting deletion of offerings with active resources.
+- **Organization visibility controls.** New feature toggles allow hiding organization-level information from project-level members and disabling the marketplace UI for end users.
+- **Permission-aware resource actions.** Frontend resource actions (terminate, change plan, change limits, etc.) are now hidden from users who lack the required permissions, with improved tooltips explaining why actions are unavailable.
+- **OIDC email-based failover matching.** When the primary OIDC identifier is missing, Waldur can fall back to email-based user matching.
+- **Organization registry code on user profile.** User profiles now include an organization registry code field, synced from identity providers and exposed in the Order API.
+- **Duplicate invitation detection.** The invitation form now warns creators when a duplicate invitation already exists for the same email.
+- **Onboarding checklist setup.** Administrators have an improved onboarding question management interface with predefined templates and better filtering.
+- **Customer detail data scoped to visible projects.** Customer API responses now only include projects visible to the requesting user, and GDPR name filtering now covers all name fields.
+- **Service providers can set resource state to OK** to manually recover resources, and SLURM policies are re-evaluated when limits increase on downscaled resources.
+- **eduTEAMS refresh token rotation moved to Celery Beat** for improved reliability as a periodic task.
+- **Removed legacy django-admin-tools** and django-fluent-dashboard dependencies.
+- **Cache-based background task locking** replaces equality-check deduplication for improved reliability.
+- **Billing info concealment** now respected in change limits, change plan, and renewal dialogs.
+- **Helm chart improvements.** Added secret support for kubeconfig and DataCite password, stomp ingress whitelist configuration, and invoice finalization grace period setting.
+- **Lithuanian translations updated** across user profile, invitations, terms of service, and organization fields.
+
+### Bug Fixes
+
+- Fixed N+1 query issues on public offerings, service provider, usage task, and users list endpoints by adding caching and optimized prefetching.
+- Fixed cost policy being bypassed for the first resource allocation.
+- Fixed Arrow vendor offering mapping serializer not accepting UUIDs, with updated frontend to match.
+- Fixed login redirect failing when the auth token is expired.
+- Fixed infinite re-render crash when opening drawers on the Resources tab.
+- Fixed offering filter not syncing correctly to the URL.
+- Fixed pricing display for daily-billed offerings showing incorrect amounts.
+- Fixed fractional values being rounded in resource component usage display.
+- Fixed ECharts crash when chart container is null after component unmount.
+- Fixed FreeIPA existing key handling and UVK ingress path type in Helm chart.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: No changes
-- **Waldur Homeport**: No changes
-- **Waldur Helm**: No changes
-- **Waldur Docker Compose**: No changes
-- **Waldur Prometheus Exporter**: No changes
-
-### SDK Updates (Auto-generated)
-
-- **JavaScript Client**: [35 commits](https://github.com/waldur/js-client/compare/8.0.2...8.0.3)
-- **Go Client**: [17 commits](https://github.com/waldur/go-client/compare/8.0.2...8.0.3)
-
-### Js Client Highlights
-
-- Release: bump version to 8.0.3.
-- 8.0.3-dev.16.
-- Update Waldur TypeScript SDK.
-
-### Go Client Highlights
-
-- Update Waldur Go SDK.
-- Update Waldur Go SDK.
-- Update Waldur Go SDK.
+- **Waldur Mastermind**: [59 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.2...8.0.3) - Provider-consumer messaging, Identity Bridge API, system logs, N+1 fixes, offering lifecycle controls
+- **Waldur Homeport**: [70 commits](https://github.com/waldur/waldur-homeport/compare/8.0.2...8.0.3) - Messaging UI, system logs view, rejection comments, permission-aware actions, billing display fixes
+- **Waldur Helm**: [10 commits](https://github.com/waldur/waldur-helm/compare/8.0.2...8.0.3) - Secret support for kubeconfig and DataCite, FreeIPA fix, invoice finalization grace period
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.0.2...8.0.3) - Maintenance updates only
 
 ### Resources
 
 - [OpenAPI Schema](../API/waldur-openapi-schema-8.0.3.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.3-diff.md)
 
+---
 
 ## 8.0.2 - 2026-02-05
 
-### Release Summary
+### Highlights
 
-- **Release Impact:** Minor release with configuration and documentation updates
-- **SDK Updates:** 3 auto-generated clients updated
+This release introduces an invoice finalization grace period, giving operators a configurable window to adjust invoices before they become final. Marketplace offering owners can now disable specific resource actions per offering, providing fine-grained control over what end users can do. OpenStack infrastructure discovery and software catalog management have been significantly improved with new admin tooling and a guided setup wizard.
+
+### What's New
+
+- **Invoice finalization grace period.** Invoices now enter a "pending finalization" state before becoming final, allowing operators a configurable window to make adjustments. Usage updates on already-finalized invoices are now properly rejected.
+- **Disableable resource actions per offering.** Offering owners can now selectively disable specific resource actions (e.g., terminate, change limits, move, synchronize, report usage, and more). Only staff users can modify these settings.
+- **OpenStack infrastructure discovery.** A new discovery wizard helps operators configure OpenStack offerings by auto-detecting available infrastructure, including external network support with dedicated models and API endpoints.
+- **AI assistant chat session management.** Backend support for logging, persisting, and managing AI assistant chat sessions, including role-based access control and automatic cleanup.
+- **Software catalog administration.** New admin UI for managing software catalogs with discovery capabilities, plus management commands for exporting, importing, and cleaning up software catalog structures. Catalog loading is now safer with improved validation.
+- **Project move permissions expanded.** Organization owners in both the source and target organizations can now move projects between them.
+- **Separate customer contact update permission.** A new `CUSTOMER_CONTACT_UPDATE` permission allows delegating contact information management without granting broader customer editing rights.
+- **Event logs for deleted verifications.** Verification deletion events are now logged for audit trail purposes.
+
+### Improvements
+
+- **Version history API reliability.** Fixed empty results for newly created objects and backfilled initial version history entries for existing resources.
+- **SCIM entitlements refactored** to use offering user usernames, improving compatibility with identity providers.
+- **Customer list filtering** extended with additional filter options.
+- **Registration method** is now exposed in the offering serializer by default.
+- **Resource options validation** now checks for pending orders before allowing updates.
+
+### Bug Fixes
+
+- Fixed SLURM QoS not updating correctly when downscaling allocations, with improved policy warning display when the site agent queue is misconfigured.
+- Fixed N+1 query performance issue on the marketplace orders list endpoint.
+- Fixed quarterly and annual billing limit changes creating duplicate invoice items.
+- Fixed invoice generation for annual billing periods.
+- Fixed TypeError when saving date values in offering plugin_options.
+- Fixed nullable partition field in software catalog serializer for SDK compatibility.
+- Fixed undefined variable exception in OpenStack backend.
+- Added debounce to global search to prevent rate limit errors on fast typing.
+- Fixed AI assistant token usage column showing in user list when the feature is disabled.
+- Fixed select field rendering in offering edit panel.
+- Fixed confirmation dialog input type for onboarding justification actions.
+- Fixed invitation translation strings.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: No changes
-- **Waldur Homeport**: No changes
-- **Waldur Helm**: No changes
-- **Waldur Docker Compose**: No changes
-- **Waldur Prometheus Exporter**: No changes
+- **Waldur Mastermind**: [30 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.1...8.0.2) - Invoice grace period, disableable actions, OpenStack discovery, AI chat management, software catalog tooling, billing and permission fixes.
+- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.0.1...8.0.2) - Disableable actions UI, invoice state support, OpenStack discovery wizard, software catalog admin UI, search and rendering fixes.
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.0.1...8.0.2) - Maintenance updates and CI fix for homeport tag setting.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.0.1...8.0.2) - Maintenance updates only.
 
-### SDK Updates (Auto-generated)
+### Resources
 
-- **Python Client**: [6 commits](https://github.com/waldur/py-client/compare/8.0.1...8.0.2)
-- **JavaScript Client**: [11 commits](https://github.com/waldur/js-client/compare/8.0.1...8.0.2)
-- **Go Client**: [5 commits](https://github.com/waldur/go-client/compare/8.0.1...8.0.2)
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.2.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.2-diff.md)
 
-### Py Client Highlights
-
-- Release: bump version to 8.0.2.
-- Update Waldur Python SDK.
-- Update Waldur Python SDK.
-
-### Js Client Highlights
-
-- Release: bump version to 8.0.2.
-- 8.0.2-dev.4.
-- Update Waldur TypeScript SDK.
-
-
+---
 
 ## 8.0.1 - 2026-02-03
 
-### Release Summary
+### Highlights
 
-- **Release Impact:** 176 commits across 4 core repositories
-- **SDK Updates:** 3 auto-generated clients updated from OpenAPI schema
+Waldur 8.0.1 is a major release that introduces Arrow accounting integration for automated license and consumption billing, a comprehensive analytics and reporting suite covering orders, users, provisioning, and resource geography, and a revamped SLURM policy management experience with visual previews and execution logging. Operators gain new tools for database growth monitoring, OIDC identity provider discovery, SCIM user synchronization, and event subscription queues for real-time integrations.
 
-!!! note "Statistics Note"
-    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
+### What's New
+
+- **Arrow accounting integration.** New module for syncing resources, consumption records, and billing data from Arrow, with a full management dashboard including customer mappings, vendor offering mappings, and import wizards.
+- **Analytics and reporting suite.** Added reporting pages for orders, user demographics, provisioning statistics, resource geography, usage trends, usage by organization type, project classification, offering costs, maintenance operations, and provider-level analytics.
+- **SLURM policy visualization and logging.** SLURM usage policies now include a visual preview, execution log viewer, status summary, and on-demand policy evaluation from the offering management page.
+- **OIDC discovery.** Administrators can now configure identity providers via OpenID Connect discovery, with a guided wizard that auto-discovers endpoints and claim mappings.
+- **SCIM synchronization.** Initial support for synchronizing user data to external systems via the SCIM protocol.
+- **Event subscription queues.** New SubscriptionQueue model enables external systems to subscribe to Waldur events and consume them via a pull-based API.
+- **Resource version history.** Resources now track changes via django-reversion, with a timeline UI showing diffs between versions.
+- **Offering tag management.** Offerings can be tagged and filtered by tags across the marketplace, with a dedicated admin interface for managing tags.
+- **Database table growth monitoring.** New scheduled task tracks table sizes over time with configurable alerts when growth exceeds thresholds, visible in the administration panel.
+- **AI assistant usage accounting.** Token consumption by the AI assistant is now tracked per user with configurable quotas, plus an LLM validation management command for quality assurance.
+- **Storage folder manager.** Initial skeleton for a new storage folder manager offering option type.
+- **Project digest notifications.** Project members can now receive periodic digest emails summarizing team activity, resource usage, and upcoming end dates.
+
+### Improvements
+
+- **Extended user profile attributes.** Users now have fields for country of residence, eduPerson assurance level, nationality, and affiliations parsed from AAI attributes. Administrators can define mandatory profile attributes that users must complete before accessing the platform.
+- **Offering visibility modes.** Marketplace offerings can be configured with visibility modes to control which users can see them.
+- **Cross-field validators for offering options.** Marketplace offering options now support greater-than, greater-than-or-equal, less-than, and less-than-or-equal validators with cross-field references.
+- **Editable pending orders.** Users with approval permissions can now update limits, attributes, and start date on pending orders.
+- **Subscription renewal minimum set to 12 months.** The minimum extension period for allocation renewals has been increased from 1 to 12 months.
+- **Staff-only set_erred and set_ok actions.** Staff users can now manually transition resources and routers to erred or OK states for troubleshooting.
+- **Conditional checklist questions.** Onboarding checklists now support conditional question logic based on previous answers.
+- **Support users can manage announcements.** The admin announcements feature is now accessible to support-role users.
+- **OpenStack duplicate image handling.** When duplicate image names are retrieved from OpenStack, only the most recently created image is used.
+- **Service providers can update OpenStack quotas.** OpenStack tenant quotas can now be updated by the service provider role.
+- **Offering pricing tab toggle.** A new feature flag allows hiding the pricing tab on offerings.
+- **Unified wizard components.** Wizard dialogs across the application now share a consistent step indicator and layout.
+- **Improved pending invitations display.** The user dashboard shows invitations in a more compact format with expiry badges.
+- **Onboarding address fetching.** Estonian and Austrian business registry validation now automatically fetches company address data.
+- **Improved translations.** Updated localization files for 23 languages.
+
+### Bug Fixes
+
+- Fixed a TransitionNotAllowed error when saving an OfferingUser in DELETED state.
+- Fixed RabbitMQ host resolution in the Docker Compose init script that was overwriting pre-set host values.
+- Fixed OpenStack network and subnet creation to use non-bulk API calls for better compatibility.
+- Fixed group invitation token handling during OAuth login flow.
+- Fixed one-time component price calculation returning incorrect values for zero quotas.
+- Fixed marketplace script pull and options handler in Kubernetes mode.
+- Fixed a 500 error when requesting specific fields via the API.
+- Fixed anonymous user filtering by organization in the marketplace.
+- Fixed missing pagination on the support page offering users list.
+- Fixed the Enter key triggering form submission in search filter bars.
+- Fixed the edit end date dialog sizing when many resources are affected.
+- Normalized country codes to uppercase when parsing schacPersonalUniqueID attributes.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [94 commits](https://github.com/waldur/waldur-mastermind/compare/7.9.8...8.0.1)
-- **Waldur Homeport**: [80 commits](https://github.com/waldur/waldur-homeport/compare/7.9.8...8.0.1)
-- **Waldur Helm**: [1 commits](https://github.com/waldur/waldur-helm/compare/7.9.8...8.0.1)
-- **Waldur Docker Compose**: [1 commits](https://github.com/waldur/waldur-docker-compose/compare/7.9.8...8.0.1)
-- **Waldur Prometheus Exporter**: No changes
+- **Waldur Mastermind**: [98 commits](https://github.com/waldur/waldur-mastermind/compare/7.9.8...8.0.1) - Arrow integration, SLURM policy overhaul, extended user attributes, reporting endpoints, OIDC discovery, SCIM sync, event subscription queues, resource history API, offering tags, DB growth monitoring
+- **Waldur Homeport**: [83 commits](https://github.com/waldur/waldur-homeport/compare/7.9.8...8.0.1) - Arrow management dashboard, comprehensive reporting suite, SLURM policy visualization, OIDC discovery wizard, version history UI, offering tags UI, user profile rework, wizard unification
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/7.9.8...8.0.1) - maintenance updates only
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/7.9.8...8.0.1) - maintenance updates only
 
-### SDK Updates (Auto-generated)
+### Resources
 
-- **Python Client**: [30 commits](https://github.com/waldur/py-client/compare/7.9.8...8.0.1)
-- **JavaScript Client**: [63 commits](https://github.com/waldur/js-client/compare/7.9.8...8.0.1)
-- **Go Client**: [28 commits](https://github.com/waldur/go-client/compare/7.9.8...8.0.1)
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.1.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.1-diff.md)
 
-### Notable Changes
-
-- **Fix Add filter icon button size.** ([4486a23](https://github.com/waldur/waldur-homeport/commit/4486a23) - Waldur Homeport)
-- **Add button in offering edit actions dropdown to allow deleteion of an offering.** ([fd48b0a](https://github.com/waldur/waldur-homeport/commit/fd48b0a) - Waldur Homeport)
-- **Fix/filter icon button size.** ([341eb2b](https://github.com/waldur/waldur-homeport/commit/341eb2b) - Waldur Homeport)
-- **Expose SCIM settings.** ([45588c0](https://github.com/waldur/waldur-homeport/commit/45588c0) - Waldur Homeport)
-- **Set target version to 8.0.0.** ([7a7e696](https://github.com/waldur/waldur-helm/commit/7a7e696) - Waldur Helm)
-- **Set target version to 8.0.0.** ([852f3c2](https://github.com/waldur/waldur-docker-compose/commit/852f3c2) - Waldur Docker Compose)
-
-### Waldur Mastermind Highlights
-
-- Add set_erred and set_ok staff-only actions to ResourceViewSet and RouterViewSet.
-- Fix migrations.
-- Handle case where network is None in TenantCreateErrorTask.
-
-### Waldur Homeport Highlights
-
-- Add staff-only set_erred and set_ok row actions for all OpenStack resources.
-- Render username instead of full name as fallback in resource state header.
-- Fix Add filter icon-button icon size.
-
-### Py Client Highlights
-
-- Release: bump version to 8.0.0.
-- Update Waldur Python SDK.
-- Update Waldur Python SDK.
-
-### Js Client Highlights
-
-- Release: bump version to 8.0.0.
-- 7.9.10-dev.16.
-- Update Waldur TypeScript SDK.
-
-### Go Client Highlights
-
-- Update Waldur Go SDK.
-- Update Waldur Go SDK.
-- Update Waldur Go SDK.
-
+---
 
 
 ## 7.9.8 - 2026-01-21
