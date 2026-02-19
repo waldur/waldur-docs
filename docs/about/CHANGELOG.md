@@ -1,5 +1,61 @@
 # Changelog
 
+## 8.0.4 - 2026-02-19
+
+This release introduces Keycloak-based user role management for marketplace offerings, full OpenStack server group policy support, and a new system for auto-generating UI table filters from the OpenAPI schema. Several reliability fixes address invoice proration, resource state transitions, and mobile UI regressions.
+
+### What's New
+
+- **Keycloak user role management.** A new `waldur_keycloak` plugin enables service providers to manage Keycloak group memberships directly from offering settings, including importing remote groups, assigning memberships, and sending notification emails. The frontend provides a full management UI with bulk actions.
+- **OpenStack server group policies.** All OpenStack server group policies (affinity, anti-affinity, soft variants) are now supported. Users can create server groups and assign instances to them during deployment via a new scheduling step.
+- **AI assistant chat logs.** Support staff can now view AI assistant conversation logs in the support view, with expandable rows showing full chat history. Chat context retrieval has been moved server-side for better reliability.
+- **OpenAPI-driven filter generation.** Table filters can now be auto-generated from the OpenAPI specification, ensuring frontend filters stay in sync with backend query parameters. Several list views have been migrated to this approach.
+- **User profile completeness tracking.** Service providers can now filter offering users by profile attribute completeness and see field-level warnings. End users see a banner on resource pages when their profile is incomplete.
+
+### Improvements
+
+- **Django upgraded from 4.2 to 5.2.** The backend framework has been updated to the latest LTS release.
+- **MQTT protocol support removed.** Message delivery now uses STOMP exclusively, simplifying RabbitMQ configuration across Helm and Docker Compose deployments.
+- **Configurable UI font family.** Administrators can now select the portal font via a new `FONT_FAMILY` setting.
+- **Sidebar "Match theme" style option.** A new sidebar appearance option automatically matches the current theme colors.
+- **Onboarding setup view redesigned.** The admin onboarding question management interface has been refreshed with improved layout.
+- **Permission deletion by type.** User affiliation actions now support bulk and row-level permission removal based on permission type.
+- **Software package API filters.** New `name_exact` and `is_extension` filters added for more precise software package lookups.
+- **OpenAPI schema quality improvements.** View names and operation IDs are now exposed on UUID/URL filter fields, optional request bodies are marked correctly for SDK generators, and a naming collision detector prevents Go SDK build failures.
+- **Resource limit validation.** The `update_limits` endpoint now validates min/max bounds before accepting changes.
+- **Auto-create default VM/Volume categories.** OpenStack resource import automatically creates marketplace categories when they do not exist.
+- **Disclaimer area reordered.** The footer disclaimer now shows text before the logo with increased spacing.
+- **Removed unused SITE_LOGO setting.** The deprecated constance setting has been cleaned up from backend and frontend.
+- **Header cleanup.** Removed duplicate page title and extra search input from the navigation header.
+- **Updated Lithuanian translation** for the sign-in label.
+
+### Bug Fixes
+
+- Fixed `MultipleObjectsReturned` error in usage reporting caused by duplicate `ComponentUsage` records, including a migration to deduplicate existing data.
+- Fixed resources getting stuck in "Updating" state after a successful plan switch.
+- Fixed quarterly limit change invoice quantity proration calculating incorrect amounts.
+- Fixed `Customer.get_owners` raising `AttributeError` and deduplicated usage policy notifications.
+- Fixed OpenStack instance image name not being detected during resource pull.
+- Fixed mobile table filters not opening the sidebar drawer due to a missing context action.
+- Fixed pricing information being visible when billing info is configured to be concealed.
+- Fixed `null` `date_created` in the offering revision backfill migration.
+- Fixed remote eduteams configuration and HAProxy redirect annotation in Helm charts.
+- Fixed docker-logger permission denied error on `docker.sock` in Docker Compose setup.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [38 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.3...8.0.4) - Keycloak plugin, Django 5.2 upgrade, OpenAPI improvements, billing and state fixes
+- **Waldur Homeport**: [24 commits](https://github.com/waldur/waldur-homeport/compare/8.0.3...8.0.4) - Keycloak UI, server groups UI, filter generation, profile completeness, mobile fix
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.0.3...8.0.4) - MQTT removal, eduteams and HAProxy fixes
+- **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.3...8.0.4) - MQTT removal, docker-logger fix
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.4.yaml)
+- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.4-diff.md)
+
+---
+
 ## 8.0.3 - 2026-02-15
 
 ### Release Summary
