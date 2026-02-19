@@ -57,6 +57,8 @@ Build latest pages:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
     - *build_script_steps
+    - git branch -D gh-pages 2>/dev/null || true
+    - git fetch github_waldur gh-pages
     - uv run mike deploy latest -p -r github_waldur -b gh-pages
   before_script: *build_before_script
 
@@ -67,6 +69,8 @@ Build tagged pages:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   script:
     - *build_script_steps
+    - git branch -D gh-pages 2>/dev/null || true
+    - git fetch github_waldur gh-pages
     - uv run mike deploy $CI_COMMIT_TAG -p -r github_waldur -b gh-pages
   before_script: *build_before_script
 
