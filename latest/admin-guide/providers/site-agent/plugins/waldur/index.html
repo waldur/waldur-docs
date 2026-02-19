@@ -5717,6 +5717,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#identity-bridge-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity Bridge Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity Bridge Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identity-bridge-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity Bridge Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identity-bridge-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity Bridge Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-attributes-synced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Attributes Synced
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8853,6 +8914,34 @@
     
   
     Jira
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../developer-guide/plugins/keycloak/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keycloak
   
 
     
@@ -13256,6 +13345,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#identity-bridge-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity Bridge Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity Bridge Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identity-bridge-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity Bridge Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identity-bridge-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity Bridge Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-attributes-synced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Attributes Synced
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14069,7 +14219,9 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
 <span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
-<span class="normal">24</span></pre></div></td><td class="code"><div><pre><span></span><code>plugins/waldur/
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span></pre></div></td><td class="code"><div><pre><span></span><code>plugins/waldur/
 ├── pyproject.toml                         # Package metadata + entry points
 ├── README.md
 ├── waldur_site_agent_waldur/
@@ -14078,16 +14230,18 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
 │   ├── client.py                          # WaldurClient(BaseClient)
 │   ├── component_mapping.py               # ComponentMapper (forward + reverse)
 │   ├── schemas.py                         # Pydantic validation schemas
-│   └── target_event_handler.py            # STOMP handler for Waldur B ORDER events
+│   ├── target_event_handler.py            # STOMP handler for Waldur B ORDER events
+│   └── username_backend.py               # Identity bridge username management backend
 └── tests/
     ├── __init__.py
     ├── conftest.py                        # Shared test fixtures
     ├── integration_helpers.py             # Test setup helpers (WaldurTestSetup)
-    ├── test_backend.py                    # Backend unit tests (35 tests)
+    ├── test_backend.py                    # Backend unit tests (36 tests)
     ├── test_client.py                     # Client tests (20 tests)
     ├── test_component_mapping.py          # Mapper tests (22 tests)
     ├── test_integration.py                # Integration tests (56 tests)
     ├── test_target_event_handler.py       # Target event handler tests
+    ├── test_username_backend.py           # Identity bridge username backend tests (22 tests)
     └── e2e/                               # End-to-end tests against live instances
         ├── conftest.py                    # E2E fixtures, AutoApproveWaldurBackend, MessageCapture
         ├── test_e2e_federation.py         # REST polling lifecycle tests (Tests 1-4)
@@ -14095,15 +14249,18 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
         └── TEST_PLAN.md                   # Detailed E2E test plan
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="entry-points">Entry Points</h3>
-<p>The plugin registers three entry points for automatic discovery:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.backends"</span><span class="k">]</span>
+<p>The plugin registers four entry points for automatic discovery:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.backends"</span><span class="k">]</span>
 <span class="n">waldur</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"waldur_site_agent_waldur.backend:WaldurBackend"</span>
 
 <span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.component_schemas"</span><span class="k">]</span>
@@ -14111,6 +14268,9 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
 
 <span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.backend_settings_schemas"</span><span class="k">]</span>
 <span class="n">waldur</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"waldur_site_agent_waldur.schemas:WaldurBackendSettingsSchema"</span>
+
+<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.username_management_backends"</span><span class="k">]</span>
+<span class="n">waldur-identity-bridge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"waldur_site_agent_waldur.username_backend:WaldurIdentityBridgeUsernameBackend"</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="user-matching">User Matching</h2>
 <p>The plugin supports three strategies for resolving Waldur A users on Waldur B:</p>
@@ -14150,6 +14310,67 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
 <li><strong><code>warn</code></strong> (default): Log a warning and skip the user</li>
 <li><strong><code>fail</code></strong>: Raise a <code>BackendError</code> (caught per-user, does not abort the batch)</li>
 </ul>
+<h2 id="identity-bridge-integration">Identity Bridge Integration</h2>
+<p>The plugin includes a username management backend (<code>waldur-identity-bridge</code>) that pushes
+user profiles from Waldur A to Waldur B via the Identity Bridge API before membership sync.
+This ensures users exist on Waldur B before the agent tries to resolve and add them to projects.</p>
+<h3 id="how-it-works">How It Works</h3>
+<ol>
+<li>During membership sync, <code>sync_user_profiles()</code> is called before user resolution</li>
+<li>For each offering user on Waldur A, it sends <code>POST /api/identity-bridge/</code> to Waldur B</li>
+<li>Identity Bridge creates the user if they don't exist, or updates attributes if they do</li>
+<li>Users that disappear from the offering are deactivated via <code>POST /api/identity-bridge/remove/</code></li>
+</ol>
+<h3 id="identity-bridge-configuration">Identity Bridge Configuration</h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Federated</span><span class="nv"> </span><span class="s">HPC</span><span class="nv"> </span><span class="s">Access"</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur-a.example.com/api/"</span>
+<span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"token-for-waldur-a"</span>
+<span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"offering-uuid-on-waldur-a"</span>
+<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-identity-bridge"</span>
+<span class="w">    </span><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
+<span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">target_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur-b.example.com/api/"</span>
+<span class="w">      </span><span class="nt">target_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"service-account-token-for-waldur-b"</span>
+<span class="w">      </span><span class="nt">target_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"offering-uuid-on-waldur-b"</span>
+<span class="w">      </span><span class="nt">target_customer_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"customer-uuid-on-waldur-b"</span>
+<span class="w">      </span><span class="nt">identity_bridge_source</span><span class="p">:</span><span class="w"> </span><span class="s">"isd:efp"</span><span class="w">  </span><span class="c1"># Required for identity bridge</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="identity-bridge-settings">Identity Bridge Settings</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>identity_bridge_source</code></td>
+<td>Yes</td>
+<td><code>""</code></td>
+<td>ISD source identifier (e.g. <code>isd:efp</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="user-attributes-synced">User Attributes Synced</h3>
+<p>The backend pushes all exposed offering user attributes to identity bridge, including:
+first name, last name, email, organization, affiliations, phone number, gender,
+birth date, nationality, and other profile fields configured via <code>OfferingUserAttributeConfig</code>.</p>
 <h2 id="project-mapping">Project Mapping</h2>
 <p>Projects on Waldur B are tracked using <code>backend_id</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>backend_id = "{customer_uuid_on_A}_{project_uuid_on_A}"
@@ -14243,8 +14464,13 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
 </tr>
 <tr>
 <td><code>test_backend.py</code></td>
-<td>35</td>
+<td>36</td>
 <td>Resource lifecycle, async orders, usage reporting, membership sync</td>
+</tr>
+<tr>
+<td><code>test_username_backend.py</code></td>
+<td>22</td>
+<td>Identity bridge username backend, attribute mapping, user sync</td>
 </tr>
 <tr>
 <td><code>test_target_event_handler.py</code></td>
@@ -14361,7 +14587,7 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-11
+    2026-02-19
   </span>
 
     

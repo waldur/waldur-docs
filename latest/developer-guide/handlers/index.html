@@ -7862,6 +7862,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#application-waldur_keycloak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application: waldur_keycloak
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#application-waldur_lexis" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8650,6 +8661,34 @@
     
   
     Jira
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/keycloak/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keycloak
   
 
     
@@ -12809,6 +12848,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#application-waldur_keycloak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application: waldur_keycloak
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#application-waldur_lexis" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -15267,6 +15317,73 @@ td:nth-child(4) {
 </tr>
 </tbody>
 </table>
+<h2 id="application-waldur_keycloak">Application: <code>waldur_keycloak</code></h2>
+<table>
+<thead>
+<tr>
+<th>Handler Name</th>
+<th>Signal Type</th>
+<th>Sender</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cleanup_keycloak_groups_on_offering_delete</code></td>
+<td><code>Django Signal (pre_delete)</code></td>
+<td><code>marketplace.Offering</code></td>
+<td>When a marketplace Offering is deleted, delete all its Keycloak groups.</td>
+</tr>
+<tr>
+<td><code>cleanup_keycloak_groups_on_resource_delete</code></td>
+<td><code>Django Signal (pre_delete)</code></td>
+<td><code>marketplace.Resource</code></td>
+<td>When a marketplace Resource is deleted, delete all its Keycloak groups.</td>
+</tr>
+<tr>
+<td><code>cleanup_keycloak_on_role_revoked</code></td>
+<td><code>Custom Signal (role_revoked)</code></td>
+<td><code>permissions.UserRole</code></td>
+<td>When a project role is revoked, schedule cleanup of Keycloak memberships</td>
+</tr>
+<tr>
+<td><code>cleanup_keycloak_on_user_deactivation</code></td>
+<td><code>Django Signal (post_save)</code></td>
+<td><code>core.User</code></td>
+<td>When a user is deactivated, schedule cleanup of all their Keycloak memberships.</td>
+</tr>
+<tr>
+<td><code>delete_keycloak_group_from_backend</code></td>
+<td><code>Django Signal (post_delete)</code></td>
+<td><code>waldur_keycloak.OfferingKeycloakGroup</code></td>
+<td>Delete a Keycloak group from the backend when the local model is deleted.</td>
+</tr>
+<tr>
+<td><code>delete_keycloak_membership_from_backend</code></td>
+<td><code>Django Signal (post_delete)</code></td>
+<td><code>waldur_keycloak.OfferingKeycloakMembership</code></td>
+<td>Remove a user from a Keycloak group when membership is deleted.</td>
+</tr>
+<tr>
+<td><code>delete_keycloak_membership_on_resource_user_delete</code></td>
+<td><code>Django Signal (post_delete)</code></td>
+<td><code>marketplace.ResourceUser</code></td>
+<td>When a ResourceUser is deleted, delete corresponding Keycloak membership.</td>
+</tr>
+<tr>
+<td><code>mark_keycloak_group_deleting</code></td>
+<td><code>Django Signal (pre_delete)</code></td>
+<td><code>waldur_keycloak.OfferingKeycloakGroup</code></td>
+<td>Mark a group as being deleted so cascade membership handlers skip re-deletion.</td>
+</tr>
+<tr>
+<td><code>sync_resource_user_to_keycloak_membership</code></td>
+<td><code>Django Signal (post_save)</code></td>
+<td><code>marketplace.ResourceUser</code></td>
+<td>When a ResourceUser is created, auto-create a Keycloak membership</td>
+</tr>
+</tbody>
+</table>
 <h2 id="application-waldur_lexis">Application: <code>waldur_lexis</code></h2>
 <table>
 <thead>
@@ -17406,12 +17523,13 @@ td:nth-child(4) {
 </tbody>
 </table>
 <h2 id="summary">Summary</h2>
-<p>Total unique handlers found: 718</p>
+<p>Total unique handlers found: 727</p>
 <ul>
 <li><strong>waldur_auth_saml2</strong>: 1 handlers</li>
 <li><strong>waldur_autoprovisioning</strong>: 1 handlers</li>
 <li><strong>waldur_core</strong>: 365 handlers</li>
 <li><strong>waldur_freeipa</strong>: 12 handlers</li>
+<li><strong>waldur_keycloak</strong>: 9 handlers</li>
 <li><strong>waldur_lexis</strong>: 1 handlers</li>
 <li><strong>waldur_mastermind</strong>: 295 handlers</li>
 <li><strong>waldur_openportal</strong>: 10 handlers</li>
@@ -17441,7 +17559,7 @@ td:nth-child(4) {
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-15
+    2026-02-19
   </span>
 
     
