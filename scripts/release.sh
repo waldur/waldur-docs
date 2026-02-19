@@ -18,6 +18,33 @@ echo "=== Waldur Release $VERSION ==="
 echo "Previous version: $PREV_TAG"
 echo ""
 
+# Pre-flight: Verify that the new tag does NOT already exist in any repo
+echo "[pre-flight] Checking that tag $VERSION does not already exist..."
+REPOS=(
+    "$PROJECT_DIR/../waldur-mastermind"
+    "$PROJECT_DIR/../waldur-homeport"
+    "$PROJECT_DIR/../waldur-helm"
+    "$PROJECT_DIR/../waldur-docker-compose"
+)
+
+TAG_EXISTS_IN=""
+for repo_path in "${REPOS[@]}"; do
+    repo_name=$(basename "$repo_path")
+    if [ -d "$repo_path/.git" ]; then
+        if git -C "$repo_path" rev-parse "$VERSION" >/dev/null 2>&1; then
+            TAG_EXISTS_IN="$TAG_EXISTS_IN $repo_name"
+        fi
+    fi
+done
+
+if [ -n "$TAG_EXISTS_IN" ]; then
+    echo "ERROR: Tag $VERSION already exists in:$TAG_EXISTS_IN"
+    echo "Cannot create a release with an existing tag. Aborting."
+    exit 1
+fi
+echo "  Tag $VERSION does not exist in any repository. Good to proceed."
+echo ""
+
 # Step 1: Collect commit data from local repos
 echo "[1/5] Collecting commit data from local repositories..."
 LOCAL_REPOS='{"waldur-mastermind":"'"$PROJECT_DIR"'/../waldur-mastermind","waldur-homeport":"'"$PROJECT_DIR"'/../waldur-homeport","waldur-helm":"'"$PROJECT_DIR"'/../waldur-helm","waldur-docker-compose":"'"$PROJECT_DIR"'/../waldur-docker-compose"}'

@@ -65,9 +65,12 @@ class MultiRepoChangelogGenerator:
     def check_tag_exists(self, repo_path, tag):
         """Check if a tag exists in the repository"""
         try:
-            result = self.run_command(f"git rev-parse {tag}", cwd=repo_path)
-            return bool(result)
-        except:
+            result = subprocess.run(
+                f"git rev-parse {tag}", shell=True, cwd=repo_path,
+                capture_output=True, text=True, check=True
+            )
+            return bool(result.stdout.strip())
+        except subprocess.CalledProcessError:
             return False
 
     def find_closest_tag(self, repo_path, target_tag):
