@@ -104,10 +104,68 @@ python3 scripts/regenerate-changelog-entry.py --list-versions
 - Core repository vs SDK separation
 - Professional language formatting
 
+## Releasing a New Version
+
+Releases are driven from this repository. Pushing a version tag here triggers the CI pipeline that tags all child repositories, bumps versions in Helm/Docker Compose, and releases SDKs.
+
+### Local release with Claude Code (recommended)
+
+The `scripts/release.sh` script uses Claude Code to generate a human-quality changelog from local repo checkouts, then lets you review it before committing and tagging.
+
+**Prerequisites:**
+
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed (`claude` on PATH)
+- Sibling checkouts of the Waldur repos (on the branch/commit you want to release):
+  ```
+  workspace/
+  ├── waldur-docs/              # this repo
+  ├── waldur-mastermind/
+  ├── waldur-homeport/
+  ├── waldur-helm/
+  └── waldur-docker-compose/
+  ```
+
+**Usage:**
+
+```bash
+bash scripts/release.sh 8.0.4
+```
+
+The script will:
+
+1. Collect commit data from the local repos (commits since the previous tag)
+2. Feed the data to Claude Code to generate a changelog entry
+3. Show the result for review — you can **accept**, **edit**, **regenerate**, or **quit**
+4. Prepend the entry to `docs/about/CHANGELOG.md` and commit
+5. Ask for confirmation, then push the commit and tag to origin
+
+The CI pipeline detects that the changelog entry already exists and skips auto-generation.
+
+### CI-only release (fallback)
+
+If Claude Code is not available, you can push a tag directly and the CI pipeline will auto-generate the changelog using the regex-based Python script:
+
+```bash
+git tag -a 8.0.4 -m "Release 8.0.4"
+git push origin 8.0.4
+```
+
+### Generating JSON commit data (for scripting)
+
+The changelog Python script supports a `--json-output` mode that emits structured commit data (with bodies and per-commit file lists) instead of markdown:
+
+```bash
+python3 scripts/generate-enhanced-changelog-multiRepo.py 8.0.4 8.0.3 \
+    --json-output \
+    --local-repos '{"waldur-mastermind":"../waldur-mastermind","waldur-homeport":"../waldur-homeport"}'
+```
+
+Use `--local-repos` to read from local checkouts instead of cloning from GitHub. Only the repos listed in the JSON mapping are analyzed.
+
 ## CI/CD Pipeline
 
 The GitLab CI pipeline handles:
 - Markdown linting and MkDocs validation on merge requests
 - Automatic deployment to GitHub Pages for master branch
-- Enhanced changelog generation with multi-repository analysis
+- Enhanced changelog generation with multi-repository analysis (skipped if entry already exists)
 - Version tagging and multi-repository release orchestration

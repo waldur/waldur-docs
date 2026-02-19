@@ -99,7 +99,7 @@ Test changelog generation:
     CI_COMMIT_TAG: "v10.0.0"
   script:
     - export VERSION=${CI_COMMIT_TAG}
-    - PREV_TAG=$(grep -m 1 "##" docs/about/CHANGELOG.md | sed "s/## //" )
+    - PREV_TAG=$(grep -m 1 "^## " docs/about/CHANGELOG.md | sed 's/^## \([^ ]*\).*/\1/')
     - echo "Testing enhanced changelog generation for $VERSION (since $PREV_TAG)"
     - python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
     - echo "Generated enhanced changelog entry:"
@@ -123,31 +123,40 @@ Tag all repositories:
     - export VERSION=${CI_COMMIT_TAG}
     - echo $CI_COMMIT_TAG_MESSAGE
     - echo $CI_RELEASE_DESCRIPTION
-    - PREV_TAG=$(grep -m 1 "##" docs/about/CHANGELOG.md | sed "s/## //" )
-    - echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
-    # Generate enhanced changelog entry
-    - python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
-    - echo "Generated enhanced changelog entry:"
-    - cat /tmp/new_entry.md
-    # Update changelog with rotation (keep only last 20 entries)
+    - PREV_TAG=$(grep -m 1 "^## " docs/about/CHANGELOG.md | sed 's/^## \([^ ]*\).*/\1/')
+    # Check if changelog entry already exists (e.g., created by local release script)
     - |
-      if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
-        echo "Rotating old changelog entries to archive..."
-        # Archive old entries (entries are preserved in git history)
-        head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
-        mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
+      if grep -q "^## ${VERSION}" docs/about/CHANGELOG.md; then
+        echo "Changelog entry for ${VERSION} already exists — skipping auto-generation."
+      else
+        echo "No existing entry — generating changelog automatically..."
+        echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
+        python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
+        echo "Generated enhanced changelog entry:"
+        cat /tmp/new_entry.md
+        # Update changelog with rotation (keep only last 20 entries)
+        if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
+          echo "Rotating old changelog entries to archive..."
+          head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
+          mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
+        fi
+        # Add new entry to top of changelog
+        echo -e "# Changelog\n" > /tmp/final_changelog.md
+        cat /tmp/new_entry.md >> /tmp/final_changelog.md
+        echo "" >> /tmp/final_changelog.md
+        tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md
+        mv /tmp/final_changelog.md docs/about/CHANGELOG.md
       fi
-    # Add new entry to top of changelog
-    - echo -e "# Changelog\n" > /tmp/final_changelog.md
-    - cat /tmp/new_entry.md >> /tmp/final_changelog.md
-    - echo "" >> /tmp/final_changelog.md
-    - tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md  # Skip "# Changelog" header
-    - mv /tmp/final_changelog.md docs/about/CHANGELOG.md
-    - git --no-pager diff docs/about/CHANGELOG.md | head -50 || true  # Show first 50 lines of diff
-    - git add docs/about/CHANGELOG.md
-    - git commit -m "Update changelog for $CI_COMMIT_TAG with enhanced analysis"
-    - git --no-pager show --stat
-    - git push origin master
+    - |
+      if ! git diff --quiet docs/about/CHANGELOG.md; then
+        git --no-pager diff docs/about/CHANGELOG.md | head -50 || true
+        git add docs/about/CHANGELOG.md
+        git commit -m "Update changelog for $CI_COMMIT_TAG with enhanced analysis"
+        git --no-pager show --stat
+        git push origin master
+      else
+        echo "No changelog changes to commit (entry was pre-created)."
+      fi
     - cd ../
   script:
     - rm -rf waldur-mastermind || true

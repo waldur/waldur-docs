@@ -71,10 +71,6 @@
 - 8.0.2-dev.4.
 - Update Waldur TypeScript SDK.
 
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.2.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.2-diff.md)
 
 
 ## 8.0.1 - 2026-02-03
@@ -140,10 +136,6 @@
 - Update Waldur Go SDK.
 - Update Waldur Go SDK.
 
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.1.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.1-diff.md)
 
 
 ## 7.9.8 - 2026-01-21
@@ -252,7 +244,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.6.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.6-diff.md)
 
 
@@ -272,7 +263,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.5.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.5-diff.md)
 
 
@@ -305,7 +295,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.4.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.4-diff.md)
 
 
@@ -325,7 +314,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.3.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.3-diff.md)
 
 
@@ -370,7 +358,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.2.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.2-diff.md)
 
 
@@ -428,7 +415,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.1.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.1-diff.md)
 
 ---
@@ -475,7 +461,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.9.0.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.0-diff.md)
 
 ---
@@ -513,7 +498,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.9.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.9-diff.md)
 
 ---
@@ -590,7 +574,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.8.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.8-diff.md)
 
 ---
@@ -661,7 +644,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.7.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.7-diff.md)
 
 ---
@@ -726,7 +708,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.6.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.6-diff.md)
 
 ---
@@ -784,7 +765,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.5.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.5-diff.md)
 
 ---
@@ -829,7 +809,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.4.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.4-diff.md)
 
 ---
@@ -865,7 +844,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.3.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.3-diff.md)
 
 ---
@@ -907,7 +885,6 @@
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-7.8.2.yaml)
 - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.2-diff.md)
 
 ---
