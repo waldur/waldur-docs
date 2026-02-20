@@ -45,7 +45,6 @@ Always end with:
 ### Resources
 
 - [OpenAPI Schema](../API/waldur-openapi-schema-{VERSION}.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-{VERSION}-diff.md)
 ```
 
 End the entry with a `---` separator line.
