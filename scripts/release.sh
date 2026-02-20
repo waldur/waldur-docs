@@ -70,7 +70,7 @@ COMMIT_DATA=$(cat /tmp/waldur-release-data.json)
 
 generate_changelog() {
     printf '%s\n\nHere is the commit data:\n\n```json\n%s\n```\n' "$FULL_PROMPT" "$COMMIT_DATA" | \
-        claude --print > /tmp/waldur-changelog-entry.md
+        env -u CLAUDECODE claude --print > /tmp/waldur-changelog-entry.md
 }
 
 generate_changelog
