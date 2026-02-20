@@ -32,22 +32,25 @@ Organization onboarding uses checklists to collect data from users. Two checklis
 - **Onboarding intent data**
 
 
-**Navigation path:** Administration → **Organizations & compliance** → **Checklist management**
+**Navigation path:** Administration → **Organizations & compliance** → **Onboarding checklist configuration**
 
+1. To add the template questions to the configuration of the checklists, click Import and confirm adding questions to the checklists. The system will add sample questions to the onboarding flow.
 
-1. Create a new checklist or open the existing one.  
-2. Set the **Checklist type**:
-   - **Onboarding customer data** – for organization details.  
-   - **Onboarding intent data** – for intent and purpose questions.  
-3. Optionally, assign a description.
+![type:image](../img/checklist_configuration.png)
 
-![type:image](../img/onboarding_checklist1.png)
+![type:image](../img/import_preset.png)
 
-![type:image](../img/onboarding_checklist2.png)
+2. The set up should be performed for both checklists:
+   - **Customer data** – for organization details.  
+   - **Intent data** – for intent and purpose questions.  
+
+![type:image](../img/customer_data.png)
+
+![type:image](../img/intent_data.png)
 
 ## Step 3: Configure onboarding questions
 
-For each checklist, add or edit the questions presented to users.
+For each checklist, add or edit the questions presented to users. 
 
 ### Question configuration
 
@@ -62,9 +65,9 @@ For every question:
 ![type:image](../img/checklist_qs1.png)
 
 
-### Field mapping (mandatory)
+### Field mapping (important)
 
-Each question must be mapped to the correct backend field.
+Each question must be mapped to the correct backend field, especially for the Customer data form.
 
 ![type:image](../img/checklist_qs2.png)
 
