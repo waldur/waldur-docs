@@ -75,7 +75,7 @@ generate_changelog() {
 
 generate_changelog
 
-# Step 3: Show result and ask for confirmation
+# Show result and ask for confirmation
 echo ""
 echo "=== Generated Changelog Entry ==="
 echo ""
@@ -110,7 +110,7 @@ case $choice in
         ;;
 esac
 
-# Step 4: Commit changelog to waldur-docs
+# Step 3: Commit changelog to waldur-docs
 echo ""
 echo "[3/5] Updating CHANGELOG.md..."
 
@@ -130,7 +130,7 @@ git commit -m "Update changelog for $VERSION"
 
 echo "  Changelog committed."
 
-# Step 5: Tag and push
+# Step 4: Tag and push
 echo ""
 echo "[4/5] Tagging waldur-docs with $VERSION..."
 read -p "Push changelog commit and tag $VERSION to origin? [y/n] " push_choice
