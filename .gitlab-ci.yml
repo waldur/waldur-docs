@@ -26,6 +26,8 @@ Test mkdocs:
   script:
     - pip install uv
     - uv sync --frozen
+    # Generate llms-full.txt for LLM-friendly documentation access
+    - python scripts/generate-llms-txt.py
     - uv run mkdocs build --strict --site-dir test
 
 .build_before_script: &build_before_script
@@ -46,6 +48,8 @@ Test mkdocs:
   - pip install uv
   - uv sync --frozen
   - cd $CI_PROJECT_DIR
+  # Generate llms-full.txt for LLM-friendly documentation access
+  - python scripts/generate-llms-txt.py
   - export ENABLE_PDF_EXPORT=1
   - git branch -D gh-pages || true
   - git fetch github_waldur
@@ -164,6 +168,25 @@ Tag all repositories:
     - cd waldur-mastermind/
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
     - git push origin $CI_COMMIT_TAG
+
+    # Generate OpenAPI schema from mastermind
+    - pip install uv
+    - uv sync --group dev
+    - mkdir -p $CI_PROJECT_DIR/docs/API
+    - >
+      DJANGO_SETTINGS_MODULE=waldur_core.server.doc_settings
+      uv run waldur spectacular
+      --api-version "$CI_COMMIT_TAG"
+      --file "$CI_PROJECT_DIR/docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml"
+      --fail-on-warn
+    - echo "Generated OpenAPI schema for ${CI_COMMIT_TAG}"
+
+    # Commit OpenAPI schema to waldur-docs
+    - cd $CI_PROJECT_DIR
+    - git add docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml
+    - git commit -m "Add OpenAPI schema for ${CI_COMMIT_TAG}"
+    - git push origin master
+
     - cd ../
     - rm -rf waldur-homeport || true
     - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-homeport.git"

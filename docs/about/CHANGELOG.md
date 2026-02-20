@@ -49,11 +49,6 @@ This release introduces Keycloak-based user role management for marketplace offe
 - **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.0.3...8.0.4) - MQTT removal, eduteams and HAProxy fixes
 - **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.3...8.0.4) - MQTT removal, docker-logger fix
 
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.4.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.4-diff.md)
-
 ---
 
 ## 8.0.3 - 2026-02-15
@@ -164,11 +159,6 @@ This release introduces an invoice finalization grace period, giving operators a
 - **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.0.1...8.0.2) - Maintenance updates and CI fix for homeport tag setting.
 - **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.0.1...8.0.2) - Maintenance updates only.
 
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.2.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.2-diff.md)
-
 ---
 
 ## 8.0.1 - 2026-02-03
@@ -232,13 +222,7 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 - **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/7.9.8...8.0.1) - maintenance updates only
 - **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/7.9.8...8.0.1) - maintenance updates only
 
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.1.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.1-diff.md)
-
 ---
-
 
 ## 7.9.8 - 2026-01-21
 
