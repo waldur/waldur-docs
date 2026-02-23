@@ -1,5 +1,53 @@
 # Changelog
 
+## 8.0.5 - 2026-02-23
+
+This release strengthens AI Assistant security with prompt injection detection, introduces a hypervisor placement map for OpenStack instances, and adds configurable resource naming patterns for offerings. Operators benefit from several reliability fixes addressing webhook race conditions, Keycloak migration conflicts on upgrades, and billing calculation accuracy for total-period limits.
+
+### What's New
+
+- **Prompt injection detection for AI Assistant.** Incoming messages are now scanned against configurable regex patterns and scored for injection risk. Flagged messages are logged with severity and categories, and administrators can review detection events in the support logs.
+- **Hypervisor placement map.** OpenStack tenant instance lists now include a visual placement map showing VM-to-hypervisor distribution, with batch action support for selecting multiple instances.
+- **Configurable resource naming patterns.** Offering managers can define naming patterns for the suggest-name endpoint, and suggested names now use hyphens instead of underscores for consistency.
+- **Cost breakdown dialog.** Project dashboards now include a detailed cost breakdown dialog showing per-resource rates and usage for the current billing period.
+- **Font family selection in branding.** Administrators can choose a custom font family in the theme settings to match organizational branding.
+- **Bulk user usage submission.** A new API endpoint allows submitting usage data for multiple users in a single request.
+- **OpenStack cloud demo preset.** A new demo preset is available for quickly bootstrapping an OpenStack cloud offering with backend model support.
+
+### Improvements
+
+- Constance settings now support generic enum and multi-select field types in both the backend API and the administration UI.
+- Table filter components across the frontend have been migrated to auto-generated components based on the OpenAPI specification, improving consistency and reducing manual maintenance.
+- Resource action options are now sorted alphabetically by label.
+- Branding configuration modals have been adjusted to a more appropriate size.
+- Question mapping fields are now required when configuring onboarding checklists.
+- Resource component usage rendering has been refined with clearer limit-period display logic.
+- MQTT protocol support has been removed from the Helm chart RabbitMQ configuration, simplifying the messaging setup.
+
+### Bug Fixes
+
+- Fixed EESSI software catalog versions being incorrectly mixed across different catalogs.
+- Fixed a webhook dispatch race condition in the event emit handler that could cause missed or duplicate notifications.
+- Fixed Keycloak migration conflicts that caused `InconsistentMigrationHistory` errors on databases upgraded from older releases, and made the initial migration idempotent.
+- Fixed AI Assistant returning HTTP 400 errors when regenerating or editing responses with chat storage disabled.
+- Fixed billing calculation for TOTAL limit period resources that was incorrectly multiplied by the number of days.
+- Fixed N+1 query performance issues in course accounts and support comments endpoints.
+- Fixed pricing information showing in organization and project cards when the organization has cost display disabled.
+- Added missing Lithuanian translations for order metadata labels.
+- Fixed remote eduteams configuration and HAproxy redirect annotation in the Helm chart.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [23 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.4...8.0.5) - injection detection, configurable naming patterns, billing fixes, migration safety improvements.
+- **Waldur Homeport**: [24 commits](https://github.com/waldur/waldur-homeport/compare/8.0.4...8.0.5) - placement map, cost breakdown UI, filter generation migration, branding improvements.
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.0.4...8.0.5) - MQTT removal, eduteams and HAproxy fixes.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.5.yaml)
+
+---
+
 ## 8.0.4 - 2026-02-19
 
 This release introduces Keycloak-based user role management for marketplace offerings, full OpenStack server group policy support, and a new system for auto-generating UI table filters from the OpenAPI schema. Several reliability fixes address invoice proration, resource state transitions, and mobile UI regressions.
