@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-02-23T03:05:12.174426Z
+Generated: 2026-02-23T21:19:56.200950Z
 Source: https://docs.waldur.com
 
 ---
@@ -8592,6 +8592,12 @@ Number of days to retain chat sessions before automatic deletion. Set to -1 to d
 **Default value:** 50
 
 Maximum number of past messages included in the LLM context window.
+
+#### LLM_INJECTION_ALLOWLIST
+
+**Type:** str
+
+Comma-separated allowlist phrases that bypass injection detection.
 
 ### Software catalog settings
 
@@ -18881,6 +18887,61 @@ backend_components:
 - **Optional**: Yes
 - **Description**: Fixed limit amount for limit-type components
 
+#### `description`
+
+- **Type**: String
+- **Optional**: Yes
+- **Description**: Description of the component shown in Waldur
+
+#### `min_value`
+
+- **Type**: Integer
+- **Optional**: Yes
+- **Description**: Minimum allowed value for the component
+
+#### `max_value`
+
+- **Type**: Integer
+- **Optional**: Yes
+- **Description**: Maximum allowed value for the component
+
+#### `max_available_limit`
+
+- **Type**: Integer
+- **Optional**: Yes
+- **Description**: Maximum available limit for the component
+
+#### `default_limit`
+
+- **Type**: Integer
+- **Optional**: Yes
+- **Description**: Default limit value applied when creating a resource
+
+#### `limit_period`
+
+- **Type**: String
+- **Optional**: Yes
+- **Values**: `"annual"`, `"month"`, `"quarterly"`, `"total"`
+- **Description**: Billing period for limit enforcement
+
+#### `article_code`
+
+- **Type**: String
+- **Optional**: Yes
+- **Description**: Article code for billing system integration
+
+#### `is_boolean`
+
+- **Type**: Boolean
+- **Optional**: Yes
+- **Description**: Whether the component represents a boolean (on/off) option
+
+#### `is_prepaid`
+
+- **Type**: Boolean
+- **Optional**: Yes
+- **Description**: Whether the component requires prepaid billing
+
 ### Backend-Specific Component Notes
 
 **SLURM**: Supports `cpu`, `mem`, and other custom components
@@ -21677,6 +21738,16 @@ offerings:
         unit_factor: 60000               # Waldur-to-backend conversion factor
         accounting_type: "usage"         # "usage" = metered, "limit" = quota
         label: "CPU"                     # Display label in Waldur UI
+        # Optional Waldur offering component fields:
+        # description: "CPU time"        # Component description
+        # min_value: 0                   # Minimum allowed value
+        # max_value: 10000               # Maximum allowed value
+        # max_available_limit: 5000      # Maximum available limit
+        # default_limit: 100             # Default limit value
+        # limit_period: "month"          # "annual", "month", "quarterly", "total"
+        # article_code: "CPU-001"        # Billing article code
+        # is_boolean: false              # Boolean (on/off) component
+        # is_prepaid: false              # Prepaid billing
       storage:
         limit: 1000
         measured_unit: "GB"
@@ -24491,6 +24562,78 @@ but do not support:
 - Resource management
 - User management
 - Limit setting
+
+## Historical Usage Loading
+
+The core `waldur_site_load_historical_usage` command can be used to bulk-load past usage data
+from DWDI into Waldur. This requires implementing `get_usage_report_for_period()` on the
+backend, which queries the same DWDI API endpoints but for a specific historical month instead
+of the current one.
+
+### Cluster Filtering
+
+For compute backends, the normal reporting flow reads the cluster from each Waldur resource's
+`offering_backend_id`. The historical loader does not pass Waldur resources, so you can
+configure a cluster filter in `backend_settings`:
+
+```yaml
+backend_settings:
+  cscs_dwdi_cluster: "alps"   # optional: filter historical queries by cluster
+```
+
+When set, all historical compute queries will include `cluster=["alps"]` in the API request.
+If omitted, no cluster filter is applied.
+
+### How It Works
+
+The DWDI API already supports date-range queries (`from`/`to` parameters on
+`/compute/usage-month/account` and `exact-month` on `/storage/usage-month`). The historical
+loader calls `get_usage_report_for_period(resource_backend_ids, year, month)` for each month in
+the requested range, then submits the returned usage to Waldur.
+
+### Running Historical Loads
+
+```bash
+# Load compute usage for all of 2024
+waldur_site_load_historical_usage \
+  --config /etc/waldur/cscs-dwdi-config.yaml \
+  --offering-uuid <compute-offering-uuid> \
+  --user-token <staff-or-provider-token> \
+  --start-date 2024-01-01 \
+  --end-date 2024-12-31 \
+  --no-staff-check
+
+# Load resource-level totals only (skip per-user breakdown)
+waldur_site_load_historical_usage \
+  --config /etc/waldur/cscs-dwdi-config.yaml \
+  --offering-uuid <compute-offering-uuid> \
+  --user-token <provider-token> \
+  --start-date 2024-06-01 \
+  --end-date 2024-09-30 \
+  --no-staff-check \
+  --skip-user-usage
+```
+
+### CLI Flags
+
+| Flag | Description |
+|------|-------------|
+| `--config` | Path to waldur-site-agent configuration file |
+| `--offering-uuid` | UUID of the Waldur offering to load data for |
+| `--user-token` | Waldur API token (staff or service provider) |
+| `--start-date` | Start date in YYYY-MM-DD format |
+| `--end-date` | End date in YYYY-MM-DD format |
+| `--no-staff-check` | Skip staff user validation (use with service provider tokens) |
+| `--skip-user-usage` | Only submit resource-level totals, skip per-user breakdown |
+
+### Notes
+
+- The `--no-staff-check` flag is useful when using a service provider token instead of a
+  staff token — the Waldur API enforces permissions server-side regardless
+- The `--skip-user-usage` flag skips the `marketplace_offering_users_list` API call and all
+  per-user usage submission, which can significantly speed up large loads
+- Resources must already exist in Waldur with valid `backend_id` values matching DWDI accounts
+- Maximum date range is 5 years
 
 ## Example Configurations
 
@@ -28505,11 +28648,9 @@ including resource management, usage reporting, periodic limits, and historical 
 
 ### Historical Usage Loading
 
-- **Bulk Data Import**: Load historical SLURM usage data into Waldur
-- **Monthly Processing**: Automatic monthly billing period handling
-- **Staff Authentication**: Secure historical data submission with staff tokens
-- **Data Attribution**: User-level and resource-level usage attribution
-- **Progress Tracking**: Detailed progress reporting during bulk loads
+The `waldur_site_load_historical_usage` command has been moved to the core package and is now
+available to all backend plugins. The SLURM backend implements `get_usage_report_for_period()`
+to supply historical data from SLURM accounting records.
 
 ### Dual-Mode Operation
 
@@ -28891,7 +29032,7 @@ The SLURM backend implements all required methods from `BaseBackend`:
 #### Usage Reporting
 
 - `get_usage_report(start_date, end_date)`
-- `get_historical_usage_report(start_date, end_date)`
+- `get_usage_report_for_period(resource_backend_ids, year, month)`
 
 #### Periodic Limits
 
@@ -28967,11 +29108,12 @@ plugins/slurm/tests/
 │   ├── test_mock_mastermind_signals.py
 │   ├── test_emulator_scenarios_*.py
 │   └── README.md
-├── test_historical_usage/         # Historical usage loading
+├── test_historical_usage/         # SLURM-specific historical usage tests
 │   ├── test_integration.py
 │   ├── test_slurm_client_historical.py
 │   ├── test_slurm_backend_historical.py
 │   └── README.md
+│   # Note: Loader and backend utils tests moved to core tests/
 ├── test_diagnostics.py            # Account diagnostics CLI
 ├── test_order_processing.py       # Core functionality
 ├── test_reporing.py               # Usage reporting
@@ -29223,23 +29365,22 @@ production HPC environments.
 
 # SLURM Historical Usage Tests
 
-This directory contains comprehensive tests for the SLURM historical usage functionality using the `slurm-emulator` package.
+This directory contains SLURM-specific tests for historical usage functionality using
+the `slurm-emulator` package. Backend-agnostic tests (loader command and backend utils)
+have been moved to the core test suite at `tests/test_historical_usage_loader.py` and
+`tests/test_backend_utils_historical.py`.
 
 ## Test Structure
 
-### Core Test Files
+### Test Files
 
-- **`conftest.py`** - Pytest fixtures and configuration for historical usage tests
+- **`conftest.py`** - Pytest fixtures and configuration (emulator setup, test data)
 
 - **`test_slurm_client_historical.py`** - Tests for `SlurmClient.get_historical_usage_report()`
 
-- **`test_slurm_backend_historical.py`** - Tests for `SlurmBackend.get_historical_usage_report()`
+- **`test_slurm_backend_historical.py`** - Tests for `SlurmBackend.get_usage_report_for_period()`
 
-- **`test_historical_usage_loader.py`** - Tests for the historical usage loading command
-
-- **`test_backend_utils_historical.py`** - Tests for backend utility functions
-
-- **`test_integration.py`** - End-to-end integration tests
+- **`test_integration.py`** - End-to-end integration tests with SLURM emulator
 
 - **`README.md`** - This documentation file
 
@@ -62452,6 +62593,7 @@ def available_checklists(self, request):
 
 ## Chat
 
+- chat_injection_detected
 - chat_session_accessed
 - chat_thread_accessed
 
