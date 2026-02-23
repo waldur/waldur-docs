@@ -151,15 +151,18 @@ Tag all repositories:
         tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md
         mv /tmp/final_changelog.md docs/about/CHANGELOG.md
       fi
+    # Update publiccode.yml with release version and date
     - |
-      if ! git diff --quiet docs/about/CHANGELOG.md; then
-        git --no-pager diff docs/about/CHANGELOG.md | head -50 || true
-        git add docs/about/CHANGELOG.md
-        git commit -m "Update changelog for $CI_COMMIT_TAG with enhanced analysis"
-        git --no-pager show --stat
+      sed -i "s/^softwareVersion: .*/softwareVersion: ${VERSION}/" publiccode.yml
+      sed -i "s/^releaseDate: .*/releaseDate: $(date +%Y-%m-%d)/" publiccode.yml
+    - |
+      git add publiccode.yml docs/about/CHANGELOG.md
+      if ! git diff --cached --quiet; then
+        git --no-pager diff --cached --stat
+        git commit -m "Release ${CI_COMMIT_TAG}: update changelog and publiccode.yml"
         git push -o ci.skip origin master
       else
-        echo "No changelog changes to commit (entry was pre-created)."
+        echo "No release metadata changes to commit."
       fi
     - cd ../
   script:
