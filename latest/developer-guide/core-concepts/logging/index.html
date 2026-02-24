@@ -93,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#event-logging" class="md-skip">
+        <a href="#logging" class="md-skip">
           Skip to content
         </a>
       
@@ -6023,6 +6023,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -6039,6 +6057,86 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#structured-logging-structlog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structured logging (structlog)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Structured logging (structlog)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-structured-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding structured fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customizing-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customizing logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event logging
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -12778,6 +12876,75 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#structured-logging-structlog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structured logging (structlog)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Structured logging (structlog)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-structured-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding structured fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customizing-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customizing logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event logging
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -12793,7 +12960,105 @@
 
 
 
-<h1 id="event-logging">Event logging</h1>
+<h1 id="logging">Logging</h1>
+<h2 id="structured-logging-structlog">Structured logging (structlog)</h2>
+<p>Waldur uses <a href="https://www.structlog.org/">structlog</a> via <a href="https://django-structlog.readthedocs.io/">django-structlog</a> for structured logging. All logs are emitted as JSON in production (or readable console output in development when <code>WALDUR_DEV_LOGS=1</code>).</p>
+<p>Existing stdlib logging calls work without changes: <code>logging.getLogger(__name__)</code> and <code>logger.info("Order %s created", order.uuid)</code> are processed through structlog's <code>foreign_pre_chain</code> and produce structured output with timestamp, level, logger name, request_id, user_uuid (in HTTP context), etc.</p>
+<p>Example JSON output:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Order abc-123-def has been created."</span><span class="p">,</span><span class="w"> </span><span class="nt">"timestamp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-02-18T14:30:00.123456Z"</span><span class="p">,</span><span class="w"> </span><span class="nt">"level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"info"</span><span class="p">,</span><span class="w"> </span><span class="nt">"logger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"waldur_mastermind.marketplace.views"</span><span class="p">,</span><span class="w"> </span><span class="nt">"request_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3a8f801c-3fc5-4257-a78a-9a567c937561"</span><span class="p">,</span><span class="w"> </span><span class="nt">"user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="configuration">Configuration</h3>
+<ul>
+<li><strong>Console</strong>: JSON (default) or colored console output when <code>WALDUR_DEV_LOGS=1</code></li>
+<li><strong>Database</strong>: SystemLog table receives JSON messages via <code>DatabaseLogHandler</code></li>
+<li><strong>Celery</strong>: Workers use structlog with task context (request_id, task_id)</li>
+</ul>
+<p>Example Celery task log:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="nt">"event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Order abc-123 sync completed."</span><span class="p">,</span><span class="w"> </span><span class="nt">"timestamp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-02-18T14:31:00.456789Z"</span><span class="p">,</span><span class="w"> </span><span class="nt">"level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"info"</span><span class="p">,</span><span class="w"> </span><span class="nt">"logger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"waldur_mastermind.marketplace.tasks"</span><span class="p">,</span><span class="w"> </span><span class="nt">"task_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6b11fd80-3cdf-4de5-acc2-3fd4633aa654"</span><span class="p">,</span><span class="w"> </span><span class="nt">"request_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3a8f801c-3fc5-4257-a78a-9a567c937561"</span><span class="p">,</span><span class="w"> </span><span class="nt">"user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="adding-structured-fields">Adding structured fields</h3>
+<p>For explicit structured fields (e.g. for log aggregation queries), use <code>extra</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Order created"</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"order_uuid"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">uuid</span><span class="p">)})</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The <code>event_logger</code> (see below) automatically includes <code>event_type</code> and <code>event_context</code> in logs.</p>
+<h3 id="customizing-logging">Customizing logging</h3>
+<p>Override <code>LOGGING</code> in your <code>settings.py</code> to add file output, syslog, or external aggregators. Extend the base config (e.g. via <code>copy.deepcopy</code>) rather than replacing it entirely. The snippets below can be combined.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging.handlers</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_core.server.base_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOGGING</span> <span class="k">as</span> <span class="n">BASE_LOGGING</span>
+
+<span class="n">LOGGING</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">BASE_LOGGING</span><span class="p">)</span>
+
+<span class="c1"># Add file handler (JSON, suitable for log aggregators)</span>
+<span class="n">LOGGING</span><span class="p">[</span><span class="s2">"handlers"</span><span class="p">][</span><span class="s2">"file"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"class"</span><span class="p">:</span> <span class="s2">"logging.handlers.WatchedFileHandler"</span><span class="p">,</span>
+    <span class="s2">"filename"</span><span class="p">:</span> <span class="s2">"/var/log/waldur/app.log"</span><span class="p">,</span>
+    <span class="s2">"formatter"</span><span class="p">:</span> <span class="s2">"structlog_json"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">LOGGING</span><span class="p">[</span><span class="s2">"root"</span><span class="p">][</span><span class="s2">"handlers"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"file"</span><span class="p">)</span>
+
+<span class="c1"># Optional: forward to syslog (e.g. for centralized logging)</span>
+<span class="c1"># LOGGING["handlers"]["syslog"] = {</span>
+<span class="c1">#     "class": "logging.handlers.SysLogHandler",</span>
+<span class="c1">#     "address": "/dev/log",  # or ("logserver.example.com", 514) for remote</span>
+<span class="c1">#     "facility": logging.handlers.SysLogHandler.LOG_LOCAL0,</span>
+<span class="c1">#     "formatter": "structlog_json",</span>
+<span class="c1"># }</span>
+<span class="c1"># LOGGING["root"]["handlers"].append("syslog")</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Event-only forwarding to a log server</strong> (e.g. for audit pipelines): use filters <code>RequireEvent</code> / <code>RequireNotEvent</code> from <code>waldur_core.logging.log</code> to separate events from general logs:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">LOGGING</span><span class="p">[</span><span class="s2">"filters"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"is-event"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"()"</span><span class="p">:</span> <span class="s2">"waldur_core.logging.log.RequireEvent"</span><span class="p">},</span>
+    <span class="s2">"is-not-event"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"()"</span><span class="p">:</span> <span class="s2">"waldur_core.logging.log.RequireNotEvent"</span><span class="p">},</span>
+<span class="p">}</span>
+<span class="n">LOGGING</span><span class="p">[</span><span class="s2">"handlers"</span><span class="p">][</span><span class="s2">"events_tcp"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"class"</span><span class="p">:</span> <span class="s2">"waldur_core.logging.log.TCPEventHandler"</span><span class="p">,</span>
+    <span class="s2">"host"</span><span class="p">:</span> <span class="s2">"logserver.example.com"</span><span class="p">,</span>
+    <span class="s2">"port"</span><span class="p">:</span> <span class="mi">5959</span><span class="p">,</span>
+    <span class="s2">"filters"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"is-event"</span><span class="p">],</span>
+<span class="p">}</span>
+<span class="c1"># Note: TCPEventHandler uses its own JSON formatter; it does not support external formatters.</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Per-logger level overrides</strong>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">LOGGING</span><span class="p">[</span><span class="s2">"loggers"</span><span class="p">][</span><span class="s2">"waldur_core"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"level"</span><span class="p">:</span> <span class="s2">"DEBUG"</span><span class="p">}</span>
+<span class="n">LOGGING</span><span class="p">[</span><span class="s2">"loggers"</span><span class="p">][</span><span class="s2">"djangosaml2"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"level"</span><span class="p">:</span> <span class="s2">"DEBUG"</span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<hr>
+<h2 id="event-logging">Event logging</h2>
 <p>Event log entries is something an end user will see. In order to improve user experience the messages should be written in a consistent way.</p>
 <p>Here are the guidelines for writing good log events.</p>
 <ul>
@@ -12880,7 +13145,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-15
+    2026-02-24
   </span>
 
     
