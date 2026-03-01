@@ -37,6 +37,7 @@ class MultiRepoChangelogGenerator:
         }
         self.temp_dir = None
         self.local_repos = local_repos or {}
+        self._remote_ref_cache = {}
 
     def run_command(self, cmd, cwd=None):
         """Run command and return output"""
@@ -61,6 +62,42 @@ class MultiRepoChangelogGenerator:
         clone_cmd = f"git clone --depth 100 {repo_url} {repo_path}"
         self.run_command(clone_cmd)
         return repo_path
+
+    def fetch_and_get_remote_ref(self, repo_path):
+        """Fetch origin and return the remote primary branch ref (e.g. origin/master)"""
+        cache_key = str(repo_path)
+        if cache_key in self._remote_ref_cache:
+            return self._remote_ref_cache[cache_key]
+        self.run_command("git fetch origin", cwd=repo_path)
+        remote_ref = None
+        # Detect primary branch name from remote
+        try:
+            ref = self.run_command(
+                "git symbolic-ref refs/remotes/origin/HEAD", cwd=repo_path
+            )
+            if ref:
+                # e.g. "refs/remotes/origin/master" -> "origin/master"
+                remote_ref = ref.replace("refs/remotes/", "")
+        except Exception:
+            pass
+        # Fallback: try common branch names
+        if not remote_ref:
+            for branch in ("master", "main", "develop"):
+                try:
+                    result = subprocess.run(
+                        f"git rev-parse origin/{branch}",
+                        shell=True, cwd=repo_path,
+                        capture_output=True, text=True, check=True,
+                    )
+                    if result.stdout.strip():
+                        remote_ref = f"origin/{branch}"
+                        break
+                except subprocess.CalledProcessError:
+                    continue
+        if not remote_ref:
+            remote_ref = "HEAD"
+        self._remote_ref_cache[cache_key] = remote_ref
+        return remote_ref
 
     def check_tag_exists(self, repo_path, tag):
         """Check if a tag exists in the repository"""
@@ -130,10 +167,11 @@ class MultiRepoChangelogGenerator:
 
         if not self.check_tag_exists(repo_path, current_tag):
             if self.local_repos:
-                # For local repos, use HEAD since we're preparing a release
-                # before the tag exists
-                actual_current = 'HEAD'
-                print(f"    Tag {current_tag} not found in {repo_path.name}, using HEAD", file=sys.stderr)
+                # For local repos, fetch and use origin's primary branch
+                # since the tag doesn't exist yet (pre-release)
+                remote_ref = self.fetch_and_get_remote_ref(repo_path)
+                actual_current = remote_ref
+                print(f"    Tag {current_tag} not found in {repo_path.name}, using {remote_ref}", file=sys.stderr)
             else:
                 actual_current = self.find_closest_tag(repo_path, current_tag)
                 if not actual_current:
@@ -337,11 +375,11 @@ class MultiRepoChangelogGenerator:
 
     def get_file_changes(self, repo_path, prev_tag, current_tag):
         """Get file change statistics excluding auto-generated files"""
-        # Resolve actual refs (use HEAD for missing current tag on local repos)
+        # Resolve actual refs (use origin's primary branch for missing current tag on local repos)
         actual_prev = prev_tag
         actual_current = current_tag
         if not self.check_tag_exists(repo_path, current_tag):
-            actual_current = 'HEAD' if self.local_repos else None
+            actual_current = self.fetch_and_get_remote_ref(repo_path) if self.local_repos else None
         if not self.check_tag_exists(repo_path, prev_tag):
             actual_prev = self.find_closest_tag(repo_path, prev_tag)
         if not actual_prev or not actual_current:
