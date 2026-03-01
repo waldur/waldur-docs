@@ -1,5 +1,62 @@
 # Changelog
 
+## 8.0.6-rc.1 - 2026-03-01
+
+### Highlights
+
+This release focuses on platform hardening and operator control. Administrators gain new feature flags to tailor the UI for different audiences — concealing audit logs, resource metadata, or billing information as needed. Several N+1 and slow database queries in marketplace endpoints have been resolved, improving responsiveness under load. The backend has also migrated to structured logging for better observability in production.
+
+### What's New
+
+- Administrators can restrict allowed SSH key types via Constance settings, with restrictions displayed to users before key import. Optionally, support tickets can be created automatically when users add or remove SSH keys.
+- New feature flags let operators conceal audit logs, resource metadata, and marketplace access from end users.
+- Staff users can now create and edit user accounts through a step-by-step wizard with password management.
+- Identity service domain (ISD) managers can create agent identities independently and view offering users scoped to their ISD overlap.
+- Offering managers can now set order states directly.
+- A visual layout selector allows administrators to preview and switch between UI layouts from the configuration page.
+- Admin actions are available to hard-delete soft-deleted projects and terminated resources.
+- Software catalog endpoints now support comprehensive filtering and ordering, with matching UI filters.
+- Helm chart supports pulling Docker images by digest for immutable deployments.
+
+### Improvements
+
+- Locale-aware number formatting is applied across resource usage displays.
+- Table toolbar alignment and a clear "X" icon on the filter-clear button improve the filtering experience.
+- Invitation custom message text field expanded to 2000 characters.
+- Terminated projects are excluded from customer visibility.
+- Permission requests can be resubmitted by users and deleted by staff.
+- Suggested resource names are now lowercased automatically.
+- AI assistant thread title generation moved server-side for better reliability.
+- The backend has migrated to structured logging via structlog, including Django request and Celery loggers.
+- Token refresh database load is reduced using an adaptive debounce interval.
+- OIDC client secret is now stored as a secret field rather than plain string.
+- Credit import auto-corrects end_date to the first day of the next month.
+- "My offerings" tab is hidden when the organization has no non-billable offerings.
+- Large-scale filter component refactoring replaces hand-written filters with auto-generated versions across the UI.
+- Updated Lithuanian, Estonian, and German translations.
+
+### Bug Fixes
+
+- Fixed slow database query in the marketplace orders endpoint.
+- Fixed N+1 queries in service provider project permissions and component usage endpoints.
+- Fixed resource duplication check that was preventing any remote resources from being created.
+- Fixed resource component quota display showing wrong units and duplicate labels.
+- Fixed order details and resource creation summary showing pricing when billing info is concealed.
+- Fixed image name parsing/grouping and increased flavor page size in VM deployment.
+- Fixed missing return in offering attributes schema generation.
+- Fixed corrupt NULL constance values causing crashes instead of being handled gracefully.
+- Fixed GLAuth UID number generation to be scoped per offering.
+- Removed incorrect default "Pending consumer approval" state filter from order lists.
+- Fixed Ansible server group policy type and added instance resolver.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [46 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6-rc.1) - Feature flags, SSH key controls, identity management, DB performance fixes, structured logging.
+- **Waldur Homeport**: [35 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6-rc.1) - User management wizard, UI concealment flags, filter generator migration, quota display fixes.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6-rc.1) - Docker image digest support.
+
+---
+
 ## 8.0.5 - 2026-02-23
 
 This release strengthens AI Assistant security with prompt injection detection, introduces a hypervisor placement map for OpenStack instances, and adds configurable resource naming patterns for offerings. Operators benefit from several reliability fixes addressing webhook race conditions, Keycloak migration conflicts on upgrades, and billing calculation accuracy for total-period limits.
