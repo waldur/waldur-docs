@@ -5793,6 +5793,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#required-user-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required User Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required User Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#waldur-a-token-waldur_api_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waldur A Token (waldur_api_token)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waldur-b-token-target_api_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waldur B Token (target_api_token)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#component-target-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6121,6 +6160,34 @@
     
   
     TEST PLAN
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tests/e2e/integration-test-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration test report
   
 
     
@@ -13477,6 +13544,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#required-user-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required User Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required User Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#waldur-a-token-waldur_api_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waldur A Token (waldur_api_token)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waldur-b-token-target_api_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waldur B Token (target_api_token)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#component-target-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14331,6 +14437,52 @@ component are summed: <code>source = SUM(target_value / factor)</code>.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="required-user-permissions">Required User Permissions</h3>
+<p>The plugin uses two API tokens that connect to different Waldur instances.
+Each token must belong to a user with the appropriate permissions.</p>
+<h4 id="waldur-a-token-waldur_api_token">Waldur A Token (<code>waldur_api_token</code>)</h4>
+<p>This token authenticates against Waldur A (the source instance). The user must have
+<strong>OFFERING.MANAGER</strong> role on the offering specified by <code>waldur_offering_uuid</code>.</p>
+<p>Required capabilities:</p>
+<ul>
+<li>List and manage offering users on offering A</li>
+<li>List and process marketplace orders on offering A</li>
+<li>Report component usages on offering A</li>
+<li>Register agent identities (requires <code>CREATE_OFFERING</code> permission on the
+  offering's customer, granted to <code>OFFERING.MANAGER</code>)</li>
+<li>Subscribe to STOMP events for the offering (when <code>stomp_enabled: true</code>)</li>
+</ul>
+<h4 id="waldur-b-token-target_api_token">Waldur B Token (<code>target_api_token</code>)</h4>
+<p>This token authenticates against Waldur B (the target instance). The user must be:</p>
+<ul>
+<li><strong>Customer owner</strong> on their own organization (can be a non-SP customer separate
+  from the service provider that owns the offering)</li>
+<li><strong>ISD identity manager</strong> (<code>is_identity_manager: true</code> with <code>managed_isds</code> set)</li>
+</ul>
+<p>The user does <strong>not</strong> need OFFERING.MANAGER or customer owner on the SP that owns
+the target offering. Access to offering B's offering users is granted via ISD
+overlap (<code>managed_isds</code> intersecting offering users' <code>active_isds</code>).</p>
+<p>Required capabilities:</p>
+<ul>
+<li>List offering users on offering B (via ISD identity manager overlap)</li>
+<li>Create and manage marketplace orders on offering B</li>
+<li>Create and manage projects under <code>target_customer_uuid</code></li>
+<li>Resolve users on Waldur B (via CUID, email, or username)</li>
+<li>Add and remove users from projects on Waldur B</li>
+<li>Read component usages from resources on Waldur B</li>
+</ul>
+<p>If <code>target_stomp_enabled: true</code>, agent identity registration uses the ISD manager
+path (no OFFERING.MANAGER needed):</p>
+<ul>
+<li>Register agent identities on the target STOMP offering via IDM path</li>
+<li>Create event subscriptions and subscription queues on Waldur B</li>
+</ul>
+<p>If <code>identity_bridge_source</code> is set (identity bridge mode), the user additionally
+requires:</p>
+<ul>
+<li>POST to <code>/api/identity-bridge/</code> on Waldur B</li>
+<li>POST to <code>/api/identity-bridge/remove/</code> on Waldur B</li>
+</ul>
 <h3 id="component-target-configuration">Component Target Configuration</h3>
 <p>Each source component can optionally define <code>target_components</code>:</p>
 <table>
@@ -14447,7 +14599,8 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
 <span class="normal">23</span>
 <span class="normal">24</span>
 <span class="normal">25</span>
-<span class="normal">26</span></pre></div></td><td class="code"><div><pre><span></span><code>plugins/waldur/
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code>plugins/waldur/
 ├── pyproject.toml                         # Package metadata + entry points
 ├── README.md
 ├── waldur_site_agent_waldur/
@@ -14466,6 +14619,7 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
     ├── test_client.py                     # Client tests (20 tests)
     ├── test_component_mapping.py          # Mapper tests (22 tests)
     ├── test_integration.py                # Integration tests (56 tests)
+    ├── test_integration_username_sync.py  # Username sync + STOMP event routing (18 tests)
     ├── test_target_event_handler.py       # Target event handler tests
     ├── test_username_backend.py           # Identity bridge username backend tests (22 tests)
     └── e2e/                               # End-to-end tests against live instances
@@ -14709,6 +14863,11 @@ birth date, nationality, and other profile fields configured via <code>OfferingU
 <td>Integration tests against real single Waldur instance</td>
 </tr>
 <tr>
+<td><code>test_integration_username_sync.py</code></td>
+<td>18</td>
+<td>Username sync, STOMP event routing, periodic reconciliation</td>
+</tr>
+<tr>
 <td><code>e2e/test_e2e_federation.py</code></td>
 <td>4</td>
 <td>REST polling lifecycle (create, update, terminate)</td>
@@ -14813,7 +14972,7 @@ birth date, nationality, and other profile fields configured via <code>OfferingU
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-19
+    2026-02-28
   </span>
 
     

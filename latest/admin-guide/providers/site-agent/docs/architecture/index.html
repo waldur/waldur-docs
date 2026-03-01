@@ -3515,6 +3515,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#event-processing-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event processing architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Event processing architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-processing-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event processing flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#periodic-reconciliation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Periodic reconciliation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stomp-subscription-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STOMP subscription types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#key-plugin-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5886,6 +5936,34 @@
     
   
     TEST PLAN
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plugins/waldur/tests/e2e/integration-test-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration test report
   
 
     
@@ -13070,6 +13148,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#event-processing-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event processing architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Event processing architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-processing-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event processing flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#periodic-reconciliation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Periodic reconciliation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stomp-subscription-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STOMP subscription types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#key-plugin-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13325,6 +13453,106 @@ graph TB
     class ORDER,REPORT,SYNC,EVENT agent
     class PLUGINS plugin
     class WALDUR,BACKENDS,STOMP external</code></pre>
+<h2 id="event-processing-architecture">Event processing architecture</h2>
+<p>The <code>event_process</code> mode uses WebSocket STOMP connections to receive real-time events from Waldur Mastermind
+via RabbitMQ. The main loop combines event-driven processing with periodic reconciliation to ensure data
+consistency even when STOMP messages are missed.</p>
+<h3 id="event-processing-flow">Event processing flow</h3>
+<pre class="mermaid"><code>---
+config:
+  layout: elk
+---
+graph TB
+    subgraph "Startup"
+        INIT[Run Initial&lt;br/&gt;Offering Processing]
+        REG[Register Agent Identity&lt;br/&gt;&amp; Event Subscriptions]
+        STOMP_CONN[Connect WebSocket STOMP&lt;br/&gt;per Object Type]
+    end
+
+    subgraph "Main Loop (1-min tick)"
+        TICK[Wake Up]
+        HC_CHECK{Health Check&lt;br/&gt;interval elapsed?&lt;br/&gt;default: 30 min}
+        HC[Send Health Checks&lt;br/&gt;for All Offerings]
+        RC_CHECK{Reconciliation&lt;br/&gt;interval elapsed?&lt;br/&gt;default: 60 min}
+        RC[Run Username&lt;br/&gt;Reconciliation]
+        SLEEP[Sleep 60s]
+    end
+
+    subgraph "STOMP Event Handlers (daemon threads)"
+        ORDER_H[Order Handler&lt;br/&gt;process orders]
+        MEMBER_H[Membership Handler&lt;br/&gt;sync roles &amp; users]
+        OU_H[OfferingUser Handler&lt;br/&gt;sync usernames]
+        IMPORT_H[Resource Import&lt;br/&gt;Handler]
+        LIMITS_H[Periodic Limits&lt;br/&gt;Handler]
+    end
+
+    subgraph "External Systems"
+        WALDUR[Waldur Mastermind&lt;br/&gt;REST API]
+        RMQ[RabbitMQ&lt;br/&gt;WebSocket STOMP]
+        BACKEND[Backend System&lt;br/&gt;SLURM / Waldur B / etc.]
+    end
+
+    %% Startup flow
+    INIT --&gt; REG --&gt; STOMP_CONN
+
+    %% Main loop
+    STOMP_CONN --&gt; TICK
+    TICK --&gt; HC_CHECK
+    HC_CHECK --&gt;|Yes| HC --&gt; RC_CHECK
+    HC_CHECK --&gt;|No| RC_CHECK
+    RC_CHECK --&gt;|Yes| RC --&gt; SLEEP
+    RC_CHECK --&gt;|No| SLEEP
+    SLEEP --&gt; TICK
+
+    %% STOMP event handlers
+    RMQ --&gt;|events| ORDER_H
+    RMQ --&gt;|events| MEMBER_H
+    RMQ --&gt;|events| OU_H
+    RMQ --&gt;|events| IMPORT_H
+    RMQ --&gt;|events| LIMITS_H
+
+    %% External connections
+    ORDER_H --&gt; WALDUR
+    MEMBER_H --&gt; WALDUR
+    OU_H --&gt; WALDUR
+    HC --&gt; WALDUR
+    RC --&gt; WALDUR
+    RC --&gt; BACKEND
+    ORDER_H --&gt; BACKEND
+    MEMBER_H --&gt; BACKEND
+    STOMP_CONN --&gt; RMQ
+
+    %% Styling - Dark mode compatible colors
+    classDef startup fill:#1E3A8A,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF
+    classDef loop fill:#B45309,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF
+    classDef handler fill:#581C87,stroke:#8B5CF6,stroke-width:2px,color:#FFFFFF
+    classDef external fill:#C2410C,stroke:#F97316,stroke-width:2px,color:#FFFFFF
+    classDef decision fill:#065F46,stroke:#10B981,stroke-width:2px,color:#FFFFFF
+
+    class INIT,REG,STOMP_CONN startup
+    class TICK,HC,RC,SLEEP loop
+    class ORDER_H,MEMBER_H,OU_H,IMPORT_H,LIMITS_H handler
+    class WALDUR,RMQ,BACKEND external
+    class HC_CHECK,RC_CHECK decision</code></pre>
+<h3 id="periodic-reconciliation">Periodic reconciliation</h3>
+<p>Event-driven processing can miss updates due to transient STOMP disconnections or message loss.
+The main loop includes a periodic reconciliation timer (default: 60 minutes, configurable via
+<code>WALDUR_SITE_AGENT_RECONCILIATION_PERIOD_MINUTES</code> environment variable) that runs
+<code>sync_offering_user_usernames()</code> for all STOMP-enabled offerings with a membership sync backend.</p>
+<p>This reconciliation is lightweight — it only syncs usernames, not a full membership sync — and is
+idempotent, so running it has no side effects when data is already consistent.</p>
+<h3 id="stomp-subscription-types">STOMP subscription types</h3>
+<p>Each offering can subscribe to multiple object types depending on configuration:</p>
+<ul>
+<li><strong>ORDER</strong>: Order processing events (requires <code>order_processing_backend</code>)</li>
+<li><strong>USER_ROLE</strong>: Role grant/revoke events (requires <code>membership_sync_backend</code>)</li>
+<li><strong>RESOURCE</strong>: Resource lifecycle events (requires <code>membership_sync_backend</code>)</li>
+<li><strong>SERVICE_ACCOUNT</strong>: Service account events (requires <code>membership_sync_backend</code>)</li>
+<li><strong>COURSE_ACCOUNT</strong>: Course account events (requires <code>membership_sync_backend</code>)</li>
+<li><strong>OFFERING_USER</strong>: Offering user create/update events (requires <code>membership_sync_backend</code>)</li>
+<li><strong>IMPORTABLE_RESOURCES</strong>: Resource import events (requires <code>resource_import_enabled</code>)</li>
+<li><strong>RESOURCE_PERIODIC_LIMITS</strong>: Periodic limit updates (requires <code>periodic_limits.enabled</code>)</li>
+</ul>
 <h2 id="key-plugin-features">Key plugin features</h2>
 <ul>
 <li><strong>Automatic Discovery</strong>: Plugins are automatically discovered via Python entry points</li>
@@ -13483,7 +13711,7 @@ graph TB
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-18
+    2026-02-28
   </span>
 
     

@@ -5675,6 +5675,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../admin-guide/providers/site-agent/plugins/waldur/tests/e2e/integration-test-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration test report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6248,6 +6276,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Agent Identity Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agent-identity-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Identity Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agent-identity-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Identity Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -13513,6 +13569,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Agent Identity Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agent-identity-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Identity Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agent-identity-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Identity Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -14259,6 +14343,48 @@ changed fields are included.</p>
 <li><strong>POST /api/marketplace-site-agent-identities/{uuid}/register_service/</strong> - Register service within agent</li>
 <li><strong>POST /api/marketplace-site-agent-identities/{uuid}/register_event_subscription/</strong> - Register event subscription for agent</li>
 </ul>
+<h4 id="agent-identity-permissions">Agent Identity Permissions</h4>
+<p>Agent identity management uses a four-tier permission model checked by <code>_can_manage_offering_agent()</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Who</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Staff</td>
+<td><code>user.is_staff</code></td>
+<td>All offerings, all identities</td>
+</tr>
+<tr>
+<td>2. Customer owner</td>
+<td><code>CREATE_OFFERING</code> permission on offering's customer</td>
+<td>All identities for customer's offerings</td>
+</tr>
+<tr>
+<td>3. Offering manager</td>
+<td><code>UPDATE_OFFERING</code> permission on the offering</td>
+<td>All identities for that offering</td>
+</tr>
+<tr>
+<td>4. ISD identity manager</td>
+<td><code>is_identity_manager=True</code> + non-empty <code>managed_isds</code></td>
+<td>Own identities only, non-archived/draft offerings</td>
+</tr>
+</tbody>
+</table>
+<p>ISD identity managers can create agent identities for offerings in Active, Paused, or Unavailable states without requiring pre-existing offering users. This enables bootstrapping: agents create offering users, so requiring offering users to register agents would be a chicken-and-egg problem.</p>
+<h4 id="agent-identity-ownership">Agent Identity Ownership</h4>
+<p>Each <code>AgentIdentity</code> has a <code>created_by</code> field tracking the user who created it. This field is used to scope ISD identity manager access:</p>
+<ul>
+<li><strong>Create</strong>: Any ISD identity manager can create an agent identity for an allowed offering</li>
+<li><strong>Update/Delete</strong>: ISD identity managers can only modify or delete their own agent identities (<code>created_by == request.user</code>)</li>
+<li><strong>List</strong>: ISD identity managers only see their own agent identities in query results</li>
+</ul>
+<p>Staff, customer owners, and offering managers are not restricted by <code>created_by</code> — they can manage all agent identities within their scope.</p>
 <h3 id="agent-services">Agent Services</h3>
 <ul>
 <li><strong>GET /api/marketplace-site-agent-services/</strong> - List agent services</li>
@@ -14597,7 +14723,7 @@ changed fields are included.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-15
+    2026-02-28
   </span>
 
     
