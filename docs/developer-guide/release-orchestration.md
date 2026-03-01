@@ -223,7 +223,7 @@ Examples: `8.0.6-rc.1`, `8.0.6-rc.2`, `10.0.0-rc.1`
 ### Creating an RC release
 
 ```bash
-# Using the local release script (skips changelog automatically)
+# Using the local release script
 ./scripts/release.sh 8.0.6-rc.1
 
 # Or manually
@@ -240,7 +240,7 @@ git push origin 8.0.6-rc.1
 | Update Docker Compose `.env.example` | Yes | Yes |
 | Test Docker Compose deployment | Yes | Yes |
 | Test Helm deployment | Yes | Yes |
-| Generate changelog | Yes | **Skipped** |
+| Generate changelog | Yes | **Yes** (replaced by stable) |
 | Update `publiccode.yml` | Yes | **Skipped** |
 | Generate OpenAPI schema | Yes | **Skipped** |
 | Release SDKs (Python, JS, Go) | Yes | **Skipped** |

@@ -15,10 +15,11 @@ VERSION=$1
 IS_RC=false
 if [[ "$VERSION" =~ -rc\. ]]; then
   IS_RC=true
-  echo "(RC release — changelog generation will be skipped)"
+  BASE_VERSION="${VERSION%%-rc.*}"
+  echo "(RC release — changelog will be generated; stable $BASE_VERSION will replace it)"
 fi
 
-PREV_TAG=$(grep -m 1 "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | sed 's/^## \([^ ]*\).*/\1/')
+PREV_TAG=$(grep "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
 DATE=$(date +%Y-%m-%d)
 
 echo "=== Waldur Release $VERSION ==="
@@ -52,8 +53,6 @@ fi
 echo "  Tag $VERSION does not exist in any repository. Good to proceed."
 echo ""
 
-if [ "$IS_RC" = "false" ]; then
-
 # Step 1: Collect commit data from local repos
 echo "[1/5] Collecting commit data from local repositories..."
 LOCAL_REPOS='{"waldur-mastermind":"'"$PROJECT_DIR"'/../waldur-mastermind","waldur-homeport":"'"$PROJECT_DIR"'/../waldur-homeport","waldur-helm":"'"$PROJECT_DIR"'/../waldur-helm","waldur-docker-compose":"'"$PROJECT_DIR"'/../waldur-docker-compose"}'
@@ -74,6 +73,13 @@ PROMPT_TEMPLATE=$(cat "$SCRIPT_DIR/prompts/changelog-prompt.md")
 FULL_PROMPT="${PROMPT_TEMPLATE//\{VERSION\}/$VERSION}"
 FULL_PROMPT="${FULL_PROMPT//\{PREV_VERSION\}/$PREV_TAG}"
 FULL_PROMPT="${FULL_PROMPT//\{DATE\}/$DATE}"
+
+# For RC releases, append a note to skip the OpenAPI Resources section
+if [ "$IS_RC" = "true" ]; then
+    FULL_PROMPT="${FULL_PROMPT}
+
+IMPORTANT: This is an RC (release candidate) release. Do NOT include the OpenAPI Resources section (OpenAPI schema links, API changes diff) because no schema is generated for RC releases."
+fi
 
 COMMIT_DATA=$(cat /tmp/waldur-release-data.json)
 
@@ -123,6 +129,33 @@ esac
 echo ""
 echo "[3/5] Updating CHANGELOG.md..."
 
+# Remove any existing RC entries for the same base version before prepending
+# For RC: removes prior RCs (e.g., 8.0.6-rc.1 when adding 8.0.6-rc.2)
+# For stable: removes all RCs (e.g., 8.0.6-rc.* when adding 8.0.6)
+if [ "$IS_RC" = "false" ]; then
+    BASE_VERSION="$VERSION"
+fi
+python3 -c "
+import re, sys
+base = '${BASE_VERSION}'
+pattern = re.compile(r'^## ' + re.escape(base) + r'-rc\.\d+\b')
+lines = open(sys.argv[1]).readlines()
+out, skip = [], False
+for line in lines:
+    if pattern.match(line):
+        skip = True
+        continue
+    if skip and line.strip() == '---':
+        skip = False
+        continue
+    if skip and line.startswith('## '):
+        skip = False
+    if not skip:
+        out.append(line)
+open(sys.argv[1], 'w').writelines(out)
+" "$PROJECT_DIR/docs/about/CHANGELOG.md"
+echo "  Removed any existing RC entries for $BASE_VERSION"
+
 # Prepend new entry
 {
     echo "# Changelog"
@@ -139,44 +172,22 @@ git commit -m "Update changelog for $VERSION"
 
 echo "  Changelog committed."
 
-else
-echo "[1/2] RC release — skipping changelog generation (steps 1-3)."
-fi
-
 # Tag and push
-if [ "$IS_RC" = "false" ]; then
-    STEP_TAG="4/5"
-    STEP_DONE="5/5"
-else
-    STEP_TAG="2/2"
-    STEP_DONE=""
-fi
-
 echo ""
-echo "[$STEP_TAG] Tagging waldur-docs with $VERSION..."
-if [ "$IS_RC" = "false" ]; then
-    read -p "Push changelog commit and tag $VERSION to origin? [y/n] " push_choice
-else
-    read -p "Push tag $VERSION to origin? [y/n] " push_choice
-fi
+echo "[4/5] Tagging waldur-docs with $VERSION..."
+read -p "Push changelog commit and tag $VERSION to origin? [y/n] " push_choice
 if [[ "$push_choice" != "y" && "$push_choice" != "Y" ]]; then
-    if [ "$IS_RC" = "false" ]; then
-        echo "Aborted. Changelog is committed locally. You can push manually."
-    else
-        echo "Aborted. You can tag and push manually."
-    fi
+    echo "Aborted. Changelog is committed locally. You can push manually."
     exit 0
 fi
 
-if [ "$IS_RC" = "false" ]; then
-    git push origin master
-fi
+git push origin master
 cd "$PROJECT_DIR"
 git tag -a "$VERSION" -m "Release $VERSION"
 git push origin "$VERSION"
 
 echo ""
-echo "Done!"
+echo "[5/5] Done!"
 echo ""
 echo "Tag $VERSION pushed. The CI pipeline will now:"
 echo "  - Tag waldur-mastermind, waldur-homeport, waldur-helm, waldur-docker-compose"
@@ -184,7 +195,8 @@ echo "  - Bump versions in helm Chart.yaml and docker-compose .env.example"
 if [ "$IS_RC" = "false" ]; then
     echo "  - Release SDKs"
     echo "  - Build and deploy documentation"
-    echo "  - Generate changelog and update publiccode.yml"
+    echo "  - Generate changelog (if not already committed) and update publiccode.yml"
 else
-    echo "  (RC release — SDKs, docs deployment, changelog, and publiccode.yml are skipped)"
+    echo "  - Generate changelog (if not already committed)"
+    echo "  (RC release — SDKs, docs deployment, and publiccode.yml are skipped)"
 fi

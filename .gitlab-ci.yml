@@ -163,35 +163,56 @@ Tag all repositories:
     - |
       if [[ "$CI_COMMIT_TAG" =~ -rc\. ]]; then
         export IS_RC=true
-        echo "RC release detected — skipping changelog, OpenAPI schema, and publiccode.yml"
+        echo "RC release detected — skipping OpenAPI schema and publiccode.yml"
       fi
-    - PREV_TAG=$(grep -m 1 "^## " docs/about/CHANGELOG.md | sed 's/^## \([^ ]*\).*/\1/')
+    - PREV_TAG=$(grep "^## " docs/about/CHANGELOG.md | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
     # Check if changelog entry already exists (e.g., created by local release script)
     - |
-      if [ "$IS_RC" != "true" ]; then
-        if grep -q "^## ${VERSION}" docs/about/CHANGELOG.md; then
-          echo "Changelog entry for ${VERSION} already exists — skipping auto-generation."
-        else
-          echo "No existing entry — generating changelog automatically..."
-          echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
-          python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
-          echo "Generated enhanced changelog entry:"
-          cat /tmp/new_entry.md
-          # Update changelog with rotation (keep only last 20 entries)
-          if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
-            echo "Rotating old changelog entries to archive..."
-            head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
-            mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
-          fi
-          # Add new entry to top of changelog
-          echo -e "# Changelog\n" > /tmp/final_changelog.md
-          cat /tmp/new_entry.md >> /tmp/final_changelog.md
-          echo "" >> /tmp/final_changelog.md
-          tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md
-          mv /tmp/final_changelog.md docs/about/CHANGELOG.md
-        fi
+      if grep -q "^## ${VERSION}" docs/about/CHANGELOG.md; then
+        echo "Changelog entry for ${VERSION} already exists — skipping auto-generation."
       else
-        echo "RC release — skipping changelog generation."
+        echo "No existing entry — generating changelog automatically..."
+        echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
+        python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
+        echo "Generated enhanced changelog entry:"
+        cat /tmp/new_entry.md
+        # Remove any existing RC entries for the same base version
+        if [ "$IS_RC" = "true" ]; then
+          BASE_VERSION="${VERSION%%-rc.*}"
+        else
+          BASE_VERSION="$VERSION"
+        fi
+        python3 -c "
+import re, sys
+base = sys.argv[2]
+pattern = re.compile(r'^## ' + re.escape(base) + r'-rc\.\d+\b')
+lines = open(sys.argv[1]).readlines()
+out, skip = [], False
+for line in lines:
+    if pattern.match(line):
+        skip = True
+        continue
+    if skip and line.strip() == '---':
+        skip = False
+        continue
+    if skip and line.startswith('## '):
+        skip = False
+    if not skip:
+        out.append(line)
+open(sys.argv[1], 'w').writelines(out)
+" docs/about/CHANGELOG.md "$BASE_VERSION"
+        # Update changelog with rotation (keep only last 20 entries)
+        if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
+          echo "Rotating old changelog entries to archive..."
+          head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
+          mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
+        fi
+        # Add new entry to top of changelog
+        echo -e "# Changelog\n" > /tmp/final_changelog.md
+        cat /tmp/new_entry.md >> /tmp/final_changelog.md
+        echo "" >> /tmp/final_changelog.md
+        tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md
+        mv /tmp/final_changelog.md docs/about/CHANGELOG.md
       fi
     # Update publiccode.yml with release version and date
     - |
@@ -210,6 +231,15 @@ Tag all repositories:
           git push -o ci.skip origin master
         else
           echo "No release metadata changes to commit."
+        fi
+      else
+        git add docs/about/CHANGELOG.md
+        if ! git diff --cached --quiet; then
+          git --no-pager diff --cached --stat
+          git commit -m "Release ${CI_COMMIT_TAG}: update changelog"
+          git push -o ci.skip origin master
+        else
+          echo "No changelog changes to commit."
         fi
       fi
     - cd ../
