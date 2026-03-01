@@ -22,6 +22,9 @@ fi
 PREV_TAG=$(grep "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
 DATE=$(date +%Y-%m-%d)
 
+CACHE_DIR="$PROJECT_DIR/.cache/release/$VERSION"
+mkdir -p "$CACHE_DIR"
+
 echo "=== Waldur Release $VERSION ==="
 echo "Previous version: $PREV_TAG"
 echo ""
@@ -57,10 +60,24 @@ echo ""
 echo "[1/5] Collecting commit data from local repositories..."
 LOCAL_REPOS='{"waldur-mastermind":"'"$PROJECT_DIR"'/../waldur-mastermind","waldur-homeport":"'"$PROJECT_DIR"'/../waldur-homeport","waldur-helm":"'"$PROJECT_DIR"'/../waldur-helm","waldur-docker-compose":"'"$PROJECT_DIR"'/../waldur-docker-compose"}'
 
-python3 "$SCRIPT_DIR/generate-enhanced-changelog-multiRepo.py" "$VERSION" "$PREV_TAG" \
-    --json-output --local-repos "$LOCAL_REPOS" > /tmp/waldur-release-data.json
+collect_commit_data() {
+    python3 "$SCRIPT_DIR/generate-enhanced-changelog-multiRepo.py" "$VERSION" "$PREV_TAG" \
+        --json-output --local-repos "$LOCAL_REPOS" > "$CACHE_DIR/commit-data.json"
+}
 
-CORE_COMMITS=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(d['summary_stats']['core_commits'])" < /tmp/waldur-release-data.json)
+if [ -f "$CACHE_DIR/commit-data.json" ]; then
+    CORE_COMMITS=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(d['summary_stats']['core_commits'])" < "$CACHE_DIR/commit-data.json")
+    echo "  Found cached commit data ($CORE_COMMITS core commits)"
+    read -p "  Reuse cached commit data? [Y/n] " reuse_data
+    if [[ "$reuse_data" =~ ^[Nn] ]]; then
+        echo "  Re-collecting..."
+        collect_commit_data
+    fi
+else
+    collect_commit_data
+fi
+
+CORE_COMMITS=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(d['summary_stats']['core_commits'])" < "$CACHE_DIR/commit-data.json")
 echo "  Collected $CORE_COMMITS core commits"
 echo ""
 
@@ -81,61 +98,84 @@ if [ "$IS_RC" = "true" ]; then
 IMPORTANT: This is an RC (release candidate) release. Do NOT include the OpenAPI Resources section (OpenAPI schema links, API changes diff) because no schema is generated for RC releases."
 fi
 
-COMMIT_DATA=$(cat /tmp/waldur-release-data.json)
+COMMIT_DATA=$(cat "$CACHE_DIR/commit-data.json")
 
 generate_changelog() {
     printf '%s\n\nHere is the commit data:\n\n```json\n%s\n```\n' "$FULL_PROMPT" "$COMMIT_DATA" | \
-        env -u CLAUDECODE claude --print > /tmp/waldur-changelog-entry.md
+        env -u CLAUDECODE claude --print > "$CACHE_DIR/changelog-entry.md"
 }
 
-generate_changelog
+if [ -f "$CACHE_DIR/changelog-entry.md" ]; then
+    echo ""
+    echo "  Found cached changelog entry:"
+    echo ""
+    cat "$CACHE_DIR/changelog-entry.md"
+    echo ""
+    read -p "  Reuse cached changelog? [Y/n/edit] " reuse_cl
+    case $reuse_cl in
+        [Nn])
+            echo "  Regenerating..."
+            generate_changelog
+            ;;
+        edit|e)
+            ${EDITOR:-vim} "$CACHE_DIR/changelog-entry.md"
+            ;;
+    esac
+else
+    generate_changelog
 
-# Show result and ask for confirmation
-echo ""
-echo "=== Generated Changelog Entry ==="
-echo ""
-cat /tmp/waldur-changelog-entry.md
-echo ""
-echo "================================="
-echo ""
-read -p "Accept this changelog? [y/edit/regenerate/quit] " choice
+    # Show result and ask for confirmation
+    echo ""
+    echo "=== Generated Changelog Entry ==="
+    echo ""
+    cat "$CACHE_DIR/changelog-entry.md"
+    echo ""
+    echo "================================="
+    echo ""
+    read -p "Accept this changelog? [y/edit/regenerate/quit] " choice
 
-case $choice in
-    y|Y|yes)
-        ;;
-    edit|e)
-        ${EDITOR:-vim} /tmp/waldur-changelog-entry.md
-        ;;
-    regenerate|r)
-        echo "Regenerating..."
-        generate_changelog
-        echo ""
-        cat /tmp/waldur-changelog-entry.md
-        echo ""
-        read -p "Accept now? [y/edit/quit] " choice2
-        case $choice2 in
-            edit|e) ${EDITOR:-vim} /tmp/waldur-changelog-entry.md ;;
-            y|Y) ;;
-            *) echo "Aborted."; exit 1 ;;
-        esac
-        ;;
-    *)
-        echo "Aborted."
-        exit 1
-        ;;
-esac
+    case $choice in
+        y|Y|yes)
+            ;;
+        edit|e)
+            ${EDITOR:-vim} "$CACHE_DIR/changelog-entry.md"
+            ;;
+        regenerate|r)
+            echo "Regenerating..."
+            generate_changelog
+            echo ""
+            cat "$CACHE_DIR/changelog-entry.md"
+            echo ""
+            read -p "Accept now? [y/edit/quit] " choice2
+            case $choice2 in
+                edit|e) ${EDITOR:-vim} "$CACHE_DIR/changelog-entry.md" ;;
+                y|Y) ;;
+                *) echo "Aborted."; exit 1 ;;
+            esac
+            ;;
+        *)
+            echo "Aborted."
+            exit 1
+            ;;
+    esac
+fi
 
 # Step 3: Commit changelog to waldur-docs
 echo ""
 echo "[3/5] Updating CHANGELOG.md..."
 
-# Remove any existing RC entries for the same base version before prepending
-# For RC: removes prior RCs (e.g., 8.0.6-rc.1 when adding 8.0.6-rc.2)
-# For stable: removes all RCs (e.g., 8.0.6-rc.* when adding 8.0.6)
-if [ "$IS_RC" = "false" ]; then
-    BASE_VERSION="$VERSION"
-fi
-python3 -c "
+cd "$PROJECT_DIR"
+
+if git log -1 --format="%s" | grep -q "Update changelog for $VERSION"; then
+    echo "  Changelog already committed. Skipping commit step."
+else
+    # Remove any existing RC entries for the same base version before prepending
+    # For RC: removes prior RCs (e.g., 8.0.6-rc.1 when adding 8.0.6-rc.2)
+    # For stable: removes all RCs (e.g., 8.0.6-rc.* when adding 8.0.6)
+    if [ "$IS_RC" = "false" ]; then
+        BASE_VERSION="$VERSION"
+    fi
+    python3 -c "
 import re, sys
 base = '${BASE_VERSION}'
 pattern = re.compile(r'^## ' + re.escape(base) + r'-rc\.\d+\b')
@@ -154,23 +194,23 @@ for line in lines:
         out.append(line)
 open(sys.argv[1], 'w').writelines(out)
 " "$PROJECT_DIR/docs/about/CHANGELOG.md"
-echo "  Removed any existing RC entries for $BASE_VERSION"
+    echo "  Removed any existing RC entries for $BASE_VERSION"
 
-# Prepend new entry
-{
-    echo "# Changelog"
-    echo ""
-    cat /tmp/waldur-changelog-entry.md
-    echo ""
-    tail -n +3 "$PROJECT_DIR/docs/about/CHANGELOG.md"  # Skip existing "# Changelog\n" header
-} > /tmp/final-changelog.md
-mv /tmp/final-changelog.md "$PROJECT_DIR/docs/about/CHANGELOG.md"
+    # Prepend new entry
+    {
+        echo "# Changelog"
+        echo ""
+        cat "$CACHE_DIR/changelog-entry.md"
+        echo ""
+        tail -n +3 "$PROJECT_DIR/docs/about/CHANGELOG.md"  # Skip existing "# Changelog\n" header
+    } > /tmp/final-changelog.md
+    mv /tmp/final-changelog.md "$PROJECT_DIR/docs/about/CHANGELOG.md"
 
-cd "$PROJECT_DIR"
-git add docs/about/CHANGELOG.md
-git commit -m "Update changelog for $VERSION"
+    git add docs/about/CHANGELOG.md
+    git commit -m "Update changelog for $VERSION"
 
-echo "  Changelog committed."
+    echo "  Changelog committed."
+fi
 
 # Tag and push
 echo ""
