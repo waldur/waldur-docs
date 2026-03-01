@@ -11,6 +11,13 @@ if [ $# -lt 1 ]; then
 fi
 
 VERSION=$1
+
+IS_RC=false
+if [[ "$VERSION" =~ -rc\. ]]; then
+  IS_RC=true
+  echo "(RC release — changelog generation will be skipped)"
+fi
+
 PREV_TAG=$(grep -m 1 "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | sed 's/^## \([^ ]*\).*/\1/')
 DATE=$(date +%Y-%m-%d)
 
@@ -44,6 +51,8 @@ if [ -n "$TAG_EXISTS_IN" ]; then
 fi
 echo "  Tag $VERSION does not exist in any repository. Good to proceed."
 echo ""
+
+if [ "$IS_RC" = "false" ]; then
 
 # Step 1: Collect commit data from local repos
 echo "[1/5] Collecting commit data from local repositories..."
@@ -130,24 +139,52 @@ git commit -m "Update changelog for $VERSION"
 
 echo "  Changelog committed."
 
-# Step 4: Tag and push
+else
+echo "[1/2] RC release — skipping changelog generation (steps 1-3)."
+fi
+
+# Tag and push
+if [ "$IS_RC" = "false" ]; then
+    STEP_TAG="4/5"
+    STEP_DONE="5/5"
+else
+    STEP_TAG="2/2"
+    STEP_DONE=""
+fi
+
 echo ""
-echo "[4/5] Tagging waldur-docs with $VERSION..."
-read -p "Push changelog commit and tag $VERSION to origin? [y/n] " push_choice
+echo "[$STEP_TAG] Tagging waldur-docs with $VERSION..."
+if [ "$IS_RC" = "false" ]; then
+    read -p "Push changelog commit and tag $VERSION to origin? [y/n] " push_choice
+else
+    read -p "Push tag $VERSION to origin? [y/n] " push_choice
+fi
 if [[ "$push_choice" != "y" && "$push_choice" != "Y" ]]; then
-    echo "Aborted. Changelog is committed locally. You can push manually."
+    if [ "$IS_RC" = "false" ]; then
+        echo "Aborted. Changelog is committed locally. You can push manually."
+    else
+        echo "Aborted. You can tag and push manually."
+    fi
     exit 0
 fi
 
-git push origin master
+if [ "$IS_RC" = "false" ]; then
+    git push origin master
+fi
+cd "$PROJECT_DIR"
 git tag -a "$VERSION" -m "Release $VERSION"
 git push origin "$VERSION"
 
 echo ""
-echo "[5/5] Done!"
+echo "Done!"
 echo ""
 echo "Tag $VERSION pushed. The CI pipeline will now:"
 echo "  - Tag waldur-mastermind, waldur-homeport, waldur-helm, waldur-docker-compose"
 echo "  - Bump versions in helm Chart.yaml and docker-compose .env.example"
-echo "  - Release SDKs"
-echo "  - Build and deploy documentation"
+if [ "$IS_RC" = "false" ]; then
+    echo "  - Release SDKs"
+    echo "  - Build and deploy documentation"
+    echo "  - Generate changelog and update publiccode.yml"
+else
+    echo "  (RC release — SDKs, docs deployment, changelog, and publiccode.yml are skipped)"
+fi

@@ -81,14 +81,14 @@ Build tagged pages:
 Test Docker Compose deployment before tagging:
   stage: test
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
   trigger:
     waldur/waldur-docker-compose
 
 Test Helm deployment before tagging:
   stage: test
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
   trigger:
     waldur/waldur-helm
 
@@ -109,11 +109,44 @@ Test changelog generation:
     - echo "Generated enhanced changelog entry:"
     - cat /tmp/new_entry.md
 
+Test RC release logic:
+  image: registry.hpc.ut.ee/mirror/library/python:3.12
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  variables:
+    ANY_RELEASE_RE: '^\d+\.\d+\.\d+(-rc\.\d+)?$'
+    STABLE_RE: '^\d+\.\d+\.\d+$'
+  script:
+    - echo "=== Test 1 — Any-release regex accepts stable and RC tags ==="
+    - echo "8.0.6"      | grep -qP "$ANY_RELEASE_RE" && echo "  PASS 8.0.6"
+    - echo "8.0.6-rc.1" | grep -qP "$ANY_RELEASE_RE" && echo "  PASS 8.0.6-rc.1"
+    - echo "8.0.6-rc.12"| grep -qP "$ANY_RELEASE_RE" && echo "  PASS 8.0.6-rc.12"
+    - echo "10.0.0"     | grep -qP "$ANY_RELEASE_RE" && echo "  PASS 10.0.0"
+    - echo "=== Test 2 — Any-release regex rejects invalid tags ==="
+    - echo "8.0.6-beta.1" | grep -qP "$ANY_RELEASE_RE" && exit 1 || echo "  PASS rejected 8.0.6-beta.1"
+    - echo "8.0.6-alpha"  | grep -qP "$ANY_RELEASE_RE" && exit 1 || echo "  PASS rejected 8.0.6-alpha"
+    - echo "8.0.6rc1"     | grep -qP "$ANY_RELEASE_RE" && exit 1 || echo "  PASS rejected 8.0.6rc1"
+    - echo "abc"          | grep -qP "$ANY_RELEASE_RE" && exit 1 || echo "  PASS rejected abc"
+    - echo ""             | grep -qP "$ANY_RELEASE_RE" && exit 1 || echo "  PASS rejected (empty)"
+    - echo "=== Test 3 — Stable-only regex rejects RC tags ==="
+    - echo "8.0.6-rc.1"  | grep -qP "$STABLE_RE" && exit 1 || echo "  PASS rejected 8.0.6-rc.1"
+    - echo "8.0.6-rc.12" | grep -qP "$STABLE_RE" && exit 1 || echo "  PASS rejected 8.0.6-rc.12"
+    - echo "=== Test 4 — Stable-only regex accepts stable tags ==="
+    - echo "8.0.6"  | grep -qP "$STABLE_RE" && echo "  PASS 8.0.6"
+    - echo "10.0.0" | grep -qP "$STABLE_RE" && echo "  PASS 10.0.0"
+    - echo "=== Test 5 — IS_RC detection ==="
+    - '[[ "8.0.6-rc.1"  =~ -rc\. ]] && echo "  PASS 8.0.6-rc.1 detected as RC"'
+    - '[[ "8.0.6-rc.12" =~ -rc\. ]] && echo "  PASS 8.0.6-rc.12 detected as RC"'
+    - '[[ "8.0.6"  =~ -rc\. ]] && exit 1 || echo "  PASS 8.0.6 not detected as RC"'
+    - '[[ "10.0.0" =~ -rc\. ]] && exit 1 || echo "  PASS 10.0.0 not detected as RC"'
+    - echo "=== All RC release logic tests passed ==="
+
 Tag all repositories:
   image: registry.hpc.ut.ee/mirror/library/python:3.12
   stage: deploy
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
   before_script:
     - apt-get update && apt-get install -y git libsasl2-dev libldap2-dev
     - git config --global user.name "$GITLAB_USER_NAME"
@@ -127,42 +160,57 @@ Tag all repositories:
     - export VERSION=${CI_COMMIT_TAG}
     - echo $CI_COMMIT_TAG_MESSAGE
     - echo $CI_RELEASE_DESCRIPTION
+    - |
+      if [[ "$CI_COMMIT_TAG" =~ -rc\. ]]; then
+        export IS_RC=true
+        echo "RC release detected — skipping changelog, OpenAPI schema, and publiccode.yml"
+      fi
     - PREV_TAG=$(grep -m 1 "^## " docs/about/CHANGELOG.md | sed 's/^## \([^ ]*\).*/\1/')
     # Check if changelog entry already exists (e.g., created by local release script)
     - |
-      if grep -q "^## ${VERSION}" docs/about/CHANGELOG.md; then
-        echo "Changelog entry for ${VERSION} already exists — skipping auto-generation."
-      else
-        echo "No existing entry — generating changelog automatically..."
-        echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
-        python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
-        echo "Generated enhanced changelog entry:"
-        cat /tmp/new_entry.md
-        # Update changelog with rotation (keep only last 20 entries)
-        if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
-          echo "Rotating old changelog entries to archive..."
-          head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
-          mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
+      if [ "$IS_RC" != "true" ]; then
+        if grep -q "^## ${VERSION}" docs/about/CHANGELOG.md; then
+          echo "Changelog entry for ${VERSION} already exists — skipping auto-generation."
+        else
+          echo "No existing entry — generating changelog automatically..."
+          echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
+          python3 scripts/generate-enhanced-changelog-multiRepo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
+          echo "Generated enhanced changelog entry:"
+          cat /tmp/new_entry.md
+          # Update changelog with rotation (keep only last 20 entries)
+          if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
+            echo "Rotating old changelog entries to archive..."
+            head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
+            mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
+          fi
+          # Add new entry to top of changelog
+          echo -e "# Changelog\n" > /tmp/final_changelog.md
+          cat /tmp/new_entry.md >> /tmp/final_changelog.md
+          echo "" >> /tmp/final_changelog.md
+          tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md
+          mv /tmp/final_changelog.md docs/about/CHANGELOG.md
         fi
-        # Add new entry to top of changelog
-        echo -e "# Changelog\n" > /tmp/final_changelog.md
-        cat /tmp/new_entry.md >> /tmp/final_changelog.md
-        echo "" >> /tmp/final_changelog.md
-        tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md
-        mv /tmp/final_changelog.md docs/about/CHANGELOG.md
+      else
+        echo "RC release — skipping changelog generation."
       fi
     # Update publiccode.yml with release version and date
     - |
-      sed -i "s/^softwareVersion: .*/softwareVersion: ${VERSION}/" publiccode.yml
-      sed -i "s/^releaseDate: .*/releaseDate: $(date +%Y-%m-%d)/" publiccode.yml
-    - |
-      git add publiccode.yml docs/about/CHANGELOG.md
-      if ! git diff --cached --quiet; then
-        git --no-pager diff --cached --stat
-        git commit -m "Release ${CI_COMMIT_TAG}: update changelog and publiccode.yml"
-        git push -o ci.skip origin master
+      if [ "$IS_RC" != "true" ]; then
+        sed -i "s/^softwareVersion: .*/softwareVersion: ${VERSION}/" publiccode.yml
+        sed -i "s/^releaseDate: .*/releaseDate: $(date +%Y-%m-%d)/" publiccode.yml
       else
-        echo "No release metadata changes to commit."
+        echo "RC release — skipping publiccode.yml update."
+      fi
+    - |
+      if [ "$IS_RC" != "true" ]; then
+        git add publiccode.yml docs/about/CHANGELOG.md
+        if ! git diff --cached --quiet; then
+          git --no-pager diff --cached --stat
+          git commit -m "Release ${CI_COMMIT_TAG}: update changelog and publiccode.yml"
+          git push -o ci.skip origin master
+        else
+          echo "No release metadata changes to commit."
+        fi
       fi
     - cd ../
   script:
@@ -172,22 +220,25 @@ Tag all repositories:
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE" || echo "Tag $CI_COMMIT_TAG already exists in waldur-mastermind"
     - git push origin $CI_COMMIT_TAG || echo "Tag $CI_COMMIT_TAG already pushed to waldur-mastermind"
 
-    # Generate OpenAPI schema from mastermind
-    - pip install uv
-    - uv sync --group dev
-    - mkdir -p $CI_PROJECT_DIR/docs/API
-    - >
-      DJANGO_SETTINGS_MODULE=waldur_core.server.doc_settings
-      uv run waldur spectacular
-      --api-version "$CI_COMMIT_TAG"
-      --file "$CI_PROJECT_DIR/docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml"
-      --fail-on-warn
-    - echo "Generated OpenAPI schema for ${CI_COMMIT_TAG}"
-
-    # Commit OpenAPI schema to waldur-docs
-    - cd $CI_PROJECT_DIR
-    - git add docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml
-    - git diff --cached --quiet && echo "OpenAPI schema already committed" || (git commit -m "Add OpenAPI schema for ${CI_COMMIT_TAG}" && git pull --rebase origin master && git push -o ci.skip origin master)
+    # Generate OpenAPI schema from mastermind (skip for RC releases)
+    - |
+      if [ "$IS_RC" != "true" ]; then
+        pip install uv
+        uv sync --group dev
+        mkdir -p $CI_PROJECT_DIR/docs/API
+        DJANGO_SETTINGS_MODULE=waldur_core.server.doc_settings \
+          uv run waldur spectacular \
+          --api-version "$CI_COMMIT_TAG" \
+          --file "$CI_PROJECT_DIR/docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml" \
+          --fail-on-warn
+        echo "Generated OpenAPI schema for ${CI_COMMIT_TAG}"
+        # Commit OpenAPI schema to waldur-docs
+        cd $CI_PROJECT_DIR
+        git add docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml
+        git diff --cached --quiet && echo "OpenAPI schema already committed" || (git commit -m "Add OpenAPI schema for ${CI_COMMIT_TAG}" && git pull --rebase origin master && git push -o ci.skip origin master)
+      else
+        echo "RC release — skipping OpenAPI schema generation."
+      fi
 
     - cd ../
     - rm -rf waldur-homeport || true
