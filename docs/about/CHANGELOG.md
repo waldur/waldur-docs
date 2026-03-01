@@ -2,60 +2,57 @@
 
 ## 8.0.6-rc.1 - 2026-03-01
 
-### Highlights
-
-This release focuses on platform hardening and operator control. Administrators gain new feature flags to tailor the UI for different audiences — concealing audit logs, resource metadata, or billing information as needed. Several N+1 and slow database queries in marketplace endpoints have been resolved, improving responsiveness under load. The backend has also migrated to structured logging for better observability in production.
+This release brings significant improvements to access control flexibility, allowing operators to selectively conceal audit logs, resource metadata, and marketplace from end users via new feature flags. Staff users gain a full user management wizard with password support, and SSH key handling is now configurable with type restrictions and automatic support ticket creation. Several database query performance issues have been resolved, and the backend has migrated to structured logging.
 
 ### What's New
 
-- Administrators can restrict allowed SSH key types via Constance settings, with restrictions displayed to users before key import. Optionally, support tickets can be created automatically when users add or remove SSH keys.
-- New feature flags let operators conceal audit logs, resource metadata, and marketplace access from end users.
-- Staff users can now create and edit user accounts through a step-by-step wizard with password management.
-- Identity service domain (ISD) managers can create agent identities independently and view offering users scoped to their ISD overlap.
-- Offering managers can now set order states directly.
-- A visual layout selector allows administrators to preview and switch between UI layouts from the configuration page.
-- Admin actions are available to hard-delete soft-deleted projects and terminated resources.
-- Software catalog endpoints now support comprehensive filtering and ordering, with matching UI filters.
-- Helm chart supports pulling Docker images by digest for immutable deployments.
+- **Staff user management wizard**: Staff can now create and edit users through a step-by-step wizard with password management support.
+- **SSH key governance**: Administrators can restrict allowed SSH key types via Constance settings, and optionally trigger support ticket creation when users add or remove SSH keys. The UI shows allowed key types before import.
+- **Visibility feature flags**: New toggles allow operators to conceal audit logs, resource metadata, and the marketplace from end users. Billing information is properly hidden across order details and resource creation summaries.
+- **Identity service domain (ISD) management**: ISD managers can create agent identities without requiring offering users, list offering users scoped by ISD overlap, and receive scoped offering user events.
+- **Offering managers can set order states** directly, enabling more flexible order workflow management.
+- **Visual layout selector** for administrators to configure the application layout through a graphical interface.
+- **Admin hard-delete actions** for soft-deleted projects and terminated resources.
+- **Docker image digest pulling** is now supported in the Helm chart for stricter image pinning.
+- **Software catalog filtering**: Comprehensive filters and ordering added to software catalog API endpoints and UI.
 
 ### Improvements
 
-- Locale-aware number formatting is applied across resource usage displays.
-- Table toolbar alignment and a clear "X" icon on the filter-clear button improve the filtering experience.
-- Invitation custom message text field expanded to 2000 characters.
+- **Structured logging**: Backend migrated to structlog, routing Django server, request, and axes loggers through the new pipeline.
+- **Locale-aware number formatting** applied across all resource usage displays.
+- **Token refresh performance**: Adaptive debounce interval reduces database load from frequent token refreshes.
+- **N+1 query fixes** in service provider permissions and component usage endpoints, plus a slow query fix in the marketplace orders endpoint.
+- Invitation custom message text limit extended to 2000 characters.
+- Permission requests can now be resubmitted; staff can delete them.
 - Terminated projects are excluded from customer visibility.
-- Permission requests can be resubmitted by users and deleted by staff.
-- Suggested resource names are now lowercased automatically.
+- OIDC client secret field properly marked as a secret type.
 - AI assistant thread title generation moved server-side for better reliability.
-- The backend has migrated to structured logging via structlog, including Django request and Celery loggers.
-- Token refresh database load is reduced using an adaptive debounce interval.
-- OIDC client secret is now stored as a secret field rather than plain string.
-- Credit import auto-corrects end_date to the first day of the next month.
+- Suggested resource names are now automatically lowercased.
+- Removed default "Pending consumer approval" filter from order lists.
 - "My offerings" tab is hidden when the organization has no non-billable offerings.
-- Large-scale filter component refactoring replaces hand-written filters with auto-generated versions across the UI.
-- Updated Lithuanian, Estonian, and German translations.
+- Table toolbar search and filter alignment improvements, with a clear X icon on the filter reset button.
+- Large-scale migration of manual filter components to a generated filter system across the UI.
+- Lithuanian, Estonian, and German translation updates.
 
 ### Bug Fixes
 
-- Fixed slow database query in the marketplace orders endpoint.
-- Fixed N+1 queries in service provider project permissions and component usage endpoints.
-- Fixed resource duplication check that was preventing any remote resources from being created.
-- Fixed resource component quota display showing wrong units and duplicate labels.
-- Fixed order details and resource creation summary showing pricing when billing info is concealed.
-- Fixed image name parsing/grouping and increased flavor page size in VM deployment.
+- Fixed resource duplication check that was preventing any new resources from being created.
+- Fixed GLAuth uidnumber generation to be correctly scoped per offering.
+- Fixed OpenAPI schema generation error in proposal views.
 - Fixed missing return in offering attributes schema generation.
-- Fixed corrupt NULL constance values causing crashes instead of being handled gracefully.
-- Fixed GLAuth UID number generation to be scoped per offering.
-- Removed incorrect default "Pending consumer approval" state filter from order lists.
-- Fixed Ansible server group policy type and added instance resolver.
+- Fixed resource component quota display showing incorrect units and duplicate labels.
+- Fixed image name parsing and grouping in the instance deploy wizard.
+- Fixed corrupt NULL constance values causing application crashes.
+- Fixed credit import to auto-correct end_date to the first day of the next month.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [46 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6-rc.1) - Feature flags, SSH key controls, identity management, DB performance fixes, structured logging.
-- **Waldur Homeport**: [35 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6-rc.1) - User management wizard, UI concealment flags, filter generator migration, quota display fixes.
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6-rc.1) - Docker image digest support.
+- **Waldur Mastermind**: [46 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6-rc.1) - feature flags, SSH key governance, ISD management, structured logging, query performance fixes.
+- **Waldur Homeport**: [35 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6-rc.1) - user management wizard, visibility controls, filter generator migration, usage formatting, UI fixes.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6-rc.1) - Docker image digest pulling support.
 
 ---
+
 
 ## 8.0.5 - 2026-02-23
 
