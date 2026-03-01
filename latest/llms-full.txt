@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-01T03:05:06.093748Z
+Generated: 2026-03-01T09:55:18.536357Z
 Source: https://docs.waldur.com
 
 ---
@@ -13265,12 +13265,6 @@ Entitlements use `OfferingUser.username` (not Waldur usernames).
 ### Error Handling
 
 SCIM operations use graceful error handling: errors are logged as warnings, failed operations don't block other users, missing configuration causes tasks to skip silently.
-
-## Related Documentation
-
-- [Configuration Guide](../../developer-guide/admin/configuration-guide.md#scim-settings) - SCIM configuration settings
-- [Scheduled Tasks](../../developer-guide/admin/scheduled.md) - Background job schedules
-- [Marketplace Documentation](../../developer-guide/core-concepts/marketplace.md) - Marketplace resources and offerings
 
 ---
 
@@ -76047,248 +76041,261 @@ This document describes the automated release orchestration system that coordina
 
 ## Overview
 
-The `waldur-docs` repository serves as the central orchestration hub for Waldur releases. When a semantic version tag (e.g., `7.6.8`) is applied to this repository, it triggers an automated workflow that:
+The `waldur-docs` repository serves as the central orchestration hub for Waldur releases. When a version tag (e.g., `8.0.6`) is pushed to this repository, it triggers a GitLab CI pipeline that:
 
-1. **Updates documentation** with versioned API schemas and changelogs
-2. **Tags all repositories** across the Waldur ecosystem
-3. **Updates version references** in deployment configurations
-4. **Releases SDKs** with updated version numbers
-5. **Generates comprehensive changelogs** with cross-repository links
+1. **Tests deployment configurations** against downstream repos
+2. **Generates and commits a changelog** with cross-repository diff links
+3. **Updates `publiccode.yml`** with the new version and date
+4. **Tags all downstream repositories** with the same version
+5. **Updates version references** in Helm charts and Docker Compose configs
+6. **Generates an OpenAPI schema** from waldur-mastermind
+7. **Releases SDKs** (Python, JS/TS, Go) with updated version numbers
+8. **Deploys versioned documentation** to GitHub Pages
 
 ## Release flow diagram
 
 ```mermaid
 flowchart TD
-  A[Create semantic version tag<br/>on waldur-docs] --> B{GitLab CI pipeline<br/>triggered}
-  
+  A[Run scripts/release.sh VERSION<br/>or push tag manually] --> B{GitLab CI pipeline<br/>triggered on tag}
+
   B --> C[Test stage]
-  C --> C1[Lint markdown files]
-  C --> C2[Test MkDocs build]
-  C --> C3[Test Docker Compose<br/>deployment]
-  C --> C4[Test Helm<br/>deployment]
-  C --> C5[Test changelog<br/>generation]
-  
+  C --> C1[Test Docker Compose<br/>deployment<br/><i>triggers waldur-docker-compose</i>]
+  C --> C2[Test Helm<br/>deployment<br/><i>triggers waldur-helm</i>]
+
   C1 --> D{All tests pass?}
   C2 --> D
-  C3 --> D
-  C4 --> D
-  C5 --> D
-  
+
   D -->|No| E[Pipeline fails]
   D -->|Yes| F[Deploy stage]
-  
-  F --> F1[Build & deploy<br/>documentation]
-  F --> F2[Tag all repositories]
-  F --> F3[Release SDKs]
-  F --> F4[Update configurations]
-  F --> F5[Generate changelog]
-  
-  F1 --> F1a[Deploy latest docs<br/>to GitHub Pages]
-  F1 --> F1b[Deploy tagged version<br/>with mike]
-  
-  F2 --> F2a[waldur-mastermind]
-  F2 --> F2b[waldur-homeport]
-  F2 --> F2c[waldur-prometheus-exporter]
-  
-  F3 --> F3a[Python SDK<br/>update pyproject.toml]
-  F3 --> F3b[JS/TS SDK<br/>update package.json]
-  F3 --> F3c[Go SDK<br/>git tag only]
-  
-  F4 --> F4a[Helm charts<br/>update Chart.yaml & values.yaml]
-  F4 --> F4b[Docker Compose<br/>update .env.example]
-  
-  F5 --> F5a[Parse previous version<br/>from CHANGELOG.md]
-  F5 --> F5b[Generate diff links<br/>for all repos]
-  F5 --> F5c[Add SBOM & API<br/>schema references]
-  F5 --> F5d[Commit updated<br/>changelog]
-  
-  F1a --> G[Release complete]
-  F1b --> G
-  F2a --> G
-  F2b --> G
-  F2c --> G
-  F3a --> G
-  F3b --> G
-  F3c --> G
-  F4a --> G
-  F4b --> G
-  F5d --> G
-  
+
+  F --> F1["<b>Tag all repositories</b> job<br/>(single job, sequential steps)"]
+  F --> F2[Release Python SDK<br/><i>py-client</i>]
+  F --> F3[Release JS/TS SDK<br/><i>js-client</i>]
+  F --> F4[Release Go SDK<br/><i>go-client</i>]
+
+  F1 --> F1a[Generate changelog<br/>+ update publiccode.yml]
+  F1a --> F1b[Tag waldur-mastermind<br/>+ generate OpenAPI schema]
+  F1b --> F1c[Tag waldur-homeport]
+  F1c --> F1d[Update + tag waldur-helm<br/><i>Chart.yaml, values.yaml</i>]
+  F1d --> F1e[Update + tag waldur-docker-compose<br/><i>.env.example</i>]
+  F1e --> F1f[Tag waldur-prometheus-exporter]
+
+  F1f --> G[Release complete]
+  F2 --> G
+  F3 --> G
+  F4 --> G
+
   G --> H[Post-deploy stage]
-  H --> H1[Deploy tagged<br/>documentation]
-  
+  H --> H1[Deploy tagged docs<br/>to GitHub Pages<br/><i>mike deploy VERSION</i>]
+
   style A fill:#e1f5fe
   style G fill:#c8e6c9
   style E fill:#ffcdd2
   style F fill:#fff3e0
 ```
 
-## Coordinated repositories
+!!! note
+    `Build latest pages` (deploying the `latest` docs alias) runs on every push to `master`, not as part of the tag pipeline.
 
-The release orchestration manages the following repositories:
+## Coordinated repositories
 
 ### Core components
 
-- **waldur-mastermind** - Backend API and business logic
-- **waldur-homeport** - Frontend web application
-- **waldur-prometheus-exporter** - Metrics and monitoring
+- **waldur-mastermind** — Backend API and business logic
+- **waldur-homeport** — Frontend web application
+- **waldur-prometheus-exporter** — Metrics and monitoring
 
 ### Deployment & infrastructure
 
-- **waldur-helm** - Kubernetes Helm charts
-- **waldur-docker-compose** - Docker Compose configurations
+- **waldur-helm** — Kubernetes Helm charts
+- **waldur-docker-compose** — Docker Compose configurations
 
 ### SDKs & client libraries
 
-- **py-client** - Python SDK
-- **js-client** - TypeScript/JavaScript SDK  
-- **go-client** - Go SDK
-
-## Release workflow
-
-### 1. Pre-release testing
-
-Before creating a release tag, the system validates:
-
-```yaml
-# Triggered on semantic version tags
-Test Docker Compose deployment before tagging:
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
-  trigger: waldur/waldur-docker-compose
-
-Test Helm deployment before tagging:
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
-  trigger: waldur/waldur-helm
-```
-
-### 2. Repository tagging
-
-The system automatically tags all core repositories with the same version:
-
-```bash
-# Each repository is cloned, tagged, and pushed
-git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-mastermind.git"
-git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE"
-git push origin $CI_COMMIT_TAG
-```
-
-### 3. Configuration updates
-
-#### Helm charts
-
-Version numbers are updated in `Chart.yaml` and `values.yaml`:
-
-```bash
-sed -i -E "s/^version: ('.*'|.*)$/version: $CI_COMMIT_TAG/" waldur/Chart.yaml
-sed -i -E "s/^appVersion: ('.*'|.*)$/appVersion: \"$CI_COMMIT_TAG\"/" waldur/Chart.yaml
-sed -i -E "s/^  imageTag: ('.*'|.*)$/  imageTag: \"$CI_COMMIT_TAG\"/" waldur/values.yaml
-```
-
-#### Docker Compose
-
-Image tags are updated in `.env.example`:
-
-```bash
-sed -i -E "s/^WALDUR_MASTERMIND_IMAGE_TAG=('.*'|.*)$/WALDUR_MASTERMIND_IMAGE_TAG=$CI_COMMIT_TAG/" .env.example
-sed -i -E "s/^WALDUR_HOMEPORT_IMAGE_TAG=('.*'|.*)$/WALDUR_HOMEPORT_IMAGE_TAG=$CI_COMMIT_TAG/" .env.example
-```
-
-### 4. SDK releases
-
-#### Python SDK
-
-Updates `pyproject.toml` with new version:
-
-```bash
-sed -i 's/^version = "[^"]*"/version = "'$CI_COMMIT_TAG'"/' pyproject.toml
-```
-
-#### JavaScript/TypeScript SDK
-
-Updates both `package.json` and `package-lock.json`:
-
-```bash
-sed -i 's/"version": "[^"]*"/"version": "'$CI_COMMIT_TAG'"/' package.json
-# Complex package-lock.json updates for multiple version references
-```
-
-#### Go SDK
-
-Simple tag-based versioning (Go modules use git tags for versions).
-
-### 5. Changelog generation
-
-The system automatically generates comprehensive changelogs that include:
-
-#### Cross-repository diff links
-
-```markdown
-* Waldur MasterMind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/7.6.7...7.6.8)
-* Waldur HomePort: [tag diff](https://github.com/waldur/waldur-homeport/compare/7.6.7...7.6.8)
-```
-
-#### Security & compliance artifacts
-
-```markdown
-* Image SBOM: [waldur-mastermind-7.6.8-image.cyclonedx.tar.gz](...)
-* Source SBOM: [waldur-mastermind-7.6.8-source.cyclonedx.tar.gz](...)
-* OpenAPI specification: [waldur-openapi-schema-7.6.8.yaml](...)
-* API changes: [View changes](/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.6.8-diff)
-```
-
-## Documentation versioning
-
-### Version-specific documentation
-
-The system deploys versioned documentation using `mike`:
-
-```bash
-# Latest version (from master branch)
-mike deploy latest -p -r github_waldur -b gh-pages
-
-# Tagged versions
-mike deploy $CI_COMMIT_TAG -p -r github_waldur -b gh-pages
-```
-
-### API schema management
-
-Each release includes:
-
-- **Versioned OpenAPI schema** - `waldur-openapi-schema-{version}.yaml`
-- **API diff reports** - Comparing changes between versions
-- **SBOM files** - Software Bill of Materials for security compliance
+- **py-client** — Python SDK (hosted on GitHub)
+- **js-client** — TypeScript/JavaScript SDK (hosted on GitHub)
+- **go-client** — Go SDK (hosted on GitHub)
 
 ## Release process
 
 ### For maintainers
 
-1. **Prepare the release** by ensuring all component repositories are ready
-2. **Create a semantic version tag** on `waldur-docs` repository:
+The recommended way to create a release is via the local release script:
 
-   ```bash
-   git tag -a 7.6.9 -m "Release 7.6.9: Description of changes"
-   git push origin 7.6.9
-   ```
+```bash
+./scripts/release.sh 8.0.6
+```
 
-3. **Monitor the pipeline** - GitLab CI will automatically:
-   - Test deployment configurations
-   - Tag all repositories
-   - Update configuration files
-   - Release SDKs
-   - Generate changelogs
-   - Deploy documentation
+The script performs these steps locally before pushing:
+
+1. **Pre-flight check** — verifies the tag doesn't already exist in any downstream repo
+2. **Collect commit data** from local clones of all repositories
+3. **Generate changelog** using Claude Code with the commit data
+4. **Review** — presents the changelog for approval (accept / edit / regenerate / quit)
+5. **Commit changelog** to `docs/about/CHANGELOG.md`
+6. **Tag and push** — pushes the changelog commit and the version tag to origin
+
+Once the tag is pushed, the CI pipeline takes over automatically.
+
+Alternatively, you can tag manually (e.g., if the changelog was already committed):
+
+```bash
+git tag -a 8.0.6 -m "Release 8.0.6"
+git push origin 8.0.6
+```
+
+### CI pipeline stages
+
+#### Test stage
+
+Deployment tests are triggered in downstream repositories:
+
+```yaml
+Test Docker Compose deployment before tagging:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
+  trigger: waldur/waldur-docker-compose
+
+Test Helm deployment before tagging:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
+  trigger: waldur/waldur-helm
+```
+
+#### Deploy stage — `Tag all repositories` job
+
+This single job performs all tagging, config updates, changelog, and schema generation sequentially:
+
+**1. Changelog generation** (in `before_script`)
+
+- Detects the previous version from `CHANGELOG.md`
+- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using `generate-enhanced-changelog-multiRepo.py`
+- Rotates old entries (keeps last 20)
+
+**2. `publiccode.yml` update**
+
+- Sets `softwareVersion` and `releaseDate`
+
+**3. Commit and push** changelog + `publiccode.yml` to master
+
+**4. Tag waldur-mastermind** + generate OpenAPI schema
+
+- Clones waldur-mastermind, creates the version tag
+- Installs mastermind dependencies and runs `waldur spectacular` to generate `waldur-openapi-schema-{version}.yaml`
+- Commits the schema file to waldur-docs
+
+**5. Tag waldur-homeport** — clone, tag, push
+
+**6. Update and tag waldur-helm** — updates `version` and `appVersion` in `waldur/Chart.yaml`, `imageTag` in `waldur/values.yaml`, commits, then tags
+
+**7. Update and tag waldur-docker-compose** — updates `WALDUR_MASTERMIND_IMAGE_TAG` and `WALDUR_HOMEPORT_IMAGE_TAG` in `.env.example`, commits, then tags
+
+**8. Tag waldur-prometheus-exporter** — clone, tag, push
+
+#### Deploy stage — SDK release jobs (parallel)
+
+Three separate jobs release the SDKs, each running in parallel:
+
+- **Python SDK** — clones `py-client` from GitHub, bumps version in `pyproject.toml`, commits, tags, pushes
+- **JS/TS SDK** — clones `js-client`, bumps version in `package.json` and `package-lock.json`, commits, tags, pushes
+- **Go SDK** — clones `go-client`, creates tag, pushes (Go modules use git tags for versioning)
+
+#### Post-deploy stage
+
+- **Build tagged pages** — deploys versioned documentation to GitHub Pages using `mike deploy $CI_COMMIT_TAG`
 
 ### Validation
 
 The release is complete when:
+
 - [ ] All repositories have the new tag
 - [ ] Helm chart versions are updated
 - [ ] Docker Compose configurations reference new image tags
 - [ ] SDK packages are released with new versions
 - [ ] Documentation is deployed with the new version
-- [ ] Changelog is updated with comprehensive links
+- [ ] Changelog is updated with cross-repository diff links
+- [ ] OpenAPI schema is committed
+
+## Changelog
+
+Each release changelog is generated with cross-repository commit data and includes:
+
+- **Summary** of user-visible changes grouped by theme (What's New, Improvements, Bug Fixes)
+- **Cross-repository diff links** for each component:
+
+    ```markdown
+    * Waldur MasterMind: [tag diff](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6)
+    ```
+
+- **Resources** section linking to the OpenAPI schema and API changes diff
+
+Changelogs are stored in `docs/about/CHANGELOG.md` with automatic rotation (last 20 entries kept).
+
+## Documentation versioning
+
+Versioned documentation is deployed to GitHub Pages using `mike`:
+
+```bash
+# Latest alias (deployed on every master push)
+mike deploy latest -p -r github_waldur -b gh-pages
+
+# Tagged versions (deployed in post-deploy stage)
+mike deploy $CI_COMMIT_TAG -p -r github_waldur -b gh-pages
+```
+
+Each release also includes a versioned OpenAPI schema file at `docs/API/waldur-openapi-schema-{version}.yaml`.
+
+## RC (Release Candidate) releases
+
+RC releases allow testing a full deployment stack before committing to a stable release. An RC tag triggers the same tagging and version-update workflow across downstream repos, but skips artifacts that should only be produced for stable releases.
+
+### Tag format
+
+```text
+X.Y.Z-rc.N
+```
+
+Examples: `8.0.6-rc.1`, `8.0.6-rc.2`, `10.0.0-rc.1`
+
+### Creating an RC release
+
+```bash
+# Using the local release script (skips changelog automatically)
+./scripts/release.sh 8.0.6-rc.1
+
+# Or manually
+git tag -a 8.0.6-rc.1 -m "RC 8.0.6-rc.1"
+git push origin 8.0.6-rc.1
+```
+
+### What RC triggers vs. skips
+
+| Action | Stable release | RC release |
+|--------|:-:|:-:|
+| Tag downstream repos (mastermind, homeport, helm, docker-compose, prometheus-exporter) | Yes | Yes |
+| Update Helm `Chart.yaml` / `values.yaml` | Yes | Yes |
+| Update Docker Compose `.env.example` | Yes | Yes |
+| Test Docker Compose deployment | Yes | Yes |
+| Test Helm deployment | Yes | Yes |
+| Generate changelog | Yes | **Skipped** |
+| Update `publiccode.yml` | Yes | **Skipped** |
+| Generate OpenAPI schema | Yes | **Skipped** |
+| Release SDKs (Python, JS, Go) | Yes | **Skipped** |
+| Deploy versioned documentation | Yes | **Skipped** |
+
+### Promoting RC to stable
+
+Once an RC has been validated, create the stable tag on the same commit:
+
+```bash
+./scripts/release.sh 8.0.6
+```
+
+This runs the full stable release workflow — changelog generation, SDK releases, docs deployment, and all other steps that were skipped during the RC.
+
+### Downstream repo compatibility
+
+All downstream repos use `if: $CI_COMMIT_TAG` (without a regex filter) for Docker image builds and chart packaging, so RC tags work out of the box with no changes needed in any downstream repository.
 
 ## Emergency procedures
 
@@ -76313,7 +76320,6 @@ If only some repositories were tagged successfully:
 
 - **SSH keys** for GitHub authentication are stored as GitLab CI variables
 - **GitLab tokens** provide access to private repositories
-- **SBOM generation** ensures supply chain security compliance
 - **Automated testing** validates deployments before release completion
 
 ---
