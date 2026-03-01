@@ -182,25 +182,13 @@ Tag all repositories:
         else
           BASE_VERSION="$VERSION"
         fi
-        python3 -c "
-import re, sys
-base = sys.argv[2]
-pattern = re.compile(r'^## ' + re.escape(base) + r'-rc\.\d+\b')
-lines = open(sys.argv[1]).readlines()
-out, skip = [], False
-for line in lines:
-    if pattern.match(line):
-        skip = True
-        continue
-    if skip and line.strip() == '---':
-        skip = False
-        continue
-    if skip and line.startswith('## '):
-        skip = False
-    if not skip:
-        out.append(line)
-open(sys.argv[1], 'w').writelines(out)
-" docs/about/CHANGELOG.md "$BASE_VERSION"
+        awk -v base="$BASE_VERSION" '
+          BEGIN { skip=0; pat="^## " base "-rc\\.[0-9]+" }
+          $0 ~ pat { skip=1; next }
+          skip && /^---$/ { skip=0; next }
+          skip && /^## / { skip=0 }
+          !skip { print }
+        ' docs/about/CHANGELOG.md > /tmp/cleaned_changelog.md && mv /tmp/cleaned_changelog.md docs/about/CHANGELOG.md
         # Update changelog with rotation (keep only last 20 entries)
         if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
           echo "Rotating old changelog entries to archive..."
