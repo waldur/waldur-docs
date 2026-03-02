@@ -53,7 +53,7 @@ PRIORITY_SECTIONS = [
     ("docs/integrator-guide/APIs/authentication.md", "API Authentication"),
     ("docs/integrator-guide/APIs/permissions.md", "API Permissions"),
     ("docs/integrator-guide/APIs/api.md", "API Overview"),
-    ("docs/integrator-guide/api-lifecycle.md", "API Lifecycle"),
+    ("docs/integrator-guide/api-lifecycle.md", "API Versioning and Change Policy"),
     ("docs/integrator-guide/sdk.md", "Python SDK"),
     ("docs/integrator-guide/APIs/project-api-examples.md", "API Examples"),
 
