@@ -1,57 +1,63 @@
 # Changelog
 
-## 8.0.6-rc.1 - 2026-03-01
+## 8.0.6-rc.2 - 2026-03-02
 
-This release brings significant improvements to access control flexibility, allowing operators to selectively conceal audit logs, resource metadata, and marketplace from end users via new feature flags. Staff users gain a full user management wizard with password support, and SSH key handling is now configurable with type restrictions and automatic support ticket creation. Several database query performance issues have been resolved, and the backend has migrated to structured logging.
+### Highlights
+
+This release gives operators fine-grained control over what end users can see, with new feature flags to conceal audit logs, resource metadata, and billing information. Staff users gain a full user management wizard with password support, and OpenStack deployments can now authenticate using Application Credentials. Under the hood, Django has been upgraded to 6.0, the platform has migrated to structured logging, and multiple N+1 query issues have been resolved for better API performance.
 
 ### What's New
 
-- **Staff user management wizard**: Staff can now create and edit users through a step-by-step wizard with password management support.
-- **SSH key governance**: Administrators can restrict allowed SSH key types via Constance settings, and optionally trigger support ticket creation when users add or remove SSH keys. The UI shows allowed key types before import.
-- **Visibility feature flags**: New toggles allow operators to conceal audit logs, resource metadata, and the marketplace from end users. Billing information is properly hidden across order details and resource creation summaries.
-- **Identity service domain (ISD) management**: ISD managers can create agent identities without requiring offering users, list offering users scoped by ISD overlap, and receive scoped offering user events.
-- **Offering managers can set order states** directly, enabling more flexible order workflow management.
-- **Visual layout selector** for administrators to configure the application layout through a graphical interface.
-- **Admin hard-delete actions** for soft-deleted projects and terminated resources.
-- **Docker image digest pulling** is now supported in the Helm chart for stricter image pinning.
-- **Software catalog filtering**: Comprehensive filters and ordering added to software catalog API endpoints and UI.
+- Operators can now connect OpenStack clouds using Application Credentials instead of username/password.
+- Staff users can create and edit user accounts through a new step-by-step wizard with password management.
+- SSH key types can be restricted via configuration, and SSH key changes can automatically create support tickets. Users see the allowed key types before importing.
+- New feature flags allow operators to conceal audit logs, resource metadata, and the marketplace from end users. Billing information is hidden in order summaries when disabled.
+- Offering managers can now set order states directly, and ISD managers can create agent identities without requiring offering users.
+- Identity managers can list offering users and receive events scoped by identity service domain overlap.
+- Quarterly limit period added for resource usage aggregation.
+- Visual layout selector added for login page configuration in the admin panel.
+- Admin actions added to hard delete soft-deleted projects and terminated resources.
+- Helm chart now supports pulling Docker images by digest for improved supply chain security.
 
 ### Improvements
 
-- **Structured logging**: Backend migrated to structlog, routing Django server, request, and axes loggers through the new pipeline.
-- **Locale-aware number formatting** applied across all resource usage displays.
-- **Token refresh performance**: Adaptive debounce interval reduces database load from frequent token refreshes.
-- **N+1 query fixes** in service provider permissions and component usage endpoints, plus a slow query fix in the marketplace orders endpoint.
-- Invitation custom message text limit extended to 2000 characters.
-- Permission requests can now be resubmitted; staff can delete them.
-- Terminated projects are excluded from customer visibility.
-- OIDC client secret field properly marked as a secret type.
-- AI assistant thread title generation moved server-side for better reliability.
-- Suggested resource names are now automatically lowercased.
-- Removed default "Pending consumer approval" filter from order lists.
-- "My offerings" tab is hidden when the organization has no non-billable offerings.
-- Table toolbar search and filter alignment improvements, with a clear X icon on the filter reset button.
-- Large-scale migration of manual filter components to a generated filter system across the UI.
-- Lithuanian, Estonian, and German translation updates.
+- Resource usage numbers are now formatted with locale-aware separators throughout the UI.
+- Comprehensive filters and ordering added to software catalog endpoints.
+- Invitation custom message text limit increased to 2,000 characters.
+- Permission requests can be resubmitted, and staff can delete them.
+- Terminated projects are now excluded from customer visibility.
+- Token refresh database load reduced with adaptive debounce interval.
+- Table toolbar alignment improved and clear-filters button now shows an X icon.
+- "My offerings" tab is hidden when an organization has no non-billable offerings.
+- OIDC client secret field properly marked as secret in configuration.
+- Migrations squashed for 5 apps, saving ~60 migration steps on fresh database setup.
+- Backend migrated to structured logging via structlog.
+- Django upgraded from 5.2 to 6.0.2.
+- AI assistant tool definitions refactored for clarity; thread title generation moved server-side.
+- Lithuanian, Estonian, and German translations expanded and corrected.
+- Large-scale migration of UI table filters to a code generator for consistency.
 
 ### Bug Fixes
 
-- Fixed resource duplication check that was preventing any new resources from being created.
+- Fixed multiple N+1 query issues in marketplace endpoints (robot accounts, orders, project permissions, component usage).
+- Fixed resource duplication check that was preventing all resource creation.
+- Fixed corrupt NULL constance values causing crashes on the settings page.
 - Fixed GLAuth uidnumber generation to be correctly scoped per offering.
+- Fixed OpenStack image name parsing and flavor page size in the deployment wizard.
 - Fixed OpenAPI schema generation error in proposal views.
-- Fixed missing return in offering attributes schema generation.
-- Fixed resource component quota display showing incorrect units and duplicate labels.
-- Fixed image name parsing and grouping in the instance deploy wizard.
-- Fixed corrupt NULL constance values causing application crashes.
+- Fixed duplicate labels in resource usage quota cells.
+- Fixed order details showing pricing when billing info is concealed.
 - Fixed credit import to auto-correct end_date to the first day of the next month.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [46 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6-rc.1) - feature flags, SSH key governance, ISD management, structured logging, query performance fixes.
-- **Waldur Homeport**: [35 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6-rc.1) - user management wizard, visibility controls, filter generator migration, usage formatting, UI fixes.
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6-rc.1) - Docker image digest pulling support.
+- **Waldur Mastermind**: [56 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6-rc.2) - OpenStack app credentials, SSH key restrictions, feature flags, N+1 fixes, Django 6.0 upgrade, structured logging
+- **Waldur Homeport**: [38 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6-rc.2) - User management wizard, UI concealing features, locale-aware formatting, filter generator migration, translation improvements
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6-rc.2) - Docker image digest pulling support, release CI improvements
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.0.5...8.0.6-rc.2) - Maintenance updates only
 
 ---
+
 
 
 ## 8.0.5 - 2026-02-23
