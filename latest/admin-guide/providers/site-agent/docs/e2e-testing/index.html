@@ -7,13 +7,13 @@
       
       
       
-        <link rel="canonical" href="https://docs.waldur.com/latest/admin-guide/providers/site-agent/docs/plugin-development-guide/">
+        <link rel="canonical" href="https://docs.waldur.com/latest/admin-guide/providers/site-agent/docs/e2e-testing/">
       
       
-        <link rel="prev" href="../offering-users/">
+        <link rel="prev" href="../deployment/">
       
       
-        <link rel="next" href="../releasing/">
+        <link rel="next" href="../installation-rocky9/">
       
       
         
@@ -24,7 +24,7 @@
     
     
       
-        <title>Plugin development guide - Waldur Documentation</title>
+        <title>E2e testing - Waldur Documentation</title>
       
     
     
@@ -93,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#plugin-development-guide" class="md-skip">
+        <a href="#e2e-testing" class="md-skip">
           Skip to content
         </a>
       
@@ -130,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Plugin development guide
+              E2e testing
             
           </span>
         </div>
@@ -3542,10 +3542,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../e2e-testing/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E2e testing
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3561,6 +3588,281 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-suites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test suites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test suites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#slurm-e2e-tests-pluginsslurmtestse2e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SLURM E2E tests (plugins/slurm/tests/e2e/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waldur-federation-e2e-tests-pluginswaldurtestse2e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waldur federation E2E tests (plugins/waldur/tests/e2e/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running locally
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running locally">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boot-the-docker-stack-optional-for-a-fresh-local-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boot the Docker stack (optional — for a fresh local instance)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-local-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a local config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ci-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ci-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test reports
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tests-are-skipped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests are skipped
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waldur_e2e_config-not-set-waldur_e2e_stomp_config-not-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "WALDUR_E2E_CONFIG not set" / "WALDUR_E2E_STOMP_CONFIG not set"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stomp-tests-skip-with-endpoint-not-reachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STOMP tests skip with "endpoint not reachable"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#order-stuck-in-non-terminal-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order stuck in non-terminal state
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ci-job-times-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI job times out
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3682,37 +3984,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Plugin development guide
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../plugin-development-guide/" class="md-nav__link">
         
   
   
@@ -3728,619 +4003,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#waldur-mastermind-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Waldur Mastermind concepts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#basebackend-method-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BaseBackend method reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="BaseBackend method reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#abstract-methods-must-implement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Abstract methods (must implement)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Abstract methods (must implement)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pingraise_exception-bool-false-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ping(raise_exception: bool = False) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#diagnostics-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        diagnostics() -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list_components-liststr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list_components() -&gt; list[str]
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_get_usage_reportresource_backend_ids-liststr-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        _get_usage_report(resource_backend_ids: list[str]) -&gt; dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_collect_resource_limitswaldur_resource-tupledict-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        _collect_resource_limits(waldur_resource) -&gt; tuple[dict, dict]
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_pre_create_resourcewaldur_resource-user_contextnone-none" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        _pre_create_resource(waldur_resource, user_context=None) -&gt; None
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#downscale_resourceresource_backend_id-str-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        downscale_resource(resource_backend_id: str) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pause_resourceresource_backend_id-str-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pause_resource(resource_backend_id: str) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restore_resourceresource_backend_id-str-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        restore_resource(resource_backend_id: str) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_resource_metadataresource_backend_id-str-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_resource_metadata(resource_backend_id: str) -&gt; dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hook-methods-override-as-needed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hook methods (override as needed)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#non-blocking-order-creation-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Non-blocking order creation (optional)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Non-blocking order creation (optional)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#check_pending_orderorder_backend_id-str-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_pending_order(order_backend_id: str) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#setup_target_event_subscriptionssource_offering-user_agent-global_proxy-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        setup_target_event_subscriptions(source_offering, user_agent, global_proxy) -&gt; list
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#baseclient-method-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BaseClient method reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#agent-mode-method-matrix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent mode method matrix
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage-report-format-specification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage report format specification
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage report format specification">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rules
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-slurm-cpu-and-memory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: SLURM CPU and memory
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supports_decreasing_usage-class-attribute" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        supports_decreasing_usage class attribute
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision-matrix-for-no-op-implementations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision matrix for no-op implementations
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#annotated-yaml-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Annotated YAML configuration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Annotated YAML configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#unit_factor-explained" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        unit_factor explained
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#entry-point-registration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Entry point registration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#processor-plugin-data-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Processor-plugin data flow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Processor-plugin data flow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pre-resolved-data-in-user_context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-resolved data in user_context
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#returning-metadata-via-backend_metadata" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Returning metadata via backend_metadata
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#data-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Data flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-resolving-an-ssh-key-uuid-from-user_context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: resolving an SSH key UUID from user_context
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#design-principles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design principles
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#common-pitfalls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common pitfalls
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Common pitfalls">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-unit-factor-direction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Unit factor direction
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-missing-total_account_usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Missing TOTAL_ACCOUNT_USAGE
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-entry-point-not-discovered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Entry point not discovered
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-forgetting-superinit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Forgetting super().init()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-returning-wrong-types-from-client-methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Returning wrong types from client methods
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-component-key-mismatch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Component key mismatch
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-guidance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing guidance
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing guidance">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-to-test-per-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What to test per mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mock-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mock patterns
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fixtures" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixtures
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#key-assertions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key assertions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llm-implementation-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLM implementation checklist
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="LLM implementation checklist">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#files-to-study" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Files to study
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#common-mistakes-to-avoid" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common mistakes to avoid
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -13559,10 +13221,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#waldur-mastermind-concepts" class="md-nav__link">
+  <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Waldur Mastermind concepts
+        Architecture
       
     </span>
   </a>
@@ -13570,45 +13232,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture-overview" class="md-nav__link">
+  <a href="#test-suites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture overview
+        Test suites
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#basebackend-method-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BaseBackend method reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="BaseBackend method reference">
+    <nav class="md-nav" aria-label="Test suites">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#abstract-methods-must-implement" class="md-nav__link">
+  <a href="#slurm-e2e-tests-pluginsslurmtestse2e" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Abstract methods (must implement)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Abstract methods (must implement)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pingraise_exception-bool-false-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ping(raise_exception: bool = False) -&gt; bool
+        SLURM E2E tests (plugins/slurm/tests/e2e/)
       
     </span>
   </a>
@@ -13616,214 +13255,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#diagnostics-bool" class="md-nav__link">
+  <a href="#waldur-federation-e2e-tests-pluginswaldurtestse2e" class="md-nav__link">
     <span class="md-ellipsis">
       
-        diagnostics() -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list_components-liststr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list_components() -&gt; list[str]
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_get_usage_reportresource_backend_ids-liststr-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        _get_usage_report(resource_backend_ids: list[str]) -&gt; dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_collect_resource_limitswaldur_resource-tupledict-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        _collect_resource_limits(waldur_resource) -&gt; tuple[dict, dict]
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_pre_create_resourcewaldur_resource-user_contextnone-none" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        _pre_create_resource(waldur_resource, user_context=None) -&gt; None
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#downscale_resourceresource_backend_id-str-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        downscale_resource(resource_backend_id: str) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pause_resourceresource_backend_id-str-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pause_resource(resource_backend_id: str) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restore_resourceresource_backend_id-str-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        restore_resource(resource_backend_id: str) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_resource_metadataresource_backend_id-str-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_resource_metadata(resource_backend_id: str) -&gt; dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hook-methods-override-as-needed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hook methods (override as needed)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#non-blocking-order-creation-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Non-blocking order creation (optional)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Non-blocking order creation (optional)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#check_pending_orderorder_backend_id-str-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_pending_order(order_backend_id: str) -&gt; bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#setup_target_event_subscriptionssource_offering-user_agent-global_proxy-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        setup_target_event_subscriptions(source_offering, user_agent, global_proxy) -&gt; list
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#baseclient-method-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BaseClient method reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#agent-mode-method-matrix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent mode method matrix
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage-report-format-specification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage report format specification
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage report format specification">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rules
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-slurm-cpu-and-memory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: SLURM CPU and memory
+        Waldur federation E2E tests (plugins/waldur/tests/e2e/)
       
     </span>
   </a>
@@ -13836,44 +13271,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#supports_decreasing_usage-class-attribute" class="md-nav__link">
+  <a href="#running-locally" class="md-nav__link">
     <span class="md-ellipsis">
       
-        supports_decreasing_usage class attribute
+        Running locally
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision-matrix-for-no-op-implementations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision matrix for no-op implementations
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#annotated-yaml-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Annotated YAML configuration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Annotated YAML configuration">
+    <nav class="md-nav" aria-label="Running locally">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#unit_factor-explained" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        unit_factor explained
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boot-the-docker-stack-optional-for-a-fresh-local-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boot the Docker stack (optional — for a fresh local instance)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-local-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a local config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the tests
       
     </span>
   </a>
@@ -13886,10 +13332,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#entry-point-registration" class="md-nav__link">
+  <a href="#environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Entry point registration
+        Environment variables
       
     </span>
   </a>
@@ -13897,22 +13343,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#processor-plugin-data-flow" class="md-nav__link">
+  <a href="#ci-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Processor-plugin data flow
+        CI pipeline
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Processor-plugin data flow">
+    <nav class="md-nav" aria-label="CI pipeline">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pre-resolved-data-in-user_context" class="md-nav__link">
+  <a href="#ci-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-resolved data in user_context
+        CI flow
       
     </span>
   </a>
@@ -13920,10 +13366,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#returning-metadata-via-backend_metadata" class="md-nav__link">
+  <a href="#ci-files" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Returning metadata via backend_metadata
+        CI files
       
     </span>
   </a>
@@ -13931,32 +13377,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#data-flow" class="md-nav__link">
+  <a href="#artifacts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-resolving-an-ssh-key-uuid-from-user_context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: resolving an SSH key UUID from user_context
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#design-principles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design principles
+        Artifacts
       
     </span>
   </a>
@@ -13969,105 +13393,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-pitfalls" class="md-nav__link">
+  <a href="#test-reports" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common pitfalls
+        Test reports
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Common pitfalls">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-unit-factor-direction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Unit factor direction
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-missing-total_account_usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Missing TOTAL_ACCOUNT_USAGE
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-entry-point-not-discovered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Entry point not discovered
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-forgetting-superinit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Forgetting super().init()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-returning-wrong-types-from-client-methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Returning wrong types from client methods
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-component-key-mismatch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Component key mismatch
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing-guidance" class="md-nav__link">
+  <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing guidance
+        Troubleshooting
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Testing guidance">
+    <nav class="md-nav" aria-label="Troubleshooting">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#what-to-test-per-mode" class="md-nav__link">
+  <a href="#tests-are-skipped" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What to test per mode
+        Tests are skipped
       
     </span>
   </a>
@@ -14075,10 +13427,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mock-patterns" class="md-nav__link">
+  <a href="#waldur_e2e_config-not-set-waldur_e2e_stomp_config-not-set" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Mock patterns
+        "WALDUR_E2E_CONFIG not set" / "WALDUR_E2E_STOMP_CONFIG not set"
       
     </span>
   </a>
@@ -14086,10 +13438,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixtures" class="md-nav__link">
+  <a href="#stomp-tests-skip-with-endpoint-not-reachable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fixtures
+        STOMP tests skip with "endpoint not reachable"
       
     </span>
   </a>
@@ -14097,38 +13449,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#key-assertions" class="md-nav__link">
+  <a href="#order-stuck-in-non-terminal-state" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key assertions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llm-implementation-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLM implementation checklist
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="LLM implementation checklist">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#files-to-study" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Files to study
+        Order stuck in non-terminal state
       
     </span>
   </a>
@@ -14136,10 +13460,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#common-mistakes-to-avoid" class="md-nav__link">
+  <a href="#ci-job-times-out" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common mistakes to avoid
+        CI job times out
       
     </span>
   </a>
@@ -14168,1168 +13492,386 @@
 
 
 
-<h1 id="plugin-development-guide">Plugin Development Guide</h1>
-<p>This guide covers everything needed to build a custom backend plugin for
-Waldur Site Agent. It is written for both human developers and LLM-based
-code generators.</p>
-<h2 id="waldur-mastermind-concepts">Waldur Mastermind concepts</h2>
-<p>Before implementing a plugin, understand how Waldur Mastermind concepts
-map to plugin operations.</p>
-<table>
-<thead>
-<tr>
-<th>Waldur concept</th>
-<th>Description</th>
-<th>Plugin relevance</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Offering</strong></td>
-<td>Service catalog entry</td>
-<td>Config block per offering; picks backend plugin</td>
-</tr>
-<tr>
-<td><strong>Resource</strong></td>
-<td>Allocation from an offering</td>
-<td>CRUD via <code>BaseBackend</code>; keyed by <code>backend_id</code></td>
-</tr>
-<tr>
-<td><strong>Order</strong></td>
-<td>Create/update/terminate request</td>
-<td>Triggers <code>order_process</code> mode</td>
-</tr>
-<tr>
-<td><strong>Component</strong></td>
-<td>Measurable dimension (CPU, RAM)</td>
-<td>Defined in <code>backend_components</code> config</td>
-</tr>
-<tr>
-<td><strong>OfferingUser</strong></td>
-<td>User linked to an offering</td>
-<td>Username backend generates usernames</td>
-</tr>
-<tr>
-<td><strong>billing_type</strong></td>
-<td><code>usage</code> or <code>limit</code></td>
-<td>Metered vs quota accounting</td>
-</tr>
-<tr>
-<td><strong>backend_id</strong></td>
-<td>Resource ID on the backend</td>
-<td>Generated by <code>_get_resource_backend_id</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="architecture-overview">Architecture overview</h2>
-<p>A plugin consists of two main classes:</p>
-<ul>
-<li><strong>Backend</strong> (inherits <code>BaseBackend</code>): Orchestrates high-level operations
-  (create resource, collect usage, manage users).</li>
-<li><strong>Client</strong> (inherits <code>BaseClient</code>): Handles low-level communication with
-  the external system (CLI commands, API calls).</li>
-</ul>
-<pre class="mermaid"><code>graph TB
-    WM[Waldur Mastermind&lt;br/&gt;REST API] &lt;--&gt;|Orders, Resources,&lt;br/&gt;Usage, Keys| SA[Site Agent Core&lt;br/&gt;Processor]
-    SA --&gt;|user_context&lt;br/&gt;(ssh_keys, plan_quotas)| BE[YourBackend&lt;br/&gt;BaseBackend]
-    BE --&gt; CL[YourClient&lt;br/&gt;BaseClient]
-    CL --&gt; EXT[External System&lt;br/&gt;CLI / API]
-    BE -.-&gt;|backend_metadata| SA
-
-    classDef waldur fill:#1E3A8A,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF
-    classDef core fill:#065F46,stroke:#10B981,stroke-width:2px,color:#FFFFFF
-    classDef plugin fill:#581C87,stroke:#8B5CF6,stroke-width:2px,color:#FFFFFF
-    classDef external fill:#92400E,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF
-
-    class WM waldur
-    class SA core
-    class BE,CL plugin
-    class EXT external</code></pre>
-<h2 id="basebackend-method-reference">BaseBackend method reference</h2>
-<h3 id="abstract-methods-must-implement">Abstract methods (must implement)</h3>
-<h4 id="pingraise_exception-bool-false-bool"><code>ping(raise_exception: bool = False) -&gt; bool</code></h4>
-<ul>
-<li><strong>Mode</strong>: All (health check)</li>
-<li><strong>Purpose</strong>: Verify backend connectivity.</li>
-<li><strong>No-op</strong>: Return <code>False</code>.</li>
-</ul>
-<h4 id="diagnostics-bool"><code>diagnostics() -&gt; bool</code></h4>
-<ul>
-<li><strong>Mode</strong>: Diagnostics CLI</li>
-<li><strong>Purpose</strong>: Log diagnostic info and return health status.</li>
-<li><strong>No-op</strong>: Log a message, return <code>True</code>.</li>
-</ul>
-<h4 id="list_components-liststr"><code>list_components() -&gt; list[str]</code></h4>
-<ul>
-<li><strong>Mode</strong>: Diagnostics</li>
-<li><strong>Purpose</strong>: Return component types available on the backend.</li>
-<li><strong>No-op</strong>: Return <code>[]</code>.</li>
-</ul>
-<h4 id="_get_usage_reportresource_backend_ids-liststr-dict"><code>_get_usage_report(resource_backend_ids: list[str]) -&gt; dict</code></h4>
-<ul>
-<li><strong>Mode</strong>: <code>report</code>, <code>membership_sync</code></li>
-<li><strong>Purpose</strong>: Collect usage data for resources.</li>
-<li><strong>Return format</strong>:</li>
-</ul>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-    <span class="s2">"resource_backend_id_1"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"TOTAL_ACCOUNT_USAGE"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cpu"</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s2">"mem"</span><span class="p">:</span> <span class="mi">2048</span><span class="p">},</span>
-        <span class="s2">"user1"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cpu"</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">"mem"</span><span class="p">:</span> <span class="mi">1024</span><span class="p">},</span>
-        <span class="s2">"user2"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cpu"</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">"mem"</span><span class="p">:</span> <span class="mi">1024</span><span class="p">},</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+<h1 id="e2e-testing">E2E Testing</h1>
+<p>End-to-end tests validate the site agent against a real Waldur instance
+with a SLURM emulator backend. Orders complete synchronously — no remote
+cluster or second Waldur instance is needed.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code>┌───────────────────────────────────────────┐
+│ Test runner (pytest)                      │
+│                                           │
+│  ┌────────────┐  ┌─────────────────────┐ │
+│  │ Waldur API │  │ SLURM emulator      │ │
+│  │ client     │  │ (.venv/bin/sacctmgr)│ │
+│  └─────┬──────┘  └──────────┬──────────┘ │
+│        │ REST API           │ CLI calls   │
+│        ▼                    ▼             │
+│  ┌────────────────────────────────────┐  │
+│  │ OfferingOrderProcessor /           │  │
+│  │ OfferingMembershipProcessor /      │  │
+│  │ OfferingReportProcessor            │  │
+│  └────────────────────────────────────┘  │
+└───────────────────────────────────────────┘
+         │
+         ▼
+┌───────────────────────────────────────────┐
+│ Docker stack (ci/docker-compose.e2e.yml)  │
+│                                           │
+│  PostgreSQL 16  ─  RabbitMQ (ws:15674)   │
+│  Waldur API     ─  Waldur Celery worker  │
+└───────────────────────────────────────────┘
 </code></pre></div></td></tr></tbody></table></div>
-<ul>
-<li><strong>Key rules</strong>:</li>
-<li>Component keys must match <code>backend_components</code> config keys.</li>
-<li>Values must be in Waldur units (after <code>unit_factor</code> conversion).</li>
-<li><code>TOTAL_ACCOUNT_USAGE</code> is required and must equal the sum of per-user values.</li>
-<li><strong>No-op</strong>: Return <code>{}</code>.</li>
-</ul>
-<h4 id="_collect_resource_limitswaldur_resource-tupledict-dict"><code>_collect_resource_limits(waldur_resource) -&gt; tuple[dict, dict]</code></h4>
-<ul>
-<li><strong>Mode</strong>: <code>order_process</code> (resource creation)</li>
-<li><strong>Purpose</strong>: Convert Waldur limits to backend limits and back.</li>
-<li><strong>Returns</strong>: <code>(backend_limits, waldur_limits)</code> where <code>backend_limits</code> has
-  values multiplied by <code>unit_factor</code>.</li>
-<li><strong>No-op</strong>: Return <code>({}, {})</code>.</li>
-</ul>
-<h4 id="_pre_create_resourcewaldur_resource-user_contextnone-none"><code>_pre_create_resource(waldur_resource, user_context=None) -&gt; None</code></h4>
-<ul>
-<li><strong>Mode</strong>: <code>order_process</code> (resource creation)</li>
-<li><strong>Purpose</strong>: Set up prerequisites before resource creation (e.g., parent accounts).</li>
-<li><strong><code>user_context</code></strong> contains pre-resolved data: <code>ssh_keys</code> (UUID → public key),
-  <code>plan_quotas</code> (component → value), <code>team</code>, <code>offering_users</code>.</li>
-<li><strong>No-op</strong>: Use <code>pass</code>.</li>
-</ul>
-<h4 id="downscale_resourceresource_backend_id-str-bool"><code>downscale_resource(resource_backend_id: str) -&gt; bool</code></h4>
-<ul>
-<li><strong>Mode</strong>: <code>membership_sync</code></li>
-<li><strong>Purpose</strong>: Restrict resource capabilities (e.g., set restrictive QoS).</li>
-<li><strong>No-op</strong>: Return <code>True</code>.</li>
-</ul>
-<h4 id="pause_resourceresource_backend_id-str-bool"><code>pause_resource(resource_backend_id: str) -&gt; bool</code></h4>
-<ul>
-<li><strong>Mode</strong>: <code>membership_sync</code></li>
-<li><strong>Purpose</strong>: Prevent all usage of the resource.</li>
-<li><strong>No-op</strong>: Return <code>True</code>.</li>
-</ul>
-<h4 id="restore_resourceresource_backend_id-str-bool"><code>restore_resource(resource_backend_id: str) -&gt; bool</code></h4>
-<ul>
-<li><strong>Mode</strong>: <code>membership_sync</code></li>
-<li><strong>Purpose</strong>: Restore resource to normal operation.</li>
-<li><strong>No-op</strong>: Return <code>True</code>.</li>
-</ul>
-<h4 id="get_resource_metadataresource_backend_id-str-dict"><code>get_resource_metadata(resource_backend_id: str) -&gt; dict</code></h4>
-<ul>
-<li><strong>Mode</strong>: <code>membership_sync</code></li>
-<li><strong>Purpose</strong>: Return backend-specific metadata for Waldur.</li>
-<li><strong>No-op</strong>: Return <code>{}</code>.</li>
-</ul>
-<h3 id="hook-methods-override-as-needed">Hook methods (override as needed)</h3>
-<p>These have default implementations in <code>BaseBackend</code>. Override only when your
-backend needs custom behavior.</p>
+<p>The Docker stack boots PostgreSQL, RabbitMQ (with <code>rabbitmq_web_stomp</code>),
+and Waldur Mastermind (API + Celery worker). A demo preset
+(<code>ci/site_agent_e2e.json</code>) loads 6 users, 3 offerings, plans, components,
+and role assignments.</p>
+<h2 id="test-suites">Test suites</h2>
+<h3 id="slurm-e2e-tests-pluginsslurmtestse2e">SLURM E2E tests (<code>plugins/slurm/tests/e2e/</code>)</h3>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Default</th>
-<th>When to override</th>
+<th>File</th>
+<th>Tests</th>
+<th>What it validates</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>post_create_resource</code></td>
-<td>No-op</td>
-<td>Post-creation setup; set <code>resource.backend_metadata</code> to push data to Waldur</td>
+<td><code>test_e2e_api_optimizations.py</code></td>
+<td>~20</td>
+<td>Order lifecycle (create/update/terminate), membership sync, reporting</td>
 </tr>
 <tr>
-<td><code>_pre_delete_resource</code></td>
-<td>No-op</td>
-<td>Pre-deletion cleanup (cancel jobs)</td>
+<td><code>test_e2e_benchmark.py</code></td>
+<td>~10</td>
+<td>API call counts and response sizes; scales to N resources</td>
 </tr>
 <tr>
-<td><code>_pre_delete_user_actions</code></td>
-<td>No-op</td>
-<td>Per-user cleanup before removal</td>
-</tr>
-<tr>
-<td><code>process_existing_users</code></td>
-<td>No-op</td>
-<td>Process existing users (homedirs)</td>
-</tr>
-<tr>
-<td><code>check_pending_order</code></td>
-<td>Returns <code>True</code></td>
-<td>Non-blocking order creation (see below)</td>
-</tr>
-<tr>
-<td><code>setup_target_event_subscriptions</code></td>
-<td>Returns <code>[]</code></td>
-<td>STOMP subscriptions to target systems</td>
+<td><code>test_e2e_stomp.py</code></td>
+<td>4</td>
+<td>STOMP WebSocket connections, event delivery, order processing with STOMP active</td>
 </tr>
 </tbody>
 </table>
-<h3 id="non-blocking-order-creation-optional">Non-blocking order creation (optional)</h3>
-<p>Backends that create resources via remote APIs can use non-blocking order
-creation. Instead of blocking until the remote operation completes, the backend
-returns immediately with a <code>pending_order_id</code> in <code>BackendResourceInfo</code>.</p>
-<p>The core processor then:</p>
+<h3 id="waldur-federation-e2e-tests-pluginswaldurtestse2e">Waldur federation E2E tests (<code>plugins/waldur/tests/e2e/</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Tests</th>
+<th>What it validates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_e2e_federation.py</code></td>
+<td>~10</td>
+<td>Full Waldur A → Waldur B order processing pipeline</td>
+</tr>
+<tr>
+<td><code>test_e2e_username_sync.py</code></td>
+<td>~8</td>
+<td>Username reconciliation between federated instances</td>
+</tr>
+<tr>
+<td><code>test_e2e_usage_sync.py</code></td>
+<td>~5</td>
+<td>Usage reporting across federation</td>
+</tr>
+<tr>
+<td><code>test_e2e_stomp.py</code></td>
+<td>~5</td>
+<td>STOMP event routing for federation</td>
+</tr>
+<tr>
+<td><code>test_e2e_offering_user_pubsub.py</code></td>
+<td>~4</td>
+<td>Offering user attribute sync via STOMP</td>
+</tr>
+<tr>
+<td><code>test_e2e_order_rejection.py</code></td>
+<td>~3</td>
+<td>Order rejection handling in federation</td>
+</tr>
+</tbody>
+</table>
+<h2 id="running-locally">Running locally</h2>
+<h3 id="prerequisites">Prerequisites</h3>
 <ol>
-<li>Sets the source order's <code>backend_id</code> to the <code>pending_order_id</code></li>
-<li>Keeps the order in <code>EXECUTING</code> state</li>
-<li>On subsequent polling cycles, calls <code>check_pending_order(backend_id)</code> to check completion</li>
-<li>When <code>check_pending_order()</code> returns <code>True</code>, marks the source order as <code>DONE</code></li>
+<li>A running Waldur instance with demo data loaded</li>
+<li><code>uv sync --all-packages</code> (installs core + all plugins + slurm-emulator)</li>
+<li>A config YAML pointing at your Waldur instance</li>
 </ol>
-<h4 id="check_pending_orderorder_backend_id-str-bool"><code>check_pending_order(order_backend_id: str) -&gt; bool</code></h4>
-<ul>
-<li><strong>Default</strong>: Returns <code>True</code> (no async orders, always "complete")</li>
-<li><strong>Override when</strong>: Your backend uses non-blocking resource creation</li>
-<li><strong>Returns</strong>: <code>True</code> if the remote order completed, <code>False</code> if still pending</li>
-<li><strong>Raises</strong>: <code>BackendError</code> if the remote order failed or was cancelled</li>
-</ul>
-<p>Example (Waldur federation plugin):</p>
+<h3 id="boot-the-docker-stack-optional-for-a-fresh-local-instance">Boot the Docker stack (optional — for a fresh local instance)</h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>ci/docker-compose.e2e.yml<span class="w"> </span>up<span class="w"> </span>waldur-db-migration
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>ci/docker-compose.e2e.yml<span class="w"> </span>up<span class="w"> </span>-d
+
+<span class="c1"># Wait for API to be ready</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s2">"%{http_code}"</span><span class="w"> </span>http://localhost:8080/api/
+<span class="c1"># Should return 401</span>
+
+<span class="c1"># Load demo preset</span>
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>ci/docker-compose.e2e.yml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>waldur-api<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>waldur<span class="w"> </span>demo_presets<span class="w"> </span>load<span class="w"> </span>site_agent_e2e<span class="w"> </span>--no-cleanup
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="create-a-local-config">Create a local config</h3>
+<p>Copy <code>ci/e2e-ci-config.yaml</code> and change the API host from <code>docker</code> to
+<code>localhost</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
 <span class="normal">6</span>
-<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">check_pending_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_backend_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="n">target_order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_order</span><span class="p">(</span><span class="n">UUID</span><span class="p">(</span><span class="n">order_backend_id</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">target_order</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">OrderState</span><span class="o">.</span><span class="n">DONE</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">if</span> <span class="n">target_order</span><span class="o">.</span><span class="n">state</span> <span class="ow">in</span> <span class="p">{</span><span class="n">OrderState</span><span class="o">.</span><span class="n">ERRED</span><span class="p">,</span> <span class="n">OrderState</span><span class="o">.</span><span class="n">CANCELED</span><span class="p">}:</span>
-        <span class="k">raise</span> <span class="n">BackendError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Target order failed: </span><span class="si">{</span><span class="n">target_order</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># Still pending</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># e2e-local-config.yaml</span>
+<span class="nt">offerings</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"E2E</span><span class="nv"> </span><span class="s">SLURM</span><span class="nv"> </span><span class="s">Usage"</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:8080/api/"</span>
+<span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"e2e0000000000000000000000000token001"</span>
+<span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"e2ef0000000000000000000000000001"</span>
+<span class="w">    </span><span class="nt">stomp_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="c1"># ... rest same as ci/e2e-ci-config.yaml</span>
 </code></pre></div></td></tr></tbody></table></div>
-<h4 id="setup_target_event_subscriptionssource_offering-user_agent-global_proxy-list"><code>setup_target_event_subscriptions(source_offering, user_agent, global_proxy) -&gt; list</code></h4>
-<ul>
-<li><strong>Default</strong>: Returns <code>[]</code> (no target subscriptions)</li>
-<li><strong>Override when</strong>: Your backend supports STOMP events from a target system</li>
-<li><strong>Returns</strong>: List of <code>StompConsumer</code> tuples for lifecycle management</li>
-<li><strong>Called by</strong>: <code>event_process</code> mode during STOMP setup</li>
-</ul>
-<h2 id="baseclient-method-reference">BaseClient method reference</h2>
-<p>All methods below are abstract and must be implemented.</p>
+<p>For STOMP tests, create a second config with <code>stomp_enabled: true</code> and
+STOMP connection settings:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># e2e-local-config-stomp.yaml</span>
+<span class="nt">offerings</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"E2E</span><span class="nv"> </span><span class="s">SLURM</span><span class="nv"> </span><span class="s">STOMP"</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:8080/api/"</span>
+<span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"e2e0000000000000000000000000token001"</span>
+<span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"e2ef0000000000000000000000000001"</span>
+<span class="w">    </span><span class="nt">stomp_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">stomp_ws_host</span><span class="p">:</span><span class="w"> </span><span class="s">"localhost"</span>
+<span class="w">    </span><span class="nt">stomp_ws_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15674</span>
+<span class="w">    </span><span class="nt">stomp_ws_path</span><span class="p">:</span><span class="w"> </span><span class="s">"/ws"</span>
+<span class="w">    </span><span class="nt">websocket_use_tls</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="c1"># ... rest same as ci/e2e-ci-config-stomp.yaml</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="run-the-tests">Run the tests</h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># REST E2E tests (API optimizations + benchmarks)</span>
+<span class="nv">WALDUR_E2E_TESTS</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<span class="nv">WALDUR_E2E_CONFIG</span><span class="o">=</span>e2e-local-config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="nv">WALDUR_E2E_PROJECT_A_UUID</span><span class="o">=</span>e2eb0000000000000000000000000001<span class="w"> </span><span class="se">\</span>
+.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>plugins/slurm/tests/e2e/<span class="w"> </span>-v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ignore<span class="o">=</span>plugins/slurm/tests/e2e/test_e2e_stomp.py
+
+<span class="c1"># STOMP E2E tests</span>
+<span class="nv">WALDUR_E2E_TESTS</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<span class="nv">WALDUR_E2E_STOMP_CONFIG</span><span class="o">=</span>e2e-local-config-stomp.yaml<span class="w"> </span><span class="se">\</span>
+<span class="nv">WALDUR_E2E_PROJECT_A_UUID</span><span class="o">=</span>e2eb0000000000000000000000000001<span class="w"> </span><span class="se">\</span>
+.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>plugins/slurm/tests/e2e/test_e2e_stomp.py<span class="w"> </span>-v
+
+<span class="c1"># Multi-resource benchmark (default N=800, reduce for quick runs)</span>
+<span class="nv">WALDUR_E2E_TESTS</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<span class="nv">WALDUR_E2E_CONFIG</span><span class="o">=</span>e2e-local-config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="nv">WALDUR_E2E_PROJECT_A_UUID</span><span class="o">=</span>e2eb0000000000000000000000000001<span class="w"> </span><span class="se">\</span>
+<span class="nv">WALDUR_E2E_BENCH_RESOURCES</span><span class="o">=</span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>plugins/slurm/tests/e2e/test_e2e_benchmark.py<span class="w"> </span>-v<span class="w"> </span>-k<span class="w"> </span>multi
+</code></pre></div></td></tr></tbody></table></div>
+<h2 id="environment-variables">Environment variables</h2>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Signature</th>
+<th>Variable</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WALDUR_E2E_TESTS</code></td>
+<td>Yes</td>
+<td>Set to <code>true</code> to enable E2E tests (skipped otherwise)</td>
+</tr>
+<tr>
+<td><code>WALDUR_E2E_CONFIG</code></td>
+<td>For REST tests</td>
+<td>Path to agent config YAML (<code>stomp_enabled: false</code>)</td>
+</tr>
+<tr>
+<td><code>WALDUR_E2E_STOMP_CONFIG</code></td>
+<td>For STOMP tests</td>
+<td>Path to agent config YAML (<code>stomp_enabled: true</code>)</td>
+</tr>
+<tr>
+<td><code>WALDUR_E2E_PROJECT_A_UUID</code></td>
+<td>Yes</td>
+<td>Project UUID on Waldur to create orders in</td>
+</tr>
+<tr>
+<td><code>WALDUR_E2E_BENCH_RESOURCES</code></td>
+<td>No</td>
+<td>Number of resources for multi-resource benchmark (default: 800, CI uses 5)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ci-pipeline">CI pipeline</h2>
+<p>The E2E job runs in the <code>E2E integration tests</code> stage in <code>.gitlab-ci.yml</code>.
+It triggers on pushes to <code>main</code> and release tags.</p>
+<h3 id="ci-flow">CI flow</h3>
+<ol>
+<li>Install Docker CLI + Compose plugin (static binaries)</li>
+<li><code>uv sync --all-packages</code> — install site-agent + slurm-emulator</li>
+<li><code>docker compose -f ci/docker-compose.e2e.yml up</code> — boot Waldur stack</li>
+<li>Wait for API health check (<code>curl http://docker:8080/api/</code>)</li>
+<li>Copy and load <code>site_agent_e2e</code> demo preset</li>
+<li>Force-set deterministic auth token</li>
+<li><strong>REST E2E tests</strong> — <code>pytest plugins/slurm/tests/e2e/ --ignore=test_e2e_stomp.py</code></li>
+<li><strong>STOMP E2E tests</strong> — <code>pytest plugins/slurm/tests/e2e/test_e2e_stomp.py</code></li>
+<li>Collect JUnit XML reports, stack logs, and markdown reports as artifacts</li>
+</ol>
+<p>The REST and STOMP tests run sequentially in the same job to reuse the
+~14min Docker stack boot + migration time.</p>
+<h3 id="ci-files">CI files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>list_resources</code></td>
-<td><code>() -&gt; list[ClientResource]</code></td>
-<td>List all resources on backend</td>
+<td><code>ci/docker-compose.e2e.yml</code></td>
+<td>Minimal Waldur stack: PostgreSQL, RabbitMQ (with web_stomp), API + worker</td>
 </tr>
 <tr>
-<td><code>get_resource</code></td>
-<td><code>(resource_id) -&gt; ClientResource or None</code></td>
-<td>Get single resource or None</td>
+<td><code>ci/e2e-ci-config.yaml</code></td>
+<td>REST test config: 3 offerings (usage/limits/mixed), <code>stomp_enabled: false</code></td>
 </tr>
 <tr>
-<td><code>create_resource</code></td>
-<td><code>(name, description, organization, parent_name=None) -&gt; str</code></td>
-<td>Create resource</td>
+<td><code>ci/e2e-ci-config-stomp.yaml</code></td>
+<td>STOMP test config: 1 offering, <code>stomp_enabled: true</code></td>
 </tr>
 <tr>
-<td><code>delete_resource</code></td>
-<td><code>(name) -&gt; str</code></td>
-<td>Delete resource</td>
+<td><code>ci/site_agent_e2e.json</code></td>
+<td>Demo preset: 6 users, 3 offerings, plans, components, roles</td>
 </tr>
 <tr>
-<td><code>set_resource_limits</code></td>
-<td><code>(resource_id, limits_dict) -&gt; str or None</code></td>
-<td>Set limits (backend units)</td>
+<td><code>ci/override.conf.py</code></td>
+<td>Mastermind Django settings (Celery broker, RabbitMQ STOMP)</td>
 </tr>
 <tr>
-<td><code>get_resource_limits</code></td>
-<td><code>(resource_id) -&gt; dict[str, int]</code></td>
-<td>Get limits (backend units)</td>
+<td><code>ci/rabbitmq-enabled-plugins</code></td>
+<td>Enables <code>rabbitmq_management</code>, <code>rabbitmq_web_stomp</code>, <code>rabbitmq_stomp</code></td>
 </tr>
 <tr>
-<td><code>get_resource_user_limits</code></td>
-<td><code>(resource_id) -&gt; dict[str, dict[str, int]]</code></td>
-<td>Per-user limits</td>
+<td><code>ci/rabbitmq.conf</code></td>
+<td>RabbitMQ connection and permissions config</td>
 </tr>
 <tr>
-<td><code>set_resource_user_limits</code></td>
-<td><code>(resource_id, username, limits_dict) -&gt; str</code></td>
-<td>Set per-user limits</td>
-</tr>
-<tr>
-<td><code>get_association</code></td>
-<td><code>(user, resource_id) -&gt; Association or None</code></td>
-<td>Check user-resource link</td>
-</tr>
-<tr>
-<td><code>create_association</code></td>
-<td><code>(username, resource_id, default_account=None) -&gt; str</code></td>
-<td>Create user-resource link</td>
-</tr>
-<tr>
-<td><code>delete_association</code></td>
-<td><code>(username, resource_id) -&gt; str</code></td>
-<td>Remove user-resource link</td>
-</tr>
-<tr>
-<td><code>get_usage_report</code></td>
-<td><code>(resource_ids) -&gt; list</code></td>
-<td>Raw usage data from backend</td>
-</tr>
-<tr>
-<td><code>list_resource_users</code></td>
-<td><code>(resource_id) -&gt; list[str]</code></td>
-<td>List usernames for resource</td>
+<td><code>ci/createdb-celery_results.sql</code></td>
+<td>Creates the <code>celery_results</code> database for Celery</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Important</strong>: <code>BaseClient</code> also provides <code>execute_command(command, silent=False)</code>
-for running CLI commands with error handling. Use it for CLI-based backends.</p>
-<h2 id="agent-mode-method-matrix">Agent mode method matrix</h2>
-<p>This table shows which <code>BaseBackend</code> methods are called by each agent mode.</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>order_process</th>
-<th>report</th>
-<th>membership_sync</th>
-<th>event_process</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ping</code></td>
-<td>startup</td>
-<td>startup</td>
-<td>startup</td>
-<td>startup</td>
-</tr>
-<tr>
-<td><code>create_resource</code> / <code>create_resource_with_id</code></td>
-<td>CREATE order</td>
-<td>-</td>
-<td>-</td>
-<td>CREATE event</td>
-</tr>
-<tr>
-<td><code>_pre_create_resource</code></td>
-<td>CREATE order</td>
-<td>-</td>
-<td>-</td>
-<td>CREATE event</td>
-</tr>
-<tr>
-<td><code>post_create_resource</code></td>
-<td>CREATE order</td>
-<td>-</td>
-<td>-</td>
-<td>CREATE event</td>
-</tr>
-<tr>
-<td><code>_collect_resource_limits</code></td>
-<td>CREATE order</td>
-<td>-</td>
-<td>-</td>
-<td>CREATE event</td>
-</tr>
-<tr>
-<td><code>check_pending_order</code></td>
-<td>CREATE order (async)</td>
-<td>-</td>
-<td>-</td>
-<td>CREATE event (async)</td>
-</tr>
-<tr>
-<td><code>set_resource_limits</code></td>
-<td>UPDATE order</td>
-<td>-</td>
-<td>-</td>
-<td>UPDATE event</td>
-</tr>
-<tr>
-<td><code>delete_resource</code></td>
-<td>TERMINATE order</td>
-<td>-</td>
-<td>-</td>
-<td>TERMINATE event</td>
-</tr>
-<tr>
-<td><code>_pre_delete_resource</code></td>
-<td>TERMINATE order</td>
-<td>-</td>
-<td>-</td>
-<td>TERMINATE event</td>
-</tr>
-<tr>
-<td><code>pull_resource</code> / <code>pull_resources</code></td>
-<td>CREATE order</td>
-<td>usage pull</td>
-<td>sync cycle</td>
-<td>various events</td>
-</tr>
-<tr>
-<td><code>_get_usage_report</code></td>
-<td>-</td>
-<td>usage pull</td>
-<td>sync cycle</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>add_users_to_resource</code></td>
-<td>post-create</td>
-<td>-</td>
-<td>user sync</td>
-<td>role events</td>
-</tr>
-<tr>
-<td><code>remove_users_from_resource</code></td>
-<td>-</td>
-<td>-</td>
-<td>user sync</td>
-<td>role events</td>
-</tr>
-<tr>
-<td><code>add_user</code> / <code>remove_user</code></td>
-<td>-</td>
-<td>-</td>
-<td>role changes</td>
-<td>role events</td>
-</tr>
-<tr>
-<td><code>downscale_resource</code></td>
-<td>-</td>
-<td>-</td>
-<td>status sync</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>pause_resource</code></td>
-<td>-</td>
-<td>-</td>
-<td>status sync</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>restore_resource</code></td>
-<td>-</td>
-<td>-</td>
-<td>status sync</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>get_resource_metadata</code></td>
-<td>-</td>
-<td>-</td>
-<td>status sync</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>setup_target_event_subscriptions</code></td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>STOMP setup</td>
-</tr>
-<tr>
-<td><code>list_resources</code></td>
-<td>-</td>
-<td>import</td>
-<td>-</td>
-<td>import event</td>
-</tr>
-<tr>
-<td><code>get_resource_limits</code></td>
-<td>-</td>
-<td>import</td>
-<td>-</td>
-<td>import event</td>
-</tr>
-<tr>
-<td><code>get_resource_user_limits</code></td>
-<td>-</td>
-<td>-</td>
-<td>limits sync</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>set_resource_user_limits</code></td>
-<td>-</td>
-<td>-</td>
-<td>limits sync</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>process_existing_users</code></td>
-<td>-</td>
-<td>-</td>
-<td>user sync</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h2 id="usage-report-format-specification">Usage report format specification</h2>
-<p>The <code>_get_usage_report</code> method must return data in this exact structure:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-    <span class="s2">"&lt;resource_backend_id&gt;"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"TOTAL_ACCOUNT_USAGE"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"&lt;component_key&gt;"</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">int_value</span><span class="o">&gt;</span><span class="p">,</span>  <span class="c1"># Sum of all per-user values</span>
-            <span class="o">...</span>
-        <span class="p">},</span>
-        <span class="s2">"&lt;username_1&gt;"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"&lt;component_key&gt;"</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">int_value</span><span class="o">&gt;</span><span class="p">,</span>
-            <span class="o">...</span>
-        <span class="p">},</span>
-        <span class="s2">"&lt;username_2&gt;"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"&lt;component_key&gt;"</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">int_value</span><span class="o">&gt;</span><span class="p">,</span>
-            <span class="o">...</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-    <span class="s2">"&lt;another_resource_backend_id&gt;"</span><span class="p">:</span> <span class="p">{</span> <span class="o">...</span> <span class="p">},</span>
-<span class="p">}</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="rules">Rules</h3>
-<ol>
-<li><strong>Component keys</strong> must exactly match those in the <code>backend_components</code> YAML config.</li>
-<li><strong>Values</strong> must be integers in Waldur units (i.e., divide raw backend values
-   by <code>unit_factor</code>).</li>
-<li><strong><code>TOTAL_ACCOUNT_USAGE</code></strong> is a required key and must equal the sum of all
-   per-user values for each component.</li>
-<li>If a resource has no usage, return
-   <code>{"TOTAL_ACCOUNT_USAGE": {"cpu": 0, "mem": 0, ...}}</code>.</li>
-<li>If usage reporting is not supported, return <code>{}</code> (empty dict).</li>
-</ol>
-<h3 id="example-slurm-cpu-and-memory">Example: SLURM CPU and memory</h3>
-<p>Given config:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_components</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">cpu</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">unit_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60000</span>
-<span class="w">    </span><span class="nt">measured_unit</span><span class="p">:</span><span class="w"> </span><span class="s">"k-Hours"</span>
-<span class="w">  </span><span class="nt">mem</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">unit_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">61440</span>
-<span class="w">    </span><span class="nt">measured_unit</span><span class="p">:</span><span class="w"> </span><span class="s">"gb-Hours"</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p>If SLURM reports 120000 cpu-minutes and 122880 MB-minutes for user1:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-    <span class="s2">"hpc_my_allocation"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"TOTAL_ACCOUNT_USAGE"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cpu"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"mem"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
-        <span class="s2">"user1"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cpu"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"mem"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p>Calculation: <code>120000 / 60000 = 2</code>, <code>122880 / 61440 = 2</code>.</p>
-<h2 id="supports_decreasing_usage-class-attribute"><code>supports_decreasing_usage</code> class attribute</h2>
-<p>Set this to <code>True</code> on your backend class if usage values can decrease between
-reports (e.g., a storage backend reporting current disk usage rather than
-accumulated compute time).</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MyStorageBackend</span><span class="p">(</span><span class="n">BaseBackend</span><span class="p">):</span>
-    <span class="n">supports_decreasing_usage</span> <span class="o">=</span> <span class="kc">True</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p>When <code>False</code> (default), the reporting processor skips updates where the new
-usage value is lower than the previously reported value, treating it as a
-data anomaly.</p>
-<h2 id="decision-matrix-for-no-op-implementations">Decision matrix for no-op implementations</h2>
-<p>If your backend does not support a certain operation, use these return values:</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>No-op return</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ping</code></td>
-<td><code>False</code></td>
-<td>Backend has no health check</td>
-</tr>
-<tr>
-<td><code>diagnostics</code></td>
-<td><code>True</code></td>
-<td>Diagnostics not implemented but OK</td>
-</tr>
-<tr>
-<td><code>list_components</code></td>
-<td><code>[]</code></td>
-<td>No component discovery</td>
-</tr>
-<tr>
-<td><code>_get_usage_report</code></td>
-<td><code>{}</code></td>
-<td>No usage reporting</td>
-</tr>
-<tr>
-<td><code>_collect_resource_limits</code></td>
-<td><code>({}, {})</code></td>
-<td>No limits support</td>
-</tr>
-<tr>
-<td><code>_pre_create_resource</code></td>
-<td><code>pass</code></td>
-<td>No pre-creation setup</td>
-</tr>
-<tr>
-<td><code>downscale_resource</code></td>
-<td><code>True</code></td>
-<td>No downscaling concept</td>
-</tr>
-<tr>
-<td><code>pause_resource</code></td>
-<td><code>True</code></td>
-<td>No pausing concept</td>
-</tr>
-<tr>
-<td><code>restore_resource</code></td>
-<td><code>True</code></td>
-<td>No restore concept</td>
-</tr>
-<tr>
-<td><code>get_resource_metadata</code></td>
-<td><code>{}</code></td>
-<td>No metadata</td>
-</tr>
-</tbody>
-</table>
-<h2 id="annotated-yaml-configuration">Annotated YAML configuration</h2>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"My</span><span class="nv"> </span><span class="s">Custom</span><span class="nv"> </span><span class="s">Offering"</span><span class="w">          </span><span class="c1"># Human-readable name for logging</span>
-
-<span class="w">    </span><span class="c1"># Waldur Mastermind connection</span>
-<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur.example.com/api/"</span>
-<span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"your-api-token"</span><span class="w">   </span><span class="c1"># Service provider token</span>
-<span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"uuid-here"</span><span class="w">    </span><span class="c1"># UUID from Waldur offering page</span>
-
-<span class="w">    </span><span class="c1"># Backend selection (entry point names from pyproject.toml)</span>
-<span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"mycustom"</span><span class="w">       </span><span class="c1"># For create/update/terminate</span>
-<span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"mycustom"</span><span class="w">              </span><span class="c1"># For usage reporting</span>
-<span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"mycustom"</span><span class="w">        </span><span class="c1"># For user sync</span>
-<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"base"</span><span class="w">        </span><span class="c1"># Username generation</span>
-
-<span class="w">    </span><span class="c1"># Legacy setting (used if per-mode backends not specified)</span>
-<span class="w">    </span><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"mycustom"</span>
-
-<span class="w">    </span><span class="c1"># Event processing (optional)</span>
-<span class="w">    </span><span class="nt">stomp_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-
-<span class="w">    </span><span class="c1"># Backend-specific settings (passed to __init__ as backend_settings)</span>
-<span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">default_account</span><span class="p">:</span><span class="w"> </span><span class="s">"root"</span><span class="w">            </span><span class="c1"># Default parent account</span>
-<span class="w">      </span><span class="nt">customer_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"cust_"</span><span class="w">           </span><span class="c1"># Prefix for customer-level accounts</span>
-<span class="w">      </span><span class="nt">project_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"proj_"</span><span class="w">            </span><span class="c1"># Prefix for project-level accounts</span>
-<span class="w">      </span><span class="nt">allocation_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"alloc_"</span><span class="w">        </span><span class="c1"># Prefix for allocation-level accounts</span>
-
-<span class="w">    </span><span class="c1"># Component definitions (passed to __init__ as backend_components)</span>
-<span class="w">    </span><span class="nt">backend_components</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">cpu</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span><span class="w">                       </span><span class="c1"># Default limit in Waldur units</span>
-<span class="w">        </span><span class="nt">measured_unit</span><span class="p">:</span><span class="w"> </span><span class="s">"k-Hours"</span><span class="w">         </span><span class="c1"># Display unit in Waldur UI</span>
-<span class="w">        </span><span class="nt">unit_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60000</span><span class="w">               </span><span class="c1"># Waldur-to-backend conversion factor</span>
-<span class="w">        </span><span class="nt">accounting_type</span><span class="p">:</span><span class="w"> </span><span class="s">"usage"</span><span class="w">         </span><span class="c1"># "usage" = metered, "limit" = quota</span>
-<span class="w">        </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"CPU"</span><span class="w">                     </span><span class="c1"># Display label in Waldur UI</span>
-<span class="w">        </span><span class="c1"># Optional Waldur offering component fields:</span>
-<span class="w">        </span><span class="c1"># description: "CPU time"        # Component description</span>
-<span class="w">        </span><span class="c1"># min_value: 0                   # Minimum allowed value</span>
-<span class="w">        </span><span class="c1"># max_value: 10000               # Maximum allowed value</span>
-<span class="w">        </span><span class="c1"># max_available_limit: 5000      # Maximum available limit</span>
-<span class="w">        </span><span class="c1"># default_limit: 100             # Default limit value</span>
-<span class="w">        </span><span class="c1"># limit_period: "month"          # "annual", "month", "quarterly", "total"</span>
-<span class="w">        </span><span class="c1"># article_code: "CPU-001"        # Billing article code</span>
-<span class="w">        </span><span class="c1"># is_boolean: false              # Boolean (on/off) component</span>
-<span class="w">        </span><span class="c1"># is_prepaid: false              # Prepaid billing</span>
-<span class="w">      </span><span class="nt">storage</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
-<span class="w">        </span><span class="nt">measured_unit</span><span class="p">:</span><span class="w"> </span><span class="s">"GB"</span>
-<span class="w">        </span><span class="nt">unit_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="w">        </span><span class="nt">accounting_type</span><span class="p">:</span><span class="w"> </span><span class="s">"limit"</span>
-<span class="w">        </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"Storage"</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="unit_factor-explained"><code>unit_factor</code> explained</h3>
-<p>The <code>unit_factor</code> converts between Waldur display units and backend-native units:</p>
+<h3 id="artifacts">Artifacts</h3>
 <ul>
-<li><code>backend_value = waldur_value * unit_factor</code></li>
-<li><code>waldur_value = backend_value / unit_factor</code></li>
+<li><code>e2e-report-rest.xml</code> / <code>e2e-report-stomp.xml</code> — JUnit test results</li>
+<li><code>waldur-stack-logs.txt</code> — Docker stack logs for debugging failures</li>
+<li><code>plugins/slurm/tests/e2e/*-report.md</code> — Detailed markdown reports with API call tables</li>
+<li><code>plugins/slurm/tests/e2e/*-report.json</code> — Machine-readable API call counts</li>
 </ul>
-<p>Examples:</p>
+<h2 id="test-reports">Test reports</h2>
+<p>Each test run produces a markdown report and a JSON summary in
+<code>plugins/slurm/tests/e2e/</code>. The markdown report includes:</p>
 <ul>
-<li>CPU k-Hours to SLURM cpu-minutes: <code>unit_factor = 60000</code> (60 min x 1000)</li>
-<li>GB-Hours to SLURM MB-minutes: <code>unit_factor = 61440</code> (60 min x 1024 MB)</li>
-<li>GB to GB (no conversion): <code>unit_factor = 1</code></li>
+<li>Per-test API call tables (method, URL, status, response size)</li>
+<li>Order/resource state snapshots at each processor cycle</li>
+<li>API call summary table (calls and bytes per test)</li>
 </ul>
-<h2 id="entry-point-registration">Entry point registration</h2>
-<p>Register your plugin in <code>pyproject.toml</code>:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">[project]</span>
-<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"waldur-site-agent-mycustom"</span>
-<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.0"</span>
-<span class="n">dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"waldur-site-agent&gt;=0.7.0"</span><span class="p">]</span>
-
-<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.backends"</span><span class="k">]</span>
-<span class="n">mycustom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"waldur_site_agent_mycustom.backend:MyCustomBackend"</span>
-
-<span class="c1"># Optional: component schema validation</span>
-<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.component_schemas"</span><span class="k">]</span>
-<span class="n">mycustom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"waldur_site_agent_mycustom.schemas:MyCustomComponentSchema"</span>
-
-<span class="c1"># Optional: backend settings schema validation</span>
-<span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.backend_settings_schemas"</span><span class="k">]</span>
-<span class="n">mycustom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"waldur_site_agent_mycustom.schemas:MyCustomBackendSettingsSchema"</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p>The entry point name (e.g., <code>mycustom</code>) is what users put in
-<code>backend_type</code> or <code>order_processing_backend</code> in the config YAML.</p>
-<h2 id="processor-plugin-data-flow">Processor-plugin data flow</h2>
-<p>Plugins <strong>never</strong> have direct access to the Waldur API client. Instead,
-the core processor pre-resolves any Waldur data the plugin might need and
-passes it via <code>user_context</code>. Plugins return metadata to Waldur by setting
-<code>resource.backend_metadata</code>.</p>
-<h3 id="pre-resolved-data-in-user_context">Pre-resolved data in <code>user_context</code></h3>
-<p>The processor enriches the <code>user_context</code> dict before calling backend
-methods. Plugins read from it without making API calls:</p>
-<table>
-<thead>
-<tr>
-<th>Key</th>
-<th>Type</th>
-<th>Contents</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>team</code></td>
-<td><code>list[dict]</code></td>
-<td>Team members with usernames</td>
-</tr>
-<tr>
-<td><code>offering_users</code></td>
-<td><code>list[dict]</code></td>
-<td>Offering users</td>
-</tr>
-<tr>
-<td><code>ssh_keys</code></td>
-<td><code>dict[str, str]</code></td>
-<td>Mapping of SSH key UUID → public key text</td>
-</tr>
-<tr>
-<td><code>plan_quotas</code></td>
-<td><code>dict[str, int]</code></td>
-<td>Plan component quotas (component key → value)</td>
-</tr>
-</tbody>
-</table>
-<h3 id="returning-metadata-via-backend_metadata">Returning metadata via <code>backend_metadata</code></h3>
-<p>To push metadata back to Waldur (e.g., access credentials, connection
-endpoints), set <code>resource.backend_metadata</code> in <code>post_create_resource</code>:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">post_create_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="n">waldur_resource</span><span class="p">,</span> <span class="n">user_context</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="c1"># ... create credentials, gather endpoints ...</span>
-    <span class="n">resource</span><span class="o">.</span><span class="n">backend_metadata</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"username"</span><span class="p">:</span> <span class="s2">"admin"</span><span class="p">,</span>
-        <span class="s2">"password"</span><span class="p">:</span> <span class="n">generated_password</span><span class="p">,</span>
-        <span class="s2">"endpoint"</span><span class="p">:</span> <span class="s2">"https://service.example.com"</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="c1"># The processor pushes this to Waldur automatically</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="data-flow">Data flow</h3>
-<pre class="mermaid"><code>sequenceDiagram
-    participant P as Processor
-    participant B as YourBackend
-    participant W as Waldur API
-    participant E as External System
-
-    P-&gt;&gt;P: Fetch service provider
-    P-&gt;&gt;B: Set service_provider_uuid
-
-    Note over P,B: Resource creation order arrives
-
-    P-&gt;&gt;W: Resolve SSH keys, plan quotas
-    W--&gt;&gt;P: Pre-resolved data
-    P-&gt;&gt;B: _pre_create_resource(resource, user_context)
-    B-&gt;&gt;B: Read ssh_keys, plan_quotas from user_context
-    B-&gt;&gt;E: Create resource with resolved data
-    E--&gt;&gt;B: Resource created
-
-    P-&gt;&gt;B: post_create_resource(resource, waldur_resource, user_context)
-    B-&gt;&gt;B: Set resource.backend_metadata
-    B--&gt;&gt;P: Return
-    P-&gt;&gt;W: Push backend_metadata to Waldur</code></pre>
-<h3 id="example-resolving-an-ssh-key-uuid-from-user_context">Example: resolving an SSH key UUID from <code>user_context</code></h3>
-<p>When a resource attribute contains a UUID reference (e.g., an SSH key UUID
-from the order form), look it up in the pre-resolved <code>ssh_keys</code> dict:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">UUID</span>
-
-<span class="k">class</span><span class="w"> </span><span class="nc">MyBackend</span><span class="p">(</span><span class="n">BaseBackend</span><span class="p">):</span>
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_ssh_key</span><span class="p">(</span><span class="n">key_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ssh_keys</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Resolve SSH key from pre-resolved context.</span>
-
-<span class="sd">        If key_value is a UUID, look it up. Otherwise treat as raw key text.</span>
-<span class="sd">        """</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">key_uuid</span> <span class="o">=</span> <span class="n">UUID</span><span class="p">(</span><span class="n">key_value</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">key_value</span>  <span class="c1"># Raw public key text, use as-is</span>
-
-        <span class="k">return</span> <span class="n">ssh_keys</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key_uuid</span><span class="p">),</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ssh_keys</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_uuid</span><span class="o">.</span><span class="n">hex</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_pre_create_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waldur_resource</span><span class="p">,</span> <span class="n">user_context</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">user_context</span> <span class="o">=</span> <span class="n">user_context</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="n">ssh_keys</span> <span class="o">=</span> <span class="n">user_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ssh_keys"</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">raw_key</span> <span class="o">=</span> <span class="n">waldur_resource</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ssh_public_key"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-        <span class="n">resolved_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_ssh_key</span><span class="p">(</span><span class="n">raw_key</span><span class="p">,</span> <span class="n">ssh_keys</span><span class="p">)</span>
-        <span class="c1"># Use resolved_key for resource setup ...</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="design-principles">Design principles</h3>
+<p>These reports are useful for tracking API efficiency across changes.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="tests-are-skipped">Tests are skipped</h3>
+<p>All E2E tests are gated by <code>WALDUR_E2E_TESTS=true</code>. If tests show as
+"skipped", check that the environment variable is set.</p>
+<h3 id="waldur_e2e_config-not-set-waldur_e2e_stomp_config-not-set">"WALDUR_E2E_CONFIG not set" / "WALDUR_E2E_STOMP_CONFIG not set"</h3>
+<p>REST tests need <code>WALDUR_E2E_CONFIG</code>, STOMP tests need
+<code>WALDUR_E2E_STOMP_CONFIG</code>. They use separate config files because
+STOMP tests require <code>stomp_enabled: true</code> with WebSocket connection
+settings.</p>
+<h3 id="stomp-tests-skip-with-endpoint-not-reachable">STOMP tests skip with "endpoint not reachable"</h3>
+<p>The STOMP tests check that RabbitMQ's web_stomp endpoint is accessible
+before attempting connections. Verify that:</p>
 <ul>
-<li><strong>Plugins must not import <code>waldur_api_client</code></strong> for runtime API calls.
-  All Waldur data should come via <code>user_context</code> or <code>BaseBackend</code> attributes.</li>
-<li><strong><code>service_provider_uuid</code></strong> is still set on <code>BaseBackend</code> by the processor
-  and can be read by plugins for constructing backend-side identifiers.</li>
-<li><strong>Handle missing context gracefully</strong> — <code>user_context</code> may be <code>None</code> or
-  missing keys in unit tests. Always default to <code>{}</code> or empty values.</li>
+<li>RabbitMQ is running with <code>rabbitmq_web_stomp</code> plugin enabled</li>
+<li>Port 15674 is exposed and reachable</li>
+<li>The <code>stomp_ws_host</code> and <code>stomp_ws_port</code> in config match your setup</li>
 </ul>
-<h2 id="common-pitfalls">Common pitfalls</h2>
-<h3 id="1-unit-factor-direction">1. Unit factor direction</h3>
-<p>The <code>unit_factor</code> converts <strong>from Waldur units to backend units</strong> by multiplication.
-When reporting usage back, you must <strong>divide</strong> by <code>unit_factor</code>. Getting this
-backwards causes limits to be set at 1/60000th of the intended value
-or usage to be reported 60000x too high.</p>
-<h3 id="2-missing-total_account_usage">2. Missing TOTAL_ACCOUNT_USAGE</h3>
-<p>The <code>_get_usage_report</code> return dict <strong>must</strong> include a <code>"TOTAL_ACCOUNT_USAGE"</code> key
-for each resource. If missing, the core will substitute zeros, and reported
-usage will appear as zero in Waldur.</p>
-<h3 id="3-entry-point-not-discovered">3. Entry point not discovered</h3>
-<p>Common causes:</p>
+<h3 id="order-stuck-in-non-terminal-state">Order stuck in non-terminal state</h3>
+<p>The processor runs up to 10 cycles with 2s delays. With the SLURM
+emulator, orders should complete in 1 cycle. If orders are stuck:</p>
 <ul>
-<li>Package not installed (<code>uv sync --all-packages</code>)</li>
-<li>Entry point group name misspelled (must be <code>"waldur_site_agent.backends"</code>)</li>
-<li>Entry point value points to wrong class or module</li>
+<li>Check Waldur API logs for errors</li>
+<li>Verify the demo preset loaded correctly</li>
+<li>Check that the emulator state file (<code>/tmp/slurm_emulator_db.json</code>)
+  is writable</li>
 </ul>
-<p>Debug with:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">entry_points</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">entry_points</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="s2">"waldur_site_agent.backends"</span><span class="p">)))</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="4-forgetting-superinit">4. Forgetting super().<strong>init</strong>()</h3>
-<p>Your backend <code>__init__</code> <strong>must</strong> call <code>super().__init__(backend_settings, backend_components)</code>.
-This sets up <code>self.backend_settings</code>, <code>self.backend_components</code>, and
-<code>self.client</code>. Then assign your own client:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend_settings</span><span class="p">,</span> <span class="n">backend_components</span><span class="p">):</span>
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">backend_settings</span><span class="p">,</span> <span class="n">backend_components</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">backend_type</span> <span class="o">=</span> <span class="s2">"mycustom"</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">MyCustomClient</span><span class="p">()</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="5-returning-wrong-types-from-client-methods">5. Returning wrong types from client methods</h3>
-<ul>
-<li><code>get_resource</code> must return <code>None</code> (not raise) when resource is absent.</li>
-<li><code>get_association</code> must return <code>None</code> (not raise) when no association exists.</li>
-<li><code>list_resources</code> must return <code>list[ClientResource]</code>, not raw dicts.</li>
-</ul>
-<h3 id="6-component-key-mismatch">6. Component key mismatch</h3>
-<p>Component keys in <code>_get_usage_report</code> must exactly match the keys in
-<code>backend_components</code> config. If config has <code>"cpu"</code> but you report <code>"CPU"</code>,
-the usage will be silently ignored.</p>
-<h2 id="testing-guidance">Testing guidance</h2>
-<h3 id="what-to-test-per-mode">What to test per mode</h3>
-<table>
-<thead>
-<tr>
-<th>Mode</th>
-<th>Test focus</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>order_process</code></td>
-<td><code>create_resource</code>, <code>delete_resource</code>, limit conversion</td>
-</tr>
-<tr>
-<td><code>report</code></td>
-<td><code>_get_usage_report</code> format, unit conversion math</td>
-</tr>
-<tr>
-<td><code>membership_sync</code></td>
-<td><code>add_user</code>, <code>remove_user</code>, pause/restore</td>
-</tr>
-<tr>
-<td>All</td>
-<td><code>ping</code>, error handling, edge cases</td>
-</tr>
-</tbody>
-</table>
-<h3 id="mock-patterns">Mock patterns</h3>
-<p>Mock the client to avoid needing a real backend:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">unittest.mock</span><span class="w"> </span><span class="kn">import</span> <span class="n">MagicMock</span><span class="p">,</span> <span class="n">patch</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_site_agent.backend.structures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientResource</span><span class="p">,</span> <span class="n">Association</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">test_create_resource</span><span class="p">():</span>
-    <span class="n">backend</span> <span class="o">=</span> <span class="n">MyCustomBackend</span><span class="p">(</span>
-        <span class="n">backend_settings</span><span class="o">=</span><span class="p">{</span><span class="s2">"default_account"</span><span class="p">:</span> <span class="s2">"root"</span><span class="p">,</span> <span class="s2">"allocation_prefix"</span><span class="p">:</span> <span class="s2">"test_"</span><span class="p">},</span>
-        <span class="n">backend_components</span><span class="o">=</span><span class="p">{</span><span class="s2">"cpu"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"unit_factor"</span><span class="p">:</span> <span class="mi">60000</span><span class="p">,</span> <span class="s2">"limit"</span><span class="p">:</span> <span class="mi">10</span><span class="p">}},</span>
-    <span class="p">)</span>
-    <span class="n">backend</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
-    <span class="n">backend</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_resource</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Resource doesn't exist yet</span>
-    <span class="n">backend</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">create_resource</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">"created"</span>
-
-    <span class="c1"># ... test resource creation</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="fixtures">Fixtures</h3>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
-
-<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">backend_settings</span><span class="p">():</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"default_account"</span><span class="p">:</span> <span class="s2">"root"</span><span class="p">,</span>
-        <span class="s2">"customer_prefix"</span><span class="p">:</span> <span class="s2">"c_"</span><span class="p">,</span>
-        <span class="s2">"project_prefix"</span><span class="p">:</span> <span class="s2">"p_"</span><span class="p">,</span>
-        <span class="s2">"allocation_prefix"</span><span class="p">:</span> <span class="s2">"a_"</span><span class="p">,</span>
-    <span class="p">}</span>
-
-<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">backend_components</span><span class="p">():</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"cpu"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"limit"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-            <span class="s2">"measured_unit"</span><span class="p">:</span> <span class="s2">"k-Hours"</span><span class="p">,</span>
-            <span class="s2">"unit_factor"</span><span class="p">:</span> <span class="mi">60000</span><span class="p">,</span>
-            <span class="s2">"accounting_type"</span><span class="p">:</span> <span class="s2">"usage"</span><span class="p">,</span>
-            <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"CPU"</span><span class="p">,</span>
-        <span class="p">},</span>
-    <span class="p">}</span>
-
-<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">backend</span><span class="p">(</span><span class="n">backend_settings</span><span class="p">,</span> <span class="n">backend_components</span><span class="p">):</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="n">MyCustomBackend</span><span class="p">(</span><span class="n">backend_settings</span><span class="p">,</span> <span class="n">backend_components</span><span class="p">)</span>
-    <span class="n">b</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">b</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="key-assertions">Key assertions</h3>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span>
-<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Usage report format</span>
-<span class="n">report</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">_get_usage_report</span><span class="p">([</span><span class="s2">"alloc_1"</span><span class="p">])</span>
-<span class="k">assert</span> <span class="s2">"TOTAL_ACCOUNT_USAGE"</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s2">"alloc_1"</span><span class="p">]</span>
-<span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s2">"alloc_1"</span><span class="p">][</span><span class="s2">"TOTAL_ACCOUNT_USAGE"</span><span class="p">]</span>
-           <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">backend</span><span class="o">.</span><span class="n">backend_components</span><span class="p">)</span>
-
-<span class="c1"># Limit conversion</span>
-<span class="n">backend_limits</span><span class="p">,</span> <span class="n">waldur_limits</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">_collect_resource_limits</span><span class="p">(</span><span class="n">mock_resource</span><span class="p">)</span>
-<span class="k">assert</span> <span class="n">backend_limits</span><span class="p">[</span><span class="s2">"cpu"</span><span class="p">]</span> <span class="o">==</span> <span class="n">waldur_limits</span><span class="p">[</span><span class="s2">"cpu"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">60000</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h2 id="llm-implementation-checklist">LLM implementation checklist</h2>
-<p>When implementing a new backend plugin with an LLM, follow these steps in order:</p>
-<ol>
-<li><strong>Read existing plugins</strong>: Study <code>plugins/slurm/</code> and <code>plugins/mup/</code> for patterns.</li>
-<li><strong>Copy the template</strong>: Start from <code>docs/plugin-template/</code> and rename.</li>
-<li><strong>Implement <code>__init__</code></strong>: Call <code>super().__init__()</code>, set <code>backend_type</code>, create client.</li>
-<li><strong>Implement <code>BaseClient</code> methods</strong>: Start with <code>get_resource</code>, <code>create_resource</code>,
-   <code>delete_resource</code>, <code>list_resources</code>.</li>
-<li><strong>Implement <code>BaseBackend</code> abstract methods</strong>: Start with <code>ping</code>, then
-   <code>_pre_create_resource</code>, then <code>_collect_resource_limits</code>, then <code>_get_usage_report</code>.</li>
-<li><strong>Handle unit conversion</strong>: Verify <code>unit_factor</code> math in both directions.</li>
-<li><strong>Write tests</strong>: Mock the client, test each abstract method.</li>
-<li><strong>Register entry points</strong>: Add to <code>pyproject.toml</code>.</li>
-<li><strong>Test integration</strong>: Install with <code>uv sync --all-packages</code> and run
-   <code>waldur_site_diagnostics</code>.</li>
-<li><strong>Verify</strong>: Run <code>uv run pytest</code> and <code>pre-commit run --all-files</code>.</li>
-</ol>
-<h3 id="files-to-study">Files to study</h3>
-<ul>
-<li><code>waldur_site_agent/backend/backends.py</code> - Base classes with all abstract methods</li>
-<li><code>waldur_site_agent/backend/clients.py</code> - Base client class</li>
-<li><code>waldur_site_agent/backend/structures.py</code> - Data structures (<code>ClientResource</code>,
-  <code>Association</code>, <code>BackendResourceInfo</code> with <code>pending_order_id</code> for async orders
-  and <code>backend_metadata</code> for returning data to Waldur)</li>
-<li><code>plugins/slurm/waldur_site_agent_slurm/backend.py</code> - Reference implementation
-  (CLI-based)</li>
-<li><code>plugins/mup/waldur_site_agent_mup/backend.py</code> - Reference implementation
-  (API-based)</li>
-</ul>
-<h3 id="common-mistakes-to-avoid">Common mistakes to avoid</h3>
-<ul>
-<li>Do not forget <code>super().__init__(backend_settings, backend_components)</code>.</li>
-<li>Do not return raw dicts from <code>list_resources</code>; return <code>ClientResource</code> objects.</li>
-<li>Do not raise exceptions from <code>get_resource</code> when resource is absent; return <code>None</code>.</li>
-<li>Do not forget the <code>"TOTAL_ACCOUNT_USAGE"</code> key in usage reports.</li>
-<li>Do not confuse Waldur units with backend units in <code>_collect_resource_limits</code>.</li>
-<li>Do not hardcode component keys; read them from <code>self.backend_components</code>.</li>
-</ul>
+<h3 id="ci-job-times-out">CI job times out</h3>
+<p>The E2E job has a default 1-hour timeout. The Waldur DB migration takes
+~14 minutes, REST tests ~2 minutes, STOMP tests ~30 seconds. If the job
+times out, check the Docker stack logs artifact for migration issues.</p>
 
 
 
@@ -15350,7 +13892,7 @@ the usage will be silently ignored.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-23
+    2026-03-02
   </span>
 
     
