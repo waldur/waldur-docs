@@ -662,8 +662,8 @@ class MultiRepoChangelogGenerator:
             # Resources
             changelog_parts.append("### Resources")
             changelog_parts.append("")
-            changelog_parts.append(f"- [OpenAPI Schema](../API/waldur-openapi-schema-{current_tag}.yaml)")
-            changelog_parts.append(f"- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-{current_tag}-diff.md)")
+            changelog_parts.append(f"- [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-{current_tag}.yaml)")
+            changelog_parts.append(f"- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-{current_tag}-diff)")
             changelog_parts.append("")
             changelog_parts.append("---")
 
