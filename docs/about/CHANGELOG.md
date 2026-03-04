@@ -1,74 +1,69 @@
 # Changelog
 
-## 8.0.6-rc.3 - 2026-03-04
+## 8.0.6-rc.4 - 2026-03-05
 
-### Highlights
-
-This release brings significant backend performance improvements with multiple N+1 query fixes across marketplace endpoints, a Django 6.0 upgrade, and structured logging migration. The AI assistant now detects sensitive data (PII and credentials) in chat input, and operators gain new feature toggles to control audit log and marketplace visibility. Several SSH key management and invitation workflow improvements round out the release.
+This release candidate introduces OpenStack Load Balancer as a Service (LBaaS) support, GPU architecture tracking in software catalogs, and a comprehensive AI Assistant security overhaul with sensitive data detection. Operators benefit from significant API performance improvements across multiple marketplace endpoints, a Django 6.0 upgrade, and new feature flags for fine-grained UI visibility control.
 
 ### What's New
 
-- **AI assistant sensitive data detection.** Chat input is now scanned for PII, credentials, and injection attempts, with warnings shown to users and audit logging for administrators.
-- **OpenStack Application Credentials authentication.** Operators can now connect OpenStack providers using application credentials instead of username/password.
-- **Staff user creation and editing wizard.** Staff users can create and edit user accounts through a step-by-step wizard with password management support.
-- **SLURM policy force-period-reset action.** Staff can manually trigger a period reset for SLURM usage policies via a new API endpoint.
-- **Feature toggles for UI concealment.** New flags allow operators to hide audit logs from end users, conceal resource metadata, and restrict marketplace access to staff only.
-- **SSH key type restrictions.** Administrators can restrict allowed SSH key types via settings, with restrictions shown to users before key import.
-- **Support ticket creation on SSH key changes.** SSH key additions and removals can now automatically create support tickets for audit tracking.
-- **Table growth monitoring.** New admin page exposes database table growth metrics with an on-demand sampling button.
-- **Visual login layout selector.** Administrators can preview and choose login page layouts through a visual selector in settings.
-- **Quarterly usage limit period.** Resource usage aggregation now supports quarterly limit periods in addition to monthly.
-- **Identity manager enhancements.** ISD managers can create agent identities without offering users and view offering users scoped by ISD overlap.
+- **OpenStack Load Balancer as a Service (LBaaS).** Backend support for managing load balancers through the OpenStack VPC integration via Octavia.
+- **OpenStack Application Credentials authentication.** Operators can now connect OpenStack services using Application Credentials in addition to traditional username/password.
+- **OpenStack instances reporting page.** Staff users can view aggregated OpenStack instance statistics from a new reporting dashboard.
+- **GPU architecture fields for software catalogs and partitions.** Software targets and offering partitions now track GPU architectures, with filtering support in the UI.
+- **Multiple parent packages for software extensions.** Software packages can now reference multiple parent packages instead of just one.
+- **AI Assistant sensitive data detection.** Chat input is now scanned for PII, credentials, and injection attempts before processing, with appropriate warnings and blocking.
+- **Staff user creation and editing wizard.** Staff users can now create and manage user accounts through a step-by-step wizard with password management.
+- **SSH key type restrictions.** Operators can restrict allowed SSH key types via settings, with the restrictions shown to users before key import.
+- **Support ticket creation on SSH key changes.** Optionally create support tickets when users add or remove SSH keys.
+- **Feature flags for UI concealment.** New toggles to hide audit logs from end users, conceal resource metadata, and restrict marketplace visibility to staff.
+- **SLURM policy force-period-reset.** Staff can now trigger a manual period reset for SLURM periodic usage policies via API.
+- **Quarterly usage aggregation.** Resource usage can now be aggregated over quarterly limit periods.
+- **Table growth monitoring UI.** Administrators can view database table growth trends and trigger on-demand sampling.
+- **Visual login layout selector.** Administrators can preview and select login page layouts from a visual picker.
+- **Offering user auto-deletion option.** New plugin toggle to automatically remove offering users when the associated user is deleted.
 
 ### Improvements
 
-- Upgraded Django from 5.2 to 6.0.2.
-- Migrated backend to structured logging via structlog.
-- Fixed multiple N+1 queries in marketplace robot accounts, service provider project permissions, component usage, and project stats endpoints.
-- Fixed slow database query in marketplace orders endpoint.
-- Reduced token refresh database load with adaptive debounce interval.
-- Squashed 60+ migration steps across 5 apps for faster fresh database setup.
-- Redesigned and consolidated application footer with dropdown menus and mobile support.
-- Added locale-aware number formatting to all usage displays.
-- Offering managers can now set order states directly.
-- Software catalog endpoints gained comprehensive filters and ordering.
-- Helm chart now supports Docker image digest-based pulling for deterministic deployments.
-- Invitation custom message text extended to 2000 characters.
-- Permission requests can now be resubmitted; staff can delete them.
-- Terminated projects are excluded from customer visibility.
-- Suggested resource names are now lowercased automatically.
-- Improved table toolbar alignment and added clear icon to filter reset button.
-- Removed default "Pending consumer approval" filter from order lists.
-- Hidden "My offerings" tab when organization has no non-billable offerings.
-- Concealed prices in order summaries and order details when billing info is disabled.
-- AI assistant thread title generation moved to backend for consistency.
-- Refactored AI assistant tool definitions and system prompt for clarity.
-- Migrated table filters to auto-generated components (batches 7-10).
-- Bumped dependencies to address known security vulnerabilities.
+- **Multiple API performance fixes.** Resolved N+1 queries in robot accounts, service provider permissions, component usage, and marketplace orders endpoints. Reduced token refresh database load with adaptive debounce.
+- **Django upgraded from 5.2 to 6.0.2.** Core framework updated to the latest major version.
+- **Migrated to structured logging.** Backend now uses structlog for consistent, machine-parseable log output.
+- **Squashed 60 migration steps.** Fresh database setups (CI, tests) now run significantly faster.
+- **Redesigned application footer.** Footer links are consolidated into organized dropdown menus with mobile support.
+- **Table toolbar alignment.** Search, filters, and actions are now visually aligned in table toolbars, with a clear X icon on the filter reset button.
+- **Locale-aware number formatting.** Usage and quota displays now format numbers according to the user's locale.
+- **Expanded invitation text limit.** Custom invitation messages can now be up to 2,000 characters.
+- **Identity manager permissions expanded.** ISD managers can create agent identities without requiring offering users, and identity managers can list offering users scoped by ISD overlap.
+- **Offering managers can set order states.** Offering managers now have permission to transition order states.
+- **Filter generator migration.** Multiple batches of hand-written table filters replaced with auto-generated versions for consistency.
+- **Service provider SSH endpoint validation.** SSH endpoint URIs on service providers are now validated against allowed domains.
+- **Terminated projects excluded from customer visibility.** Soft-deleted projects no longer appear in customer project lists.
+- **Improved OIDC configuration.** Added default OIDC logout URL, marked client secret as a secret field, and fixed invalid auth state handling.
+- **Translation improvements.** Updated Lithuanian, Estonian, and German translations across invitations, marketplace, and permission flows.
+- **Security dependency updates.** Bumped Python and npm dependencies to address known vulnerabilities.
+- **Helm chart supports image digest pulling.** Deployments can now pin images by digest in addition to tag.
 
 ### Bug Fixes
 
-- Fixed duplicate role creation via group invitation auto-approval.
-- Fixed 500 error when X-Forwarded-For header contains a hostname instead of an IP.
-- Fixed invalid social authentication state handling that could block login.
-- Fixed corrupt NULL constance values causing TypeErrors on settings pages.
-- Fixed resource duplication check that prevented any remote resources from being created.
-- Fixed GLAuth uidnumber generation to be scoped per offering.
-- Fixed image name parsing and grouping in OpenStack instance deployment.
-- Fixed resource component quota display units, layout, and duplicate labels.
-- Fixed OpenAPI schema generation errors in proposal views and offering attributes.
-- Fixed credit import to auto-correct end_date to first day of next month.
-- OIDC client secret field is now properly marked as a secret type.
-- Fixed multiple translation issues across Estonian, Lithuanian, and German locales.
+- **Fixed expired project credits not being zeroed.** Expired credits are now properly zeroed and excluded from linear consumption calculations.
+- **Fixed duplicate role creation via group invitation auto-approval.** Auto-approved group invitations no longer create duplicate roles.
+- **Fixed 500 error when X-Forwarded-For contains a hostname.** Non-IP values in the header are now handled gracefully.
+- **Fixed resource duplication check blocking all resource creation.** The remote marketplace duplicate check was overly broad and has been corrected.
+- **Fixed GLAuth UID number generation.** UID numbers are now scoped per offering to avoid collisions.
+- **Fixed resource component quota display.** Corrected units, layout, and duplicate labels in quota cells.
+- **Fixed OpenStack image name grouping.** Image name parsing in the deployment wizard now groups correctly, and the flavor page size has been increased.
+- **Fixed pricing shown when billing info is concealed.** Order details and resource creation summaries now respect the billing concealment setting.
+- **Fixed corrupt NULL constance values causing crashes.** NULL database entries in configuration are now handled gracefully.
+- **Fixed stale warning after auto-approved group invitation.** The "No association" warning no longer appears after a successful auto-approval.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [69 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6-rc.3) - Django 6.0 upgrade, structured logging, AI assistant security, performance fixes, new feature toggles
-- **Waldur Homeport**: [47 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6-rc.3) - User wizard, footer redesign, filter migration, sensitive data UI, feature toggle integration
-- **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6-rc.3) - Docker image digest pulling support, release automation
-- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.5...8.0.6-rc.3) - Maintenance updates only
+- **Waldur Mastermind**: [81 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6-rc.4) - LBaaS backend, AI Assistant security, performance fixes, Django 6.0 upgrade, structured logging
+- **Waldur Homeport**: [52 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6-rc.4) - Reporting dashboard, user management wizard, feature flag UI, footer redesign, filter generator migration
+- **Waldur Helm**: [6 commits](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6-rc.4) - Docker image digest support, helm-unittest migration
+- **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.5...8.0.6-rc.4) - Maintenance updates only
 
 ---
+
 
 
 
