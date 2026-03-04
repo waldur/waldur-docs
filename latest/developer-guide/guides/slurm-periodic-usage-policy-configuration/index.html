@@ -7447,6 +7447,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#force-period-reset-staff-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Force Period Reset (Staff-Only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#frontend" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7585,6 +7596,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#automatic-period-boundary-reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic Period Boundary Reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#log-retention" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7683,6 +7705,17 @@
     <span class="md-ellipsis">
       
         Incorrect Usage Calculations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resources-still-paused-after-new-period-starts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources Still Paused After New Period Starts
       
     </span>
   </a>
@@ -13913,6 +13946,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#force-period-reset-staff-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Force Period Reset (Staff-Only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#frontend" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14051,6 +14095,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#automatic-period-boundary-reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic Period Boundary Reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#log-retention" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14156,6 +14211,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#resources-still-paused-after-new-period-starts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources Still Paused After New Period Starts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#no-evaluation-logs-appearing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14214,9 +14280,10 @@
 <h2 id="overview">Overview</h2>
 <p>The <code>SlurmPeriodicUsagePolicy</code> enables automatic management of SLURM resource allocations with:</p>
 <ul>
-<li>Periodic (quarterly) usage tracking</li>
+<li>Periodic usage tracking (monthly, quarterly, annual, or total)</li>
 <li>Automatic QoS adjustments based on usage thresholds</li>
-<li>Carryover of unused allocations with decay</li>
+<li>Automatic period boundary reset (daily Celery beat task clears stale pauses/downscales when a new period starts)</li>
+<li>Carryover of unused allocations with configurable cap</li>
 <li>Grace periods for temporary overconsumption</li>
 <li>Integration with site agent for SLURM account management</li>
 </ul>
@@ -14393,12 +14460,14 @@
 </ul>
 <h3 id="slurm-specific-parameters">SLURM-Specific Parameters</h3>
 <ul>
+<li><strong><code>period</code></strong>: Billing period length — <code>MONTH_1</code> (monthly), <code>MONTH_3</code> (quarterly, default), <code>MONTH_12</code> (annual), or <code>TOTAL</code> (cumulative, never resets). Controls how <code>_get_current_period()</code> computes the billing window for usage calculations and carryover.</li>
 <li><strong><code>limit_type</code></strong>: <code>"GrpTRESMins"</code>, <code>"MaxTRESMins"</code>, or <code>"GrpTRES"</code></li>
 <li><strong><code>tres_billing_enabled</code></strong>: Use TRES billing units vs raw values</li>
 <li><strong><code>tres_billing_weights</code></strong>: Weight configuration for billing units</li>
 <li><strong><code>fairshare_decay_half_life</code></strong>: Days for fairshare decay (default: 15)</li>
-<li><strong><code>grace_ratio</code></strong>: Grace period ratio (0.2 = 20% overconsumption)</li>
-<li><strong><code>carryover_enabled</code></strong>: Allow unused allocation carryover</li>
+<li><strong><code>grace_ratio</code></strong>: Grace period ratio (0.2 = 20% overconsumption). The pause threshold is <code>(1 + grace_ratio) * 100</code>%. For example, <code>grace_ratio=0.2</code> means resources are paused at 120% usage.</li>
+<li><strong><code>carryover_enabled</code></strong>: Allow unused allocation carryover between periods</li>
+<li><strong><code>carryover_factor</code></strong>: Maximum carryover as a fraction of the base allocation (e.g., 0.3 = up to 30% of the base limit can be carried over). Unused allocation from the previous period is <code>max(0, base - prev_usage)</code>, capped at <code>carryover_factor * base</code>.</li>
 <li><strong><code>raw_usage_reset</code></strong>: Reset SLURM raw usage at period transitions</li>
 <li><strong><code>qos_strategy</code></strong>: <code>"threshold"</code> or <code>"progressive"</code></li>
 </ul>
@@ -14517,7 +14586,7 @@
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="evaluation-and-testing">Evaluation and Testing</h2>
 <h3 id="staff-only-api-actions">Staff-Only API Actions</h3>
-<p>Two staff-only API actions allow testing policy evaluation directly from the frontend or API without waiting for automatic triggers.</p>
+<p>Three staff-only API actions allow testing and managing policy evaluation directly from the frontend or API without waiting for automatic triggers.</p>
 <h4 id="dry-run">Dry Run</h4>
 <p>Calculate usage percentages and show what actions would be triggered without applying any changes.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -14547,6 +14616,29 @@
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token STAFF_TOKEN"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-d<span class="w"> </span><span class="s1">'{}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Response includes per-resource: <code>usage_percentage</code>, <code>actions_taken</code>, <code>previous_state</code>, and <code>new_state</code>.</p>
+<h4 id="force-period-reset-staff-only">Force Period Reset (Staff-Only)</h4>
+<p>Force-trigger a period boundary reset for a specific policy. This is useful after a Celery beat outage, or to immediately unblock resources that are still paused/downscaled from a previous period.</p>
+<p>The action finds all active resources under the policy's offering that are currently paused or downscaled and have usage below 100% in the current period, then re-evaluates them synchronously — which removes the stale pause/downscale flags and sends STOMP messages to the site agent.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Reset all stale paused/downscaled resources for a policy</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://waldur.example.com/api/marketplace-slurm-periodic-usage-policies/POLICY_UUID/force-period-reset/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token STAFF_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Optionally scope to a single resource:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>.../POLICY_UUID/force-period-reset/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token STAFF_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"resource_uuid": "RESOURCE_UUID"}'</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>Response includes per-resource: <code>usage_percentage</code>, <code>actions_taken</code>, <code>previous_state</code>, and <code>new_state</code>.</p>
 <h4 id="frontend">Frontend</h4>
@@ -14649,6 +14741,15 @@ POST<span class="w"> </span>/api/marketplace-slurm-periodic-usage-policies/POLIC
 </ul>
 <h3 id="structured-events">Structured Events</h3>
 <p>Policy evaluations emit a <code>SLURM_POLICY_EVALUATION</code> event type, visible in the Waldur events system.</p>
+<h3 id="automatic-period-boundary-reset">Automatic Period Boundary Reset</h3>
+<p>A daily Celery beat task (<code>reset-slurm-policy-periods</code>, runs at 01:00) ensures that resources paused or downscaled in a previous period are automatically unblocked when the new period starts with zero usage.</p>
+<p>For each <code>SlurmPeriodicUsagePolicy</code> (except those with <code>period=TOTAL</code>), the task:</p>
+<ol>
+<li>Finds active resources that are still <code>paused=True</code> or <code>downscaled=True</code></li>
+<li>Checks if their usage in the <strong>current</strong> period is below 100%</li>
+<li>If so, queues <code>evaluate_resource_against_policy</code> which clears the stale flags and sends STOMP messages to the site agent</li>
+</ol>
+<p>This is idempotent — safe to re-run and catches up automatically after Celery beat outages. For immediate manual intervention, use the staff-only <code>force-period-reset</code> API action.</p>
 <h3 id="log-retention">Log Retention</h3>
 <p>Evaluation logs are automatically cleaned up by a daily Celery beat task (<code>cleanup-slurm-evaluation-logs</code>, runs at 03:00). The retention period is configurable via:</p>
 <ul>
@@ -14667,6 +14768,21 @@ POST<span class="w"> </span>/api/marketplace-slurm-periodic-usage-policies/POLIC
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Current usage: </span><span class="si">{</span><span class="n">usage_percentage</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="debug-carryover-calculations">Debug Carryover Calculations</h3>
+<p>Carryover allows unused allocation from the previous period to increase the current period's effective limit. The formula is:</p>
+<ol>
+<li><code>unused = max(0, base_limit - previous_period_usage)</code></li>
+<li><code>cap = carryover_factor * base_limit</code></li>
+<li><code>carryover = min(unused, cap)</code></li>
+<li><code>effective_limit = base_limit + carryover</code></li>
+</ol>
+<p>Example: base limit 1000, previous usage 400, carryover_factor 0.5:</p>
+<ul>
+<li><code>unused = max(0, 1000 - 400) = 600</code></li>
+<li><code>cap = 0.5 * 1000 = 500</code></li>
+<li><code>carryover = min(600, 500) = 500</code></li>
+<li><code>effective_limit = 1000 + 500 = 1500</code></li>
+</ul>
+<p>If the previous period was fully used (e.g., usage 1200), carryover is 0.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">settings</span> <span class="o">=</span> <span class="n">policy</span><span class="o">.</span><span class="n">calculate_slurm_settings</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
@@ -14709,9 +14825,15 @@ POST<span class="w"> </span>/api/marketplace-slurm-periodic-usage-policies/POLIC
 </ul>
 <h3 id="incorrect-usage-calculations">Incorrect Usage Calculations</h3>
 <ul>
-<li>Review carryover settings and decay factor</li>
-<li>Check billing period alignment (quarterly boundaries)</li>
+<li>Review carryover settings and carryover factor</li>
+<li>Check billing period alignment — the <code>period</code> field controls boundaries: <code>MONTH_1</code> (monthly), <code>MONTH_3</code> (quarterly), <code>MONTH_12</code> (annual), <code>TOTAL</code> (cumulative)</li>
 <li>Verify component type matches between policy and usage data</li>
+</ul>
+<h3 id="resources-still-paused-after-new-period-starts">Resources Still Paused After New Period Starts</h3>
+<ul>
+<li>The <code>reset-slurm-policy-periods</code> task runs at 01:00 daily and should clear stale pauses. Check Celery worker logs for errors.</li>
+<li>Use the staff <code>force-period-reset</code> endpoint to manually trigger a reset: <code>POST /api/marketplace-slurm-periodic-usage-policies/POLICY_UUID/force-period-reset/</code></li>
+<li>Verify that the policy's <code>period</code> is not set to <code>TOTAL</code> (total-period policies never auto-reset)</li>
 </ul>
 <h3 id="no-evaluation-logs-appearing">No Evaluation Logs Appearing</h3>
 <ul>
@@ -14755,7 +14877,7 @@ POST<span class="w"> </span>/api/marketplace-slurm-periodic-usage-policies/POLIC
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-19
+    2026-03-03
   </span>
 
     
