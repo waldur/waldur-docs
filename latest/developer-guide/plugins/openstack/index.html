@@ -15109,6 +15109,11 @@
 <td><code>neutronclient</code></td>
 <td>v2.0</td>
 </tr>
+<tr>
+<td>Octavia (Load Balancer)</td>
+<td>REST via keystoneauth session</td>
+<td>v2</td>
+</tr>
 </tbody>
 </table>
 <p>Only the Keystone endpoint needs to be configured explicitly; all other service endpoints are discovered automatically from the Keystone service catalog.</p>
@@ -15453,6 +15458,146 @@
 <td>Set Gateway</td>
 <td>Configure external gateway</td>
 <td><code>POST /api/openstack-routers/{uuid}/set_gateway/</code></td>
+</tr>
+<tr>
+<td><strong>Load Balancers</strong> (Octavia LBaaS)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>List Load Balancers</td>
+<td>Get load balancers</td>
+<td><code>GET /api/openstack-loadbalancers/</code></td>
+</tr>
+<tr>
+<td>Create Load Balancer</td>
+<td>Create Octavia OVN LB</td>
+<td><code>POST /api/openstack-loadbalancers/</code></td>
+</tr>
+<tr>
+<td>Update Load Balancer</td>
+<td>Update load balancer name</td>
+<td><code>PATCH /api/openstack-loadbalancers/{uuid}/</code></td>
+</tr>
+<tr>
+<td>Delete Load Balancer</td>
+<td>Remove load balancer</td>
+<td><code>DELETE /api/openstack-loadbalancers/{uuid}/</code></td>
+</tr>
+<tr>
+<td>Attach Floating IP</td>
+<td>Attach floating IP to VIP port</td>
+<td><code>POST /api/openstack-loadbalancers/{uuid}/attach_floating_ip/</code></td>
+</tr>
+<tr>
+<td>Detach Floating IP</td>
+<td>Detach floating IP from VIP port</td>
+<td><code>POST /api/openstack-loadbalancers/{uuid}/detach_floating_ip/</code></td>
+</tr>
+<tr>
+<td>Update VIP Security Groups</td>
+<td>Set security groups on VIP port</td>
+<td><code>POST /api/openstack-loadbalancers/{uuid}/update_vip_security_groups/</code></td>
+</tr>
+<tr>
+<td><strong>Pools</strong> (LB backend pools)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>List Pools</td>
+<td>Get load balancer pools</td>
+<td><code>GET /api/openstack-pools/</code></td>
+</tr>
+<tr>
+<td>Create Pool</td>
+<td>Create backend pool</td>
+<td><code>POST /api/openstack-pools/</code></td>
+</tr>
+<tr>
+<td>Update Pool</td>
+<td>Update pool name</td>
+<td><code>PATCH /api/openstack-pools/{uuid}/</code></td>
+</tr>
+<tr>
+<td>Delete Pool</td>
+<td>Remove pool</td>
+<td><code>DELETE /api/openstack-pools/{uuid}/</code></td>
+</tr>
+<tr>
+<td><strong>Pool Members</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>List Pool Members</td>
+<td>Get pool members</td>
+<td><code>GET /api/openstack-pool-members/</code></td>
+</tr>
+<tr>
+<td>Create Pool Member</td>
+<td>Add backend server to pool</td>
+<td><code>POST /api/openstack-pool-members/</code></td>
+</tr>
+<tr>
+<td>Update Pool Member</td>
+<td>Update member name or weight</td>
+<td><code>PATCH /api/openstack-pool-members/{uuid}/</code></td>
+</tr>
+<tr>
+<td>Delete Pool Member</td>
+<td>Remove member from pool</td>
+<td><code>DELETE /api/openstack-pool-members/{uuid}/</code></td>
+</tr>
+<tr>
+<td><strong>Health Monitors</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>List Health Monitors</td>
+<td>Get pool health monitors</td>
+<td><code>GET /api/openstack-health-monitors/</code></td>
+</tr>
+<tr>
+<td>Create Health Monitor</td>
+<td>Create health check for pool</td>
+<td><code>POST /api/openstack-health-monitors/</code></td>
+</tr>
+<tr>
+<td>Update Health Monitor</td>
+<td>Update delay, timeout, max_retries</td>
+<td><code>PATCH /api/openstack-health-monitors/{uuid}/</code></td>
+</tr>
+<tr>
+<td>Delete Health Monitor</td>
+<td>Remove health monitor</td>
+<td><code>DELETE /api/openstack-health-monitors/{uuid}/</code></td>
+</tr>
+<tr>
+<td><strong>Listeners</strong> (LB frontend)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>List Listeners</td>
+<td>Get load balancer listeners</td>
+<td><code>GET /api/openstack-listeners/</code></td>
+</tr>
+<tr>
+<td>Create Listener</td>
+<td>Create frontend listener</td>
+<td><code>POST /api/openstack-listeners/</code></td>
+</tr>
+<tr>
+<td>Update Listener</td>
+<td>Update name or default pool</td>
+<td><code>PATCH /api/openstack-listeners/{uuid}/</code></td>
+</tr>
+<tr>
+<td>Delete Listener</td>
+<td>Remove listener</td>
+<td><code>DELETE /api/openstack-listeners/{uuid}/</code></td>
 </tr>
 <tr>
 <td><strong>Common Resource Actions</strong></td>
@@ -16222,6 +16367,12 @@
 <td><code>nova</code></td>
 </tr>
 <tr>
+<td><code>lbaas_enabled</code></td>
+<td>options</td>
+<td>Enable Octavia LBaaS (load balancers) for this provider</td>
+<td><code>false</code></td>
+</tr>
+<tr>
 <td><code>storage_mode</code></td>
 <td>plugin_options</td>
 <td>Storage quota mode (<code>fixed</code> or <code>dynamic</code>)</td>
@@ -16915,7 +17066,7 @@ POST<span class="w"> </span>/api/openstack-networks/<span class="o">{</span>uuid
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-03-02
+    2026-03-04
   </span>
 
     

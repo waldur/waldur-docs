@@ -6750,6 +6750,89 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Credits and Compensations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#credit-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credit Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoice-finalization-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invoice Finalization Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compensation-calculation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compensation Calculation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimal-consumption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal Consumption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimal-consumption-logic-fixed-vs-linear" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal Consumption Logic: FIXED vs LINEAR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overdue-credit-zeroing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overdue Credit Zeroing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#credit-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credit Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -13259,6 +13342,89 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Credits and Compensations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#credit-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credit Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoice-finalization-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invoice Finalization Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compensation-calculation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compensation Calculation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimal-consumption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal Consumption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimal-consumption-logic-fixed-vs-linear" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal Consumption Logic: FIXED vs LINEAR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overdue-credit-zeroing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overdue Credit Zeroing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#credit-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credit Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -13544,13 +13710,198 @@
     I --&gt;|No| J[Wait for next hourly run]
     I --&gt;|Yes| D</code></pre>
 <h3 id="credits-and-compensations">Credits and Compensations</h3>
-<p>Customer credits can be configured with an optional <code>end_date</code> (must be the 1st of a month). During invoice finalization:</p>
+<p>Waldur supports a two-level credit system: <strong>CustomerCredit</strong> (organization-wide) and <strong>ProjectCredit</strong> (per-project allocation). Both inherit from <code>BaseCredit</code> (<code>src/waldur_mastermind/invoices/models.py</code>).</p>
+<h4 id="credit-model">Credit Model</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td>Decimal</td>
+<td>Remaining credit balance</td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>Date (nullable)</td>
+<td>Expiry date (must be 1st of month)</td>
+</tr>
+<tr>
+<td><code>expected_consumption</code></td>
+<td>Decimal</td>
+<td>Target monthly spend</td>
+</tr>
+<tr>
+<td><code>minimal_consumption_logic</code></td>
+<td><code>FIXED</code> / <code>LINEAR</code></td>
+<td>How expected consumption is managed</td>
+</tr>
+<tr>
+<td><code>grace_coefficient</code></td>
+<td>Decimal (0-100)</td>
+<td>Percentage discount on minimal consumption</td>
+</tr>
+<tr>
+<td><code>apply_as_minimal_consumption</code></td>
+<td>Boolean</td>
+<td>Whether to enforce minimal consumption</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ProjectCredit</strong> is a sub-allocation of the customer credit. The sum of all project credit values cannot exceed the customer credit value.</p>
+<h4 id="invoice-finalization-flow">Invoice Finalization Flow</h4>
+<p>During invoice finalization, credits are processed via <code>process_invoice_credits()</code>:</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant T as Invoice Task
+    participant S as set_to_zero_overdue_credits
+    participant MC as MonthlyCompensation
+    participant DB as Database
+
+    T-&gt;&gt;S: Zero overdue credits
+    S-&gt;&gt;DB: Zero CustomerCredits where end_date &lt; today
+    S-&gt;&gt;DB: Zero ProjectCredits where end_date &lt; today
+
+    T-&gt;&gt;MC: process_invoice_credits(invoice)
+    MC-&gt;&gt;MC: clear_compensations() (rollback any previous)
+    MC-&gt;&gt;MC: calculate_current_compensations()
+    MC-&gt;&gt;MC: save() (write compensation items + update credits)
+    MC-&gt;&gt;MC: update_linear_expected_consumption()
+    MC-&gt;&gt;DB: Update expected_consumption for LINEAR credits</code></pre>
+<h4 id="compensation-calculation">Compensation Calculation</h4>
+<p><code>MonthlyCompensation.calculate_current_compensations()</code> processes invoice items sorted by price (ascending):</p>
 <ol>
-<li><strong>Overdue credits are zeroed</strong>: Credits with <code>end_date</code> before the effective date are set to zero</li>
-<li><strong>Compensations are applied</strong>: <code>MonthlyCompensation</code> calculates and applies credit-based discounts to invoice items</li>
-<li><strong>Expected consumption is updated</strong>: Linear consumption projections are recalculated</li>
+<li>For each item, check if the item's project has a <strong>ProjectCredit</strong></li>
+<li>If yes: deduct from the project credit first, then from the customer credit</li>
+<li>If no: deduct directly from the customer credit</li>
+<li>Create a negative <code>InvoiceItem</code> (compensation) for each deduction</li>
+<li>After all items, enforce <strong>minimal consumption</strong> for both customer and project credits</li>
 </ol>
+<pre class="mermaid"><code>sequenceDiagram
+    participant MC as MonthlyCompensation
+    participant PC as ProjectCredit
+    participant CC as CustomerCredit
+    participant INV as Invoice
+
+    loop For each invoice item (sorted by price)
+        alt Item's project has ProjectCredit
+            MC-&gt;&gt;PC: Deduct min(item.price, pc.value)
+            MC-&gt;&gt;CC: Deduct same amount from customer credit
+        else No ProjectCredit
+            MC-&gt;&gt;CC: Deduct min(item.price, cc.value)
+        end
+        MC-&gt;&gt;INV: Create negative InvoiceItem (compensation)
+    end
+
+    Note over MC: Enforce minimal consumption
+    alt total_compensation &lt; cc.minimal_consumption
+        MC-&gt;&gt;CC: Deduct shortfall (tail) from credit
+    end
+    loop For each ProjectCredit with minimal_consumption &gt; 0
+        alt project_compensation &lt; pc.minimal_consumption
+            MC-&gt;&gt;PC: Deduct shortfall (tail) from credit
+        end
+    end</code></pre>
+<h4 id="minimal-consumption">Minimal Consumption</h4>
+<p>Minimal consumption ensures a minimum credit spend per month, preventing credits from being hoarded.</p>
+<p><strong>Formula</strong>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>If end_date is this month:
+    minimal_consumption = expected_consumption
+
+Otherwise:
+    minimal_consumption = (100 - grace_coefficient) / 100 * expected_consumption
+</code></pre></div></td></tr></tbody></table></div>
+<p>If <code>apply_as_minimal_consumption</code> is <code>False</code>, minimal consumption is 0 (disabled).</p>
+<h4 id="minimal-consumption-logic-fixed-vs-linear">Minimal Consumption Logic: FIXED vs LINEAR</h4>
+<p><strong>FIXED</strong> (default): <code>expected_consumption</code> is set manually and stays constant.</p>
+<p><strong>LINEAR</strong>: <code>expected_consumption</code> is recalculated each month to ensure the credit is consumed by <code>end_date</code>. The formula is:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>new_expected = max(0, old_expected - total_compensation) * (1 - time_left_factor)
+             + remaining_value * time_left_factor
+
+where:
+    time_left_factor = min(1, days_in_current_month / days_until_end_date)
+</code></pre></div></td></tr></tbody></table></div>
+<p>This creates a sliding target: as the end date approaches, <code>time_left_factor</code> increases toward 1.0, pushing <code>expected_consumption</code> toward the full remaining credit value. This guarantees the credit is consumed by expiry.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant MC as MonthlyCompensation
+    participant CC as CustomerCredit (LINEAR)
+    participant PC as ProjectCredit (LINEAR)
+    participant DB as Database
+
+    MC-&gt;&gt;MC: update_linear_expected_consumption()
+
+    alt CustomerCredit has LINEAR logic + end_date
+        MC-&gt;&gt;CC: calculate_linear_expected_consumption(total_compensation)
+        MC-&gt;&gt;DB: Save new expected_consumption
+    end
+
+    MC-&gt;&gt;DB: Query all ProjectCredits with LINEAR logic + end_date &gt; today
+    loop For each linear ProjectCredit
+        MC-&gt;&gt;PC: calculate_linear_expected_consumption(tail + project_compensation)
+        MC-&gt;&gt;DB: Save new expected_consumption
+    end</code></pre>
+<h4 id="overdue-credit-zeroing">Overdue Credit Zeroing</h4>
+<p><code>set_to_zero_overdue_credits()</code> runs during invoice finalization and zeros both customer and project credits whose <code>end_date</code> has passed. Zeroing a project credit does <strong>not</strong> affect the customer credit balance.</p>
 <p>When a grace period is used, the effective date for zeroing credits is always the 1st of the current month (not the actual finalization date). This ensures credits with <code>end_date</code> on the 1st are still applied to the previous month's invoice before being zeroed.</p>
+<h4 id="credit-events">Credit Events</h4>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reduction_of_customer_credit</code></td>
+<td>Compensation item created</td>
+</tr>
+<tr>
+<td><code>reduction_of_project_credit</code></td>
+<td>Compensation item created for project</td>
+</tr>
+<tr>
+<td><code>reduction_of_customer_credit_due_to_minimal_consumption</code></td>
+<td>Customer tail deducted</td>
+</tr>
+<tr>
+<td><code>reduction_of_project_credit_due_to_minimal_consumption</code></td>
+<td>Project tail deducted</td>
+</tr>
+<tr>
+<td><code>reduction_of_customer_expected_consumption</code></td>
+<td>LINEAR recalculation (customer)</td>
+</tr>
+<tr>
+<td><code>reduction_of_project_expected_consumption</code></td>
+<td>LINEAR recalculation (project)</td>
+</tr>
+<tr>
+<td><code>set_to_zero_overdue_credit</code></td>
+<td>Expired credit zeroed</td>
+</tr>
+<tr>
+<td><code>roll_back_customer_credit</code></td>
+<td>Compensation cleared</td>
+</tr>
+<tr>
+<td><code>roll_back_project_credit</code></td>
+<td>Compensation cleared</td>
+</tr>
+</tbody>
+</table>
 <h3 id="configuration">Configuration</h3>
 <p>The grace period is configured in <code>WALDUR_INVOICES</code> settings:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -13677,7 +14028,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-20
+    2026-03-04
   </span>
 
     

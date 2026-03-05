@@ -7467,6 +7467,67 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#gpu-architecture-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPU Architecture Filtering
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GPU Architecture Filtering">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filter-packages-by-gpu-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Packages by GPU Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-versions-by-gpu-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Versions by GPU Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-targets-by-gpu-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Targets by GPU Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpu-architecture-in-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPU Architecture in Responses
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -14080,6 +14141,67 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#gpu-architecture-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPU Architecture Filtering
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GPU Architecture Filtering">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filter-packages-by-gpu-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Packages by GPU Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-versions-by-gpu-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Versions by GPU Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-targets-by-gpu-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Targets by GPU Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpu-architecture-in-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPU Architecture in Responses
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -14432,7 +14554,7 @@ curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </spa
 <li><strong>Ruby gems</strong>: Scientific Ruby libraries</li>
 <li><strong>Octave packages</strong>: Signal processing, optimization</li>
 </ul>
-<p>Extensions are linked to their parent software (e.g., Python packages linked to Python installation).</p>
+<p>Extensions are linked to their parent software packages via a many-to-many relationship. A single extension can belong to multiple parents (e.g., <code>adwaita-icon-theme</code> can be an extension of both GTK3 and GTK4). The EESSI loader collects parent information from all versions of an extension, not just the first.</p>
 <h3 id="spack-build-variants">Spack Build Variants</h3>
 <p>Spack supports flexible build configurations through targets:</p>
 <h4 id="target-types">Target Types</h4>
@@ -14619,7 +14741,10 @@ curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/ap
 <span class="normal">17</span>
 <span class="normal">18</span>
 <span class="normal">19</span>
-<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># List packages in a catalog</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># List packages in a catalog</span>
 curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-packages/?catalog_uuid=abc-123-def-456"</span>
 
 <span class="c1"># Search for specific software by name</span>
@@ -14636,6 +14761,9 @@ curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/ap
 
 <span class="c1"># Filter by extension name (e.g., packages bundling numpy)</span>
 curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-packages/?extension_name=numpy"</span>
+
+<span class="c1"># Filter extensions by parent package UUID</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-packages/?parent_software_uuid=parent-uuid"</span>
 
 <span class="c1"># Order by catalog version</span>
 curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-packages/?o=catalog_version"</span>
@@ -14728,13 +14856,21 @@ curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/ap
 <span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
-<span class="normal">53</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"package-uuid"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GROMACS"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Molecular dynamics simulation package..."</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"homepage"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://www.gromacs.org/"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"catalog"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abc-123-def-456"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"is_extension"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"parent_softwares"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
 <span class="w">  </span><span class="nt">"version_count"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"extension_count"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"versions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
 <span class="w">      </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"version-uuid-1"</span><span class="p">,</span>
@@ -14768,14 +14904,16 @@ curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/ap
 <span class="w">          </span><span class="nt">"target_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu_architecture"</span><span class="p">,</span>
 <span class="w">          </span><span class="nt">"target_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x86_64"</span><span class="p">,</span>
 <span class="w">          </span><span class="nt">"target_subtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"generic"</span><span class="p">,</span>
-<span class="w">          </span><span class="nt">"location"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/cvmfs/software.eessi.io/versions/2023.06/software/linux/x86_64/generic"</span>
+<span class="w">          </span><span class="nt">"location"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/cvmfs/software.eessi.io/versions/2023.06/software/linux/x86_64/generic"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"gpu_architectures"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"nvidia/cc70"</span><span class="p">,</span><span class="w"> </span><span class="s2">"nvidia/cc80"</span><span class="p">,</span><span class="w"> </span><span class="s2">"nvidia/cc90"</span><span class="p">]</span>
 <span class="w">        </span><span class="p">},</span>
 <span class="w">        </span><span class="p">{</span>
 <span class="w">          </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"target-uuid-2"</span><span class="p">,</span>
 <span class="w">          </span><span class="nt">"target_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu_architecture"</span><span class="p">,</span>
 <span class="w">          </span><span class="nt">"target_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"aarch64"</span><span class="p">,</span>
 <span class="w">          </span><span class="nt">"target_subtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"generic"</span><span class="p">,</span>
-<span class="w">          </span><span class="nt">"location"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/cvmfs/software.eessi.io/versions/2023.06/software/linux/aarch64/generic"</span>
+<span class="w">          </span><span class="nt">"location"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/cvmfs/software.eessi.io/versions/2023.06/software/linux/aarch64/generic"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"gpu_architectures"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="w">      </span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
@@ -14852,6 +14990,103 @@ curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/ap
 <span class="c1"># Filter by CPU microarchitecture</span>
 curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-targets/?cpu_microarchitecture=generic"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="gpu-architecture-filtering">GPU Architecture Filtering</h3>
+<p>Software targets include a <code>gpu_architectures</code> field — a flat list of GPU architectures the target supports (e.g., <code>["nvidia/cc70", "nvidia/cc80", "nvidia/cc90"]</code>). This field is extracted from the nested <code>metadata["gpu_arch"]</code> structure for efficient filtering.</p>
+<h4 id="filter-packages-by-gpu-support">Filter Packages by GPU Support</h4>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Find packages with GPU-enabled builds</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-packages/?has_gpu=true"</span>
+
+<span class="c1"># Find packages without GPU support</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-packages/?has_gpu=false"</span>
+
+<span class="c1"># Find packages supporting a specific GPU architecture</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-packages/?gpu_arch=nvidia/cc90"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h4 id="filter-versions-by-gpu-support">Filter Versions by GPU Support</h4>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Find versions with GPU-enabled builds</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-versions/?has_gpu=true"</span>
+
+<span class="c1"># Find versions for a specific GPU architecture</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-versions/?gpu_arch=nvidia/cc70"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h4 id="filter-targets-by-gpu-support">Filter Targets by GPU Support</h4>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Find targets with GPU architectures</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-targets/?has_gpu=true"</span>
+
+<span class="c1"># Find targets supporting a specific GPU architecture</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-targets/?gpu_arch=nvidia/cc80"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h4 id="gpu-architecture-in-responses">GPU Architecture in Responses</h4>
+<p>Target responses include the <code>gpu_architectures</code> field:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"target-uuid"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"target_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu_architecture"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"target_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x86_64"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"target_subtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"generic"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"location"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/cvmfs/software.eessi.io/versions/2023.06/software/linux/x86_64/generic"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"gpu_architectures"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"nvidia/cc70"</span><span class="p">,</span><span class="w"> </span><span class="s2">"nvidia/cc80"</span><span class="p">,</span><span class="w"> </span><span class="s2">"nvidia/cc90"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"metadata"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"full_arch"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x86_64/generic"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"gpu_arch"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"x86_64/generic"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"nvidia/cc70"</span><span class="p">,</span><span class="w"> </span><span class="s2">"nvidia/cc80"</span><span class="p">,</span><span class="w"> </span><span class="s2">"nvidia/cc90"</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gpu_architectures</code></td>
+<td>array of strings</td>
+<td>Flat list of supported GPU architectures (e.g., <code>nvidia/cc70</code>, <code>amd/gfx90a</code>)</td>
+</tr>
+<tr>
+<td><code>has_gpu</code></td>
+<td>boolean filter</td>
+<td>Filter by presence/absence of GPU support</td>
+</tr>
+<tr>
+<td><code>gpu_arch</code></td>
+<td>string filter</td>
+<td>Filter by specific GPU architecture string</td>
+</tr>
+</tbody>
+</table>
 <h2 id="linking-catalogs-to-offerings">Linking Catalogs to Offerings</h2>
 <h3 id="associate-catalog-with-offering">Associate Catalog with Offering</h3>
 <p>Offering-software catalog associations are managed through offering actions, not a separate endpoint:</p>
@@ -15011,7 +15246,10 @@ curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </spa
 <span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
-<span class="normal">104</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Get offering details with associated software catalogs</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Get offering details with associated software catalogs</span>
 curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-provider-offerings/{offering_uuid}/"</span>
 
 <span class="c1"># Get software packages available for an offering</span>
@@ -15048,7 +15286,7 @@ The<span class="w"> </span>unified<span class="w"> </span>catalog<span class="w"
 
 Both<span class="w"> </span>loaders<span class="w"> </span>handle:
 
--<span class="w"> </span>**Extension<span class="w"> </span>packages**:<span class="w"> </span>Link<span class="w"> </span>child<span class="w"> </span>packages<span class="w"> </span>to<span class="w"> </span>parent<span class="w"> </span>software
+-<span class="w"> </span>**Extension<span class="w"> </span>packages**:<span class="w"> </span>Link<span class="w"> </span>child<span class="w"> </span>packages<span class="w"> </span>to<span class="w"> </span>one<span class="w"> </span>or<span class="w"> </span>more<span class="w"> </span>parent<span class="w"> </span>software<span class="w"> </span>packages
 -<span class="w"> </span>**Multiple<span class="w"> </span>architectures**:<span class="w"> </span>Support<span class="w"> </span>diverse<span class="w"> </span>target<span class="w"> </span>platforms
 -<span class="w"> </span>**Metadata<span class="w"> </span>preservation**:<span class="w"> </span>Store<span class="w"> </span>catalog-specific<span class="w"> </span>information
 -<span class="w"> </span>**Error<span class="w"> </span>recovery**:<span class="w"> </span>Continue<span class="w"> </span>processing<span class="w"> </span>despite<span class="w"> </span>individual<span class="w"> </span>failures
@@ -15088,6 +15326,9 @@ The<span class="w"> </span>EESSI<span class="w"> </span>loader<span class="w"> <
 <span class="w">        </span><span class="o">{</span>
 <span class="w">          </span><span class="s2">"version"</span>:<span class="w"> </span><span class="s2">"2024.4"</span>,
 <span class="w">          </span><span class="s2">"cpu_arch"</span>:<span class="w"> </span><span class="o">[</span><span class="s2">"x86_64/generic"</span>,<span class="w"> </span><span class="s2">"aarch64/generic"</span><span class="o">]</span>,
+<span class="w">          </span><span class="s2">"gpu_arch"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="s2">"x86_64/generic"</span>:<span class="w"> </span><span class="o">[</span><span class="s2">"nvidia/cc70"</span>,<span class="w"> </span><span class="s2">"nvidia/cc80"</span>,<span class="w"> </span><span class="s2">"nvidia/cc90"</span><span class="o">]</span>
+<span class="w">          </span><span class="o">}</span>,
 <span class="w">          </span><span class="s2">"toolchain"</span>:<span class="w"> </span><span class="o">{</span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"foss"</span>,<span class="w"> </span><span class="s2">"version"</span>:<span class="w"> </span><span class="s2">"2023b"</span><span class="o">}</span>,
 <span class="w">          </span><span class="s2">"toolchain_families_compatibility"</span>:<span class="w"> </span><span class="o">[</span><span class="s2">"2023b_foss"</span><span class="o">]</span>,
 <span class="w">          </span><span class="s2">"module"</span>:<span class="w"> </span><span class="o">{</span>
@@ -15137,6 +15378,11 @@ The<span class="w"> </span>EESSI<span class="w"> </span>loader<span class="w"> <
 <td>Each with <code>full_module_name</code>, <code>module_name</code>, <code>module_version</code></td>
 </tr>
 <tr>
+<td><code>gpu_arch</code></td>
+<td>object</td>
+<td>Map of CPU arch to GPU arch lists (e.g., <code>{"x86_64/generic": ["nvidia/cc70"]}</code>)</td>
+</tr>
+<tr>
 <td><code>extensions</code></td>
 <td>array</td>
 <td>Bundled packages with <code>type</code>, <code>name</code>, <code>version</code></td>
@@ -15149,6 +15395,7 @@ The<span class="w"> </span>EESSI<span class="w"> </span>loader<span class="w"> <
 </tbody>
 </table>
 <h4 id="extension-structure">Extension Structure</h4>
+<p>In the EESSI API, each version of an extension references its parent software. The loader collects parent references from <strong>all</strong> versions, so an extension that references different parents across versions will be linked to all of them via the <code>parent_softwares</code> many-to-many relationship.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -15205,6 +15452,25 @@ The<span class="w"> </span>EESSI<span class="w"> </span>loader<span class="w"> <
 <span class="w">      </span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The Waldur API response for extension packages includes a list of parent software objects:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"extension-uuid"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"numpy"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"is_extension"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"parent_softwares"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"parent-uuid-1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SciPy-bundle"</span><span class="p">,</span><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://..."</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"parent-uuid-2"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Python"</span><span class="p">,</span><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://..."</span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="spack-repology-format">Spack Repology Format</h3>
@@ -15307,7 +15573,8 @@ The<span class="w"> </span>EESSI<span class="w"> </span>loader<span class="w"> <
 - SLURM partition model configuration
 - Partition management APIs (add, update, remove)
 - Partition-specific software catalog associations
-- CPU architecture targeting for different partitions</p>
+- CPU/GPU architecture targeting for different partitions
+- Connecting software GPU requirements to partition capabilities</p>
 
 
 
@@ -15328,7 +15595,7 @@ The<span class="w"> </span>EESSI<span class="w"> </span>loader<span class="w"> <
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-20
+    2026-03-04
   </span>
 
     
