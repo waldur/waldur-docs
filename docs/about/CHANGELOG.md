@@ -1,68 +1,81 @@
 # Changelog
 
-## 8.0.6-rc.4 - 2026-03-05
 
-This release candidate introduces OpenStack Load Balancer as a Service (LBaaS) support, GPU architecture tracking in software catalogs, and a comprehensive AI Assistant security overhaul with sensitive data detection. Operators benefit from significant API performance improvements across multiple marketplace endpoints, a Django 6.0 upgrade, and new feature flags for fine-grained UI visibility control.
+
+## 8.0.6 - 2026-03-06
+
+### Highlights
+
+This release delivers major API performance improvements by fixing numerous N+1 query issues across key endpoints, significantly reducing response times for large deployments. OpenStack gains Load Balancer as a Service (LBaaS) support and Application Credentials authentication, while the AI Assistant is hardened with sensitive data detection and injection prevention. Operators also get new feature flags for fine-grained UI visibility control and improved billing credit handling.
 
 ### What's New
 
-- **OpenStack Load Balancer as a Service (LBaaS).** Backend support for managing load balancers through the OpenStack VPC integration via Octavia.
-- **OpenStack Application Credentials authentication.** Operators can now connect OpenStack services using Application Credentials in addition to traditional username/password.
-- **OpenStack instances reporting page.** Staff users can view aggregated OpenStack instance statistics from a new reporting dashboard.
+- **OpenStack Load Balancer as a Service (LBaaS).** Backend support for managing load balancers via the OpenStack Octavia API.
+- **OpenStack Application Credentials authentication.** Operators can now connect OpenStack services using application credentials instead of username/password.
+- **OpenStack instances reporting page.** Staff users can view aggregate statistics and details for all OpenStack instances from a dedicated reporting page.
+- **AI Assistant sensitive data detection.** Chat input is now scanned for PII, credentials, and injection attempts before being sent to the AI model, with warnings displayed to users.
 - **GPU architecture fields for software catalogs and partitions.** Software targets and offering partitions now track GPU architectures, with filtering support in the UI.
-- **Multiple parent packages for software extensions.** Software packages can now reference multiple parent packages instead of just one.
-- **AI Assistant sensitive data detection.** Chat input is now scanned for PII, credentials, and injection attempts before processing, with appropriate warnings and blocking.
-- **Staff user creation and editing wizard.** Staff users can now create and manage user accounts through a step-by-step wizard with password management.
-- **SSH key type restrictions.** Operators can restrict allowed SSH key types via settings, with the restrictions shown to users before key import.
-- **Support ticket creation on SSH key changes.** Optionally create support tickets when users add or remove SSH keys.
-- **Feature flags for UI concealment.** New toggles to hide audit logs from end users, conceal resource metadata, and restrict marketplace visibility to staff.
-- **SLURM policy force-period-reset.** Staff can now trigger a manual period reset for SLURM periodic usage policies via API.
-- **Quarterly usage aggregation.** Resource usage can now be aggregated over quarterly limit periods.
-- **Table growth monitoring UI.** Administrators can view database table growth trends and trigger on-demand sampling.
-- **Visual login layout selector.** Administrators can preview and select login page layouts from a visual picker.
-- **Offering user auto-deletion option.** New plugin toggle to automatically remove offering users when the associated user is deleted.
+- **Software catalog: multiple parent packages.** Software extensions can now be linked to multiple parent packages instead of just one.
+- **Staff user creation and password management.** Staff users can now create and edit user accounts with password management through a step-by-step wizard.
+- **SLURM policy force-period-reset.** Staff can manually trigger a period reset for SLURM usage policies via a new API action.
+- **SSH key change notifications.** Optionally create support tickets when users add or remove SSH keys, configurable via Constance settings.
+- **SSH key type restrictions.** Operators can restrict which SSH key types (RSA, ED25519, etc.) are accepted, with the UI showing restrictions before import.
+- **Feature flags for UI visibility.** New toggles to conceal audit logs from end users, hide resource metadata, and restrict marketplace access to staff.
+- **Quarterly usage aggregation.** Resource usage can now be aggregated by quarter in addition to monthly and total periods.
+- **Table growth monitoring UI.** Administrators can view database table growth trends and trigger manual samples from a new settings page.
+- **Visual login layout selector.** Administrators can preview and select login page layouts from a visual picker in settings.
+- **Offering user auto-deletion option.** New plugin option to automatically delete offering users when they are removed, with sync restoration support.
+- **Identity management improvements.** ISD managers can create agent identities without offering users, and identity managers can list offering users scoped by ISD overlap.
 
 ### Improvements
 
-- **Multiple API performance fixes.** Resolved N+1 queries in robot accounts, service provider permissions, component usage, and marketplace orders endpoints. Reduced token refresh database load with adaptive debounce.
-- **Django upgraded from 5.2 to 6.0.2.** Core framework updated to the latest major version.
-- **Migrated to structured logging.** Backend now uses structlog for consistent, machine-parseable log output.
-- **Squashed 60 migration steps.** Fresh database setups (CI, tests) now run significantly faster.
-- **Redesigned application footer.** Footer links are consolidated into organized dropdown menus with mobile support.
-- **Table toolbar alignment.** Search, filters, and actions are now visually aligned in table toolbars, with a clear X icon on the filter reset button.
+- **Extensive N+1 query fixes.** Resolved N+1 queries on project list, project list_users, customer projects, robot accounts, service provider project_permissions, component usage, marketplace orders, and stats endpoints.
+- **Django upgraded to 6.0.2.** The backend framework has been updated from Django 5.2 to 6.0.2.
+- **Structured logging migration.** Mastermind now uses structlog for consistent JSON-formatted logs across API, Celery, and Django request loggers.
+- **Bulk course account creation moved to background tasks.** Large CSV uploads no longer time out — processing happens asynchronously.
+- **Token refresh DB load reduced.** An adaptive debounce interval prevents excessive database writes during token refreshes.
+- **Migration squashing.** 60 migration steps consolidated across 5 apps, speeding up fresh database setup and CI runs.
 - **Locale-aware number formatting.** Usage and quota displays now format numbers according to the user's locale.
-- **Expanded invitation text limit.** Custom invitation messages can now be up to 2,000 characters.
-- **Identity manager permissions expanded.** ISD managers can create agent identities without requiring offering users, and identity managers can list offering users scoped by ISD overlap.
-- **Offering managers can set order states.** Offering managers now have permission to transition order states.
-- **Filter generator migration.** Multiple batches of hand-written table filters replaced with auto-generated versions for consistency.
-- **Service provider SSH endpoint validation.** SSH endpoint URIs on service providers are now validated against allowed domains.
-- **Terminated projects excluded from customer visibility.** Soft-deleted projects no longer appear in customer project lists.
-- **Improved OIDC configuration.** Added default OIDC logout URL, marked client secret as a secret field, and fixed invalid auth state handling.
-- **Translation improvements.** Updated Lithuanian, Estonian, and German translations across invitations, marketplace, and permission flows.
-- **Security dependency updates.** Bumped Python and npm dependencies to address known vulnerabilities.
-- **Helm chart supports image digest pulling.** Deployments can now pin images by digest in addition to tag.
+- **Footer redesign.** Application footer links have been consolidated and redesigned for better organization.
+- **Table toolbar alignment.** Search, filters, and action buttons are now consistently aligned in table toolbars.
+- **Filter migration to generator.** Multiple batches of hand-written table filters replaced with auto-generated versions for consistency.
+- **Offering managers can set order states.** Expanding self-service capabilities for service providers.
+- **Invitation text extended to 2000 characters.** Longer custom messages can now be included in invitations.
+- **Marketplace resource pull action exposed.** Users can now trigger resource sync from the UI for OpenStack instances, tenants, and volumes.
+- **Helm chart supports image digest pulling.** Deployments can now pin images by digest for reproducibility.
+- **Dependencies bumped** to address known security vulnerabilities in both Python and npm packages.
 
 ### Bug Fixes
 
-- **Fixed expired project credits not being zeroed.** Expired credits are now properly zeroed and excluded from linear consumption calculations.
-- **Fixed duplicate role creation via group invitation auto-approval.** Auto-approved group invitations no longer create duplicate roles.
-- **Fixed 500 error when X-Forwarded-For contains a hostname.** Non-IP values in the header are now handled gracefully.
-- **Fixed resource duplication check blocking all resource creation.** The remote marketplace duplicate check was overly broad and has been corrected.
-- **Fixed GLAuth UID number generation.** UID numbers are now scoped per offering to avoid collisions.
-- **Fixed resource component quota display.** Corrected units, layout, and duplicate labels in quota cells.
-- **Fixed OpenStack image name grouping.** Image name parsing in the deployment wizard now groups correctly, and the flavor page size has been increased.
-- **Fixed pricing shown when billing info is concealed.** Order details and resource creation summaries now respect the billing concealment setting.
-- **Fixed corrupt NULL constance values causing crashes.** NULL database entries in configuration are now handled gracefully.
-- **Fixed stale warning after auto-approved group invitation.** The "No association" warning no longer appears after a successful auto-approval.
+- Fixed expired project credits not being zeroed and excluded from linear consumption calculations.
+- Fixed duplicate role creation when group invitations are auto-approved.
+- Fixed 500 error when `X-Forwarded-For` header contains a hostname instead of an IP address.
+- Fixed invalid auth state handling during social authentication flows.
+- Fixed resource duplication check incorrectly preventing all resource creation in remote marketplace.
+- Fixed corrupt NULL constance values crashing the settings endpoint.
+- Fixed GLAuth uidnumber generation to be scoped per offering instead of globally.
+- Fixed synchronous subtask call in SLURM policy evaluation causing Celery issues.
+- Fixed order unlink AttributeError by relocating `get_order_scopes` to the log module.
+- Fixed Atlassian support backend TypeError in `pull_request_types`.
+- Fixed image name parsing/grouping and increased flavor page size in instance deployment.
+- Fixed resource component quota display showing incorrect units and layout.
+- Fixed order details showing pricing when billing info is concealed.
+- Fixed stale "No association" warning after auto-approved group invitation.
+- Fixed various translation issues across Estonian, Lithuanian, and German locales.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [81 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6-rc.4) - LBaaS backend, AI Assistant security, performance fixes, Django 6.0 upgrade, structured logging
-- **Waldur Homeport**: [52 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6-rc.4) - Reporting dashboard, user management wizard, feature flag UI, footer redesign, filter generator migration
-- **Waldur Helm**: [6 commits](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6-rc.4) - Docker image digest support, helm-unittest migration
-- **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.5...8.0.6-rc.4) - Maintenance updates only
+- **Waldur Mastermind**: [92 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.5...8.0.6) - LBaaS backend, N+1 fixes, AI assistant hardening, Django 6.0, structured logging, SLURM policy reset, SSH key management
+- **Waldur Homeport**: [56 commits](https://github.com/waldur/waldur-homeport/compare/8.0.5...8.0.6) - OpenStack reporting page, user management wizard, sensitive data detection UI, filter generator migration, footer redesign, feature flag support
+- **Waldur Helm**: [9 commits](https://github.com/waldur/waldur-helm/compare/8.0.5...8.0.6) - Docker image digest support, helm-unittest migration
+- **Waldur Docker Compose**: [4 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.5...8.0.6) - Maintenance updates only
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.6.yaml)
 
 ---
+
 
 
 
