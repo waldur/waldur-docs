@@ -4904,6 +4904,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="User Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direct-cr-user-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct CR User Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -13655,6 +13672,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="User Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direct-cr-user-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct CR User Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -14118,6 +14152,13 @@ Custom entries are merged with the defaults:</p>
 <td><code>true</code></td>
 <td>Use Keycloak user ID for lookup (false = use username)</td>
 </tr>
+<tr>
+<td><code>sync_users_to_cr</code></td>
+<td>boolean</td>
+<td>No</td>
+<td><code>false</code></td>
+<td>Sync user emails to CR <code>adminUsers</code>/<code>rwUsers</code>/<code>roUsers</code> fields</td>
+</tr>
 </tbody>
 </table>
 <h3 id="keycloak-settings-optional">Keycloak Settings (Optional)</h3>
@@ -14228,6 +14269,49 @@ Custom entries are merged with the defaults:</p>
 <li>User is removed from any incorrect role groups (role reconciliation)</li>
 <li>User is added to the correct role group</li>
 </ol>
+<h4 id="direct-cr-user-sync">Direct CR User Sync</h4>
+<p>When <code>sync_users_to_cr</code> is enabled, user emails from Waldur are written directly to the
+ManagedNamespace CR's <code>adminUsers</code>, <code>rwUsers</code>, and <code>roUsers</code> fields.
+The managed-namespace-operator then creates RoleBindings with these emails as
+OIDC User subjects.</p>
+<p>Each user's Waldur role is mapped to a namespace role using the same
+<code>role_mapping</code> configuration (see <a href="#role-mapping">Role Mapping</a>), and the
+email is placed in the corresponding CR field:</p>
+<table>
+<thead>
+<tr>
+<th>Namespace Role</th>
+<th>CR Field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>admin</code></td>
+<td><code>adminUsers</code></td>
+</tr>
+<tr>
+<td><code>readwrite</code></td>
+<td><code>rwUsers</code></td>
+</tr>
+<tr>
+<td><code>readonly</code></td>
+<td><code>roUsers</code></td>
+</tr>
+</tbody>
+</table>
+<p>On each membership sync cycle, the <strong>full current set</strong> of team members from
+Waldur is written to the CR. Users removed from the Waldur project team are
+automatically removed from the CR on the next sync, because empty lists are
+sent for roles with no members.</p>
+<p>This can be used <strong>alongside</strong> Keycloak groups (both mechanisms populate the
+same RoleBindings) or <strong>without</strong> Keycloak (<code>keycloak_enabled: false</code>) for
+deployments that rely solely on OIDC email-based authentication.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">sync_users_to_cr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">keycloak_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">  </span><span class="c1"># optional, can also be true for dual mode</span>
+</code></pre></div></td></tr></tbody></table></div>
 <p>When users are removed:</p>
 <ol>
 <li>User is removed from all 3 Keycloak groups</li>
@@ -14290,7 +14374,7 @@ Custom entries are merged with the defaults:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-23
+    2026-03-06
   </span>
 
     
