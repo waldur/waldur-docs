@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-07T03:05:10.741122Z
+Generated: 2026-03-08T03:05:03.862535Z
 Source: https://docs.waldur.com
 
 ---
@@ -760,17 +760,22 @@ spec:
   volume:
     size: 20Gi
   numberOfInstances: 2
+
   users:
     waldur:
-
     - superuser
-
     - createdb
 
   databases:
     waldur: waldur
   postgresql:
     version: "16"  # Updated to latest supported version
+    parameters: # Custom PostgreSQL parameters
+      log_connections: "off"
+      log_disconnections: "off"
+      max_connections: "200"
+  enableConnectionPooler: true # Enable connection pooler for load balancing
+  enableReplicaConnectionPooler: true
   resources:
     requests:
       cpu: '500m'
@@ -12940,7 +12945,6 @@ td:nth-child(4) {
 | `waldur-remote-notify-about-pending-project-update-requests` | `waldur_mastermind.marketplace_remote.notify_about_pending_project_update_requests` | 7 days | Notify about pending project update requests.<br><br> This task sends email notifications to project owners about pending<br> project update requests that have been waiting for more than a week.<br> Runs weekly via celery beat. |
 | `waldur-remote-offerings-sync` | `waldur_mastermind.marketplace_remote.remote_offerings_sync` | 1 day | Synchronize remote offerings based on RemoteSynchronisation configurations.<br><br> This task processes active remote synchronization configurations,<br> running synchronization for each configured remote marketplace.<br> Runs daily via celery beat. |
 | `waldur-remote-pull-erred-orders` | `waldur_mastermind.marketplace_remote.pull_erred_orders` | 1 day | Pull and synchronize erred remote marketplace orders.<br><br> This task specifically handles erred local orders that may have been<br> resolved in remote Waldur instances. It synchronizes UPDATE and TERMINATE<br> order states and adjusts local resource states accordingly.<br> Runs daily via celery beat. |
-| `waldur-remote-pull-invoices` | `waldur_mastermind.marketplace_remote.pull_invoices` | 1 hour | Pull and synchronize remote marketplace resource invoice data.<br><br> This task synchronizes invoice items for marketplace resources from<br> remote Waldur instances, including current and previous month data.<br> Runs every 60 minutes via celery beat. |
 | `waldur-remote-pull-maintenance-announcements` | `waldur_mastermind.marketplace_remote.pull_maintenance_announcements` | 1 hour | Pull and synchronize remote maintenance announcements.<br><br> This task synchronizes maintenance announcements from remote Waldur instances,<br> Runs every 60 minutes via celery beat. |
 | `waldur-remote-pull-offering-users` | `waldur_mastermind.marketplace_remote.pull_offering_users` | 1 hour | Pull and synchronize remote marketplace offering users.<br><br> This task synchronizes user associations with marketplace offerings from<br> remote Waldur instances, ensuring local user mappings are up to date.<br> Runs every 60 minutes via celery beat. |
 | `waldur-remote-pull-offerings` | `waldur_mastermind.marketplace_remote.pull_offerings` | 1 hour | Pull and synchronize remote marketplace offerings.<br><br> This task synchronizes offerings from remote Waldur instances, updating<br> local offering data including components, plans, and access endpoints.<br> Runs every 60 minutes via celery beat. |
@@ -32274,22 +32278,77 @@ waldur = "waldur_site_agent_waldur.schemas:WaldurBackendSettingsSchema"
 waldur-identity-bridge = "waldur_site_agent_waldur.username_backend:WaldurIdentityBridgeUsernameBackend"
 ```
 
-## User Matching
+## User Resolution
 
-The plugin supports three strategies for resolving Waldur A users on Waldur B:
+During membership sync, the agent must resolve local user identifiers (from Waldur A)
+to user UUIDs on Waldur B. Two settings control this:
 
-| Strategy | Setting | Waldur B API | Use Case |
-|----------|---------|-------------|----------|
-| eduTeams CUID | `cuid` | `remote_eduteams` endpoint | Both instances use eduTeams federation |
-| Email | `email` | `users_list(email=...)` | Shared email addresses between instances |
-| Username | `username` | `users_list(username=...)` | Shared usernames between instances |
+- **`user_resolve_method`** — *how* to look up the user (which API to call)
+- **`user_match_field`** — *what* field the local identifier represents
 
-Resolved user UUIDs are cached for the lifetime of the backend instance to minimize API calls.
+### `user_resolve_method`
+
+- **`identity_bridge`** (default) — `POST /api/identity-bridge/`.
+  Idempotent create/update, returns UUID. Requires `identity_bridge_source`.
+- **`remote_eduteams`** — `POST /api/remote-eduteams/`.
+  Server-side eduTEAMS OIDC lookup by CUID. Requires OIDC on Waldur B.
+- **`user_field`** — `GET /api/users/?{field}={value}`.
+  User list lookup. Field from `user_match_field` (`cuid` falls back to `username`).
+
+### `user_match_field`
+
+| Value | Description |
+|-------|-------------|
+| `cuid` (default) | Local identifier is an eduTeams CUID |
+| `email` | Local identifier is an email address |
+| `username` | Local identifier is a username |
+
+`user_match_field` is used directly by `remote_eduteams` and `user_field` methods.
+For `identity_bridge`, it is not used — the local identifier is always sent as the
+`username` parameter to the identity bridge API.
+
+### `user_not_found_action`
 
 When a user cannot be resolved on Waldur B:
 
 - **`warn`** (default): Log a warning and skip the user
 - **`fail`**: Raise a `BackendError` (caught per-user, does not abort the batch)
+
+Resolved user UUIDs are cached for the lifetime of the backend instance to minimize API calls.
+
+### Choosing the Right Combination
+
+| Scenario | `user_resolve_method` | `user_match_field` | Notes |
+|----------|-----------------------|--------------------|-------|
+| eduTEAMS federation, Waldur B has OIDC | `remote_eduteams` | `cuid` | Classic setup. |
+| Identity bridge pushes users | `identity_bridge` | `cuid` | No OIDC needed. |
+| Match by email | `user_field` | `email` | No IdP dependency. |
+| Match by username | `user_field` | `username` | No IdP dependency. |
+
+### Example: Identity Bridge Resolution
+
+```yaml
+backend_settings:
+  target_api_url: "https://waldur-b.example.com/"
+  target_api_token: "service-account-token"
+  target_offering_uuid: "..."
+  target_customer_uuid: "..."
+  user_resolve_method: "identity_bridge"
+  user_match_field: "cuid"
+  identity_bridge_source: "isd:efp"
+```
+
+### Example: Remote eduTEAMS Resolution (default)
+
+```yaml
+backend_settings:
+  target_api_url: "https://waldur-b.example.com/"
+  target_api_token: "service-account-token"
+  target_offering_uuid: "..."
+  target_customer_uuid: "..."
+  user_resolve_method: "remote_eduteams"  # override default (identity_bridge)
+  user_match_field: "cuid"
+```
 
 ## Identity Bridge Integration
 
@@ -32319,6 +32378,7 @@ offerings:
       target_api_token: "service-account-token-for-waldur-b"
       target_offering_uuid: "offering-uuid-on-waldur-b"
       target_customer_uuid: "customer-uuid-on-waldur-b"
+      user_resolve_method: "identity_bridge"
       identity_bridge_source: "isd:efp"  # Required for identity bridge
 ```
 
@@ -32326,7 +32386,7 @@ offerings:
 
 | Setting | Required | Default | Description |
 |---------|----------|---------|-------------|
-| `identity_bridge_source` | Yes | `""` | ISD source identifier (e.g. `isd:efp`) |
+| `identity_bridge_source` | Yes | `""` | ISD source identifier (e.g. `isd:efp`). Format: `<type>:<name>`. |
 
 ### User Attributes Synced
 
@@ -48639,7 +48699,31 @@ def filter_invoice_items(items, ordering=None):
 
 ---
 
-## 7. Best Practices and Conventions
+## 7. Nullable Fields and SDK Client Generation
+
+When a model ForeignKey is nullable (`null=True`), the corresponding serializer field **must** declare `allow_null=True`. Without this, the OpenAPI schema will not mark the field as nullable, and auto-generated SDK clients (Python, TypeScript, Go) will crash when parsing a `null` value from the API response.
+
+**Example bug**: A nullable FK serialized without `allow_null=True` causes the generated Python client to call `UUID(None)`, raising a `TypeError`.
+
+```python
+# Model
+class AgentIdentity(models.Model):
+    created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+# WRONG - missing allow_null=True
+created_by = serializers.SlugRelatedField(slug_field="uuid", read_only=True)
+
+# CORRECT - matches the model's nullable nature
+created_by = serializers.SlugRelatedField(slug_field="uuid", read_only=True, allow_null=True)
+```
+
+**Rule**: Any time a serializer field maps to a nullable model field (FK with `null=True`, or `CharField(null=True)`, etc.), add `allow_null=True` to the serializer field. This applies to `SlugRelatedField`, `HyperlinkedRelatedField`, `PrimaryKeyRelatedField`, and plain fields alike.
+
+**How to verify**: After making changes, run `uv run waldur spectacular --validate` and inspect the generated schema to confirm the field shows `nullable: true`.
+
+---
+
+## 8. Best Practices and Conventions
 
 1. **Docstrings are the Source of Truth**: Write clear docstrings on viewset *action methods*. They become the official API descriptions.
 2. **Use the Right Tool for the Job**:
@@ -48654,7 +48738,7 @@ def filter_invoice_items(items, ordering=None):
 7. **Handle Polymorphism with Hooks**: For complex conditional schemas (`oneOf`, `anyOf`), post-processing hooks are the most flexible and powerful tool available, as demonstrated by `add_polymorphic_attributes_schema`.
 8. **Simplify for the Consumer**: Use extensions (`OpenStackNestedSecurityGroupSerializerExtension`) and hooks (`transform_paginated_arrays`) to simplify complex or deeply nested objects where the full detail is unnecessary for the API consumer. The goal is a schema that is not just accurate, but also usable.
 
-## 8. The OpenAPI Schema in the Broader Workflow
+## 9. The OpenAPI Schema in the Broader Workflow
 
 The OpenAPI schema is not merely a documentation artifact; it is a critical, machine-readable contract that drives a significant portion of our development, testing, and release workflows. Our CI/CD pipelines are built around the schema as the single source of truth for the API's structure.
 

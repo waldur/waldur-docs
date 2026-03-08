@@ -5943,13 +5943,85 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#user-matching" class="md-nav__link">
+  <a href="#user-resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        User Matching
+        User Resolution
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="User Resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user_resolve_method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_resolve_method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user_match_field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_match_field
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user_not_found_action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_not_found_action
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choosing-the-right-combination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing the Right Combination
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-identity-bridge-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Identity Bridge Resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-remote-eduteams-resolution-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Remote eduTEAMS Resolution (default)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -13722,13 +13794,85 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#user-matching" class="md-nav__link">
+  <a href="#user-resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        User Matching
+        User Resolution
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="User Resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user_resolve_method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_resolve_method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user_match_field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_match_field
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user_not_found_action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_not_found_action
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choosing-the-right-combination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing the Right Combination
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-identity-bridge-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Identity Bridge Resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-remote-eduteams-resolution-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Remote eduTEAMS Resolution (default)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -14708,44 +14852,124 @@ uv<span class="w"> </span>run<span class="w"> </span>waldur_site_agent<span clas
 <span class="k">[project.entry-points.</span><span class="s2">"waldur_site_agent.username_management_backends"</span><span class="k">]</span>
 <span class="n">waldur-identity-bridge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"waldur_site_agent_waldur.username_backend:WaldurIdentityBridgeUsernameBackend"</span>
 </code></pre></div></td></tr></tbody></table></div>
-<h2 id="user-matching">User Matching</h2>
-<p>The plugin supports three strategies for resolving Waldur A users on Waldur B:</p>
+<h2 id="user-resolution">User Resolution</h2>
+<p>During membership sync, the agent must resolve local user identifiers (from Waldur A)
+to user UUIDs on Waldur B. Two settings control this:</p>
+<ul>
+<li><strong><code>user_resolve_method</code></strong> — <em>how</em> to look up the user (which API to call)</li>
+<li><strong><code>user_match_field</code></strong> — <em>what</em> field the local identifier represents</li>
+</ul>
+<h3 id="user_resolve_method"><code>user_resolve_method</code></h3>
+<ul>
+<li><strong><code>identity_bridge</code></strong> (default) — <code>POST /api/identity-bridge/</code>.
+  Idempotent create/update, returns UUID. Requires <code>identity_bridge_source</code>.</li>
+<li><strong><code>remote_eduteams</code></strong> — <code>POST /api/remote-eduteams/</code>.
+  Server-side eduTEAMS OIDC lookup by CUID. Requires OIDC on Waldur B.</li>
+<li><strong><code>user_field</code></strong> — <code>GET /api/users/?{field}={value}</code>.
+  User list lookup. Field from <code>user_match_field</code> (<code>cuid</code> falls back to <code>username</code>).</li>
+</ul>
+<h3 id="user_match_field"><code>user_match_field</code></h3>
 <table>
 <thead>
 <tr>
-<th>Strategy</th>
-<th>Setting</th>
-<th>Waldur B API</th>
-<th>Use Case</th>
+<th>Value</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>eduTeams CUID</td>
-<td><code>cuid</code></td>
-<td><code>remote_eduteams</code> endpoint</td>
-<td>Both instances use eduTeams federation</td>
+<td><code>cuid</code> (default)</td>
+<td>Local identifier is an eduTeams CUID</td>
 </tr>
 <tr>
-<td>Email</td>
 <td><code>email</code></td>
-<td><code>users_list(email=...)</code></td>
-<td>Shared email addresses between instances</td>
+<td>Local identifier is an email address</td>
 </tr>
 <tr>
-<td>Username</td>
 <td><code>username</code></td>
-<td><code>users_list(username=...)</code></td>
-<td>Shared usernames between instances</td>
+<td>Local identifier is a username</td>
 </tr>
 </tbody>
 </table>
-<p>Resolved user UUIDs are cached for the lifetime of the backend instance to minimize API calls.</p>
+<p><code>user_match_field</code> is used directly by <code>remote_eduteams</code> and <code>user_field</code> methods.
+For <code>identity_bridge</code>, it is not used — the local identifier is always sent as the
+<code>username</code> parameter to the identity bridge API.</p>
+<h3 id="user_not_found_action"><code>user_not_found_action</code></h3>
 <p>When a user cannot be resolved on Waldur B:</p>
 <ul>
 <li><strong><code>warn</code></strong> (default): Log a warning and skip the user</li>
 <li><strong><code>fail</code></strong>: Raise a <code>BackendError</code> (caught per-user, does not abort the batch)</li>
 </ul>
+<p>Resolved user UUIDs are cached for the lifetime of the backend instance to minimize API calls.</p>
+<h3 id="choosing-the-right-combination">Choosing the Right Combination</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th><code>user_resolve_method</code></th>
+<th><code>user_match_field</code></th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>eduTEAMS federation, Waldur B has OIDC</td>
+<td><code>remote_eduteams</code></td>
+<td><code>cuid</code></td>
+<td>Classic setup.</td>
+</tr>
+<tr>
+<td>Identity bridge pushes users</td>
+<td><code>identity_bridge</code></td>
+<td><code>cuid</code></td>
+<td>No OIDC needed.</td>
+</tr>
+<tr>
+<td>Match by email</td>
+<td><code>user_field</code></td>
+<td><code>email</code></td>
+<td>No IdP dependency.</td>
+</tr>
+<tr>
+<td>Match by username</td>
+<td><code>user_field</code></td>
+<td><code>username</code></td>
+<td>No IdP dependency.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-identity-bridge-resolution">Example: Identity Bridge Resolution</h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur-b.example.com/"</span>
+<span class="w">  </span><span class="nt">target_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"service-account-token"</span>
+<span class="w">  </span><span class="nt">target_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"..."</span>
+<span class="w">  </span><span class="nt">target_customer_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"..."</span>
+<span class="w">  </span><span class="nt">user_resolve_method</span><span class="p">:</span><span class="w"> </span><span class="s">"identity_bridge"</span>
+<span class="w">  </span><span class="nt">user_match_field</span><span class="p">:</span><span class="w"> </span><span class="s">"cuid"</span>
+<span class="w">  </span><span class="nt">identity_bridge_source</span><span class="p">:</span><span class="w"> </span><span class="s">"isd:efp"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="example-remote-eduteams-resolution-default">Example: Remote eduTEAMS Resolution (default)</h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur-b.example.com/"</span>
+<span class="w">  </span><span class="nt">target_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"service-account-token"</span>
+<span class="w">  </span><span class="nt">target_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"..."</span>
+<span class="w">  </span><span class="nt">target_customer_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"..."</span>
+<span class="w">  </span><span class="nt">user_resolve_method</span><span class="p">:</span><span class="w"> </span><span class="s">"remote_eduteams"</span><span class="w">  </span><span class="c1"># override default (identity_bridge)</span>
+<span class="w">  </span><span class="nt">user_match_field</span><span class="p">:</span><span class="w"> </span><span class="s">"cuid"</span>
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="identity-bridge-integration">Identity Bridge Integration</h2>
 <p>The plugin includes a username management backend (<code>waldur-identity-bridge</code>) that pushes
 user profiles from Waldur A to Waldur B via the Identity Bridge API before membership sync.
@@ -14770,7 +14994,8 @@ This ensures users exist on Waldur B before the agent tries to resolve and add t
 <span class="normal">10</span>
 <span class="normal">11</span>
 <span class="normal">12</span>
-<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Federated</span><span class="nv"> </span><span class="s">HPC</span><span class="nv"> </span><span class="s">Access"</span>
 <span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur-a.example.com/api/"</span>
 <span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"token-for-waldur-a"</span>
@@ -14782,6 +15007,7 @@ This ensures users exist on Waldur B before the agent tries to resolve and add t
 <span class="w">      </span><span class="nt">target_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"service-account-token-for-waldur-b"</span>
 <span class="w">      </span><span class="nt">target_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"offering-uuid-on-waldur-b"</span>
 <span class="w">      </span><span class="nt">target_customer_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"customer-uuid-on-waldur-b"</span>
+<span class="w">      </span><span class="nt">user_resolve_method</span><span class="p">:</span><span class="w"> </span><span class="s">"identity_bridge"</span>
 <span class="w">      </span><span class="nt">identity_bridge_source</span><span class="p">:</span><span class="w"> </span><span class="s">"isd:efp"</span><span class="w">  </span><span class="c1"># Required for identity bridge</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="identity-bridge-settings">Identity Bridge Settings</h3>
@@ -14799,7 +15025,7 @@ This ensures users exist on Waldur B before the agent tries to resolve and add t
 <td><code>identity_bridge_source</code></td>
 <td>Yes</td>
 <td><code>""</code></td>
-<td>ISD source identifier (e.g. <code>isd:efp</code>)</td>
+<td>ISD source identifier (e.g. <code>isd:efp</code>). Format: <code>&lt;type&gt;:&lt;name&gt;</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -15028,7 +15254,7 @@ birth date, nationality, and other profile fields configured via <code>OfferingU
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-28
+    2026-03-07
   </span>
 
     
