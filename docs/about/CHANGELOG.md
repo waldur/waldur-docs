@@ -1,5 +1,44 @@
 # Changelog
 
+## 8.0.7-rc.1 - 2026-03-10
+
+### Highlights
+
+This release introduces AI Assistant support for creating virtual machines, improves SLURM policy handling, and fixes OpenStack instance data retrieval. Operators benefit from a new offering archival command and streamlined Docker Compose setup with optional Keycloak.
+
+### What's New
+
+- AI Assistant now supports a "Create a VM" action, allowing users to provision virtual machines directly through the chat interface.
+- Added a management command (`archive_offering`) for operators to archive marketplace offerings via CLI.
+- Kubernetes resource cleanup is now performed automatically for marketplace script-based offerings.
+- Exposed identity bridge fields on the user's own profile, making federation metadata visible to end users.
+- Added `provider_description` field to marketplace resource and order items.
+- Invoices for remote offerings are now calculated locally instead of being pulled from the remote site, improving reliability and reducing cross-site API calls.
+
+### Improvements
+
+- SLURM policy period is now enforced to match the offering component's `limit_period`, preventing configuration mismatches. The `preview_impact` endpoint also respects this setting.
+- OpenStack instance flavor data is now retrieved using Nova microversion 2.47, fixing cases where flavor details were missing.
+- Keycloak setup in Docker Compose is upgraded and made optional via a Docker Compose profile. Deprecated FirecREST example configuration has been removed.
+- Added `data-testid` attributes across multiple UI components (select fields, buttons, tabs, links) for improved end-to-end test coverage.
+- New ESLint rule (`enforce-disabled-button-tooltip`) ensures disabled buttons always have explanatory tooltips.
+- Updated Helm chart documentation for external database integration.
+- Fixed display of measured units for OpenStack tenant resource components in the UI.
+
+### Bug Fixes
+
+- Fixed nullable foreign key fields missing `allow_null=True` on `SlugRelatedField`, improving API schema correctness.
+- Fixed `kubectl describe` in Helm CI after-script that failed due to duplicate resource type prefix.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [16 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.6...8.0.7-rc.1) - AI Assistant VM creation, SLURM policy enforcement, OpenStack Nova microversion fix, K8s cleanup for scripts, local invoice calculation for remote offerings.
+- **Waldur Homeport**: [6 commits](https://github.com/waldur/waldur-homeport/compare/8.0.6...8.0.7-rc.1) - E2E testability improvements, ESLint rule for disabled button tooltips, OpenStack unit display fix.
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.0.6...8.0.7-rc.1) - CI fix, external DB documentation update.
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.6...8.0.7-rc.1) - Keycloak upgrade with optional profile, deprecated FirecREST config removal.
+
+---
+
 
 
 ## 8.0.6 - 2026-03-06
