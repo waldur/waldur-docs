@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-10T03:04:51.639813Z
+Generated: 2026-03-10T06:09:52.758719Z
 Source: https://docs.waldur.com
 
 ---
@@ -4861,6 +4861,27 @@ positional arguments:
     validate_scenarios  Validate scenario YAML files
     test_evaluation     Test evaluation with real LLM responses
     run_all             Run all checks (health, validate, test)
+
+```
+
+## archive_offering
+
+Archive an offering and terminate all its resources (including child offerings' resources), or clean up invoice items for already-terminated resources.
+
+```bash
+
+usage: waldur archive_offering [--dry-run]
+                               {terminate,cleanup-invoices} offering_uuid
+
+positional arguments:
+  {terminate,cleanup-invoices}
+                        terminate: archive offering(s) and terminate all non-
+                        terminated resources. cleanup-invoices: remove current
+                        month invoice items for terminated resources.
+  offering_uuid         UUID of the parent offering to process.
+
+options:
+  --dry-run             List affected resources/items without making changes.
 
 ```
 
@@ -12928,6 +12949,7 @@ td:nth-child(4) {
 | `waldur-keycloak-cleanup-orphaned-memberships` | `waldur_keycloak.cleanup_orphaned_memberships` | 1 hour | Task not found in registry |
 | `waldur-keycloak-sync-pending-memberships` | `waldur_keycloak.sync_pending_memberships` | 15 minutes | Task not found in registry |
 | `waldur-marketplace-calculate-usage` | `waldur_mastermind.marketplace.calculate_usage_for_current_month` | 1 hour | Calculate marketplace resource usage for the current month across all customers and projects. |
+| `waldur-marketplace-script-cleanup-orphaned-k8s-resources` | `waldur_marketplace_script.cleanup_orphaned_k8s_resources` | 1 hour | Remove orphaned Kubernetes Jobs and ConfigMaps created by Waldur that are older than 1 hour. |
 | `waldur-marketplace-script-pull-resources` | `waldur_marketplace_script.pull_resources` | 1 hour | Pull resources from marketplace script offerings by executing configured pull scripts. |
 | `waldur-marketplace-script-remove-old-dry-runs` | `waldur_marketplace_script.remove_old_dry_runs` | 1 day | Remove old dry run records that are older than one day. |
 | `waldur-mastermind-reject-past-bookings` | `waldur_mastermind.booking.reject_past_bookings` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Reject booking resources that have start times in the past. |
@@ -19336,8 +19358,8 @@ backend_settings:
   order_poll_interval: 5                     # Seconds between sync order polls
   user_not_found_action: "warn"              # warn | fail
   # Optional: target STOMP for instant async order completion
+  # Requires target_offering_uuid to be a Marketplace.Slurm offering
   target_stomp_enabled: false
-  target_stomp_offering_uuid: ""             # Marketplace.Slurm offering on B
 ```
 
 ## Backend Components
@@ -19589,7 +19611,6 @@ offerings:
       order_poll_interval: 5
       user_not_found_action: "warn"
       target_stomp_enabled: true
-      target_stomp_offering_uuid: "agent-offering-uuid-on-waldur-b"
 
     backend_components:
       node_hours:
@@ -32046,8 +32067,6 @@ offerings:
       user_not_found_action: "warn"
       # Target STOMP: subscribe to ORDER events on Waldur B
       target_stomp_enabled: true
-      # Agent identity on B requires a Marketplace.Slurm offering UUID
-      target_stomp_offering_uuid: "agent-based-offering-uuid-on-waldur-b"
 
     backend_components:
       node_hours:
@@ -32104,8 +32123,7 @@ These settings are on the offering itself (not inside `backend_settings`):
 | `order_poll_timeout` | No | `300` | Max seconds to wait for synchronous order completion (update/terminate) |
 | `order_poll_interval` | No | `5` | Seconds between synchronous order state polls |
 | `user_not_found_action` | No | `warn` | When user not found: `warn` or `fail` |
-| `target_stomp_enabled` | No | `false` | STOMP subscription on B for instant order completion |
-| `target_stomp_offering_uuid` | No | `target_offering_uuid` | `Marketplace.Slurm` offering on B for agent identity |
+| `target_stomp_enabled` | No | `false` | STOMP on B for instant order completion (requires Slurm offering) |
 
 ### Required User Permissions
 
@@ -32649,9 +32667,8 @@ curl -sI https://<waldur-a-host>/rmqws-stomp
 **On Waldur B (target STOMP):**
 
 - Verify `/rmqws-stomp` WebSocket endpoint is available (same curl test)
-- The target offering is already `Marketplace.Slurm` (Step 1), so agent
-  identity registration works directly. Set `target_stomp_offering_uuid`
-  to the same UUID as `target_offering_uuid`.
+- The target offering must be `Marketplace.Slurm` for STOMP to work
+  (`Marketplace.Basic` does not support STOMP event signals)
 - Set `target_stomp_enabled: true` in backend settings
 
 If Waldur B does not have `/rmqws-stomp` configured (returns HTTP 200
@@ -32700,10 +32717,7 @@ offerings:
       order_poll_timeout: 300
       order_poll_interval: 5
       user_not_found_action: "warn"
-      # For target STOMP tests (optional); same UUID as target_offering_uuid
-      # since the target offering is Marketplace.Slurm
       target_stomp_enabled: true
-      target_stomp_offering_uuid: "<offering-uuid-on-B>"
 
     backend_components:
       # Example: passthrough (1:1) or with conversion factors
@@ -32876,7 +32890,6 @@ completion notifications.
 ```yaml
 backend_settings:
   target_stomp_enabled: true
-  target_stomp_offering_uuid: "<slurm-offering-uuid-on-B>"
 ```
 
 **Steps:**
@@ -32889,8 +32902,8 @@ backend_settings:
 
 **Expected:**
 
-- 1 target STOMP connection established (ORDER events on B)
-- Connection reports `is_connected() == True`
+- 2 target STOMP connections established (ORDER and OFFERING_USER events on B)
+- All connections report `is_connected() == True`
 - Skipped gracefully if `target_stomp_enabled=false`
 
 **Prerequisites:** Waldur B must have `/rmqws-stomp` WebSocket endpoint
