@@ -60,6 +60,7 @@ This release brings AI-powered VM creation, improved marketplace offering manage
 
 
 
+
 ## 8.0.6 - 2026-03-06
 
 ### Highlights
