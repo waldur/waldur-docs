@@ -1,49 +1,54 @@
 # Changelog
 
-## 8.0.7-rc.3 - 2026-03-11
+## 8.0.7-rc.4 - 2026-03-11
 
 ### Highlights
 
-This release adds AI-assisted VM creation, improved offering metadata, and better SLURM policy enforcement. OpenStack instance flavor detection is now more reliable, and several UI and backend fixes improve overall stability for both operators and end users.
+This release brings AI-assisted VM creation, editable marketplace category structures, and new offering metadata fields for documentation and helpdesk links. OpenStack reliability is improved with proper Nova API microversioning, and SLURM usage policies now correctly enforce period alignment with offering components. The frontend gains better accessibility, routing fixes, and expanded E2E test coverage.
 
 ### What's New
 
-- AI Assistant now supports creating virtual machines through conversational commands, including project selection and VM preview before provisioning.
-- Offerings can now include helpdesk and documentation URLs, giving end users direct access to support and reference materials from the marketplace.
-- STOMP notifications are now available for offering consumers, enabling real-time event delivery to consumer-side integrations.
-- New `archive_offering` management command allows operators to archive offerings via the CLI.
-- Search filters added for robot accounts, making it easier to find and manage programmatic access entries.
-- Identity bridge fields are now exposed on the user's own profile endpoint.
+- **AI Assistant can now create virtual machines.** Users can request VM creation directly through the chat interface, including previewing configurations and selecting projects.
+- **Marketplace category structure is now editable via the API.** Administrators can modify category attributes and options without reloading from configuration files.
+- **Offerings now support documentation and helpdesk URL fields.** Providers can link to external documentation and support portals directly from the offering overview page.
+- **STOMP notifications are now available for offering consumers.** Consumer organizations receive real-time event notifications for offerings they use.
+- **New `archive_offering` management command.** Operators can archive offerings from the command line for bulk lifecycle management.
+- **Robot accounts now have search filters.** API consumers can filter and search robot accounts more easily.
+- **Identity bridge fields are exposed on own user profile.** Users can now see their linked identity information on their profile page.
 
 ### Improvements
 
-- SLURM periodic usage policies now enforce that the policy period matches the offering component's limit period, preventing misconfiguration. The preview impact action also respects this setting.
-- Remote offering invoices are now calculated locally instead of being pulled from the remote instance, reducing cross-instance dependencies and improving reliability.
-- OpenStack backend now uses Nova microversion 2.47, fixing cases where flavor data was missing for imported instances.
-- Offering user creation now happens by the time an order reaches pending state, ensuring users are provisioned earlier in the workflow.
-- Keycloak setup in Docker Compose is upgraded to a newer mapper version and made optional via Docker Compose profiles.
-- Deprecated FirecREST example configuration has been removed from Docker Compose setup.
-- Kubernetes resource cleanup added for marketplace script offerings, preventing orphaned resources.
-- Database migrations have been squashed across several apps to speed up fresh database setup and e2e tests.
-- Extensive `data-testid` attributes added across frontend components to improve end-to-end test coverage and accessibility.
-- New ESLint rule (`enforce-disabled-button-tooltip`) ensures disabled buttons always have tooltips explaining why they are disabled.
-- GDPR attribute filtering now correctly excludes `active_isds` field from being redacted.
+- **Remote offering invoices are now calculated locally** instead of being pulled from the remote Waldur instance, improving reliability and reducing cross-instance dependencies.
+- **SLURM policy period is enforced to match offering component limit_period.** This prevents misconfiguration where policy and component periods diverge, and the impact preview now respects the period setting.
+- **OpenStack instance flavor data is now reliably fetched** by using Nova microversion 2.47, fixing cases where flavor details were missing.
+- **Offering user creation now happens when an order reaches pending state** rather than later in the lifecycle, ensuring users are provisioned earlier.
+- **Keycloak setup in Docker Compose is upgraded and made optional** via a Docker Compose profile, with the mapper library updated to 1.3.4.
+- **Deprecated FirecREST example configuration removed** from Docker Compose setup.
+- **Kubernetes resource cleanup added for marketplace scripts.** Script-based offerings now properly clean up K8s resources after execution.
+- **Squashed database migrations** speed up fresh database setup and e2e test runs.
+- **Improved Lithuanian translations.**
+- **Icon-only Support button for course projects** reduces UI clutter.
+- **Extensive data-testid attributes added** across frontend components for improved E2E test automation.
+- **New ESLint rule enforces tooltips on disabled buttons** to improve accessibility.
 
 ### Bug Fixes
 
-- Fixed logout button on the Django admin page.
-- Fixed navigation to Terms of Service, Privacy Policy, and other public pages for users with incomplete profiles.
-- Fixed measured unit display for OpenStack tenant resource components.
-- Fixed nullable foreign key fields missing `allow_null=True` on SlugRelatedField serializers, improving OpenAPI schema correctness.
+- **Fixed URLs with trailing slashes causing 404 errors** in the frontend router.
+- **Fixed navigation to Terms of Service and Privacy pages** for users with incomplete profiles.
+- **Fixed measured units display for OpenStack tenant resource components.**
+- **Fixed logout button on the Django admin page.**
+- **Fixed GDPR attribute filtering** to exclude `active_isds` from the filtered set.
+- **Fixed nullable foreign key fields** missing `allow_null=True` on SlugRelatedField serializers.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [25 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.6...8.0.7-rc.3) - AI-assisted VM creation, offering metadata fields, SLURM policy enforcement, OpenStack flavor fix, local invoice calculation for remote offerings.
-- **Waldur Homeport**: [10 commits](https://github.com/waldur/waldur-homeport/compare/8.0.6...8.0.7-rc.3) - E2E testability improvements, navigation fix for incomplete profiles, OpenStack unit display fix.
-- **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/8.0.6...8.0.7-rc.3) - Version bumps and external DB documentation update.
-- **Waldur Docker Compose**: [4 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.6...8.0.7-rc.3) - Keycloak upgrade with optional profile, removal of deprecated FirecREST config.
+- **Waldur Mastermind**: [26 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.6...8.0.7-rc.4) - AI VM creation, category editing, offering metadata fields, SLURM policy fixes, OpenStack microversioning, migration squashing.
+- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.0.6...8.0.7-rc.4) - Offering URL fields UI, routing fix, E2E testability improvements, accessibility enhancements, translation updates.
+- **Waldur Helm**: [5 commits](https://github.com/waldur/waldur-helm/compare/8.0.6...8.0.7-rc.4) - Version bumps and external DB documentation update.
+- **Waldur Docker Compose**: [5 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.6...8.0.7-rc.4) - Keycloak upgrade with optional profile, FirecREST config removal, version bumps.
 
 ---
+
 
 
 
