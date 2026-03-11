@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-11T14:59:39.166677Z
+Generated: 2026-03-11T16:23:39.623191Z
 Source: https://docs.waldur.com
 
 ---
@@ -22347,6 +22347,7 @@ backend needs custom behavior.
 | `_pre_delete_user_actions` | No-op | Per-user cleanup before removal |
 | `process_existing_users` | No-op | Process existing users (homedirs) |
 | `check_pending_order` | Returns `True` | Non-blocking order creation (see below) |
+| `evaluate_pending_order` | Returns `ACCEPT` | Custom approval logic for pending orders (see below) |
 | `setup_target_event_subscriptions` | Returns `[]` | STOMP subscriptions to target systems |
 
 ### Non-blocking order creation (optional)
@@ -22388,6 +22389,77 @@ def check_pending_order(self, order_backend_id: str) -> bool:
 - **Returns**: List of `StompConsumer` tuples for lifecycle management
 - **Called by**: `event_process` mode during STOMP setup
 
+### Pending order evaluation (optional)
+
+When an order arrives in `PENDING_PROVIDER` state, the agent calls
+`evaluate_pending_order` on the backend before taking any action. The
+default implementation returns `ACCEPT`, which preserves the existing
+auto-approve behaviour. Override this method to implement custom
+approval logic.
+
+#### `evaluate_pending_order(order, waldur_rest_client) -> PendingOrderDecision`
+
+- **Default**: Returns `PendingOrderDecision.ACCEPT`
+- **Override when**: You need to inspect or gate orders before approval
+- **Parameters**:
+  - `order` (`OrderDetails`) — full order data including `project_uuid`,
+    `customer_uuid`, `created_by_*`, `attributes`, and
+    `consumer_message` / `provider_message` fields.
+  - `waldur_rest_client` (`AuthenticatedClient`) — authenticated client
+    for fetching additional data from the Waldur API (e.g., project
+    members and roles).
+- **Returns** one of:
+  - `PendingOrderDecision.ACCEPT` — approve the order
+  - `PendingOrderDecision.REJECT` — reject the order
+  - `PendingOrderDecision.PENDING` — keep waiting; the order will be
+    re-evaluated on the next polling cycle
+
+> **Note:** This is the only hook that receives `waldur_rest_client`.
+> Other backend methods receive Waldur data via `user_context` instead.
+
+#### Use cases
+
+| Scenario | Approach |
+|---|---|
+| Wait for a PI | Query project members, return `PENDING` until a PI role exists |
+| Reject unprocessable orders | Inspect `order.attributes`, return `REJECT` |
+| Require a signed agreement | Set `provider_message`, return `PENDING` until `consumer_message` is set |
+
+#### Example: wait for a PI before approving
+
+```python
+from waldur_api_client.api.marketplace_provider_resources import (
+    marketplace_provider_resources_team_list,
+)
+from waldur_site_agent.backend.backends import BaseBackend, PendingOrderDecision
+
+class MyBackend(BaseBackend):
+    def evaluate_pending_order(self, order, waldur_rest_client):
+        team = marketplace_provider_resources_team_list.sync(
+            client=waldur_rest_client,
+            uuid=order.marketplace_resource_uuid.hex,
+        )
+        has_pi = any(
+            member.role_name == "PI" for member in (team or [])
+        )
+        if not has_pi:
+            return PendingOrderDecision.PENDING
+        return PendingOrderDecision.ACCEPT
+```
+
+#### Example: reject orders that lack a required attribute
+
+```python
+from waldur_site_agent.backend.backends import BaseBackend, PendingOrderDecision
+
+class MyBackend(BaseBackend):
+    def evaluate_pending_order(self, order, waldur_rest_client):
+        attrs = getattr(order, "attributes", None) or {}
+        if not attrs.get("project_justification"):
+            return PendingOrderDecision.REJECT
+        return PendingOrderDecision.ACCEPT
+```
+
 ## BaseClient method reference
 
 All methods below are abstract and must be implemented.
@@ -22423,6 +22495,7 @@ This table shows which `BaseBackend` methods are called by each agent mode.
 | `post_create_resource` | CREATE order | - | - | CREATE event |
 | `_collect_resource_limits` | CREATE order | - | - | CREATE event |
 | `check_pending_order` | CREATE order (async) | - | - | CREATE event (async) |
+| `evaluate_pending_order` | pending-provider orders | - | - | - |
 | `set_resource_limits` | UPDATE order | - | - | UPDATE event |
 | `delete_resource` | TERMINATE order | - | - | TERMINATE event |
 | `_pre_delete_resource` | TERMINATE order | - | - | TERMINATE event |
@@ -22632,10 +22705,14 @@ The entry point name (e.g., `mycustom`) is what users put in
 
 ## Processor-plugin data flow
 
-Plugins **never** have direct access to the Waldur API client. Instead,
-the core processor pre-resolves any Waldur data the plugin might need and
+Plugins generally do not have direct access to the Waldur API client.
+The core processor pre-resolves any Waldur data the plugin might need and
 passes it via `user_context`. Plugins return metadata to Waldur by setting
 `resource.backend_metadata`.
+
+> **Exception:** `evaluate_pending_order` receives `waldur_rest_client`
+> directly, because the order has not been approved yet and no resource
+> context exists at that point.
 
 ### Pre-resolved data in `user_context`
 
@@ -22724,8 +22801,10 @@ class MyBackend(BaseBackend):
 
 ### Design principles
 
-- **Plugins must not import `waldur_api_client`** for runtime API calls.
+- **Plugins should avoid importing `waldur_api_client`** for runtime API calls.
   All Waldur data should come via `user_context` or `BaseBackend` attributes.
+  The exception is `evaluate_pending_order`, which receives `waldur_rest_client`
+  for querying project or order data before approval.
 - **`service_provider_uuid`** is still set on `BaseBackend` by the processor
   and can be read by plugins for constructing backend-side identifiers.
 - **Handle missing context gracefully** — `user_context` may be `None` or
@@ -27460,6 +27539,430 @@ When users are removed:
 ```bash
 pre-commit run --all-files
 ```
+
+---
+
+### LDAP Username Management Plugin for Waldur Site Agent
+<!-- Source: docs/admin-guide/providers/site-agent/plugins/ldap/README.md -->
+
+# LDAP Username Management Plugin for Waldur Site Agent
+
+Provisions POSIX users and groups in an LDAP directory when Waldur offering
+members need local accounts on an HPC site. Handles the full user lifecycle:
+account creation, access group membership, optional VPN password generation,
+and welcome email delivery.
+
+## Overview
+
+```mermaid
+graph LR
+    subgraph "Waldur Mastermind"
+        OU[Offering Users]
+    end
+
+    subgraph "Site Agent"
+        PROC[OfferingMembershipProcessor]
+        BACK[LdapUsernameBackend]
+        EMAIL[WelcomeEmailSender]
+    end
+
+    subgraph "LDAP Directory"
+        PEOPLE[ou=People]
+        GROUPS[ou=Groups]
+    end
+
+    subgraph "SMTP Gateway"
+        SMTP[Mail Server]
+    end
+
+    OU -->|"list offering users"| PROC
+    PROC -->|"get / create username"| BACK
+    BACK -->|"create user + group"| PEOPLE
+    BACK -->|"add to access groups"| GROUPS
+    BACK -->|"send welcome email"| EMAIL
+    EMAIL -->|"SMTP"| SMTP
+
+    classDef waldur fill:#e3f2fd
+    classDef agent fill:#f3e5f5
+    classDef ldap fill:#e8f5e9
+    classDef mail fill:#fff3e0
+
+    class OU waldur
+    class PROC,BACK,EMAIL agent
+    class PEOPLE,GROUPS ldap
+    class SMTP mail
+```
+
+## Features
+
+- **POSIX User Provisioning**: Creates `posixAccount` entries with personal groups,
+  auto-allocated UID/GID from configurable ranges
+- **Username Generation**: Multiple strategies — `first_initial_lastname` (`jsmith`),
+  `first_letter_full_lastname` (`j.smith`), `firstname_dot_lastname` (`john.smith`),
+  `firstname_lastname` (`johnsmith`), or passthrough `waldur_username`
+- **Collision Resolution**: Expands first-name prefix before falling back to numeric
+  suffixes (`j.smith` → `jo.smith` → `john.smith` → `j.smith2`)
+- **Access Groups**: Automatically adds new users to configured LDAP groups
+  (e.g., VPN access, GPU access) with `memberUid` or `member` (DN-based) attributes
+- **VPN Password Generation**: Optional cryptographically random password stored in
+  `userPassword` attribute
+- **Welcome Email**: Templated email via SMTP with account credentials, delivered
+  on user creation (opt-in)
+- **Profile Sync**: Updates LDAP attributes (`givenName`, `sn`, `cn`, `mail`) from
+  Waldur user profiles
+- **User Deactivation**: Configurable removal or retention of LDAP entries when
+  users leave the offering
+
+## Architecture
+
+### User Provisioning Flow
+
+```mermaid
+sequenceDiagram
+    participant W as Waldur API
+    participant P as MembershipProcessor
+    participant B as LdapUsernameBackend
+    participant L as LdapClient
+    participant S as SMTP Gateway
+
+    P->>W: List offering users
+    W-->>P: Offering users list
+
+    loop For each new user
+        P->>B: get_username(offering_user)
+        B->>L: search_user_by_email(email)
+        alt User found
+            L-->>B: Existing username
+        else Not found
+            B->>L: user_exists(waldur_username)
+            L-->>B: false
+            P->>B: generate_username(offering_user)
+            B->>B: Generate username string
+            B->>L: user_exists(candidate)
+            B->>B: Resolve collisions
+            B->>L: create_user(username, ...)
+            L->>L: get_next_uid / get_next_gid
+            L->>L: Create personal group
+            L->>L: Create posixAccount entry
+            L-->>B: uid_number
+
+            loop For each access group
+                B->>L: add_user_to_group(group, username)
+            end
+
+            opt Welcome email enabled
+                B->>S: Send templated email
+            end
+        end
+    end
+```
+
+### Username Generation Strategy
+
+```mermaid
+graph TB
+    START[New offering user] --> FORMAT{username_format?}
+
+    FORMAT -->|first_initial_lastname| FI["jsmith"]
+    FORMAT -->|first_letter_full_lastname| FL["j.smith"]
+    FORMAT -->|firstname_dot_lastname| FD["john.smith"]
+    FORMAT -->|firstname_lastname| FN["johnsmith"]
+    FORMAT -->|waldur_username| WU["Waldur username as-is"]
+
+    FI --> UNIQUE
+    FL --> UNIQUE
+    FD --> UNIQUE
+    FN --> UNIQUE
+    WU --> UNIQUE
+
+    UNIQUE{Exists in LDAP?}
+    UNIQUE -->|No| DONE[Use username]
+    UNIQUE -->|"Yes (dot format)"| EXPAND["Expand prefix<br/>j.smith → jo.smith → john.smith"]
+    UNIQUE -->|"Yes (no dot / exhausted)"| SUFFIX["Numeric suffix<br/>jsmith2, jsmith3, ..."]
+
+    EXPAND --> DONE
+    SUFFIX --> DONE
+
+    classDef decision fill:#fff3e0
+    classDef result fill:#e8f5e9
+
+    class FORMAT,UNIQUE decision
+    class DONE result
+```
+
+### Component Overview
+
+```mermaid
+graph TB
+    subgraph "LdapUsernameBackend"
+        GET[get_username<br/>Search by email, then Waldur username]
+        GEN[generate_username<br/>Create POSIX user + groups]
+        SYNC[sync_user_profiles<br/>Update LDAP attributes]
+        DEACT[deactivate_users<br/>Remove or retain users]
+    end
+
+    subgraph "LdapClient"
+        SEARCH[Search Operations<br/>user / email / group lookups]
+        IDALLOC[ID Allocation<br/>next available UID / GID]
+        USEROP[User Operations<br/>create / delete / update]
+        GROUPOP[Group Operations<br/>create / delete / membership]
+    end
+
+    subgraph "WelcomeEmailSender"
+        RENDER[Jinja2 Template Rendering]
+        SEND[SMTP Delivery]
+    end
+
+    GET --> SEARCH
+    GEN --> IDALLOC
+    GEN --> USEROP
+    GEN --> GROUPOP
+    GEN --> RENDER
+    RENDER --> SEND
+    SYNC --> USEROP
+    DEACT --> USEROP
+    DEACT --> GROUPOP
+
+    classDef backend fill:#e3f2fd
+    classDef client fill:#e8f5e9
+    classDef email fill:#fff3e0
+
+    class GET,GEN,SYNC,DEACT backend
+    class SEARCH,IDALLOC,USEROP,GROUPOP client
+    class RENDER,SEND email
+```
+
+## Configuration
+
+### Minimal Example
+
+```yaml
+offerings:
+  - name: "HPC Cluster"
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "your-token"
+    waldur_offering_uuid: "offering-uuid"
+    username_management_backend: "ldap"
+    backend_type: "slurm"
+    backend_settings:
+      ldap:
+        uri: "ldap://ldap.example.com"
+        bind_dn: "cn=admin,dc=example,dc=com"
+        bind_password: "admin-password"
+        base_dn: "dc=example,dc=com"
+```
+
+### Full Example (with welcome email and access groups)
+
+```yaml
+offerings:
+  - name: "HPC Cluster"
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "your-token"
+    waldur_offering_uuid: "offering-uuid"
+    username_management_backend: "ldap"
+    backend_type: "slurm"
+    backend_settings:
+      ldap:
+        # Connection
+        uri: "ldap://ldap.example.com"
+        bind_dn: "cn=admin,dc=example,dc=com"
+        bind_password: "admin-password"
+        base_dn: "dc=example,dc=com"
+        use_starttls: false
+
+        # Directory structure
+        people_ou: "ou=People"
+        groups_ou: "ou=Groups"
+
+        # ID allocation ranges
+        uid_range_start: 10000
+        uid_range_end: 65000
+        gid_range_start: 10000
+        gid_range_end: 65000
+
+        # User defaults
+        default_login_shell: "/bin/bash"
+        default_home_base: "/home"
+
+        # Username generation
+        username_format: "first_letter_full_lastname"  # produces j.smith
+
+        # User lifecycle
+        remove_user_on_deactivate: false
+        generate_vpn_password: true
+
+        # Access groups — new users are automatically added
+        access_groups:
+          - name: "vpnusrgroup"
+            attribute: "memberUid"       # UID-based membership
+          - name: "cluster-users"
+            attribute: "member"          # DN-based membership
+
+        # Welcome email (opt-in)
+        welcome_email:
+          smtp_host: "smtp.example.com"
+          smtp_port: 587
+          smtp_username: "noreply@example.com"
+          smtp_password: "smtp-password"
+          use_tls: true
+          from_address: "noreply@example.com"
+          from_name: "HPC Support"
+          subject: "Your {{ username }} account is ready"
+          template_path: "templates/welcome-email.txt.j2"
+```
+
+### LDAP Settings Reference
+
+| Setting | Required | Default | Description |
+|---------|----------|---------|-------------|
+| `uri` | Yes | -- | LDAP server URI (e.g., `ldap://ldap.example.com`) |
+| `bind_dn` | Yes | -- | DN to bind as (e.g., `cn=admin,dc=example,dc=com`) |
+| `bind_password` | Yes | -- | Password for bind DN |
+| `base_dn` | Yes | -- | Base DN for the directory |
+| `use_starttls` | No | `false` | Use STARTTLS for connection security |
+| `people_ou` | No | `ou=People` | OU for user entries |
+| `groups_ou` | No | `ou=Groups` | OU for group entries |
+| `uid_range_start` | No | `10000` | Start of UID allocation range |
+| `uid_range_end` | No | `65000` | End of UID allocation range |
+| `gid_range_start` | No | `10000` | Start of GID allocation range |
+| `gid_range_end` | No | `65000` | End of GID allocation range |
+| `default_login_shell` | No | `/bin/bash` | Default login shell for new users |
+| `default_home_base` | No | `/home` | Base path for home directories |
+| `username_format` | No | `first_initial_lastname` | Username generation strategy (see below) |
+| `remove_user_on_deactivate` | No | `false` | Delete LDAP entry on deactivation |
+| `generate_vpn_password` | No | `false` | Generate random VPN password on creation |
+| `access_groups` | No | `[]` | LDAP groups to add new users to |
+| `welcome_email` | No | -- | SMTP settings for welcome email (disabled when absent) |
+
+### Username Formats
+
+| Format | Example | Description |
+|--------|---------|-------------|
+| `first_initial_lastname` | `jsmith` | First initial + full last name |
+| `first_letter_full_lastname` | `j.smith` | First initial + dot + full last name |
+| `firstname_dot_lastname` | `john.smith` | Full first name + dot + full last name |
+| `firstname_lastname` | `johnsmith` | Full first name + full last name |
+| `waldur_username` | *(as-is)* | Use the Waldur username without transformation |
+
+Names are normalized: diacritics removed (`Müller` → `muller`), non-alphanumeric
+characters stripped. The `waldur_username` format bypasses normalization.
+
+### Welcome Email Settings
+
+| Setting | Required | Default | Description |
+|---------|----------|---------|-------------|
+| `smtp_host` | Yes | -- | SMTP server hostname |
+| `smtp_port` | No | `587` | SMTP server port |
+| `smtp_username` | No | -- | SMTP auth username (omit for unauthenticated relay) |
+| `smtp_password` | No | -- | SMTP auth password |
+| `use_tls` | No | `true` | Use STARTTLS (port 587) |
+| `use_ssl` | No | `false` | Use implicit SSL (port 465) |
+| `timeout` | No | `30` | SMTP connection timeout in seconds |
+| `from_address` | Yes | -- | Sender email address |
+| `from_name` | No | -- | Sender display name |
+| `subject` | No | `Your new account has been created` | Subject line (Jinja2 template) |
+| `template_path` | Yes | -- | Path to Jinja2 email body template (absolute or relative to CWD) |
+
+### Welcome Email Template Variables
+
+The following variables are available in the Jinja2 template:
+
+| Variable | Description |
+|----------|-------------|
+| `username` | The generated POSIX username |
+| `vpn_password` | VPN password (empty string if `generate_vpn_password` is false) |
+| `first_name` | User's first name from Waldur |
+| `last_name` | User's last name from Waldur |
+| `email` | User's email address |
+| `home_directory` | Full home directory path (e.g., `/home/jsmith`) |
+| `login_shell` | Configured login shell (e.g., `/bin/bash`) |
+| `uid_number` | Allocated UID number |
+
+Example templates are provided in `examples/`:
+- `welcome-email.txt.j2` — plain text
+- `welcome-email.html.j2` — HTML
+
+### Access Group Configuration
+
+Each access group entry supports:
+
+| Field | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `name` | Yes | -- | LDAP group name (e.g., `vpnusrgroup`) |
+| `attribute` | No | `memberUid` | Membership attribute: `memberUid` (UID) or `member` (DN) |
+
+### LDAP Object Classes
+
+Default object classes can be overridden per deployment:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `user_object_classes` | See below | Object classes for user entries |
+| `user_group_object_classes` | See below | Object classes for personal user groups |
+| `project_group_object_classes` | `posixGroup`, `top` | Object classes for project groups |
+
+Defaults:
+
+- **user_object_classes**: `inetOrgPerson`,
+  `organizationalPerson`, `person`, `posixAccount`, `top`
+- **user_group_object_classes**: `groupOfNames`, `nsMemberOf`,
+  `organizationalUnit`, `posixGroup`, `top`
+
+## Plugin Structure
+
+```text
+plugins/ldap/
+├── pyproject.toml                        # Package metadata + entry points
+├── README.md
+├── examples/
+│   ├── welcome-email.txt.j2             # Plain text email template
+│   └── welcome-email.html.j2            # HTML email template
+├── waldur_site_agent_ldap/
+│   ├── __init__.py
+│   ├── backend.py                       # LdapUsernameBackend
+│   ├── client.py                        # LdapClient (ldap3-based)
+│   ├── email_sender.py                  # WelcomeEmailSender (SMTP + Jinja2)
+│   └── schemas.py                       # Pydantic validation schemas
+└── tests/
+    ├── __init__.py
+    └── test_email_sender.py             # Email sender unit tests (9 tests)
+```
+
+### Entry Points
+
+```toml
+[project.entry-points."waldur_site_agent.username_management_backends"]
+ldap = "waldur_site_agent_ldap.backend:LdapUsernameBackend"
+
+[project.entry-points."waldur_site_agent.backend_settings_schemas"]
+ldap = "waldur_site_agent_ldap.schemas:LdapBackendSettingsSchema"
+```
+
+## Testing
+
+```bash
+# Run unit tests
+.venv/bin/python -m pytest plugins/ldap/tests/ -v
+
+# Run LDAP E2E tests (requires running LDAP + SLURM emulator + Waldur)
+WALDUR_E2E_TESTS=true \
+WALDUR_E2E_LDAP_CONFIG=ci/e2e-ci-config-ldap.yaml \
+WALDUR_E2E_PROJECT_A_UUID=<uuid> \
+.venv/bin/python -m pytest plugins/slurm/tests/e2e/test_e2e_ldap.py -v
+```
+
+### E2E Test Coverage
+
+The LDAP E2E tests (`plugins/slurm/tests/e2e/test_e2e_ldap.py`) cover:
+
+| Test Class | Tests | Focus |
+|------------|-------|-------|
+| `TestLdapResourceLifecycle` | 3 | Create, update limits, terminate SLURM resource with LDAP integration |
+| `TestLdapMembershipSync` | 5 | User provisioning, project groups, access groups, SLURM associations |
+| `TestLdapUsageReporting` | 3 | Usage injection and verification with component mapper |
+| `TestLdapBackwardCompatibility` | 2 | Passthrough vs conversion component mapping |
+| `TestLdapWelcomeEmail` | 5 | Email sending, credential delivery, recipient validation |
 
 ---
 
@@ -51638,9 +52141,9 @@ The application uses a unified button system. **Never import Bootstrap Button di
 | **SubmitButton** | `src/form/SubmitButton.tsx` | Form submission | Loading spinner, disabled states, large size |
 | **CompactSubmitButton** | `src/form/CompactSubmitButton.tsx` | Compact form submission | Small size for popovers/inline forms |
 | **EditButton** | `src/form/EditButton.tsx` | Edit navigation/dialogs | Large size, edit icon |
-| **CompactEditButton** | `src/form/CompactEditButton.tsx` | Inline field editing | Small size for settings rows |
+| **CompactEditButton** | `src/form/CompactEditButton.tsx` | Edit button for key-value rows | Used in key-value component where label and edit button appear in the same row |
 | **CloseDialogButton** | `src/modal/CloseDialogButton.tsx` | Modal cancel/close | Auto-closes dialog, customizable label |
-| **IconButton** | `src/table/IconButton.tsx` | Icon-only with tooltip | Required tooltip for accessibility |
+| **IconButton** | `src/core/buttons/IconButton.tsx` | Icon-only with tooltip | Required tooltip for accessibility |
 | **ToolbarButton** | `src/table/ToolbarButton.tsx` | Table/panel toolbars | Badge support, consistent toolbar styling |
 | **SaveButton** | `src/core/SaveButton.tsx` | Form save with dirty state | Tracks form changes, conditional visibility |
 
@@ -51648,17 +52151,17 @@ The application uses a unified button system. **Never import Bootstrap Button di
 
 | Use Case | Component | Size |
 |----------|-----------|------|
-| Form submit | `SubmitButton` | Large |
-| Form submit in popover/compact form | `CompactSubmitButton` | Small |
-| Table row action | `ActionButton` or `RowActionButton` | Large |
-| Inline action in form/table cell | `CompactActionButton` | Small |
-| Modal cancel/close | `CloseDialogButton` | Large |
-| Icon-only button | `IconButton` | - |
-| Table toolbar buttons | `ToolbarButton` or `IconButton` | - |
-| Edit field in settings row | `CompactEditButton` | Small |
-| Edit in card/panel header | `EditButton` | Large |
-| Create with dialog | `CreateModalButton` | Large |
-| Delete with confirmation | `DeleteButton` | Large |
+| Form submit | `SubmitButton` | `lg` |
+| Form submit in popover/inline form | `CompactSubmitButton` | `sm` |
+| Table row action | `ActionButton` or `RowActionButton` | `lg` |
+| Inline action in tight spaces | `CompactActionButton` | `sm` |
+| Modal cancel/close | `CloseDialogButton` | `lg` |
+| Icon-only button | `IconButton` | — |
+| Table toolbar buttons | `ToolbarButton` or `IconButton` | — |
+| Edit button in key-value component row | `CompactEditButton` | `sm` |
+| Edit in card/panel header | `EditButton` | `lg` |
+| Create with dialog | `CreateModalButton` | `lg` |
+| Delete with confirmation | `DeleteButton` | `lg` |
 
 #### ActionButton Usage
 
@@ -51735,7 +52238,7 @@ import { CloseDialogButton } from '@waldur/modal/CloseDialogButton';
 #### IconButton Usage
 
 ```tsx
-import { IconButton } from '@waldur/table/IconButton';
+import { IconButton } from '@waldur/core/buttons/IconButton';
 
 // Toolbar refresh button
 <IconButton
@@ -52215,6 +52718,376 @@ export const composeValidators = (...validators) => (value) =>
 6. **Configuration-Driven**: Use data structures to define forms rather than hardcoding
 
 This type-specific field system enables dynamic form generation while maintaining type safety and consistent user experience across the application.
+
+## Component Prop Reference
+
+Prop tables extracted from TypeScript interfaces. Use these to generate correct props without reading source files.
+
+### Buttons
+
+#### ActionButton
+
+```ts
+import { ActionButton } from '@waldur/table/ActionButton';
+```
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `action` | `(event?: any) => void` | yes | — | Click handler |
+| `title` | `string` | no | — | Button label text |
+| `iconNode` | `ReactNode` | no | — | Icon to display |
+| `iconRight` | `boolean` | no | `false` | Place icon on the right instead of left |
+| `variant` | `string` | no | `'tertiary'` | Design token button variant |
+| `disabled` | `boolean` | no | `false` | Disabled state |
+| `tooltip` | `string` | no | — | Tooltip text. **REQUIRED when `disabled` is true** |
+| `pending` | `boolean` | no | `false` | Shows spinner and disables button |
+| `className` | `string` | no | — | Additional CSS classes |
+| `visibility` | `{ minWidth?: number; maxWidth?: number }` | no | — | Responsive visibility constraints |
+| `data-testid` | `string` | no | — | Test ID attribute |
+
+---
+
+#### CompactActionButton
+
+```ts
+import { CompactActionButton } from '@waldur/table/CompactActionButton';
+```
+
+Same props as `ActionButton` (without `visibility`). Use for tight spaces — renders at `sm` size.
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `action` | `(event?: any) => void` | yes | — | Click handler |
+| `title` | `string` | no | — | Button label text |
+| `iconNode` | `ReactNode` | no | — | Icon to display |
+| `iconRight` | `boolean` | no | `false` | Place icon on the right instead of left |
+| `variant` | `string` | no | `'tertiary'` | Design token button variant |
+| `disabled` | `boolean` | no | `false` | Disabled state |
+| `tooltip` | `string` | no | — | Tooltip text. **REQUIRED when `disabled` is true** |
+| `pending` | `boolean` | no | `false` | Shows spinner and disables button |
+| `className` | `string` | no | — | Additional CSS classes |
+
+---
+
+#### SubmitButton
+
+```ts
+import { SubmitButton } from '@waldur/form';
+```
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `submitting` | `boolean` | yes | — | Shows spinner and disables button while true |
+| `label` | `ReactNode` | no | — | Button label text |
+| `children` | `ReactNode` | no | — | Alternative to `label` |
+| `variant` | `string` | no | `'primary'` | Design token button variant |
+| `disabled` | `boolean` | no | `false` | Disabled state independent of `submitting` |
+| `invalid` | `boolean` | no | `false` | Disables button when form is invalid |
+| `type` | `'submit' \| 'button'` | no | `'submit'` | Button type |
+| `onClick` | `(event: React.MouseEvent<HTMLButtonElement>) => void` | no | — | Click handler |
+| `iconNode` | `ReactNode` | no | — | Icon to display |
+| `iconOnLeft` | `boolean` | no | `false` | Place icon on the left (default is right) |
+| `id` | `string` | no | — | HTML id attribute |
+| `form` | `string` | no | — | Associates button with a form by id |
+| `className` | `string` | no | — | Additional CSS classes |
+| `data-*` | `string` | no | — | Any `data-` attribute for testing/integration |
+
+---
+
+#### CompactSubmitButton
+
+```ts
+import { CompactSubmitButton } from '@waldur/form';
+```
+
+Same props as `SubmitButton` (without `form`). Renders at `sm` size — use inside popovers and inline forms.
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `submitting` | `boolean` | yes | — | Shows spinner and disables button while true |
+| `label` | `ReactNode` | no | — | Button label text |
+| `children` | `ReactNode` | no | — | Alternative to `label` |
+| `variant` | `string` | no | `'primary'` | Design token button variant |
+| `disabled` | `boolean` | no | `false` | Disabled state independent of `submitting` |
+| `invalid` | `boolean` | no | `false` | Disables button when form is invalid |
+| `type` | `'submit' \| 'button'` | no | `'submit'` | Button type |
+| `onClick` | `(event: React.MouseEvent<HTMLButtonElement>) => void` | no | — | Click handler |
+| `iconNode` | `ReactNode` | no | — | Icon to display |
+| `iconOnLeft` | `boolean` | no | `false` | Place icon on the left (default is right) |
+| `id` | `string` | no | — | HTML id attribute |
+| `className` | `string` | no | — | Additional CSS classes |
+
+---
+
+#### IconButton
+
+```ts
+import { IconButton } from '@waldur/core/buttons/IconButton';
+```
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `iconNode` | `ReactNode` | yes | — | Icon to display |
+| `tooltip` | `string` | yes | — | Tooltip text. **Required for accessibility** |
+| `onClick` | `(event: React.MouseEvent) => void` | yes | — | Click handler |
+| `variant` | `ButtonVariant` | no | — | Design token button variant |
+| `disabled` | `boolean` | no | `false` | Disabled state |
+| `pending` | `boolean` | no | `false` | Shows spinner while true |
+| `type` | `'button' \| 'submit'` | no | `'button'` | Button type |
+| `className` | `string` | no | — | Additional CSS classes |
+| `data-testid` | `string` | no | — | Test ID attribute |
+
+---
+
+#### CompactIconButton
+
+```ts
+import { CompactIconButton } from '@waldur/core/buttons/IconButton';
+```
+
+Identical props to `IconButton`. Renders at `sm` size.
+
+---
+
+#### ToolbarButton
+
+```ts
+import { ToolbarButton } from '@waldur/table/ToolbarButton';
+```
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `iconNode` | `ReactNode` | yes | — | Icon to display |
+| `onClick` | `(event: React.MouseEvent) => void` | yes | — | Click handler |
+| `title` | `string` | no | — | Button label text (omit for icon-only) |
+| `tooltip` | `string` | no | — | Tooltip text shown on hover |
+| `variant` | `ButtonVariant` | no | — | Design token button variant |
+| `disabled` | `boolean` | no | `false` | Disabled state |
+| `pending` | `boolean` | no | `false` | Shows spinner while true |
+| `badge` | `number \| string` | no | — | Badge count to display (e.g. active filter count) |
+| `className` | `string` | no | — | Additional CSS classes |
+
+---
+
+#### BaseButton
+
+```ts
+import { BaseButton } from '@waldur/core/buttons/BaseButton';
+```
+
+**Do not use in feature code.** This is an internal primitive used by the higher-level button components. Feature code must use the specific button components (`ActionButton`, `SubmitButton`, `ToolbarButton`, etc.) which already cover all use cases.
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `size` | `'sm' \| 'lg'` | yes | — | Button size |
+| `label` | `ReactNode` | no | — | Button label text |
+| `onClick` | `(event?: any) => void` | no | — | Click handler |
+| `iconNode` | `ReactNode` | no | — | Icon to display |
+| `iconRight` | `boolean` | no | `false` | Place icon on the right instead of left |
+| `variant` | `ButtonVariant` | no | — | Design token button variant |
+| `disabled` | `boolean` | no | `false` | Disabled state |
+| `tooltip` | `string` | no | — | Tooltip text. **REQUIRED when `disabled` is true** |
+| `pending` | `boolean` | no | `false` | Shows spinner and disables button |
+| `type` | `'button' \| 'submit'` | no | `'button'` | Button type |
+| `id` | `string` | no | — | HTML id attribute |
+| `form` | `string` | no | — | Associates button with a form by id |
+| `className` | `string` | no | — | Additional CSS classes |
+| `data-*` | `string` | no | — | Any `data-` attribute for testing/integration |
+
+---
+
+### Data Display
+
+#### Badge
+
+```ts
+import { Badge } from '@waldur/core/Badge';
+```
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `variant` | `Variant \| 'pink' \| 'blue' \| 'teal' \| 'indigo' \| 'purple' \| 'rose' \| 'orange' \| 'moss'` | no | — | Badge color variant |
+| `leftIcon` | `ReactNode` | no | — | Icon displayed on left |
+| `rightIcon` | `ReactNode` | no | — | Icon displayed on right |
+| `onlyIcon` | `boolean` | no | `false` | Show icon only, no text |
+| `alignIcon` | `boolean` | no | `false` | Align icon vertically |
+| `tooltip` | `ReactNode` | no | — | Tooltip text |
+| `tooltipProps` | `Partial<TipProps>` | no | — | Custom tooltip configuration |
+| `light` | `boolean` | no | `false` | Use light background |
+| `outline` | `boolean` | no | `false` | Use outline style |
+| `pill` | `boolean` | no | `false` | Use pill (rounded) shape |
+| `roundless` | `boolean` | no | `false` | Remove border radius |
+| `hasBullet` | `boolean` | no | `false` | Include bullet point |
+| `size` | `'sm' \| 'lg'` | no | — | Badge size |
+
+---
+
+#### StateIndicator
+
+```ts
+import { StateIndicator } from '@waldur/core/StateIndicator';
+```
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `label` | `string` | yes | — | Display label |
+| `variant` | `Variant` | yes | — | Color variant |
+| `tooltip` | `string` | no | — | Tooltip text |
+| `active` | `boolean` | no | `false` | Shows loading spinner when true |
+| `light` | `boolean` | no | `false` | Use light background |
+| `outline` | `boolean` | no | `false` | Use outline style |
+| `pill` | `boolean` | no | `false` | Use pill (rounded) shape |
+| `roundless` | `boolean` | no | `false` | Remove border radius |
+| `hasBullet` | `boolean` | no | `false` | Include bullet point |
+| `size` | `'sm' \| 'lg'` | no | — | Badge size |
+
+---
+
+#### NoResult
+
+```ts
+import { NoResult } from '@waldur/navigation/header/search/NoResult';
+```
+
+Use for **all empty states**. Always provide an actionable CTA via `callback`+`buttonTitle` or `actions`.
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `title` | `string` | no | — | Empty state heading |
+| `message` | `ReactNode` | no | — | Empty state body text |
+| `buttonTitle` | `string` | no | — | Label for the default action button |
+| `callback` | `() => void` | no | — | Handler for the default action button |
+| `actions` | `ReactNode` | no | — | Custom action buttons/elements (alternative to `callback`) |
+| `isVisible` | `boolean` | no | `true` | Control component visibility |
+| `className` | `string` | no | — | Additional CSS classes |
+| `style` | `CSSProperties` | no | — | Inline styles |
+
+---
+
+### Tables
+
+#### Table
+
+```ts
+import { Table } from '@waldur/table';
+```
+
+Key configuration props. Full interface is large — these are the most commonly used.
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `rows` | `any[]` | yes | — | Row data array |
+| `fetch` | `(force?: boolean) => void` | yes | — | Function to load data |
+| `columns` | `Array<Column<RowType>>` | yes | — | Column definitions |
+| `table` | `string` | no | — | Table identifier key (used for persisted state) |
+| `rowKey` | `string` | no | `'uuid'` | Field used as row key |
+| `title` | `ReactNode` | no | — | Table heading |
+| `subtitle` | `ReactNode` | no | — | Table subheading |
+| `hasPagination` | `boolean` | no | `true` | Enable pagination controls |
+| `hasQuery` | `boolean` | no | `false` | Enable search input |
+| `hasActionBar` | `boolean` | no | `true` | Show action bar above table |
+| `hasHeaders` | `boolean` | no | `true` | Show column headers |
+| `hasOptionalColumns` | `boolean` | no | `false` | Enable column visibility toggle |
+| `enableExport` | `boolean` | no | `false` | Enable export functionality |
+| `enableMultiSelect` | `boolean` | no | `false` | Enable row multi-select |
+| `hoverable` | `boolean` | no | `false` | Enable row hover highlight |
+| `rowClass` | `(({ row }) => string) \| string` | no | — | CSS class for individual rows |
+| `rowActions` | `React.ComponentType<{ row; fetch }>` | no | — | Per-row actions component |
+| `expandableRow` | `React.ComponentType<{ row; fetch }>` | no | — | Expandable row detail component |
+| `isRowExpandable` | `(row: RowType) => boolean` | no | — | Controls which rows can be expanded |
+| `tableActions` | `ReactNode` | no | — | Toolbar action buttons |
+| `dropdownActions` | `ReactNode` | no | — | Actions shown in toolbar dropdown |
+| `multiSelectActions` | `React.ComponentType<{ rows; refetch }>` | no | — | Bulk action component (requires `enableMultiSelect`) |
+| `filters` | `JSX.Element` | no | — | Filter UI component |
+| `filterPosition` | `'menu' \| 'sidebar' \| 'header'` | no | `'menu'` | Where to render filters |
+| `placeholderComponent` | `ReactNode` | no | — | Custom empty state component |
+| `placeholderActions` | `ReactNode` | no | — | Empty state action buttons |
+| `emptyMessage` | `ReactNode` | no | — | Simple empty state message text |
+| `hideRefresh` | `boolean` | no | `false` | Hide refresh button |
+| `hideIfEmpty` | `boolean` | no | `false` | Hide entire table when no rows |
+| `initialPageSize` | `number` | no | — | Initial number of rows per page |
+| `gridItem` | `React.ComponentType<{ row }>` | no | — | Component for grid display mode |
+| `tabs` | `TableTab[]` | no | — | Tab configuration |
+| `footer` | `ReactNode` | no | — | Footer content |
+| `className` | `string` | no | — | Table wrapper CSS classes |
+
+---
+
+### Forms
+
+#### FormGroup (React Final Form)
+
+```ts
+import { FormGroup } from '@waldur/marketplace/offerings/FormGroup';
+```
+
+Use this version inside React Final Form. **Do not use `FormContainer` from `@waldur/form`** — that is redux-form only and will cause errors.
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `label` | `ReactNode` | no | — | Field label |
+| `description` | `ReactNode` | no | — | Help text displayed below field |
+| `help` | `ReactNode` | no | — | Alternative help text |
+| `helpEnd` | `boolean` | no | `false` | Place help text at end of label row |
+| `required` | `boolean` | no | `false` | Shows red asterisk |
+| `spaceless` | `boolean` | no | `false` | Remove bottom margin. Use on last field in a form |
+| `space` | `number` | no | `7` | Bottom margin size |
+| `quickAction` | `ReactNode` | no | — | Quick action element next to label |
+| `controlId` | `string` | no | — | HTML `for` attribute on label |
+| `id` | `string` | no | — | HTML id attribute |
+| `className` | `string` | no | — | Additional CSS classes |
+| `meta` | `FieldMetaState<any>` | no | — | React Final Form field metadata (for validation display) |
+
+---
+
+#### SelectField
+
+```ts
+import { SelectField } from '@waldur/form';
+```
+
+Redux Form field component. In React Final Form use `<Field name="..." component={SelectField as any} />`.
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `options` | `Array<{ value: any; label: string }>` | yes | — | Selectable options |
+| `isMulti` | `boolean` | no | `false` | Enable multi-value selection |
+| `simpleValue` | `boolean` | no | `false` | Store plain value instead of `{ value, label }` object |
+| `getOptionValue` | `(option: any) => any` | no | — | Custom option value accessor |
+| `placeholder` | `string` | no | — | Placeholder text |
+| `isDisabled` | `boolean` | no | `false` | Disable the select |
+| `isClearable` | `boolean` | no | `false` | Show clear button |
+| `className` | `string` | no | — | Additional CSS classes |
+| `noUpdateOnBlur` | `boolean` | no | `false` | Skip redux-form blur update |
+
+---
+
+#### StringField
+
+```ts
+import { StringField } from '@waldur/form';
+```
+
+Redux Form field component. In React Final Form use `<Field name="..." component={StringField as any} />`.
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `placeholder` | `string` | no | — | Placeholder text |
+| `disabled` | `boolean` | no | `false` | Disable the input |
+| `readOnly` | `boolean` | no | `false` | Read-only state |
+| `maxLength` | `number` | no | — | Maximum character length |
+| `pattern` | `string` | no | — | HTML validation regex pattern |
+| `autoFocus` | `boolean` | no | `false` | Focus input on mount |
+| `solid` | `boolean` | no | `false` | Use solid background styling |
+| `icon` | `ReactNode` | no | — | Icon displayed inside the input |
+| `label` | `ReactNode` | no | — | Field label (used with `FormGroup`) |
+| `description` | `ReactNode` | no | — | Help text below field |
+| `tooltip` | `ReactNode` | no | — | Tooltip on label |
+| `required` | `boolean` | no | `false` | Shows required indicator |
+| `validate` | `Validator \| Validator[]` | no | — | Validation function(s) |
+| `className` | `string` | no | — | Additional CSS classes on input |
+| `containerClassName` | `string` | no | — | Additional CSS classes on wrapper |
+| `spaceless` | `boolean` | no | `false` | Remove bottom margin |
 
 ---
 
