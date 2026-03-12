@@ -5296,6 +5296,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#lifecycle-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#user-access" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13973,6 +13984,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#lifecycle-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#user-access" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14409,13 +14431,13 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <tbody>
 <tr>
 <td>CPU (Cores)</td>
-<td><code>requests.cpu</code>, <code>limits.cpu</code></td>
-<td><code>4</code> cores</td>
+<td><code>requests.cpu</code>, <code>limits.cpu</code> (2x requests)</td>
+<td>requests: <code>4</code>, limits: <code>8</code></td>
 </tr>
 <tr>
 <td>Memory (GB)</td>
-<td><code>requests.memory</code>, <code>limits.memory</code></td>
-<td><code>16Gi</code></td>
+<td><code>requests.memory</code>, <code>limits.memory</code> (2x requests)</td>
+<td>requests: <code>16Gi</code>, limits: <code>32Gi</code></td>
 </tr>
 <tr>
 <td>Storage (GB)</td>
@@ -14429,6 +14451,9 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>Note:</strong> <code>limits.cpu</code> and <code>limits.memory</code> are automatically set to 2x the request values to allow bursting.</p>
+</blockquote>
 <h4 id="3-user-access-mapping">3. User Access Mapping</h4>
 <p>Waldur user roles are mapped to OpenShift RoleBindings:</p>
 <table>
@@ -14459,29 +14484,19 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </table>
 <h4 id="4-metadata-and-annotations">4. Metadata and Annotations</h4>
 <p>Waldur metadata is preserved in OKD annotations:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-alloc-prod-env</span>
 <span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">waldur.com/customer-uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"123e4567e89b12d3a456426614174000"</span>
-<span class="w">    </span><span class="nt">waldur.com/project-uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"456e7890f12c34d5b678537825285111"</span>
-<span class="w">    </span><span class="nt">waldur.com/resource-uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"789a0123g34h56i7j890648936396222"</span>
-<span class="w">    </span><span class="nt">waldur.com/customer-name</span><span class="p">:</span><span class="w"> </span><span class="s">"ACME</span><span class="nv"> </span><span class="s">Corp"</span>
-<span class="w">    </span><span class="nt">waldur.com/project-name</span><span class="p">:</span><span class="w"> </span><span class="s">"Web</span><span class="nv"> </span><span class="s">Development"</span>
-<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">waldur.com/managed</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
-<span class="w">    </span><span class="nt">waldur.com/customer</span><span class="p">:</span><span class="w"> </span><span class="s">"acme"</span>
-<span class="w">    </span><span class="nt">waldur.com/project</span><span class="p">:</span><span class="w"> </span><span class="s">"webdev"</span>
+<span class="w">    </span><span class="nt">openshift.io/description</span><span class="p">:</span><span class="w"> </span><span class="s">"Production</span><span class="nv"> </span><span class="s">Environment"</span>
+<span class="w">    </span><span class="nt">openshift.io/display-name</span><span class="p">:</span><span class="w"> </span><span class="s">"Production</span><span class="nv"> </span><span class="s">Environment"</span>
+<span class="w">    </span><span class="nt">waldur/organization</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-org-acme"</span>
+<span class="w">    </span><span class="nt">waldur/parent</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-proj-webdev"</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="okdopenshift-setup">OKD/OpenShift Setup</h2>
 <h3 id="authentication-requirements">Authentication Requirements</h3>
@@ -14724,6 +14739,47 @@ The quotas enforce both request and limit constraints for:</p>
 <li><strong>Storage</strong>: Managed through persistent volume claims</li>
 <li><strong>Pod count</strong>: Maximum number of pods in the namespace</li>
 </ul>
+<h3 id="lifecycle-operations">Lifecycle Operations</h3>
+<p>The plugin supports pausing, downscaling, and restoring projects by adjusting their resource quotas.
+These operations use hardcoded values (not configurable):</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>CPU</th>
+<th>Memory</th>
+<th>Storage</th>
+<th>Pods</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pause</strong></td>
+<td>0</td>
+<td>0 GB</td>
+<td>0 GB</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>Downscale</strong></td>
+<td>1 core</td>
+<td>1 GB</td>
+<td>1 GB</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>Restore</strong> (defaults)</td>
+<td>10 cores</td>
+<td>32 GB</td>
+<td>100 GB</td>
+<td>50</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note:</strong> The restore operation currently applies hardcoded default quotas rather than
+restoring previously configured values.</p>
+</blockquote>
 <h3 id="user-access">User Access</h3>
 <p>Users from Waldur are automatically granted access to OKD projects through RoleBindings. The plugin
 maps Waldur roles to OpenShift ClusterRoles for fine-grained access control.</p>
@@ -14897,7 +14953,7 @@ waldur_site_diagnostics<span class="w"> </span>-c<span class="w"> </span>okd-con
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-02-24
+    2026-03-11
   </span>
 
     
