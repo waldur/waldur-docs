@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-13T03:04:46.539239Z
+Generated: 2026-03-14T03:04:53.880509Z
 Source: https://docs.waldur.com
 
 ---
@@ -10676,6 +10676,104 @@ Notifies organization owners about active resources that have not generated cost
 
 ```
 
+### marketplace.notification_quota_75_percent
+
+Notifies project administrators and managers when 75% of a resource component allocation has been consumed.
+
+#### Templates
+
+=== "marketplace/notification_quota_75_percent_subject.txt"
+
+```txt
+
+    Warning: 75% of your {{ site_name }} project resource allocation has been consumed!
+
+```
+
+=== "marketplace/notification_quota_75_percent_message.txt"
+
+```txt
+
+    Dear {{ user.first_name }},
+
+    This message is sent by {{ site_name }} to project administrators and project managers.
+
+    {{ usage_percentage }}% of the allocation for your project {{ project_name }} resource {{ resource_name }} for {{ component_name }} ({{ allocation_total }} {{ measured_unit }}) has been consumed (current usage: {{ current_usage }} {{ measured_unit }}).
+
+    If you require further information, contact your service provider:{% if provider_email %} {{ provider_email }}{% endif %}.
+
+    Best regards,
+    {{ provider_name }}{% if provider_email %}
+    {{ provider_email }}{% endif %}
+
+```
+
+=== "marketplace/notification_quota_75_percent_message.html"
+
+```txt
+
+    <html>
+    <head lang="en"><meta charset="UTF-8"><title>Resource allocation 75% consumed</title></head>
+    <body>
+    <p>Dear {{ user.first_name }},</p>
+    <p>This message is sent by {{ site_name }} to project administrators and project managers.</p>
+    <p>{{ usage_percentage }}% of the allocation for your project <strong>{{ project_name }}</strong> resource <strong><a href="{{ resource_url }}">{{ resource_name }}</a></strong> for <strong>{{ component_name }}</strong> (<strong>{{ allocation_total }} {{ measured_unit }}</strong>) has been consumed (current usage: {{ current_usage }} {{ measured_unit }}).</p>
+    <p>If you require further information, contact your service provider:{% if provider_email %} <a href="mailto:{{ provider_email }}">{{ provider_email }}</a>{% endif %}.</p>
+    <p>Best regards,<br>{{ provider_name }}{% if provider_email %}<br>{{ provider_email }}{% endif %}</p>
+    </body>
+    </html>
+
+```
+
+### marketplace.notification_quota_full
+
+Notifies project administrators and managers when a resource component allocation limit has been reached.
+
+#### Templates
+
+=== "marketplace/notification_quota_full_subject.txt"
+
+```txt
+
+    Warning: Your {{ site_name }} project resource allocation has been consumed!
+
+```
+
+=== "marketplace/notification_quota_full_message.txt"
+
+```txt
+
+    Dear {{ user.first_name }},
+
+    This message is sent by {{ site_name }} to project administrators and project managers.
+
+    {{ usage_percentage }}% of the allocation for your project {{ project_name }} resource {{ resource_name }} for {{ component_name }} ({{ allocation_total }} {{ measured_unit }}) has been consumed (current usage: {{ current_usage }} {{ measured_unit }}).
+
+    If you require further information, contact your service provider:{% if provider_email %} {{ provider_email }}{% endif %}.
+
+    Best regards,
+    {{ provider_name }}{% if provider_email %}
+    {{ provider_email }}{% endif %}
+
+```
+
+=== "marketplace/notification_quota_full_message.html"
+
+```txt
+
+    <html>
+    <head lang="en"><meta charset="UTF-8"><title>Resource allocation limit reached</title></head>
+    <body>
+    <p>Dear {{ user.first_name }},</p>
+    <p>This message is sent by {{ site_name }} to project administrators and project managers.</p>
+    <p>{{ usage_percentage }}% of the allocation for your project <strong>{{ project_name }}</strong> resource <strong><a href="{{ resource_url }}">{{ resource_name }}</a></strong> for <strong>{{ component_name }}</strong> (<strong>{{ allocation_total }} {{ measured_unit }}</strong>) has been consumed (current usage: {{ current_usage }} {{ measured_unit }}).</p>
+    <p>If you require further information, contact your service provider:{% if provider_email %} <a href="mailto:{{ provider_email }}">{{ provider_email }}</a>{% endif %}.</p>
+    <p>Best regards,<br>{{ provider_name }}{% if provider_email %}<br>{{ provider_email }}{% endif %}</p>
+    </body>
+    </html>
+
+```
+
 ### marketplace.notification_to_user_that_order_been_rejected
 
 Notification to user whose order been rejected.
@@ -14772,6 +14870,24 @@ Provider rejection reason: {{ order.provider_rejection_comment }}
 
 ```
 
+### notification_quota_full_message.txt (waldur_mastermind.marketplace)
+
+```txt
+
+Dear {{ user.first_name }},
+
+This message is sent by {{ site_name }} to project administrators and project managers.
+
+{{ usage_percentage }}% of the allocation for your project {{ project_name }} resource {{ resource_name }} for {{ component_name }} ({{ allocation_total }} {{ measured_unit }}) has been consumed (current usage: {{ current_usage }} {{ measured_unit }}).
+
+If you require further information, contact your service provider:{% if provider_email %} {{ provider_email }}{% endif %}.
+
+Best regards,
+{{ provider_name }}{% if provider_email %}
+{{ provider_email }}{% endif %}
+
+```
+
 ### notify_consumer_about_pending_order_message.html (waldur_mastermind.marketplace)
 
 ```html
@@ -14954,6 +15070,14 @@ Resource {{ resource_name }} update has failed.
 Hello!
 
 A new order by {{ order.created_by.get_full_name }} is waiting for approval.
+
+```
+
+### notification_quota_75_percent_subject.txt (waldur_mastermind.marketplace)
+
+```txt
+
+Warning: 75% of your {{ site_name }} project resource allocation has been consumed!
 
 ```
 
@@ -15433,6 +15557,23 @@ Thank you!
 
 ```
 
+### notification_quota_full_message.html (waldur_mastermind.marketplace)
+
+```html
+
+<html>
+<head lang="en"><meta charset="UTF-8"><title>Resource allocation limit reached</title></head>
+<body>
+<p>Dear {{ user.first_name }},</p>
+<p>This message is sent by {{ site_name }} to project administrators and project managers.</p>
+<p>{{ usage_percentage }}% of the allocation for your project <strong>{{ project_name }}</strong> resource <strong><a href="{{ resource_url }}">{{ resource_name }}</a></strong> for <strong>{{ component_name }}</strong> (<strong>{{ allocation_total }} {{ measured_unit }}</strong>) has been consumed (current usage: {{ current_usage }} {{ measured_unit }}).</p>
+<p>If you require further information, contact your service provider:{% if provider_email %} <a href="mailto:{{ provider_email }}">{{ provider_email }}</a>{% endif %}.</p>
+<p>Best regards,<br>{{ provider_name }}{% if provider_email %}<br>{{ provider_email }}{% endif %}</p>
+</body>
+</html>
+
+```
+
 ### tos_reconsent_required_message.html (waldur_mastermind.marketplace)
 
 ```html
@@ -15564,6 +15705,14 @@ The resource you have - {{ resource.name }} has not been used for the past 3 mon
 
 ```
 
+### notification_quota_full_subject.txt (waldur_mastermind.marketplace)
+
+```txt
+
+Warning: Your {{ site_name }} project resource allocation has been consumed!
+
+```
+
 ### digest_resource_usage.html (waldur_mastermind.marketplace)
 
 ```html
@@ -15626,6 +15775,24 @@ The resource you have - {{ resource.name }} has not been used for the past 3 mon
 Hello!
 
 Resource {{ resource_name }} deletion has failed.
+
+```
+
+### notification_quota_75_percent_message.txt (waldur_mastermind.marketplace)
+
+```txt
+
+Dear {{ user.first_name }},
+
+This message is sent by {{ site_name }} to project administrators and project managers.
+
+{{ usage_percentage }}% of the allocation for your project {{ project_name }} resource {{ resource_name }} for {{ component_name }} ({{ allocation_total }} {{ measured_unit }}) has been consumed (current usage: {{ current_usage }} {{ measured_unit }}).
+
+If you require further information, contact your service provider:{% if provider_email %} {{ provider_email }}{% endif %}.
+
+Best regards,
+{{ provider_name }}{% if provider_email %}
+{{ provider_email }}{% endif %}
 
 ```
 
@@ -15742,6 +15909,23 @@ Thank you!
 ```txt
 
 Resource {{ resource_name }} creation has failed.
+
+```
+
+### notification_quota_75_percent_message.html (waldur_mastermind.marketplace)
+
+```html
+
+<html>
+<head lang="en"><meta charset="UTF-8"><title>Resource allocation 75% consumed</title></head>
+<body>
+<p>Dear {{ user.first_name }},</p>
+<p>This message is sent by {{ site_name }} to project administrators and project managers.</p>
+<p>{{ usage_percentage }}% of the allocation for your project <strong>{{ project_name }}</strong> resource <strong><a href="{{ resource_url }}">{{ resource_name }}</a></strong> for <strong>{{ component_name }}</strong> (<strong>{{ allocation_total }} {{ measured_unit }}</strong>) has been consumed (current usage: {{ current_usage }} {{ measured_unit }}).</p>
+<p>If you require further information, contact your service provider:{% if provider_email %} <a href="mailto:{{ provider_email }}">{{ provider_email }}</a>{% endif %}.</p>
+<p>Best regards,<br>{{ provider_name }}{% if provider_email %}<br>{{ provider_email }}{% endif %}</p>
+</body>
+</html>
 
 ```
 
@@ -66468,6 +66652,8 @@ td:nth-child(4) {
 | `change_order_state` | `Django Signal (post_save)` | `waldur_rancher.Cluster` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_slurm.Allocation` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_vmware.VirtualMachine` | Change the state of an order based on resource state changes. |
+| `check_and_notify_quota_75_percent` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Send notification when a resource component's allocation reaches 75%. |
+| `check_and_notify_quota_full` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Send notification when a resource component's allocation is fully consumed. |
 | `cleanup_admin_announcement_on_maintenance_deletion` | `Django Signal (pre_delete)` | `marketplace.MaintenanceAnnouncement` | Ensure AdminAnnouncement is cleaned up when MaintenanceAnnouncement is deleted. |
 | `close_course_accounts_after_project_removal` | `Django Signal (pre_delete)` | `structure.Project` | No description |
 | `close_customer_service_accounts_on_customer_deletion` | `Django Signal (pre_delete)` | `structure.Customer` | Close service accounts associated with a customer when the customer is deleted. |
@@ -66773,7 +66959,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 778
+Total unique handlers found: 780
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
@@ -66781,7 +66967,7 @@ Total unique handlers found: 778
 - **waldur_freeipa**: 12 handlers
 - **waldur_keycloak**: 9 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 303 handlers
+- **waldur_mastermind**: 305 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
