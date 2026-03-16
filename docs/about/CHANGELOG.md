@@ -69,6 +69,7 @@ This release brings significant improvements to the AI Assistant, now compatible
 
 
 
+
 ## 8.0.6 - 2026-03-06
 
 ### Highlights
