@@ -2,8 +2,8 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-17T03:04:52.880114Z
-Source: https://docs.waldur.com
+Generated: 2026-03-17T07:48:57.527784Z
+Source: https://docs.waldur.com/latest
 
 ---
 
@@ -8567,9 +8567,9 @@ Enable LLM-based chat feature and calls to the inference service.
 
 **Type:** str
 
-**Default value:** ollama
+**Default value:** vllm
 
-Type of LLM inference backend. For example: openai, ollama.
+Type of LLM inference backend. For example: vllm, openai, ollama.
 
 #### LLM_INFERENCES_API_URL
 
@@ -8590,6 +8590,12 @@ API key for authenticating with the LLM inference service.
 **Default value:** gemma3:27b
 
 Name of the LLM model to use for inference.
+
+#### LLM_COMPLETION_KWARGS
+
+**Type:** dict_field
+
+Override keyword arguments merged on top of provider defaults for LLM chat completion. Supported keys: temperature, top_p, top_k, max_tokens, max_completion_tokens, presence_penalty, frequency_penalty, repetition_penalty, stop, seed, reasoning_effort, extra_body. Leave empty to use provider defaults.
 
 #### LLM_TOKEN_LIMIT_DAILY
 
@@ -8920,6 +8926,16 @@ Minimum allowed RSA key size in bits. Set to 0 to disable the check.
 **Type:** bool
 
 If true, a support ticket is created when a user adds or removes an SSH public key.
+
+### Reporting
+
+#### ENABLED_REPORTING_SCREENS
+
+**Type:** multiple_choice_field
+
+**Default value:** ['resource-usage', 'user-usage', 'quotas', 'usage-monitoring', 'usage-trends', 'organization-summary', 'project-detail', 'resources-geography', 'project-classification', 'usage-by-customer', 'usage-by-org-type', 'usage-by-creator', 'call-performance', 'review-progress', 'resource-demand', 'capacity', 'provider-overview', 'provider-revenue', 'provider-orders', 'provider-resources', 'provider-customers', 'provider-offerings', 'openstack-instances', 'user-demographics', 'user-organizations', 'user-affiliations', 'user-roles', 'growth', 'revenue', 'pricelist', 'orders', 'offering-costs', 'maintenance-overview', 'provisioning-stats']
+
+Select which reporting screens should be visible to users. Uncheck to disable specific reports.
 
 ---
 
@@ -61758,7 +61774,7 @@ The llms.txt standard provides a structured way for AI systems to understand and
 
 A curated index of Waldur documentation with descriptions for each section. This file helps AI agents understand the documentation structure and decide which resources to fetch.
 
-**URL:** [https://docs.waldur.com/llms.txt](https://docs.waldur.com/llms.txt)
+**URL:** [https://docs.waldur.com/latest/llms.txt](https://docs.waldur.com/latest/llms.txt)
 
 **Use case:** Quick navigation, understanding documentation structure, deciding which pages to read.
 
@@ -61766,7 +61782,7 @@ A curated index of Waldur documentation with descriptions for each section. This
 
 A comprehensive file containing all documentation content in a single text file. This enables loading the complete documentation context in one request.
 
-**URL:** [https://docs.waldur.com/llms-full.txt](https://docs.waldur.com/llms-full.txt)
+**URL:** [https://docs.waldur.com/latest/llms-full.txt](https://docs.waldur.com/latest/llms-full.txt)
 
 **Use case:** Loading complete documentation into AI context, comprehensive searches, full-context assistance.
 
@@ -61777,7 +61793,7 @@ A comprehensive file containing all documentation content in a single text file.
 You can reference the llms.txt files directly in conversations:
 
 ```
-Please read https://docs.waldur.com/llms.txt and help me understand
+Please read https://docs.waldur.com/latest/llms.txt and help me understand
 how to deploy Waldur using Helm.
 ```
 
@@ -61786,7 +61802,7 @@ how to deploy Waldur using Helm.
 With web browsing enabled, GPT can fetch and use the llms.txt files:
 
 ```
-Fetch https://docs.waldur.com/llms-full.txt and explain how to
+Fetch https://docs.waldur.com/latest/llms-full.txt and explain how to
 configure Keycloak authentication in Waldur.
 ```
 
@@ -67797,6 +67813,9 @@ td:nth-child(4) {
 | `terminate_resource` | `Django Signal (pre_delete)` | `waldur_slurm.Allocation` | Terminate a resource. |
 | `terminate_resource` | `Django Signal (pre_delete)` | `waldur_vmware.VirtualMachine` | Terminate a resource. |
 | `trigger_order_callback` | `Django Signal (post_save)` | `marketplace.Order` | Trigger HTTP callback when marketplace order state changes. |
+| `trigger_scim_sync_on_offering_endpoint_change` | `Django Signal (post_save)` | `marketplace.OfferingAccessEndpoint` | Trigger SCIM entitlements synchronization when offering SSH endpoints change. |
+| `trigger_scim_sync_on_offering_endpoint_change` | `Django Signal (post_delete)` | `marketplace.OfferingAccessEndpoint` | Trigger SCIM entitlements synchronization when offering SSH endpoints change. |
+| `trigger_scim_sync_on_offering_user_ok` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Trigger SCIM entitlements synchronization when OfferingUser transitions to OK with username. |
 | `trigger_user_action_recalculation_on_order_state_change` | `Django Signal (post_save)` | `marketplace.Order` | Trigger immediate UserAction recalculation when Order state changes. |
 | `update_argocd_secret_when_resource_options_changed` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
 | `update_cache_when_invoice_item_is_deleted` | `Django Signal (post_delete)` | `invoices.InvoiceItem` | No description |
@@ -67905,7 +67924,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 780
+Total unique handlers found: 783
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
@@ -67913,7 +67932,7 @@ Total unique handlers found: 780
 - **waldur_freeipa**: 12 handlers
 - **waldur_keycloak**: 9 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 305 handlers
+- **waldur_mastermind**: 308 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
