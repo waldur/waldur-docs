@@ -13,7 +13,7 @@ Project creation is allowed for organization owners in their organizations and s
     - **Project description** - A brief description about the project.
     - **OECD FoS code** - OECD science field code ([more info](https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about))
     - **Start date** - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
-    - **End date** – once reached, triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
+    - **End date** – once reached (plus any configured grace period), triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
 
 4. If you need to edit project details later, open your project and select the **Edit** tab.
 
@@ -23,3 +23,38 @@ Project creation is allowed for organization owners in their organizations and s
     3. Important: Setting any end date (either the project's or a resource's) only creates a termination request. The resource remains active in the project until the termination process is fully completed.
 
 ![type:video](../img/create_project.mp4)
+
+## Grace period
+
+A grace period adds extra days after the project's end date before resources are actually terminated. This gives project members time to back up data or request an extension.
+
+Grace period can be configured at two levels:
+
+- **Organization level** – applies to all projects in the organization by default.
+- **Project level** – overrides the organization-level setting for a specific project.
+
+### Setting the grace period
+
+Staff users can set the grace period on the project's **Edit** tab under **General** settings. Enter the number of days in the **Grace period (days)** field.
+
+Once a grace period is set, a **Resource termination date** row appears showing the actual date when resources will be terminated (end date + grace period days).
+
+![Grace period on project manage page](../img/grace-period-manage.png)
+
+### How it works
+
+When a project has a grace period configured:
+
+- The **project list** shows a badge next to the end date indicating the grace period (e.g., "+14d grace").
+
+![Grace period badge in project list](../img/grace-period-badge.png)
+
+- When the project's end date has passed but the grace period is still active, an **"In grace period"** badge appears.
+- A warning bar is displayed at the top of the project pages showing the original end date, the resource termination date, and the number of days remaining.
+
+![Grace period warning bar](../img/grace-period-warning-bar.png)
+
+- Notification emails about project ending include grace period details when applicable.
+
+!!! warning
+    Once the grace period expires (i.e., the resource termination date is reached), all project resources will be scheduled for termination, just as they would on the regular end date.
