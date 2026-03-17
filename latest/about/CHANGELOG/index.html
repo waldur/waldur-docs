@@ -998,15 +998,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#807-rc7-2026-03-16" class="md-nav__link">
+  <a href="#807-rc8-2026-03-18" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8.0.7-rc.7 - 2026-03-16
+        8.0.7-rc.8 - 2026-03-18
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="8.0.7-rc.7 - 2026-03-16">
+    <nav class="md-nav" aria-label="8.0.7-rc.8 - 2026-03-18">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -15116,15 +15116,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#807-rc7-2026-03-16" class="md-nav__link">
+  <a href="#807-rc8-2026-03-18" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8.0.7-rc.7 - 2026-03-16
+        8.0.7-rc.8 - 2026-03-18
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="8.0.7-rc.7 - 2026-03-16">
+    <nav class="md-nav" aria-label="8.0.7-rc.8 - 2026-03-18">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -17147,58 +17147,62 @@
 
 
 <h1 id="changelog">Changelog</h1>
-<h2 id="807-rc7-2026-03-16">8.0.7-rc.7 - 2026-03-16</h2>
+<h2 id="807-rc8-2026-03-18">8.0.7-rc.8 - 2026-03-18</h2>
 <h3 id="highlights">Highlights</h3>
-<p>This release brings significant improvements to the AI Assistant, now compatible with the OpenAI API and capable of creating VMs directly from chat. Operators gain new quota usage notifications (75% and 100% thresholds), configurable reporting screens, and OpenStack port security controls. Numerous stability fixes address race conditions, transaction failures, and worker timeouts in the marketplace backend.</p>
+<p>This release candidate brings significant improvements to the AI Assistant, now compatible with the OpenAI API and capable of creating VMs directly from chat. Operators gain new quota usage notifications (75% and 100% thresholds), configurable reporting screens, and OpenStack port security controls. Numerous stability fixes address race conditions, N+1 query performance issues, and marketplace filter synchronization problems in the UI.</p>
 <h3 id="whats-new">What's New</h3>
 <ul>
 <li><strong>AI Assistant now supports OpenAI-compatible API and VM creation.</strong> Users can ask the assistant to create virtual machines, and operators can connect any OpenAI-compatible LLM provider.</li>
-<li><strong>Quota usage notifications.</strong> The system now sends email notifications when resource quota reaches 75% and when it is fully consumed, helping users avoid unexpected service interruptions.</li>
-<li><strong>Configurable reporting screens.</strong> Operators can enable or disable specific reporting screens via Constance settings, allowing per-deployment customization of the admin UI.</li>
-<li><strong>OpenStack port security controls.</strong> Users can now toggle port security on instance and port creation, with validation that prevents assigning security groups when port security is disabled.</li>
-<li><strong>Marketplace category editing.</strong> Administrators can now edit category structure (sections, attributes) directly from the admin UI.</li>
-<li><strong>Offering documentation and helpdesk URLs.</strong> Offerings now support dedicated documentation and helpdesk URL fields, displayed on the public offering page.</li>
-<li><strong>SCIM sync improvements.</strong> SCIM synchronization is now triggered when a user transitions to OK state and when offering endpoints change, improving identity provisioning reliability.</li>
-<li><strong>Archive offering management command.</strong> Operators can archive offerings via a new <code>archive_offering</code> CLI command.</li>
-<li><strong>Robot account search filters.</strong> Added filtering capabilities for robot accounts in the marketplace API.</li>
+<li><strong>Quota usage notifications at 75% and 100% thresholds.</strong> Project owners and managers now receive email notifications when resource quota consumption reaches warning levels.</li>
+<li><strong>Configurable reporting screens.</strong> Operators can enable or disable specific reporting views through Constance settings, tailoring the UI to their needs.</li>
+<li><strong>OpenStack port security controls.</strong> Users can now toggle port security when creating instances or ports, with validation that prevents assigning security groups when port security is disabled.</li>
+<li><strong>Grace period visibility in the UI.</strong> Project and resource APIs now expose grace period fields, and the frontend displays warning bars and improved date fields for projects approaching their end date.</li>
+<li><strong>Offering documentation and helpdesk URLs.</strong> Service providers can now add documentation and helpdesk links to their offerings, visible on the public offering page.</li>
+<li><strong>Category structure editing.</strong> Administrators can now edit marketplace category attributes and sections directly from the admin interface.</li>
+<li><strong>SCIM sync triggers on user state transitions and offering endpoint changes.</strong> Identity provisioning stays in sync automatically when users become active or offering endpoints are modified.</li>
+<li><strong>Robot account search filters.</strong> New filters make it easier to find and manage robot accounts in the marketplace.</li>
+<li><strong>Archive offering management command.</strong> Operators can now archive offerings via CLI for bulk lifecycle management.</li>
 </ul>
 <h3 id="improvements">Improvements</h3>
 <ul>
-<li><strong>Marketplace filter synchronization.</strong> Fixed multiple issues where sidebar and toolbar filters lost sync, including project selection without an organization and individual filter removal.</li>
-<li><strong>Remote offering invoicing.</strong> Replaced remote invoice pulling with local calculation, reducing external API dependencies and improving reliability.</li>
-<li><strong>SLURM policy period enforcement.</strong> Policy periods are now validated against offering component limit periods, and preview impact respects the policy period setting.</li>
-<li><strong>OpenStack Nova microversion 2.47.</strong> Fixes missing flavor data when importing existing instances.</li>
-<li><strong>Offering user creation reliability.</strong> Deferred offering user creation to Celery to prevent Gunicorn worker timeouts, with race condition protection and proper SCIM sync triggering.</li>
-<li><strong>STOMP notifications for offering consumers.</strong> Consumers now receive real-time STOMP notifications for offering changes.</li>
-<li><strong>Identity bridge fields on user profile.</strong> Users can now see their own identity bridge fields.</li>
-<li><strong>Kubernetes fallback to in-cluster config.</strong> The K8s backend now gracefully falls back to in-cluster configuration when the kubeconfig file is invalid.</li>
-<li><strong>E2E testing migrated to Playwright.</strong> Replaced Cypress with Playwright for end-to-end testing, and upgraded from Vite 7 to Vite 8 with the Rolldown bundler.</li>
-<li><strong>Improved testability.</strong> Added <code>data-testid</code> attributes across numerous UI components and created a new ESLint rule enforcing tooltips on disabled buttons.</li>
-<li><strong>Keycloak setup upgraded and made optional.</strong> Docker Compose deployments can now enable Keycloak via a Docker profile.</li>
-<li><strong>Lithuanian translations improved.</strong></li>
-<li><strong>Squashed database migrations</strong> for faster fresh DB setup in e2e tests.</li>
+<li><strong>Replaced Cypress with Playwright for E2E testing.</strong> The frontend test infrastructure has been modernized for faster, more reliable end-to-end tests.</li>
+<li><strong>Marketplace filter synchronization fixed.</strong> Sidebar and toolbar filters now stay in sync correctly, including when removing individual filters or when no organization is selected.</li>
+<li><strong>Multiple N+1 query fixes.</strong> The course accounts endpoint, service provider users endpoint, and constance settings queries are now properly optimized.</li>
+<li><strong>SLURM policy period enforcement.</strong> Policy periods are now validated against offering component limit periods, and the preview impact endpoint respects the period setting.</li>
+<li><strong>Remote offering invoices calculated locally.</strong> Invoice calculation for remote offerings no longer requires pulling data from remote endpoints, improving reliability.</li>
+<li><strong>Kubernetes resource cleanup for marketplace scripts.</strong> Script-based offerings now properly clean up K8s resources, and the job timeout setting is correctly applied.</li>
+<li><strong>STOMP notifications enabled for offering consumers.</strong> Consumer-side integrations now receive real-time event notifications.</li>
+<li><strong>Improved Lithuanian and Estonian translations.</strong></li>
+<li><strong>Table UI polish.</strong> Toolbar button sizes are now consistent, and expandable table rows have improved alignment.</li>
+<li><strong>Added <code>data-testid</code> attributes across many UI components</strong> to support automated E2E testing.</li>
+<li><strong>Added <code>created_before</code> and <code>modified_before</code> API filters</strong> for more flexible date-range queries.</li>
+<li><strong>Squashed database migrations</strong> to speed up fresh database setup and E2E test runs.</li>
 </ul>
 <h3 id="bug-fixes">Bug Fixes</h3>
 <ul>
-<li>Fixed IntegrityError when creating course account with existing username.</li>
-<li>Fixed crash when deleting ERRED course account with no associated user.</li>
-<li>Fixed crash in checklist template endpoint with question dependencies.</li>
-<li>Fixed transaction cascading failures in <code>import_structure</code> command.</li>
-<li>Fixed STOMP circuit breaker never recovering from OPEN state.</li>
-<li>Fixed N+1 Constance query in service provider users endpoint.</li>
-<li>Fixed <code>BackgroundListPullTask</code> iterator not wrapped in <code>transaction.atomic()</code>.</li>
-<li>Fixed admin page logout button.</li>
-<li>Fixed URLs with trailing slashes causing 404 errors in the frontend.</li>
-<li>Fixed navigation to Terms of Service and Privacy pages for users with incomplete profiles.</li>
-<li>Fixed measured units display for OpenStack tenant resource components.</li>
-<li>Fixed GDPR attribute filtering to exclude <code>active_isds</code>.</li>
+<li><strong>Fixed STOMP circuit breaker never recovering from OPEN state.</strong></li>
+<li><strong>Fixed Gunicorn worker timeout when creating offering users</strong> by deferring the operation to Celery.</li>
+<li><strong>Fixed race condition in offering user creation</strong> that caused duplicate entries.</li>
+<li><strong>Fixed duplicate key error when importing offering users</strong> with existing (offering, user) pairs.</li>
+<li><strong>Fixed transaction cascading failures in the <code>import_structure</code> command.</strong></li>
+<li><strong>Fixed crash in checklist template endpoint</strong> when questions have dependencies.</li>
+<li><strong>Fixed crash when deleting ERRED course accounts</strong> with no associated user.</li>
+<li><strong>Fixed IntegrityError when creating course accounts</strong> with existing usernames.</li>
+<li><strong>Fixed Nova flavor data retrieval</strong> by using microversion 2.47.</li>
+<li><strong>Fixed URLs with trailing slashes causing 404 errors</strong> in the frontend router.</li>
+<li><strong>Fixed admin panel logout button.</strong></li>
+<li><strong>Fixed navigation to Terms of Service and Privacy pages</strong> for users with incomplete profiles.</li>
+<li><strong>Fixed measured units display</strong> for OpenStack tenant resource components.</li>
+<li><strong>Fixed Kubernetes backend fallback</strong> to in-cluster config when kubeconfig is invalid.</li>
+<li><strong>Exposed identity bridge fields on own user profile.</strong></li>
+<li><strong>Docker Compose: upgraded Keycloak setup</strong> and made it optional via Docker profile; removed deprecated FirecREST example configuration.</li>
 </ul>
 <h3 id="core-component-activity">Core Component Activity</h3>
 <ul>
-<li><strong>Waldur Mastermind</strong>: <a href="https://github.com/waldur/waldur-mastermind/compare/8.0.6...8.0.7-rc.7">51 commits</a> - AI Assistant OpenAI compatibility, quota notifications, port security, SCIM sync, numerous stability fixes.</li>
-<li><strong>Waldur Homeport</strong>: <a href="https://github.com/waldur/waldur-homeport/compare/8.0.6...8.0.7-rc.7">29 commits</a> - Configurable reporting, category editing UI, Playwright migration, Vite 8 upgrade, filter sync fixes.</li>
-<li><strong>Waldur Helm</strong>: <a href="https://github.com/waldur/waldur-helm/compare/8.0.6...8.0.7-rc.7">8 commits</a> - Maintenance updates only (version bumps, CI fix, docs update).</li>
-<li><strong>Waldur Docker Compose</strong>: <a href="https://github.com/waldur/waldur-docker-compose/compare/8.0.6...8.0.7-rc.7">8 commits</a> - Keycloak upgrade with optional profile, removed deprecated FirecREST configuration.</li>
+<li><strong>Waldur Mastermind</strong>: <a href="https://github.com/waldur/waldur-mastermind/compare/8.0.6...8.0.7-rc.8">61 commits</a> - AI Assistant OpenAI compatibility, quota notifications, port security, grace period API, SCIM sync improvements, and numerous stability fixes.</li>
+<li><strong>Waldur Homeport</strong>: <a href="https://github.com/waldur/waldur-homeport/compare/8.0.6...8.0.7-rc.8">36 commits</a> - Grace period UI, port security toggle, reporting screen toggles, Playwright migration, marketplace filter fixes, and E2E testability improvements.</li>
+<li><strong>Waldur Helm</strong>: <a href="https://github.com/waldur/waldur-helm/compare/8.0.6...8.0.7-rc.8">9 commits</a> - Version bumps and documentation updates.</li>
+<li><strong>Waldur Docker Compose</strong>: <a href="https://github.com/waldur/waldur-docker-compose/compare/8.0.6...8.0.7-rc.8">9 commits</a> - Keycloak upgrade, deprecated FirecREST config removal, and version bumps.</li>
 </ul>
 <hr>
 <h2 id="806-2026-03-06">8.0.6 - 2026-03-06</h2>
@@ -18294,7 +18298,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-03-16
+    2026-03-18
   </span>
 
     
