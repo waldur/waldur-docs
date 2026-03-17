@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-16T18:21:00.623093Z
+Generated: 2026-03-17T03:04:52.880114Z
 Source: https://docs.waldur.com
 
 ---
@@ -54042,6 +54042,110 @@ Redux Form field component. In React Final Form use `<Field name="..." component
 
 ---
 
+### Configuration Management Guide
+<!-- Source: docs/developer-guide/ui/configuration-management.md -->
+
+# Configuration Management Guide
+
+This guide describes how configuration settings are managed in Waldur Homeport, including the architecture, design patterns, and the integration with Waldur Mastermind.
+
+## Architecture Overview
+
+Waldur follows a "Single Source of Truth" pattern for configuration. Settings are defined in the Mastermind backend and exposed to Homeport through auto-generated files and API endpoints.
+
+### Backend (Mastermind)
+
+- **Constance**: Settings are managed using `django-constance`.
+- **Definitions**: Located in `src/waldur_core/server/constance_settings.py`.
+- **Public Exposure**: Settings listed in `PUBLIC_CONSTANCE_SETTINGS` are available via the `/api/override-settings/` endpoint.
+
+### Frontend (Homeport)
+
+- **Meta-data**: `src/SettingsDescription.ts` (auto-generated) contains descriptions, types, and defaults for settings.
+- **Enums**: `src/FeaturesEnums.ts` (auto-generated) contains feature flag enums.
+- **API Client**: Uses `overrideSettingsRetrieve` from `waldur-js-client`.
+
+## Design Patterns
+
+### Configuration Components
+
+Waldur Homeport provides specialized components for building configuration interfaces:
+
+- **SettingsCard**: Displays a group of settings defined in `SettingsDescription.ts`.
+- **SettingsWithTabs**: Organized interface with searchable tabs for multiple setting groups.
+- **FieldRow**: Individual setting row with automatic field type detection.
+
+### Available Field Types
+
+The `SettingsDescription.ts` (and thus `FieldRow`) supports several types:
+
+- `string`: Standard text input.
+- `integer`: Number input.
+- `boolean`: Checkbox toggle.
+- `choice_field`: Dropdown selection (requires `options`).
+- `multiple_choice_field`: Multi-select checkboxes or badges.
+- `url_field`: URL validated text input.
+- `color_field`: Color picker.
+- `image_field`: File upload for images.
+- `json_list_field`: Specialized list editor for JSON data.
+- `multilingual_image_field`: Map of language codes to images.
+
+### Auto-generation Workflow
+
+To keep Homeport in sync with Mastermind's settings definitions, use the following commands in the `waldur-mastermind` directory:
+
+```bash
+# Update settings descriptions
+uv run waldur print_settings_description > ../waldur-homeport/src/SettingsDescription.ts
+
+# Update feature enums
+uv run waldur print_features_enums > ../waldur-homeport/src/FeaturesEnums.ts
+```
+
+## How-to: Adding a New Configuration Section
+
+### 1. Backend Definition (Mastermind)
+
+In `waldur_core/server/constance_settings.py`:
+
+1. Add settings to `CONSTANCE_CONFIG`.
+2. Group them in `CONSTANCE_CONFIG_FIELDSETS`.
+3. Add keys to `PUBLIC_CONSTANCE_SETTINGS`.
+
+### 2. Frontend Sync
+
+Run the auto-generation commands mentioned above.
+
+### 3. Frontend Implementation (Homeport)
+
+1. **Create Component**: Create a new component (e.g., `src/administration/myservice/MyServiceSettings.tsx`).
+
+   ```tsx
+   export const MyServiceSettings = () => {
+     const { data, isLoading } = useQuery({
+       queryKey: ['MyServiceSettings'],
+       queryFn: () => overrideSettingsRetrieve().then(r => r.data)
+     });
+     if (isLoading) return <LoadingSpinner />;
+     return <SettingsCard groupNames={[translate('My Service')]} settingsSource={data} />;
+   };
+   ```
+
+2. **Register Route**: Add the route in `src/administration/routes.ts` under the appropriate parent (usually `admin-configuration`).
+
+---
+
+## LLM Quick-start Patterns
+
+When asking an LLM to add configuration:
+
+1. **Provide backend keys**: "I added `ENABLED_REPORTING_SCREENS` to Mastermind."
+2. **Specify group name**: "The settings are in the 'Reporting' group."
+3. **Reference template**: "Use `AdministrationSshKeys.tsx` as a template."
+4. **Target file**: "Register the route in `src/administration/routes.ts`."
+
+---
+
 ### Development Setup Guide
 <!-- Source: docs/developer-guide/ui/development-setup.md -->
 
@@ -55623,6 +55727,106 @@ const validator = new TranslationValidator({
 ```
 
 This comprehensive internationalization system ensures high-quality translations while providing developers and translators with the tools and context needed for effective multilingual applications.
+
+---
+
+### Menu and Navigation Architecture Guide
+<!-- Source: docs/developer-guide/ui/menu-navigation.md -->
+
+# Menu and Navigation Architecture Guide
+
+This guide describes the navigation and menu architecture in Waldur Homeport, covering routing, dynamic sidebar generation, and workspace management.
+
+## Architecture Overview
+
+Waldur Homeport uses a state-based navigation system driven by **UI-Router for React**. The UI structure is organized into **Workspaces** (e.g., Project, Organization, Administration, Support).
+
+### Core Components
+
+- **Router**: `src/router.ts` initializes the UI-Router.
+- **States**: `src/states.ts` aggregates all module-specific `routes.ts`.
+- **Layout**: `src/navigation/Layout.tsx` defines the main container.
+- **Sidebar**: `src/navigation/sidebar/UnifiedSidebar.tsx` manages all sidebar content.
+- **Tabs**: `src/navigation/TabsList.tsx` manages the header/tab-bar navigation.
+
+## State-based Routing
+
+Routes are defined as "states" in module-specific files. Each state can have metadata in the `data` property:
+
+```typescript
+{
+  name: 'admin-reporting-settings',
+  parent: 'admin-configuration',
+  url: 'reporting-settings/',
+  component: ...,
+  data: {
+    breadcrumb: () => translate('Reporting settings'),
+    feature: 'reporting', // Optional feature toggle
+    permissions: [isStaff], // Optional permission guards
+    priority: 100, // Used for sorting in menus
+  }
+}
+```
+
+## Dynamic Navigation (useTabs)
+
+The application uses a dynamic approach to build menus. Instead of hardcoding every link, the `useTabs.tsx` hook inspects the registered router states to build a hierarchy.
+
+### How it works
+
+1. **Root Detection**: Finds the "root" state for the current path (e.g., the state with a `title`).
+2. **Filtering**: Collects states that are children of the root and meet visibility criteria (feature flags, permissions).
+3. **Hierarchy**: Groups states into parent-child relationships based on state naming (e.g., `parent.child`) or the `parent` property.
+4. **Active State**: Tracks the current state to highlight items in the sidebar or tabs.
+
+## Sidebar Organization
+
+The `UnifiedSidebar.tsx` component conditionally renders menu items based on the active workspace and user roles:
+
+- **OrganizationsListMenu**: List of organizations the user can access.
+- **ProjectsListMenu**: List of projects within the active organization.
+- **ResourcesMenu**: High-level resource categories.
+- **AdminMenu**: System management links (Staff/Support only).
+- **Public/Anonymous Menus**: Links visible to unauthenticated users.
+
+### Key Sidebar Components
+
+- **MenuItem**: A single clickable link with icon and badge.
+- **MenuAccordion**: A collapsible group for nested items.
+
+## Workspaces
+
+A "Workspace" is a logical context (like a specific Project or the entire Administration area).
+
+- Workspaces are defined in route metadata (`workspace: 'admin'`).
+- The `src/workspace/` module provides selectors to get the current customer, project, or user roles.
+- The UI often resets or switches functionality based on the active workspace.
+
+## How-to: Adding a New Menu Item
+
+### Method A: Route-driven (Recommended for Configuration/Details)
+
+1. Add a new route in `routes.ts`.
+2. Ensure it has a correctly named `parent`.
+3. Provide a `breadcrumb` function and `priority` in `data`.
+4. `useTabs` will automatically pick it up and display it in the appropriate sub-menu.
+
+### Method B: Explicit Component (For Top-level/Global links)
+
+1. Create a new menu component in `src/navigation/sidebar/`.
+2. Use the `MenuItem` component.
+3. Import and add it to `UnifiedSidebar.tsx`.
+
+---
+
+## LLM Quick-start Patterns
+
+When asking an LLM to modify navigation:
+
+1. **Identify parents**: "Add a child route to `admin-configuration`."
+2. **Specify breadcrumbs**: "The breadcrumb should be 'Invoices'."
+3. **Reference workspace**: "The user is currently in the 'Organization' workspace."
+4. **Check visibility**: "This item should only be visible if `isStaff` is true."
 
 ---
 
