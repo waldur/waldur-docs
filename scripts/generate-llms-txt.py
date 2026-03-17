@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Optional
 
 # Site configuration
-SITE_URL = "https://docs.waldur.com"
+SITE_URL = "https://docs.waldur.com/latest"
 SITE_NAME = "Waldur Documentation"
 SITE_DESCRIPTION = """Waldur is an open-source hybrid cloud platform for managing multi-cloud environments.
 It provides a unified interface for resource orchestration, service catalog management,

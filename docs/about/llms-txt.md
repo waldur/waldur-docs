@@ -12,7 +12,7 @@ The llms.txt standard provides a structured way for AI systems to understand and
 
 A curated index of Waldur documentation with descriptions for each section. This file helps AI agents understand the documentation structure and decide which resources to fetch.
 
-**URL:** [https://docs.waldur.com/llms.txt](https://docs.waldur.com/llms.txt)
+**URL:** [https://docs.waldur.com/latest/llms.txt](https://docs.waldur.com/latest/llms.txt)
 
 **Use case:** Quick navigation, understanding documentation structure, deciding which pages to read.
 
@@ -20,7 +20,7 @@ A curated index of Waldur documentation with descriptions for each section. This
 
 A comprehensive file containing all documentation content in a single text file. This enables loading the complete documentation context in one request.
 
-**URL:** [https://docs.waldur.com/llms-full.txt](https://docs.waldur.com/llms-full.txt)
+**URL:** [https://docs.waldur.com/latest/llms-full.txt](https://docs.waldur.com/latest/llms-full.txt)
 
 **Use case:** Loading complete documentation into AI context, comprehensive searches, full-context assistance.
 
@@ -31,7 +31,7 @@ A comprehensive file containing all documentation content in a single text file.
 You can reference the llms.txt files directly in conversations:
 
 ```
-Please read https://docs.waldur.com/llms.txt and help me understand
+Please read https://docs.waldur.com/latest/llms.txt and help me understand
 how to deploy Waldur using Helm.
 ```
 
@@ -40,7 +40,7 @@ how to deploy Waldur using Helm.
 With web browsing enabled, GPT can fetch and use the llms.txt files:
 
 ```
-Fetch https://docs.waldur.com/llms-full.txt and explain how to
+Fetch https://docs.waldur.com/latest/llms-full.txt and explain how to
 configure Keycloak authentication in Waldur.
 ```
 
