@@ -6451,6 +6451,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#retrying-erred-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrying Erred Orders
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -13017,6 +13028,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/service-provider-organization/order-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/service-provider-organization/service-provider-registration/" class="md-nav__link">
         
   
@@ -13766,6 +13805,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#retrying-erred-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrying Erred Orders
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -14319,8 +14369,9 @@
     EXECUTING --&gt; DONE : Processing complete
     EXECUTING --&gt; ERRED : Processing failed
 
+    ERRED --&gt; EXECUTING : Retry (if supported)
+
     DONE --&gt; [*]
-    ERRED --&gt; [*]
     CANCELED --&gt; [*]
     REJECTED --&gt; [*]</code></pre>
 <h4 id="state-descriptions">State Descriptions</h4>
@@ -14365,7 +14416,7 @@
 </tr>
 <tr>
 <td><strong>ERRED</strong></td>
-<td>Order failed with errors</td>
+<td>Order failed with errors. Can be retried if the offering type supports it.</td>
 <td>Processing errors</td>
 </tr>
 <tr>
@@ -14397,6 +14448,7 @@
     TERMINATING --&gt; TERMINATED : Deletion success
     TERMINATING --&gt; ERRED : Deletion failed
 
+    ERRED --&gt; CREATING : Retry create
     ERRED --&gt; OK : Error resolved
     ERRED --&gt; UPDATING : Retry update
     ERRED --&gt; TERMINATING : Force deletion
@@ -14444,6 +14496,46 @@
 </tr>
 </tbody>
 </table>
+<h3 id="retrying-erred-orders">Retrying Erred Orders</h3>
+<p>When an order fails due to transient errors, authorized users can retry it instead of creating a new order.</p>
+<p><strong>Endpoint</strong>: <code>POST /api/marketplace-orders/{uuid}/retry/</code></p>
+<p><strong>Constraints</strong>:</p>
+<ul>
+<li>The offering type must have <code>supports_order_retry</code> enabled in the plugin registry</li>
+<li>Order must be in <code>ERRED</code> state</li>
+<li>Order must have an associated resource</li>
+</ul>
+<p>Currently supported offering types: <strong>Site Agent</strong> (<code>Marketplace.Slurm</code>) and <strong>Basic</strong> (<code>Marketplace.Basic</code>). Other offering types can opt in by setting <code>supports_order_retry=True</code> in their <code>manager.register()</code> call.</p>
+<p><strong>Permission</strong>: <code>APPROVE_ORDER</code> on the offering's customer or the offering itself (staff, offering owners, offering managers).</p>
+<p><strong>Behavior</strong>:</p>
+<p>The endpoint resets both the order and its resource to active processing states within a single transaction:</p>
+<ul>
+<li><strong>Order</strong>: state reset to <code>EXECUTING</code>, <code>error_message</code>, <code>error_traceback</code>, and <code>completed_at</code> cleared</li>
+<li><strong>Resource</strong>: state reset based on order type, <code>error_message</code> and <code>error_traceback</code> cleared</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Order Type</th>
+<th>Resource State After Retry</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CREATE</td>
+<td>CREATING</td>
+</tr>
+<tr>
+<td>UPDATE</td>
+<td>UPDATING</td>
+</tr>
+<tr>
+<td>TERMINATE</td>
+<td>TERMINATING</td>
+</tr>
+</tbody>
+</table>
+<p>After the state reset, <code>process_order</code> is triggered via Celery to reprocess the order. For agent-driven offerings (site agent), the processor is a no-op and the agent picks up the order independently.</p>
 <h2 id="billing-system">Billing System</h2>
 <p>The billing system is designed to be flexible and event-driven, reacting to changes in a resource's lifecycle and usage.</p>
 <h3 id="billing-workflow-and-core-components">Billing Workflow and Core Components</h3>
@@ -15089,7 +15181,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-03-02
+    2026-03-19
   </span>
 
     

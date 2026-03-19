@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-19T18:07:40.945503Z
+Generated: 2026-03-19T19:37:38.140500Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -22628,6 +22628,39 @@ updates. To address this, the main event loop includes a periodic reconciliation
 WALDUR_SITE_AGENT_RECONCILIATION_PERIOD_MINUTES=60
 ```
 
+## User Attribute Forwarding
+
+During membership synchronization, the processor can forward user profile
+attributes to backends that need them (e.g., the Waldur federation backend
+sends attributes to the Identity Bridge API when resolving remote users).
+
+### Attribute resolution flow
+
+Which attributes are forwarded is driven by the offering's
+`OfferingUserAttributeConfig`. Providers configure which user fields are
+*exposed* via the Waldur admin UI (e.g., `expose_email`, `expose_organization`,
+`expose_gender`). The agent:
+
+1. Fetches the attribute config from the API (cached for 5 minutes).
+2. Requests only the exposed fields when listing offering users.
+3. During user sync, extracts exposed attribute values from each
+   `OfferingUser` and passes them to the backend via `user_attributes`.
+
+### Supported attributes
+
+All 20+ attributes from `OfferingUserAttributeConfig` are supported:
+`username`, `full_name` (includes `first_name`, `last_name`), `email`,
+`phone_number`, `organization`, `job_title`, `affiliations`, `gender`,
+`personal_title`, `place_of_birth`, `country_of_residence`, `nationality`,
+`nationalities`, `organization_country`, `organization_type`,
+`organization_registry_code`, `eduperson_assurance`, `civil_number`,
+`birth_date`, `identity_source`, `active_isds`.
+
+### Fallback behavior
+
+When the attribute config API is unavailable, the agent defaults to
+exposing `username`, `full_name`, and `email`.
+
 ## Best Practices
 
 ### Username Backend Implementation
@@ -23061,6 +23094,19 @@ class MyStorageBackend(BaseBackend):
 When `False` (default), the reporting processor skips updates where the new
 usage value is lower than the previously reported value, treating it as a
 data anomaly.
+
+## `handled_resource_states` class attribute
+
+Controls which resource states the membership processor fetches and processes.
+Defaults to `[ResourceState.OK, ResourceState.ERRED]`. Override this when your
+backend needs to manage users on resources that are still being provisioned.
+
+```python
+from waldur_api_client.models.resource_state import ResourceState
+
+class MyAsyncBackend(BaseBackend):
+    handled_resource_states = [ResourceState.OK, ResourceState.ERRED, ResourceState.CREATING]
+```
 
 ## Decision matrix for no-op implementations
 
@@ -38641,7 +38687,7 @@ The system includes:
 
 - Graceful connection handling
 - Signal handlers for proper shutdown
-- Retry mechanisms for order processing
+- Retry mechanisms for order processing — erred orders can be explicitly retried via `POST /api/marketplace-orders/{uuid}/retry/` for offering types that opt in with `supports_order_retry=True` (see [Retrying Erred Orders](marketplace.md#retrying-erred-orders))
 - Error logging and optional Sentry integration
 
 ## Integration Examples
@@ -40707,8 +40753,9 @@ stateDiagram-v2
     EXECUTING --> DONE : Processing complete
     EXECUTING --> ERRED : Processing failed
 
+    ERRED --> EXECUTING : Retry (if supported)
+
     DONE --> [*]
-    ERRED --> [*]
     CANCELED --> [*]
     REJECTED --> [*]
 ```
@@ -40723,7 +40770,7 @@ stateDiagram-v2
 | **PENDING_START_DATE** | Awaiting the order's specified start date. | Activation when a future start date is set on the order. |
 | **EXECUTING** | Resource provisioning in progress | Processor execution |
 | **DONE** | Order completed successfully | Resource provisioning success |
-| **ERRED** | Order failed with errors | Processing errors |
+| **ERRED** | Order failed with errors. Can be retried if the offering type supports it. | Processing errors |
 | **CANCELED** | Order canceled by user/system | User cancellation |
 | **REJECTED** | Order rejected by provider | Provider rejection |
 
@@ -40747,6 +40794,7 @@ stateDiagram-v2
     TERMINATING --> TERMINATED : Deletion success
     TERMINATING --> ERRED : Deletion failed
 
+    ERRED --> CREATING : Retry create
     ERRED --> OK : Error resolved
     ERRED --> UPDATING : Retry update
     ERRED --> TERMINATING : Force deletion
@@ -40764,6 +40812,37 @@ stateDiagram-v2
 | **TERMINATING** | Resource being deleted | Monitor progress |
 | **TERMINATED** | Resource deleted | Archive, billing |
 | **ERRED** | Resource in error state | Retry, investigate, delete |
+
+### Retrying Erred Orders
+
+When an order fails due to transient errors, authorized users can retry it instead of creating a new order.
+
+**Endpoint**: `POST /api/marketplace-orders/{uuid}/retry/`
+
+**Constraints**:
+
+- The offering type must have `supports_order_retry` enabled in the plugin registry
+- Order must be in `ERRED` state
+- Order must have an associated resource
+
+Currently supported offering types: **Site Agent** (`Marketplace.Slurm`) and **Basic** (`Marketplace.Basic`). Other offering types can opt in by setting `supports_order_retry=True` in their `manager.register()` call.
+
+**Permission**: `APPROVE_ORDER` on the offering's customer or the offering itself (staff, offering owners, offering managers).
+
+**Behavior**:
+
+The endpoint resets both the order and its resource to active processing states within a single transaction:
+
+- **Order**: state reset to `EXECUTING`, `error_message`, `error_traceback`, and `completed_at` cleared
+- **Resource**: state reset based on order type, `error_message` and `error_traceback` cleared
+
+| Order Type | Resource State After Retry |
+|------------|---------------------------|
+| CREATE | CREATING |
+| UPDATE | UPDATING |
+| TERMINATE | TERMINATING |
+
+After the state reset, `process_order` is triggered via Celery to reprocess the order. For agent-driven offerings (site agent), the processor is a no-op and the agent picks up the order independently.
 
 ## Billing System
 
@@ -59753,6 +59832,90 @@ Images provide visual representation and marketing appeal. Each image requires:
 - **Name** – A descriptive title
 - **Description** – A brief explanation of the image content
 - **Attached image file** – The image file itself
+
+---
+
+### Order management
+<!-- Source: docs/user-guide/service-provider-organization/order-management.md -->
+
+# Order management
+
+## Order lifecycle
+
+When a customer requests a resource from your offering, an order is created. Orders progress through several states:
+
+| State | Description |
+|-------|-------------|
+| **Pending consumer** | Waiting for consumer approval |
+| **Pending provider** | Waiting for provider approval |
+| **Executing** | Resource provisioning in progress |
+| **Done** | Order completed successfully |
+| **Erred** | Order failed with errors |
+| **Canceled** | Order was canceled |
+| **Rejected** | Order was rejected by provider |
+
+## Managing orders
+
+As a service provider (organization owner, offering owner, or offering manager), you can manage orders for your offerings from the **Provider** dashboard under the **Orders** section.
+
+### Approving and rejecting orders
+
+When an order is in **Pending provider** state, you can:
+
+- **Approve** the order to start resource provisioning
+- **Reject** the order with a reason that will be communicated to the customer
+
+### Marking orders as done
+
+For offerings that are managed manually (Basic and SLURM offerings), you can mark an executing order as **Done** once the resource has been provisioned on the backend.
+
+### Retrying erred orders
+
+When an order fails during processing, it enters the **Erred** state. If the failure was caused by a transient issue (e.g., temporary backend unavailability, network timeout), authorized users can retry the order instead of asking the customer to create a new one.
+
+#### Who can retry
+
+- Platform staff
+- Organization owners of the service provider
+- Offering managers
+
+#### How to retry
+
+1. Navigate to the order details page. The order state will show as **Erred** with an error message describing what went wrong.
+
+    [Image: Order in erred state with error details]
+
+2. Click the **Error details** tab to review what went wrong before retrying.
+
+    [Image: Error details tab showing error message and traceback]
+
+3. Click the **Actions** dropdown button and select **Retry**.
+
+    [Image: Actions dropdown showing the Retry option]
+
+4. A confirmation dialog will appear explaining that the order and its resource will be reset to an active processing state. Click **Yes** to confirm.
+
+    [Image: Confirmation dialog for retrying an erred order]
+
+5. After confirming, the order transitions back to **Executing** and a success notification appears.
+
+    [Image: Order successfully retried, now in Executing state]
+
+!!! warning
+    Retrying an order clears the previous error message and traceback. If you need to preserve error details for investigation, note them down before retrying.
+
+!!! note
+    Retry is currently supported for **Basic** and **SLURM** (site agent) offering types. Other offering types do not support this action.
+
+#### What happens during retry
+
+| Order type | Resource state after retry |
+|------------|---------------------------|
+| Create | Creating |
+| Update | Updating |
+| Terminate | Terminating |
+
+The order's error message, error traceback, and completion timestamp are cleared. The order is then resubmitted for processing through the normal provisioning pipeline.
 
 ---
 
