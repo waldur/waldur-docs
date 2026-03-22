@@ -15637,14 +15637,16 @@ options:
 <span class="w">                 </span>created.
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="load_notifications">load_notifications</h2>
-<p>Import notifications to DB</p>
+<p>Sync notifications and their templates from a JSON/YAML config file to the DB.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>load_notifications<span class="w"> </span>notifications_file
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>load_notifications<span class="w"> </span>notifications_file
 
 positional<span class="w"> </span>arguments:
-<span class="w">  </span>notifications_file<span class="w">  </span>Specifies<span class="w"> </span>location<span class="w"> </span>of<span class="w"> </span>notifications<span class="w"> </span>file.
+<span class="w">  </span>notifications_file<span class="w">  </span>Path<span class="w"> </span>to<span class="w"> </span>a<span class="w"> </span>JSON<span class="w"> </span>or<span class="w"> </span>YAML<span class="w"> </span>file<span class="w"> </span>mapping<span class="w"> </span>notification<span class="w"> </span>keys<span class="w"> </span>to
+<span class="w">                      </span>their<span class="w"> </span>enabled<span class="w"> </span>status<span class="w"> </span><span class="o">(</span>bool<span class="o">)</span>.
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="load_spack_catalog">load_spack_catalog</h2>
 <p>Load Spack software catalog data using the unified catalog loader</p>
@@ -15837,7 +15839,7 @@ positional<span class="w"> </span>arguments:
 <span class="w">  </span>roles_file<span class="w">  </span>Specifies<span class="w"> </span>location<span class="w"> </span>of<span class="w"> </span>roles<span class="w"> </span>configuration<span class="w"> </span>file.
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="override_templates">override_templates</h2>
-<p>Override templates</p>
+<p>Override dbtemplates content from a YAML file. Use --clean to remove DB templates not present in the file.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -15845,16 +15847,14 @@ positional<span class="w"> </span>arguments:
 <span class="normal">5</span>
 <span class="normal">6</span>
 <span class="normal">7</span>
-<span class="normal">8</span>
-<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>override_templates<span class="w"> </span><span class="o">[</span>-c<span class="w"> </span>CLEAN<span class="o">]</span><span class="w"> </span>templates_file
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>override_templates<span class="w"> </span><span class="o">[</span>-c<span class="o">]</span><span class="w"> </span>templates_file
 
 positional<span class="w"> </span>arguments:
-<span class="w">  </span>templates_file<span class="w">        </span>Specifies<span class="w"> </span>location<span class="w"> </span>of<span class="w"> </span>templates<span class="w"> </span>file.
+<span class="w">  </span>templates_file<span class="w">  </span>Path<span class="w"> </span>to<span class="w"> </span>a<span class="w"> </span>YAML<span class="w"> </span>file<span class="w"> </span>mapping<span class="w"> </span>template<span class="w"> </span>names<span class="w"> </span>to<span class="w"> </span>their<span class="w"> </span>content.
 
 options:
-<span class="w">  </span>-c<span class="w"> </span>CLEAN,<span class="w"> </span>--clean<span class="w"> </span>CLEAN
-<span class="w">                        </span>This<span class="w"> </span>flag<span class="w"> </span>means<span class="w"> </span>total<span class="w"> </span>synchronization<span class="w"> </span>with<span class="w"> </span>the
-<span class="w">                        </span>template<span class="w"> </span>file<span class="w"> </span>you<span class="w"> </span>pass.
+<span class="w">  </span>-c,<span class="w"> </span>--clean<span class="w">     </span>Remove<span class="w"> </span>DB<span class="w"> </span>templates<span class="w"> </span>whose<span class="w"> </span>names<span class="w"> </span>are<span class="w"> </span>not<span class="w"> </span>present<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>file
+<span class="w">                  </span><span class="o">(</span>full<span class="w"> </span>sync<span class="w"> </span>mode<span class="o">)</span>.
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="pgmigrate">pgmigrate</h2>
 <p>Load data with disabled signals.</p>
@@ -16128,7 +16128,7 @@ options:
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-03-19
+    2026-03-21
   </span>
 
     
