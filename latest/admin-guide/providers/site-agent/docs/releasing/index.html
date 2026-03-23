@@ -3928,6 +3928,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#release-candidates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Candidates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release Candidates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-rcs-differ-from-stable-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How RCs differ from stable releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typical-rc-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical RC workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13507,6 +13546,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#release-candidates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Candidates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release Candidates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-rcs-differ-from-stable-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How RCs differ from stable releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typical-rc-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical RC workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13590,8 +13668,18 @@ waldur-site-agent.</p>
 <h2 id="quick-start">Quick Start</h2>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>./scripts/release.sh<span class="w"> </span><span class="m">0</span>.10.0
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Stable release</span>
+./scripts/release.sh<span class="w"> </span><span class="m">0</span>.10.0
 <span class="c1"># Review the commit, then push:</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>main<span class="w"> </span>--tags
+
+<span class="c1"># Release candidate</span>
+./scripts/release.sh<span class="w"> </span><span class="m">0</span>.10.0-rc.1
 git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>main<span class="w"> </span>--tags
 </code></pre></div></td></tr></tbody></table></div>
 <p>The script handles version bumping, changelog generation,
@@ -13688,6 +13776,60 @@ tooling):</p>
 <p>All packages (core + plugins) share the same version number,
 following <code>MAJOR.MINOR.PATCH</code> (e.g. <code>0.10.0</code>). Tags do <strong>not</strong>
 use a <code>v</code> prefix.</p>
+<p>Release candidates use the <code>-rc.N</code> suffix in git tags
+(e.g. <code>0.10.0-rc.1</code>). The release script automatically converts
+this to PEP 440 format (<code>0.10.0rc1</code>) for <code>pyproject.toml</code> files
+and PyPI publishing. Helm and Docker use the git tag as-is.</p>
+<h2 id="release-candidates">Release Candidates</h2>
+<p>RC releases follow the same workflow as stable releases:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>./scripts/release.sh<span class="w"> </span><span class="m">0</span>.10.0-rc.1
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>main<span class="w"> </span>--tags
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="how-rcs-differ-from-stable-releases">How RCs differ from stable releases</h3>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Stable</th>
+<th>RC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Git tag</td>
+<td><code>0.10.0</code></td>
+<td><code>0.10.0-rc.1</code></td>
+</tr>
+<tr>
+<td>pyproject.toml version</td>
+<td><code>0.10.0</code></td>
+<td><code>0.10.0rc1</code> (PEP 440)</td>
+</tr>
+<tr>
+<td>Helm chart version</td>
+<td><code>0.10.0</code></td>
+<td><code>0.10.0-rc.1</code></td>
+</tr>
+<tr>
+<td>Docker <code>:latest</code> tag</td>
+<td>Updated</td>
+<td><strong>Not</strong> updated</td>
+</tr>
+<tr>
+<td>Changelog</td>
+<td>New entry</td>
+<td>Replaces prior RC entries for same base version</td>
+</tr>
+</tbody>
+</table>
+<h3 id="typical-rc-workflow">Typical RC workflow</h3>
+<ol>
+<li><code>./scripts/release.sh 0.10.0-rc.1</code> — first candidate</li>
+<li>Test, find issues, fix on main</li>
+<li><code>./scripts/release.sh 0.10.0-rc.2</code> — replaces rc.1 changelog entry</li>
+<li><code>./scripts/release.sh 0.10.0</code> — stable release, includes all changes since last stable</li>
+</ol>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="error-working-tree-is-not-clean">"Error: working tree is not clean"</h3>
 <p>Commit or stash any uncommitted changes before releasing.</p>
@@ -13735,7 +13877,7 @@ running the release script, CI still stamps the correct versions.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-03-04
+    2026-03-23
   </span>
 
     
