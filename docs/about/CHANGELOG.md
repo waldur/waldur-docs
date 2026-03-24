@@ -95,6 +95,9 @@ This release brings major improvements to the AI Assistant, including OpenAI API
 
 
 
+
+
+
 ## 8.0.6 - 2026-03-06
 
 ### Highlights
