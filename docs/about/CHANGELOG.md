@@ -1,77 +1,70 @@
 # Changelog
 
-
-
-## 8.0.7-rc.13 - 2026-03-24
+## 8.0.7-rc.14 - 2026-03-25
 
 ### Highlights
 
-This release brings major improvements to the AI Assistant, including OpenAI API compatibility, role-based access control, VM creation support, and streaming tool results. Project end date management gets a complete workflow with change requests, approvals, cancellations, and grace period visibility. OpenStack networking gains port security controls, and numerous reliability fixes address race conditions, N+1 queries, and STOMP notification delivery.
+This release brings major improvements to the AI Assistant with VM creation support, OpenAI API compatibility, and role-based access control. Project end date change requests give organizations a formal workflow for extending project lifetimes. Reporting gets chart export capabilities and toggleable screens, while OpenStack networking gains port security controls and improved port management.
 
 ### What's New
 
-- **Project end date change requests.** Users can now request project end date modifications through a formal workflow with approval, rejection, cancellation, and comment support. Notifications are sent at each stage, and grace period warnings are shown prominently in the UI.
-- **AI Assistant: VM creation action.** The AI Assistant can now create virtual machines on behalf of users, with multi-offering selection limited to active plans, streaming inline tool results, and hidden tool call internals for a cleaner chat experience.
-- **AI Assistant: role-based access control.** Administrators can configure which user roles have access to the AI Assistant via the `LLM_CHAT_ENABLED_ROLES` setting.
-- **AI Assistant: OpenAI API compatibility.** The AI Assistant backend now supports the OpenAI API format, broadening the range of LLM providers that can be used.
-- **Quota usage notifications.** Automated notifications are now sent when resource quota reaches 75% and 100% utilization.
-- **OpenStack port security controls.** Users can enable or disable port security during instance and port creation, with validation preventing security groups from being assigned when port security is off.
-- **Reporting screens are now toggleable.** Administrators can enable or disable individual reporting screens via Constance settings.
-- **Retry erred orders and course accounts.** Operators can now retry failed site agent orders and erred course accounts directly from the UI.
-- **Staff override for proposal reviews.** Staff users can override conflict-of-interest blocks and reviewer invitation restrictions in the proposal review workflow.
-- **Marketplace category editing.** Administrators can now edit category structure (attributes, sections) through the API.
-- **Offerings: helpdesk and documentation URLs.** Offerings now support dedicated helpdesk and documentation URL fields, displayed on the public offering page.
-- **User analytics endpoints.** New API endpoints provide nationality and residence country statistics for user analytics.
-- **LDAP agent configuration generator.** SLURM offering integration page now includes a dialog to generate LDAP agent `.env` configuration files.
-- **Visual login layout selector.** Administrators can choose login page layouts through a visual preview selector in settings.
+- **AI Assistant: VM creation and streaming improvements.** Users can now create virtual machines directly through the AI Assistant chat, with multi-offering selection to choose only active plans. The assistant now streams responses inline with rendered tool results, hides internal tool call details from users, and persists LLM responses even when the client disconnects mid-stream.
+- **AI Assistant: role-based access control and OpenAI compatibility.** Administrators can now control which user roles have access to the AI Assistant. The backend is now compatible with the OpenAI API format, and a disclosure statement educates users about AI safety.
+- **Project end date change requests.** Users can request modifications to project end dates through a formal approval workflow, with support for comments, cancellation, and email notifications for approved/rejected requests.
+- **Quota usage notifications.** New email notifications alert project managers when resource quota reaches 75% and 100% utilization.
+- **Reporting chart export and toggleable screens.** All reporting charts now support data export. Administrators can enable or disable individual reporting screens via Constance settings.
+- **User analytics and demographics.** New API endpoints provide statistics on user nationality and residence country, with a dedicated user analytics configuration option.
+- **Port security controls for OpenStack instances.** Operators can now toggle port security on instance and port creation, with validation that security groups are not assigned when port security is disabled.
+- **Offering documentation and helpdesk URLs.** Offerings now support dedicated documentation and helpdesk URL fields, displayed on the public offering page.
+- **Prepaid component configuration.** Extended prepaid configuration for offering components with duration step and renewal duration constraints.
+- **LDAP agent configuration generator.** SLURM offering managers can generate LDAP agent `.env` configuration files directly from the UI.
+- **Staff override for proposal reviews.** Staff users can override conflict-of-interest blocks and manually manage reviewer invitations.
+- **Feature toggles for user profile tabs.** API token, permission requests, and remote accounts tabs can now be individually toggled on or off.
 
 ### Improvements
 
+- **Marketplace tags visible to anonymous users.** Public marketplace pages now display tags without requiring authentication.
+- **Human-readable state names in marketplace statistics API.** Resource state counts now use readable labels instead of internal codes.
+- **Grace period UI improvements.** Project and resource end dates now clearly display grace period information with warning bars.
+- **Retry actions for erred orders and course accounts.** Operators can retry failed site agent orders and erred course accounts directly from the UI.
+- **OpenStack port management.** Instance port updates now reuse existing ports instead of creating new ones, and fixed IPs are properly applied during updates.
+- **Policy engine reliability.** Fixed policy actions bypassing Django signals (breaking STOMP notifications), re-entrant signal crashes, and added reversion tracking with event scopes for audit trails.
 - **SCIM sync improvements.** SCIM sync now triggers on offering endpoint changes and when users transition to OK state, with corrected entitlement processing order.
-- **OpenStack port updates.** Existing ports are now reused during updates instead of creating new ones, and fixed IP addresses are properly handled.
-- **Structure import/export.** Cost policies and SLURM policies are now included in structure export/import, with fixes for duplicate key errors and transaction cascading failures.
-- **STOMP notifications.** Fixed circuit breaker never recovering from OPEN state, policy actions now properly emit Django signals, and user role events are sent for resources in CREATING state.
-- **Performance.** Fixed N+1 queries in course accounts and service provider users endpoints, deferred offering user creation to Celery to prevent Gunicorn timeouts, and squashed migrations to speed up fresh DB setup.
-- **SDK compatibility.** Fixed multiple nullable fields in Project and Resource serializers that caused auto-generated SDK clients to crash on null values.
-- **Identity provider rebrand.** eduTEAMS has been rebranded to MyAccessID across the UI.
-- **Marketplace filter sync.** Fixed sidebar and toolbar filter synchronization issues, including project selection when organization is not yet selected.
-- **Remote offering invoices.** Replaced pulling of invoices for remote offerings with local calculation.
-- **E2E testing migration.** Replaced Cypress with Playwright for end-to-end testing.
-- **Nova microversion 2.47.** OpenStack instance import now uses Nova microversion 2.47 to fix missing flavor data.
-- **Robot account search filters.** Added search filters for robot accounts in the marketplace.
-- **Kubernetes fallback.** Kubernetes backend now falls back to in-cluster config when kubeconfig file is invalid.
-- **K8s resource cleanup.** Added automatic cleanup of Kubernetes resources for marketplace scripts.
-- **Docker Compose: Keycloak optional.** Keycloak setup is now optional via Docker Compose profiles, with upgraded mapper library.
+- **Marketplace filter synchronization.** Sidebar and toolbar filters now stay in sync when individual filters are removed.
+- **Rebrand eduTEAMS to MyAccessID** across the identity provider UI.
+- **Visual layout selector** for administrators to preview and configure login page layouts.
+- **Replaced Cypress with Playwright** for end-to-end testing.
+- **Excluded closed service accounts from limit counts** to prevent incorrect quota enforcement.
+- **Nova microversion 2.47** is now used to fix missing flavor data when importing OpenStack instances.
+- **STOMP circuit breaker recovery** fixed to properly transition from OPEN back to HALF-OPEN state.
+- **K8s resource cleanup** for marketplace script offerings, with downgraded error logging during cleanup.
 
 ### Bug Fixes
 
-- Fixed cleanup_structure FK constraint failures on deadlock retry and authtoken FK constraint issues.
-- Fixed notification update dialog Save doing nothing when template content is null.
-- Fixed notification template sync on load_notifications and template override cache.
-- Fixed NaN display in prepaid component order form.
-- Fixed checkbox initial values in Edit user dialog.
-- Fixed stale provider message on resource details page.
+- Fixed SDK clients crashing on null values for project end dates and effective end dates in API responses.
+- Fixed notification template sync and override cache issues.
+- Fixed `cleanup_structure` command failures due to FK constraints and deadlocks.
+- Fixed race condition in offering user creation and gunicorn worker timeout on state transitions.
+- Fixed duplicate key errors when importing offering users with existing pairs.
+- Fixed crash when deleting ERRED course accounts with no user.
 - Fixed crash in checklist template endpoint with question dependencies.
-- Fixed crash when deleting ERRED course account with no user.
-- Fixed duplicate key error when importing offering users.
-- Fixed admin page logout button.
+- Fixed language selector crash when current language is not yet selected.
 - Fixed URLs with trailing slashes causing 404 errors.
-- Fixed measured units for OpenStack tenant resource components.
-- Fixed CSV re-parse when file changes in upload wizards.
-- Fixed translation label typos in Estonian and Lithuanian locales.
-- Fixed SLURM policy period enforcement to match offering component limit_period.
-- Fixed race condition in offering user creation.
-- Excluded closed service accounts from limit count.
-- Allowed navigation to ToS and Privacy pages for users with incomplete profiles.
+- Fixed notification update dialog Save button doing nothing when template content is null.
+- Fixed NaN display in prepaid component order form.
+- Fixed logout button on the admin page.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [104 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.6...8.0.7-rc.13) - AI Assistant overhaul, project end date workflows, OpenStack port security, quota notifications, reliability fixes
-- **Waldur Homeport**: [74 commits](https://github.com/waldur/waldur-homeport/compare/8.0.6...8.0.7-rc.13) - AI Assistant UI updates, grace period warnings, reporting toggles, Playwright migration, port security UI
-- **Waldur Helm**: [14 commits](https://github.com/waldur/waldur-helm/compare/8.0.6...8.0.7-rc.13) - Maintenance updates only
-- **Waldur Docker Compose**: [14 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.6...8.0.7-rc.13) - Keycloak optional profile, removed deprecated FirecREST config
+- **Waldur Mastermind**: [119 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.6...8.0.7-rc.14) - AI Assistant overhaul, project end date workflows, policy engine fixes, quota notifications, OpenStack port security, and numerous bug fixes
+- **Waldur Homeport**: [98 commits](https://github.com/waldur/waldur-homeport/compare/8.0.6...8.0.7-rc.14) - AI Assistant VM creation UI, reporting chart exports, grace period UI, Playwright migration, and filter synchronization fixes
+- **Waldur Helm**: [17 commits](https://github.com/waldur/waldur-helm/compare/8.0.6...8.0.7-rc.14) - Whitelabeling imagePullSecret support and templating fixes
+- **Waldur Docker Compose**: [15 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.6...8.0.7-rc.14) - Keycloak setup upgrade with optional profile, removed deprecated FirecREST config
 
 ---
+
+
+
 
 
 
