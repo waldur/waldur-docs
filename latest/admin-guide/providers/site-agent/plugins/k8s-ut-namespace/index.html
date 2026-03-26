@@ -14397,6 +14397,13 @@ Custom entries are merged with the defaults:</p>
 <td>User attribute for CR user fields</td>
 </tr>
 <tr>
+<td><code>cr_user_identity_lowercase</code></td>
+<td>bool</td>
+<td>No</td>
+<td><code>false</code></td>
+<td>Lowercase the identity value before writing to CR</td>
+</tr>
+<tr>
 <td><code>namespace_labels</code></td>
 <td>object</td>
 <td>No</td>
@@ -14563,14 +14570,20 @@ deployments that rely solely on OIDC-based authentication.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">sync_users_to_cr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">cr_user_identity_field</span><span class="p">:</span><span class="w"> </span><span class="s">"civil_number"</span><span class="w">  </span><span class="c1"># or "email", "username", etc.</span>
+<span class="w">  </span><span class="nt">cr_user_identity_lowercase</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">        </span><span class="c1"># optional, lowercase the value</span>
 <span class="w">  </span><span class="nt">keycloak_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">  </span><span class="c1"># optional, can also be true for dual mode</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>The chosen field must be enabled in the offering's user attribute config
 (<code>expose_civil_number: true</code>) in Waldur. Users missing the configured
 attribute are skipped with a warning log.</p>
+<p>When <code>cr_user_identity_lowercase</code> is enabled, the identity value is
+lowercased before writing to the CR (e.g., <code>EE12345678901</code> becomes
+<code>ee12345678901</code>). This is useful when OIDC subject matching is
+case-sensitive and the identity source has mixed case.</p>
 <p>When users are removed:</p>
 <ol>
 <li>User is removed from all 3 Keycloak groups</li>

@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-25T19:18:42.063032Z
+Generated: 2026-03-26T03:04:43.076078Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -1225,50 +1225,67 @@ Available options in `values.yaml`:
 
 ---
 
-### Mastermind templates configuration
+### Mastermind Templates
 <!-- Source: docs/admin-guide/deployment/helm/docs/mastermind-templates.md -->
 
-# Mastermind templates configuration
+# Mastermind Templates
 
-If you want to configure custom mastermind templates, you should:
+Waldur supports custom notification templates (email subjects and bodies) via the `waldur.mastermindTemplating` values.
 
-1. Setup `waldur.mastermindTemplating.mastermindTemplatesPath`
+## Configuration
 
-    in values.yaml (by default, it is equal to `mastermind_templates/mastermind-templates.yaml`).
-    Alternatively, you can use `waldur.mastermindTemplating.mastermindTemplates` containing `.yaml`
-    file strings to get rid of file usage.
+There are two ways to provide templates:
 
-2. Put all the custom templates into the file in a following way:
+### Option 1: Inline in values.yaml
 
-**NB**: The keys in the file should have `<waldur_application_name>/<event_name>_<postfix>.<extension>`, where `<postfix>` can be either `message` or `subject`, and `<extension>` - either `txt` or `html`
+Set `waldur.mastermindTemplating.mastermindTemplates` directly:
 
 ```yaml
-<file-name1>: |
-    <Custom content1>
-<file-name2>: |
-    <Custom content2>
-...
-```
-
-Example:
-
-```yaml
-users/invitation_notification_message.txt: |
-    Hi!
-users/invitation_notification_message.html: |
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>Invitation has been created</title>
-    </head>
-    <body>
-    <p>
+waldur:
+  mastermindTemplating:
+    mastermindTemplates:
+      users/invitation_notification_message.txt: |
         Hi!
-    </p>
-    </body>
-    </html>
-...
+      users/invitation_notification_message.html: |
+        <html>
+        <head lang="en">
+          <meta charset="UTF-8">
+          <title>Invitation</title>
+        </head>
+        <body><p>Hi!</p></body>
+        </html>
 ```
+
+### Option 2: External file
+
+Place your templates in a YAML file within the Helm chart directory, then point to it with `waldur.mastermindTemplating.mastermindTemplatesPath`:
+
+```yaml
+waldur:
+  mastermindTemplating:
+    mastermindTemplatesPath: "mastermind_templates/mastermind-templates.yaml"
+```
+
+The file at that path should have the same structure as the inline option above.
+
+The default value of `mastermindTemplatesPath` is `mastermind_templates/mastermind-templates.yaml`. If neither option is set, no ConfigMap is created.
+
+## Template file format
+
+Templates are keyed by their path relative to the Waldur templates directory. The key format is:
+
+```txt
+<app_name>/<event_name>_<postfix>.<extension>
+```
+
+- `<postfix>`: either `message` or `subject`
+- `<extension>`: either `txt` or `html`
+
+Example keys:
+
+- `users/invitation_notification_message.txt` — plain-text email body
+- `users/invitation_notification_message.html` — HTML email body
+- `users/invitation_notification_subject.txt` — email subject line
 
 ---
 
@@ -27970,6 +27987,7 @@ offerings:
 | `keycloak_use_user_id` | boolean | No | `true` | Use Keycloak user ID for lookup (false = use username) |
 | `sync_users_to_cr` | boolean | No | `false` | Sync user identities to CR `adminUsers`/`rwUsers`/`roUsers` fields |
 | `cr_user_identity_field` | string | No | `email` | User attribute for CR user fields |
+| `cr_user_identity_lowercase` | bool | No | `false` | Lowercase the identity value before writing to CR |
 | `namespace_labels` | object | No | `{}` | Labels to set on created namespaces (e.g., `tenant: waldur`) |
 | `namespace_annotations` | object | No | `{}` | Annotations to set on created namespaces |
 
@@ -28078,12 +28096,18 @@ deployments that rely solely on OIDC-based authentication.
 backend_settings:
   sync_users_to_cr: true
   cr_user_identity_field: "civil_number"  # or "email", "username", etc.
+  cr_user_identity_lowercase: true        # optional, lowercase the value
   keycloak_enabled: false  # optional, can also be true for dual mode
 ```
 
 The chosen field must be enabled in the offering's user attribute config
 (`expose_civil_number: true`) in Waldur. Users missing the configured
 attribute are skipped with a warning log.
+
+When `cr_user_identity_lowercase` is enabled, the identity value is
+lowercased before writing to the CR (e.g., `EE12345678901` becomes
+`ee12345678901`). This is useful when OIDC subject matching is
+case-sensitive and the identity source has mixed case.
 
 When users are removed:
 
