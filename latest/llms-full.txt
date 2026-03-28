@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-03-28T03:04:39.878562Z
+Generated: 2026-03-28T07:27:30.317757Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -12493,6 +12493,79 @@ A notification about the proposal state changes (submitted → in review → acc
 
 ```
 
+### proposal.proposal_submission_deadline_approaching
+
+Reminds proposal creators to submit draft proposals during the last 3 days before the round cutoff.
+
+#### Templates
+
+=== "proposal/proposal_submission_deadline_approaching_subject.txt"
+
+```txt
+
+    Reminder: Proposal {{ proposal_name }} submission deadline approaching for {{ call_name }}
+
+```
+
+=== "proposal/proposal_submission_deadline_approaching_message.txt"
+
+```txt
+
+    Dear {{ proposal_creator_name }},
+
+    This is a friendly reminder that the submission deadline for your draft proposal "{{ proposal_name }}" in call "{{ call_name }}" is approaching.
+
+    Deadline information:
+    - Round: {{ round_name }}
+    - Submission deadline: {{ deadline_date }}
+    - Time remaining: {{ time_remaining_days }} days {{ time_remaining_hours }} hours
+
+    Your proposal is currently in DRAFT state. To be considered for review, you must submit your proposal before the deadline.
+
+    Please ensure you have completed all required sections and finalized your resource requests before submission.
+
+    Complete and submit proposal: {{ proposal_url }}
+
+    Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/proposal_submission_deadline_approaching_message.html"
+
+```txt
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Proposal submission deadline reminder</title>
+    </head>
+    <body>
+        <p>Dear {{ proposal_creator_name }},</p>
+
+        <p>This is a friendly reminder that the submission deadline for your draft proposal "{{ proposal_name }}" in call "{{ call_name }}" is approaching.</p>
+
+        <p><strong>Deadline information:</strong><br>
+            - Round: {{ round_name }}<br>
+            - Submission deadline: {{ deadline_date }}<br>
+            - Time remaining: {{ time_remaining_days }} days {{ time_remaining_hours }} hours
+        </p>
+
+        <p>Your proposal is currently in <strong>DRAFT</strong> state. To be considered for review, you must submit your proposal before the deadline.</p>
+
+        <p>Please ensure you have completed all required sections and finalized your resource requests before submission.</p>
+
+        <p>Complete and submit proposal: <a href="{{ proposal_url }}">{{ proposal_url }}</a></p>
+
+        <p>Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.</p>
+
+        <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
+    </body>
+    </html>
+
+```
+
 ### proposal.requested_offering_decision
 
 A notification to call manager about the decision on requested offering (accepted/rejected).
@@ -12637,6 +12710,69 @@ A notification to a reviewer about a new review assignment.
     <p>If you accept this assignment, you'll be able to access the full proposal content and submit your review.</p>
 
     <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+    </body>
+    </html>
+
+```
+
+### proposal.review_deadline_approaching
+
+Reminds reviewers to submit in-review assignments 3 days before deadline.
+
+#### Templates
+
+=== "proposal/review_deadline_approaching_subject.txt"
+
+```txt
+
+    Reminder: Review due in {{ time_remaining_days }} days for {{ proposal_name }}
+
+```
+
+=== "proposal/review_deadline_approaching_message.txt"
+
+```txt
+
+    Dear {{ reviewer_name }},
+
+    This is a friendly reminder that your review for the proposal "{{ proposal_name }}" in call "{{ call_name }}" is due soon.
+
+    Review deadline:
+    - Due date: {{ review_deadline }}
+    - Time remaining: {{ time_remaining_days }} days
+
+    Please log in to the platform to complete and submit your review as soon as possible. If you have any questions or need assistance, please contact the call manager.
+
+    Continue review: {{ review_url }}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/review_deadline_approaching_message.html"
+
+```txt
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Review deadline reminder</title>
+    </head>
+    <body>
+        <p>Dear {{ reviewer_name }},</p>
+
+        <p>This is a friendly reminder that your review for the proposal "{{ proposal_name }}" in call "{{ call_name }}" is due soon.</p>
+
+        <p><strong>Review deadline:</strong><br>
+            - Due date: {{ review_deadline }}<br>
+            - Time remaining: {{ time_remaining_days }} days
+        </p>
+
+        <p>Please log in to the platform to complete and submit your review as soon as possible. If you have any questions or need assistance, please contact the call manager.</p>
+
+        <p>Continue review: <a href="{{ review_url }}">{{ review_url }}</a></p>
+
+        <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
     </body>
     </html>
 
@@ -13162,6 +13298,8 @@ td:nth-child(4) {
 | `notification_about_project_ending` | `waldur_mastermind.marketplace.notification_about_project_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about projects ending in 1 day and 7 days. |
 | `notification_about_resource_ending` | `waldur_mastermind.marketplace.notification_about_resource_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about resources ending in 1 day and 7 days. |
 | `notify-managers-of-expired-batches` | `waldur_mastermind.proposal.notify_managers_of_expired_batches` | 30 minutes | Notify call managers when batches expire without response. |
+| `notify-proposal-creator-on-submission-deadline-approaching` | `waldur_mastermind.proposal.notify_proposal_creator_on_submission_deadline_approaching` | 1 day | No description available |
+| `notify-reviewer-on-review-deadline-approaching` | `waldur_mastermind.proposal.notify_reviewer_on_review_deadline_approaching` | 1 day | No description available |
 | `notify_about_stale_resource` | `waldur_mastermind.marketplace.notify_about_stale_resource` | Cron: `0 15 5 * * (m/h/dM/MY/d)` | Notify customers about resources that have not generated invoice items in the last 3 months. |
 | `notify_manager_on_round_cutoff` | `waldur_mastermind.proposal.notify_manager_on_round_cutoff` | 1 hour | No description available |
 | `notify_reviewer_on_round_start` | `waldur_mastermind.proposal.notify_reviewer_on_round_start` | 1 day | No description available |
@@ -16646,6 +16784,31 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 
 ```
 
+### proposal_submission_deadline_approaching_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Dear {{ proposal_creator_name }},
+
+This is a friendly reminder that the submission deadline for your draft proposal "{{ proposal_name }}" in call "{{ call_name }}" is approaching.
+
+Deadline information:
+- Round: {{ round_name }}
+- Submission deadline: {{ deadline_date }}
+- Time remaining: {{ time_remaining_days }} days {{ time_remaining_hours }} hours
+
+Your proposal is currently in DRAFT state. To be considered for review, you must submit your proposal before the deadline.
+
+Please ensure you have completed all required sections and finalized your resource requests before submission.
+
+Complete and submit proposal: {{ proposal_url }}
+
+Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
 ### review_assigned_message.html (waldur_mastermind.proposal)
 
 ```html
@@ -16883,6 +17046,40 @@ New review round opening: {{ call_name }}
 
 ```
 
+### proposal_submission_deadline_approaching_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Proposal submission deadline reminder</title>
+</head>
+<body>
+    <p>Dear {{ proposal_creator_name }},</p>
+
+    <p>This is a friendly reminder that the submission deadline for your draft proposal "{{ proposal_name }}" in call "{{ call_name }}" is approaching.</p>
+
+    <p><strong>Deadline information:</strong><br>
+        - Round: {{ round_name }}<br>
+        - Submission deadline: {{ deadline_date }}<br>
+        - Time remaining: {{ time_remaining_days }} days {{ time_remaining_hours }} hours
+    </p>
+
+    <p>Your proposal is currently in <strong>DRAFT</strong> state. To be considered for review, you must submit your proposal before the deadline.</p>
+
+    <p>Please ensure you have completed all required sections and finalized your resource requests before submission.</p>
+
+    <p>Complete and submit proposal: <a href="{{ proposal_url }}">{{ proposal_url }}</a></p>
+
+    <p>Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.</p>
+
+    <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
+</body>
+</html>
+
+```
+
 ### proposal_state_changed_message.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -17049,6 +17246,14 @@ Round closed: {{ round_name }} - {{ call_name }}
 
 ```
 
+### review_deadline_approaching_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+Reminder: Review due in {{ time_remaining_days }} days for {{ proposal_name }}
+
+```
+
 ### round_opening_for_reviewers_message.html (waldur_mastermind.proposal)
 
 ```html
@@ -17172,6 +17377,55 @@ Alert: review assignment rejected for {{ proposal_name }}
 ```txt
 
 Offering request {{ decision }}: {{ offering_name }}
+
+```
+
+### review_deadline_approaching_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Review deadline reminder</title>
+</head>
+<body>
+    <p>Dear {{ reviewer_name }},</p>
+
+    <p>This is a friendly reminder that your review for the proposal "{{ proposal_name }}" in call "{{ call_name }}" is due soon.</p>
+
+    <p><strong>Review deadline:</strong><br>
+        - Due date: {{ review_deadline }}<br>
+        - Time remaining: {{ time_remaining_days }} days
+    </p>
+
+    <p>Please log in to the platform to complete and submit your review as soon as possible. If you have any questions or need assistance, please contact the call manager.</p>
+
+    <p>Continue review: <a href="{{ review_url }}">{{ review_url }}</a></p>
+
+    <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
+</body>
+</html>
+
+```
+
+### review_deadline_approaching_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Dear {{ reviewer_name }},
+
+This is a friendly reminder that your review for the proposal "{{ proposal_name }}" in call "{{ call_name }}" is due soon.
+
+Review deadline:
+- Due date: {{ review_deadline }}
+- Time remaining: {{ time_remaining_days }} days
+
+Please log in to the platform to complete and submit your review as soon as possible. If you have any questions or need assistance, please contact the call manager.
+
+Continue review: {{ review_url }}
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
 
 ```
 
@@ -17437,6 +17691,14 @@ Proposal state update: {{ proposal_name }} - {{ new_state }}
 ```txt
 
 Proposal canceled: {{ proposal_name }}
+
+```
+
+### proposal_submission_deadline_approaching_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+Reminder: Proposal {{ proposal_name }} submission deadline approaching for {{ call_name }}
 
 ```
 
@@ -68011,6 +68273,7 @@ td:nth-child(4) {
 | `log_offering_role_deleted` | `Django Signal (post_delete)` | `marketplace.OfferingUserRole` | Log offering role deletion. |
 | `log_offering_user_created` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Log offering user creation. |
 | `log_offering_user_deleted` | `Django Signal (post_delete)` | `marketplace.OfferingUser` | Log offering user deletion. |
+| `log_offering_user_username_updated` | `Django Signal (post_save)` | `marketplace.OfferingUser` | No description |
 | `log_order_events` | `Django Signal (post_save)` | `marketplace.Order` | Log order creation and state transition events. |
 | `log_request_events` | `Django Signal (post_save)` | `marketplace_remote.ProjectUpdateRequest` | No description |
 | `log_resource_events` | `Django Signal (post_save)` | `marketplace.Resource` | Log resource creation request events. |
@@ -68132,6 +68395,7 @@ td:nth-child(4) {
 | `trigger_scim_sync_on_offering_endpoint_change` | `Django Signal (post_save)` | `marketplace.OfferingAccessEndpoint` | Trigger SCIM entitlements synchronization when offering SSH endpoints change. |
 | `trigger_scim_sync_on_offering_endpoint_change` | `Django Signal (post_delete)` | `marketplace.OfferingAccessEndpoint` | Trigger SCIM entitlements synchronization when offering SSH endpoints change. |
 | `trigger_scim_sync_on_offering_user_ok` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Trigger SCIM entitlements synchronization when OfferingUser transitions to OK with username. |
+| `trigger_scim_sync_on_resource_ok` | `Django Signal (post_save)` | `marketplace.Resource` | Trigger SCIM entitlements synchronization when resource transitions to OK. |
 | `trigger_user_action_recalculation_on_order_state_change` | `Django Signal (post_save)` | `marketplace.Order` | Trigger immediate UserAction recalculation when Order state changes. |
 | `update_argocd_secret_when_resource_options_changed` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
 | `update_cache_when_invoice_item_is_deleted` | `Django Signal (post_delete)` | `invoices.InvoiceItem` | No description |
@@ -68240,7 +68504,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 784
+Total unique handlers found: 786
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
@@ -68248,7 +68512,7 @@ Total unique handlers found: 784
 - **waldur_freeipa**: 12 handlers
 - **waldur_keycloak**: 9 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 308 handlers
+- **waldur_mastermind**: 310 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
