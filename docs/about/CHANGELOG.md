@@ -115,6 +115,7 @@ This release brings a major overhaul of the reporting and analytics module with 
 
 
 
+
 ## 8.0.6 - 2026-03-06
 
 ### Highlights
