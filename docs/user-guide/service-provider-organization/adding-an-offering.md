@@ -90,6 +90,77 @@ creating an offering is through a HomePort.
     For more advanced cases of management of offerings, take a look at how a SLURM offering can be managed using
     [Ansible module](https://github.com/waldur/ansible-waldur-module/blob/develop/waldur_batch_offering.py).
 
+## Configuring billing model per component
+
+Waldur supports configuring the billing model for each component individually. The same OpenStack Tenant offering type can have different billing configurations depending on the use case:
+
+- **Monthly billing** (default): Components use **Limit-based** accounting type. Customers are billed monthly based on their reserved limits (e.g., 4 cores × €1/core/month).
+- **Prepaid billing**: Components use **One-time** accounting type with the **Pre-paid** option enabled. Customers pay upfront for the full duration (e.g., 4 cores × €1/core/month × 3 months = €12 total).
+
+### Default: Limit-based (monthly billing)
+
+By default, OpenStack Tenant offerings come with three built-in components — Cores, RAM, and Storage — all configured as **Limit-based** with monthly billing.
+
+### Switching all components with "Switch modes"
+
+The fastest way to switch between monthly and prepaid billing is the **Switch modes** dropdown on the Accounting → Components tab. It combines both billing mode and storage mode options in one menu:
+
+![Components tab with Switch modes dropdown](../img/openstack-switch-modes-button.png)
+
+Click **Switch modes** → **Billing mode** to open a dialog where you can select the billing model for all infrastructure components at once:
+
+![Switch modes dropdown with Billing mode and Storage mode options](../img/openstack-switch-modes-dropdown.png)
+
+After selecting "Prepaid (One-time)" and saving, all built-in components (Cores, RAM, Storage) switch to "One-time" (prepaid). Custom components like "Consultancy Hours" are not affected.
+
+![All infrastructure components switched to One-time](../img/openstack-all-prepaid-result.png)
+
+### Switching individual components
+
+You can also configure each component individually:
+
+1. Navigate to the offering's **Edit** → **Accounting** → **Components** tab.
+2. Click the action menu (⋮) on the component you want to change and select **Edit**.
+3. Change the **Accounting type** from "Limit-based" to **"One-time"**.
+4. Enable the **Pre-paid component** toggle.
+5. Optionally configure duration constraints (min/max duration, renewal settings).
+6. Click **Save**.
+
+This allows mixed configurations — for example, CPU and RAM as prepaid while Storage remains monthly.
+
+!!! note
+    For prepaid offerings, the **Termination date** (end date) is required when ordering. The total upfront charge is calculated as `price × limit × months`.
+
+### How billing works for each model
+
+| Billing model | Invoice frequency | Formula | Limit changes |
+|---------------|-------------------|---------|---------------|
+| **Limit-based** (monthly) | Every month | `price × limit` per month | Adjusted on current month's invoice |
+| **One-time + prepaid** (upfront) | Once at creation | `price × limit × months` | Supplementary charge for `(new - old) × remaining months` |
+| **Limit-based / Total** (one-time) | Once at creation | `price × limit` | Incremental charge for difference |
+
+## Adding custom components
+
+Service providers can add custom accounting components to any offering alongside the built-in ones. This is useful for non-infrastructure services like consultancy hours, support packages, or training credits.
+
+To add a custom component:
+
+1. Navigate to the offering's **Edit** → **Accounting** → **Components** tab.
+2. Click **Add component**.
+3. Fill in:
+    - **Internal name**: a machine-readable identifier (e.g., `consultancy_hours`)
+    - **Display name**: shown to users (e.g., "Consultancy Hours")
+    - **Measured unit**: the unit label (e.g., "hours")
+    - **Accounting type**: select the billing model (e.g., "Limit-based" with "Maximum total" for one-time flat charges)
+4. Click **Confirm**.
+
+![Custom component added to OpenStack offering](../img/openstack-custom-component-added.png)
+
+Custom components appear alongside built-in components in the order form and pricing views. They are billed according to their configured accounting type but are not pushed to the OpenStack backend as quotas.
+
+!!! tip
+    Use **Limit-based** with **Maximum total** period for one-time flat-rate services like consultancy hours. Use **One-time + Pre-paid** for subscription-based add-ons that scale with duration.
+
 ## Offering management
 
 It is possible to temporarily unpublish the offering. For example, if the service is down for a longer maintenance. To do that, open the offering edit page and click on **Pause** from the right.
