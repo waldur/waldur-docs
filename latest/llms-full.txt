@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-04-05T21:34:37.410309Z
+Generated: 2026-04-05T21:49:08.276723Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -40733,6 +40733,18 @@ The processor supports four primary update operation types:
   - Supports combined renewal + limit changes
   - Tracks renewal costs and dates
 
+##### Billing for prepaid components on limit changes
+
+When limits change on a resource with prepaid (`ONE_TIME` + `is_prepaid=True`) components, the billing system creates supplementary invoice items:
+
+- **Increase**: `(new_limit - old_limit) × remaining_months × price` — positive charge
+- **Decrease**: same formula with negative unit price — negative invoice adjustment (reduces invoice total)
+- **Unchanged**: no supplementary item
+
+This is handled by `MarketplaceBillingService._handle_prepaid_limits_change()` and applies to mid-period changes via `update_limits`, not only to renewals. The original per-month limit is stored in the invoice item's `details["prepaid_limit"]` for accurate delta calculation.
+
+For `LIMIT` billing type components, limit changes are handled by `LimitPeriodProcessor.process_update()` as before.
+
 #### 3. Resource Options Updates
 
 - **Detection**: `"new_options"` present in `order.attributes`
@@ -41356,7 +41368,18 @@ The marketplace supports five distinct billing patterns, each handled by differe
 | **USAGE**        | Pay-as-you-consume services               | $0.10/GB of storage used          | `ComponentUsage` reports are submitted.              |
 | **LIMIT**        | Pre-allocated resource quotas             | $5/CPU core allocated per month   | Resource activation, limit changes, and monthly invoice generation. |
 | **ONE_TIME**     | Setup fees, licenses                      | $100 one-time installation fee    | Resource activation (`CREATE` order).                |
+| **ONE_TIME** (prepaid) | Upfront billing for time-limited resources | 4 cores × $1/mo × 3 months = $12 | Resource activation (`CREATE` order). Quantity = limit × months. |
 | **ON_PLAN_SWITCH** | Fees for changing service plans           | $25 fee to upgrade to a premium plan | Plan modification (`UPDATE` order).                  |
+
+#### Per-Component Billing Configuration
+
+The billing type is configurable **per offering component**, not globally per offering type. This allows the same OpenStack Tenant offering type to have different billing configurations:
+
+- **Monthly billing**: Components use `LIMIT` billing type (default for OpenStack). Customers are billed monthly.
+- **Prepaid billing**: Components use `ONE_TIME` with `is_prepaid=True`. Customers pay upfront for `limit × months`. An `end_date` is required. Mid-period limit changes create supplementary charges for `(new_limit - old_limit) × remaining_months`.
+- **One-time total**: Components use `LIMIT` with `limit_period=TOTAL`. A single charge for the full amount, regardless of duration. Useful for consultancy hours, support packages.
+
+Service providers configure the billing model by editing the component's accounting type in the offering's Accounting tab.
 
 ### Component Architecture
 
@@ -41395,7 +41418,7 @@ Limit-based components are billed based on the quantity of a resource a user has
 
 - **`TOTAL`**: This period represents a one-time charge for a lifetime allocation.
   - **Initial Charge**: A single invoice item is created when the resource is first provisioned (`CREATE` order).
-  - **Limit Updates**: If the limit for a `TOTAL` component is changed later, the system calculates the difference between the new limit and the sum of all previously billed quantities for that component. It then creates a new invoice item (positive or negative) to bill for only the increment or credit the decrement. This prevents double-billing and correctly handles upgrades/downgrades.
+  - **Limit Updates**: If the limit for a `TOTAL` component is changed later, the system calculates the difference between the new limit and the sum of all previously billed quantities for that component. It then creates a new invoice item (positive or negative) to bill for only the increment or reduce the invoice total for the decrement. This prevents double-billing and correctly handles upgrades/downgrades.
 
 - **`QUARTERLY`**: This period has specialized logic for billing every three months, ensuring charges align with standard financial quarters.
 
