@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-04-05T02:04:41.053696Z
+Generated: 2026-04-05T21:34:37.410309Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -9013,6 +9013,30 @@ If true, a support ticket is created when a user adds or removes an SSH public k
 
 Select which reporting screens should be visible to users. Uncheck to disable specific reports.
 
+### Personal Access Tokens
+
+#### PAT_ENABLED
+
+**Type:** bool
+
+Enable Personal Access Token authentication.
+
+#### PAT_MAX_LIFETIME_DAYS
+
+**Type:** int
+
+**Default value:** 365
+
+Maximum PAT lifetime in days.
+
+#### PAT_MAX_TOKENS_PER_USER
+
+**Type:** int
+
+**Default value:** 20
+
+Maximum number of active PATs per user.
+
 ---
 
 ### Features
@@ -13327,6 +13351,7 @@ td:nth-child(4) {
 | `check-polices` | `waldur_mastermind.policy.check_polices` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Evaluate all policies across all policy types in the system. |
 | `check-table-growth-alerts` | `waldur_core.check_table_growth_alerts` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Check for tables that have grown abnormally fast and send alerts.<br> Compares current sizes against 7-day and 30-day historical data. |
 | `cleanup-dangling-user-actions` | `waldur_core.user_actions.cleanup_dangling_user_actions` | Cron: `30 3 * * * (m/h/dM/MY/d)` | Clean up user actions pointing to non-existent objects (fallback periodic cleanup) |
+| `cleanup-expired-pats` | `waldur_core.core.cleanup_expired_personal_access_tokens` | 6 hours | Deactivate expired PATs. |
 | `cleanup-expired-silenced-actions` | `waldur_core.user_actions.cleanup_expired_silenced_actions` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Remove or unsilence actions with expired temporary silence |
 | `cleanup-old-action-executions` | `waldur_core.user_actions.cleanup_old_action_executions` | Cron: `0 1 * * 0 (m/h/dM/MY/d)` | Clean up old action execution records |
 | `cleanup-orphan-subscription-queues` | `waldur_core.logging.cleanup_orphan_subscription_queues` | 6 hours | Delete RabbitMQ subscription queues that have no matching DB record.<br><br> This handles cases where:<br> - The pre_delete signal failed to clean up a queue<br> - DB records were deleted manually without triggering signals<br> - Data corruption left orphaned queues in RabbitMQ |
@@ -18205,6 +18230,17 @@ overall usage data within a project and breaks down monthly usage across resourc
 GPU, and storage. End users can export this usage data in PDF, CSV, and XLSX formats. Access to information
 varies by user role: project members can see details for their specific projects, while organization owners
 can view information for all projects within their organization.
+
+## Billing models
+
+Waldur supports two billing models for resource components, configurable per offering:
+
+- **Monthly (Limit-based)**: Resources are billed each month based on reserved limits. This is the default for OpenStack Tenant offerings. Limits can be changed at any time, with billing adjusted on the current invoice.
+- **Prepaid (One-time + Pre-paid)**: Resources are billed upfront for the full subscription period. The charge is calculated as `price × limit × months`. An end date is required. Mid-period limit changes create supplementary charges for the remaining period.
+
+Both models can coexist on the same offering — for example, CPU cores can be prepaid while a management fee remains monthly. Custom components (e.g., consultancy hours) can use the "Maximum total" limit period for flat one-time charges.
+
+For configuration details, see [Configuring billing model per component](../user-guide/service-provider-organization/adding-an-offering.md#configuring-billing-model-per-component).
 
 In addition to that, Waldur offers convenient way for exporting the usage information for visualization [with
 Grafana](grafana.md).
@@ -60183,6 +60219,77 @@ creating an offering is through a HomePort.
     For more advanced cases of management of offerings, take a look at how a SLURM offering can be managed using
     [Ansible module](https://github.com/waldur/ansible-waldur-module/blob/develop/waldur_batch_offering.py).
 
+## Configuring billing model per component
+
+Waldur supports configuring the billing model for each component individually. The same OpenStack Tenant offering type can have different billing configurations depending on the use case:
+
+- **Monthly billing** (default): Components use **Limit-based** accounting type. Customers are billed monthly based on their reserved limits (e.g., 4 cores × €1/core/month).
+- **Prepaid billing**: Components use **One-time** accounting type with the **Pre-paid** option enabled. Customers pay upfront for the full duration (e.g., 4 cores × €1/core/month × 3 months = €12 total).
+
+### Default: Limit-based (monthly billing)
+
+By default, OpenStack Tenant offerings come with three built-in components — Cores, RAM, and Storage — all configured as **Limit-based** with monthly billing.
+
+### Switching all components with "Switch modes"
+
+The fastest way to switch between monthly and prepaid billing is the **Switch modes** dropdown on the Accounting → Components tab. It combines both billing mode and storage mode options in one menu:
+
+[Image: Components tab with Switch modes dropdown]
+
+Click **Switch modes** → **Billing mode** to open a dialog where you can select the billing model for all infrastructure components at once:
+
+[Image: Switch modes dropdown with Billing mode and Storage mode options]
+
+After selecting "Prepaid (One-time)" and saving, all built-in components (Cores, RAM, Storage) switch to "One-time" (prepaid). Custom components like "Consultancy Hours" are not affected.
+
+[Image: All infrastructure components switched to One-time]
+
+### Switching individual components
+
+You can also configure each component individually:
+
+1. Navigate to the offering's **Edit** → **Accounting** → **Components** tab.
+2. Click the action menu (⋮) on the component you want to change and select **Edit**.
+3. Change the **Accounting type** from "Limit-based" to **"One-time"**.
+4. Enable the **Pre-paid component** toggle.
+5. Optionally configure duration constraints (min/max duration, renewal settings).
+6. Click **Save**.
+
+This allows mixed configurations — for example, CPU and RAM as prepaid while Storage remains monthly.
+
+!!! note
+    For prepaid offerings, the **Termination date** (end date) is required when ordering. The total upfront charge is calculated as `price × limit × months`.
+
+### How billing works for each model
+
+| Billing model | Invoice frequency | Formula | Limit changes |
+|---------------|-------------------|---------|---------------|
+| **Limit-based** (monthly) | Every month | `price × limit` per month | Adjusted on current month's invoice |
+| **One-time + prepaid** (upfront) | Once at creation | `price × limit × months` | Supplementary charge for `(new - old) × remaining months` |
+| **Limit-based / Total** (one-time) | Once at creation | `price × limit` | Incremental charge for difference |
+
+## Adding custom components
+
+Service providers can add custom accounting components to any offering alongside the built-in ones. This is useful for non-infrastructure services like consultancy hours, support packages, or training credits.
+
+To add a custom component:
+
+1. Navigate to the offering's **Edit** → **Accounting** → **Components** tab.
+2. Click **Add component**.
+3. Fill in:
+    - **Internal name**: a machine-readable identifier (e.g., `consultancy_hours`)
+    - **Display name**: shown to users (e.g., "Consultancy Hours")
+    - **Measured unit**: the unit label (e.g., "hours")
+    - **Accounting type**: select the billing model (e.g., "Limit-based" with "Maximum total" for one-time flat charges)
+4. Click **Confirm**.
+
+[Image: Custom component added to OpenStack offering]
+
+Custom components appear alongside built-in components in the order form and pricing views. They are billed according to their configured accounting type but are not pushed to the OpenStack backend as quotas.
+
+!!! tip
+    Use **Limit-based** with **Maximum total** period for one-time flat-rate services like consultancy hours. Use **One-time + Pre-paid** for subscription-based add-ons that scale with duration.
+
 ## Offering management
 
 It is possible to temporarily unpublish the offering. For example, if the service is down for a longer maintenance. To do that, open the offering edit page and click on **Pause** from the right.
@@ -67362,6 +67469,11 @@ def available_checklists(self, request):
 - auth_logged_in_with_username
 - auth_logged_out
 - auth_login_failed_with_username
+- pat_created
+- pat_expired
+- pat_revoked
+- pat_rotated
+- pat_used_from_new_ip
 - token_created
 - token_lifetime_updated
 
@@ -68133,6 +68245,7 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_firecrest.Job` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `marketplace.Order` | Recalculate count quota when an instance is created or deleted. |
 | `revoke_roles_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | When project is deleted, capture user role snapshots before revoking them. |
+| `revoke_user_pats_on_deactivation` | `Django Signal (pre_save)` | `core.User` | Revoke all active PATs when a user is deactivated. |
 | `schedule_cleanup_for_deleted_object` | `Django Signal (post_delete)` | `marketplace.Order` | Signal handler to schedule cleanup of user actions for a deleted object. |
 | `schedule_cleanup_for_deleted_object` | `Django Signal (post_delete)` | `marketplace.Offering` | Signal handler to schedule cleanup of user actions for a deleted object. |
 | `schedule_cleanup_for_deleted_object` | `Django Signal (post_delete)` | `marketplace.Resource` | Signal handler to schedule cleanup of user actions for a deleted object. |
@@ -68575,11 +68688,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 788
+Total unique handlers found: 789
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 409 handlers
+- **waldur_core**: 410 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_keycloak**: 9 handlers
 - **waldur_lexis**: 1 handlers
@@ -74028,6 +74141,226 @@ Use `require_membership` for portals where only registered organization members 
 ### Tests
 
 Backend tests are in `src/waldur_mastermind/marketplace/tests/test_offerings.py` in the `RestrictedOfferingVisibilityModeTest` class.
+
+---
+
+### Personal Access Tokens
+<!-- Source: docs/developer-guide/personal-access-tokens.md -->
+
+# Personal Access Tokens
+
+## Overview
+
+Personal Access Tokens (PATs) provide named, scoped, time-limited tokens for programmatic API access. They are distinct from the existing `Token` model, which continues to serve UI/session authentication. PATs use the `w_` prefix to distinguish them from OIDC JWT tokens.
+
+## Token Format
+
+Format: `w_<unix_timestamp>_<random>` (e.g., `w_1735689599_Abc123def...`)
+
+- `w_` prefix identifies the token as a Waldur PAT
+- `<unix_timestamp>` is the expiration time, visible by inspecting the token
+- `<random>` is 256 bits of entropy via `secrets.token_urlsafe(32)`
+- SHA-256 hash stored in database; plaintext shown only once at creation
+- First 8 characters stored as `token_prefix` for UI identification
+
+The embedded timestamp allows humans and scripts to check expiry without an API call. The server still validates against the database on every request.
+
+## Authentication
+
+PATs use the `Authorization: Bearer` header:
+
+```text
+Authorization: Bearer w_1735689599_<random>
+```
+
+The `PATAuthentication` class in `waldur_core.core.authentication` handles PAT requests. It is registered in `DEFAULT_AUTHENTICATION_CLASSES` between `SessionAuthentication` and `OIDCAuthentication`:
+
+```python
+"DEFAULT_AUTHENTICATION_CLASSES": (
+    "waldur_core.core.authentication.ImpersonationAuthentication",
+    "waldur_core.core.authentication.SessionAuthentication",
+    "waldur_core.core.authentication.PATAuthentication",
+    "waldur_core.core.authentication.OIDCAuthentication",
+),
+```
+
+The `w_` prefix lets `PATAuthentication` claim the request and fall through to `OIDCAuthentication` for non-PAT Bearer tokens.
+
+## API Endpoints
+
+Base URL: `/api/personal-access-tokens/`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/personal-access-tokens/` | List user's tokens (no plaintext) |
+| POST | `/api/personal-access-tokens/` | Create a new token (plaintext returned once) |
+| GET | `/api/personal-access-tokens/{uuid}/` | Retrieve token details (no plaintext) |
+| DELETE | `/api/personal-access-tokens/{uuid}/` | Soft-revoke (sets `is_active=False`) |
+| POST | `/api/personal-access-tokens/{uuid}/rotate/` | Atomic rotation: creates new token, revokes old |
+| GET | `/api/personal-access-tokens/available_scopes/` | Lists all delegatable permission enum values |
+
+PUT and PATCH are disabled -- tokens are immutable after creation.
+
+### Create Token
+
+**POST** `/api/personal-access-tokens/`
+
+Request:
+
+```json
+{
+  "name": "CI/CD Pipeline",
+  "scopes": ["LIST_ORDERS", "LIST_RESOURCES"],
+  "expires_at": "2025-12-31T23:59:59Z"
+}
+```
+
+Response (201, with `Cache-Control: no-store` header):
+
+```json
+{
+  "uuid": "abc123...",
+  "name": "CI/CD Pipeline",
+  "token": "w_full_plaintext_token_shown_only_once",
+  "scopes": ["LIST_ORDERS", "LIST_RESOURCES"],
+  "expires_at": "2025-12-31T23:59:59Z",
+  "created": "2025-01-15T10:00:00Z"
+}
+```
+
+### Rotate Token
+
+**POST** `/api/personal-access-tokens/{uuid}/rotate/`
+
+Atomically revokes the old token and creates a new one with the same name, scopes, and expiration. The operation uses `select_for_update()` to prevent races. Returns the same response format as create.
+
+### Revoke Token
+
+**DELETE** `/api/personal-access-tokens/{uuid}/`
+
+Sets `is_active=False` on the token (soft delete). Returns 204.
+
+## Scope Enforcement
+
+PAT scopes follow an intersection model: the effective permission at request time is the intersection of the PAT's scopes and the user's current roles.
+
+```text
+effective_permissions = PAT_scopes AND user_current_roles
+```
+
+Key implementation details in `waldur_core.permissions.utils`:
+
+- `_pat_scope_check()` runs in both `has_permission()` and `has_any_permission()` **before** the `is_staff` bypass, so staff PATs are properly scoped
+- If a user loses a role after creating a PAT, the PAT's matching permissions stop working immediately
+- Scope validation at creation ensures users can only request permissions they currently have
+
+## Security
+
+### PAT-via-PAT Blocked
+
+The `create`, `destroy`, and `rotate` actions reject requests authenticated with a PAT. This prevents token escalation -- PATs can only be managed through session or token authentication.
+
+### Uniform Error Responses
+
+All authentication failures return the same `"Invalid token."` message regardless of the failure reason (inactive, expired, nonexistent). This prevents information leakage about token state.
+
+### User Deactivation Cascade
+
+The `revoke_user_pats_on_deactivation` signal handler in `waldur_core.core.handlers` revokes all active PATs when a user's `is_active` changes from `True` to `False`.
+
+### Global Kill Switch
+
+The `PAT_ENABLED` Constance setting (default: `True`) controls whether PAT authentication is active. When `False`, `PATAuthentication.authenticate()` returns `None` for all `w_`-prefixed tokens, effectively disabling all PATs system-wide.
+
+## Configuration
+
+### Constance Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `PAT_ENABLED` | `True` | Global enable/disable for PAT authentication |
+| `PAT_MAX_LIFETIME_DAYS` | `365` | Maximum token lifetime in days |
+| `PAT_MAX_TOKENS_PER_USER` | `20` | Maximum active tokens per user |
+
+These settings are in the "Personal Access Tokens" fieldset in the Constance admin panel.
+
+## Model
+
+`PersonalAccessToken` in `waldur_core.core.models`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `user` | ForeignKey(User) | Token owner |
+| `name` | CharField | User-assigned name |
+| `token_prefix` | CharField | First 8 chars of token (for UI display) |
+| `token_hash` | CharField(64) | SHA-256 hash (unique, indexed) |
+| `scopes` | JSONField | List of `PermissionEnum` values |
+| `expires_at` | DateTimeField | Expiration timestamp |
+| `is_active` | BooleanField | Whether the token is active |
+| `last_used_at` | DateTimeField | Last usage timestamp |
+| `last_used_ip` | GenericIPAddressField | Last client IP |
+| `use_count` | PositiveIntegerField | Total usage count |
+
+## Usage Tracking
+
+The `last_used_at`, `last_used_ip`, and `use_count` fields are updated via a batched write with 10-minute cache-based debouncing (cache key: `pat_usage:{pk}`). This avoids a database write on every authenticated request.
+
+## Audit Events
+
+| Event Type | Trigger |
+|------------|---------|
+| `pat_created` | Token created |
+| `pat_revoked` | Token revoked (manual or user deactivation cascade) |
+| `pat_rotated` | Token rotated |
+| `pat_expired` | Token expired (deactivated by cleanup task) |
+| `pat_used_from_new_ip` | Token used from a different IP than `last_used_ip` |
+
+All events are scoped to the token's user and registered under `USER_MANAGEMENT_EVENTS` in `waldur_core.logging.enums`.
+
+## Celery Tasks
+
+The `cleanup_expired_personal_access_tokens` task runs every 6 hours. It deactivates all PATs where `expires_at <= now()` and `is_active=True`, emitting a `pat_expired` event for each.
+
+## Examples
+
+### Create a PAT
+
+```bash
+curl -X POST https://waldur.example.com/api/personal-access-tokens/ \
+  -H "Authorization: Token YOUR_SESSION_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "CI/CD Pipeline",
+    "scopes": ["LIST_ORDERS", "LIST_RESOURCES"],
+    "expires_at": "2025-12-31T23:59:59Z"
+  }'
+```
+
+### Use the PAT
+
+```bash
+curl https://waldur.example.com/api/resources/ \
+  -H "Authorization: Bearer w_returned_token_value"
+```
+
+### Rotate a PAT
+
+```bash
+curl -X POST https://waldur.example.com/api/personal-access-tokens/{uuid}/rotate/ \
+  -H "Authorization: Token YOUR_SESSION_TOKEN"
+```
+
+### Revoke a PAT
+
+```bash
+curl -X DELETE https://waldur.example.com/api/personal-access-tokens/{uuid}/ \
+  -H "Authorization: Token YOUR_SESSION_TOKEN"
+```
+
+## See Also
+
+- [Service Accounts](service-accounts.md) -- programmatic access at organizational/project scope
+- [Identity Bridge](identity-bridge.md) -- federated identity management
 
 ---
 
