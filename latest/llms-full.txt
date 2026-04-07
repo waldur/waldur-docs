@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-04-07T02:04:42.413039Z
+Generated: 2026-04-07T17:07:57.816620Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -31066,6 +31066,7 @@ offerings:
 | `project_prefix` | string | No | "waldur-" | Prefix for created Rancher project names |
 | `default_role` | string | No | "workloads-manage" | Default role assigned to users in Rancher |
 | `keycloak_use_user_id` | boolean | No | true | Use Keycloak user ID for lookup (false = use username) |
+| `namespace_labels` | map | No | {} | Extra labels applied to namespaces (e.g., `gpu-pool: h100-2x`) |
 
 ### Keycloak Settings (optional, matching waldur-mastermind format)
 
@@ -31152,6 +31153,7 @@ The plugin supports the following resource components (all with `billing_type: "
 - **CPU**: Measured in cores
 - **Memory**: Measured in GB
 - **Storage**: Measured in GB
+- **GPU**: Measured in units (optional, see [GPU Scheduling](#gpu-scheduling))
 
 ### Accounting Model
 
@@ -31172,6 +31174,178 @@ All components report **actual allocated resources**:
 
 1. **Project Creation**: CPU and memory limits → Rancher project quotas
 2. **Usage Reporting**: All components → actual allocated resources from Kubernetes
+
+## GPU Scheduling
+
+The plugin supports GPU quota management via Kubernetes ResourceQuotas combined with
+namespace-label-based scheduling. This approach uses a single generic `nvidia.com/gpu`
+resource for quotas, and a **Kyverno policy** on the cluster to steer GPU workloads
+to the correct node pool based on a namespace label.
+
+### How It Works
+
+1. **Site agent** creates a namespace with a `gpu-pool` label (configured via `namespace_labels`)
+2. **Site agent** applies a ResourceQuota with `requests.nvidia.com/gpu: N` (generic GPU count)
+3. **Kyverno policy** on the cluster reads the namespace's `gpu-pool` label and injects
+   a matching `nodeSelector` into every pod, ensuring GPU workloads land on the correct nodes
+4. **GPU nodes** are labeled with `gpu-pool=<type>` (e.g., `gpu-pool=h100-2x`)
+
+### Offering Setup
+
+Create a **separate Waldur offering per GPU pool type**. Each offering's backend config
+specifies the GPU pool label:
+
+```yaml
+offerings:
+  # Offering for H100 GPU pool
+  - name: "k8s-gpu-h100"
+    uuid: "..."
+    backend_type: "rancher"
+    backend:
+      backend_url: "https://rancher.example.com"
+      username: "..."
+      password: "..."
+      cluster_id: "c-m-1234abcd"
+      namespace_labels:
+        gpu-pool: "h100-2x"
+    components:
+      cpu:
+        type: "cpu"
+        name: "CPU"
+        measured_unit: "cores"
+      memory:
+        type: "ram"
+        name: "RAM"
+        measured_unit: "GB"
+      gpu:
+        type: "gpu"
+        name: "GPU"
+        measured_unit: "units"
+
+  # Offering for H200 GPU pool
+  - name: "k8s-gpu-h200"
+    uuid: "..."
+    backend_type: "rancher"
+    backend:
+      backend_url: "https://rancher.example.com"
+      username: "..."
+      password: "..."
+      cluster_id: "c-m-1234abcd"
+      namespace_labels:
+        gpu-pool: "h200-8x"
+    components:
+      cpu:
+        type: "cpu"
+        name: "CPU"
+        measured_unit: "cores"
+      memory:
+        type: "ram"
+        name: "RAM"
+        measured_unit: "GB"
+      gpu:
+        type: "gpu"
+        name: "GPU"
+        measured_unit: "units"
+```
+
+### Required Kubernetes Setup
+
+#### 1. Label GPU Nodes
+
+Each GPU node must be labeled with its pool type matching the `namespace_labels` values:
+
+```bash
+kubectl label node gpu-h100-node-01 gpu-pool=h100-2x
+kubectl label node gpu-h100-node-02 gpu-pool=h100-2x
+kubectl label node gpu-h200-node-01 gpu-pool=h200-8x
+```
+
+#### 2. Deploy Kyverno Policy
+
+A Kyverno `ClusterPolicy` must be deployed on the cluster to inject `nodeSelector`
+into pods based on the namespace's `gpu-pool` label. This is the minimal policy:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-gpu-pool-node-selector
+spec:
+  rules:
+    - name: set-node-selector-from-namespace-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      context:
+        - name: gpupool
+          apiCall:
+            urlPath: /api/v1/namespaces/{{ request.namespace }}
+            jmesPath: metadata.labels."gpu-pool" || ''
+            method: GET
+      preconditions:
+        all:
+          - key: "{{ gpupool }}"
+            operator: NotEquals
+            value: ""
+      mutate:
+        patchStrategicMerge:
+          spec:
+            nodeSelector:
+              gpu-pool: "{{ gpupool }}"
+```
+
+This policy:
+
+- Matches **all Pods** in every namespace
+- Fetches the namespace's `gpu-pool` label via Kubernetes API
+- **Precondition**: only fires if the label is non-empty (CPU-only namespaces are unaffected)
+- **Mutates**: injects `nodeSelector: {gpu-pool: "<value>"}` into the Pod spec
+- Kyverno **auto-generates** equivalent rules for Deployments, StatefulSets, Jobs, CronJobs, etc.
+
+#### 3. Optional: Default No-GPU Quota Policy
+
+To prevent accidental GPU usage in namespaces without a GPU pool label,
+deploy a generate policy that creates a zero-GPU ResourceQuota:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: default-no-gpu-quota
+spec:
+  rules:
+    - name: generate-no-gpu-quota
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+              selector:
+                matchExpressions:
+                  - key: gpu-pool
+                    operator: DoesNotExist
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - kyverno
+      generate:
+        apiVersion: v1
+        kind: ResourceQuota
+        name: no-gpu-quota
+        namespace: "{{request.object.metadata.name}}"
+        synchronize: true
+        data:
+          spec:
+            hard:
+              requests.nvidia.com/gpu: "0"
+              limits.nvidia.com/gpu: "0"
+```
 
 ## Complete Workflow
 
@@ -62610,6 +62784,147 @@ Users are encouraged to implement data protection and security measures to secur
 
 ---
 
+### Dependency Vulnerability Management
+<!-- Source: docs/about/dependency-vulnerability-management.md -->
+
+# Dependency Vulnerability Management
+
+Waldur uses automated dependency vulnerability scanning across all repositories
+to detect known CVEs in third-party packages. This approach is informed by the
+[ENISA Technical Advisory for Secure Use of Package Managers (March 2026)](https://www.enisa.europa.eu/sites/default/files/2026-03/ENISA%20Technical%20Advisory%20-%20Package_Managers_Final.pdf).
+
+## How it works
+
+Every CI pipeline runs [osv-scanner](https://google.github.io/osv-scanner/) against
+the repository's lock file (`uv.lock` for Python, `yarn.lock` for JavaScript).
+The scanner checks all direct and transitive dependencies against the
+[OSV.dev](https://osv.dev/) vulnerability database, which aggregates data from
+GitHub Advisories, PyPI, npm, NVD, and other sources.
+
+The shared CI template lives in
+[waldur-pipelines](https://code.opennodecloud.com/waldur/waldur-pipelines)
+at `/templates/test/vulnerability-scan.yml` and is included by each repository.
+
+### Scanning scope
+
+| Repository | Lock file | Ecosystem |
+|------------|-----------|-----------|
+| waldur-mastermind | `uv.lock` | PyPI |
+| waldur-homeport | `yarn.lock` | npm |
+| waldur-site-agent | `uv.lock` | PyPI |
+| waldur-docs | `uv.lock` | PyPI |
+
+### When scans run
+
+- On every **merge request** pipeline
+- On every push to the **default branch** (`develop`, `main`, or `master`)
+- On every **tagged release**
+
+## Interpreting results
+
+The scan job is configured with `allow_failure: true`, meaning it reports
+findings without blocking the pipeline. Vulnerabilities appear as an orange
+warning icon on the scan job in GitLab CI.
+
+The scanner outputs a table with:
+
+- **OSV URL** — link to the vulnerability details
+- **CVSS** — severity score (0-10)
+- **Package** — affected package name
+- **Version** — currently installed version
+- **Fixed version** — minimum version that resolves the issue
+
+!!! note
+    Not all reported vulnerabilities are exploitable. A vulnerability in a
+    transitive dependency may not be reachable from Waldur's code. Triage
+    before acting — check whether the affected function is actually used.
+
+## Fixing vulnerabilities
+
+### Python repositories (uv)
+
+```bash
+# Upgrade a specific package
+uv lock --upgrade-package <package-name>
+
+# Verify the lock file is consistent
+uv lock --check
+```
+
+If `pyproject.toml` has a version constraint that blocks the upgrade, update
+the constraint first, then re-lock.
+
+### JavaScript repositories (yarn)
+
+```bash
+# Upgrade a direct dependency
+yarn upgrade <package-name>@<fixed-version>
+
+# For transitive-only dependencies, add a resolution
+# in package.json to force a specific version:
+"resolutions": {
+  "<package-name>": ">=<fixed-version>"
+}
+```
+
+After adding resolutions, run `yarn install` to update `yarn.lock`.
+
+## Suppressing false positives
+
+If a reported vulnerability is not applicable (e.g., the affected function is
+not reachable, or the package is only used in tests), add a suppression to
+`.osv-scanner.toml` in the repository root:
+
+```toml
+[[IgnoredVulns]]
+id = "GHSA-xxxx-xxxx-xxxx"
+reason = "Function is not reachable — we only use the parsing module"
+ignoreUntil = "2026-10-01"  # Re-evaluate after this date
+```
+
+!!! warning
+    Always set an `ignoreUntil` date so suppressions are periodically
+    re-evaluated. Do not suppress vulnerabilities indefinitely.
+
+## Triage process
+
+When the scan finds new vulnerabilities:
+
+1. **Assess severity** — focus on High and Critical (CVSS >= 7.0) first.
+2. **Check reachability** — is the vulnerable function actually called in Waldur?
+   Use `grep` or code search to determine if the affected module/function is imported.
+3. **Check fix availability** — if a fixed version exists, upgrade. If not,
+   evaluate workarounds or suppress with justification.
+4. **Prioritize production dependencies** — vulnerabilities in dev-only or
+   test-only dependencies are lower priority.
+5. **Create a fix** — upgrade the package and verify tests pass. For breaking
+   changes (e.g., major version bumps), create a dedicated MR.
+6. **Document exceptions** — if a vulnerability cannot be fixed immediately,
+   add it to `.osv-scanner.toml` with a clear reason and re-evaluation date.
+
+## Lock file hygiene
+
+Lock files are the foundation of reproducible and secure builds:
+
+- **Always commit lock files** — `uv.lock`, `yarn.lock`, and `package-lock.json`
+  must be in version control.
+- **Enforce frozen installs in CI** — `uv sync --frozen` and
+  `yarn install --frozen-lockfile` ensure CI uses exactly what was committed.
+- **Review lock file changes in MRs** — unexpected dependency additions or
+  version changes in lock files may indicate supply chain issues.
+- **Keep dependencies up to date** — outdated dependencies accumulate
+  vulnerabilities over time. Regularly run upgrades and review changelogs.
+
+## References
+
+- [ENISA Technical Advisory — Secure Use of Package Managers](https://www.enisa.europa.eu/sites/default/files/2026-03/ENISA%20Technical%20Advisory%20-%20Package_Managers_Final.pdf)
+- [osv-scanner documentation](https://google.github.io/osv-scanner/)
+- [OSV.dev vulnerability database](https://osv.dev/)
+- [OpenSSF npm Best Practices for the Supply Chain](https://openssf.org/blog/2022/09/01/npm-best-practices-for-the-supply-chain/)
+- [OWASP NPM Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html)
+
+---
+
 ### Governance
 <!-- Source: docs/about/governance.md -->
 
@@ -70515,6 +70830,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ProtectedModelMixin`](#protectedmodelmixin) | `waldur_core.structure.admin` | Mixin to handle protected model deletion errors gracefully in Django admin |
 | [`CoordinatesMixin`](#coordinatesmixin) | `waldur_core.structure.mixins` | Mixin to add a latitude and longitude fields |
 | [`IPCoordinatesMixin`](#ipcoordinatesmixin) | `waldur_core.structure.mixins` | Mixin to add a latitude and longitude fields |
+| [`CustomerAddressDetailsMixin`](#customeraddressdetailsmixin) | `waldur_core.structure.models` | Mixin contains customer address detail fields |
 | [`CustomerDetailsMixin`](#customerdetailsmixin) | `waldur_core.structure.models` | Mixin containing customer detail fields |
 | [`ProjectOECDFOS2007CodeMixin`](#projectoecdfos2007codemixin) | `waldur_core.structure.models` | Mixin providing OECD FOS 2007 classification codes for research projects |
 | [`ServiceAccountMixin`](#serviceaccountmixin) | `waldur_core.structure.models` | Mixin for models that support service accounts |
@@ -71439,6 +71755,16 @@ Mixin to add a latitude and longitude fields
 
 **Base classes:** `CoordinatesMixin`
 
+### CustomerAddressDetailsMixin
+
+**Module:** `waldur_core.structure.models`
+
+**Description:**
+
+Mixin contains customer address detail fields.
+
+**Base classes:** `Model`
+
 ### CustomerDetailsMixin
 
 **Module:** `waldur_core.structure.models`
@@ -71451,7 +71777,7 @@ Provides comprehensive customer information fields including
 native name, contact details, agreement number, email, phone,
 address, banking information, and external system integration.
 
-**Base classes:** `NameMixin`, `VATMixin`, `CoordinatesMixin`
+**Base classes:** `NameMixin`, `VATMixin`, `CoordinatesMixin`, `CustomerAddressDetailsMixin`
 
 ### ProjectOECDFOS2007CodeMixin
 
