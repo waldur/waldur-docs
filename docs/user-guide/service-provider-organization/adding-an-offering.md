@@ -128,6 +128,10 @@ You can also configure each component individually:
 
 This allows mixed configurations — for example, CPU and RAM as prepaid while Storage remains monthly.
 
+One-time components also support **Min value** and **Max value** constraints, which limit the quantity a customer can order. These fields appear alongside the Pre-paid toggle in the component edit dialog.
+
+![One-time component with min/max value fields](../img/one-time-component-min-max.png)
+
 !!! note
     For prepaid offerings, the **Termination date** (end date) is required when ordering. The total upfront charge is calculated as `price × limit × months`.
 
@@ -160,6 +164,38 @@ Custom components appear alongside built-in components in the order form and pri
 
 !!! tip
     Use **Limit-based** with **Maximum total** period for one-time flat-rate services like consultancy hours. Use **One-time + Pre-paid** for subscription-based add-ons that scale with duration.
+
+## Volume discounts
+
+Service providers can configure volume discounts on plan components to incentivize larger orders. When a customer orders a quantity that meets or exceeds a configured threshold, a percentage discount is automatically applied.
+
+### Configuring discounts
+
+1. Navigate to the offering's **Edit** → **Accounting** → **Plans** tab.
+2. Select a plan and click the **Discounts** button.
+3. For each component, set:
+    - **Discount threshold**: the minimum quantity required to trigger the discount
+    - **Discount rate**: the percentage discount (0–100%)
+4. Save changes.
+
+For example, setting a threshold of 16 cores and a rate of 10% means customers ordering 16 or more CPU cores receive a 10% price reduction on that component.
+
+### How customers see discounts
+
+During order creation, discount information is displayed directly on the component:
+
+- **Before threshold is met**: the discount hint appears in gray text (e.g., "10% off for 16+ cores"), informing the customer about the available discount.
+
+![Order form showing discount hints in gray when below threshold](../img/order-discount-hint.png)
+
+- **When threshold is met**: the hint turns green and the total price reflects the discounted rate. A "Volume discount savings" row appears in the order summary.
+
+![Order form showing active discounts in green with reduced prices](../img/order-discount-active.png)
+
+![Order summary showing Volume discount savings](../img/order-discount-summary.png)
+
+!!! tip
+    Volume discounts are applied per component. You can set different thresholds and rates for different components within the same plan to create tiered pricing structures.
 
 ## Offering management
 
