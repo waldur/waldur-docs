@@ -120,3 +120,35 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.
 
 ![type:video](../img/allocation_update.mp4)
+
+## Volume discounts
+
+Some offerings may have volume discounts configured on their components. When ordering a resource, you can see discount information directly on the order form.
+
+### How to identify available discounts
+
+Each component with a volume discount shows a hint below the unit price, for example: **"10% off for 16+ cores"**. This tells you the discount percentage and the minimum quantity required to activate it.
+
+When your requested quantity is **below the threshold**, the hint appears in gray text — informing you that a discount is available if you increase the quantity.
+
+![Order form showing discount hints in gray when quantity is below threshold](../img/order-discount-hint.png)
+
+### When the discount is active
+
+Once your requested quantity **meets or exceeds the threshold**, the discount hint turns green and the total price for that component is automatically reduced.
+
+![Order form showing active discounts in green with reduced prices](../img/order-discount-active.png)
+
+In the example above:
+
+- **CPU Cores**: 20 cores at €10.00/core with 10% discount = **€180.00** (instead of €200.00)
+- **NVMe Storage**: 600 GB at €0.50/GB with 15% discount = **€255.00** (instead of €300.00)
+
+### Discount savings in the order summary
+
+The order summary panel on the right shows a **"Volume discount savings"** line with the total amount saved across all components. This negative value is already reflected in the total price.
+
+![Order summary showing Volume discount savings line](../img/order-discount-summary.png)
+
+!!! tip
+    You can experiment with different quantities to see how discounts affect your total cost before submitting the order. The prices update in real time as you change the values.
