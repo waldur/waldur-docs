@@ -1,0 +1,86 @@
+# Rancher Plugin Configuration Example
+# This configuration shows how to set up the Rancher plugin for Waldur Site Agent
+# The plugin creates one Rancher project per Waldur resource with optional Keycloak integration
+
+# Waldur API configuration
+waldur:
+  api_url: "https://waldur.example.com/api/"
+  token: "your-waldur-api-token-here"
+
+offerings:
+  - name: "rancher-kubernetes"
+    uuid: "12345678-1234-5678-9abc-123456789012"
+
+    # Backend type - must be 'rancher'
+    backend_type: "rancher"
+
+    # Backend configuration
+    backend:
+      # Rancher server configuration (matches waldur-mastermind format)
+      backend_url: "https://rancher.example.com"  # Base Rancher URL (without /v3)
+      username: "your-rancher-access-key"         # Rancher access key (called username in waldur-mastermind)
+      password: "your-rancher-secret-key"         # Rancher secret key
+      cluster_id: "c-m-1234abcd"  # Just the cluster ID, not project reference
+      verify_cert: true
+
+      # Project naming configuration
+      # Each Waldur project will create a Rancher project named: {project_prefix}{waldur_project_slug}
+      project_prefix: "waldur-"
+
+      # Keycloak integration (optional) - matches waldur-mastermind format
+      keycloak_enabled: true
+      keycloak:
+        keycloak_url: "https://keycloak.example.com/auth/"
+        keycloak_realm: "waldur"
+        keycloak_user_realm: "master"
+        keycloak_username: "keycloak-admin"
+        keycloak_password: "your-keycloak-admin-password"
+        keycloak_ssl_verify: true
+
+      # Extra labels applied to every namespace created by this offering.
+      # Use this for GPU pool steering: a Kyverno policy on the cluster reads
+      # the gpu-pool label and injects a matching nodeSelector into pods,
+      # so GPU workloads land on the correct node pool.
+      # See GPU Scheduling section in the plugin README for required policies.
+      # namespace_labels:
+      #   gpu-pool: "h100-2x"
+
+    # Component definitions for resource management
+    components:
+      cpu:
+        type: "cpu"
+        name: "CPU"
+        measured_unit: "cores"
+        billing_type: "limit"
+
+      memory:
+        type: "ram"
+        name: "RAM"
+        measured_unit: "GB"
+        billing_type: "limit"
+
+      storage:
+        type: "storage"
+        name: "Storage"
+        measured_unit: "GB"
+        billing_type: "limit"
+
+      # GPU component (optional).
+      # Uses the generic nvidia.com/gpu K8s resource for ResourceQuota.
+      # GPU pool steering (which GPU type) is handled via namespace_labels
+      # + Kyverno policy, not via separate K8s resource names.
+      # gpu:
+      #   type: "gpu"
+      #   name: "GPU"
+      #   measured_unit: "units"
+      #   billing_type: "limit"
+
+      # Custom K8s resource mapping (advanced, optional).
+      # Components can specify a k8s_resource field to map to a non-default
+      # K8s extended resource name in ResourceQuota:
+      # custom_resource:
+      #   type: "gpu"
+      #   name: "Custom Resource"
+      #   measured_unit: "units"
+      #   billing_type: "limit"
+      #   k8s_resource: "example.com/custom"   # maps to requests.example.com/custom
