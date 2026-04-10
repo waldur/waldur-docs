@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-04-10T02:04:42.668888Z
+Generated: 2026-04-10T22:37:42.794886Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -9143,6 +9143,10 @@ Enable display of software catalog in UI.
 ## marketplace.display_user_tos
 
 Enable display of user terms of service in UI.
+
+## marketplace.hide_add_resource_button_from_end_users
+
+Hide add resource button from end users but allow staff/support access.
 
 ## marketplace.hide_marketplace_from_end_users
 
@@ -19226,6 +19230,156 @@ print('Order is done, resource is being terminated')
 MOAB is a scheduling engine for HPC centers from Adaptive Computing.
 
 Waldur implementation of support for MOAB is done via the [Waldur site agent](site-agent/index.md).
+
+---
+
+### OpenPortal integration
+<!-- Source: docs/admin-guide/providers/openportal-integration.md -->
+
+# OpenPortal integration
+
+## Overview
+
+OpenPortal is a distributed agent-based infrastructure management protocol that enables Waldur to integrate with remote HPC centres and resource providers. The integration supports award/project management, user provisioning, resource allocation, and usage reporting across institutional boundaries.
+
+!!! note
+    OpenPortal is developed by the University of Bristol's Isambard Supercomputing Centre. Source code and documentation: [github.com/isambard-sc/openportal](https://github.com/isambard-sc/openportal)
+
+## Architecture
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Waldur Portal   │────│  OpenPortal       │────│  Remote HPC      │
+│  (Waldur)        │    │  Bridge Agent     │    │  Cluster Agent   │
+│                  │    │                   │    │                  │
+│  marketplace_    │    │  HTTP API         │    │  SLURM/PBS/etc   │
+│  openportal_     │    │  Job queuing      │    │  Account mgmt    │
+│  remote module   │    │  Signal URLs      │    │  Usage reporting │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+```
+
+### Components
+
+| Component | Location | Purpose |
+|---|---|---|
+| Waldur OpenPortal module | `waldur_openportal/` | Backend integration with OpenPortal protocol |
+| Marketplace OpenPortal Remote | `marketplace_openportal_remote/` | Marketplace processors for order/resource lifecycle |
+| OpenPortal Bridge | External service | HTTP bridge between Waldur and OpenPortal network |
+| Cluster Agent | HPC centre | Manages local accounts, quotas, and usage |
+
+## Capabilities
+
+### Supported operations
+
+| Operation | Direction | OpenPortal Instruction |
+|---|---|---|
+| **Create project/award** | Waldur → Remote | `create_project` / `create_award` |
+| **Update project** | Waldur → Remote | `update_project` / `update_award` |
+| **Delete project** | Waldur → Remote | `remove_project` |
+| **Add user to project** | Waldur → Remote | `add_user` |
+| **Remove user** | Waldur → Remote | `remove_user` |
+| **Set resource limits** | Waldur → Remote | `set_limit` |
+| **Get resource limits** | Remote → Waldur | `get_limit` |
+| **Get usage reports** | Remote → Waldur | `get_usage_report` / `get_usage_reports` |
+| **Get storage reports** | Remote → Waldur | `get_storage_report` / `get_storage_reports` |
+| **Set project quota** | Waldur → Remote | `set_project_quota` |
+| **Sync offerings** | Remote → Waldur | `sync_offerings` |
+
+### Award metadata (AwardDetails)
+
+When creating or updating projects, the following metadata is transmitted:
+
+- **name**, **description**: Project identification
+- **start_date**, **end_date**: Project timeline
+- **members**: Map of email → role
+- **allocation**: Resource allocation amount with units (CPU-HR, GPU-HR, NHR, etc.)
+- **breakdown**: Component-level allocation (e.g., `gpu_hours`, `interactive_cpu_hours`, `project_storage`)
+- **award**: Link to award record on funding body system
+- **call**: Link to the funding call
+- **project_link**: Link to project page on awarding portal
+- **renewal**: Link to renewal/extension request page
+- **notes**: Append-only timestamped messages between portals
+- **membership_control**: Policy for membership changes (`open`, `members_only`, `roles_only`, `locked`)
+
+### Usage reporting
+
+The integration supports pulling compute and storage usage:
+
+- **Compute usage**: Daily per-user CPU/GPU/node usage
+- **Storage usage**: Quota and consumption snapshots per volume
+- **Date range filtering**: Query specific time periods
+- **Report remapping**: Translate component names between systems
+
+## Configuration
+
+### Prerequisites
+
+1. OpenPortal Bridge deployed and accessible via HTTP
+2. Cluster agent(s) configured on remote HPC centres
+3. Waldur `waldur_openportal` module enabled
+
+### Helm configuration
+
+Add the following to your Waldur Helm values:
+
+```yaml
+waldur:
+  openportal:
+    enabled: true
+    bridge_url: "https://bridge.example.com"
+    bridge_token: "your-bridge-api-token"
+```
+
+### Creating a remote allocation offering
+
+1. Navigate to **Service Provider** settings
+2. Create a new offering with type **OpenPortal Remote**
+3. Configure:
+    - Bridge URL and authentication
+    - Remote project identifier mapping
+    - Component definitions (CPU, GPU, RAM, storage)
+
+## Monitoring
+
+### Health checks
+
+The integration includes a health check endpoint:
+
+```bash
+# Check bridge connectivity
+curl -H "Authorization: Token YOUR_TOKEN" \
+  https://waldur.example.com/api/openportal-remote-allocations/health/
+```
+
+### Usage synchronization
+
+Usage data is pulled periodically via Celery tasks:
+
+- `sync_usage`: Pulls latest usage reports from remote clusters
+- `pull_allocation`: Full synchronization of single allocation
+- `send_notifications`: Sends project expiration notifications
+
+### Notification frequency
+
+Per-project notification frequency is configurable to avoid notification fatigue:
+
+- Notifications tracked per project with last-sent timestamps
+- Configurable minimum interval between notifications
+
+## Data flow for marketplace orders
+
+1. **User creates order** → `CreateRemoteAllocationProcessor` → `create_allocation()` on bridge
+2. **Limits change** → `UpdateRemoteAllocationLimitsProcessor` → `set_resource_limits()` on bridge
+3. **User added** → Signal handler → `sync_users()` → `add_user()` on bridge
+4. **Usage sync** → Periodic task → `get_usage_report()` from bridge → `ComponentUsage` update
+
+## Version compatibility
+
+| OpenPortal Version | Waldur Module | Key Features |
+|---|---|---|
+| 0.27.x | Current | AwardDetails with links, notes, membership control |
+| 0.26.x | Supported | Date range filtering on reports |
+| 0.25.x | Supported | Report remapping |
 
 ---
 
@@ -59727,6 +59881,468 @@ A: When configured for Call manager decisions, the manager can approve or reject
 
 ---
 
+### Checklists and forms
+<!-- Source: docs/user-guide/call-managing-organization/checklists-and-forms.md -->
+
+# Checklists and forms
+
+Waldur uses a flexible checklist system to create customizable forms for proposals, compliance checks, and onboarding workflows. This guide covers how to configure and manage checklists within call management.
+
+## Overview
+
+Checklists in Waldur serve multiple purposes:
+
+| Checklist Type | Purpose |
+|---|---|
+| **Proposal compliance** | Questions that proposal submitters must answer |
+| **Offering compliance** | Compliance checks for service provider offerings |
+| **Project metadata** | Additional project information collection |
+| **Onboarding** | Data collection during organization onboarding |
+
+## Supported question types
+
+Waldur supports 16 question types for building forms:
+
+| Question Type | Description | Validation |
+|---|---|---|
+| **Yes/No** | Boolean with Yes/No/N/A options | — |
+| **Text input** | Single-line short text | — |
+| **Text area** | Multi-line long text | — |
+| **Number** | Numeric input (integer or decimal) | Optional min/max value |
+| **Date** | Date picker (YYYY-MM-DD) | Date format validation |
+| **Date and time** | Date with time picker | DateTime format validation |
+| **File** | Single file upload | Optional: allowed types, MIME types, max size |
+| **Multiple files** | Multi-file upload | Optional: allowed types, max count, max size |
+| **Single selection** | Dropdown with one selectable option | Options defined via Question Options |
+| **Multiple selection** | Dropdown with multiple selectable options | Options defined via Question Options |
+| **Phone number** | Phone number input | Phone format validation |
+| **Year** | Year input | Optional min/max year |
+| **Email** | Email address input | Email format validation |
+| **URL** | URL input | URL format validation |
+| **Country** | Country selector (ISO 3166) | Country code validation |
+| **Rating** | Numeric rating scale | Configurable min/max (e.g., 1-5 for Likert) |
+
+## File upload configuration
+
+For **File** and **Multiple files** question types, you can configure:
+
+- **Allowed file extensions**: e.g., `.pdf`, `.doc`, `.docx`
+- **Allowed MIME types**: e.g., `application/pdf`, `application/msword`
+- **Maximum file size**: In megabytes
+- **Maximum file count**: For multiple files type only
+
+!!! tip
+    When both extensions and MIME types are specified, files must match both criteria for security.
+
+## Conditional visibility (question dependencies)
+
+Questions can be shown or hidden based on answers to other questions, enabling dynamic forms.
+
+### Setting up conditional visibility
+
+1. Create the base question (the one that controls visibility)
+2. Create the dependent question
+3. Add a **dependency** linking the dependent question to the base question
+4. Configure:
+    - **Depends on question**: The base question
+    - **Required answer value**: The answer that makes the dependent question visible
+    - **Operator**: How to compare (equals, not equals, contains, in list, not in list)
+
+### Dependency logic operators
+
+When a question has multiple dependencies:
+
+- **AND**: All dependencies must be satisfied for the question to be visible
+- **OR**: At least one dependency must be satisfied
+
+### Available comparison operators
+
+| Operator | Description | Example |
+|---|---|---|
+| **Equals** | Exact match | Answer = "Yes" |
+| **Not equals** | Inverse match | Answer ≠ "No" |
+| **Contains** | Substring match | Answer contains "GPU" |
+| **In list** | Value in set | Answer in ["Option A", "Option B"] |
+| **Not in list** | Value not in set | Answer not in ["N/A"] |
+
+!!! note
+    The system prevents circular dependencies. If Question A depends on Question B, then Question B cannot depend on Question A (directly or through a chain).
+
+## Review trigger configuration
+
+Questions can be configured to flag answers for review by call managers:
+
+- **Review answer value**: The answer that triggers a review flag
+- **Operator**: Comparison method (same operators as above)
+- **Always requires review**: Flag for review regardless of answer
+
+When a triggered answer is submitted, the checklist completion is marked as requiring review.
+
+## Attaching checklists to calls
+
+**Performed by:** Call manager
+
+1. Navigate to the **call configuration**
+2. In the **General configuration** section, select a **compliance checklist**
+3. The selected checklist will be presented to all proposal submitters
+
+When a proposal is created, the system automatically creates a checklist completion record for that proposal. Submitters must answer all required questions before submitting.
+
+## Checklist completion tracking
+
+For each proposal with an attached checklist:
+
+- **Completion percentage**: Tracks how many questions have been answered
+- **Review status**: Indicates if any answers require manager review
+- **Review notes**: Managers can add notes after reviewing flagged answers
+
+## Managing checklists (administrators)
+
+Administrators can manage checklists via the admin interface:
+
+1. **Create checklist**: Define name, type, and description
+2. **Add questions**: Create questions with type, ordering, required flag, and guidance text
+3. **Add options**: For selection types, add option labels with sort order
+4. **Add dependencies**: Configure conditional visibility between questions
+5. **Attach to calls**: Link the checklist to specific calls via call configuration
+
+!!! warning
+    Modifying checklist questions after proposals have been submitted may affect existing answers. Consider creating a new checklist version for significant changes.
+
+---
+
+### Data export
+<!-- Source: docs/user-guide/call-managing-organization/data-export.md -->
+
+# Data export
+
+Waldur provides multiple ways to export data from the platform. This guide covers the export capabilities available for call management.
+
+## Table export
+
+Every data table in Waldur supports direct export to multiple formats.
+
+### Available formats
+
+| Format | Description | Use Case |
+|---|---|---|
+| **CSV** | Comma-separated values | Data analysis in Excel, Google Sheets, or scripts |
+| **Excel (XLSX)** | Microsoft Excel format | Formatted spreadsheets with styling |
+| **PDF** | Portable document format | Reports and printable documents |
+| **Clipboard** | Copy to clipboard | Quick paste into other applications |
+
+### How to export
+
+1. Navigate to any data table (proposals list, users list, reviews, etc.)
+2. Click the **Export** button in the table toolbar
+3. In the export dialog, choose:
+    - **Format**: CSV, Excel, PDF, or Clipboard
+    - **Apply filters**: Export only filtered data (if table has active filters)
+    - **All pages**: Export all records or only the current page
+4. Click **Export** to download the file
+
+!!! tip
+    Apply table filters before exporting to narrow down the data. The "Apply filters" checkbox will include only the filtered subset in the export.
+
+## Saved filters
+
+Table filters can be saved for reuse:
+
+1. Configure your desired filters on any data table
+2. Click the **Save filter** button
+3. Enter a name for the saved filter
+4. The saved filter appears in the filter dropdown for quick access
+
+## Management command export
+
+For administrators, Waldur provides management commands for comprehensive data export:
+
+```bash
+# Export full platform structure to JSON
+waldur export_structure --output backup.json --verbose
+
+# Export with event history
+waldur export_structure --output full_backup.json --include-events
+```
+
+The structure export includes:
+
+- Users and permissions
+- Organizations and projects
+- Marketplace data (categories, offerings, plans, resources, orders)
+- Billing information (invoices, credits, usage)
+- Checklists and answers
+
+## API-based export
+
+All data accessible through the Waldur REST API can be exported programmatically:
+
+```bash
+# Export proposals for a specific call
+curl -H "Authorization: Token YOUR_TOKEN" \
+  "https://waldur.example.com/api/proposal-proposals/?call_uuid=CALL_UUID&page_size=1000"
+```
+
+See the Integrator Guide for API documentation.
+
+---
+
+### Proposal ID configuration
+<!-- Source: docs/user-guide/call-managing-organization/proposal-id-configuration.md -->
+
+# Proposal ID configuration
+
+Waldur allows call managers to configure custom proposal ID patterns per call. This ensures proposals have meaningful, structured identifiers that follow organizational conventions.
+
+## How proposal IDs work
+
+Each proposal receives a unique **slug** (identifier) generated from a configurable template. The slug is assigned when the proposal is created in draft state.
+
+## Configuring the ID template
+
+**Performed by:** Call manager (before any proposals are submitted)
+
+1. Navigate to the **call configuration**
+2. In the **General configuration** section, set the **Proposal slug template**
+3. Use the available template variables to define your pattern
+
+## Available template variables
+
+| Variable | Description | Example Value |
+|---|---|---|
+| `{call_slug}` | The call's slug identifier | `hpc-call-2026` |
+| `{round_slug}` | The round's slug identifier | `round-1` |
+| `{org_slug}` | The proposing organization's slug | `university-of-tartu` |
+| `{year}` | Current year | `2026` |
+| `{month}` | Current month (2-digit) | `04` |
+| `{counter}` | Sequential counter within the round | `7` |
+| `{counter_padded}` | Zero-padded counter (3 digits) | `007` |
+
+## Example patterns
+
+| Pattern | Example Output |
+|---|---|
+| `{call_slug}-{counter_padded}` | `hpc-call-2026-001` |
+| `{round_slug}-{year}-{counter_padded}` | `round-1-2026-001` |
+| `{call_slug}/{org_slug}-{counter}` | `hpc-call-2026/university-of-tartu-1` |
+
+!!! note
+    The default pattern (if no template is configured) is `{round_slug}-{counter_padded}`.
+
+## Important considerations
+
+- The template **cannot be changed** after proposals have been submitted to the call
+- The counter resets per round — each round starts counting from 1
+- Proposal slugs are unique within the system
+- The counter counts all proposals in the round (including drafts)
+
+!!! warning
+    Plan your ID pattern carefully before activating the call. Once proposals are created, the template is locked to prevent ID inconsistencies.
+
+---
+
+### Reviewer management
+<!-- Source: docs/user-guide/call-managing-organization/reviewer-management.md -->
+
+# Reviewer management
+
+This guide covers the complete reviewer lifecycle in Waldur's call management system: building reviewer pools, managing reviewer profiles, configuring reviewer-proposal matching, and handling conflicts of interest.
+
+## Reviewer profiles
+
+Reviewers in Waldur maintain detailed profiles that enable intelligent matching with proposals.
+
+### Profile components
+
+Each reviewer profile includes:
+
+- **Personal information**: Name, ORCID ID, biography, alternative names
+- **Affiliations**: Current and past institutional affiliations with type (employment, education, visiting, honorary, consulting), organization identifier, and date range
+- **Expertise**: Self-declared expertise categories with proficiency levels (expert, familiar, basic)
+- **Publications**: Academic publications with title, authors, venue, venue type (journal, conference, preprint, book, thesis, report), and year
+- **Availability**: Whether the reviewer is available for new review assignments
+
+!!! tip
+    Reviewers should keep their profiles up-to-date, especially expertise areas and affiliations. This data is used for automated reviewer-proposal matching and conflict of interest detection.
+
+### Managing your reviewer profile
+
+1. Navigate to your **User Profile**
+2. Select the **Reviewer Profile** section
+3. Fill in your biography, ORCID ID, and availability status
+4. Add **affiliations** with your current and past institutions
+5. Add **expertise categories** with your proficiency level for each
+6. Add relevant **publications** for matching purposes
+7. Set your profile to **Published** when ready to receive review assignments
+
+## Reviewer pool management
+
+Call managers build a curated pool of reviewers for each call.
+
+### Building a reviewer pool
+
+**Performed by:** Call manager
+
+1. Navigate to the **call** settings
+2. Select the **Reviewer Pool** section
+3. Add reviewers using one of these methods:
+    - **By profile**: Search and select from published reviewer profiles
+    - **By email**: Invite reviewers via email who may not yet have accounts
+
+### Invitation workflow
+
+When a reviewer is added to a pool:
+
+1. An email invitation is sent with a unique acceptance token
+2. The reviewer can **accept** or **decline** the invitation without logging in
+3. On acceptance, the reviewer must have a published profile
+4. The reviewer is prompted to self-declare any conflicts of interest
+
+Invitation statuses: **Pending** | **Accepted** | **Declined** | **Expired**
+
+!!! note
+    Invitation tokens are generated using secure random bytes and do not require the reviewer to have an existing Waldur account to respond.
+
+## Conflict of interest (COI) detection
+
+Waldur includes an automated COI detection system to ensure fair and unbiased peer review.
+
+### COI types detected
+
+| COI Type | Description |
+|---|---|
+| Institutional (same) | Reviewer and proposal PI share the same institution |
+| Financial (direct) | Reviewer has financial interest related to the proposal |
+| Relational (family) | Familial relationship between reviewer and applicant |
+| Co-authorship | Recent co-authored publications between reviewer and applicant |
+
+### Severity levels
+
+- **Real**: Confirmed conflict that must be addressed
+- **Apparent**: Circumstantial conflict that may need review
+- **Potential**: Possible conflict flagged for awareness
+
+### Detection methods
+
+- **Automated**: System cross-references reviewer affiliations and publications against proposal team data
+- **Self-disclosed**: Reviewers declare conflicts during pool acceptance
+- **Reported**: Third parties report potential conflicts
+- **Manager-identified**: Call managers manually flag conflicts
+
+### Configuring COI detection
+
+**Performed by:** Call manager
+
+1. Navigate to call settings
+2. Select the **COI Settings** section
+3. Configure per-call settings:
+    - COI type weights and severity thresholds
+    - Publication matching parameters (year range, author matching method)
+    - Automated detection sensitivity
+
+### Running COI detection
+
+1. Click **Run COI Detection** in the call management dashboard
+2. The system runs a batch detection job (processed in the background)
+3. Review detected conflicts in the **Conflicts** tab
+4. For each conflict, choose to **Dismiss**, **Waive** (with justification), or **Recuse** the reviewer
+
+### COI disclosure forms
+
+Reviewers are presented with a disclosure form when accepting a pool invitation:
+
+1. General conflict declaration
+2. Financial interest details (entity type, relationship, amount range)
+3. Self-declared conflicts with specific proposals
+
+!!! warning
+    Staff users can override COI blocks on specific assignments with an audit trail. All overrides are recorded with the overriding user, reason, and timestamp.
+
+## Reviewer-proposal matching
+
+Waldur uses algorithmic matching to suggest optimal reviewer-proposal assignments.
+
+### Matching methods
+
+| Method | Description |
+|---|---|
+| **Keyword** | Matches reviewer expertise keywords against proposal text |
+| **TF-IDF** | Text similarity using Term Frequency-Inverse Document Frequency |
+| **Combined** (default) | Weighted combination of keyword and TF-IDF scores |
+
+### Configuring matching
+
+**Performed by:** Call manager
+
+1. Navigate to call settings
+2. Select the **Matching Configuration** section
+3. Configure:
+    - **Affinity method**: Keyword, TF-IDF, or Combined
+    - **Weights**: Keyword weight vs text weight (must sum to 1.0)
+    - **Constraints**: Min/max reviewers per proposal, min/max proposals per reviewer
+    - **Threshold**: Minimum affinity score for suggestions
+    - **Reviewer bids**: Whether to incorporate reviewer preferences
+
+### Generating suggestions
+
+1. Click **Generate Suggestions** in the matching section
+2. The system computes affinity scores for all reviewer-proposal pairs
+3. Results appear in the **Suggestions** tab with:
+    - Affinity score (0-1)
+    - Matched keywords
+    - Top matching proposals
+4. Accept or reject each suggestion
+
+### Reviewer bidding
+
+If enabled, reviewers can express preferences for proposals:
+
+- **Want to review**: Eager to evaluate this proposal
+- **Cannot review**: Unable to review (workload, expertise mismatch)
+- **Conflict**: Self-declared conflict with this proposal
+
+Bids are factored into the matching algorithm with configurable weight.
+
+## Assignment workflow (Stage 2)
+
+After matching, call managers create assignment batches to formally assign proposals to reviewers.
+
+### Creating assignment batches
+
+1. Review matching suggestions and confirmed reviewer pool
+2. Create an **Assignment Batch** for each reviewer
+3. Add specific proposals to each batch (with affinity scores shown)
+4. Add optional **manager notes** for the reviewer
+5. Review and **send** the batch
+
+### Batch lifecycle
+
+```
+DRAFT → SENT → RESPONDED / EXPIRED / CANCELLED
+```
+
+- **Draft**: Manager is preparing the batch
+- **Sent**: Invitation sent to reviewer (email with unique token)
+- **Responded**: Reviewer has accepted or declined all items
+- **Expired**: Batch expired without full response (configurable expiration days)
+
+### Assignment item responses
+
+For each proposal in a batch, the reviewer can:
+
+- **Accept**: Creates a Review in IN_REVIEW state — reviewer can begin evaluation
+- **Decline**: Records decline reason; may trigger auto-reassignment if configured
+
+### Auto-reassignment
+
+If configured in the **Assignment Configuration**:
+
+- When a reviewer declines, the system automatically finds the next-best reviewer
+- Maximum auto-reassignment attempts are configurable (default: 3)
+- Reminder emails sent before assignment expiry (configurable days before)
+
+---
+
 ### Cost and usage policies
 <!-- Source: docs/user-guide/customer-organization/cost-and-usage-policies.md -->
 
@@ -61271,6 +61887,114 @@ Waldur provides Impersonation functionality to allow the support team to debug a
 ## Logging
 
 All actions performed on behalf of a user are logged with additional context in the audit logs, including the impersonator's UUID, full name, and username. This is primarily for security purposes.
+
+---
+
+### Notification management
+<!-- Source: docs/user-guide/staff-users/notification-management.md -->
+
+# Notification management
+
+Waldur includes a configurable notification system for managing email communications. Administrators can enable/disable notifications, customize email templates, and manage notification delivery.
+
+## Overview
+
+Waldur has 40+ notification types organized by module. Each notification has:
+
+- **Subject template**: Email subject line
+- **Text template**: Plain text email body
+- **HTML template**: Rich HTML email body
+- **Context variables**: Dynamic data available in templates
+
+## Managing notifications
+
+**Performed by:** Staff users
+
+1. Navigate to **Administration** → **Notifications**
+2. View the list of all notification types with their current status (enabled/disabled)
+
+### Enabling and disabling notifications
+
+- Click the **toggle** next to any notification to enable or disable it
+- Disabled notifications will not send any emails
+
+!!! warning
+    All notifications are disabled by default. Enable the notifications relevant to your deployment before going live.
+
+### Editing email templates
+
+1. Click on a notification to open the template editor
+2. The editor shows three tabs:
+    - **Subject**: Plain text subject line template
+    - **Message (text)**: Plain text body template
+    - **Message (HTML)**: Rich HTML body template
+3. Use the **Variables** pane on the right to see available template variables
+4. Edit the template using the Monaco code editor
+5. Click **Save** to apply changes
+
+### Template syntax
+
+Templates use Django template syntax:
+
+```django
+Dear {{ user.full_name }},
+
+Your proposal "{{ proposal.name }}" has been {{ proposal.state }}.
+
+{% if proposal.state == "accepted" %}
+Congratulations! Your project has been created.
+{% endif %}
+
+Best regards,
+{{ call.name }} Team
+```
+
+### Resetting templates
+
+To restore a template to its default:
+
+1. Open the notification template editor
+2. Click **Reset to default**
+3. The template reverts to the system default version
+
+## Proposal notifications
+
+The following notifications are available for call management:
+
+| Notification | Recipients | Trigger |
+|---|---|---|
+| New proposal submitted | Call managers | Researcher submits a proposal |
+| New review submitted | Call managers | Reviewer submits evaluation |
+| Proposal cancelled | Proposal creator | Round cutoff passes (auto-cancel) |
+| Proposal state changed | Proposal creator | Any state transition |
+| Submission deadline approaching | Draft proposers | 3 days before round cutoff |
+| Review assigned | Reviewer | Manager assigns a review |
+| Review deadline approaching | Reviewers | 3 days before review deadline |
+| Review rejected | Call managers | Reviewer rejects assignment |
+| Round closing | Call managers | Round ends |
+| Round opening | Reviewers | New round becomes active |
+| Reviews complete | Call managers | All required reviews submitted |
+| Proposal decision (reviewer) | Reviewers | After accept/reject decision |
+| Requested offering decision | Call manager | Decision on offering request |
+
+## Broadcasting
+
+For one-time communications to groups of users, use the [Broadcasting](broadcasting.md) feature instead of notification templates.
+
+## Configuration via management commands
+
+Administrators can manage notifications via CLI:
+
+```bash
+# Load notification configuration from file
+waldur load_notifications /etc/waldur/notifications.json
+
+# Override templates from YAML file
+waldur override_templates /etc/waldur/custom_templates.yaml
+
+# Generate notification documentation
+waldur print_notifications
+```
 
 ---
 
