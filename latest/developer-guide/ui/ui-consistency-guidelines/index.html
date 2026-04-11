@@ -8569,6 +8569,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#121-anonymous-user-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.1 Anonymous User Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122-equal-card-heights-in-flex-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.2 Equal Card Heights in Flex Containers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-not-to-do" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14812,6 +14834,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#121-anonymous-user-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.1 Anonymous User Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122-equal-card-heights-in-flex-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.2 Equal Card Heights in Flex Containers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#what-not-to-do" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -16350,6 +16394,101 @@
 </blockquote>
 <hr>
 <h2 id="12-anti-patterns">12. Anti-Patterns</h2>
+<h3 id="121-anonymous-user-actions">12.1 Anonymous User Actions</h3>
+<p>When an action requires authentication (e.g., deploying a resource, ordering a service), <strong>show a confirmation dialog</strong> explaining that login is required, rather than silently redirecting or doing nothing.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">waitForConfirmation</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@waldur/modal/actions'</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">handleClick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">user</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">await</span><span class="w"> </span><span class="nx">waitForConfirmation</span><span class="p">(</span>
+<span class="w">        </span><span class="nx">dispatch</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Authentication required'</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">translate</span><span class="p">(</span>
+<span class="w">          </span><span class="s1">'Please log in to order a resource. You will be redirected to the login page.'</span><span class="p">,</span>
+<span class="w">        </span><span class="p">),</span>
+<span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="nx">positiveButton</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Log in'</span><span class="p">)</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="p">);</span>
+<span class="w">      </span><span class="nx">router</span><span class="p">.</span><span class="nx">stateService</span><span class="p">.</span><span class="nx">go</span><span class="p">(</span><span class="s1">'login'</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// User cancelled</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// Proceed with authenticated action</span>
+<span class="p">};</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Key rules</strong>:</p>
+<ul>
+<li>Never silently redirect anonymous users — always explain what's happening</li>
+<li>Use <code>waitForConfirmation</code> with a clear title and descriptive body</li>
+<li>Label the positive button with the action ("Log in"), not generic "OK"</li>
+<li>If the element is normally a <code>&lt;Link&gt;</code>, render a <code>&lt;button&gt;</code> for anonymous users to prevent navigation before the dialog</li>
+</ul>
+<h3 id="122-equal-card-heights-in-flex-containers">12.2 Equal Card Heights in Flex Containers</h3>
+<p>When cards are displayed in a row (carousel, grid), ensure they all have equal height regardless of content differences (description length, tags, badges).</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Carousel/flex container item wrapper</span>
+<span class="nc">.offering-carousel-item</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">display</span><span class="nd">:</span><span class="w"> </span><span class="nt">flex</span><span class="o">;</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="nt">Makes</span><span class="w"> </span><span class="nt">child</span><span class="w"> </span><span class="nt">card</span><span class="w"> </span><span class="nt">stretch</span><span class="w"> </span><span class="nt">to</span><span class="w"> </span><span class="nt">full</span><span class="w"> </span><span class="nt">height</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Card wrapper class needs height: 100%</span>
+<span class="p">.</span><span class="nx">offering</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">list</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="kt">100</span><span class="o">%</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Card itself needs h-100</span>
+<span class="p">&lt;</span><span class="nt">Card</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"card-bordered h-100"</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="p">&lt;</span><span class="nt">Card</span><span class="p">.</span><span class="na">Body</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"d-flex flex-column"</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="p">{</span><span class="cm">/* Use flex-grow-1 on variable-height content */</span><span class="p">}</span>
+<span class="w">    </span><span class="p">&lt;</span><span class="nt">p</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"flex-grow-1"</span><span class="p">&gt;{</span><span class="nx">description</span><span class="p">}&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="p">{</span><span class="cm">/* Fixed footer stays at bottom */</span><span class="p">}</span>
+<span class="w">  </span><span class="p">&lt;/</span><span class="nt">Card</span><span class="p">.</span><span class="na">Body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">Card</span><span class="p">&gt;</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Checklist</strong>:</p>
+<ul>
+<li>Flex container parent: default <code>align-items: stretch</code> (don't override)</li>
+<li>Item wrapper: <code>display: flex</code> to propagate stretch</li>
+<li>Card link/wrapper: <code>height: 100%</code></li>
+<li>Card element: <code>h-100</code> class</li>
+<li>Variable content area: <code>flex-grow-1</code> to fill remaining space</li>
+</ul>
 <h3 id="what-not-to-do">What NOT to Do</h3>
 <table>
 <thead>
@@ -16399,6 +16538,16 @@
 <td><code>user.is_staff</code> checks everywhere</td>
 <td>Inconsistent</td>
 <td>Use <code>hasPermission()</code> utility</td>
+</tr>
+<tr>
+<td>Silent redirect for anonymous users</td>
+<td>Confusing, "magical"</td>
+<td>Show confirmation dialog before redirect</td>
+</tr>
+<tr>
+<td>Cards without <code>h-100</code> in flex rows</td>
+<td>Uneven card heights</td>
+<td>Use <code>display: flex</code> on wrapper + <code>h-100</code> on card</td>
 </tr>
 </tbody>
 </table>

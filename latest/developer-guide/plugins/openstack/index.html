@@ -16243,6 +16243,11 @@
 <td><code>POST /api/openstack-loadbalancers/{uuid}/detach_floating_ip/</code></td>
 </tr>
 <tr>
+<td>Set Security Groups</td>
+<td>Set security groups on VIP port</td>
+<td><code>POST /api/openstack-loadbalancers/{uuid}/set_security_groups/</code></td>
+</tr>
+<tr>
 <td>Unlink Load Balancer</td>
 <td>Remove DB record without touching backend (staff-only)</td>
 <td><code>POST /api/openstack-loadbalancers/{uuid}/unlink/</code></td>
@@ -16510,14 +16515,24 @@
 </code></pre></div></td></tr></tbody></table></div>
 <p>After attach or detach the <code>attached_floating_ip</code> field on the load balancer is updated automatically on the next sync.</p>
 <h4 id="managing-security-groups-on-the-vip-port">Managing Security Groups on the VIP Port</h4>
-<p>Security groups on the VIP port are managed through the standard port endpoint. Retrieve the <code>vip_port</code> URL from the load balancer response, then update the port:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>PATCH /api/openstack-ports/{uuid}/
+<p>Security groups on the VIP port control which traffic can reach the load balancer. This is especially important when a floating IP is attached — without appropriate security groups, inbound traffic will be blocked.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code>POST /api/openstack-loadbalancers/{uuid}/set_security_groups/
+{
+    "security_groups": [
+        "/api/openstack-sgp/{sg-uuid}/"
+    ]
+}
 </code></pre></div></td></tr></tbody></table></div>
-<p>This replaces the previously available <code>update_vip_security_groups</code> action, which has been removed.</p>
+<p>All security groups must belong to the same tenant as the load balancer. Pass an empty list to clear all security groups. The load balancer response includes a <code>vip_security_groups</code> field showing the currently assigned security groups.</p>
 <h4 id="creating-a-load-balancer">Creating a Load Balancer</h4>
 <p>The <code>vip_subnet</code> field accepts a <strong>URL reference</strong> to an existing Waldur <code>SubNet</code> object (not a raw Neutron UUID string). The subnet must belong to the selected tenant and must already be provisioned in the backend. The Octavia provider defaults to <code>ovn</code>; currently only the OVN provider is supported.</p>
 <h4 id="creating-a-pool">Creating a Pool</h4>
-<p>Required fields: <code>load_balancer</code>, <code>name</code>, <code>protocol</code> (<code>TCP</code> or <code>UDP</code>). The load balancing algorithm is fixed to <code>SOURCE_IP_PORT</code> and cannot be changed (OVN limitation).</p>
+<p>Required fields: <code>load_balancer</code>, <code>name</code>, <code>protocol</code> (<code>TCP</code> or <code>UDP</code>). The optional <code>lb_algorithm</code> field defaults to <code>SOURCE_IP_PORT</code>. When the load balancer uses the OVN provider, only <code>SOURCE_IP_PORT</code> is accepted; other algorithms (<code>ROUND_ROBIN</code>, <code>LEAST_CONNECTIONS</code>, <code>SOURCE_IP</code>) are rejected with a validation error.</p>
 <h4 id="creating-a-listener">Creating a Listener</h4>
 <p>Required fields: <code>load_balancer</code>, <code>protocol</code> (<code>TCP</code> or <code>UDP</code>), <code>protocol_port</code> (1–65535). The optional <code>default_pool</code> field links the listener to a pool.</p>
 <h4 id="creating-a-health-monitor">Creating a Health Monitor</h4>
@@ -16622,6 +16637,10 @@
 <tr>
 <td>Detach floating IP</td>
 <td><code>POST /api/openstack-loadbalancers/{uuid}/detach_floating_ip/</code></td>
+</tr>
+<tr>
+<td>Set security groups on VIP</td>
+<td><code>POST /api/openstack-loadbalancers/{uuid}/set_security_groups/</code></td>
 </tr>
 <tr>
 <td>Pull (sync from backend)</td>
@@ -17969,7 +17988,7 @@ POST<span class="w"> </span>/api/openstack-networks/<span class="o">{</span>uuid
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-04-06
+    2026-04-10
   </span>
 
     
