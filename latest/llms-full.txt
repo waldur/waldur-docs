@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-04-11T02:04:47.798752Z
+Generated: 2026-04-11T05:52:08.084442Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -60173,6 +60173,97 @@ Administrators can manage checklists via the admin interface:
 
 ---
 
+### Conflict of interest management
+<!-- Source: docs/user-guide/call-managing-organization/coi-management.md -->
+
+# Conflict of interest management
+
+Waldur includes a conflict of interest (COI) detection and management system for the call-for-proposals workflow. This guide covers how call managers review COIs and use staff override capabilities when the automated workflow gets blocked.
+
+## Overview
+
+COIs are detected automatically or self-declared by reviewers when they accept pool invitations. Each COI has:
+
+- **Type**: Same institution, co-authorship, family relationship, mentor/mentee, financial interest, etc.
+- **Severity**: Real (must recuse), Apparent (requires management plan), or Potential (disclosure only)
+- **Status**: Pending, Dismissed, Waived, or Recused
+
+## Reviewing conflicts of interest
+
+Navigate to your call's **Manage** page and select the **Reviewer pool** tab, then the **COI** sub-tab.
+
+[Image: COI review tab showing conflicts with types, severities, and statuses]
+
+The COI table shows all detected conflicts with their type, severity, current status, and detection method. For each pending COI, the call manager can take one of three actions:
+
+### Dismiss
+
+Mark the COI as a false positive. The reviewer can continue reviewing the proposal without restrictions. Related assignment items that were blocked by this COI are automatically unblocked.
+
+### Waive
+
+Approve the reviewer to continue despite the conflict, but with a mandatory **management plan** describing the mitigation measures. Related blocked assignments are automatically unblocked.
+
+### Recuse
+
+Permanently remove the reviewer from the proposal. Any existing reviews are discarded, and assignment items are marked as blocked.
+
+!!! note
+    When a COI is dismissed or waived, any assignment items that were blocked solely because of that COI are automatically changed from "blocked" to "pending". If multiple COIs exist for the same reviewer-proposal pair, the assignment remains blocked until all COIs are resolved.
+
+## Staff override capabilities
+
+When the automated workflow gets stuck — for example, a reviewer's invitation expired or an assignment is blocked by a COI that the manager wants to override — staff and call managers can use manual overrides.
+
+### Force-accepting reviewer pool invitations
+
+If a reviewer's invitation is stuck in **pending**, **declined**, or **expired** status, a call manager can force-accept it.
+
+1. Navigate to the **Reviewer pool** tab
+2. Find the invitation with the stuck status
+3. Click the three-dot action menu and select **Force accept**
+
+[Image: Force accept action in the reviewer pool dropdown]
+
+4. In the dialog, provide a mandatory **override reason** explaining why the override is necessary
+
+[Image: Force accept dialog with required reason field]
+
+5. Click **Force accept** to confirm
+
+The invitation status changes to "Accepted" with an "Overridden" badge indicating it was manually accepted.
+
+[Image: Reviewer pool showing overridden badge on force-accepted invitation]
+
+!!! warning
+    Force-accepting an invitation bypasses the reviewer's consent. Only use this when you have confirmed with the reviewer through other channels. The override reason is recorded for audit purposes.
+
+### Force-unblocking COI-blocked assignments
+
+If an assignment item is blocked due to a COI and the manager wants to proceed regardless:
+
+1. Navigate to the **Assignments** sub-tab in the Reviewer pool
+2. Expand the assignment batch to see individual items
+3. Find the item with **COI blocked** status
+4. Click the action menu and select **Force unblock**
+5. Provide a mandatory **override reason**
+6. The item status changes from "blocked" to "pending"
+
+!!! warning
+    Force-unblocking an assignment allows a reviewer with a known conflict of interest to review a proposal. Use this only when the conflict has been evaluated and the risk is acceptable. The override is recorded with the reason, user, and timestamp for compliance purposes.
+
+## Audit trail
+
+All override actions are recorded with:
+
+- **Who** performed the override
+- **When** it was performed
+- **Why** (the mandatory override reason)
+
+This information is visible in the reviewer pool table (as an "Overridden" badge with tooltip) and in assignment item details.
+
+---
+
 ### Data export
 <!-- Source: docs/user-guide/call-managing-organization/data-export.md -->
 
@@ -60543,6 +60634,76 @@ Offering manager can set different usage policies for specific organization grou
 
 From the popup, select accounting component and set limit for that. Several compoments can be defined in one policy. Then, it is needed to select period (is this policy per month, quarter, annual or total) and finally select organization group for which this policy applies to.
     [Image: New offering usage policy]
+
+---
+
+### Course accounts
+<!-- Source: docs/user-guide/customer-organization/course-accounts.md -->
+
+# Course accounts
+
+Course accounts allow project managers to create temporary user accounts for course participants. Waldur supports both individual account creation and bulk import via CSV.
+
+## Batch import
+
+For courses with many participants, use the batch import feature to create multiple accounts at once from a CSV file.
+
+### Preparing the CSV file
+
+The CSV file must include these headers:
+
+- **email** (required): participant's email address
+- **description** (optional): a note about the participant
+
+Example:
+
+```csv
+email,description
+student1@university.edu,Physics 101 - Group A
+student2@university.edu,Physics 101 - Group B
+student3@university.edu,Physics 101 - Group A
+```
+
+You can also download a template from the upload dialog.
+
+### Uploading accounts
+
+1. Navigate to your course project's **Team** page
+2. Click **Add** and select **Course account**
+3. Switch to the **Batch import** tab
+
+[Image: Batch import wizard showing the three-step progress bar and file upload area]
+
+4. Upload your CSV file (drag and drop or click to browse)
+5. Click **Next** to preview the imported data
+6. Review the list — accounts with invalid emails are flagged
+7. Click **Create** to submit
+
+### Monitoring creation progress
+
+After submitting, the wizard advances to the **Creation progress** step. This screen shows:
+
+- **Summary badges** at the top: count of Pending, Created, and Failed accounts
+- **Per-account table** with Email, State, and Error columns
+- The view **polls automatically** every 3 seconds until all accounts finish processing
+
+[Image: Creation progress step showing per-account status with Pending badges]
+
+Once all accounts are processed, click **Close** to return to the main list.
+
+!!! tip
+    If some accounts fail, check the Error column for details. Common causes include duplicate emails or issues with the external account provisioning service. Failed accounts can be retried individually from the course accounts list.
+
+### Retrying failed accounts
+
+If an account fails during creation (shown as "Erred" in the list):
+
+1. Find the failed account in the course accounts table
+2. Click the action menu (three dots) and select **Retry**
+3. The account returns to "Pending" state and the system retries the creation
+
+!!! note
+    The retry action re-enqueues the account creation task. If the underlying issue (e.g., external service unavailability) is not resolved, the account will fail again.
 
 ---
 
