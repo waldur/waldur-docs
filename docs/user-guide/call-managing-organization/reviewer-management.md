@@ -2,6 +2,8 @@
 
 This guide covers the complete reviewer lifecycle in Waldur's call management system: building reviewer pools, managing reviewer profiles, configuring reviewer-proposal matching, and handling conflicts of interest.
 
+![Reviewer pool management](../img/reviewer_pool_table.png)
+
 ## Reviewer profiles
 
 Reviewers in Waldur maintain detailed profiles that enable intelligent matching with proposals.
@@ -32,6 +34,8 @@ Each reviewer profile includes:
 ## Reviewer pool management
 
 Call managers build a curated pool of reviewers for each call.
+
+![Reviewer dashboard](../img/reviewer_dashboard.png)
 
 ### Building a reviewer pool
 
