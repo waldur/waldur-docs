@@ -2,6 +2,8 @@
 
 Waldur provides multiple ways to export data from the platform. This guide covers the export capabilities available for call management.
 
+![Call proposals list](../img/call_proposals_list.png)
+
 ## Table export
 
 Every data table in Waldur supports direct export to multiple formats.
