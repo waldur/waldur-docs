@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-04-12T02:04:46.649367Z
+Generated: 2026-04-12T21:21:06.633843Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -59359,6 +59359,8 @@ A: When configured for Call manager decisions, the manager can approve or reject
 
 Waldur uses a flexible checklist system to create customizable forms for proposals, compliance checks, and onboarding workflows. This guide covers how to configure and manage checklists within call management.
 
+[Image: Call COI settings]
+
 ## Overview
 
 Checklists in Waldur serve multiple purposes:
@@ -59580,6 +59582,8 @@ This information is visible in the reviewer pool table (as an "Overridden" badge
 
 Waldur provides multiple ways to export data from the platform. This guide covers the export capabilities available for call management.
 
+[Image: Call proposals list]
+
 ## Table export
 
 Every data table in Waldur supports direct export to multiple formats.
@@ -59710,6 +59714,8 @@ Each proposal receives a unique **slug** (identifier) generated from a configura
 
 This guide covers the complete reviewer lifecycle in Waldur's call management system: building reviewer pools, managing reviewer profiles, configuring reviewer-proposal matching, and handling conflicts of interest.
 
+[Image: Reviewer pool management]
+
 ## Reviewer profiles
 
 Reviewers in Waldur maintain detailed profiles that enable intelligent matching with proposals.
@@ -59740,6 +59746,8 @@ Each reviewer profile includes:
 ## Reviewer pool management
 
 Call managers build a curated pool of reviewers for each call.
+
+[Image: Reviewer dashboard]
 
 ### Building a reviewer pool
 
@@ -60466,6 +60474,96 @@ To check the current resource allocation limit:
 
 1. On the same window, the plan details for Allocation components (CPU, GPU, and storage) can be found on the top-right side.
    [Image: Resource limits]
+
+---
+
+### AI Assistant
+<!-- Source: docs/user-guide/end-users/ai-assistant.md -->
+
+# AI Assistant
+
+Waldur includes a built-in AI Assistant that helps users manage cloud resources and navigate the platform through natural language conversation.
+
+## Overview
+
+The AI Assistant can:
+
+- **Discover calls for proposals** — find open calls matching your research needs
+- **Guide proposal preparation** — explain call requirements, deadlines, and forms
+- **Track review workload** — show pending reviews with priority and deadlines
+- **Summarize proposals** — provide structured overviews of any proposal you have access to
+- **Assist with reviews** — analyze proposals against call criteria for assigned reviewers
+- **Provide call insights** — submission trends, review bottlenecks, and action items (staff only)
+- **Manage cloud resources** — create VMs, list resources, manage projects
+
+## Accessing the AI Assistant
+
+The AI Assistant is available as a chat sidebar. Click the assistant icon in the navigation bar to open the conversation panel.
+
+!!! note
+    The AI Assistant must be enabled by your platform administrator. If you don't see the assistant icon, contact your admin.
+
+## Example conversations
+
+### Finding calls to apply to
+
+> **You:** I need GPU hours for climate modeling simulations. Which calls can I apply to?
+>
+> **Assistant:** Based on your requirements, I found 2 matching calls:
+>
+> 1. **2025 GPU Research Program** — offers up to 5,000 GPU hours with A100 hardware
+> 2. **2025 Spring HPC Allocation Call** — standard compute package with 100K CPU hours
+
+### Understanding call requirements
+
+> **You:** What do I need to prepare for the 2025 GPU Research Program call?
+>
+> **Assistant:** Here's what you need:
+> - Institution type and accreditation certificate
+> - Resource requirements: GPU hours (up to 5,000), storage
+> - Research area selection and funding status declaration
+> - Deadline: March 27, 2027
+
+### Checking review workload
+
+> **You:** What reviews do I have pending?
+>
+> **Assistant:** You have 3 reviews in progress, 1 completed, and 2 pending invitations.
+
+### Getting call insights (staff/managers)
+
+> **You:** How is the Spring HPC call going?
+>
+> **Assistant:** 4 proposals submitted, 2 in review, acceptance rate 75%. 1 reviewer has not started their assigned review.
+
+## Available capabilities by role
+
+| Capability | End users | Support | Staff |
+|---|---|---|---|
+| Find matching calls | Yes | Yes | Yes |
+| Proposal guidance | Yes | Yes | Yes |
+| Review workload | Yes | Yes | Yes |
+| Proposal overview | Yes | Yes | Yes |
+| Review assistant | Assigned reviewers | Yes | Yes |
+| Call insights | — | — | Yes |
+| Create VMs | Yes | Yes | Yes |
+| List resources | Yes | Yes | Yes |
+
+## Tips for better results
+
+- **Be specific** about your research domain, resource needs, and timeframe
+- **Mention call names** when asking about specific calls
+- **Use proposal slugs** (e.g., "R1-001") when asking about specific proposals
+- The assistant provides **clickable links** to navigate directly to relevant pages
+
+## Privacy and data handling
+
+- Conversations are stored per user and are private
+- The assistant uses an external language model for generating responses
+- Platform data accessed by the assistant respects your role permissions — you can only see data you have access to through the normal UI
+
+!!! warning
+    Do not share sensitive personal information (passwords, financial details) in the chat. The assistant processes your messages through an external AI service.
 
 ---
 
@@ -64031,6 +64129,119 @@ and interested in managed Waldur hosting.
 
 
 ## Additional Documentation
+
+### AI Assistant configuration
+<!-- Source: docs/admin-guide/ai-assistant.md -->
+
+# AI Assistant configuration
+
+The Waldur AI Assistant provides natural language interaction for managing resources, discovering calls, and navigating the platform. It requires an OpenAI-compatible language model backend.
+
+## Prerequisites
+
+- An OpenAI-compatible inference service (vLLM, OpenAI API, Ollama)
+- A model with function calling support
+- Network access from the Waldur backend to the inference service
+
+## Configuration
+
+All settings are managed through the Constance admin interface at **Administration > Settings > AI Assistant**.
+
+### Core settings
+
+| Setting | Description | Default |
+|---|---|---|
+| `AI_ASSISTANT_ENABLED` | Enable/disable the AI Assistant | `False` |
+| `AI_ASSISTANT_ENABLED_ROLES` | Who can access: `disabled`, `staff`, `staff_and_support`, `all` | `disabled` |
+| `AI_ASSISTANT_BACKEND_TYPE` | LLM provider type: `vllm`, `openai`, `ollama` | `vllm` |
+| `AI_ASSISTANT_API_URL` | Base URL for the LLM service (e.g., `https://llm.example.com/v1`) | — |
+| `AI_ASSISTANT_API_TOKEN` | Authentication token for the LLM service | — |
+| `AI_ASSISTANT_MODEL` | Model identifier (e.g., `gpt-4`, `qwen3.5-122b`) | — |
+
+### Advanced settings
+
+| Setting | Description | Default |
+|---|---|---|
+| `AI_ASSISTANT_NAME` | Display name for the assistant | `Waldur Assistant` |
+| `AI_ASSISTANT_COMPLETION_KWARGS` | JSON override for temperature, top_p, max_tokens, etc. | `{}` |
+| `AI_ASSISTANT_TOKEN_LIMIT_DAILY` | Daily token limit per user (-1 = unlimited) | `-1` |
+| `AI_ASSISTANT_TOKEN_LIMIT_WEEKLY` | Weekly token limit per user | `-1` |
+| `AI_ASSISTANT_TOKEN_LIMIT_MONTHLY` | Monthly token limit per user | `-1` |
+| `AI_ASSISTANT_HISTORY_LIMIT` | Maximum past messages in context | `50` |
+| `AI_ASSISTANT_SESSION_RETENTION_DAYS` | Days to retain chat history | `90` |
+
+### Helm configuration
+
+When deploying via Helm, set the AI Assistant values:
+
+```yaml
+waldur:
+  constance:
+    AI_ASSISTANT_ENABLED: true
+    AI_ASSISTANT_ENABLED_ROLES: "all"
+    AI_ASSISTANT_BACKEND_TYPE: "vllm"
+    AI_ASSISTANT_API_URL: "https://llm.example.com/v1"
+    AI_ASSISTANT_MODEL: "your-model-name"
+```
+
+!!! warning
+    Set `AI_ASSISTANT_API_TOKEN` through a Kubernetes secret or environment variable, not in the Helm values file.
+
+## Health check
+
+Verify the AI Assistant configuration:
+
+```bash
+waldur ai_assistant health
+```
+
+This checks:
+1. Configuration completeness
+2. Network connectivity to the LLM service
+3. Model response capability
+
+## Available tools
+
+The AI Assistant uses a tool system that allows it to query the Waldur database and perform actions on behalf of the user. Tools are filtered by user role.
+
+### Resource management tools
+
+| Tool | Description | Access |
+|---|---|---|
+| `show_user_resources` | List user's active cloud resources | All users |
+| `list_projects` | List accessible projects for VM creation | All users |
+| `preview_vm` | Preview VM configuration before creation | All users |
+| `create_vm` | Create OpenStack VM via marketplace | All users |
+
+### Proposal management tools
+
+| Tool | Description | Access |
+|---|---|---|
+| `find_matching_calls` | Discover calls matching research needs | All users |
+| `guide_proposal` | Explain call requirements and preparation | All users |
+| `review_workload` | Reviewer's pending work summary | All users |
+| `proposal_overview` | Structured proposal summary | All users |
+| `review_assistant` | Analysis for assigned reviewers | Assigned reviewers |
+| `call_insights` | Call health and progress analysis | Staff only |
+
+## Security considerations
+
+- The AI Assistant sends structured data to the external LLM service for response generation
+- All tool calls enforce the same permission checks as the REST API
+- Prompt injection detection is built in — messages with detected injection attempts are filtered
+- PII detection flags sensitive content before processing
+- Token usage is tracked per user for quota enforcement
+- All chat sessions are auditable
+
+## Monitoring
+
+Chat usage metrics are available via:
+
+- **Token quota endpoints**: `GET /api/chat-quota/usage/` — per-user token consumption
+- **Session history**: Accessible to staff via admin interface
+- **Health check**: `waldur ai_assistant health` — infrastructure status
+
+---
 
 ### Backups
 <!-- Source: docs/admin-guide/backups.md -->
