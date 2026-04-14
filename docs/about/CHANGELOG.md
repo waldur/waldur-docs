@@ -57,6 +57,7 @@ This release brings significant improvements to the AI Assistant with new propos
 ---
 
 
+
 ## 8.0.7 - 2026-04-09
 
 ### Highlights
