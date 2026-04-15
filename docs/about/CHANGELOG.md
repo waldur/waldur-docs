@@ -1,62 +1,62 @@
 # Changelog
 
-## 8.0.8-rc.3 - 2026-04-15
+## 8.0.8-rc.4 - 2026-04-15
 
-### Highlights
-
-This release brings significant improvements to the AI Assistant, new marketplace layouts, and better reporting capabilities. Users can now manage proposals and reviews through the AI Assistant, browse offerings in new carousel and sidebar layouts, and access monthly component usage reports. Several API serialization fixes improve reliability for Go SDK consumers, and a security patch addresses CVE-2026-40192 in the Pillow library.
+This release candidate brings significant improvements to the AI Assistant with proposal and review management tools, introduces project affiliations with external organizations, and adds monthly component usage reporting. Reporting tables now use server-side pagination for better performance with large datasets, and several API serialization issues that affected the Go SDK have been resolved.
 
 ### What's New
 
-- **AI Assistant proposal and review tools.** The AI Assistant can now help users navigate proposals, review workloads, and find matching calls. It also gained a keyword-based intent classifier for smarter tool loading, improved resource table display, and a HomePort navigation block for in-app linking.
-- **Marketplace layout options.** Operators can choose between classic, carousel, and sidebar layouts for the marketplace landing page, with new offering card styles (compact, detailed, image, list item) and category sidebar navigation.
-- **Monthly component usage reporting.** A new reporting page lets providers track aggregated component usage over time, with filters and table views available in both the backend API and the frontend.
-- **Project affiliations with external organizations.** Projects can now be linked to affiliated external organizations, with full admin CRUD UI and project metadata editing.
-- **ORDER.CREATE permission.** A new fine-grained permission restricts order creation, preventing users with only CUSTOMER.READER role from placing orders. The UI hides order buttons accordingly.
-- **OpenStack hypervisor summary.** Operators can now view a hypervisor summary tab when managing OpenStack tenants.
-- **Load balancer security groups.** A new action allows setting security groups on load balancer VIP ports, with algorithm validation against provider capabilities.
-- **Offering cover images.** Offerings can now display a cover image on their page, togglable via admin settings.
-- **GDPR-compliant address attribute.** User profiles now support an address field with configurable exposure through offering user attribute settings.
-- **OpenPortal reports.** Merged organisation allocation, system usage, and storage reports from the Isambard fork.
-- **Expandable project team rows for service providers.** Service providers can now expand project rows to see team details inline.
+- **Project affiliations with external organizations.** Projects can now be linked to affiliated organizations, with full admin CRUD UI and project metadata editing support.
+- **Monthly component usage reporting.** A new reporting endpoint and UI page allow operators to track and filter offering component usage over time, with export functionality.
+- **AI Assistant proposal and review tools.** The AI Assistant can now help users navigate proposals, review workloads, and find matching calls, with improved intent classification that loads tools conditionally based on user queries.
+- **AI Assistant navigation blocks.** The assistant can now render in-app navigation links, guiding users directly to relevant pages in the UI.
+- **Marketplace layout options.** New carousel and sidebar layouts for the marketplace landing page, with configurable offering card styles (compact, detailed, image, list item).
+- **OpenStack hypervisor summary.** Operators can now view hypervisor information in the OpenStack tenant management view.
+- **ORDER.CREATE permission.** A new granular permission restricts order creation, preventing CUSTOMER.READER roles from placing orders. The UI hides deploy buttons accordingly.
+- **Offering cover images.** Offerings can now display a cover image on their page, configurable via admin settings.
+- **OpenStack load balancer enhancements.** Security groups can now be assigned to load balancer VIP ports, and LB algorithms are validated against provider capabilities. Load balancers are also synced during tenant pull operations.
+- **GDPR-compliant address attribute.** User profiles now support an address field, configurable per offering via user attribute settings.
+- **Support ticket on pending orders.** A support ticket is automatically created when an order enters the pending state, including start and end dates in the description.
+- **Expandable project team rows for service providers.** Service providers can now expand project rows to see team member details.
 
 ### Improvements
 
-- **Server-side pagination for reports.** Offering cost reports, missing usage reports, and resources-by-offering tables now use server-side pagination for better performance with large datasets.
-- **AI Assistant drawer expand/collapse toggle.** The chat drawer can now be expanded for a wider view and defers runtime initialization until opened, improving initial page load.
-- **UI consistency polish.** Modernized order summary tables, normalized badge text casing, updated chart colors to lighter palette, improved page spacing and title sizes, and refined filter button and form table spacing.
-- **Prepaid subscription selector improvements.** Fixed start date handling and input validation in the prepaid duration selector.
-- **Order timestamps.** Error details and output logs of orders now include timestamps for easier debugging.
-- **Software catalog version data.** Software catalog extensions and parent package listings now include version information.
-- **Loading overlay on table pagination.** Tables now show a loading overlay during server-side pagination refetches.
-- **Helm chart: pull secret for cleanup cronjob.** The cleanup cronjob now correctly references image pull secrets.
+- **Server-side pagination for reports.** Offering cost reports, usage reports, missing usage reports, and resources-by-offering tables now use server-side pagination for improved performance.
+- **AI Assistant resource tables.** Resource data displayed by the assistant is now richer and avoids generating redundant markdown tables after tool calls.
+- **AI Assistant drawer.** The chat drawer now supports expand/collapse toggling, defers runtime mounting until opened for faster page loads, and includes various UI polish.
+- **Announcements bar now renders URLs.** Announcement messages can include clickable links.
+- **Prepaid resources.** The limit change view now shows remaining prepaid period instead of annual price, and the subscription period selector has improved start date handling and input validation.
+- **UI consistency pass.** Normalized badge text casing, updated chart colors to lighter palette, modernized order summary tables, improved page spacing and title sizes, and standardized icon imports across the codebase.
+- **Order timestamps.** Error details and output logs of orders now include timestamps.
+- **Table loading indicator.** Tables now show a loading overlay during pagination refetches.
+- **Helm chart cleanup cronjob.** Image pull secrets are now applied to the cleanup cronjob.
 
 ### Bug Fixes
 
-- **API serialization fixes for Go SDK compatibility.** Fixed multiple issues where numeric fields (minimal_price, plan prices, quotas, price estimates) were serialized as strings instead of numbers, causing Go SDK unmarshal errors.
-- **Fixed prepaid duration calculation** to correctly use order start_date instead of the current date.
-- **Fixed user filter** that incorrectly included users with revoked project or organization roles.
-- **Fixed identity bridge gender serializer** for correct social auth attribute mapping.
-- **Fixed UniqueViolation in constance key rename migration** that could fail during upgrades.
-- **Fixed scientific notation display** in plan price editing dialogs.
-- **Fixed organization dashboard usage chart** showing wrong billing type.
-- **Fixed action menu items appearing stuck** after click in offering state actions.
-- **Fixed View summary button misalignment** in the Plan step when no project is selected.
-- **Fixed group invitation token cleanup** when canceling a ProjectDetailsDialog.
-- **Fixed OIDC re-discover view** not initializing client_secret field.
-- **Removed hardcoded 1-week minimum** for resource termination date, allowing more flexible scheduling.
-- **Fixed Octavia sync** to gracefully skip when load-balancer service is not in the catalog.
-- **Fixed Docker build** by excluding torch dependencies from Alpine-based container images.
+- **API serialization fixes for Go SDK compatibility.** Fixed minimal_price, plan prices, quotas, price estimates, and scope_name fields that were serialized as wrong types (strings instead of numbers or vice versa).
+- **User filter excluded revoked roles.** Users with revoked project or organization roles no longer appear in filtered results.
+- **Identity bridge gender serializer.** Fixed incorrect gender field handling in the identity bridge integration.
+- **Prepaid duration calculation.** Duration is now correctly computed from the order start date.
+- **Database migration fix.** Resolved a UniqueViolation error in the constance key rename migration.
+- **Chat offering filter.** The AI Assistant now correctly matches shared offerings when filtering.
+- **Scientific notation in plan prices.** Very small plan prices are no longer displayed in scientific notation during editing.
+- **Organization dashboard usage chart.** Fixed incorrect billing type display in the usage chart.
+- **Octavia sync skip.** Load balancer sync is now gracefully skipped when the Octavia service is not in the OpenStack catalog.
+- **Action item visual feedback.** Action buttons no longer appear stuck after clicking.
+- **View summary button alignment.** Fixed misalignment in the Plan step when no project is selected.
+- **Group invitation cleanup.** Cancelling a project details dialog now properly removes the group invitation token.
+- **OIDC re-discovery.** The client_secret field is now correctly initialized in the re-discover view.
 - **Security: upgraded Pillow to 12.2.0** to address CVE-2026-40192.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [45 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.7...8.0.8-rc.3) - AI Assistant tools, usage reporting, permissions, OpenStack enhancements, serialization fixes
-- **Waldur Homeport**: [46 commits](https://github.com/waldur/waldur-homeport/compare/8.0.7...8.0.8-rc.3) - Marketplace layouts, AI Assistant UI, reporting pages, UI consistency improvements
-- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.0.7...8.0.8-rc.3) - Pull secret fix for cleanup cronjob, version updates
-- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.7...8.0.8-rc.3) - Maintenance updates only
+- **Waldur Mastermind**: [53 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.7...8.0.8-rc.4) - AI Assistant tools, project affiliations, usage reporting, permission controls, OpenStack LB enhancements, serialization fixes
+- **Waldur Homeport**: [49 commits](https://github.com/waldur/waldur-homeport/compare/8.0.7...8.0.8-rc.4) - Marketplace layouts, AI Assistant UI, reporting pagination, affiliated organizations UI, UI consistency improvements
+- **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/8.0.7...8.0.8-rc.4) - Pull secret for cleanup cronjob, version bumps
+- **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.7...8.0.8-rc.4) - Maintenance updates only
 
 ---
+
 
 
 
