@@ -1,59 +1,67 @@
 # Changelog
 
-## 8.0.8-rc.5 - 2026-04-17
+## 8.0.8-rc.6 - 2026-04-17
 
-This release brings significant improvements to the AI Assistant with proposal and review management tools, new marketplace layout options, and a new monthly component usage reporting system. Security has been strengthened with XSS vulnerability fixes and dependency upgrades. Multiple API serialization issues affecting Go SDK consumers have been resolved.
+### Highlights
+
+This release brings significant improvements to OpenStack networking management, a new AI Assistant capable of handling proposals and reviews, and a revamped marketplace with multiple layout options. Security vulnerabilities in HTML/markdown rendering and dependency libraries have been patched, and reporting tables now use server-side pagination for better performance at scale.
 
 ### What's New
 
-- **Monthly component usage reporting.** Operators can now track and report on component usage aggregated by month, with a dedicated reporting page including filters and table view.
-- **AI Assistant proposal and review tools.** The AI Assistant can now help users navigate proposals, reviews, and call management workflows with new dedicated tools and improved resource table display.
-- **Project affiliations with external organizations.** Projects can now be linked to external affiliated organizations, with full admin and project-level management UI.
-- **Marketplace layout options.** The marketplace landing page now supports carousel, sidebar, and classic layout styles with new offering card variants.
-- **Offering cover images.** Offerings can now display a cover image on their page, with an admin toggle to enable the feature.
-- **Router external gateway management.** OpenStack router external gateways can now be set and removed through the API and UI.
-- **Load balancer security group management.** Operators can now assign security groups to load balancer VIP ports and validate LB algorithms against provider capabilities.
-- **Hypervisor summary for OpenStack tenants.** A new hypervisor summary tab shows compute host information in the tenant management view.
-- **ORDER.CREATE permission.** A new permission restricts order creation, preventing users with only CUSTOMER.READER role from placing orders. The UI hides deploy buttons accordingly.
-- **OpenPortal reports.** Added organisation allocation, usage, and storage reporting views merged from the Isambard fork.
-- **GDPR-compliant address attribute.** User profiles now support a structured address field that can be exposed through offering user attribute configuration.
+- **Affiliated organizations for projects.** Projects can now be linked to external organizations, with full admin CRUD and project metadata editing in the UI.
+- **AI Assistant proposal and review tools.** The assistant can now guide users through proposal creation, show call overviews, and assist reviewers with workload insights. Saved content now matches what is displayed, and resource tables show richer data.
+- **Monthly component usage reporting.** A new reporting page lets providers view and export component usage aggregated by month, with server-side pagination and filtering.
+- **OpenStack router external gateway management.** Operators can now set and remove external gateways on routers directly from the platform.
+- **Load balancer security group management.** A new action allows setting security groups on load balancer VIP ports, and the LB algorithm is now validated against provider capabilities.
+- **Hypervisor summary for OpenStack tenants.** A new tab displays hypervisor information within the tenant management view.
+- **ORDER.CREATE permission.** A new fine-grained permission controls who can create orders — users without it no longer see deploy buttons.
+- **Marketplace layout options.** The marketplace landing page now supports carousel, sidebar, and classic layouts, with new card styles (compact, detailed, image, list item).
+- **Offering cover images.** Offerings can now display a cover image on their page, togglable from admin settings.
+- **GDPR-compliant address attribute.** A new address field on the User model can be exposed to offering providers through attribute configuration.
+- **SLURM grace-adjusted limits.** Periodic sync of SLURM GrpTRESMins at a configurable grace ratio, allowing soft over-allocation before enforcement.
+- **Support ticket on pending orders.** A support ticket is now automatically created when an order enters the pending state, including start and end dates in the description.
 
 ### Improvements
 
-- **AI Assistant reliability.** Saved message content now matches what is displayed, the offering filter correctly matches shared offerings, and the chat drawer defers initialization until opened for faster page loads.
-- **AI Assistant expand/collapse toggle.** The AI Assistant drawer now supports expand and collapse with improved history sidebar and navigation block support.
-- **Server-side pagination for reports.** Offering costs, usage monitoring, missing usage, and resources-by-offering reports now use server-side pagination for better performance with large datasets.
-- **Prepaid subscription handling.** The remaining prepaid period is now shown instead of annual price for prepaid resources, and the duration calculation correctly uses the order start date.
-- **Support tickets for pending orders.** A support ticket is now automatically created when an order enters the pending state, including start and end dates in the description.
-- **Announcement bar links.** The announcement bar now renders clickable URLs using safe markdown.
-- **SLURM grace ratio support.** SLURM policies now set GrpTRESMins at the grace level when a grace ratio is configured.
-- **Dropdown pagination fixes.** Fixed pagination in cost policy, credit form, issue creation, and resource move dropdowns.
-- **Terms of service indicator.** Offerings now expose whether they have active terms of service in the offering user response.
-- **Software catalog versions.** Version data is now included in software catalog extension and parent package listings.
-- **Python 3.13 and Debian Bookworm upgrade.** The backend has been upgraded to Python 3.13 with Debian Bookworm-based Docker images, enabling semantic tool routing via fastembed/onnxruntime.
-- **Identity bridge improvements.** First and last name are now available as user attribute choices, and the gender serializer has been fixed.
+- **Server-side pagination for reports.** Offering costs, usage monitoring, resources geography, and missing usage reports now paginate on the server, improving load times for large datasets.
+- **Dropdown pagination fixes.** Fixed pagination in autocomplete dropdowns across cost policy forms, credit dialogs, issue creation, and resource move dialogs.
+- **Prepaid subscription improvements.** The remaining prepaid period is now shown instead of annual price when changing limits; start date and input validation have been fixed.
+- **AI Assistant UI enhancements.** The chat drawer now supports expand/collapse, defers runtime mounting for faster page loads, and includes a HomePort navigation block for in-app links.
+- **Announcement bar now renders URLs.** Markdown links in announcements are displayed as clickable hyperlinks.
+- **Software catalog version data.** Extension and parent package listings now include version information.
+- **Identity bridge improvements.** First/last name added to user attribute choices; gender serializer fixed.
+- **Offering Terms of Service indicator.** The offering user response now includes a flag showing whether the offering has active terms of service.
+- **Order timestamps.** Error details and output logs now expose timestamps for better debugging.
 
 ### Bug Fixes
 
-- **API serialization fixes.** Fixed multiple issues where decimal prices, quotas, and scope names were serialized as strings instead of proper JSON types, causing Go SDK unmarshal errors.
-- **XSS vulnerability fixes.** Corrected XSS vulnerabilities in all markdown and HTML rendering components with upgraded DOMPurify.
-- **Security dependency upgrades.** Upgraded Pillow to fix CVE-2026-40192 and DOMPurify to fix GHSA-39q2-94rc-95cp.
-- **CourseAccount serializer crash.** Fixed a crash when project dates were null.
-- **User filter fix.** Users with revoked project or organization roles are no longer incorrectly included in filtered results.
-- **Scientific notation in plan prices.** Fixed plan price editing displaying values in scientific notation.
-- **Octavia sync fix.** Load balancer sync is now skipped when the Octavia service is not in the OpenStack catalog.
-- **Order progress bar.** Removed a deprecated check that was preventing the order progress bar from displaying.
-- **Action button feedback.** Action items no longer appear stuck after being clicked.
-- **Database migration fix.** Fixed a UniqueViolation error in the constance key rename migration.
+- **Fixed XSS vulnerabilities in markdown/HTML rendering components** with proper sanitization across FormattedHtml, SafeMarkdown, and announcement bar.
+- **Fixed API serialization issues** where plan prices, minimal_price, quotas, and scope_name were returned as wrong types (strings instead of numbers or vice versa), causing Go SDK unmarshal errors.
+- **Fixed user filter** that incorrectly included users with revoked project/organization roles.
+- **Fixed CourseAccount serializer crash** when project dates were null.
+- **Fixed prepaid duration calculation** to correctly use order start_date.
+- **Fixed scientific notation display** in plan price editing.
+- **Fixed organization dashboard usage chart** showing wrong billing type.
+- **Fixed action items appearing stuck** after click in offering state actions.
+- **Fixed group invitation token** not being removed when cancelling the ProjectDetailsDialog.
+- **Fixed constance key rename migration** failing with UniqueViolation.
+- **Skipped Octavia sync** when load-balancer service is not in the OpenStack catalog.
+
+### Security
+
+- Upgraded Pillow to 12.2.0 to fix CVE-2026-40192.
+- Upgraded DOMPurify to 3.4.0 to fix GHSA-39q2-94rc-95cp.
+- Fixed XSS vulnerabilities in all markdown and HTML rendering components.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [69 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.7...8.0.8-rc.5) - AI Assistant tools, monthly usage reporting, OpenStack networking, permission system, serialization fixes
-- **Waldur Homeport**: [56 commits](https://github.com/waldur/waldur-homeport/compare/8.0.7...8.0.8-rc.5) - Marketplace layouts, AI Assistant UI, server-side pagination, security fixes, UI polish
-- **Waldur Helm**: [5 commits](https://github.com/waldur/waldur-helm/compare/8.0.7...8.0.8-rc.5) - Added pull secret to cleanup cronjob, version updates
-- **Waldur Docker Compose**: [4 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.7...8.0.8-rc.5) - Maintenance updates only
+- **Waldur Mastermind**: [71 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.7...8.0.8-rc.6) - OpenStack networking, AI Assistant tools, SLURM policies, usage reporting, permissions, serializer fixes, Python 3.13 upgrade.
+- **Waldur Homeport**: [61 commits](https://github.com/waldur/waldur-homeport/compare/8.0.7...8.0.8-rc.6) - Marketplace layouts, AI Assistant UI, reporting pagination, security fixes, UI polish across orders, proposals, and charts.
+- **Waldur Helm**: [6 commits](https://github.com/waldur/waldur-helm/compare/8.0.7...8.0.8-rc.6) - Added pull secret to cleanup cronjob; version bump updates.
+- **Waldur Docker Compose**: [5 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.7...8.0.8-rc.6) - Maintenance updates only.
 
 ---
+
 
 
 
