@@ -7522,17 +7522,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#reduxredux-saga-pattern-legacy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Redux/Redux Saga Pattern (Legacy)
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -7699,17 +7688,6 @@
     <span class="md-ellipsis">
       
         Best Practices
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration Patterns
       
     </span>
   </a>
@@ -13749,17 +13727,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#reduxredux-saga-pattern-legacy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Redux/Redux Saga Pattern (Legacy)
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -13932,17 +13899,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#migration-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration Patterns
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -13963,7 +13919,7 @@
 <h1 id="api-integration-guide">API Integration Guide</h1>
 <p>This guide covers data loading patterns, API client usage, and refresh mechanisms for integrating with the Waldur MasterMind backend.</p>
 <h2 id="api-data-loading-and-refresh-patterns">API Data Loading and Refresh Patterns</h2>
-<p>The application uses multiple approaches for loading data from REST APIs in forms and handling data refresh operations, showing evolution from legacy Redux patterns to modern React Query implementations.</p>
+<p>The application utilizes React Query efficiently for loading data from REST APIs, rendering forms, and handling real-time data refresh operations.</p>
 <h2 id="data-loading-patterns">Data Loading Patterns</h2>
 <h3 id="react-querytanstack-query-modern-approach">React Query/TanStack Query (Modern Approach)</h3>
 <p>The preferred pattern for new components uses React Query for efficient data fetching:</p>
@@ -14034,49 +13990,6 @@
 <li><strong>Reusability</strong>: Shared across multiple components</li>
 <li><strong>Centralized Error Handling</strong>: Consistent error management</li>
 </ul>
-<h3 id="reduxredux-saga-pattern-legacy">Redux/Redux Saga Pattern (Legacy)</h3>
-<p>Used primarily for table data management:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kd">function</span><span class="o">*</span><span class="w"> </span><span class="nx">fetchList</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">table</span><span class="p">,</span><span class="w"> </span><span class="nx">extraFilter</span><span class="p">,</span><span class="w"> </span><span class="nx">pullInterval</span><span class="p">,</span><span class="w"> </span><span class="nx">force</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">action</span><span class="p">.</span><span class="nx">payload</span><span class="p">;</span>
-
-<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">yield</span><span class="w"> </span><span class="nx">select</span><span class="p">(</span><span class="nx">getTableState</span><span class="p">(</span><span class="nx">table</span><span class="p">));</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">currentPage</span><span class="o">:</span><span class="w"> </span><span class="kt">state.pagination.currentPage</span><span class="p">,</span>
-<span class="w">      </span><span class="nx">pageSize</span><span class="o">:</span><span class="w"> </span><span class="kt">state.pagination.pageSize</span><span class="p">,</span>
-<span class="w">      </span><span class="nx">filter</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="nx">extraFilter</span><span class="p">,</span><span class="w"> </span><span class="nx">field</span><span class="o">:</span><span class="w"> </span><span class="kt">fields</span><span class="w"> </span><span class="p">},</span>
-<span class="w">    </span><span class="p">};</span>
-
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">rows</span><span class="p">,</span><span class="w"> </span><span class="nx">resultCount</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">yield</span><span class="w"> </span><span class="nx">call</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">fetchData</span><span class="p">,</span><span class="w"> </span><span class="nx">request</span><span class="p">);</span>
-<span class="w">    </span><span class="k">yield</span><span class="w"> </span><span class="nx">put</span><span class="p">(</span><span class="nx">actions</span><span class="p">.</span><span class="nx">fetchListDone</span><span class="p">(</span><span class="nx">table</span><span class="p">,</span><span class="w"> </span><span class="nx">entities</span><span class="p">,</span><span class="w"> </span><span class="nx">order</span><span class="p">,</span><span class="w"> </span><span class="nx">resultCount</span><span class="p">));</span>
-<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">yield</span><span class="w"> </span><span class="nx">put</span><span class="p">(</span><span class="nx">actions</span><span class="p">.</span><span class="nx">fetchListError</span><span class="p">(</span><span class="nx">table</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">));</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p><strong>Characteristics:</strong></p>
-<ul>
-<li><strong>Centralized State</strong>: Redux store for table data</li>
-<li><strong>Automatic Pagination</strong>: Built-in pagination and filtering</li>
-<li><strong>Request Cancellation</strong>: AbortController support</li>
-<li><strong>Periodic Polling</strong>: Configurable refresh intervals</li>
-</ul>
 <h2 id="data-refresh-mechanisms">Data Refresh Mechanisms</h2>
 <h3 id="crud-operations-refresh">CRUD Operations Refresh</h3>
 <p><strong>Create Operations:</strong></p>
@@ -14123,13 +14036,7 @@
 <p><strong>Edit Operations:</strong></p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Optimistic updates in Redux</span>
-<span class="k">yield</span><span class="w"> </span><span class="nx">put</span><span class="p">(</span><span class="nx">actions</span><span class="p">.</span><span class="nx">entityUpdate</span><span class="p">(</span><span class="nx">table</span><span class="p">,</span><span class="w"> </span><span class="nx">entity</span><span class="p">));</span>
-
-<span class="c1">// Manual refresh after edit</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Manual refresh after edit</span>
 <span class="k">await</span><span class="w"> </span><span class="nx">updateResource</span><span class="p">(</span><span class="nx">resourceData</span><span class="p">);</span>
 <span class="nx">refetch</span><span class="p">();</span><span class="w"> </span><span class="c1">// Refresh data</span>
 </code></pre></div></td></tr></tbody></table></div>
@@ -14168,7 +14075,7 @@
 </tr>
 <tr>
 <td><strong>Automatic Polling</strong></td>
-<td><code>pullInterval</code> in Redux saga</td>
+<td><code>refetchInterval</code> in React Query</td>
 <td>Real-time data updates</td>
 </tr>
 <tr>
@@ -14298,50 +14205,7 @@
 <li><strong>API Integration</strong>: Prefer <code>waldur-js-client</code> over direct fetch calls</li>
 <li><strong>Form Validation</strong>: Use async validation with API dependency checking</li>
 </ol>
-<p>This data loading architecture demonstrates the application's evolution toward modern React patterns while maintaining backward compatibility with existing table infrastructure and Redux-based components.</p>
-<h2 id="migration-patterns">Migration Patterns</h2>
-<p>The application shows clear migration from Redux to React Query:</p>
-<table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Redux Pattern</th>
-<th>React Query Pattern</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Data Loading</strong></td>
-<td>Redux actions + sagas</td>
-<td><code>useQuery</code> hooks</td>
-</tr>
-<tr>
-<td><strong>Caching</strong></td>
-<td>Redux store</td>
-<td>Query cache</td>
-</tr>
-<tr>
-<td><strong>Error Handling</strong></td>
-<td>Redux error actions</td>
-<td>Query error states</td>
-</tr>
-<tr>
-<td><strong>Loading States</strong></td>
-<td>Redux loading flags</td>
-<td><code>isLoading</code> state</td>
-</tr>
-<tr>
-<td><strong>Refresh</strong></td>
-<td>Dispatch actions</td>
-<td><code>refetch()</code> function</td>
-</tr>
-<tr>
-<td><strong>Polling</strong></td>
-<td>Saga intervals</td>
-<td>Query refetch intervals</td>
-</tr>
-</tbody>
-</table>
+<p>This data loading architecture demonstrates the application's comprehensive utilization of modern React patterns for seamless API integrations.</p>
 
 
 
