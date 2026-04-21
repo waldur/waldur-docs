@@ -8536,6 +8536,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#project-slug-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Slug Templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#backend-id-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13909,6 +13920,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#project-slug-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Slug Templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#backend-id-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14259,6 +14281,92 @@
         <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_slug</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">counter</span><span class="si">}</span><span class="s2">"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="project-slug-templates">Project Slug Templates</h3>
+<p>Organizations can define custom slug templates for their projects via the <code>project_slug_template</code> field on the Customer model. When set, new projects auto-generate slugs using the template instead of the default name-based generation.</p>
+<p><strong>Configuration:</strong> Staff users set the template on a Customer via the API:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">PATCH /api/customers/{uuid}/</span>
+<span class="err">{"project_slug_template": "{customer_slug}-{year}-{counter_padded}"}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The field is read-only for non-staff users but visible in API responses.</p>
+<p><strong>Supported placeholders:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Placeholder</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{customer_slug}</code></td>
+<td>Organization slug</td>
+<td><code>acme</code></td>
+</tr>
+<tr>
+<td><code>{project_name}</code></td>
+<td>Slugified project name</td>
+<td><code>my-project</code></td>
+</tr>
+<tr>
+<td><code>{year}</code></td>
+<td>Current year (4-digit)</td>
+<td><code>2026</code></td>
+</tr>
+<tr>
+<td><code>{month}</code></td>
+<td>Current month (2-digit)</td>
+<td><code>04</code></td>
+</tr>
+<tr>
+<td><code>{counter}</code></td>
+<td>Sequential project number per organization</td>
+<td><code>3</code></td>
+</tr>
+<tr>
+<td><code>{counter_padded}</code></td>
+<td>Zero-padded 3-digit counter</td>
+<td><code>003</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Slug is generated only on project creation when no slug is provided</li>
+<li>If a staff user provides a slug explicitly, it takes precedence over the template</li>
+<li>If the template is invalid or contains unknown placeholders, generation falls back to the default name-based slug</li>
+<li>Counter is scoped per customer (counts existing projects in the organization)</li>
+<li>Uniqueness is enforced globally; a numeric suffix is appended on collision</li>
+<li>The template can be changed at any time, even when projects exist</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Template</th>
+<th>Result (3rd project, customer slug <code>csc</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{customer_slug}-{counter_padded}</code></td>
+<td><code>csc-003</code></td>
+</tr>
+<tr>
+<td><code>{customer_slug}-{year}{month}-{counter_padded}</code></td>
+<td><code>csc-202604-003</code></td>
+</tr>
+<tr>
+<td><code>{project_name}-{counter}</code></td>
+<td><code>my-project-3</code></td>
+</tr>
+<tr>
+<td><em>(no template set)</em></td>
+<td>Default: slugified project name, e.g. <code>my-projec</code></td>
+</tr>
+</tbody>
+</table>
 <h3 id="backend-id-usage">Backend ID Usage</h3>
 <p>The <code>backend_id</code> field serves as a bridge to external systems with specific characteristics:</p>
 <ul>
@@ -14477,7 +14585,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-04-04
+    2026-04-21
   </span>
 
     
