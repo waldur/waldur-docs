@@ -78,6 +78,9 @@ This release brings major improvements to the AI Assistant, new permission contr
 
 
 
+
+
+
 ## 8.0.7 - 2026-04-09
 
 ### Highlights
