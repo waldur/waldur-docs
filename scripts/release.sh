@@ -38,6 +38,18 @@ REPOS=(
     "$PROJECT_DIR/../waldur-docker-compose"
 )
 
+echo "[pre-flight] Fetching latest from origin in all repositories..."
+for repo_path in "${REPOS[@]}"; do
+    repo_name=$(basename "$repo_path")
+    if [ -d "$repo_path/.git" ]; then
+        echo "  Fetching $repo_name..."
+        git -C "$repo_path" fetch origin --tags --force --quiet
+    else
+        echo "  WARNING: $repo_name not found at $repo_path, skipping fetch."
+    fi
+done
+echo ""
+
 TAG_EXISTS_IN=""
 for repo_path in "${REPOS[@]}"; do
     repo_name=$(basename "$repo_path")
