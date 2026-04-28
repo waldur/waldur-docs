@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-04-28T02:04:42.920162Z
+Generated: 2026-04-28T12:00:18.354844Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -25276,6 +25276,291 @@ uv sync --all-packages
 
 ---
 
+### SLURM Storage Quotas
+<!-- Source: docs/admin-guide/providers/site-agent/docs/slurm-storage-quotas.md -->
+
+# SLURM Storage Quotas
+
+The SLURM plugin can apply two independent kinds of filesystem quotas during
+normal agent operation:
+
+- **Per-user home directory quota** (`homedir_quota`) — runs in
+  `membership_sync` mode when a new user is added to a SLURM account and a
+  homedir is created. Sets a *user* quota on the user's home directory via
+  CephFS xattrs, XFS user quotas, or Lustre user quotas.
+- **Per-project directory + Lustre group/project quota**
+  (`project_directory`) — runs in `order_process` mode during resource
+  creation (`_pre_create_resource`). Creates a shared project directory,
+  applies ownership / permissions / ACLs, and optionally sets a Lustre
+  *project* quota keyed on the LDAP group GID.
+
+The two are independent — you can enable either, both, or neither. Failures
+in either are logged but do not abort agent operation.
+
+## Subsystem A — Per-user home directory quota
+
+This lives in the **core** module
+[`waldur_site_agent/backend/quota.py`](../waldur_site_agent/backend/quota.py)
+and is invoked from
+[`BaseBackend.create_user_homedirs`](../waldur_site_agent/backend/backends.py)
+whenever the agent creates a new user homedir. It is wired into the SLURM
+backend through the standard
+`enable_user_homedir_account_creation` /
+`default_homedir_umask` settings.
+
+The SLURM backend triggers `create_user_homedirs` from three call sites:
+
+- `post_create_resource` — during `order_process`, after a resource is
+  created, for the offering users in the user context.
+- `add_users_to_resource` — during `membership_sync`, for users newly added
+  to a resource.
+- `process_existing_users` — during `membership_sync`, to ensure homedirs
+  exist for already-known users.
+
+It is also called by the standalone `create_homedirs_for_offering_users`
+utility (`waldur_site_agent/common/utils.py`).
+
+### Homedir quota configuration
+
+```yaml
+backend_settings:
+  enable_user_homedir_account_creation: true
+  default_homedir_umask: "0077"
+
+  # Optional override. When set, the agent applies the quota to
+  # {homedir_base_path}/{username}. When unset, the path is taken from
+  # the system passwd database (pwd.getpwnam(username).pw_dir).
+  homedir_base_path: "/cephfs/home"
+
+  homedir_quota:
+    provider: "ceph_xattr"   # one of: ceph_xattr | xfs | lustre
+    # ...provider-specific fields below
+```
+
+The schema is `HomedirQuotaConfig` in `backend/quota.py`. It uses
+`extra="forbid"`, so unknown keys are rejected. An invalid configuration is
+logged and treated as "no quota" — homedir creation still proceeds.
+
+### Provider: `ceph_xattr`
+
+Sets quotas via extended attributes on the homedir.
+
+```yaml
+homedir_quota:
+  provider: "ceph_xattr"
+  max_bytes: "1099511627776"   # 1 TiB in bytes; string. Optional.
+  max_files: 100000             # integer. Optional.
+```
+
+Commands executed (per attribute):
+
+```bash
+setfattr -n ceph.quota.max_bytes -v 1099511627776 <homedir>
+getfattr --only-values -n ceph.quota.max_bytes <homedir>   # verification
+```
+
+The verify step compares the read-back value against the configured one and
+logs a warning on mismatch.
+
+### Provider: `xfs`
+
+Sets XFS user quotas via `xfs_quota`. Block limits accept human-readable
+suffixes (`g`, `t`, …).
+
+```yaml
+homedir_quota:
+  provider: "xfs"
+  mount_point: "/home"          # required
+  block_softlimit: "900g"
+  block_hardlimit: "1t"
+  inode_softlimit: 90000
+  inode_hardlimit: 100000
+```
+
+Command executed:
+
+```bash
+xfs_quota -x -c "limit -u bsoft=900g bhard=1t isoft=90000 ihard=100000 alice" /home
+xfs_quota -x -c "quota -u -N -b -h alice" /home   # verification (logged)
+```
+
+If `mount_point` is missing or no limits are set, the quota step is
+skipped with a log message. The homedir itself is still created.
+
+### Provider: `lustre`
+
+Sets Lustre user quotas via `lfs setquota`. Block limits are expressed in
+**kilobytes**.
+
+```yaml
+homedir_quota:
+  provider: "lustre"
+  mount_point: "/home"
+  block_softlimit: "943718400"    # ~900 GiB in KiB
+  block_hardlimit: "1048576000"   # ~1 TiB in KiB
+  inode_softlimit: 90000
+  inode_hardlimit: 100000
+```
+
+Command executed:
+
+```bash
+lfs setquota -u alice -b 943718400 -B 1048576000 -i 90000 -I 100000 /home
+lfs quota -u alice /home   # verification (logged)
+```
+
+### When the quota is applied
+
+`BaseBackend.create_user_homedirs` iterates over the set of usernames it is
+given. For each one:
+
+1. `client.create_linux_user_homedir(username, umask)` is called.
+2. If `homedir_quota` is configured, the quota is then applied on the resolved
+   homedir path.
+3. A failure for one user is logged but does not stop processing of the
+   remaining users.
+4. If homedir creation itself fails for a user, the quota step is skipped for
+   that user.
+
+## Subsystem B — Project directory + Lustre group/project quota
+
+SLURM-plugin specific. Schemas: `ProjectDirectoryConfig` and
+`LustreQuotaConfig` in
+[`plugins/slurm/waldur_site_agent_slurm/schemas.py`](../plugins/slurm/waldur_site_agent_slurm/schemas.py).
+Implementation: `_setup_project_directory` /
+`_set_lustre_quota` in
+[`plugins/slurm/waldur_site_agent_slurm/backend.py`](../plugins/slurm/waldur_site_agent_slurm/backend.py).
+
+### Project directory configuration
+
+```yaml
+backend_settings:
+  project_directory:
+    enabled: true
+    base_path: "/valhalla/projects"   # default
+    owner: "nobody"                    # uid/owner for chown
+    permissions: "770"                 # octal, applied via chmod
+    set_gid: true                      # chmod g+s
+    set_acl: true                      # setfacl -R -m group:<g>:rwx,d:group:<g>:rwx
+
+    # Optional Lustre group/project quota (see below for prerequisites)
+    lustre_quota:
+      mount_point: "/valhalla"
+      block_softlimit: 5368709120      # kilobytes
+      block_hardlimit: 6442450944
+      inode_softlimit: 5000000
+      inode_hardlimit: 7000000
+```
+
+### What the agent does on resource creation
+
+When `project_directory.enabled: true`, `_pre_create_resource` calls
+`_setup_project_directory(resource_backend_id)` after the SLURM account
+hierarchy is created. It executes (in order):
+
+```bash
+mkdir -p   <base_path>/<resource_backend_id>
+chmod 770  <base_path>/<resource_backend_id>
+chmod g+s  <base_path>/<resource_backend_id>     # if set_gid
+chown <owner>:<group_name> <base_path>/<resource_backend_id>
+setfacl -R -m group:<group_name>:rwx,d:group:<group_name>:rwx <path>   # if set_acl
+```
+
+`<group_name>` defaults to the resource backend ID. It can be overridden
+through two extra keys that are read by the backend but not (yet) part of
+the schema fields — they pass through because the schema has
+`extra="allow"`:
+
+- `group_owner_source`: when set to `"project_id"` (the default), the group
+  name is the SLURM account name. Any other value falls back to:
+- `group_name`: explicit override of the group used in `chown` / `setfacl`.
+
+### Lustre group/project quota: prerequisites
+
+The Lustre quota step inside `_setup_project_directory` runs **only if all
+three** of the following are true:
+
+1. `lustre_quota` is configured.
+2. The SLURM backend has an LDAP client configured (`backend_settings.ldap`).
+3. `LdapClient.get_group_gid(group_name)` returns a non-`None` GID.
+
+If any of these is missing the directory is still created but the Lustre
+quota is silently skipped. No warning is emitted today — if you intend to
+use Lustre project quotas, make sure the offering has `ldap:` configured
+and that the project group exists in LDAP before the resource is created.
+
+If the prerequisites are met, the agent runs:
+
+```bash
+lfs setquota -p <gid> [-b <block_softlimit>] [-B <block_hardlimit>] \
+                      [-i <inode_softlimit>] [-I <inode_hardlimit>] <mount_point>
+lfs project -p <gid> -r -s <project_path>
+```
+
+Each `-b/-B/-i/-I` flag is included only if the corresponding limit is set
+in the configuration. `mount_point` defaults to `/valhalla`.
+
+Note that this is a **project quota** (`-p`), not a group or user quota. The
+GID coming from LDAP is reused as the Lustre project ID, and the directory
+tree is tagged with that project ID via `lfs project -r -s`.
+
+Unlike subsystem A, no verification step is run. Failures from
+`lfs setquota` are logged but do not abort resource creation.
+
+## Examples
+
+A complete reference example showing both subsystems is in
+[`examples/waldur-site-agent-config.yaml.example`](../examples/waldur-site-agent-config.yaml.example):
+
+- The `Example SLURM Offering` shows `homedir_quota` placement with the
+  `ceph_xattr` provider (commented out).
+- The `Discoverer CPU` offering shows `homedir_base_path`, the `lustre` and
+  `xfs` `homedir_quota` provider examples (commented out), and a full
+  uncommented `project_directory` block with `lustre_quota`.
+
+## Caveats and known inconsistencies
+
+- **`HomedirQuotaConfig.block_softlimit` / `block_hardlimit` are typed as
+  `Optional[str]`** (to allow XFS suffixes like `"900g"`), while
+  `LustreQuotaConfig.block_softlimit` / `block_hardlimit` are typed as
+  `Optional[int]`. Use integers (kilobytes) for `project_directory.lustre_quota`
+  even if you use string-with-suffix for `homedir_quota` on Lustre.
+- **`group_owner_source` and `group_name`** are accepted by the runtime but
+  are not declared fields of `ProjectDirectoryConfig` (they pass through via
+  `extra="allow"`). They are documented here for completeness.
+- **Lustre project quota silently no-ops without LDAP.** This is a current
+  implementation choice — the quota requires the GID and the GID lookup goes
+  through the LDAP client.
+- **No verification** is run after `lfs setquota -p` (the homedir-quota path
+  *does* verify). Operators should spot-check with `lfs quota -p <gid>
+  <mount>` after onboarding the first project.
+
+## Operator troubleshooting
+
+Verify a user's home quota:
+
+```bash
+# Ceph
+getfattr --only-values -n ceph.quota.max_bytes /cephfs/home/alice
+# XFS
+xfs_quota -x -c 'quota -u -N -b -h alice' /home
+# Lustre
+lfs quota -u alice /home
+```
+
+Verify a project directory's Lustre quota / project ID:
+
+```bash
+lfs quota   -p <gid>     /valhalla
+lfs project -d /valhalla/projects/<resource_backend_id>
+```
+
+The agent logs each command it issues and each verification result. Search
+the structured logs for `homedir`, `Lustre quota`, or
+`Created project directory` to trace activity.
+
+---
+
 ### SLURM Usage Reporting Setup Guide
 <!-- Source: docs/admin-guide/providers/site-agent/docs/slurm-usage-reporting-setup.md -->
 
@@ -31699,6 +31984,19 @@ backend_settings:
       slowdown: "slowdown"
       blocked: "blocked"
 ```
+
+### Storage Quotas
+
+The SLURM plugin supports two independent filesystem-quota subsystems:
+
+- **Per-user home directory quota** (`homedir_quota` / `homedir_base_path`)
+  with CephFS xattr, XFS, or Lustre user-quota providers.
+- **Per-project directory + Lustre group/project quota**
+  (`project_directory` with optional nested `lustre_quota`).
+
+See [docs/slurm-storage-quotas.md](../../docs/slurm-storage-quotas.md) for
+configuration reference, command flow, prerequisites (Lustre project quotas
+require LDAP integration), and operator troubleshooting tips.
 
 ### Event Processing Configuration
 
@@ -53437,7 +53735,7 @@ yarn info vitest @testing-library/react cypress version```
 - Extract shared test data into separate files (e.g., `test-utils.ts`)
 - Only mock what's actually imported by the component under test
 - Don't mock exports that aren't used - it adds unnecessary complexity
-- Verify import paths match actual usage (e.g., `./constants` vs `@waldur/marketplace/common/constants`)
+- Verify import paths match actual usage (e.g., `./constants` vs `@/marketplace/common/constants`)
 
 **Vitest Mocking Constraints**:
 
@@ -53472,7 +53770,7 @@ vi.mock('./constants', () => ({
 
 ### TypeScript Configuration
 
-- Uses `@waldur/*` path mapping for internal imports
+- Uses `@/*` path mapping for internal imports
 - Strict TypeScript checking disabled for legacy compatibility
 - Module resolution set to "Bundler" for Vite compatibility
 
@@ -53631,7 +53929,7 @@ The application uses a unified button system. **Never import Bootstrap Button di
 #### ActionButton Usage
 
 ```tsx
-import { ActionButton } from '@waldur/table/ActionButton';
+import { ActionButton } from '@/table/ActionButton';
 
 // Basic usage
 <ActionButton
@@ -53661,7 +53959,7 @@ import { ActionButton } from '@waldur/table/ActionButton';
 #### SubmitButton Usage
 
 ```tsx
-import { SubmitButton } from '@waldur/form';
+import { SubmitButton } from '@/form';
 
 // In a form
 <SubmitButton
@@ -53685,7 +53983,7 @@ import { SubmitButton } from '@waldur/form';
 #### CloseDialogButton Usage
 
 ```tsx
-import { CloseDialogButton } from '@waldur/modal/CloseDialogButton';
+import { CloseDialogButton } from '@/modal/CloseDialogButton';
 
 // Simple close
 <Modal.Footer>
@@ -53703,7 +54001,7 @@ import { CloseDialogButton } from '@waldur/modal/CloseDialogButton';
 #### IconButton Usage
 
 ```tsx
-import { IconButton } from '@waldur/core/buttons/IconButton';
+import { IconButton } from '@/core/buttons/IconButton';
 
 // Toolbar refresh button
 <IconButton
@@ -53742,8 +54040,8 @@ Generic button factories that reduce boilerplate for common CRUD operations:
 #### CreateModalButton Usage
 
 ```tsx
-import { CreateModalButton } from '@waldur/core/buttons';
-import { lazyComponent } from '@waldur/core/lazyComponent';
+import { CreateModalButton } from '@/core/buttons';
+import { lazyComponent } from '@/core/lazyComponent';
 
 const MyDialog = lazyComponent(() =>
   import('./MyDialog').then((m) => ({ default: m.MyDialog })),
@@ -53761,7 +54059,7 @@ export const MyCreateButton = ({ refetch }) => (
 #### EditModalButton Usage
 
 ```tsx
-import { EditModalButton } from '@waldur/core/buttons';
+import { EditModalButton } from '@/core/buttons';
 
 export const MyEditButton = ({ row, refetch }) => (
   <EditModalButton
@@ -53778,7 +54076,7 @@ export const MyEditButton = ({ row, refetch }) => (
 #### DeleteButton Usage
 
 ```tsx
-import { DeleteButton } from '@waldur/core/buttons';
+import { DeleteButton } from '@/core/buttons';
 import { myItemDestroy } from 'waldur-js-client';
 
 export const MyDeleteButton = ({ row, refetch }) => (
@@ -54193,7 +54491,7 @@ Prop tables extracted from TypeScript interfaces. Use these to generate correct 
 #### ActionButton
 
 ```ts
-import { ActionButton } from '@waldur/table/ActionButton';
+import { ActionButton } from '@/table/ActionButton';
 ```
 
 | Prop | Type | Required | Default | Description |
@@ -54215,7 +54513,7 @@ import { ActionButton } from '@waldur/table/ActionButton';
 #### CompactActionButton
 
 ```ts
-import { CompactActionButton } from '@waldur/table/CompactActionButton';
+import { CompactActionButton } from '@/table/CompactActionButton';
 ```
 
 Same props as `ActionButton` (without `visibility`). Use for tight spaces — renders at `sm` size.
@@ -54237,7 +54535,7 @@ Same props as `ActionButton` (without `visibility`). Use for tight spaces — re
 #### SubmitButton
 
 ```ts
-import { SubmitButton } from '@waldur/form';
+import { SubmitButton } from '@/form';
 ```
 
 | Prop | Type | Required | Default | Description |
@@ -54262,7 +54560,7 @@ import { SubmitButton } from '@waldur/form';
 #### CompactSubmitButton
 
 ```ts
-import { CompactSubmitButton } from '@waldur/form';
+import { CompactSubmitButton } from '@/form';
 ```
 
 Same props as `SubmitButton` (without `form`). Renders at `sm` size — use inside popovers and inline forms.
@@ -54287,7 +54585,7 @@ Same props as `SubmitButton` (without `form`). Renders at `sm` size — use insi
 #### IconButton
 
 ```ts
-import { IconButton } from '@waldur/core/buttons/IconButton';
+import { IconButton } from '@/core/buttons/IconButton';
 ```
 
 | Prop | Type | Required | Default | Description |
@@ -54307,7 +54605,7 @@ import { IconButton } from '@waldur/core/buttons/IconButton';
 #### CompactIconButton
 
 ```ts
-import { CompactIconButton } from '@waldur/core/buttons/IconButton';
+import { CompactIconButton } from '@/core/buttons/IconButton';
 ```
 
 Identical props to `IconButton`. Renders at `sm` size.
@@ -54317,7 +54615,7 @@ Identical props to `IconButton`. Renders at `sm` size.
 #### ToolbarButton
 
 ```ts
-import { ToolbarButton } from '@waldur/table/ToolbarButton';
+import { ToolbarButton } from '@/table/ToolbarButton';
 ```
 
 | Prop | Type | Required | Default | Description |
@@ -54337,7 +54635,7 @@ import { ToolbarButton } from '@waldur/table/ToolbarButton';
 #### BaseButton
 
 ```ts
-import { BaseButton } from '@waldur/core/buttons/BaseButton';
+import { BaseButton } from '@/core/buttons/BaseButton';
 ```
 
 **Do not use in feature code.** This is an internal primitive used by the higher-level button components. Feature code must use the specific button components (`ActionButton`, `SubmitButton`, `ToolbarButton`, etc.) which already cover all use cases.
@@ -54366,7 +54664,7 @@ import { BaseButton } from '@waldur/core/buttons/BaseButton';
 #### Badge
 
 ```ts
-import { Badge } from '@waldur/core/Badge';
+import { Badge } from '@/core/Badge';
 ```
 
 | Prop | Type | Required | Default | Description |
@@ -54390,7 +54688,7 @@ import { Badge } from '@waldur/core/Badge';
 #### StateIndicator
 
 ```ts
-import { StateIndicator } from '@waldur/core/StateIndicator';
+import { StateIndicator } from '@/core/StateIndicator';
 ```
 
 | Prop | Type | Required | Default | Description |
@@ -54411,7 +54709,7 @@ import { StateIndicator } from '@waldur/core/StateIndicator';
 #### NoResult
 
 ```ts
-import { NoResult } from '@waldur/navigation/header/search/NoResult';
+import { NoResult } from '@/navigation/header/search/NoResult';
 ```
 
 Use for **all empty states**. Always provide an actionable CTA via `callback`+`buttonTitle` or `actions`.
@@ -54434,7 +54732,7 @@ Use for **all empty states**. Always provide an actionable CTA via `callback`+`b
 #### Table
 
 ```ts
-import { Table } from '@waldur/table';
+import { Table } from '@/table';
 ```
 
 Key configuration props. Full interface is large — these are the most commonly used.
@@ -54483,10 +54781,10 @@ Key configuration props. Full interface is large — these are the most commonly
 #### FormGroup (React Final Form)
 
 ```ts
-import { FormGroup } from '@waldur/marketplace/offerings/FormGroup';
+import { FormGroup } from '@/marketplace/offerings/FormGroup';
 ```
 
-Use this version inside React Final Form. **Do not use `FormContainer` from `@waldur/form`** — that is redux-form only and will cause errors.
+Use this version inside React Final Form. **Do not use `FormContainer` from `@/form`** — that is redux-form only and will cause errors.
 
 | Prop | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -54508,7 +54806,7 @@ Use this version inside React Final Form. **Do not use `FormContainer` from `@wa
 #### SelectField
 
 ```ts
-import { SelectField } from '@waldur/form';
+import { SelectField } from '@/form';
 ```
 
 Redux Form field component. In React Final Form use `<Field name="..." component={SelectField as any} />`.
@@ -54530,7 +54828,7 @@ Redux Form field component. In React Final Form use `<Field name="..." component
 #### StringField
 
 ```ts
-import { StringField } from '@waldur/form';
+import { StringField } from '@/form';
 ```
 
 Redux Form field component. In React Final Form use `<Field name="..." component={StringField as any} />`.
@@ -54846,7 +55144,7 @@ For containerized development:
 
 ### IDE Configuration
 
-- TypeScript support with path mapping for `@waldur/*` imports
+- TypeScript support with path mapping for `@/*` imports
 - ESLint and Prettier integration for code formatting
 - Vitest integration for test running and debugging
 
@@ -55471,8 +55769,8 @@ const comp = fields.value[i];
 
 **Two Types Available**:
 
-1. **`@waldur/form/FormGroup`** - Redux Form wrapper with comprehensive state management
-2. **`@waldur/marketplace/offerings/FormGroup`** - Simple wrapper for labels/help text (preferred for React Final Form)
+1. **`@/form/FormGroup`** - Redux Form wrapper with comprehensive state management
+2. **`@/marketplace/offerings/FormGroup`** - Simple wrapper for labels/help text (preferred for React Final Form)
 
 ### FormGroup Migration Patterns
 
@@ -55544,7 +55842,7 @@ This document covers internationalization implementation, translation workflows,
 Use the `translate` function to mark strings for translation:
 
 ```typescript
-import { translate } from '@waldur/i18n';
+import { translate } from '@/i18n';
 
 // Basic usage
 const message = translate('User details');
@@ -55560,7 +55858,7 @@ const welcomeMessage = translate('Welcome, {name}!', { name: user.name });
 Use `formatJsxTemplate` for embedding React components:
 
 ```typescript
-import { translate, formatJsxTemplate } from '@waldur/i18n';
+import { translate, formatJsxTemplate } from '@/i18n';
 
 const message = translate('Opened by {user} at {date}', {
   user: <IssueUser item={item} />,
@@ -55573,7 +55871,7 @@ const message = translate('Opened by {user} at {date}', {
 Use `formatJsx` for translatable text with embedded links:
 
 ```typescript
-import { translate, formatJsx } from '@waldur/i18n';
+import { translate, formatJsx } from '@/i18n';
 
 const message = translate(
   'You have not added any SSH keys to your <Link>profile</Link>.',
@@ -56356,8 +56654,8 @@ Waldur authorization system determines what user can do. It consists of permissi
 Permissions are defined in `PermissionEnum` which is automatically generated from backend code and pushed to fronted code by GitLab CI. Most of the time you're going to use `hasPermission` function which checks, whether user is allowed to perform action on given customer, project or offering. The following example shows how to check whether user is allowed to create offering in organization.
 
 ```js
-import { PermissionEnum } from '@waldur/permissions/enums';
-import { hasPermission } from '@waldur/permissions/hasPermission';
+import { PermissionEnum } from '@/permissions/enums';
+import { hasPermission } from '@/permissions/hasPermission';
 
 hasPermission(user, {
   permission: PermissionEnum.CREATE_OFFERING,
@@ -56513,7 +56811,7 @@ import {
   InvitationTokenStorage,
   GroupInvitationTokenStorage,
   LanguageStorage,
-} from '@waldur/core/StorageManager';
+} from '@/core/StorageManager';
 ```
 
 ### String Storage
@@ -56784,7 +57082,7 @@ This ensures your application doesn't crash due to corrupted storage data.
 When testing code that uses Storage Managers:
 
 ```typescript
-import { AuthTokenStorage } from '@waldur/core/StorageManager';
+import { AuthTokenStorage } from '@/core/StorageManager';
 
 // Mock the storage
 jest.spyOn(AuthTokenStorage, 'get').mockReturnValue('mock-token');
@@ -56797,7 +57095,7 @@ expect(AuthTokenStorage.get()).toBe('mock-token');
 For JSON storage:
 
 ```typescript
-import { RedirectStorage } from '@waldur/core/StorageManager';
+import { RedirectStorage } from '@/core/StorageManager';
 
 jest.spyOn(RedirectStorage, 'get').mockReturnValue({
   toState: 'home',
@@ -56875,10 +57173,10 @@ export const Config = new JsonStorageManager<AppConfig>('config');
 ```ts
 import { rolesList } from 'waldur-js-client';
 
-import { translate } from '@waldur/i18n';
-import Table from '@waldur/table/Table';
-import { createFetcher } from '@waldur/table/api';
-import { useTable } from '@waldur/table/useTable';
+import { translate } from '@/i18n';
+import Table from '@/table/Table';
+import { createFetcher } from '@/table/api';
+import { useTable } from '@/table/useTable';
 
 export const RolesList = () => {
   const tableProps = useTable({
@@ -56920,7 +57218,7 @@ The recommended way is to use `createFetcher` with SDK functions from `waldur-js
 
 ```ts
 import { usersList } from 'waldur-js-client';
-import { createFetcher } from '@waldur/table/api';
+import { createFetcher } from '@/table/api';
 
 const tableProps = useTable({
   table: 'UsersList',
@@ -57226,14 +57524,14 @@ Filter badges rendered from filtersStorage
 
 ### URL query parameter sync
 
-Filters can be synced to URL query parameters for shareable links. Use utilities from `@waldur/core/filters`:
+Filters can be synced to URL query parameters for shareable links. Use utilities from `@/core/filters`:
 
 ```ts
 import {
   syncFiltersToURL,
   useReinitializeFilterFromUrl,
   getQueryParams,
-} from '@waldur/core/filters';
+} from '@/core/filters';
 
 const FILTER_FORM_ID = 'MyFilterForm';
 
@@ -57380,7 +57678,7 @@ Table component supports tabs for switching between different views or data sets
 Define tabs using an array of `TableTab` objects:
 
 ```ts
-import { TableTab } from '@waldur/table/types';
+import { TableTab } from '@/table/types';
 
 const tabs: TableTab[] = [
   {
@@ -57564,11 +57862,11 @@ import { FC, useCallback } from 'react';
 import { PencilSimple, Trash, EnvelopeSimple } from '@phosphor-icons/react';
 import { useMutation } from '@tanstack/react-query';
 
-import { translate } from '@waldur/i18n';
-import { waitForConfirmation } from '@waldur/modal/actions';
-import { ActionItem } from '@waldur/resource/actions/ActionItem';
-import { useNotify } from '@waldur/store/hooks';
-import { ActionsDropdownComponent } from '@waldur/table/ActionsDropdown';
+import { translate } from '@/i18n';
+import { waitForConfirmation } from '@/modal/actions';
+import { ActionItem } from '@/resource/actions/ActionItem';
+import { useNotify } from '@/store/hooks';
+import { ActionsDropdownComponent } from '@/table/ActionsDropdown';
 
 interface RowActionsProps {
   row: MyRowType;
@@ -58075,7 +58373,7 @@ For simple styling, use Bootstrap utility classes that automatically adapt to th
 For third-party libraries that need explicit theme values:
 
 ```tsx
-import { useTheme } from '@waldur/theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 const MyComponent = () => {
   const { theme } = useTheme();
@@ -58235,7 +58533,7 @@ Empty states are critical touchpoints that can either frustrate users or guide t
 Use the `NoResult` component for all table empty states:
 
 ```tsx
-import { NoResult } from '@waldur/navigation/header/search/NoResult';
+import { NoResult } from '@/navigation/header/search/NoResult';
 
 // Basic usage - let NoResult provide defaults
 <NoResult />
@@ -58272,7 +58570,7 @@ import { NoResult } from '@waldur/navigation/header/search/NoResult';
 **Utility functions** (from `src/table/utils.tsx`):
 
 ```tsx
-import { getNoResultTitle, getNoResultMessage } from '@waldur/table/utils';
+import { getNoResultTitle, getNoResultMessage } from '@/table/utils';
 
 // For filtered tables
 getNoResultTitle({ verboseName: 'users', hasFilter: true });
@@ -58291,8 +58589,8 @@ getNoResultMessage({ verboseName: 'projects', customEmpty: translate('Start by c
 **Standard**: Use `DASH_ESCAPE_CODE` (—) for null/undefined values in displays:
 
 ```tsx
-import { DASH_ESCAPE_CODE } from '@waldur/table/constants';
-import { renderFieldOrDash } from '@waldur/table/utils';
+import { DASH_ESCAPE_CODE } from '@/table/constants';
+import { renderFieldOrDash } from '@/table/utils';
 
 // In table columns
 {
@@ -58358,8 +58656,8 @@ The decision to hide vs disable a button significantly impacts user experience. 
 **ALWAYS provide a tooltip explaining WHY the button is disabled.**
 
 ```tsx
-import { useValidators } from '@waldur/resource/actions/useValidators';
-import { ActionItem } from '@waldur/resource/actions/ActionItem';
+import { useValidators } from '@/resource/actions/useValidators';
+import { ActionItem } from '@/resource/actions/ActionItem';
 
 // Using useValidators hook for state-based validation
 const validators = [
@@ -58402,8 +58700,8 @@ const MyAction = ({ resource }) => {
 Use `hasPermission()` utility consistently:
 
 ```tsx
-import { hasPermission } from '@waldur/permissions/hasPermission';
-import { useUser } from '@waldur/workspace/hooks';
+import { hasPermission } from '@/permissions/hasPermission';
+import { useUser } from '@/workspace/hooks';
 
 const MyComponent = ({ project }) => {
   const user = useUser();
@@ -58423,7 +58721,7 @@ const MyComponent = ({ project }) => {
 **Staff-only actions**:
 
 ```tsx
-import { StaffOnlyIndicator } from '@waldur/customer/details/StaffOnlyIndicator';
+import { StaffOnlyIndicator } from '@/customer/details/StaffOnlyIndicator';
 
 // For staff-only actions that should still be visible
 <ActionItem
@@ -58452,7 +58750,7 @@ Consistent loading feedback prevents user confusion and maintains perceived perf
 // Spinner shown when: loading === true && rows.length === 0
 
 // For manual control in custom components:
-import { LoadingSpinner } from '@waldur/core/LoadingSpinner';
+import { LoadingSpinner } from '@/core/LoadingSpinner';
 
 {loading && !data.length ? (
   <LoadingSpinner />
@@ -58473,8 +58771,8 @@ import { LoadingSpinner } from '@waldur/core/LoadingSpinner';
 Use the `pending` prop on buttons:
 
 ```tsx
-import { SubmitButton } from '@waldur/form';
-import { BaseButton } from '@waldur/core/buttons/BaseButton';
+import { SubmitButton } from '@/form';
+import { BaseButton } from '@/core/buttons/BaseButton';
 
 // Form submit button
 <SubmitButton
@@ -58502,7 +58800,7 @@ import { BaseButton } from '@waldur/core/buttons/BaseButton';
 Use `LoadingErred` component for recoverable errors:
 
 ```tsx
-import { LoadingErred } from '@waldur/core/LoadingErred';
+import { LoadingErred } from '@/core/LoadingErred';
 
 // In data-fetching components
 if (error) {
@@ -58579,7 +58877,7 @@ if (error) {
 ### 4.3 Pagination Rules
 
 ```tsx
-import { PAGE_SIZE_COMPACT, PAGE_SIZE_FULL } from '@waldur/table/constants';
+import { PAGE_SIZE_COMPACT, PAGE_SIZE_FULL } from '@/table/constants';
 
 // PAGE_SIZE_COMPACT = 5 (for embedded/secondary tables)
 // PAGE_SIZE_FULL = 10 (for primary tables)
@@ -58600,7 +58898,7 @@ import { PAGE_SIZE_COMPACT, PAGE_SIZE_FULL } from '@waldur/table/constants';
 ### 5.1 Confirmation Dialog Pattern
 
 ```tsx
-import { waitForConfirmation } from '@waldur/modal/actions';
+import { waitForConfirmation } from '@/modal/actions';
 
 // Destructive action (deletion) - name the object being deleted
 const handleDelete = async () => {
@@ -58659,7 +58957,7 @@ await waitForConfirmation(
 
 ## 6. Notifications
 
-Use the notification utilities from `@waldur/store/notify`:
+Use the notification utilities from `@/store/notify`:
 
 ```tsx
 import {
@@ -58667,7 +58965,7 @@ import {
   showError,
   showErrorResponse,
   showInfo
-} from '@waldur/store/notify';
+} from '@/store/notify';
 
 // Success - action completed
 dispatch(showSuccess(translate('Project created successfully')));
@@ -58705,7 +59003,7 @@ dispatch(showInfo(translate('Changes will take effect after refresh')));
 ### 7.1 StateIndicator Component
 
 ```tsx
-import { StateIndicator } from '@waldur/core/StateIndicator';
+import { StateIndicator } from '@/core/StateIndicator';
 
 // Basic usage
 <StateIndicator
@@ -58765,7 +59063,7 @@ Use tooltips for:
 - **Complex terms**: Provide definitions
 
 ```tsx
-import { Tip } from '@waldur/core/Tooltip';
+import { Tip } from '@/core/Tooltip';
 
 // Basic tooltip
 <Tip label={translate('Copy to clipboard')} id="copy-btn">
@@ -58813,7 +59111,7 @@ import { QuestionIcon } from '@phosphor-icons/react';
 ### 9.1 Text Truncation
 
 ```tsx
-import { formatLongText } from '@waldur/table/utils';
+import { formatLongText } from '@/table/utils';
 
 // For text > 100 characters - shows tooltip with full text
 {formatLongText(description)}
@@ -58832,7 +59130,7 @@ import { formatLongText } from '@waldur/table/utils';
 All user-facing text must use `translate()`:
 
 ```tsx
-import { translate } from '@waldur/i18n';
+import { translate } from '@/i18n';
 
 // Simple string
 translate('Save changes')
@@ -58896,7 +59194,7 @@ translate('{count} item', '{count} items', { count })
 ### 11.1 Breakpoints
 
 ```tsx
-import { GRID_BREAKPOINTS } from '@waldur/core/constants';
+import { GRID_BREAKPOINTS } from '@/core/constants';
 
 // GRID_BREAKPOINTS = { xs: 0, sm: 576, md: 768, lg: 992, xl: 1200, xxl: 1400 }
 
@@ -58950,7 +59248,7 @@ const filterPosition = isSm && originalPosition === 'menu'
 When an action requires authentication (e.g., deploying a resource, ordering a service), **show a confirmation dialog** explaining that login is required, rather than silently redirecting or doing nothing.
 
 ```tsx
-import { waitForConfirmation } from '@waldur/modal/actions';
+import { waitForConfirmation } from '@/modal/actions';
 
 const handleClick = async () => {
   if (!user) {
@@ -59086,42 +59384,42 @@ if (hasPermission(user, { permission: 'resource.admin', projectId })) { ... }
 
 ```tsx
 // Empty states
-import { NoResult } from '@waldur/navigation/header/search/NoResult';
-import { DASH_ESCAPE_CODE } from '@waldur/table/constants';
-import { renderFieldOrDash, getNoResultTitle, getNoResultMessage } from '@waldur/table/utils';
+import { NoResult } from '@/navigation/header/search/NoResult';
+import { DASH_ESCAPE_CODE } from '@/table/constants';
+import { renderFieldOrDash, getNoResultTitle, getNoResultMessage } from '@/table/utils';
 
 // Buttons & Actions
-import { BaseButton } from '@waldur/core/buttons/BaseButton';
-import { ActionItem } from '@waldur/resource/actions/ActionItem';
-import { useValidators } from '@waldur/resource/actions/useValidators';
+import { BaseButton } from '@/core/buttons/BaseButton';
+import { ActionItem } from '@/resource/actions/ActionItem';
+import { useValidators } from '@/resource/actions/useValidators';
 
 // Loading & Errors
-import { LoadingSpinner, LoadingSpinnerIcon } from '@waldur/core/LoadingSpinner';
-import { LoadingErred } from '@waldur/core/LoadingErred';
+import { LoadingSpinner, LoadingSpinnerIcon } from '@/core/LoadingSpinner';
+import { LoadingErred } from '@/core/LoadingErred';
 
 // Indicators
-import { StateIndicator } from '@waldur/core/StateIndicator';
-import { Badge } from '@waldur/core/Badge';
+import { StateIndicator } from '@/core/StateIndicator';
+import { Badge } from '@/core/Badge';
 
 // Tooltips
-import { Tip } from '@waldur/core/Tooltip';
+import { Tip } from '@/core/Tooltip';
 
 // Permissions
-import { hasPermission } from '@waldur/permissions/hasPermission';
-import { StaffOnlyIndicator } from '@waldur/customer/details/StaffOnlyIndicator';
+import { hasPermission } from '@/permissions/hasPermission';
+import { StaffOnlyIndicator } from '@/customer/details/StaffOnlyIndicator';
 
 // Notifications
-import { showSuccess, showError, showErrorResponse, showInfo } from '@waldur/store/notify';
+import { showSuccess, showError, showErrorResponse, showInfo } from '@/store/notify';
 
 // Modals
-import { waitForConfirmation } from '@waldur/modal/actions';
+import { waitForConfirmation } from '@/modal/actions';
 
 // i18n
-import { translate } from '@waldur/i18n';
+import { translate } from '@/i18n';
 
 // Constants
-import { GRID_BREAKPOINTS } from '@waldur/core/constants';
-import { PAGE_SIZE_COMPACT, PAGE_SIZE_FULL } from '@waldur/table/constants';
+import { GRID_BREAKPOINTS } from '@/core/constants';
+import { PAGE_SIZE_COMPACT, PAGE_SIZE_FULL } from '@/table/constants';
 ```
 
 ### Decision Trees
