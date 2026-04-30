@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-04-30T02:05:05.459508Z
+Generated: 2026-04-30T16:11:56.460786Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -8359,6 +8359,14 @@ Fields that can be provided in invitations for email personalization. These are 
 
 Default user attributes exposed to service providers (OfferingUser API) when no explicit config exists.
 
+#### DEFAULT_CALL_USER_ATTRIBUTES
+
+**Type:** multiple_choice_field
+
+**Default value:** ['username', 'full_name', 'email']
+
+Default applicant attributes exposed to call reviewers when no explicit CallApplicantVisibilityConfig exists.
+
 #### ENABLED_USER_PROFILE_ATTRIBUTES
 
 **Type:** multiple_choice_field
@@ -13416,6 +13424,58 @@ A daily digest notification sent to users with pending actions.
 
     <p>Please acknowledge or resolve these actions here:<br/>
     <a href="{{ actions_url }}">{{ actions_url }}</a></p>
+
+```
+
+## WALDUR_OPENPORTAL
+
+### openportal.managed_project_rejected
+
+Sent to Project admins and Project managers when their resource allocation request is rejected.
+
+#### Templates
+
+=== "openportal/managed_project_rejected_subject.txt"
+
+```txt
+
+    Resource allocation request for {{ project_name }} has been rejected
+
+```
+
+=== "openportal/managed_project_rejected_message.txt"
+
+```txt
+
+    Dear {% if recipient_first_name %}{{ recipient_first_name }}{% else %}user{% endif %},
+
+    This message is from your {{ site_name }} self-service portal. {{ reviewer_organization|default:reviewer_full_name }} has rejected the resource allocation request for project {{ project_name }}.
+
+    {% if review_comment %}Rejection reason: {{ review_comment }}
+
+    {% endif %}Please contact your Resource Allocator for details: {{ reviewer_email }}
+
+    Best regards,
+    {{ reviewer_full_name }}
+    {% if reviewer_organization %}{{ reviewer_organization }}
+    {% endif %}{{ reviewer_email }}
+
+```
+
+=== "openportal/managed_project_rejected_message.html"
+
+```txt
+
+    <html lang="en">
+    <head><meta charset="UTF-8"><title>Resource allocation request rejected</title></head>
+    <body>
+    <p>Dear {% if recipient_first_name %}{{ recipient_first_name }}{% else %}user{% endif %},</p>
+    <p>This message is from your <strong>{{ site_name }}</strong> self-service portal. <strong>{{ reviewer_organization|default:reviewer_full_name }}</strong> has rejected the resource allocation request for project <strong>{{ project_name }}</strong>.</p>
+    {% if review_comment %}<p>Rejection reason: {{ review_comment }}</p>{% endif %}
+    <p>Please contact your Resource Allocator for details: <a href="mailto:{{ reviewer_email }}">{{ reviewer_email }}</a></p>
+    <p>Best regards,<br>{{ reviewer_full_name }}<br>{% if reviewer_organization %}{{ reviewer_organization }}<br>{% endif %}{{ reviewer_email }}</p>
+    </body>
+    </html>
 
 ```
 
