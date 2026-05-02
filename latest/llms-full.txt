@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-01T02:05:12.938933Z
+Generated: 2026-05-02T02:05:35.166241Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -10095,6 +10095,59 @@ Sent to staff users so they can approve or reject a pending invitation.
 
 ```
 
+### users.permission_request_rejected
+
+Sent to the user who submitted a permission request to inform them that their request has been rejected.
+
+#### Templates
+
+=== "users/permission_request_rejected_subject.txt"
+
+```txt
+
+    Your permission request has been rejected
+
+```
+
+=== "users/permission_request_rejected_message.txt"
+
+```txt
+
+    Hello!
+
+    Your permission request for {{ permission_request.invitation }} has been rejected.
+    {% if permission_request.review_comment %}
+    Reviewer comment: {{ permission_request.review_comment }}
+    {% endif %}
+
+```
+
+=== "users/permission_request_rejected_message.html"
+
+```txt
+
+    <html>
+    <head lang="en">
+      <meta charset="UTF-8">
+      <title>Your permission request has been rejected</title>
+    </head>
+    <body>
+    <p>
+      Hello!
+    </p>
+    <p>
+      Your permission request for {{ permission_request.invitation }} has been rejected.
+    </p>
+    {% if permission_request.review_comment %}
+    <p>
+      Reviewer comment: {{ permission_request.review_comment }}
+    </p>
+    {% endif %}
+    </body>
+    </html>
+
+```
+
 ### users.permission_request_submitted
 
 Sent to staff or customer owners about a submitted permission request.
@@ -14855,6 +14908,14 @@ Invitation request
 
 ```
 
+### permission_request_rejected_subject.txt (waldur_core.users)
+
+```txt
+
+Your permission request has been rejected
+
+```
+
 ### permission_request_submitted_message.txt (waldur_core.users)
 
 ```txt
@@ -14991,6 +15052,19 @@ Please visit the link below to sign up and accept your invitation:
 
 ```
 
+### permission_request_rejected_message.txt (waldur_core.users)
+
+```txt
+
+Hello!
+
+Your permission request for {{ permission_request.invitation }} has been rejected.
+{% if permission_request.review_comment %}
+Reviewer comment: {{ permission_request.review_comment }}
+{% endif %}
+
+```
+
 ### permission_request_submitted_message.html (waldur_core.users)
 
 ```html
@@ -15010,6 +15084,32 @@ Please visit the link below to sign up and accept your invitation:
 <p>
   Please visit the <a href="{{ requests_link }}">link</a> to approve or reject permission request.
 </p>
+</body>
+</html>
+
+```
+
+### permission_request_rejected_message.html (waldur_core.users)
+
+```html
+
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>Your permission request has been rejected</title>
+</head>
+<body>
+<p>
+  Hello!
+</p>
+<p>
+  Your permission request for {{ permission_request.invitation }} has been rejected.
+</p>
+{% if permission_request.review_comment %}
+<p>
+  Reviewer comment: {{ permission_request.review_comment }}
+</p>
+{% endif %}
 </body>
 </html>
 
@@ -69975,6 +70075,7 @@ td:nth-child(4) {
 | `create_initial_revision` | `Django Signal (post_save)` | `marketplace.Resource` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `marketplace.Offering` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `marketplace.Plan` | Create an initial reversion snapshot when an object is first created. |
+| `create_notification_about_permission_request_has_been_rejected` | `Django Signal (post_save)` | `users.PermissionRequest` | Notify the requester when their permission request has been rejected. |
 | `create_notification_about_permission_request_has_been_submitted` | `Django Signal (post_save)` | `users.PermissionRequest` | Send a notification when a permission request has been submitted. |
 | `create_project_metadata_completion` | `Django Signal (post_save)` | `structure.Project` | Create ChecklistCompletion for project metadata when a project is created. |
 | `deactivate_user_if_no_roles` | `Custom Signal (role_revoked)` | `—` | Deactivate a user if they no longer have any active roles. |
@@ -70799,11 +70900,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 790
+Total unique handlers found: 791
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 410 handlers
+- **waldur_core**: 411 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_keycloak**: 9 handlers
 - **waldur_lexis**: 1 handlers
