@@ -7620,14 +7620,25 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Data Refresh Mechanisms">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mutations-with-notifications-and-table-reload" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mutations with Notifications and Table Reload
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mutations with Notifications and Table Reload">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#crud-operations-refresh" class="md-nav__link">
+  <a href="#best-practice-usemanagedmutation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CRUD Operations Refresh
+        Best Practice: useManagedMutation
       
     </span>
   </a>
@@ -8334,6 +8345,34 @@
     
   
     Ui consistency guidelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../useManagedMutation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    useManagedMutation
   
 
     
@@ -13825,14 +13864,25 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Data Refresh Mechanisms">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mutations-with-notifications-and-table-reload" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mutations with Notifications and Table Reload
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mutations with Notifications and Table Reload">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#crud-operations-refresh" class="md-nav__link">
+  <a href="#best-practice-usemanagedmutation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CRUD Operations Refresh
+        Best Practice: useManagedMutation
       
     </span>
   </a>
@@ -14075,8 +14125,11 @@
 <li><strong>Centralized Error Handling</strong>: Consistent error management</li>
 </ul>
 <h2 id="data-refresh-mechanisms">Data Refresh Mechanisms</h2>
-<h3 id="crud-operations-refresh">CRUD Operations Refresh</h3>
-<p><strong>Create Operations:</strong></p>
+<h2 id="mutations-with-notifications-and-table-reload">Mutations with Notifications and Table Reload</h2>
+<p>For form and modal mutations (CRUD operations) that need to display notifications, update data caches, and potentially close dialogs, use the custom <code>useManagedMutation</code> hook.</p>
+<h3 id="best-practice-usemanagedmutation">Best Practice: <code>useManagedMutation</code></h3>
+<p>This hook encapsulates the try-catch block, notification logic (<code>useNotify</code>), and modal closure (<code>useModal</code>) in a declarative API. It is the preferred way to handle mutations in Waldur.</p>
+<p>For detailed documentation, examples, and edge cases, see the <a href="../useManagedMutation/">useManagedMutation Guide</a>.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -14096,47 +14149,42 @@
 <span class="normal">17</span>
 <span class="normal">18</span>
 <span class="normal">19</span>
-<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">onSubmit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">formData</span><span class="o">:</span><span class="w"> </span><span class="kt">ProjectFormData</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">projectsCreate</span><span class="p">({</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useManagedMutation</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/modal/useManagedMutation'</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">saveProjectMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useManagedMutation</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">mutationFn</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">formData</span><span class="o">:</span><span class="w"> </span><span class="kt">ProjectFormData</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">    </span><span class="nx">projectsCreate</span><span class="p">({</span>
 <span class="w">      </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">formData.name</span><span class="p">,</span>
-<span class="w">        </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="kt">formData.description</span><span class="p">,</span>
 <span class="w">        </span><span class="nx">customer</span><span class="o">:</span><span class="w"> </span><span class="kt">formData.customer.url</span><span class="p">,</span>
 <span class="w">      </span><span class="p">},</span>
-<span class="w">    </span><span class="p">});</span>
-
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">refetch</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">await</span><span class="w"> </span><span class="nx">refetch</span><span class="p">();</span><span class="w"> </span><span class="c1">// Refresh parent data</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="nx">showSuccess</span><span class="p">(</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Project has been created.'</span><span class="p">));</span>
-<span class="w">    </span><span class="nx">closeDialog</span><span class="p">();</span>
-<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">showErrorResponse</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span><span class="w"> </span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Unable to create project.'</span><span class="p">));</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">};</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p><strong>Edit Operations:</strong></p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Manual refresh after edit</span>
-<span class="k">await</span><span class="w"> </span><span class="nx">updateResource</span><span class="p">(</span><span class="nx">resourceData</span><span class="p">);</span>
-<span class="nx">refetch</span><span class="p">();</span><span class="w"> </span><span class="c1">// Refresh data</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p><strong>Delete Operations:</strong></p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">await</span><span class="w"> </span><span class="nx">marketplaceProviderOfferingsRemoveOfferingComponent</span><span class="p">({</span>
-<span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">uuid</span><span class="o">:</span><span class="w"> </span><span class="kt">offering.uuid</span><span class="w"> </span><span class="p">},</span>
-<span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">uuid</span><span class="o">:</span><span class="w"> </span><span class="kt">component.uuid</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">}),</span>
+<span class="w">  </span><span class="nx">successMessage</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Project has been created.'</span><span class="p">),</span>
+<span class="w">  </span><span class="nx">errorMessage</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Unable to create project.'</span><span class="p">),</span>
+<span class="w">  </span><span class="nx">refetch</span><span class="p">,</span><span class="w"> </span><span class="c1">// Option 1: Pass a refetch callback directly</span>
+<span class="w">  </span><span class="c1">// Option 2: Provide an array of query filters to automatically invalidate</span>
+<span class="w">  </span><span class="nx">invalidateQueries</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">queryKey</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'CustomerProjects'</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">],</span>
 <span class="p">});</span>
-<span class="nx">refetch</span><span class="p">();</span><span class="w"> </span><span class="c1">// Refresh parent data</span>
-<span class="nx">dispatch</span><span class="p">(</span><span class="nx">showSuccess</span><span class="p">(</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Component has been removed.'</span><span class="p">)));</span>
+
+<span class="c1">// Use .mutateAsync for form submission</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">onSubmit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">formData</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">saveProjectMutation</span><span class="p">.</span><span class="nx">mutateAsync</span><span class="p">(</span><span class="nx">formData</span><span class="p">);</span>
+
+<span class="c1">// Use .mutate for simple action buttons</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">onDelete</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">deleteMutation</span><span class="p">.</span><span class="nx">mutate</span><span class="p">({});</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li><strong>Automatic modal closure</strong> upon successful completion.</li>
+<li><strong>Declarative notifications</strong> for success/error handling.</li>
+<li><strong>Easy state sync</strong> with table reloads using <code>refetch</code> or <code>invalidateQueries</code>.</li>
+<li><strong>Integrated confirmation</strong> dialog support.</li>
+</ul>
 <h3 id="refresh-strategies">Refresh Strategies</h3>
 <table>
 <thead>
@@ -14310,7 +14358,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-05-02
+    2026-05-03
   </span>
 
     

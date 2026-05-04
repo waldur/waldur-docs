@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-03T02:05:00.900154Z
+Generated: 2026-05-04T02:04:45.401376Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -13623,6 +13623,7 @@ td:nth-child(4) {
 | `pull-service-properties` | `waldur_core.structure.ServicePropertiesListPullTask` | 1 day | Pull service properties from all active service backends. |
 | `pull-service-resources` | `waldur_core.structure.ServiceResourcesListPullTask` | Hourly (at minute 0) | Pull resources from all active service backends. |
 | `pull-support-users` | `waldur_mastermind.support.pull_support_users` | 6 hours | Pull support users from the active support backend. |
+| `reconcile-user-roles-against-availability` | `waldur_core.permissions.reconcile_user_roles_against_availability` | 1 day | Periodic safety net: reconcile UserRoles against RoleAvailability for<br>every role that has at least one availability row.<br><br>Catches drift from manual DB edits / failed signals. |
 | `reconcile_robot_account_access` | `waldur_mastermind.marketplace.reconcile_robot_account_access` | Cron: `30 2 * * * (m/h/dM/MY/d)` | Reconciliation task to ensure robot account access is properly maintained.<br><br>This task periodically checks all robot accounts and removes users who<br>no longer have active project access, serving as a backup to the<br>signal-driven cleanup. |
 | `remove_deleted_robot_accounts` | `waldur_mastermind.marketplace.remove_deleted_robot_accounts` | 1 day | Remove robot accounts that are in DELETED state.<br>This task runs daily to clean up robot accounts that have been marked for deletion. |
 | `resend-stuck-invitations` | `waldur_core.users.resend_stuck_invitations` | 1 hour | Reconcile stuck invitations that were never sent due to errors or broker/worker downtime. |
@@ -54217,51 +54218,49 @@ export const useOrganizationGroups = () => {
 
 ## Data Refresh Mechanisms
 
-### CRUD Operations Refresh
+## Mutations with Notifications and Table Reload
 
-**Create Operations:**
+For form and modal mutations (CRUD operations) that need to display notifications, update data caches, and potentially close dialogs, use the custom `useManagedMutation` hook.
+
+### Best Practice: `useManagedMutation`
+
+This hook encapsulates the try-catch block, notification logic (`useNotify`), and modal closure (`useModal`) in a declarative API. It is the preferred way to handle mutations in Waldur.
+
+For detailed documentation, examples, and edge cases, see the [useManagedMutation Guide](./useManagedMutation.md).
 
 ```typescript
-const onSubmit = async (formData: ProjectFormData) => {
-  try {
-    const response = await projectsCreate({
+import { useManagedMutation } from '@/modal/useManagedMutation';
+
+const saveProjectMutation = useManagedMutation({
+  mutationFn: (formData: ProjectFormData) =>
+    projectsCreate({
       body: {
         name: formData.name,
-        description: formData.description,
         customer: formData.customer.url,
       },
-    });
-
-    if (refetch) {
-      await refetch(); // Refresh parent data
-    }
-
-    showSuccess(translate('Project has been created.'));
-    closeDialog();
-  } catch (e) {
-    showErrorResponse(e, translate('Unable to create project.'));
-  }
-};
-```
-
-**Edit Operations:**
-
-```typescript
-// Manual refresh after edit
-await updateResource(resourceData);
-refetch(); // Refresh data
-```
-
-**Delete Operations:**
-
-```typescript
-await marketplaceProviderOfferingsRemoveOfferingComponent({
-  path: { uuid: offering.uuid },
-  body: { uuid: component.uuid },
+    }),
+  successMessage: translate('Project has been created.'),
+  errorMessage: translate('Unable to create project.'),
+  refetch, // Option 1: Pass a refetch callback directly
+  // Option 2: Provide an array of query filters to automatically invalidate
+  invalidateQueries: [
+    { queryKey: ['CustomerProjects'] },
+  ],
 });
-refetch(); // Refresh parent data
-dispatch(showSuccess(translate('Component has been removed.')));
+
+// Use .mutateAsync for form submission
+const onSubmit = (formData) => saveProjectMutation.mutateAsync(formData);
+
+// Use .mutate for simple action buttons
+const onDelete = () => deleteMutation.mutate({});
 ```
+
+**Benefits:**
+
+- **Automatic modal closure** upon successful completion.
+- **Declarative notifications** for success/error handling.
+- **Easy state sync** with table reloads using `refetch` or `invalidateQueries`.
+- **Integrated confirmation** dialog support.
 
 ### Refresh Strategies
 
@@ -59054,12 +59053,10 @@ For a clean UI, use `ActionsDropdownComponent` with `ActionItem` to create a 3-d
 ```ts
 import { FC, useCallback } from 'react';
 import { PencilSimple, Trash, EnvelopeSimple } from '@phosphor-icons/react';
-import { useMutation } from '@tanstack/react-query';
 
 import { translate } from '@/i18n';
-import { waitForConfirmation } from '@/modal/actions';
+import { useManagedMutation } from '@/modal/useManagedMutation';
 import { ActionItem } from '@/resource/actions/ActionItem';
-import { useNotify } from '@/store/hooks';
 import { ActionsDropdownComponent } from '@/table/ActionsDropdown';
 
 interface RowActionsProps {
@@ -59067,33 +59064,23 @@ interface RowActionsProps {
   refetch: () => void;
 }
 
+// Usage with useManagedMutation
 export const RowActions: FC<RowActionsProps> = ({ row, refetch }) => {
-  const dispatch = useDispatch();
-  const { showSuccess, showErrorResponse } = useNotify();
-
-  const deleteMutation = useMutation({
+  const { mutate: handleDelete, isPending: isDeleting } = useManagedMutation({
     mutationFn: () => deleteItem({ path: { uuid: row.uuid } }),
-    onSuccess: () => {
-      showSuccess(translate('Item deleted successfully.'));
-      refetch();
-    },
-    onError: (error) => {
-      showErrorResponse(error, translate('Failed to delete item.'));
+    successMessage: translate('Item deleted successfully.'),
+    errorMessage: translate('Failed to delete item.'),
+    refetch,
+    confirmation: {
+      title: translate('Delete item'),
+      body: translate('Are you sure you want to delete {name}?', {
+        name: row.name,
+      }),
     },
   });
 
-  const handleDelete = useCallback(async () => {
-    try {
-      await waitForConfirmation(
-        dispatch,
-        translate('Delete item'),
-        translate('Are you sure you want to delete {name}?', { name: row.name }),
-      );
-      deleteMutation.mutate();
-    } catch {
-      // User cancelled confirmation
-    }
-  }, [dispatch, row, deleteMutation]);
+  // NOTE: Use .mutate() for button actions, not .mutateAsync()
+  const onDelete = () => handleDelete({});
 
   // Conditionally show actions based on row state
   const canEdit = row.status === 'draft';
@@ -59116,11 +59103,11 @@ export const RowActions: FC<RowActionsProps> = ({ row, refetch }) => {
       {canDelete && (
         <ActionItem
           title={translate('Delete')}
-          action={handleDelete}
+          action={onDelete}
           iconNode={<Trash weight="bold" />}
           className="text-danger"
           iconColor="danger"
-          disabled={deleteMutation.isPending}
+          disabled={isDeleting}
         />
       )}
     </ActionsDropdownComponent>
@@ -60089,99 +60076,161 @@ import { PAGE_SIZE_COMPACT, PAGE_SIZE_FULL } from '@/table/constants';
 
 ## 5. Dialogs and Confirmations
 
-### 5.1 Confirmation Dialog Pattern
+### 5.1 Confirmation and Mutation Pattern
+
+The preferred way to handle mutations that require user confirmation is the `useManagedMutation` hook. It centralizes confirmation logic, loading states, and notifications.
 
 ```tsx
-import { waitForConfirmation } from '@/modal/actions';
+import { useManagedMutation } from '@/modal/useManagedMutation';
+import { translate } from '@/i18n';
 
-// Destructive action (deletion) - name the object being deleted
-const handleDelete = async () => {
-  try {
-    await waitForConfirmation(
-      dispatch,
-      translate('Delete {type}', { type: 'project' }),
-      translate('"{name}" will be permanently deleted. This action cannot be undone.', { name: resource.name }),
-      {
-        forDeletion: true,  // Red styling, warning icon
-        size: 'sm',
-        positiveButton: translate('Delete'),  // Clear action label
-      }
-    );
-    // User confirmed - proceed with deletion
-    await deleteResource(resource.uuid);
-    dispatch(showSuccess(translate('Resource deleted')));
-  } catch {
-    // User cancelled - do nothing
-    return;
-  }
+export const DeleteProjectButton = ({ project, refetch }) => {
+  const { mutate, isPending } = useManagedMutation<any, any, void>({
+    mutationFn: () => deleteProject(project.uuid),
+    successMessage: translate('Project has been deleted.'),
+    errorMessage: translate('Could not delete project.'),
+    refetch,
+    confirmation: {
+      title: translate('Delete project {name}?', { name: project.name }),
+      body: translate('This action cannot be undone.'),
+      options: {
+        forDeletion: true,
+        positiveButton: translate('Delete'),
+      },
+    },
+  });
+
+  return (
+    <Button
+      variant="danger"
+      onClick={() => mutate()}
+      disabled={isPending}
+    >
+      {translate('Delete')}
+    </Button>
+  );
 };
-
-// Non-destructive confirmation
-await waitForConfirmation(
-  dispatch,
-  translate('Confirm action'),
-  translate('This will restart all services. Continue?'),
-  {
-    positiveButton: translate('Restart'),
-  }
-);
 ```
 
-**Button order**: Cancel (left), Confirm (right)
+### 5.2 Batch Mutation Pattern
 
-**Clear action labels**: Use "Delete", "Restart", "Submit" - not "OK" or "Yes"
+For operations involving multiple items (bulk actions), use the `useBatchMutation` hook. It handles partial successes gracefully and standardizes bulk confirmation dialogs.
+
+```tsx
+import { useBatchMutation } from '@/modal/useBatchMutation';
+import { translate } from '@/i18n';
+
+export const BulkDeleteProjectsButton = ({ projects, refetch }) => {
+  const { mutate, isPending } = useBatchMutation<any, any, void>({
+    rows: projects,
+    mutationFn: (project) => deleteProject(project.uuid),
+    successMessage: translate('Selected projects have been deleted.'),
+    errorMessage: translate('Some projects could not be deleted.'),
+    renderPartialSuccessMessage: (n) =>
+      translate('{n} projects have been deleted.', { n }),
+    refetch,
+    confirmation: {
+      title: translate('Delete selected projects'),
+      body: (
+        <div>
+          <p>{translate('You are about to delete these projects:')}</p>
+          <ul>
+            {projects.map((p) => (
+              <li key={p.uuid}>{p.name}</li>
+            ))}
+          </ul>
+        </div>
+      ),
+      options: { forDeletion: true },
+    },
+  });
+
+  return (
+    <Button
+      variant="danger"
+      onClick={() => mutate()}
+      disabled={isPending}
+    >
+      {translate('Delete selected')}
+    </Button>
+  );
+};
+```
 
 ### 5.2 Form Dialog Pattern
 
+Use the `useModal` hook to manage dialog state:
+
 ```tsx
-// Standard form dialog footer
-<div className="d-flex gap-2 justify-content-end">
-  <Button variant="tertiary" onClick={closeDialog}>
-    {translate('Cancel')}
-  </Button>
-  <SubmitButton
-    label={translate('Save changes')}
-    submitting={isSubmitting}
-    disabled={!isValid}
-  />
-</div>
+import { useModal } from '@/modal/actions';
+
+export const MyDialog: FC = () => {
+  const { closeDialog } = useModal();
+
+  return (
+    <ModalDialog
+      title={translate('Title')}
+      footer={
+        <div className="d-flex gap-2 justify-content-end">
+          <Button variant="tertiary" onClick={closeDialog}>
+            {translate('Cancel')}
+          </Button>
+          <SubmitButton
+            label={translate('Save changes')}
+            submitting={isSubmitting}
+            disabled={!isValid}
+          />
+        </div>
+      }
+    >
+      {/* Form content */}
+    </ModalDialog>
+  );
+};
 ```
 
 ---
 
 ## 6. Notifications
 
-Use the notification utilities from `@/store/notify`:
+### 6.1 Standard Mutation Pattern
+
+For most API actions, use `useManagedMutation` even if no confirmation is required. This ensures consistent loading state and notification handling.
 
 ```tsx
-import {
-  showSuccess,
-  showError,
-  showErrorResponse,
-  showInfo
-} from '@/store/notify';
+import { useManagedMutation } from '@/modal/useManagedMutation';
 
-// Success - action completed
-dispatch(showSuccess(translate('Project created successfully')));
+export const ApproveButton = ({ resource }) => {
+  const { mutate, isPending } = useManagedMutation<any, any, void>({
+    mutationFn: () => approveResource(resource.uuid),
+    successMessage: translate('Resource approved'),
+    errorMessage: translate('Could not approve resource'),
+  });
 
-// Success with details
-dispatch(showSuccess(
-  translate('Resource deployed'),
-  translate('Your resource will be ready in a few minutes.')
-));
+  return (
+    <Button onClick={() => mutate()} disabled={isPending}>
+      {translate('Approve')}
+    </Button>
+  );
+};
+```
 
-// Error - action failed
-dispatch(showError(translate('Unable to save changes')));
+### 6.2 Benefits of Managed Mutations
 
-// Error with API response details
-try {
-  await saveData();
-} catch (error) {
-  dispatch(showErrorResponse(error, translate('Unable to save changes.')));
-}
+- **Declarative Logic**: Focus on the action and messages rather than managing `try/catch` blocks and loading states manually.
+- **UX Consistency**: Standardizes how confirmations look and how success/error notifications are displayed.
+- **Robustness**: `useBatchMutation` handles partial failures (using `Promise.allSettled`) ensuring the user knows exactly what succeeded and what failed.
+- **Automatic Sync**: Integrated support for `refetch` and query invalidation ensures the UI stays up to date after the mutation.
+- **Type Safety**: Fully typed hooks reduce runtime errors when passing variables or handling results.
 
-// Info - informational only
-dispatch(showInfo(translate('Changes will take effect after refresh')));
+For non-component usage (utility functions, services), use `NotifyService`:
+
+```tsx
+import { NotifyService } from '@/store/notify';
+
+export const standaloneHelper = async (error) => {
+  NotifyService.errorResponse(error, translate('Background task failed'));
+};
 ```
 
 **Configuration**:
@@ -60442,13 +60491,14 @@ const filterPosition = isSm && originalPosition === 'menu'
 When an action requires authentication (e.g., deploying a resource, ordering a service), **show a confirmation dialog** explaining that login is required, rather than silently redirecting or doing nothing.
 
 ```tsx
-import { waitForConfirmation } from '@/modal/actions';
+import { useModal } from '@/modal/actions';
+
+const { confirm } = useModal();
 
 const handleClick = async () => {
   if (!user) {
     try {
-      await waitForConfirmation(
-        dispatch,
+      await confirm(
         translate('Authentication required'),
         translate(
           'Please log in to order a resource. You will be redirected to the login page.',
@@ -60468,7 +60518,7 @@ const handleClick = async () => {
 **Key rules**:
 
 - Never silently redirect anonymous users — always explain what's happening
-- Use `waitForConfirmation` with a clear title and descriptive body
+- Use `confirm` from `useModal()` hook with a clear title and descriptive body
 - Label the positive button with the action ("Log in"), not generic "OK"
 - If the element is normally a `<Link>`, render a `<button>` for anonymous users to prevent navigation before the dialog
 
@@ -60603,10 +60653,10 @@ import { hasPermission } from '@/permissions/hasPermission';
 import { StaffOnlyIndicator } from '@/customer/details/StaffOnlyIndicator';
 
 // Notifications
-import { showSuccess, showError, showErrorResponse, showInfo } from '@/store/notify';
+import { useNotify } from '@/store/notify';
 
 // Modals
-import { waitForConfirmation } from '@/modal/actions';
+import { useModal } from '@/modal/actions';
 
 // i18n
 import { translate } from '@/i18n';
@@ -61037,6 +61087,153 @@ When fixing these inconsistencies:
 - [ ] Verify disabled button tooltips appear
 - [ ] Check responsive behavior on mobile
 - [ ] Run relevant unit tests
+
+---
+
+### useManagedMutation Hook
+<!-- Source: docs/developer-guide/ui/useManagedMutation.md -->
+
+# useManagedMutation Hook
+
+The `useManagedMutation` hook is a standardized wrapper around TanStack Query's `useMutation`. It provides a consistent way to handle API mutations, particularly those occurring within modal dialogs or triggered by action buttons.
+
+## Motivation
+
+Standardizing mutations across the application ensures:
+
+- **Consistent User Feedback**: Success and error notifications follow the same patterns.
+- **Reduced Boilerplate**: Manual handling of `try/catch`, notifications, and loading states is eliminated.
+- **Automated Workflow**: Common tasks like closing the active modal (optional) and refetching data are handled automatically.
+- **Centralized Invalidation**: Easy integration with React Query's cache management.
+
+## API Reference
+
+```typescript
+function useManagedMutation<TData, TError, TVariables>(options: ModalMutationOptions): UseMutationResult;
+```
+
+### Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `mutationFn` | `(variables: TVariables) => Promise<TData>` | **Required**. The function that performs the API call. |
+| `successMessage` | `string` | Optional message to display upon successful mutation. |
+| `errorMessage` | `string` | Optional message to display upon mutation failure. |
+| `refetch` | `() => void \| Promise<void>` | Optional callback to refetch data after success. |
+| `invalidateQueries` | `InvalidateQueryFilters[]` | Optional array of query filters to invalidate upon success. |
+| `confirmation` | `MutationConfirmationConfig` | Optional configuration for a confirmation dialog before execution. |
+| `closeModal` | `boolean` | Whether to close the active modal dialog upon success. Defaults to `true`. |
+| `onSuccess` | `(data, variables, context) => void` | Optional callback executed after standard success actions. |
+| `onError` | `(error, variables, context) => void` | Optional callback executed after standard error actions. |
+
+## Examples
+
+### 1. Simple Action Button (e.g., Delete)
+
+For simple actions, use `.mutate()` as it doesn't return a promise and is safer for standard event handlers.
+
+```tsx
+import { useManagedMutation } from '@/modal/useManagedMutation';
+import { RemovalActionItem } from '@/resource/actions/RemovalActionItem';
+
+const DeleteButton = ({ resource, refetch }) => {
+  const { mutate, isPending } = useManagedMutation<any, any, void>({
+    mutationFn: () => deleteResource(resource.uuid),
+    successMessage: translate('Resource has been deleted.'),
+    errorMessage: translate('Unable to delete resource.'),
+    refetch,
+    confirmation: {
+      title: translate('Confirmation'),
+      body: translate('Are you sure you want to delete this resource?'),
+    },
+  });
+
+  return (
+    <RemovalActionItem
+      title={translate('Delete')}
+      action={mutate}
+      disabled={isPending}
+    />
+  );
+};
+```
+
+### 2. Form Submission
+
+For forms (e.g., using React Final Form), use `.mutateAsync()` to allow the form handler to track the submission state.
+
+```tsx
+const CreateProjectDialog = ({ resolve }) => {
+  const { mutateAsync } = useManagedMutation({
+    mutationFn: (values) => projectsCreate({ body: values }),
+    successMessage: translate('Project created.'),
+    refetch: resolve.refetch,
+  });
+
+  return (
+    <Form
+      onSubmit={(values) => mutateAsync(values)}
+      render={({ handleSubmit }) => (
+        <form onSubmit={handleSubmit}>
+          {/* ... fields ... */}
+        </form>
+      )}
+    />
+  );
+};
+```
+
+### 3. Complex Cache Invalidation
+
+Use `invalidateQueries` to refresh multiple parts of the application state.
+
+```tsx
+const updateMutation = useManagedMutation({
+  mutationFn: updateData,
+  invalidateQueries: [
+    { queryKey: ['ResourcesList'] },
+    { queryKey: ['UserStats', userId] },
+  ],
+});
+```
+
+## Best Practices & Edge Cases
+
+### `mutate` vs `mutateAsync`
+
+> [!IMPORTANT]
+>
+> - Use **`.mutate()`** in buttons, `ActionItem`, and `onClick` handlers. It is safer as it doesn't require manual promise handling or error catching in the caller.
+> - Use **`.mutateAsync()`** in forms (like `onSubmit` in React Final Form) where the parent needs to know when the mutation resolves to manage local state or lifecycle.
+
+### Modal Closure
+
+`useManagedMutation` automatically calls `closeDialog()` on success.
+
+- If the mutation is triggered from a standalone page (not a modal), `closeDialog()` will safely do nothing.
+- If you need to keep the modal open after success, use a standard `useMutation` instead.
+
+### Confirmation Dialog Integration
+
+If a `confirmation` config is provided, `useManagedMutation` will:
+
+1. Intercept the call to `mutate` or `mutateAsync`.
+2. Show the confirmation dialog.
+3. Only execute the `mutationFn` if the user confirms.
+4. If cancelled, it returns immediately without error.
+
+### Error Handling
+
+The hook automatically handles `showErrorResponse`. You don't need to manually catch errors unless you have additional logging or specific UI logic to perform upon failure.
+
+```tsx
+const mutation = useManagedMutation({
+  // ...
+  onError: (error) => {
+    console.error('Custom logging:', error);
+  }
+});
+```
 
 ---
 
@@ -71259,6 +71456,7 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `marketplace.Order` | Recalculate count quota when an instance is created or deleted. |
 | `revoke_roles_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | When project is deleted, capture user role snapshots before revoking them. |
 | `revoke_user_pats_on_deactivation` | `Django Signal (pre_save)` | `core.User` | Revoke all active PATs when a user is deactivated. |
+| `revoke_user_roles_on_availability_removal` | `Django Signal (post_delete)` | `permissions.RoleAvailability` | Schedule async revocation when a RoleAvailability row is removed. |
 | `schedule_cleanup_for_deleted_object` | `Django Signal (post_delete)` | `marketplace.Order` | Signal handler to schedule cleanup of user actions for a deleted object. |
 | `schedule_cleanup_for_deleted_object` | `Django Signal (post_delete)` | `marketplace.Offering` | Signal handler to schedule cleanup of user actions for a deleted object. |
 | `schedule_cleanup_for_deleted_object` | `Django Signal (post_delete)` | `marketplace.Resource` | Signal handler to schedule cleanup of user actions for a deleted object. |
@@ -71299,9 +71497,7 @@ td:nth-child(4) {
 | `cleanup_keycloak_on_user_deactivation` | `Django Signal (post_save)` | `core.User` | When a user is deactivated, schedule cleanup of all their Keycloak memberships. |
 | `delete_keycloak_group_from_backend` | `Django Signal (post_delete)` | `waldur_keycloak.OfferingKeycloakGroup` | Delete a Keycloak group from the backend when the local model is deleted. |
 | `delete_keycloak_membership_from_backend` | `Django Signal (post_delete)` | `waldur_keycloak.OfferingKeycloakMembership` | Remove a user from a Keycloak group when membership is deleted. |
-| `delete_keycloak_membership_on_resource_user_delete` | `Django Signal (post_delete)` | `marketplace.ResourceUser` | When a ResourceUser is deleted, delete corresponding Keycloak membership. |
 | `mark_keycloak_group_deleting` | `Django Signal (pre_delete)` | `waldur_keycloak.OfferingKeycloakGroup` | Mark a group as being deleted so cascade membership handlers skip re-deletion. |
-| `sync_resource_user_to_keycloak_membership` | `Django Signal (post_save)` | `marketplace.ResourceUser` | When a ResourceUser is created, auto-create a Keycloak membership |
 
 ## Application: `waldur_lexis`
 
@@ -71465,8 +71661,6 @@ td:nth-child(4) {
 | `log_invoice_state_transition` | `Django Signal (post_save)` | `invoices.Invoice` | No description |
 | `log_issue_delete` | `Django Signal (post_delete)` | `support.Issue` | No description |
 | `log_issue_save` | `Django Signal (post_save)` | `support.Issue` | No description |
-| `log_offering_role_created_or_updated` | `Django Signal (post_save)` | `marketplace.OfferingUserRole` | Log offering role creation and updates. |
-| `log_offering_role_deleted` | `Django Signal (post_delete)` | `marketplace.OfferingUserRole` | Log offering role deletion. |
 | `log_offering_user_created` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Log offering user creation. |
 | `log_offering_user_deleted` | `Django Signal (post_delete)` | `marketplace.OfferingUser` | Log offering user deletion. |
 | `log_offering_user_username_updated` | `Django Signal (post_save)` | `marketplace.OfferingUser` | No description |
@@ -71476,8 +71670,6 @@ td:nth-child(4) {
 | `log_resource_events` | `Django Signal (post_save)` | `marketplace.Resource` | Log resource creation request events. |
 | `log_resource_robot_account_created_or_updated` | `Django Signal (post_save)` | `marketplace.RobotAccount` | Log resource robot account creation and updates. |
 | `log_resource_robot_account_deleted` | `Django Signal (post_delete)` | `marketplace.RobotAccount` | Log resource robot account deletion. |
-| `log_resource_user_created` | `Django Signal (post_save)` | `marketplace.ResourceUser` | Log resource user creation. |
-| `log_resource_user_deleted` | `Django Signal (post_delete)` | `marketplace.ResourceUser` | Log resource user deletion. |
 | `log_service_account_created_or_updated` | `Django Signal (post_save)` | `ScopedServiceAccount` | Log service account creation and updates. |
 | `log_service_account_deleted` | `Django Signal (post_delete)` | `ScopedServiceAccount` | Log service account deletion. |
 | `log_terms_of_service_consent_granted` | `Django Signal (post_save)` | `marketplace.UserOfferingConsent` | Log when a user grants consent to Terms of Service. |
@@ -71502,6 +71694,8 @@ td:nth-child(4) {
 | `process_invoice_item` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Process invoice item changes and update related price estimates. |
 | `project_credit_changed_handler` | `Django Signal (post_save)` | `invoices.ProjectCredit` | No description |
 | `project_estimated_cost_policy_trigger_handler` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Evaluate project cost policies when invoice items are updated. |
+| `reconcile_offering_profile_on_offering_changed` | `Django Signal (post_save)` | `marketplace.Offering` | When an Offering is saved, schedule a reconciliation task. Cheap |
+| `reconcile_offering_profile_on_roles_changed` | `Django Signal (m2m_changed)` | `OfferingProfile_roles` | When OfferingProfile.roles M2M changes, schedule reconciliation |
 | `refund_project_credit_on_project_removal` | `Django Signal (pre_delete)` | `structure.Project` | No description |
 | `request_offering_user_deletion_when_project_access_lost` | `Custom Signal (role_revoked)` | `—` | Schedule task to request offering user deletion when project access is lost. |
 | `resource_has_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Log resource changes. |
@@ -71702,15 +71896,15 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 791
+Total unique handlers found: 788
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 411 handlers
+- **waldur_core**: 412 handlers
 - **waldur_freeipa**: 12 handlers
-- **waldur_keycloak**: 9 handlers
+- **waldur_keycloak**: 7 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 313 handlers
+- **waldur_mastermind**: 311 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -73434,6 +73628,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`SshPublicKeySerializerMixin`](#sshpublickeyserializermixin) | `waldur_core.structure.serializers` | A type of `ModelSerializer` that uses hyperlinked relationships instead of pr... |
 | [`ProjectMetadataTestMixin`](#projectmetadatatestmixin) | `waldur_core.structure.tests.test_project_metadata` | Shared test setup and utilities for project metadata tests |
 | [`AvailabilityCheckViewMixin`](#availabilitycheckviewmixin) | `waldur_core.structure.views` | A viewset that provides default `create()`, `retrieve()`, `update()`, `partia... |
+| [`ScopeInvitationMixin`](#scopeinvitationmixin) | `waldur_core.users.models` | Mixin for invitations scoped to a Customer with a system Role |
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_freeipa.views` | Raise exception if extension is disabled |
 | [`LLMConfigurationMixin`](#llmconfigurationmixin) | `waldur_mastermind.chat.views` | Validates that AI Assistant is enabled, the user has the required role, and t... |
 | [`PeriodMixin`](#periodmixin) | `waldur_mastermind.invoices.models` | Make subclasses preserve the alters_data attribute on overridden methods |
@@ -74525,6 +74720,16 @@ A viewset that provides default `create()`, `retrieve()`, `update()`,
 `partial_update()`, `destroy()` and `list()` actions.
 
 **Base classes:** `ModelViewSet`
+
+### ScopeInvitationMixin
+
+**Module:** `waldur_core.users.models`
+
+**Description:**
+
+Mixin for invitations scoped to a Customer with a system Role.
+
+**Base classes:** `Model`
 
 ### CheckExtensionMixin
 

@@ -8557,6 +8557,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../useManagedMutation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    useManagedMutation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -15520,25 +15548,13 @@ with filters           (SPA routing)         filtersStorage updated
 <span class="normal">67</span>
 <span class="normal">68</span>
 <span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">FC</span><span class="p">,</span><span class="w"> </span><span class="nx">useCallback</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">FC</span><span class="p">,</span><span class="w"> </span><span class="nx">useCallback</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
 <span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">PencilSimple</span><span class="p">,</span><span class="w"> </span><span class="nx">Trash</span><span class="p">,</span><span class="w"> </span><span class="nx">EnvelopeSimple</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@phosphor-icons/react'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useMutation</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@tanstack/react-query'</span><span class="p">;</span>
+
 
 <span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">translate</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/i18n'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">waitForConfirmation</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/modal/actions'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useManagedMutation</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/modal/useManagedMutation'</span><span class="p">;</span>
 <span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ActionItem</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/resource/actions/ActionItem'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useNotify</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/store/hooks'</span><span class="p">;</span>
 <span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ActionsDropdownComponent</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table/ActionsDropdown'</span><span class="p">;</span>
 
 <span class="kd">interface</span><span class="w"> </span><span class="nx">RowActionsProps</span><span class="w"> </span><span class="p">{</span>
@@ -15546,33 +15562,23 @@ with filters           (SPA routing)         filtersStorage updated
 <span class="w">  </span><span class="nx">refetch</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">void</span><span class="p">;</span>
 <span class="p">}</span>
 
+<span class="c1">// Usage with useManagedMutation</span>
 <span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">RowActions</span><span class="o">:</span><span class="w"> </span><span class="kt">FC</span><span class="o">&lt;</span><span class="nx">RowActionsProps</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">row</span><span class="p">,</span><span class="w"> </span><span class="nx">refetch</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">dispatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useDispatch</span><span class="p">();</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">showSuccess</span><span class="p">,</span><span class="w"> </span><span class="nx">showErrorResponse</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useNotify</span><span class="p">();</span>
-
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">deleteMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMutation</span><span class="p">({</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">mutate</span><span class="o">:</span><span class="w"> </span><span class="kt">handleDelete</span><span class="p">,</span><span class="w"> </span><span class="nx">isPending</span><span class="o">:</span><span class="w"> </span><span class="kt">isDeleting</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useManagedMutation</span><span class="p">({</span>
 <span class="w">    </span><span class="nx">mutationFn</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">deleteItem</span><span class="p">({</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">uuid</span><span class="o">:</span><span class="w"> </span><span class="kt">row.uuid</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}),</span>
-<span class="w">    </span><span class="nx">onSuccess</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">showSuccess</span><span class="p">(</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Item deleted successfully.'</span><span class="p">));</span>
-<span class="w">      </span><span class="nx">refetch</span><span class="p">();</span>
-<span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nx">onError</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">showErrorResponse</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span><span class="w"> </span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Failed to delete item.'</span><span class="p">));</span>
+<span class="w">    </span><span class="nx">successMessage</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Item deleted successfully.'</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">errorMessage</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Failed to delete item.'</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">refetch</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">confirmation</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Delete item'</span><span class="p">),</span>
+<span class="w">      </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Are you sure you want to delete {name}?'</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">row.name</span><span class="p">,</span>
+<span class="w">      </span><span class="p">}),</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">  </span><span class="p">});</span>
 
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">handleDelete</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useCallback</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">await</span><span class="w"> </span><span class="nx">waitForConfirmation</span><span class="p">(</span>
-<span class="w">        </span><span class="nx">dispatch</span><span class="p">,</span>
-<span class="w">        </span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Delete item'</span><span class="p">),</span>
-<span class="w">        </span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Are you sure you want to delete {name}?'</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">row.name</span><span class="w"> </span><span class="p">}),</span>
-<span class="w">      </span><span class="p">);</span>
-<span class="w">      </span><span class="nx">deleteMutation</span><span class="p">.</span><span class="nx">mutate</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="c1">// User cancelled confirmation</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="p">[</span><span class="nx">dispatch</span><span class="p">,</span><span class="w"> </span><span class="nx">row</span><span class="p">,</span><span class="w"> </span><span class="nx">deleteMutation</span><span class="p">]);</span>
+<span class="w">  </span><span class="c1">// NOTE: Use .mutate() for button actions, not .mutateAsync()</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">onDelete</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">handleDelete</span><span class="p">({});</span>
 
 <span class="w">  </span><span class="c1">// Conditionally show actions based on row state</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">canEdit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">row</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">'draft'</span><span class="p">;</span>
@@ -15595,11 +15601,11 @@ with filters           (SPA routing)         filtersStorage updated
 <span class="w">      </span><span class="p">{</span><span class="nx">canDelete</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span>
 <span class="w">        </span><span class="o">&lt;</span><span class="nx">ActionItem</span>
 <span class="w">          </span><span class="nx">title</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Delete'</span><span class="p">)}</span>
-<span class="w">          </span><span class="nx">action</span><span class="o">=</span><span class="p">{</span><span class="nx">handleDelete</span><span class="p">}</span>
+<span class="w">          </span><span class="nx">action</span><span class="o">=</span><span class="p">{</span><span class="nx">onDelete</span><span class="p">}</span>
 <span class="w">          </span><span class="nx">iconNode</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">Trash</span><span class="w"> </span><span class="nx">weight</span><span class="o">=</span><span class="s2">"bold"</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
 <span class="w">          </span><span class="nx">className</span><span class="o">=</span><span class="s2">"text-danger"</span>
 <span class="w">          </span><span class="nx">iconColor</span><span class="o">=</span><span class="s2">"danger"</span>
-<span class="w">          </span><span class="nx">disabled</span><span class="o">=</span><span class="p">{</span><span class="nx">deleteMutation</span><span class="p">.</span><span class="nx">isPending</span><span class="p">}</span>
+<span class="w">          </span><span class="nx">disabled</span><span class="o">=</span><span class="p">{</span><span class="nx">isDeleting</span><span class="p">}</span>
 <span class="w">        </span><span class="o">/&gt;</span>
 <span class="w">      </span><span class="p">)}</span>
 <span class="w">    </span><span class="o">&lt;</span><span class="err">/ActionsDropdownComponent&gt;</span>
@@ -15999,7 +16005,7 @@ with filters           (SPA routing)         filtersStorage updated
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-05-02
+    2026-05-03
   </span>
 
     

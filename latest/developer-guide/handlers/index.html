@@ -8081,6 +8081,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui/useManagedMutation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    useManagedMutation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -16333,6 +16361,12 @@ td:nth-child(4) {
 <td>Revoke all active PATs when a user is deactivated.</td>
 </tr>
 <tr>
+<td><code>revoke_user_roles_on_availability_removal</code></td>
+<td><code>Django Signal (post_delete)</code></td>
+<td><code>permissions.RoleAvailability</code></td>
+<td>Schedule async revocation when a RoleAvailability row is removed.</td>
+</tr>
+<tr>
 <td><code>schedule_cleanup_for_deleted_object</code></td>
 <td><code>Django Signal (post_delete)</code></td>
 <td><code>marketplace.Order</code></td>
@@ -16539,22 +16573,10 @@ td:nth-child(4) {
 <td>Remove a user from a Keycloak group when membership is deleted.</td>
 </tr>
 <tr>
-<td><code>delete_keycloak_membership_on_resource_user_delete</code></td>
-<td><code>Django Signal (post_delete)</code></td>
-<td><code>marketplace.ResourceUser</code></td>
-<td>When a ResourceUser is deleted, delete corresponding Keycloak membership.</td>
-</tr>
-<tr>
 <td><code>mark_keycloak_group_deleting</code></td>
 <td><code>Django Signal (pre_delete)</code></td>
 <td><code>waldur_keycloak.OfferingKeycloakGroup</code></td>
 <td>Mark a group as being deleted so cascade membership handlers skip re-deletion.</td>
-</tr>
-<tr>
-<td><code>sync_resource_user_to_keycloak_membership</code></td>
-<td><code>Django Signal (post_save)</code></td>
-<td><code>marketplace.ResourceUser</code></td>
-<td>When a ResourceUser is created, auto-create a Keycloak membership</td>
 </tr>
 </tbody>
 </table>
@@ -17501,18 +17523,6 @@ td:nth-child(4) {
 <td>No description</td>
 </tr>
 <tr>
-<td><code>log_offering_role_created_or_updated</code></td>
-<td><code>Django Signal (post_save)</code></td>
-<td><code>marketplace.OfferingUserRole</code></td>
-<td>Log offering role creation and updates.</td>
-</tr>
-<tr>
-<td><code>log_offering_role_deleted</code></td>
-<td><code>Django Signal (post_delete)</code></td>
-<td><code>marketplace.OfferingUserRole</code></td>
-<td>Log offering role deletion.</td>
-</tr>
-<tr>
 <td><code>log_offering_user_created</code></td>
 <td><code>Django Signal (post_save)</code></td>
 <td><code>marketplace.OfferingUser</code></td>
@@ -17565,18 +17575,6 @@ td:nth-child(4) {
 <td><code>Django Signal (post_delete)</code></td>
 <td><code>marketplace.RobotAccount</code></td>
 <td>Log resource robot account deletion.</td>
-</tr>
-<tr>
-<td><code>log_resource_user_created</code></td>
-<td><code>Django Signal (post_save)</code></td>
-<td><code>marketplace.ResourceUser</code></td>
-<td>Log resource user creation.</td>
-</tr>
-<tr>
-<td><code>log_resource_user_deleted</code></td>
-<td><code>Django Signal (post_delete)</code></td>
-<td><code>marketplace.ResourceUser</code></td>
-<td>Log resource user deletion.</td>
 </tr>
 <tr>
 <td><code>log_service_account_created_or_updated</code></td>
@@ -17721,6 +17719,18 @@ td:nth-child(4) {
 <td><code>Django Signal (post_save)</code></td>
 <td><code>invoices.InvoiceItem</code></td>
 <td>Evaluate project cost policies when invoice items are updated.</td>
+</tr>
+<tr>
+<td><code>reconcile_offering_profile_on_offering_changed</code></td>
+<td><code>Django Signal (post_save)</code></td>
+<td><code>marketplace.Offering</code></td>
+<td>When an Offering is saved, schedule a reconciliation task. Cheap</td>
+</tr>
+<tr>
+<td><code>reconcile_offering_profile_on_roles_changed</code></td>
+<td><code>Django Signal (m2m_changed)</code></td>
+<td><code>OfferingProfile_roles</code></td>
+<td>When OfferingProfile.roles M2M changes, schedule reconciliation</td>
 </tr>
 <tr>
 <td><code>refund_project_credit_on_project_removal</code></td>
@@ -18805,15 +18815,15 @@ td:nth-child(4) {
 </tbody>
 </table>
 <h2 id="summary">Summary</h2>
-<p>Total unique handlers found: 791</p>
+<p>Total unique handlers found: 788</p>
 <ul>
 <li><strong>waldur_auth_saml2</strong>: 1 handlers</li>
 <li><strong>waldur_autoprovisioning</strong>: 1 handlers</li>
-<li><strong>waldur_core</strong>: 411 handlers</li>
+<li><strong>waldur_core</strong>: 412 handlers</li>
 <li><strong>waldur_freeipa</strong>: 12 handlers</li>
-<li><strong>waldur_keycloak</strong>: 9 handlers</li>
+<li><strong>waldur_keycloak</strong>: 7 handlers</li>
 <li><strong>waldur_lexis</strong>: 1 handlers</li>
-<li><strong>waldur_mastermind</strong>: 313 handlers</li>
+<li><strong>waldur_mastermind</strong>: 311 handlers</li>
 <li><strong>waldur_openportal</strong>: 10 handlers</li>
 <li><strong>waldur_openstack</strong>: 13 handlers</li>
 <li><strong>waldur_openstack_replication</strong>: 1 handlers</li>
@@ -18841,7 +18851,7 @@ td:nth-child(4) {
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-05-01
+    2026-05-03
   </span>
 
     
