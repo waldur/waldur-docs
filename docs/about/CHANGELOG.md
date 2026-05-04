@@ -1,66 +1,90 @@
 # Changelog
 
-## 8.0.8-rc.13 - 2026-04-30
+## 8.0.8-rc.14 - 2026-05-05
 
 ### Highlights
 
-This release is a major step forward for Waldur's AI assistant, which now runs an agentic loop with new tools spanning marketplace browsing, proposal management, VM ordering, and user feedback collection. Operators get a new HPC-oriented capability set: science domain registry, project affiliations, custom slug templates, and grace-period handling for projects and SLURM allocations. The release also enables usage-based billing for OpenStack offerings, ships hypervisor and load-balancer management improvements, upgrades the platform to Python 3.13/Debian Bookworm, and addresses several Go SDK serialization issues alongside multiple security and pagination fixes.
+This release introduces a unified **ResourceProject** model with resource-level user invitations and permissions, allowing service providers to scope users and limits per project on a single resource. The platform gains substantial new capabilities for OpenStack — instance rescue/unrescue, Placement-API hypervisor capacity tracking, load-balancer security-group management, router gateway controls — plus an anonymous service-discovery chatbot for the HPC Service Hub, agentic AI assistant tooling, and end-to-end usage-based billing for OpenStack offerings. Numerous fixes around prepaid pricing, dropdown pagination, cross-org isolation, and SDK serialization improve day-to-day reliability for operators and end users.
 
 ### What's New
 
-- AI assistant gained an agentic loop with marketplace, proposal, review, and VM creation tools, message feedback collection, history sidebar improvements, and a HomePort navigation block.
-- Science domain and sub-domain registry for HPC environments, exposed in project metadata, project creation, and admin UI.
-- Project affiliations with external organizations, including admin management and project-level editing.
-- Custom slug templates configurable on Customer and Call, with hint helpers in the project creation dialog.
-- Grace-period support for offerings (`apply_grace_period` flag, `project_is_in_grace_period` on resources) with new project warning bars and lifecycle/end-date conflict badges in resource lists.
-- Usage-based billing mode for OpenStack offerings, including new component usage poll records and a monthly component usage reporting page in the provider portal.
-- OpenStack: router external gateway management, load-balancer security groups, LB algorithm validation, hypervisor summary tab with placement charts, and `cpu_allocation_ratio` setting.
-- Marketplace: pre-defined system prompts for AI assistants, scheduled daily refresh of price estimates, terms-of-service consent widget on the user dashboard, and new marketplace landing layouts.
-- Permissions: new `ORDER.CREATE` permission separating order creation from `CUSTOMER.READER`, and new `SET_CONSUMER_ORDER_INFO` permission for responding to provider requests.
-- Reviewer pool, COI review, and reviewer discovery sections received UX polish; reviewer invitation emails are now sent when users are added to the call reviewer pool.
-- Notifications: requesters are now notified when permission requests are rejected, and Puhuri portal sends a notification when resource allocation is rejected.
-- Software catalog now exposes extension and parent package version data with extensions/parents/categories visible in the catalog view.
-- Python 3.13 / Debian Bookworm upgrade for Mastermind, with the Docker image switched from Alpine to Debian slim to support semantic tool routing.
-- Helm: image-pull secret added to the Waldur cleanup CronJob.
-- Docker Compose: Keycloak upgraded to 26.6.1 (CVE-2026-4366, CVE-2026-4633) and `waldur-keycloak-mapper` bumped to 1.4.0.
+- **Resource projects with user invitations**: Resources can now be split across multiple project-scoped allocations with their own limits, members, and invitations; new admin offering flag `resource_projects_limits_required` enforces this for applicable workflows.
+- **Anonymous service-discovery chatbot for HPC Service Hub** (WAL-9688): public-facing, deployment-neutral chat experience with catalog-aware tools, budget gating, anti-abuse strikes, and session review.
+- **AI assistant agentic loop and richer tools** (WAL-9884, WAL-9510, WAL-9486, WAL-9817, WAL-9848): adds proposal/review tooling, configurable system prompts, user feedback collection, expandable resource tables, generic-question handling for staff, and a HomePort navigation block. Drawer can now expand/collapse and defers runtime mount until first open.
+- **OpenStack instance rescue / unrescue** (WAL-8603): operators and users can place instances into rescue mode and recover them via the UI.
+- **Placement-API hypervisor capacity tracking** (WAL-9889/9890/9891/9892/9897): replaces legacy `cpu_allocation_ratio` accounting with Nova 2.87 + Placement, including pre-flight `allocation_candidates` and per-instance allocations diagnostics; new hypervisor summary tab with charts.
+- **OpenStack load balancer management** (WAL-9388/9387): full LBaaS frontend with create/edit/destroy actions for pools, listeners, members, health monitors, plus floating-IP attach and security-group assignment.
+- **Router external gateway management** (RWA-2) and `set_security_groups` action for LB VIP ports.
+- **Usage-based billing for OpenStack offerings** (WAL-9841): end-to-end pipeline with monthly component-usage reporting, accumulation, and a new provider reporting page.
+- **Science Domain / Sub-Domain registry** (HPCMP-476): admin-managed taxonomy with project metadata field, autocomplete, and a starter preset.
+- **Custom project slug templates** at customer and call level, with hint UI shown during project creation.
+- **Project affiliations with external organizations** (WAL-9846): admin registry plus per-project metadata management.
+- **Applicant data visibility configuration** for proposal calls — replaces the legacy attribute config with a simpler, more granular permissions panel.
+- **Reviewer invitation and permission-rejection email notifications** (WAL-5181), plus reminder emails now use the inviter's full name (WAL-9906).
+- **GDPR-compliant `address` attribute on User** with offering-level visibility configuration.
+- **`SET_CONSUMER_ORDER_INFO` and `ORDER.CREATE` permissions** for finer access control over order workflows.
+- **Pending TOS-consent widget** on the user dashboard plus end-to-end TOS UX refresh (WAL-9874, WAL-9877).
+- **Service providers can list users on resources they sell** with a new resource-team endpoint.
+- **`set_as_erred` order action** exposed in the UI (WAL-9648); error/output timestamps now visible on orders (WAL-7982).
+- **Pending-order support tickets** auto-created with prepaid total cost, slugs, and start/end dates included.
+- **Restore-order handlers and staff-only resource restore action**, plus per-offering customer/project usage stats endpoint (HPCMP-472).
+- **Grace-period UI**: `apply_grace_period` flag on offerings, `project_is_in_grace_period` exposed on resources, and lifecycle/grace banners in project and resource lists (HPCMP-477).
+- **OpenStack onboarding**: customer onboarding button on organization page, and pre-defined cover image support for offerings.
 
 ### Improvements
 
-- Resource lifecycle UI: project lifecycle badges in lists and cards, end-date styling by lifecycle state, and clearer customer-level default grace period display.
-- Order workflow: prepaid total cost and slugs added to pending order tickets, support tickets created automatically when orders enter pending state, and order error/output now expose timestamps.
-- Change-limits dialog and renewal flow now include purchase-order fields with correct visibility.
-- Pending confirmation drawer redesigned and order action columns hidden when nothing is pending.
-- Server-side pagination across reporting tables (offering costs, missing usage reports, resource demand, resources by offering, usage monitoring) with loading overlays during refetch.
-- Marketplace pricing: shows base quantity with duration in prepaid order summaries, the remaining prepaid period instead of annual price for prepaid resources, and accurate periodic plan estimates.
-- Numerous dropdown/autocomplete pagination fixes (cost policies, project selectors, credits, issues, move resource).
-- Default avatar placeholders, badge text casing, page spacing, chart colors, and order summary tables aligned with the design system.
-- AI assistant: defers chat runtime mount until drawer opens; expand/collapse drawer toggle; saved content now matches displayed output.
-- Performance: removed `.iterator()` calls incompatible with PgBouncer, fixed N+1 queries on marketplace component usage, avoided M2M JOIN+DISTINCT on `marketplace-offering-users`, refactored Customer/project resource serialization for bulk performance.
-- CI: smart test selection for CI-only changes, parallel linter jobs, optional SDK and docs builds via `BUILD_SDK`/`SKIP_BUILD`/`SKIP_DOCS` gates.
-- Replaced multiple npm packages with inline implementations (`copy-to-clipboard`, `cidr-regex`, `ip-regex`, `d3-scale-chromatic`, `@cloudfour/simple-svg-placeholder`) and pinned `postcss>=8.5.10` for GHSA-qx2v-qp2m-jg93.
-- Security: upgraded `dompurify` to 3.4.0 (GHSA-39q2-94rc-95cp), `@xmldom/xmldom` to 0.8.13, `pillow` to 12.2.0 (CVE-2026-40192), `lxml` (GHSA-vfmq-68hx-4jfw); fixed XSS in markdown/HTML rendering components.
+- **Prepaid order pricing**: corrected duration calculation to use order start date, fixed estimated total in plan section, surfaced base quantity × duration in summaries, removed the hardcoded one-week minimum termination date, and improved subscription-period selector validation.
+- **AI Assistant**: chat-history sidebar redesign, conditional tool loading via keyword intent classifier (WAL-9845), shared offering filtering fix (WAL-9799), staff-mode generic Q&A (WAL-9811), and tool-call follow-up crash/silent-content-drop fix.
+- **OpenStack discovery and operations**: cascade-removal of VM snapshots when a connected volume snapshot is deleted (WAL-9882), Octavia sync skipped when LB service absent, console URL now allows overriding both domain and port, Octavia `verify_ssl` propagation fixed (WAL-9388).
+- **Marketplace performance**: server-side pagination for offering cost reports, missing-usage reports, and stats endpoints; eliminated N+1 queries in component-usage list and avoided expensive M2M JOIN+DISTINCT on offering-users endpoint.
+- **Order summary tables modernized** (uppercase headers removed), order action drop-downs hide when no pending orders, resource flag badges added for project lifecycle and end-date conflicts, and badge text normalized.
+- **Page spacing, edit-button sizing, avatar placeholder colors, and chart palettes** refreshed across reporting and customer screens.
+- **Dropdown pagination fixes** in cost-policy, credit, issue-creation, and move-to-project autocompletes (HPCMP-471).
+- **Search dropdown, table filter row, and add-filter button** spacing tightened; loading overlay now shown during table refetches.
+- **Service providers**: new project-team expandable row (WAL-9844); restricted project-team Details to staff/support (WAL-9875); retry-order permission checks (WAL-9880); refresh of permission and feature checks for resource row actions (WAL-9871).
+- **Hide order-creation buttons** for users without `CREATE_ORDER` permission.
+- **OpenStack hypervisor summary** tab on tenant manage view (WAL-7929) with progress charts.
+- **Software catalog view** now shows extensions, parents, and categories.
+- **Project metadata** improvements: editable Science domain field, project lifecycle badge in lists/cards, end-date styling by lifecycle state.
+- **Notification setup**: wider subject input in support templates; admin "Onboarding" button on organization page.
+- **PO support extended** to `update_limits`, change-limits dialog, and renewal flow with enriched ticket descriptions.
+- **Operational hardening**: replaced `QuerySet.iterator()` with chunked iteration to avoid PgBouncer cursor incompatibility; reduced OOM risk in periodic SLURM sync; corrected `set_to_zero_overdue_credits` audit; richer credit-balance snapshots and revision history via django-reversion.
+- **OIDC**: deactivated users with pending invitations and group invitations blocked by `OIDC_BLOCK_CREATION_OF_UNINVITED_USERS` can now log in; cross-organization notification isolation hardened.
+- **Performance refactors**: customer serialization eliminates request-as-cache anti-patterns; project resource counts batched via ListSerializer; daily price-estimate refresh task; bundle slimmed by replacing `semantic-router` with `fastembed` and removing `copy-to-clipboard`, `cidr-regex`, `ip-regex`, `d3-scale-chromatic`, and `@cloudfour/simple-svg-placeholder` dependencies; Docker image switched from Alpine to Debian slim and Python upgraded to 3.13.
+- **Frontend pre-commit replaced with `prek`**, smarter test selection, and parallelised lint jobs.
+- **`waldur_keycloak` app removed** in favour of the unified permission system; stale documentation pruned.
+- **Helm/Compose security**: Keycloak bumped to 26.6.1 (CVE-2026-4366, CVE-2026-4633); waldur-keycloak-mapper bumped to 1.4.0; pillow and lxml upgrades.
 
 ### Bug Fixes
 
-- Multiple Go SDK unmarshal errors fixed by correcting serializer types (`minimal_price`, plan prices, `get_quotas`, `NestedPriceEstimateSerializer`, `scope_name`, `access_url` schema).
-- OpenStack: `IntegrityError` on image pull when duplicates are hidden; `verify_ssl` now passed to OctaviaClient; Octavia sync skipped when load-balancer service is not in the catalog.
-- Marketplace: `PlanComponent.DoesNotExist` crash in `set_limits` for TOTAL components; volume discount no longer applied to duration-multiplied quantity; volume discount threshold check fixed for prepaid components; `affected_offerings` restored on maintenance announcement template responses.
-- Authentication: deactivated users can now log in via OIDC with pending invitations; group invitations no longer blocked by `OIDC_BLOCK_CREATION_OF_UNINVITED_USERS`; identity bridge gender serializer fixed.
-- Project slug template now applied when creating projects via API; user filter no longer includes users with revoked roles; `user_has_consent=false` filter no longer excludes offerings without consent records.
-- AI assistant: tool-call follow-up crash fixed; redundant markdown table after resource tool call removed; chat offering filter correctly matches shared offerings.
-- Prepaid subscription period selector: corrected start date and input validation; correct period shown in plan details popup.
-- Credit usage dialog now shows project name with correct filter; estimated total price corrected in plan section.
-- Apply action moved into 3-dot dropdown on calls table; reviewer pool actions dropdown fixed; "View summary" button alignment in Plan step corrected.
-- Cost policy and credit dropdowns paginate correctly; cluster security groups list and end-date change request tabs UI polished.
+- Fixed quarterly SLURM policies broken by the 0226 `limit_period` backfill (WAL-9907).
+- Fixed prepaid field validation to allow null values on non-prepaid components (WAL-9908).
+- Fixed `IntegrityError` on OpenStack image pull when duplicates are hidden.
+- Fixed `affected_offerings` missing from maintenance announcement template API.
+- Fixed `user_has_consent=false` filter incorrectly excluding offerings with no consent records.
+- Fixed slug template not applied when creating projects via API.
+- Fixed volume discount applied to duration-multiplied quantity.
+- Fixed `InvalidCursorName` crash in `sync_allocation_limits`.
+- Fixed several SDK unmarshal errors caused by Decimal/numeric serialization in marketplace and billing serializers (`minimal_price`, `get_quotas`, plan prices, `scope_name`, `NestedPriceEstimateSerializer`).
+- Fixed `CourseAccount` serializer crash on null project dates.
+- Fixed user filter that incorrectly included users with revoked project/organization roles.
+- Fixed identity-bridge gender serializer.
+- Fixed `PlanComponent.DoesNotExist` crash in `set_limits` for TOTAL limit components.
+- Fixed `UniqueViolation` in constance key rename migration (`core.0025`).
+- Fixed credit usage dialog: missing project name and incorrect filter; fixed estimated total price in plan section; fixed prepaid period selector start date and validation.
+- Fixed scientific-notation display in plan price editing.
+- Fixed redundant markdown table after AI Assistant resource tool calls.
+- Fixed XSS vulnerabilities in markdown/HTML rendering components; allow URLs in announcements bar safely.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [155 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.7...8.0.8-rc.13) - AI assistant agentic loop, science domains, OpenStack usage-based billing, Python 3.13 upgrade, OpenPortal merges, and broad performance/serializer fixes.
-- **Waldur Homeport**: [131 commits](https://github.com/waldur/waldur-homeport/compare/8.0.7...8.0.8-rc.13) - Agentic AI assistant UI, science domain admin and project metadata, marketplace landing layouts, server-side pagination across reporting, and extensive design-system polish.
-- **Waldur Helm**: [13 commits](https://github.com/waldur/waldur-helm/compare/8.0.7...8.0.8-rc.13) - Image-pull secret added to the cleanup CronJob; remaining commits are RC version bumps.
-- **Waldur Docker Compose**: [14 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.7...8.0.8-rc.13) - Keycloak 26.6.1 security upgrade and `waldur-keycloak-mapper` 1.4.0 bump alongside RC version bumps.
+- **Waldur Mastermind**: [184 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.7...8.0.8-rc.14) - ResourceProject model, AI assistant overhaul, OpenStack Placement migration and LBaaS backend, usage-based billing pipeline, Python 3.13/Debian slim upgrade, dependency hardening.
+- **Waldur Homeport**: [160 commits](https://github.com/waldur/waldur-homeport/compare/8.0.7...8.0.8-rc.14) - ResourceProject UI, OpenStack rescue and LBaaS frontend, hypervisor summary, AI assistant agentic UI and feedback, marketplace layout variants, large-scale `useManagedMutation` and import-path refactor, XSS fixes.
+- **Waldur Helm**: [14 commits](https://github.com/waldur/waldur-helm/compare/8.0.7...8.0.8-rc.14) - Cleanup cronjob pull-secret support and RC version bumps.
+- **Waldur Docker Compose**: [15 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.7...8.0.8-rc.14) - Keycloak 26.6.1 security upgrade and waldur-keycloak-mapper 1.4.0.
 
 ---
+
 
 
 
