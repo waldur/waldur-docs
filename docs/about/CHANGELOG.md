@@ -1,5 +1,42 @@
 # Changelog
 
+## 8.0.9-rc.1 - 2026-05-06
+
+### Highlights
+
+This release candidate focuses on stability and polish across the marketplace experience. OpenStack server group provisioning now works with newer Nova API versions, several order and resource UI rough edges are smoothed out, and a security advisory in the `marked` dependency has been addressed. Form modernization continues with multiple dialogs migrated from redux-form to react-final-form.
+
+### Improvements
+
+- Continued migration of dialogs and forms (campaigns, broadcast templates, payment profiles, endpoints, attribute/category editing) from redux-form to react-final-form for a more consistent experience and better test coverage.
+- Streamlined modal/dialog UX by removing redundant close buttons across the application.
+- Replaced the standalone Terminate dialog with an inline mutation flow in the resource terminate action.
+- Added a usage-periods verification demo preset and dev-stack improvements to make local testing easier.
+
+### Bug Fixes
+
+- Fixed OpenStack server group creation against newer versions of the Nova API.
+- Prevented 500 errors in OpenPortal report filters when the configuration is unavailable.
+- Fixed Docker init scripts that depended on `wget` being installed.
+- Restored the language selector in the logged-in user dropdown (it was hidden whenever a language was set).
+- Resource usage history is now rendered as bars, with empty limit series hidden.
+- One-time components can now be created in offerings without toggling prepaid first.
+- Terminate confirmation popup now shows the project and customer names.
+- Order checkout sidebar no longer shows daily totals tagged as monthly.
+- Terminate order details and lists now fall back to resource name when no other label is available (WAL-9914).
+- Bumped `marked` to address GHSA-6v9c-7cg6-27q7.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [4 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.8...8.0.9-rc.1) - OpenStack and OpenPortal fixes, Dockerfile cleanup, demo preset additions.
+- **Waldur Homeport**: [15 commits](https://github.com/waldur/waldur-homeport/compare/8.0.8...8.0.9-rc.1) - marketplace UI fixes, ongoing react-final-form migration, security dependency bump.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.9-rc.1.yaml)
+
+---
+
 ## 8.0.8 - 2026-05-05
 
 ### Highlights
