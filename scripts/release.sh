@@ -181,20 +181,26 @@ cd "$PROJECT_DIR"
 if git log -1 --format="%s" | grep -q "Update changelog for $VERSION"; then
     echo "  Changelog already committed. Skipping commit step."
 else
-    # Remove any existing RC entries for the same base version before prepending
-    # For RC: removes prior RCs (e.g., 8.0.6-rc.1 when adding 8.0.6-rc.2)
-    # For stable: removes all RCs (e.g., 8.0.6-rc.* when adding 8.0.6)
+    # Remove any existing entries that this run would duplicate:
+    # - The exact $VERSION (in case release.sh was run before for this version
+    #   and a later commit broke the git-log guard above).
+    # - For stable releases, also strip RCs of the same base (e.g. 8.0.6-rc.* when adding 8.0.6).
+    # - For RC releases, also strip prior RCs of the same base (e.g. 8.0.6-rc.1 when adding 8.0.6-rc.2).
     if [ "$IS_RC" = "false" ]; then
         BASE_VERSION="$VERSION"
     fi
     python3 -c "
 import re, sys
 base = '${BASE_VERSION}'
-pattern = re.compile(r'^## ' + re.escape(base) + r'-rc\.\d+\b')
+version = '${VERSION}'
+patterns = [
+    re.compile(r'^## ' + re.escape(version) + r'\b'),
+    re.compile(r'^## ' + re.escape(base) + r'-rc\.\d+\b'),
+]
 lines = open(sys.argv[1]).readlines()
 out, skip = [], False
 for line in lines:
-    if pattern.match(line):
+    if any(p.match(line) for p in patterns):
         skip = True
         continue
     if skip and line.strip() == '---':
@@ -206,7 +212,7 @@ for line in lines:
         out.append(line)
 open(sys.argv[1], 'w').writelines(out)
 " "$PROJECT_DIR/docs/about/CHANGELOG.md"
-    echo "  Removed any existing RC entries for $BASE_VERSION"
+    echo "  Removed any existing entries for $VERSION (and RCs of $BASE_VERSION)"
 
     # Prepend new entry
     {
