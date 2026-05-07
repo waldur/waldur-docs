@@ -1,41 +1,41 @@
 # Changelog
 
-## 8.0.9-rc.1 - 2026-05-06
+## 8.0.9-rc.2 - 2026-05-07
 
 ### Highlights
 
-This release candidate focuses on stability and polish across the marketplace experience. OpenStack server group provisioning now works with newer Nova API versions, several order and resource UI rough edges are smoothed out, and a security advisory in the `marked` dependency has been addressed. Form modernization continues with multiple dialogs migrated from redux-form to react-final-form.
+This release candidate sharpens the marketplace experience with clearer resource usage charts, more informative termination dialogs, and fixes to checkout totals and offering component setup. It also delivers backend reliability improvements for OpenStack server group creation and OpenPortal report filters, plus continued progress migrating forms to react-final-form for a more responsive UI.
 
 ### Improvements
 
-- Continued migration of dialogs and forms (campaigns, broadcast templates, payment profiles, endpoints, attribute/category editing) from redux-form to react-final-form for a more consistent experience and better test coverage.
-- Streamlined modal/dialog UX by removing redundant close buttons across the application.
-- Replaced the standalone Terminate dialog with an inline mutation flow in the resource terminate action.
-- Added a usage-periods verification demo preset and dev-stack improvements to make local testing easier.
+- Resource usage history now renders as bar charts with compact y-axis labels, and empty limit series are hidden for cleaner visualizations.
+- Terminate confirmations now display project and customer names so operators can verify the right resource before acting; terminate orders fall back to the resource name when needed.
+- Per-offering usage statistics have been consolidated into the marketplace module for a more coherent API surface.
+- A usage-periods verification demo preset has been added alongside dev-stack improvements to make local verification easier.
+- Continued migration of forms (offerings, plans, components, payments, broadcasts, campaigns, attributes, endpoints) from redux-form to react-final-form, with added test coverage and a consistent dialog header style across the app.
 
 ### Bug Fixes
 
-- Fixed OpenStack server group creation against newer versions of the Nova API.
-- Prevented 500 errors in OpenPortal report filters when the configuration is unavailable.
-- Fixed Docker init scripts that depended on `wget` being installed.
-- Restored the language selector in the logged-in user dropdown (it was hidden whenever a language was set).
-- Resource usage history is now rendered as bars, with empty limit series hidden.
-- One-time components can now be created in offerings without toggling prepaid first.
-- Terminate confirmation popup now shows the project and customer names.
-- Order checkout sidebar no longer shows daily totals tagged as monthly.
-- Terminate order details and lists now fall back to resource name when no other label is available (WAL-9914).
+- OpenStack server group creation now works correctly against newer Nova API versions.
+- OpenPortal report filters no longer return a 500 error when configuration is unavailable.
+- One-time components in offerings can be created without requiring the prepaid toggle.
+- Order checkout sidebar correctly shows monthly totals when the monthly tag is selected (previously displayed daily totals).
+- The language selector is restored in the logged-in user dropdown after an inverted guard previously hid it.
+- Init scripts in the Docker image no longer fail due to a missing `wget` dependency.
+
+### Security
+
 - Bumped `marked` to address GHSA-6v9c-7cg6-27q7.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [4 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.8...8.0.9-rc.1) - OpenStack and OpenPortal fixes, Dockerfile cleanup, demo preset additions.
-- **Waldur Homeport**: [15 commits](https://github.com/waldur/waldur-homeport/compare/8.0.8...8.0.9-rc.1) - marketplace UI fixes, ongoing react-final-form migration, security dependency bump.
-
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.9-rc.1.yaml)
+- **Waldur Mastermind**: [6 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.8...8.0.9-rc.2) - OpenStack and OpenPortal fixes, marketplace usage stats consolidation, and demo preset additions.
+- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.0.8...8.0.9-rc.2) - usage chart fixes, terminate/checkout improvements, and broad form migration to react-final-form.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.8...8.0.9-rc.2) - maintenance updates only.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.0.8...8.0.9-rc.2) - maintenance updates only.
 
 ---
+
 
 ## 8.0.8 - 2026-05-05
 
