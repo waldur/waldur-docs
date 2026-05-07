@@ -1,40 +1,49 @@
 # Changelog
 
-## 8.0.9-rc.2 - 2026-05-07
+## 8.0.9-rc.3 - 2026-05-07
 
 ### Highlights
 
-This release candidate sharpens the marketplace experience with clearer resource usage charts, more informative termination dialogs, and fixes to checkout totals and offering component setup. It also delivers backend reliability improvements for OpenStack server group creation and OpenPortal report filters, plus continued progress migrating forms to react-final-form for a more responsive UI.
+This release candidate redesigns affiliated organization handling end-to-end, giving customer admins per-organization defaults and a dedicated panel to manage them. Proposal calls now support workflow step tracking so reviewers and managers can see where each proposal sits in the review pipeline. OpenStack VM creation is more robust against image and Nova API edge cases, and resource usage charts have been polished to render history correctly and avoid misleading "Limit: 0" labels.
+
+### What's New
+
+- Affiliated organizations have been redesigned with per-customer defaults, a single foreign-key relationship, and the ability to mark affiliation as mandatory; project creation exposes the new field and a customer admin panel lets organization owners manage defaults.
+- Proposal calls now track workflow steps, including responsible roles, display ordering, and a uniqueness guarantee for the active step on each proposal.
+- Project members can now create OpenStack tenants directly through the marketplace, removing the previous owner-only restriction.
+- Helm deployments can now opt into Traefik ingress, with matching Middleware CRDs generated for the API, admin API, homeport, RabbitMQ websocket, and EveryPay endpoints.
+- A new usage-periods verification demo preset is available for testing non-monthly limit periods.
 
 ### Improvements
 
-- Resource usage history now renders as bar charts with compact y-axis labels, and empty limit series are hidden for cleaner visualizations.
-- Terminate confirmations now display project and customer names so operators can verify the right resource before acting; terminate orders fall back to the resource name when needed.
-- Per-offering usage statistics have been consolidated into the marketplace module for a more coherent API surface.
-- A usage-periods verification demo preset has been added alongside dev-stack improvements to make local verification easier.
-- Continued migration of forms (offerings, plans, components, payments, broadcasts, campaigns, attributes, endpoints) from redux-form to react-final-form, with added test coverage and a consistent dialog header style across the app.
+- Rescue-tagged OpenStack images are now rejected as VM boot images both server-side and in the homeport image picker, preventing accidental use of recovery images for new instances.
+- Per-offering usage statistics have moved fully into the marketplace module, with a cleaner serializer caching strategy that reduces database query counts.
+- Affiliated-organization listings now support `?field=` projection for narrower API responses.
+- Offering import gracefully falls back when the terms-of-service link is null.
+- OpenPortal has been refactored, and report filters no longer return 500 errors when the OpenPortal configuration is unavailable.
+- Several form areas (campaigns, payment profiles, broadcast templates, marketplace components/plans, customer details, OpenStack volume extension, and many dialogs) have been migrated from redux-form to react-final-form, improving form responsiveness and reducing the legacy form footprint.
+- The close button has been removed from modals and dialogs across the application for a more consistent dialog experience.
+- Security advisories GHSA-w5hq-g745-h8pq (uuid) and GHSA-6v9c-7cg6-27q7 (marked) have been cleared via dependency bumps.
 
 ### Bug Fixes
 
-- OpenStack server group creation now works correctly against newer Nova API versions.
-- OpenPortal report filters no longer return a 500 error when configuration is unavailable.
-- One-time components in offerings can be created without requiring the prepaid toggle.
-- Order checkout sidebar correctly shows monthly totals when the monthly tag is selected (previously displayed daily totals).
-- The language selector is restored in the logged-in user dropdown after an inverted guard previously hid it.
-- Init scripts in the Docker image no longer fail due to a missing `wget` dependency.
-
-### Security
-
-- Bumped `marked` to address GHSA-6v9c-7cg6-27q7.
+- OpenStack server group create and pull operations now work against newer Nova API versions.
+- Resource usage history charts render as bars, hide empty limit series, drop misleading "Limit: 0" tooltip rows for non-monthly limit periods, and use compact y-axis labels.
+- One-time components can now be created without first toggling the prepaid option.
+- Order checkout sidebar no longer shows daily totals tagged as monthly.
+- The terminate confirmation popup now shows project and customer names, and terminate orders fall back to the resource name when the offering label is missing.
+- The language selector has been restored in the logged-in user dropdown after an inverted guard was hiding it.
+- Init scripts no longer fail in environments without `wget`.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [6 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.8...8.0.9-rc.2) - OpenStack and OpenPortal fixes, marketplace usage stats consolidation, and demo preset additions.
-- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.0.8...8.0.9-rc.2) - usage chart fixes, terminate/checkout improvements, and broad form migration to react-final-form.
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.8...8.0.9-rc.2) - maintenance updates only.
-- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.0.8...8.0.9-rc.2) - maintenance updates only.
+- **Waldur Mastermind**: [15 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.8...8.0.9-rc.3) - Affiliation redesign, proposal workflow steps, OpenStack Nova compatibility fixes, and OpenPortal refactor.
+- **Waldur Homeport**: [23 commits](https://github.com/waldur/waldur-homeport/compare/8.0.8...8.0.9-rc.3) - Affiliation UI, large redux-form to react-final-form migration, usage chart fixes, and dialog cleanup.
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.0.8...8.0.9-rc.3) - Traefik ingress class support with Middleware CRDs.
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.8...8.0.9-rc.3) - Maintenance updates only.
 
 ---
+
 
 
 ## 8.0.8 - 2026-05-05
