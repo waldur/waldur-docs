@@ -7,7 +7,13 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "mkdocs-material>=7.3.1",
+    # Migrated off the original MkDocs ecosystem (Mar 2026): mkdocs core stalled,
+    # mkdocs-material entered maintenance mode, and "MkDocs 2.0" drops plugin support.
+    # ProperDocs is a drop-in fork of mkdocs 1.6.1; MaterialX continues mkdocs-material 9.7.1.
+    # mkdocs is pinned <2 as belt-and-suspenders against an accidental v2 release on PyPI.
+    "properdocs>=1.6.7",
+    "mkdocs<2",
+    "mkdocs-materialx>=10.1.4",
     "mkdocs-git-revision-date-plugin>=0.3.2",
     "mkdocs-print-site-plugin>=2.6.0",
     "mkdocs-render-swagger-plugin>=0.1.2",
@@ -18,6 +24,9 @@ dependencies = [
     "mike>=2.1.3",
     "mkdocs-unused-files>=0.2.0",
     "mkdocs-include-markdown-plugin>=7.1.7",
+    # Direct constraints to clear transitive CVEs flagged by osv-scanner
+    "gitpython>=3.1.49",  # GHSA-7545/rpm5/v87r/x2qx — pulled in via mkdocs-document-dates
+    "lxml>=6.1.0",        # GHSA-vfmq-68hx-4jfw — pulled in via mkdocs-print-site-plugin
 ]
 
 [tool.uv]
