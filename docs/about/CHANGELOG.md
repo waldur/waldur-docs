@@ -1,51 +1,59 @@
 # Changelog
 
-## 8.0.9-rc.4 - 2026-05-08
+## 8.0.9-rc.5 - 2026-05-08
 
 ### Highlights
 
-This release candidate brings a redesigned affiliated organizations workflow with per-customer defaults and a dedicated admin panel, expands proposal handling with workflow step tracking, and introduces site agent diagnostics collection. Operators get Traefik ingress support in the Helm chart, while users see clearer usage charts, safer VM image selection, and numerous fixes across permissions, terminations, and OpenStack compatibility.
+This release candidate brings a major redesign of organization affiliations, new proposal workflow step tracking, and substantial improvements to usage visualization across customer and project dashboards. Operators get site-agent diagnostics collection and Traefik ingress support in Helm, while OpenStack users benefit from several reliability fixes around instance creation, server groups, and rescue images. Numerous form modernizations and small UX fixes round out the release.
 
 ### What's New
 
-- Affiliated organizations were redesigned end-to-end: per-customer defaults, a single foreign key on projects, mandatory-affiliation option, a customer admin panel, and a project-creation field. Projects expose flat `affiliation_name`/`affiliation_code` and the affiliated-organizations list now supports `?field=` projection.
-- Proposal workflow step tracking is now available, letting call managers define ordered steps with responsible roles and enforce a single active step per proposal.
-- Site agent diagnostics can now be collected centrally, with a new `SiteAgentLog` model, filters, and API endpoints for inspecting agent runs.
-- Helpdesk tickets are now created automatically on resource and resource-project role changes.
-- The Helm chart now supports the Traefik ingress class with Middleware CRDs across all ingress endpoints.
-- A usage-periods verification demo preset was added to the marketplace dev stack.
+- Affiliation redesign rolls out across the stack: per-customer default affiliations, a single foreign key on projects, optional mandatory enforcement, a new project-create field, and a customer admin panel for managing defaults.
+- Proposal workflow step tracking lets call managers define ordered, role-responsible workflow steps and track active step per proposal.
+- Site agent diagnostics collection: operators can now request and view diagnostic logs from connected site agents.
+- Helpdesk tickets are automatically created on resource and resource-project role changes.
+- Traefik ingress class with Middleware CRDs is now supported in the Helm chart.
+- New per-offering usage widget overhaul on customer and project dashboards, including aggregate timeline, gauge grid, limit horizon, period-over-period, and treemap views.
 
 ### Improvements
 
-- Rescue-tagged OpenStack images are now rejected as VM boot images and hidden from the boot-image picker during VM creation.
+- Per-offering usage stats moved fully into the marketplace API, simplifying the data model.
 - Project members can now create OpenStack tenants directly via the marketplace.
-- Per-offering usage statistics moved fully into the marketplace module, with refactored `OfferingUser` caching to reduce serializer query counts.
-- Offering import now falls back gracefully when the terms-of-service link is null.
-- Many forms migrated from `redux-form` to `react-final-form` (auth dialogs, customer/payment profiles, marketplace offerings, components, plans, campaigns, broadcasts, attribute/category dialogs, endpoint dialog, terminate action), with added test coverage.
-- Close buttons were removed from modal and dialog components for consistency.
-- Bumped `uuid` (GHSA-w5hq-g745-h8pq) and `marked` (GHSA-6v9c-7cg6-27q7) to clear known vulnerabilities.
+- Affiliated-organizations list now supports `?field=` projection for lighter responses; project serializer exposes flat `affiliation_name`/`code`.
+- Pull tasks are skipped for service settings without live offerings, reducing background load.
+- StateMixin `begin_*` transitions are now idempotent from the target state.
+- Existing ports beyond `status=DOWN` are accepted on instance create / `update_ports`.
+- OfferingUser caching refactored to use ListSerializer context for fewer queries.
+- Rescue-tagged OpenStack images are rejected as VM boot images and hidden from the homeport boot-image picker.
+- Usage chart y-axis uses compact notation; resource usage history renders as bars with empty limit series hidden.
+- Terminate orders fall back to resource name and show project/customer names in the confirmation popup.
+- Clarified `HOMEPORT_URL` impact on SSO redirect callbacks in provider configuration.
+- Front-end forms continue migration from redux-form to react-final-form (offerings, plans, components, payments, campaigns, broadcasts, attributes, endpoints, payment profiles).
+- Security: bumped `uuid` (GHSA-w5hq-g745-h8pq) and `marked` (GHSA-6v9c-7cg6-27q7).
 
 ### Bug Fixes
 
+- Fixed OpenStack instance creation race against `pull_tenant_ports`.
+- Fixed OpenStack server group creation and pull against newer Nova API.
 - Service provider deletion is no longer blocked by auto-created OpenStack child offerings.
-- Permission request notifications now produce correct links for approvers, and customer owners again see approve/reject buttons on permission requests.
-- OpenStack server group creation and pull now work against newer Nova API versions.
-- OpenPortal report filters no longer return 500 when configuration is unavailable.
-- The Dockerfile no longer relies on missing `wget` in init scripts.
-- Resource usage history now renders as bars with empty limit series hidden; "Limit: 0" rows are omitted from tooltips on quarterly/non-monthly limit periods, and y-axis labels use compact notation.
-- One-time components can now be created without enabling the prepaid toggle.
-- The terminate confirmation popup shows project and customer names, and terminate orders fall back to the resource name when needed.
-- The order checkout sidebar no longer shows daily totals tagged as monthly.
-- The language selector is restored in the logged-in user dropdown (inverted guard fixed).
+- Permission request notification link now points correctly for approvers; customer owners now see approve/reject buttons on permission requests.
+- Offering import handles a null TOS link without errors.
+- OpenPortal report filters no longer 500 when configuration is unavailable.
+- One-time components can be created without enabling the prepaid toggle.
+- Order checkout sidebar no longer shows daily totals with a monthly tag.
+- Restored the language selector in the logged-in user dropdown.
+- Limit-period usage charts no longer render a misleading "Limit: 0" tooltip row.
+- Init scripts that depended on missing `wget` are fixed.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [21 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.8...8.0.9-rc.4) - affiliation redesign, proposal workflow steps, site agent diagnostics, OpenStack and OpenPortal fixes.
-- **Waldur Homeport**: [24 commits](https://github.com/waldur/waldur-homeport/compare/8.0.8...8.0.9-rc.4) - affiliation UI, large-scale react-final-form migration, usage chart fixes, dialog cleanups.
-- **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/8.0.8...8.0.9-rc.4) - Traefik ingress class and Middleware CRDs.
-- **Waldur Docker Compose**: maintenance updates only.
+- **Waldur Mastermind**: [26 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.8...8.0.9-rc.5) - affiliation redesign, proposal workflow steps, site-agent diagnostics, OpenStack reliability fixes.
+- **Waldur Homeport**: [26 commits](https://github.com/waldur/waldur-homeport/compare/8.0.8...8.0.9-rc.5) - usage widget overhaul, affiliation UI, large redux-form to react-final-form migration, several UX fixes.
+- **Waldur Helm**: [5 commits](https://github.com/waldur/waldur-helm/compare/8.0.8...8.0.9-rc.5) - Traefik ingress class with Middleware CRDs.
+- **Waldur Docker Compose**: [4 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.8...8.0.9-rc.5) - maintenance updates only.
 
 ---
+
 
 
 
