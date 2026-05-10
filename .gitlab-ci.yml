@@ -366,3 +366,42 @@ Release Go SDK:
     - git tag -a $CI_COMMIT_TAG -m "$CI_COMMIT_TAG_MESSAGE" || echo "Tag $CI_COMMIT_TAG already exists in go-client"
     - git push origin $CI_COMMIT_TAG || echo "Tag $CI_COMMIT_TAG already pushed to go-client"
     - git push origin main || echo "main already up to date in go-client"
+
+Announce release on Slack:
+  image: registry.hpc.ut.ee/mirror/library/python:3.13
+  stage: postdeploy
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
+  needs: ["Tag all repositories"]
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+    - git fetch origin master --quiet
+    - git checkout origin/master -- docs/about/CHANGELOG.md
+  script:
+    - VERSION="$CI_COMMIT_TAG"
+    - DATE=$(grep -m1 "^## ${VERSION} - " docs/about/CHANGELOG.md | sed 's/.* - //')
+    - |
+      if [ -z "$DATE" ]; then
+        echo "Could not find changelog entry for $VERSION — skipping Slack notification."
+        exit 0
+      fi
+    - ANCHOR="$(echo "$VERSION" | tr -d '.' | tr 'A-Z' 'a-z')-${DATE}"
+    - URL="https://docs.waldur.com/latest/about/CHANGELOG/"
+    - echo "Waiting for anchor #${ANCHOR} to appear at ${URL} ..."
+    - |
+      ok=0
+      for i in $(seq 1 20); do
+        if curl -sf --max-time 10 "$URL" | grep -q "id=\"${ANCHOR}\""; then
+          echo "Anchor ${ANCHOR} is live (attempt $i)"
+          ok=1
+          break
+        fi
+        echo "Anchor not yet live (attempt $i/20); sleeping 30s"
+        sleep 30
+      done
+      if [ "$ok" -ne 1 ]; then
+        echo "Anchor ${ANCHOR} never appeared after 10 minutes; skipping Slack notification."
+        echo "The job can be re-run manually from GitLab once docs.waldur.com/latest is rebuilt."
+        exit 0
+      fi
+    - python3 scripts/publish-release-slack.py "$VERSION"

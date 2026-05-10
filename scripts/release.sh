@@ -16,10 +16,17 @@ IS_RC=false
 if [[ "$VERSION" =~ -rc\. ]]; then
   IS_RC=true
   BASE_VERSION="${VERSION%%-rc.*}"
-  echo "(RC release — changelog will be generated; stable $BASE_VERSION will replace it)"
+  echo "(RC release — entry will be added; prior RCs of $BASE_VERSION are kept until stable $BASE_VERSION ships)"
 fi
 
-PREV_TAG=$(grep "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
+if [ "$IS_RC" = "true" ]; then
+    # RC: diff from the most recent prior release — prior RC of the same base if any, otherwise last stable.
+    # Exclude the exact current version to make re-runs idempotent.
+    PREV_TAG=$(grep "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | grep -v "^## $VERSION " | head -1 | sed 's/^## \([^ ]*\).*/\1/')
+else
+    # Stable: diff from previous stable (skip RCs).
+    PREV_TAG=$(grep "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
+fi
 DATE=$(date +%Y-%m-%d)
 
 CACHE_DIR="$PROJECT_DIR/.cache/release/$VERSION"
@@ -184,8 +191,8 @@ else
     # Remove any existing entries that this run would duplicate:
     # - The exact $VERSION (in case release.sh was run before for this version
     #   and a later commit broke the git-log guard above).
-    # - For stable releases, also strip RCs of the same base (e.g. 8.0.6-rc.* when adding 8.0.6).
-    # - For RC releases, also strip prior RCs of the same base (e.g. 8.0.6-rc.1 when adding 8.0.6-rc.2).
+    # - For stable releases only, also strip RCs of the same base (e.g. 8.0.6-rc.* when adding 8.0.6).
+    # - RC releases keep prior RCs of the same base so each RC has its own entry.
     if [ "$IS_RC" = "false" ]; then
         BASE_VERSION="$VERSION"
     fi
@@ -193,10 +200,10 @@ else
 import re, sys
 base = '${BASE_VERSION}'
 version = '${VERSION}'
-patterns = [
-    re.compile(r'^## ' + re.escape(version) + r'\b'),
-    re.compile(r'^## ' + re.escape(base) + r'-rc\.\d+\b'),
-]
+is_rc = '${IS_RC}' == 'true'
+patterns = [re.compile(r'^## ' + re.escape(version) + r'\b')]
+if not is_rc:
+    patterns.append(re.compile(r'^## ' + re.escape(base) + r'-rc\.\d+\b'))
 lines = open(sys.argv[1]).readlines()
 out, skip = [], False
 for line in lines:
@@ -212,7 +219,11 @@ for line in lines:
         out.append(line)
 open(sys.argv[1], 'w').writelines(out)
 " "$PROJECT_DIR/docs/about/CHANGELOG.md"
-    echo "  Removed any existing entries for $VERSION (and RCs of $BASE_VERSION)"
+    if [ "$IS_RC" = "true" ]; then
+        echo "  Removed any existing entry for $VERSION (prior RCs of $BASE_VERSION kept)"
+    else
+        echo "  Removed any existing entries for $VERSION (and RCs of $BASE_VERSION)"
+    fi
 
     # Prepend new entry
     {
