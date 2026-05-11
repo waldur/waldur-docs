@@ -1,5 +1,37 @@
 # Changelog
 
+## 8.0.9-rc.6 - 2026-05-11
+
+### Highlights
+
+This release expands ResourceProject lifecycle management with per-offering auto-approval, soft-delete with restore, and staff tools to adjust prepaid resource dates. Operators get visibility into termination metadata and audit fields, while several stability and security fixes (notification email handling, Django CVE patches, and a hotfix for LDAP-based deployments) make this candidate safer to roll out.
+
+### What's New
+
+- ResourceProjects now support per-offering auto-approval and soft delete, with new UI for the auto-OK toggle, staff-only force-delete, and a restore dialog for terminated projects. Termination metadata and soft-delete audit fields are also exposed on the API so operators can see who terminated what and when. ([WAL-9922])
+- Staff can adjust start and end dates of prepaid resources directly from the resource actions menu, via a new staff-only `adjust_dates` API action and matching dialog in the UI. ([WAL-9921])
+- Prepaid `ONE_TIME` components can now be selected as ResourceProject limits and are shown as such in the project form.
+
+### Improvements
+
+- Notification email recipients are no longer truncated when saving customer details — all entries are now preserved correctly. ([WAL-9919])
+- SAML2 and other extension settings are now re-applied after operator `override.conf.py` files load, so deployment overrides no longer silently lose extension config. ([gh-83])
+- ResourceProject member management no longer crashes when event hooks are active. ([WAL-9922])
+- Site-agent log cleanup task fixed to use the correct related-name lookup. ([WAL-9263])
+- Backend dependency hygiene: replaced `iptools` with the Python standard library `ipaddress`, removed 8 unused dependencies, and restored `django-auth-ldap` to avoid breaking LDAP-based operator deployments.
+
+### Security
+
+- Bumped Django to 6.0.5 to address CVEs flagged by osv-scanner.
+- Bumped `fast-uri` in the frontend to address GHSA-q3j6-qgpj-74h6. ([WAL-9920])
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [14 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.5...8.0.9-rc.6) - ResourceProject auto-OK and soft delete, prepaid date adjustments, Django CVE patch, and dependency cleanup.
+- **Waldur Homeport**: [8 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.5...8.0.9-rc.6) - UI for ResourceProject auto-OK/restore and prepaid date adjustments, notification email fix, plus form and test framework migrations (redux-form → react-final-form, enzyme → react-testing-library).
+
+---
+
 ## 8.0.9-rc.5 - 2026-05-08
 
 ### Highlights
