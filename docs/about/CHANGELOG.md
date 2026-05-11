@@ -1,5 +1,22 @@
 # Changelog
 
+## 8.0.9-rc.7 - 2026-05-11
+
+### Highlights
+
+This release candidate delegates more permission-management authority to customer owners and removes redundant work from remote resource synchronization. Customer owners can now act on project-scoped permission requests without escalating to higher-level admins, and remote resource pulls avoid fetching the same data twice.
+
+### Improvements
+
+- Customer owners can now approve or reject permission requests scoped to projects within their customer, reducing reliance on staff or higher-tier roles for routine access decisions.
+- Remote resource pulls no longer fetch the same remote resource twice during a single pull cycle, lowering API load and speeding up synchronization.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [2 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.6...8.0.9-rc.7) - expanded customer owner permissions and optimized remote resource fetching.
+
+---
+
 ## 8.0.9-rc.6 - 2026-05-11
 
 ### Highlights
