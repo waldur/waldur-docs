@@ -1,5 +1,37 @@
 # Changelog
 
+## 8.0.9-rc.9 - 2026-05-12
+
+### Highlights
+
+This release introduces SCIM 2.0 identity management, enabling enterprise customers to provision and synchronize users and groups from external identity providers. Operators gain new batch actions to manage project and resource end dates across multiple items at once, and a new OfferingGroup model lets marketplace administrators organize related offerings together. Several reliability fixes address OpenStack RBAC sync crashes, support backend stability, and noisy error logging.
+
+### What's New
+
+- SCIM 2.0 identity management is now available, with both a server endpoint for external identity providers to push users and groups, and a pull client plus management command for synchronizing users from upstream SCIM sources.
+- Marketplace administrators can now group related offerings together using the new OfferingGroup model, with admin, API, and filtering support.
+- Operators can batch-set or clear the end date for multiple projects at once from the project list.
+- Operators can batch-set or clear the termination date for multiple marketplace resources at once from the resource list.
+- User details view now exposes the user's birthdate field.
+
+### Improvements
+
+- External-network and configuration failures during marketplace and Arrow task execution are now logged at WARNING level instead of ERROR, reducing noise from expected transient conditions.
+
+### Bug Fixes
+
+- Fixed a duplicate-key crash during OpenStack RBAC policy synchronization when OpenStack recreates a policy with the same identifier.
+- Resolved conflicting marketplace migrations introduced alongside the OfferingGroup model.
+- Issue serialization no longer fails when a support issue references a stale resource content type.
+- SMAX support backend calls are now guarded against `None` entity_id values, preventing crashes when processing incomplete issue data.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [7 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.8...8.0.9-rc.9) - SCIM 2.0 identity management, OfferingGroup model, support and OpenStack stability fixes.
+- **Waldur Homeport**: [4 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.8...8.0.9-rc.9) - Batch end-date actions for projects and resources, plus user birthdate exposure.
+
+---
+
 ## 8.0.9-rc.8 - 2026-05-12
 
 ### Highlights
