@@ -390,17 +390,20 @@ Announce release on Slack:
     - 'echo "Waiting for anchor #${ANCHOR} to appear at ${URL} ..."'
     - |
       ok=0
-      for i in $(seq 1 20); do
-        if curl -sf --max-time 10 "$URL" | grep -q "id=\"${ANCHOR}\""; then
+      attempts=30
+      for i in $(seq 1 "$attempts"); do
+        if curl -sf --max-time 10 \
+             -H "Cache-Control: no-cache" -H "Pragma: no-cache" \
+             "${URL}?ts=$(date +%s)" | grep -q "id=\"${ANCHOR}\""; then
           echo "Anchor ${ANCHOR} is live (attempt $i)"
           ok=1
           break
         fi
-        echo "Anchor not yet live (attempt $i/20); sleeping 30s"
+        echo "Anchor not yet live (attempt $i/${attempts}); sleeping 30s"
         sleep 30
       done
       if [ "$ok" -ne 1 ]; then
-        echo "Anchor ${ANCHOR} never appeared after 10 minutes; skipping Slack notification."
+        echo "Anchor ${ANCHOR} never appeared after 15 minutes; skipping Slack notification."
         echo "The job can be re-run manually from GitLab once docs.waldur.com/latest is rebuilt."
         exit 0
       fi
