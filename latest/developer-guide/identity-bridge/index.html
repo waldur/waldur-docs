@@ -3012,6 +3012,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../admin-guide/mastermind-configuration/scim-identity-provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scim identity provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../admin-guide/mastermind-configuration/scim-integration/" class="md-nav__link">
         
   
@@ -9200,6 +9228,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../offering-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Offering groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../offering-tags/" class="md-nav__link">
         
   
@@ -9603,10 +9659,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_36">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_37">
         
           
-          <label class="md-nav__link" for="__nav_3_36" id="__nav_3_36_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_37" id="__nav_3_37_label" tabindex="0">
             
   
   
@@ -9624,8 +9680,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_36_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_36">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_37_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_37">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -14601,9 +14657,9 @@
         USER["User Model\n+ attribute_sources\n+ active_isds\n+ managed_isds"]
     end
 
-    ISD_P -- "GET userinfo/{cuid}" --&gt; RE
-    ISD_O -- "POST /api/identity-bridge/" --&gt; IB
-    ISD_E -- "POST /api/identity-bridge/" --&gt; IB
+    ISD_P --&gt;|GET userinfo/cuid| RE
+    ISD_O --&gt;|POST /api/identity-bridge/| IB
+    ISD_E --&gt;|POST /api/identity-bridge/| IB
 
     RE --&gt; HELPER
     IB --&gt; HELPER
@@ -14644,7 +14700,7 @@
 <pre class="mermaid"><code>flowchart LR
     subgraph Pull["Pull-based (existing)"]
         direction TB
-        P1["Waldur beat task\n(every 5 min)"] --&gt; P2["GET userinfo/{cuid}"]
+        P1["Waldur beat task\n(every 5 min)"] --&gt; P2["GET userinfo/&amp;#123;cuid&amp;#125;"]
         P2 --&gt; P3["Update user attributes"]
     end
 
@@ -14708,16 +14764,16 @@
 <pre class="mermaid"><code>stateDiagram-v2
     [*] --&gt; Unset: Field has no value
 
-    Unset --&gt; OwnedByPuhuri: Puhuri sends non-empty value
-    OwnedByPuhuri --&gt; OwnedByEOSC: EOSC sends non-empty value\n(ownership transfers)
-    OwnedByPuhuri --&gt; Cleared: Puhuri (owner) sends empty
-    OwnedByPuhuri --&gt; OwnedByPuhuri: EOSC sends empty\n(preserved — EOSC is not owner)
+    Unset --&gt; OwnedByPuhuri: Puhuri sends non empty value
+    OwnedByPuhuri --&gt; OwnedByEOSC: EOSC sends non empty value
+    OwnedByPuhuri --&gt; Cleared: Puhuri the owner sends empty
+    OwnedByPuhuri --&gt; OwnedByPuhuri: EOSC sends empty so preserved
 
-    OwnedByEOSC --&gt; OwnedByPuhuri: Puhuri sends non-empty value\n(ownership transfers back)
-    OwnedByEOSC --&gt; Cleared: EOSC (owner) sends empty
+    OwnedByEOSC --&gt; OwnedByPuhuri: Puhuri sends non empty value
+    OwnedByEOSC --&gt; Cleared: EOSC the owner sends empty
 
-    Cleared --&gt; OwnedByPuhuri: Puhuri sends non-empty value
-    Cleared --&gt; OwnedByEOSC: EOSC sends non-empty value</code></pre>
+    Cleared --&gt; OwnedByPuhuri: Puhuri sends non empty value
+    Cleared --&gt; OwnedByEOSC: EOSC sends non empty value</code></pre>
 <p><strong>Key invariant</strong>: Only the last writer (current owner) can clear a field. Empty values from non-owners are silently ignored.</p>
 <h3 id="tracking-format">Tracking Format</h3>
 <p>Each attribute maps to its source and a freshness timestamp in the <code>attribute_sources</code> JSONField:</p>
@@ -14751,8 +14807,8 @@
     E["Keep user active\n(other ISDs still reference)"]
 
     A --&gt; B --&gt; C
-    C -- "Yes" --&gt; D
-    C -- "No" --&gt; E</code></pre>
+    C --&gt;|Yes| D
+    C --&gt;|No| E</code></pre>
 <p>The deactivation behavior is configurable via the <code>FEDERATED_IDENTITY_DEACTIVATION_POLICY</code> setting:</p>
 <table>
 <thead>
@@ -15036,7 +15092,7 @@
 </table>
 <h3 id="removal-behavior">Removal Behavior</h3>
 <pre class="mermaid"><code>sequenceDiagram
-    participant ISD as ISD (caller)
+    participant ISD as ISD caller
     participant API as POST /api/identity-bridge/remove/
     participant User as User Model
 
@@ -15093,12 +15149,12 @@ email: old@example.com -&gt; new@example.com
     Deny["403 Forbidden"]
 
     Caller --&gt; Check1
-    Check1 -- "Yes" --&gt; Allow
-    Check1 -- "No" --&gt; Check2
-    Check2 -- "No" --&gt; Deny
-    Check2 -- "Yes" --&gt; Check3
-    Check3 -- "Yes" --&gt; Allow
-    Check3 -- "No" --&gt; Deny</code></pre>
+    Check1 --&gt;|Yes| Allow
+    Check1 --&gt;|No| Check2
+    Check2 --&gt;|No| Deny
+    Check2 --&gt;|Yes| Check3
+    Check3 --&gt;|Yes| Allow
+    Check3 --&gt;|No| Deny</code></pre>
 <h3 id="threat-mitigations">Threat Mitigations</h3>
 <table>
 <thead>
@@ -15205,7 +15261,7 @@ curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </sp
     participant EOSC as EOSC
     participant PUHURI as Puhuri
     participant W as Waldur
-    participant U as User: alice
+    participant U as User_alice
 
     EOSC-&gt;&gt;W: Push {email: "alice@uni.eu", org: "University"}
     Note over U: email owned by isd:eosc&lt;br/&gt;org owned by isd:eosc&lt;br/&gt;active_isds: [isd:eosc]
@@ -15424,7 +15480,7 @@ curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </sp
 
     subgraph Endpoint["Which endpoint"]
         E1["GET /api/identity-bridge/stats/"]
-        E2["GET /api/users/{uuid}/identity_bridge_status/"]
+        E2["GET /api/users/&amp;#123;uuid&amp;#125;/identity_bridge_status/"]
     end
 
     D1 --&gt; E1
@@ -15504,7 +15560,7 @@ curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </sp
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    2026-04-29
+    2026-05-12
   </span>
 
     

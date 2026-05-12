@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-12T14:37:29.254979Z
+Generated: 2026-05-12T14:38:50.618754Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -13803,10 +13803,432 @@ td:nth-child(4) {
 
 ---
 
-### SCIM API Integration
+### SCIM 2.0 Identity Provider
+<!-- Source: docs/admin-guide/mastermind-configuration/scim-identity-provider.md -->
+
+# SCIM 2.0 Identity Provider
+
+## Overview
+
+Waldur ships an optional **SCIM 2.0 Service Provider** mounted at `/scim/v2/` so that external identity providers — Okta, Microsoft Entra ID, Keycloak, JumpCloud — can provision users and groups into Waldur using the standard [RFC 7644](https://datatracker.ietf.org/doc/html/rfc7644) protocol. A companion **on-demand outbound SCIM pull** lets staff refresh user attributes from a remote SCIM directory.
+
+This is a peer of the existing inbound user-provisioning paths and writes through the same multi-source attribute-merge policy as the Identity Bridge, so SCIM-provisioned attributes interleave cleanly with OIDC and ISD-pushed data.
+
+> **Two different SCIM features.** This page describes Waldur as a SCIM **server** (receiving provisioning *from* an IdP). For Waldur as a SCIM **client** pushing SSH entitlements *to* an HPC login-node service, see [SCIM Entitlements](../../developer-guide/admin/scim-integration.md). The two are independent and configured separately.
+
+## When to use SCIM
+
+| Path | Best when |
+|---|---|
+| OIDC just-in-time (existing) | Users self-onboard on first login. No prior knowledge of the user is required. |
+| Identity Bridge (existing) | A trusted ISD wants to push user data into Waldur via a Waldur-specific REST API. |
+| Email invitations (existing) | Ad-hoc invites where the admin knows the user out of band. |
+| **SCIM Service Provider (this)** | A corporate IdP (Okta / Entra ID / Keycloak) drives a complete user lifecycle: create, update, deactivate users and assign group-based roles — on a standard protocol every IdP speaks. |
+| SCIM Pull (this) | Refresh user attributes from a remote SCIM directory without waiting for the user to log in. |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph IdP["External Identity Provider"]
+        OKTA["Okta / Entra ID /<br/>Keycloak / JumpCloud"]
+    end
+
+    subgraph Waldur
+        SCIM["/scim/v2/<br/>Users + Groups"]
+        AUTH["ScimBearerAuthentication<br/>+ IsScimStaff + feature flag"]
+        MERGE["update_user_attributes_from_source()"]
+        ROLES["permissions.utils<br/>add_user / delete_user"]
+        DB["User<br/>+ UserRole<br/>+ attribute_sources"]
+    end
+
+    OKTA -->|SCIM 2.0 POST/PUT/PATCH/DELETE<br/>Authorization Bearer staff-token| SCIM
+    SCIM --> AUTH
+    AUTH --> SCIM
+    SCIM -->|user attributes| MERGE
+    SCIM -->|group membership| ROLES
+    MERGE --> DB
+    ROLES --> DB
+```
+
+User attribute writes converge on the same `update_user_attributes_from_source()` helper used by the Identity Bridge — so a SCIM source (`scim:default`) participates in the same multi-source ownership policy as `isd:*` sources.
+
+## Setup
+
+1. **Add `scim2-models`** — already included in `pyproject.toml`. No extra installation step needed beyond `uv sync`.
+2. **Create a staff service-account user** for the IdP to authenticate as. The service account must have `is_staff=True` and `is_active=True`.
+3. **Issue an auth token** for that user. The token's `key` is what the IdP sends as `Authorization: Bearer <key>`.
+
+    ```python
+    from rest_framework.authtoken.models import Token
+    from waldur_core.core.models import User
+
+    svc = User.objects.create(
+        username="scim-okta-svc", is_staff=True, is_active=True
+    )
+    svc.set_unusable_password()
+    svc.save()
+    token, _ = Token.objects.get_or_create(user=svc)
+    print(token.key)  # paste into the IdP
+    ```
+
+4. **Enable the feature** in Constance:
+    - `SCIM_INBOUND_ENABLED = True`
+    - Optionally narrow `SCIM_INBOUND_ALLOWED_ATTRIBUTES` (default `first_name, last_name, email, organization, affiliations`).
+    - Optionally rename the source label (`SCIM_INBOUND_SOURCE_NAME`, default `scim:default`) — useful when you have multiple IdPs and want to distinguish them in `attribute_sources`.
+
+5. **Point the IdP at `/scim/v2/`** using the token. The IdP's SCIM connector tester should see `GET /scim/v2/ServiceProviderConfig` succeed.
+
+6. **Smoke test from the shell** before pointing real users at it:
+
+    ```bash
+    curl -H "Authorization: Bearer <token>" \
+         -H "Accept: application/scim+json" \
+         https://waldur.example.com/scim/v2/ServiceProviderConfig
+    ```
+
+## Endpoint reference
+
+All endpoints live under `/scim/v2/`. They are outside the `/api/` prefix and therefore excluded from the public OpenAPI schema.
+
+### Discovery (no auth required, only the feature flag)
+
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/ServiceProviderConfig` | Server capabilities — patch supported, bulk not, etc. |
+| GET | `/ResourceTypes` | The two resource types Waldur exposes (`User`, `Group`). |
+| GET | `/ResourceTypes/{name}` | A single resource type. |
+| GET | `/Schemas` | Core User, Core Group, Enterprise User, plus the Waldur extension schema (`urn:waldur:params:scim:schemas:extension:User:1.0`). |
+| GET | `/Schemas/{urn}` | A single schema by its URN. |
+
+### Users (staff bearer required)
+
+| Method | Path | Behaviour |
+|---|---|---|
+| POST | `/Users` | Create a Waldur user. Lookup priority `externalId` → `userName` → primary `email` is applied first to detect duplicates → 409. |
+| GET | `/Users` | List with optional `filter`, `startIndex`, `count`. |
+| GET | `/Users/{uuid_hex}` | Read. |
+| PUT | `/Users/{uuid_hex}` | Full replace. `userName` is immutable post-creation; an attempt to change it returns 400 with `scimType: mutability`. |
+| PATCH | `/Users/{uuid_hex}` | RFC 7644 §3.5.2 PatchOp envelope. |
+| DELETE | `/Users/{uuid_hex}` | Soft-delete via `remove_user_from_isd` — honours `FEDERATED_IDENTITY_DEACTIVATION_POLICY`. |
+
+### Groups (staff bearer required)
+
+| Method | Path | Behaviour |
+|---|---|---|
+| POST | `/Groups` | Create a virtual group + grant the implied role to the listed members. |
+| GET | `/Groups` | List groups that have at least one active member; supports `displayName eq "..."` filter. |
+| GET | `/Groups/{display_name}` | Read with current members. |
+| PUT | `/Groups/{display_name}` | Replace the entire member set. |
+| PATCH | `/Groups/{display_name}` | Add / remove / replace members. |
+| DELETE | `/Groups/{display_name}` | Revoke all memberships in the group. |
+
+## Authentication and authorisation
+
+```mermaid
+flowchart TB
+    REQ["Incoming SCIM request"]
+
+    subgraph "Permission classes (applied in order)"
+        F["ScimFeatureEnabled<br/>(SCIM_INBOUND_ENABLED?)"]
+        S["IsScimStaff<br/>(user.is_staff and is_active?)"]
+    end
+
+    A["ScimBearerAuthentication"]
+
+    REQ -->|Authorization Bearer ...| A
+    A -->|token resolved core.AuthToken<br/>user authenticated| F
+    F -->|flag=False| R1["403 SCIM error"]
+    F -->|flag=True| S
+    S -->|not staff| R2["403 SCIM error"]
+    S -->|staff| OK["Handler runs"]
+
+    A -->|no or invalid token| R3["401"]
+```
+
+- **Bearer scheme** — accepts `Authorization: Bearer <token>` (SCIM standard) and `Authorization: Token <token>` (Waldur convention) for the same `core.AuthToken`.
+- **Staff-only** — `is_staff=True` is required even though the token resolves successfully, so a leaked end-user token cannot drive SCIM operations.
+- **Feature flag** — when `SCIM_INBOUND_ENABLED=False` the discovery endpoints also return 403, hiding the entire surface.
+- **Content type** — responses use `application/scim+json`; requests accept both `application/scim+json` and `application/json` so that DRF test clients and lax SCIM connectors both work.
+
+## Group naming convention
+
+SCIM Groups are **virtual** in Waldur — there is no `Group` table. A SCIM Group corresponds to the set of users holding a given (scope, role) pair, where the scope is a Customer or Project and the role is a Waldur `Role`.
+
+The `displayName` doubles as the SCIM `id` and uses a self-describing convention:
+
+```text
+waldur:{customer|project}:{uuid-hex}:{role-name}
+```
+
+| Component | Format | Example |
+|---|---|---|
+| Scope kind | `customer` or `project` | `customer` |
+| Scope UUID | 32 hex chars (no dashes) | `f1b3...` |
+| Role name | `[a-z0-9_\-\.]+`, matched case-insensitively against `Role.name` | `CUSTOMER.OWNER` |
+
+Examples:
+
+- `waldur:customer:f1b3a8caa4314b0ea5db61df37e25cd1:CUSTOMER.OWNER`
+- `waldur:project:af3ba2d3018d4cd58a9ac34bc94aeb45:PROJECT.MANAGER`
+
+```mermaid
+flowchart TB
+    DN["displayName:<br/>waldur:customer:f1b3..:CUSTOMER.OWNER"]
+
+    REGEX["Regex: waldur:(customer or project):[0-9a-f]&#123;32&#125;:(role)"]
+    LOOKUP["Customer / Project lookup<br/>by uuid"]
+    ROLE["Role lookup<br/>(content_type, name__iexact)"]
+
+    GRANT["permissions.utils.add_user(scope, user, role)"]
+    REVOKE["permissions.utils.delete_user(scope, user, role)"]
+
+    DN --> REGEX
+    REGEX -->|scope kind and uuid| LOOKUP
+    REGEX -->|role name| ROLE
+    LOOKUP --> GRANT
+    LOOKUP --> REVOKE
+    ROLE --> GRANT
+    ROLE --> REVOKE
+```
+
+Resolver failure modes:
+
+| Failure | Response |
+|---|---|
+| `displayName` doesn't match the regex | 400 `invalidValue` with a remediation message |
+| Scope UUID doesn't exist | 404 `invalidValue` |
+| Role doesn't exist for that scope kind | 400 `invalidValue` |
+| Member UUID doesn't exist | 400 `invalidValue` |
+
+### Listing strategy
+
+`GET /Groups` enumerates **only groups that have at least one active member**. The catalogue of every (customer × role) and (project × role) combination is not materialised — most IdPs POST the groups they care about first and then PATCH members, so a sparse listing is acceptable in practice.
+
+For lookups by exact name, supply `?filter=displayName eq "..."` — the resolver runs against the parsed name without enumerating anything.
+
+## Multi-source attribute provenance
+
+All inbound attribute writes go through `update_user_attributes_from_source()` (see [Identity Bridge](../../developer-guide/identity-bridge.md) for the full lifecycle). The source label is `SCIM_INBOUND_SOURCE_NAME` (default `scim:default`).
+
+```mermaid
+stateDiagram-v2
+    [*] --> Unset: Field empty
+
+    Unset --> OwnedBySCIM: SCIM POST/PUT with non-empty value
+    Unset --> OwnedByPuhuri: Puhuri (Identity Bridge) sets value
+
+    OwnedBySCIM --> OwnedByPuhuri: Puhuri writes non empty value
+    OwnedBySCIM --> Cleared: SCIM the owner writes empty
+    OwnedBySCIM --> OwnedBySCIM: Puhuri writes empty preserved
+
+    OwnedByPuhuri --> OwnedBySCIM: SCIM writes non empty value
+    OwnedByPuhuri --> Cleared: Puhuri the owner writes empty
+```
+
+Key consequences:
+
+- **Empty values from non-owners are preserved.** A SCIM `PUT` that omits an email previously set by Identity Bridge will not clear that email.
+- **Per-attribute timestamps** are refreshed on every write, even when the value is unchanged — useful for freshness-based reporting.
+- **Deactivation** routes through `remove_user_from_isd` and honours `FEDERATED_IDENTITY_DEACTIVATION_POLICY`: with the default `all_isds_removed` a user is only deactivated when no active sources remain; with `any_isd_removed` any removal deactivates.
+
+## SCIM-to-Waldur attribute mapping
+
+| SCIM attribute | Waldur User field | Direction | Notes |
+|---|---|---|---|
+| `userName` | `username` | inbound (create only) | Immutable after create. Normalised to `[0-9a-z_.@+-]+`. |
+| `externalId` | stored in `attribute_sources["externalId"].value` | both | No DB column; participates in lookup priority. |
+| `name.givenName` / `name.familyName` | `first_name` / `last_name` | both | |
+| `displayName` | derived (ignored on write) | outbound only | Composed from first + last name. |
+| `emails[primary=true].value` | `email` | both | First primary entry wins; falls back to first entry. |
+| `phoneNumbers[primary=true].value` | `phone_number` | both | |
+| `active` | `is_active` | both | `false` triggers `remove_user_from_isd`. |
+| `enterprise:User.organization` | `organization` | both | RFC 7643 enterprise extension. |
+| `urn:waldur:...:civilNumber` | `civil_number` | both | Waldur extension. |
+| `urn:waldur:...:affiliations` | `affiliations` | both | Waldur extension. |
+| `urn:waldur:...:edupersonAssurance` | `eduperson_assurance` | both | Waldur extension. |
+| `meta.created` / `meta.lastModified` | `date_joined` / `modified` | outbound only | |
+
+## PATCH op support
+
+The handler accepts the subset that Okta, Microsoft Entra ID, and Keycloak emit:
+
+| Operation | Path | Behaviour |
+|---|---|---|
+| `replace` | _omitted_ (value is a User dict) | Replace multiple top-level attributes at once (Okta style). |
+| `replace` | `active` | Toggle `is_active`; `false` runs the deactivation flow. |
+| `replace` | `name.givenName` / `name.familyName` | Update first / last name. |
+| `replace` / `add` / `remove` | `emails` / `phoneNumbers` | First primary entry wins. |
+| `replace` | `externalId` | Update; `remove` clears it. |
+| `replace` | `userName` | Rejected — 400 `mutability`. |
+| `add` / `remove` / `replace` | `members` | Group membership delta. |
+| `add` / `remove` | `members[value eq "<uuid>"]` | Filter form used by Entra ID and Keycloak. |
+| anything else | unsupported path | 400 `invalidPath` (fail loud rather than silently misapply). |
+
+## SCIM filter expression support
+
+`GET /Users?filter=...` accepts the subset most IdPs emit. The parser builds Django `Q` objects from a hard-coded attribute whitelist; values are always parameterised by Django ORM.
+
+| Operator | Status | Example |
+|---|---|---|
+| `eq`, `ne`, `co`, `sw`, `ew`, `pr` | supported | `userName eq "alice"` |
+| `and`, `or`, `not`, parens | supported | `userName sw "a" and not (emails ew "@guest.com")` |
+| `gt`, `lt`, `ge`, `le` | not supported (400 `invalidFilter`) | |
+| value-path expressions (`emails[type eq "work"]`) | not supported (400 `invalidFilter`) | |
+
+Filterable User attributes: `userName`, `name.givenName`, `name.familyName`, `emails` / `emails.value`, `active`, `displayName`.
+
+Filterable Group attribute: `displayName` (use exact equality for lookup, e.g. `displayName eq "waldur:customer:...:CUSTOMER.OWNER"`).
+
+## On-demand outbound SCIM pull
+
+```mermaid
+flowchart LR
+    OP["Staff operator"]
+    CMD["waldur scim_pull_user<br/>--username alice"]
+    ACT["POST /api/users/<uuid>/<br/>pull_scim_attributes/"]
+
+    subgraph Waldur
+        SVC["pull_user_attributes()"]
+        CLIENT["ScimPullClient"]
+        MERGE["update_user_attributes_from_source()<br/>source=scim:pull"]
+        USER["User<br/>+ attribute_sources"]
+    end
+
+    REMOTE["Remote SCIM 2.0 directory<br/>SCIM_PULL_API_URL"]
+
+    OP -->|CLI| CMD
+    OP -->|API| ACT
+    CMD --> SVC
+    ACT --> SVC
+    SVC --> CLIENT
+    CLIENT -->|GET /Users filter userName eq| REMOTE
+    CLIENT -->|user dict| SVC
+    SVC --> MERGE
+    MERGE --> USER
+```
+
+There is **no periodic pull task** — pulls happen only when an operator triggers them. This keeps load predictable and avoids accidentally drowning a remote SCIM service.
+
+### Management command
+
+```bash
+# Single user (synchronous)
+waldur scim_pull_user --username alice
+
+# All active users with rate limiting
+waldur scim_pull_user --all --rate 5
+
+# Override the source label written to attribute_sources
+waldur scim_pull_user --username alice --source scim:keycloak
+```
+
+### API action
+
+```bash
+curl -X POST \
+     -H "Authorization: Token <staff-token>" \
+     https://waldur.example.com/api/users/<user-uuid-hex>/pull_scim_attributes/
+```
+
+Response (200):
+
+```json
+{
+  "detail": "SCIM pull complete.",
+  "changed_fields": ["email", "first_name", "externalId"]
+}
+```
+
+Failure modes:
+
+| Cause | Response |
+|---|---|
+| `SCIM_PULL_API_URL` / `SCIM_PULL_API_KEY` not set | 503 |
+| Remote SCIM returns non-2xx | 502 |
+| Caller not staff | 403 |
+| User not found | 404 |
+
+## Configuration reference
+
+All keys live under the Constance fieldset **SCIM Identity Provider** in the Waldur admin.
+
+| Key | Default | Purpose |
+|---|---|---|
+| `SCIM_INBOUND_ENABLED` | `False` | Master switch for `/scim/v2/`. |
+| `SCIM_INBOUND_SOURCE_NAME` | `scim:default` | Source label written to `attribute_sources` for inbound writes. |
+| `SCIM_INBOUND_ALLOWED_ATTRIBUTES` | `first_name, last_name, email, organization, affiliations` | Subset of writable user attributes that SCIM is allowed to set. |
+| `SCIM_PULL_API_URL` | `""` | Base URL of the remote SCIM directory used by the on-demand pull. |
+| `SCIM_PULL_API_KEY` | `""` (secret) | Bearer token for the remote directory. |
+| `SCIM_PULL_SOURCE_NAME` | `scim:pull` | Source label for pulled attributes. |
+
+The pre-existing **SCIM Entitlements (outbound push)** fieldset (`SCIM_MEMBERSHIP_SYNC_ENABLED`, `SCIM_API_URL`, `SCIM_API_KEY`, `SCIM_URN_NAMESPACE`) remains separate and is documented in [SCIM Entitlements](../../developer-guide/admin/scim-integration.md).
+
+## End-to-end SCIM user lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant IdP as External IdP
+    participant SCIM as /scim/v2/ (Waldur)
+    participant Helper as update_user_attributes_from_source
+    participant DB as Waldur DB
+    participant Login as Waldur login
+
+    IdP->>SCIM: POST /Users {userName, name, email}
+    SCIM->>Helper: payload, source=scim:default
+    Helper->>DB: User row created<br/>attribute_sources records scim:default
+    SCIM-->>IdP: 201 with Location header
+
+    IdP->>SCIM: POST /Groups {displayName: "waldur:project:abc:PROJECT.MANAGER", members:[user]}
+    SCIM->>DB: UserRole(user, role=PROJECT.MANAGER, scope=project)
+    SCIM-->>IdP: 201
+
+    Note over Login,DB: User logs in via OIDC.<br/>OIDC just-in-time matches the existing User<br/>(no duplicate created — userName matched)
+
+    IdP->>SCIM: PATCH /Users/<id> replace active=false
+    SCIM->>Helper: remove_user_from_isd(source=scim:default)
+    Helper->>DB: active_isds, attribute_sources cleaned<br/>is_active=False if policy says so
+    SCIM-->>IdP: 200
+```
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `GET /scim/v2/ServiceProviderConfig` returns 403 with `detail: SCIM_INBOUND_ENABLED` | Feature flag is off. | Set `SCIM_INBOUND_ENABLED=True` in Constance. |
+| All SCIM requests return 401 | Bearer scheme not used, or token doesn't match a `core.AuthToken`. | Verify the IdP sends `Authorization: Bearer <token>` exactly; check `Token.objects.filter(key=...).exists()`. |
+| All SCIM requests return 403 (with token) | Token user is not `is_staff`. | Promote the service account: `User.objects.filter(username=...).update(is_staff=True)`. |
+| `POST /Groups` returns 400 `invalidValue` | `displayName` doesn't match the `waldur:` convention (see Group naming convention section above). | Build the displayName from the URLs in the Waldur admin (Customer/Project UUID + role name). |
+| `POST /Groups` returns 400 with "Role X is not defined for project" | The role hasn't been created on this deployment. | Ensure the role exists; for system roles, access `CustomerRole.OWNER` / `ProjectRole.MANAGER` once (e.g. via `import_roles`) so the row is materialised. |
+| Attribute set via SCIM is not visible | Field not in `SCIM_INBOUND_ALLOWED_ATTRIBUTES`, or the field was already owned by another source which wrote an empty value (which is preserved). | Widen `SCIM_INBOUND_ALLOWED_ATTRIBUTES`; inspect `User.attribute_sources` to see current owner. |
+| `PATCH active=false` doesn't deactivate the user | `FEDERATED_IDENTITY_DEACTIVATION_POLICY=all_isds_removed` and the user still has another active source (e.g. `isd:puhuri`). | Switch to `any_isd_removed`, or remove the user from the other source first. |
+| SCIM tests pass but real Okta connector fails | Real SCIM clients use exact `application/scim+json` content type and stricter envelopes than the test client. | Capture the failing request from Okta's system log; verify the SCIM envelope. |
+
+## Security notes
+
+- The endpoint is gated on `is_staff` — equivalent in authority to existing staff role-management APIs. Treat the service-account token like any other staff credential.
+- Bearer tokens leak silently in proxy logs and error trackers. Consider configuring `User.token_lifetime` on the SCIM service account if your operational model assumes rotating credentials. (Note: the current `ScimBearerAuthentication` does not enforce `token_lifetime`-based expiry — see the security review section of the original MR.)
+- `/scim/v2/` is outside the `/api/` prefix and excluded from the public OpenAPI schema.
+- All writable attributes are gated by both `SCIM_INBOUND_ALLOWED_ATTRIBUTES` and `WRITABLE_USER_FIELDS`; privilege flags like `is_staff` / `is_superuser` / `is_active` (directly) / `token_lifetime` cannot be set via SCIM payloads.
+- The SCIM filter parser only emits Django `Q` objects against a hard-coded attribute whitelist; values are parameterised by Django ORM.
+
+## Further reading
+
+- [RFC 7643 — SCIM Core Schema](https://datatracker.ietf.org/doc/html/rfc7643)
+- [RFC 7644 — SCIM Protocol](https://datatracker.ietf.org/doc/html/rfc7644)
+- [Identity Bridge](../../developer-guide/identity-bridge.md) — peer inbound provisioning path with the same multi-source attribute merge.
+- [SCIM Entitlements (outbound push)](../../developer-guide/admin/scim-integration.md) — independent feature that pushes entitlements *from* Waldur *to* HPC login-node SCIM services.
+- [User profile attributes](../../developer-guide/user-profile-attributes.md) — canonical list of `User` fields and which are writable from federated sources.
+
+---
+
+### SCIM Entitlements (outbound push)
 <!-- Source: docs/admin-guide/mastermind-configuration/scim-integration.md -->
 
-# SCIM API Integration
+# SCIM Entitlements (outbound push)
+
+> **Two different SCIM features in Waldur.** This page describes Waldur as a SCIM **client** pushing SSH entitlements *out to* a remote SCIM service (typically an HPC login-node manager). For Waldur as a SCIM **server** accepting user/group provisioning *in from* an external IdP (Okta, Entra ID, Keycloak), see [SCIM Identity Provider](../../developer-guide/admin/scim-identity-provider.md). The two features are independent and can be enabled separately.
 
 ## Overview
 
@@ -42354,19 +42776,15 @@ classDiagram
 
     %% Group by service type
     class OpenStackServices {
-        <<namespace>>
     }
 
     class RemoteMarketplace {
-        <<namespace>>
     }
 
     class RancherServices {
-        <<namespace>>
     }
 
     class ScriptServices {
-        <<namespace>>
     }
 ```
 
@@ -42449,9 +42867,9 @@ For `LIMIT` billing type components, limit changes are handled by `LimitPeriodPr
 ```mermaid
 flowchart TD
     A[AbstractUpdateResourceProcessor.process_order] --> B{Check Order Type}
-    B -->|action == 'renew'| C[Renewal Processing]
-    B -->|'old_limits' exists| D[Limit Update Processing]
-    B -->|'new_options' exists| E[Options Update Processing]
+    B -->|action equals renew| C[Renewal Processing]
+    B -->|old_limits exists| D[Limit Update Processing]
+    B -->|new_options exists| E[Options Update Processing]
     B -->|Default| F[Plan Switch Processing]
 
     C --> G[_process_renewal_or_limit_update<br/>is_renewal=True]
@@ -42694,9 +43112,9 @@ If Waldur B is unreachable, the API call fails and the order moves to erred stat
 ```mermaid
 sequenceDiagram
     participant User
-    participant WaldurA as Waldur A (consumer)
-    participant CeleryA as Celery Worker (A)
-    participant WaldurB as Waldur B (provider)
+    participant WaldurA as Waldur A consumer
+    participant CeleryA as Celery Worker A
+    participant WaldurB as Waldur B provider
 
     User->>WaldurA: POST /marketplace-orders/ (create)
     WaldurA->>WaldurA: validate_order: query local DB<br/>No active resource with same name+offering+project
@@ -42719,9 +43137,9 @@ This is the scenario that duplicate prevention guards against.
 ```mermaid
 sequenceDiagram
     participant User
-    participant WaldurA as Waldur A (consumer)
-    participant CeleryA as Celery Worker (A)
-    participant WaldurB as Waldur B (provider)
+    participant WaldurA as Waldur A consumer
+    participant CeleryA as Celery Worker A
+    participant WaldurB as Waldur B provider
 
     User->>WaldurA: POST /marketplace-orders/ (create "my-vm")
     WaldurA-->>User: 201 Order created
@@ -42758,7 +43176,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant User
-    participant WaldurA as Waldur A (consumer)
+    participant WaldurA as Waldur A consumer
 
     Note over WaldurA: Active resource "my-vm" exists<br/>(state: OK)
     User->>WaldurA: POST /marketplace-orders/ (create "my-vm")
@@ -42780,8 +43198,8 @@ The warning log helps operators identify potential orphaned resources on the rem
 ```mermaid
 sequenceDiagram
     participant User
-    participant WaldurA as Waldur A (consumer)
-    participant WaldurB as Waldur B (provider)
+    participant WaldurA as Waldur A consumer
+    participant WaldurB as Waldur B provider
 
     User->>WaldurA: Terminate resource
     alt backend_id is empty
@@ -43167,12 +43585,12 @@ graph TD
 
         SH_ResourceHandler -- calls appropriate method based on change --> MBS
 
-        MBS -- `_process_resource()` loops through plan components --> Decision_BillingType{What is component.billing_type?}
+        MBS -->|_process_resource loops through plan components| Decision_BillingType{What is component.billing_type?}
 
-        Decision_BillingType -- FIXED, ONE_TIME, ON_PLAN_SWITCH --> Logic_Simple(Handled directly by MarketplaceBillingService)
-        Decision_BillingType -- LIMIT --> Logic_Limit(LimitPeriodProcessor)
+        Decision_BillingType -->|FIXED ONE_TIME ON_PLAN_SWITCH| Logic_Simple(Handled directly by MarketplaceBillingService)
+        Decision_BillingType -->|LIMIT| Logic_Limit(LimitPeriodProcessor)
 
-        SH_UsageHandler -- Processes usage directly --> Logic_Usage(BillingUsageProcessor)
+        SH_UsageHandler -->|Processes usage directly| Logic_Usage(BillingUsageProcessor)
     end
 
     subgraph "4. Final Outcome"
@@ -44169,10 +44587,10 @@ flowchart LR
         ROPT["options"]
     end
 
-    OO -->|"defines form"| OA
-    OA -->|"all values"| RA
-    OA -->|"filtered by"| RO
-    RO -->|"matching keys"| ROPT
+    OO -->|defines form| OA
+    OA -->|all values| RA
+    OA -->|filtered by| RO
+    RO -->|matching keys| ROPT
 
     style RA fill:#e1f5fe
     style ROPT fill:#c8e6c9
@@ -47619,7 +48037,7 @@ sequenceDiagram
 
     alt Call has compliance checklist
         S->>PCC: Create completion tracking
-        PCC->>PCC: Initialize as incomplete
+        PCC->>PCC: Initialize incomplete state
     else No compliance checklist
         S->>S: No action needed
     end
@@ -48597,10 +49015,10 @@ graph TD
     H --> I[LLMStreamer<br/>StreamingHttpResponse]
     I --> J[worker thread]
     J --> K{tool_calls<br/>this round?}
-    K -- yes --> L[ToolExecutor.execute_tool<br/>+ injection check on args]
+    K -->|yes| L[ToolExecutor.execute_tool<br/>+ injection check on args]
     L --> M[_extend_with_tool_results]
     M --> J
-    K -- no / cap hit --> N[StreamParser.parse<br/>NDJSON blocks]
+    K -->|no or cap hit| N[StreamParser.parse<br/>NDJSON blocks]
     N --> O[client]
     J --> P[finally:<br/>persist + record_usage<br/>+ generate_thread_name]
 ```
@@ -48836,10 +49254,10 @@ Two detection layers, both enforced *before* any LLM call:
 graph LR
     A[user input] --> B[InputDetectionService.check_user_input]
     B --> C{action?}
-    C -- block --> D[canned/contextual rejection<br/>no LLM data call]
-    C -- redact --> E[replace with redacted_text]
-    C -- warn/flag --> F[add pii_warning to stream]
-    C -- allow --> G[build_context]
+    C -->|block| D[canned/contextual rejection<br/>no LLM data call]
+    C -->|redact| E[replace with redacted_text]
+    C -->|warn or flag| F[add pii_warning to stream]
+    C -->|allow| G[build_context]
     E --> G
     F --> G
     G --> H[LLM]
@@ -49015,7 +49433,7 @@ same shape, so reloading thread history needs no conversion.
 
 ```mermaid
 graph LR
-    A[LLM token stream] --> B[StreamParser.parse<br/>chunk -> UI block dicts]
+    A[LLM token stream] --> B[StreamParser.parse<br/>chunk to UI block dicts]
     B --> C[ui_registry.create_content<br/>schema validate]
     C --> D[NDJSON line to client]
     C --> E[_absorb_block<br/>append to accumulated_blocks]
@@ -49357,8 +49775,8 @@ This creates a sliding target: as the end date approaches, `time_left_factor` in
 ```mermaid
 sequenceDiagram
     participant MC as MonthlyCompensation
-    participant CC as CustomerCredit (LINEAR)
-    participant PC as ProjectCredit (LINEAR)
+    participant CC as CustomerCredit LINEAR
+    participant PC as ProjectCredit LINEAR
     participant DB as Database
 
     MC->>MC: update_linear_expected_consumption()
@@ -73219,9 +73637,9 @@ flowchart TB
         USER["User Model\n+ attribute_sources\n+ active_isds\n+ managed_isds"]
     end
 
-    ISD_P -- "GET userinfo/{cuid}" --> RE
-    ISD_O -- "POST /api/identity-bridge/" --> IB
-    ISD_E -- "POST /api/identity-bridge/" --> IB
+    ISD_P -->|GET userinfo/cuid| RE
+    ISD_O -->|POST /api/identity-bridge/| IB
+    ISD_E -->|POST /api/identity-bridge/| IB
 
     RE --> HELPER
     IB --> HELPER
@@ -73252,7 +73670,7 @@ flowchart TB
 flowchart LR
     subgraph Pull["Pull-based (existing)"]
         direction TB
-        P1["Waldur beat task\n(every 5 min)"] --> P2["GET userinfo/{cuid}"]
+        P1["Waldur beat task\n(every 5 min)"] --> P2["GET userinfo/&#123;cuid&#125;"]
         P2 --> P3["Update user attributes"]
     end
 
@@ -73289,16 +73707,16 @@ Legacy values from existing OIDC flows are automatically converted:
 stateDiagram-v2
     [*] --> Unset: Field has no value
 
-    Unset --> OwnedByPuhuri: Puhuri sends non-empty value
-    OwnedByPuhuri --> OwnedByEOSC: EOSC sends non-empty value\n(ownership transfers)
-    OwnedByPuhuri --> Cleared: Puhuri (owner) sends empty
-    OwnedByPuhuri --> OwnedByPuhuri: EOSC sends empty\n(preserved — EOSC is not owner)
+    Unset --> OwnedByPuhuri: Puhuri sends non empty value
+    OwnedByPuhuri --> OwnedByEOSC: EOSC sends non empty value
+    OwnedByPuhuri --> Cleared: Puhuri the owner sends empty
+    OwnedByPuhuri --> OwnedByPuhuri: EOSC sends empty so preserved
 
-    OwnedByEOSC --> OwnedByPuhuri: Puhuri sends non-empty value\n(ownership transfers back)
-    OwnedByEOSC --> Cleared: EOSC (owner) sends empty
+    OwnedByEOSC --> OwnedByPuhuri: Puhuri sends non empty value
+    OwnedByEOSC --> Cleared: EOSC the owner sends empty
 
-    Cleared --> OwnedByPuhuri: Puhuri sends non-empty value
-    Cleared --> OwnedByEOSC: EOSC sends non-empty value
+    Cleared --> OwnedByPuhuri: Puhuri sends non empty value
+    Cleared --> OwnedByEOSC: EOSC sends non empty value
 ```
 
 **Key invariant**: Only the last writer (current owner) can clear a field. Empty values from non-owners are silently ignored.
@@ -73333,8 +73751,8 @@ flowchart TD
     E["Keep user active\n(other ISDs still reference)"]
 
     A --> B --> C
-    C -- "Yes" --> D
-    C -- "No" --> E
+    C -->|Yes| D
+    C -->|No| E
 ```
 
 The deactivation behavior is configurable via the `FEDERATED_IDENTITY_DEACTIVATION_POLICY` setting:
@@ -73501,7 +73919,7 @@ Signals that a user has been removed from an ISD. Clears attributes owned by the
 
 ```mermaid
 sequenceDiagram
-    participant ISD as ISD (caller)
+    participant ISD as ISD caller
     participant API as POST /api/identity-bridge/remove/
     participant User as User Model
 
@@ -73566,12 +73984,12 @@ flowchart TD
     Deny["403 Forbidden"]
 
     Caller --> Check1
-    Check1 -- "Yes" --> Allow
-    Check1 -- "No" --> Check2
-    Check2 -- "No" --> Deny
-    Check2 -- "Yes" --> Check3
-    Check3 -- "Yes" --> Allow
-    Check3 -- "No" --> Deny
+    Check1 -->|Yes| Allow
+    Check1 -->|No| Check2
+    Check2 -->|No| Deny
+    Check2 -->|Yes| Check3
+    Check3 -->|Yes| Allow
+    Check3 -->|No| Deny
 ```
 
 ### Threat Mitigations
@@ -73642,7 +74060,7 @@ sequenceDiagram
     participant EOSC as EOSC
     participant PUHURI as Puhuri
     participant W as Waldur
-    participant U as User: alice
+    participant U as User_alice
 
     EOSC->>W: Push {email: "alice@uni.eu", org: "University"}
     Note over U: email owned by isd:eosc<br/>org owned by isd:eosc<br/>active_isds: [isd:eosc]
@@ -73767,7 +74185,7 @@ flowchart LR
 
     subgraph Endpoint["Which endpoint"]
         E1["GET /api/identity-bridge/stats/"]
-        E2["GET /api/users/{uuid}/identity_bridge_status/"]
+        E2["GET /api/users/&#123;uuid&#125;/identity_bridge_status/"]
     end
 
     D1 --> E1
@@ -77990,6 +78408,233 @@ When compliance lifecycle changes occur, the following APIs are affected:
 
 ---
 
+### Offering Groups
+<!-- Source: docs/developer-guide/offering-groups.md -->
+
+# Offering Groups
+
+Offering groups let a service provider express that several offerings belong to the same logical entity (for example, the partitions of a SLURM cluster exposed as separate offerings). Groups are a generic grouping primitive — title, description and icon — not tied to any specific backend type.
+
+## Overview
+
+A common pattern is one cluster split into multiple offerings (one per partition or per node type). Without grouping, those offerings appear flat in the catalog and there is no canonical way to say "these belong together". `OfferingGroup` solves this by:
+
+- giving providers a single object to attach metadata to (title, description, icon);
+- letting consumers list all offerings in the same logical entity with one filter;
+- keeping the grouping per-customer, so providers manage only their own groups.
+
+## Constraints
+
+1. **Same customer**: every offering in a group must belong to the same `customer` as the group. The API rejects assignments that span customers.
+2. **Provider-scoped management**: service providers manage their own groups; staff have full access. Other authenticated users do not see them.
+3. **Generic grouping**: groups carry presentation metadata only — they do not change billing, ordering or any provisioning behaviour. Whether an offering is part of a group is purely declarative.
+4. **SET_NULL on delete**: deleting a group does not cascade. Offerings that pointed at it have their `offering_group` cleared.
+
+## Permission Model
+
+| Action | Staff | Service Provider (own customer) | Service Provider (other) | Regular User |
+|--------|-------|----------------------------------|---------------------------|--------------|
+| List/Retrieve groups | All | Own customer's groups | None | None |
+| Create group | Yes | Yes (customer must be a service provider) | No | No |
+| Update / Delete group | Yes | Yes | No | No |
+| Assign offering to group (`set_offering_group`) | Yes (any state) | Yes (DRAFT offerings only) | No | No |
+
+The list endpoint uses the project's `GenericRoleFilter` against the group's `customer`, so an organization owner only sees groups belonging to organizations they have a role on.
+
+`customer` is part of `protected_fields` and cannot be reassigned after creation — to move a group between customers, delete and recreate it.
+
+The `set_offering_group` action reuses `can_update_offering`, which mirrors the regular offering `update` permission: service-provider owners can mutate the assignment only on offerings in the `DRAFT` state; staff can mutate any state. The server enforces this regardless of what the client shows.
+
+## OfferingGroup Model
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `uuid` | UUID | Unique identifier |
+| `title` | String (255 chars) | Display title |
+| `description` | Text | Optional description (inherits from `DescribableMixin`, ≤4096 chars) |
+| `icon` | File | Optional icon image |
+| `customer` | FK → Customer | The owning service-provider customer |
+| `created` | DateTime | Creation timestamp |
+
+The reverse relation is `Customer.offering_groups` (all groups owned by a customer) and `OfferingGroup.offerings` (all offerings currently in the group).
+
+## API Endpoints
+
+### Group Management
+
+```bash
+# List groups visible to the caller
+GET /api/marketplace-offering-groups/
+# Filters: ?title=<icontains>  ?customer_uuid=<uuid>
+
+# Create a group
+POST /api/marketplace-offering-groups/
+{
+  "title": "cluster-alpha",
+  "description": "All partitions of the alpha cluster",
+  "customer": "http://.../api/customers/<customer-uuid>/"
+}
+
+# Retrieve a group
+GET /api/marketplace-offering-groups/<uuid>/
+
+# Update title / description / icon (customer is protected)
+PATCH /api/marketplace-offering-groups/<uuid>/
+{ "description": "Updated description" }
+
+# Delete a group (offerings get offering_group=NULL)
+DELETE /api/marketplace-offering-groups/<uuid>/
+```
+
+### Assign or Clear an Offering's Group
+
+Two ways to set the group on an offering:
+
+**At creation**, include `offering_group` in the create payload. The group's customer must match the offering's customer:
+
+```bash
+POST /api/marketplace-provider-offerings/
+{
+  "name": "alpha-cpu",
+  "customer": "http://.../api/customers/<customer-uuid>/",
+  "category": "http://.../api/marketplace-categories/<uuid>/",
+  "type": "Support.OfferingTemplate",
+  "offering_group": "<group-uuid>"
+}
+```
+
+**After creation**, use the dedicated action (mirrors `set_profile`):
+
+```bash
+# Assign
+POST /api/marketplace-provider-offerings/<offering-uuid>/set_offering_group/
+{ "offering_group": "<group-uuid>" }
+
+# Clear
+POST /api/marketplace-provider-offerings/<offering-uuid>/set_offering_group/
+{ "offering_group": null }
+```
+
+Response echoes the resulting state:
+
+```json
+{
+  "offering_group_uuid": "...",
+  "offering_group_title": "cluster-alpha"
+}
+```
+
+### Listing Offerings in a Group
+
+There is no nested route — filter the existing provider-offering list by group UUID. This keeps pagination, permissions and existing filters intact:
+
+```bash
+GET /api/marketplace-provider-offerings/?offering_group_uuid=<group-uuid>
+```
+
+### Reading Group Fields on Offerings
+
+Both the slim and full offering serializers expose three read-only group fields:
+
+| Field | Where | Description |
+|-------|-------|-------------|
+| `offering_group` | `ProviderOfferingDetailsSerializer` (full) | Hyperlink to the group, or `null` |
+| `offering_group_uuid` | both | UUID of the assigned group, or `null` |
+| `offering_group_title` | both | Title of the assigned group, or `null` |
+
+The slim serializer (`ProviderOfferingSerializer`, used by `/api/marketplace-service-providers/<uuid>/offerings/`) exposes the `_uuid` and `_title` pair so a UI table can show the group column and a row action can pre-populate the current group without an extra fetch.
+
+## Response Format
+
+### Group Response
+
+```json
+{
+  "url": "http://example.com/api/marketplace-offering-groups/abc.../",
+  "uuid": "abc...",
+  "created": "2026-05-12T10:30:00Z",
+  "title": "cluster-alpha",
+  "description": "All partitions of the alpha cluster",
+  "icon": null,
+  "customer": "http://example.com/api/customers/cus.../",
+  "customer_uuid": "cus...",
+  "customer_name": "Acme HPC"
+}
+```
+
+### Offering Response (excerpt)
+
+```json
+{
+  "uuid": "off...",
+  "name": "alpha-cpu",
+  "offering_group": "http://example.com/api/marketplace-offering-groups/abc.../",
+  "offering_group_uuid": "abc...",
+  "offering_group_title": "cluster-alpha"
+}
+```
+
+## Filter Reference
+
+### Group List
+
+| Parameter | Description |
+|-----------|-------------|
+| `title` | Group title (case-insensitive contains) |
+| `customer_uuid` | UUID of the owning customer |
+
+### Offering List
+
+| Parameter | Description |
+|-----------|-------------|
+| `offering_group_uuid` | Show only offerings assigned to this group |
+
+## Use Cases
+
+### 1. SLURM cluster partitions
+
+A SLURM cluster exposing each partition as a separate offering:
+
+```bash
+# Create the cluster group
+POST /api/marketplace-offering-groups/
+{ "title": "cluster-alpha", "customer": "<customer-url>" }
+# → uuid: G
+
+# Assign each partition offering to it
+POST /api/marketplace-provider-offerings/<cpu-uuid>/set_offering_group/   { "offering_group": "<G>" }
+POST /api/marketplace-provider-offerings/<gpu-uuid>/set_offering_group/   { "offering_group": "<G>" }
+POST /api/marketplace-provider-offerings/<bulk-uuid>/set_offering_group/  { "offering_group": "<G>" }
+
+# Show "all partitions of cluster-alpha"
+GET  /api/marketplace-provider-offerings/?offering_group_uuid=<G>
+```
+
+### 2. Storage tiers under one storage backend
+
+```bash
+POST /api/marketplace-offering-groups/
+{ "title": "ceph-prod", "description": "Production Ceph cluster (replicated and erasure-coded pools)" }
+# Assign hot / warm / cold storage offerings to the same group
+```
+
+### 3. VM families
+
+```bash
+POST /api/marketplace-offering-groups/
+{ "title": "general-purpose", "description": "Balanced VM family" }
+```
+
+## Best Practices
+
+1. **One group per logical entity** — a SLURM cluster, a Ceph cluster, a VM family. Don't use groups as a freeform tag system; that's what offering tags are for.
+2. **Stable titles** — the title is what consumers see. Avoid renames after offerings are in use.
+3. **Mind the DRAFT-only constraint** — service-provider owners can only reassign groups while the offering is still in `DRAFT`. Plan grouping early, or have a staff user do it.
+4. **Delete is safe** — `SET_NULL` means deleting a group will not remove the offerings; it only detaches them. Useful for reorganizations.
+5. **Pair with categories, not against them** — categories classify *what* the offering is; groups express *which logical entity* the offering belongs to. Use both.
+
+---
+
 ### Offering Tags
 <!-- Source: docs/developer-guide/offering-tags.md -->
 
@@ -79651,8 +80296,8 @@ flowchart LR
         RBAC_LABEL -.-> RBAC_NET
     end
 
-    ROUTER -->|"Gateway<br/>(SNAT enabled)"| PUB_NET
-    ROUTER -.->|"Gateway<br/>(SNAT disabled)"| RBAC_NET
+    ROUTER -->|Gateway<br/>SNAT enabled| PUB_NET
+    ROUTER -.->|Gateway<br/>SNAT disabled| RBAC_NET
 
     style global_ext fill:#e8f5e9,stroke:#4caf50
     style tenant_b fill:#e3f2fd,stroke:#2196f3
@@ -81026,7 +81671,7 @@ sequenceDiagram
     end
 
     WaldurAPI->>Email: Send notification to user
-    WaldurAPI->>Admin: Return membership details
+    WaldurAPI->>Admin: Return membership info
 ```
 
 ### State Management
@@ -81207,14 +81852,14 @@ sequenceDiagram
         OpenStack->>VM: Provision server node
         VM->>Vault: Authenticate with AppRole
         VM->>Vault: Retrieve cluster token
-        VM->>RancherServer: Register as server node
+        VM->>RancherServer: Register the server node
         Celery->>Celery: Poll node state until Active
     and Server Node 2
         Celery->>OpenStack: Create VM with cloud-init
         OpenStack->>VM: Provision server node
         VM->>Vault: Authenticate with AppRole
         VM->>Vault: Retrieve cluster token
-        VM->>RancherServer: Register as server node
+        VM->>RancherServer: Register the server node
         Celery->>Celery: Poll node state until Active
     end
 
@@ -81223,19 +81868,19 @@ sequenceDiagram
     OpenStack->>VM: Provision agent node
     VM->>Vault: Authenticate with AppRole
     VM->>Vault: Retrieve cluster token
-    VM->>RancherServer: Register as agent node
+    VM->>RancherServer: Register the agent node
     Celery->>Celery: Poll node state until Active
 
     Note over Celery: Remaining Agent Nodes (Parallel)
     par Agent Node 2
         Celery->>OpenStack: Create VM with cloud-init
         OpenStack->>VM: Provision agent node
-        VM->>RancherServer: Register as agent node
+        VM->>RancherServer: Register the agent node
         Celery->>Celery: Poll node state until Active
     and Agent Node N
         Celery->>OpenStack: Create VM with cloud-init
         OpenStack->>VM: Provision agent node
-        VM->>RancherServer: Register as agent node
+        VM->>RancherServer: Register the agent node
         Celery->>Celery: Poll node state until Active
     end
 
