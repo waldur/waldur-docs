@@ -1,5 +1,42 @@
 # Changelog
 
+## 8.0.9-rc.8 - 2026-05-12
+
+### Highlights
+
+This release introduces an experimental Spending & limits watch section on the project dashboard, giving teams clearer visibility into credit terms, pacing, and cost breakdowns. Resource lifecycle handling is more robust: expired resource terminations are now attributed independently, marketplace actions no longer fail for unlinked plugin resources, and total component usage is reported correctly when user-level usages are populated. Security and stability also improve with urllib3 and mermaid upgrades to address CVEs, plus a fix for an OIDC login edge case.
+
+### What's New
+
+- Project dashboards now include an experimental Spending & limits watch section with credit terms, pacing indicators, and breakdown, health, matrix, spend, and timeline views.
+- The hpc_ai_platform demo preset has been extended to cover credits, invoices, and cost policies, making it easier to showcase end-to-end financial workflows.
+
+### Improvements
+
+- Project PATCH requests no longer require mandatory fields when those fields aren't being changed, simplifying partial updates.
+- Truncated table cells now show the full value as a tooltip on hover in pending consumer and provider order drawers (WAL-9916).
+- Site Agent SLURM partition handling is now documented for marketplace operators (WAL-9925).
+- Frontend forms across customer, marketplace, OpenStack, proposals, Rancher, and project management have been migrated to react-final-form for consistency.
+
+### Bug Fixes
+
+- Fixed an attribute error encountered during the first-revision OIDC login path.
+- Fixed total component usage incorrectly reporting zero when per-user usages were non-zero.
+- Each expired resource termination is now attributed independently, preventing one failure from affecting the whole batch (WAL-9926).
+- Marketplace resource actions (edit end date, pull, change limits, renew allocation) no longer return 404 errors for resources without a linked plugin.
+
+### Security
+
+- Bumped urllib3 to 2.7.0 in the backend to address known CVEs.
+- Bumped mermaid to ^11.15.0 in the frontend to address OSV-scanner vulnerabilities.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [7 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.7...8.0.9-rc.8) - bug fixes for OIDC login and usage reporting, independent expired-resource termination, expanded HPC AI demo preset, and a urllib3 security bump.
+- **Waldur Homeport**: [5 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.7...8.0.9-rc.8) - new experimental project spending watch section, marketplace action 404 fixes, table tooltip improvement, react-final-form migration, and mermaid security bump.
+
+---
+
 ## 8.0.9-rc.7 - 2026-05-11
 
 ### Highlights
