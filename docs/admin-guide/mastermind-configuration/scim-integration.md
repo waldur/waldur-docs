@@ -13,7 +13,7 @@ Edit the source at: https://code.opennodecloud.com/waldur/waldur-mastermind.git/
 
 # SCIM Entitlements (outbound push)
 
-> **Two different SCIM features in Waldur.** This page describes Waldur as a SCIM **client** pushing SSH entitlements *out to* a remote SCIM service (typically an HPC login-node manager). For Waldur as a SCIM **server** accepting user/group provisioning *in from* an external IdP (Okta, Entra ID, Keycloak), see [SCIM Identity Provider](../../developer-guide/admin/scim-identity-provider.md). The two features are independent and can be enabled separately.
+> **Two different SCIM features in Waldur.** This page describes Waldur as a SCIM **client** pushing SSH entitlements *out to* a remote SCIM service (typically an HPC login-node manager). For Waldur as a SCIM **server** accepting user/group provisioning *in from* an external IdP (Okta, Entra ID, Keycloak), see [SCIM Identity Provider](scim-identity-provider.md). The two features are independent and can be enabled separately.
 
 ## Overview
 

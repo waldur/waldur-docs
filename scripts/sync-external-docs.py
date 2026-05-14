@@ -159,6 +159,19 @@ class ExternalDocSyncer:
             # Resolve the link target in the source tree
             resolved = os.path.normpath(os.path.join(str(file_source_dir), path_part))
 
+            # If the link already resolves inside the current mapping's
+            # remote tree, no rewrite is needed — both source and target
+            # land in `current_local`. Skipping is critical when mappings
+            # nest (e.g. `docs/` AND `docs/admin/` are both mapped on the
+            # same source repo), because otherwise the broader mapping
+            # would silently win and produce a path that doesn't exist
+            # at the destination.
+            try:
+                Path(resolved).relative_to(current_remote)
+                return match.group(0)
+            except ValueError:
+                pass
+
             # Check against each other mapping (most specific first)
             for other in other_mappings:
                 try:
