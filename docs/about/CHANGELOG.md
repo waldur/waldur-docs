@@ -1,5 +1,54 @@
 # Changelog
 
+## 8.0.9-rc.10 - 2026-05-16
+
+### Highlights
+
+This release brings several productivity boosts for project teams and service providers: marketplace orders can now be auto-approved on a per-project basis, autoprovisioning rules can be tested before deployment, and personal access tokens can be scoped to specific entities for tighter security. Operators gain better visibility into OpenStack firewall changes through aggregate audit logging, plus several hardening fixes addressing IDOR, SSRF, and privileged endpoint exposure.
+
+### What's New
+
+- **Per-project marketplace order auto-approval (WAL-9936)**: Project administrators can now configure auto-approval rules for marketplace orders directly from project Settings, with corresponding filters and notices added across the orders list, order summary, and deploy pages.
+- **Dry-run test-match for autoprovisioning rules (WAL-9930 / WAL-9931)**: Operators can now test autoprovisioning rules against sample users before activating them, with a dedicated diagnostics dialog showing which users would match.
+- **Entity-scope bindings for personal access tokens**: Personal access tokens can be restricted to specific entities (projects, organizations, etc.), and list responses are filtered accordingly when accessed via a scoped PAT.
+- **Aggregate audit logging for OpenStack firewall resources**: Security group, port, and load balancer changes now emit consolidated audit events, making it easier to track network policy changes.
+- **Bidirectional offering type swap (Basic ↔ Slurm)**: Service providers can change an existing offering between Basic and Slurm types via a new row action.
+- **Offering groups for service providers (WAL-9759)**: A new offering groups tab and set-group action lets providers organize their offerings into named groups.
+- **Paginated user affiliation stats**: The affiliation details table now uses backend pagination, improving load performance for large organizations.
+- **Service provider offering types endpoint (WAL-7805)**: New `offering_types` action exposes available offering types per service provider.
+- **Site agent diagnostics collection (WAL-9263)**: Offering dashboards now surface diagnostics collected from the site agent.
+- **Helm: existing secret for read-only DB password (WAL-9934)**: Helm chart now supports referencing an existing secret for the read-only database password.
+
+### Improvements
+
+- Self-healing of the marketplace model during OpenStack tenant sync recovers from drift automatically (ONS-1175).
+- OpenStack instance creation errors are now surfaced with more context, and IP-conflict port creation returns a human-readable message instead of a raw exception.
+- STOMP publish-failure logs are deduplicated during outages to reduce log noise.
+- DonutChart now expands the "Other" slice with a per-item breakdown in its tooltip.
+- "Change limits" action is always shown with an explanatory tooltip when disabled, instead of being hidden.
+- Order error dialog now shows a helpful hint when the traceback is hidden from the viewer.
+- Experimental "What-if" / "Why-so" analytics actions are hidden behind a feature flag.
+- Continued migration of forms (credits, Rancher templates, offering imports, LBaaS dialogs, roles, proposals, and more) to react-final-form for consistency and reliability.
+
+### Bug Fixes
+
+- Fixed IDOR vulnerability allowing unauthorized access to invoice costs (SEC-C5).
+- Blocked SSRF attacks via webhook destination URLs (SEC-C9).
+- Restricted `/api/query/` endpoint to staff users only (SEC-C10).
+- Fixed `refresh_instance_backend_metadata` to correctly iterate OpenStack instances.
+- Fixed `AttributeError` in `ProtectedCallViewSet.detach_documents`.
+- Fixed missing required-field validation in project metadata checklist.
+- Fixed structlog traceback formatting for stdlib loggers.
+- Bumped `systeminformation` to address GHSA-hvx9-hwr7-wjj9.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [22 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.9...8.0.9-rc.10) - new auto-approval, autoprovisioning, and PAT scoping features plus security hardening (SEC-C5/C9/C10).
+- **Waldur Homeport**: [18 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.9...8.0.9-rc.10) - UI for new backend features, continued react-final-form migration, and several UX polish items.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.9-rc.9...8.0.9-rc.10) - support for existing secret reference for read-only DB password.
+
+---
+
 ## 8.0.9-rc.9 - 2026-05-12
 
 ### Highlights
