@@ -8,6 +8,7 @@ import os
 import sys
 import shutil
 import subprocess
+import time
 import yaml
 import fnmatch
 from pathlib import Path
@@ -63,22 +64,33 @@ class ExternalDocSyncer:
 
         print(f"Cloning {source['name']} from {source['repository']}")
 
-        try:
-            # Clone with depth=1 for faster cloning
-            subprocess.run([
-                'git', 'clone',
-                '--branch', branch,
-                '--depth', '1',
-                repo_url, str(temp_dir)
-            ], check=True, capture_output=True)
+        max_retries = 5
+        for attempt in range(1, max_retries + 1):
+            # Ensure a clean target directory on retries
+            if temp_dir.exists():
+                shutil.rmtree(temp_dir)
 
-            return temp_dir
+            try:
+                # Clone with depth=1 for faster cloning
+                subprocess.run([
+                    'git', 'clone',
+                    '--branch', branch,
+                    '--depth', '1',
+                    repo_url, str(temp_dir)
+                ], check=True, capture_output=True)
 
-        except subprocess.CalledProcessError as e:
-            print(f"Error cloning repository: {e}")
-            print(f"Stdout: {e.stdout.decode()}")
-            print(f"Stderr: {e.stderr.decode()}")
-            return None
+                return temp_dir
+
+            except subprocess.CalledProcessError as e:
+                print(f"Error cloning repository (attempt {attempt}/{max_retries}): {e}")
+                print(f"Stdout: {e.stdout.decode()}")
+                print(f"Stderr: {e.stderr.decode()}")
+                if attempt < max_retries:
+                    backoff = 2 ** attempt  # 2, 4, 8, 16 seconds
+                    print(f"Retrying in {backoff}s...")
+                    time.sleep(backoff)
+
+        return None
 
     def should_exclude(self, file_path, excludes):
         """Check if a file should be excluded based on exclude patterns."""
