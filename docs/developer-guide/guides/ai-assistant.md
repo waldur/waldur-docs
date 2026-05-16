@@ -518,7 +518,7 @@ replaying history into the next LLM call.
 ## Configuration reference
 
 *For operators.* All keys are Constance-backed; see the full table in
-[`docs/admin/configuration-guide.md`](../admin/configuration-guide.md)
+[`docs/admin/configuration-guide.md`](../../admin-guide/mastermind-configuration/configuration-guide.md)
 section "AI assistant settings" (around line 2549). Quick reference:
 
 | Key | Type | Purpose |
@@ -541,7 +541,7 @@ section "AI assistant settings" (around line 2549). Quick reference:
 
 Four Celery tasks register through `MarketplaceChatExtension.celery_tasks`
 (`src/waldur_mastermind/chat/extension.py:20`). See
-[`docs/admin/scheduled.md`](../admin/scheduled.md) lines 120-123 for the
+[`docs/admin/scheduled.md`](../../admin-guide/mastermind-configuration/scheduled.md) lines 120-123 for the
 generated entries. Briefly:
 
 - `waldur-chat-reset-daily-token-usage` — daily at 00:00.

@@ -117,19 +117,21 @@ class ExternalDocSyncer:
         current_remote = Path(current_mapping['remote'])
         current_local = Path(current_mapping['local'])
 
-        # Build list of other mappings, sorted longest-remote-first for specificity
-        other_mappings = []
-        for m in mappings:
-            if m is current_mapping:
-                continue
-            other_mappings.append({
+        # Sort all mappings longest-remote-first so we always match the most
+        # specific one. When mappings nest (e.g. `docs/` AND `docs/admin/` on the
+        # same repo), a link from a `docs/` file pointing into `docs/admin/` must
+        # resolve against the more-specific `docs/admin/` mapping — that subdir
+        # is excluded from the broader copy by get_subdirectory_mappings, so the
+        # target file doesn't exist under the broader local path.
+        all_mappings = [
+            {
                 'remote': Path(m['remote']),
                 'local': Path(m['local']),
-            })
-        other_mappings.sort(key=lambda m: len(m['remote'].parts), reverse=True)
-
-        if not other_mappings:
-            return content
+                'is_current': m is current_mapping,
+            }
+            for m in mappings
+        ]
+        all_mappings.sort(key=lambda m: len(m['remote'].parts), reverse=True)
 
         file_source_dir = current_remote / Path(rel_file_path).parent
         file_local_dir = current_local / Path(rel_file_path).parent
@@ -159,29 +161,19 @@ class ExternalDocSyncer:
             # Resolve the link target in the source tree
             resolved = os.path.normpath(os.path.join(str(file_source_dir), path_part))
 
-            # If the link already resolves inside the current mapping's
-            # remote tree, no rewrite is needed — both source and target
-            # land in `current_local`. Skipping is critical when mappings
-            # nest (e.g. `docs/` AND `docs/admin/` are both mapped on the
-            # same source repo), because otherwise the broader mapping
-            # would silently win and produce a path that doesn't exist
-            # at the destination.
-            try:
-                Path(resolved).relative_to(current_remote)
-                return match.group(0)
-            except ValueError:
-                pass
-
-            # Check against each other mapping (most specific first)
-            for other in other_mappings:
+            # Find the most specific mapping that owns the resolved path.
+            for m in all_mappings:
                 try:
-                    rel_in_other = Path(resolved).relative_to(other['remote'])
-                    new_target = other['local'] / rel_in_other
-                    new_rel = os.path.relpath(str(new_target), str(file_local_dir))
-                    new_rel = new_rel.replace('\\', '/')
-                    return prefix + new_rel + anchor + suffix
+                    rel_in_m = Path(resolved).relative_to(m['remote'])
                 except ValueError:
                     continue
+                if m['is_current']:
+                    # Target lands in the same mapping as the source — no rewrite.
+                    return match.group(0)
+                new_target = m['local'] / rel_in_m
+                new_rel = os.path.relpath(str(new_target), str(file_local_dir))
+                new_rel = new_rel.replace('\\', '/')
+                return prefix + new_rel + anchor + suffix
 
             return match.group(0)
 
