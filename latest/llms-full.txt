@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-16T02:04:55.503572Z
+Generated: 2026-05-16T08:58:07.822674Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -24784,6 +24784,16 @@ When `False` (default), the reporting processor skips updates where the
 new usage value is lower than the previously reported value, treating it
 as a data anomaly.
 
+### `supports_cycle_preflight: bool = False`
+
+Set to `True` for backends that call a remote API during order processing.
+The order processor runs `run_preflight()` once per offering per cycle
+before listing orders. The default implementation calls `ping()` and raises
+`BackendNotReadyError` on failure so orders stay pending instead of ERRED.
+
+Override `run_preflight()` to probe specific endpoints. Opt in from plugins
+such as Waldur federation and other HTTP backends can enable it when needed.
+
 ### `supports_async_orders: bool = False`
 
 Set to `True` for backends that complete order creation asynchronously
@@ -43910,6 +43920,54 @@ Consumer approval is **skipped** when any of these conditions are met:
 | **Same Organization Auto-Approval** | Public offering with auto-approval enabled | `offering.shared && offering.customer == project.customer && auto_approve_in_service_provider_projects == True` |
 | **Termination by Service Provider** | Service provider owner terminating resource | `order.type == TERMINATE && has_owner_access(user, offering.customer)` |
 | **Project Permission** | User has order approval permission | `has_permission(APPROVE_ORDER, project)` |
+| **Project Auto-Approval Rule** | Project has an enabled `ProjectOrderAutoApproval` whose `monthly_cost_limit` is at or above the order's estimated monthly cost (and the offering has no usage-billed components) | See *Project-Level Auto-Approval Rule* below |
+
+#### Project-Level Auto-Approval Rule
+
+Projects can carry an optional `ProjectOrderAutoApproval` record (OneToOne with
+`Project`) that delegates the project's `APPROVE_ORDER` right to a deterministic
+ceiling. When a new order is created in `PENDING_CONSUMER` state, a post-save
+handler schedules a re-checked evaluation via `transaction.on_commit`. The order
+is auto-approved when **all** of the following hold:
+
+- An enabled rule exists for the order's project.
+- The order's offering has **no** components with `billing_type=USAGE`
+  (LIMIT/FIXED/ONE_TIME/ON_PLAN_SWITCH are considered predictable).
+- The recurring monthly cost — `plan.get_estimate(order.limits)` with no
+  start/end dates, so one-time fees and switch fees are excluded — is
+  `<= rule.monthly_cost_limit` (inclusive boundary).
+- The rule's `created_by` user still holds `APPROVE_ORDER` on the project or
+  its customer, or is staff. Otherwise the rule silently no-ops and emits a
+  warning log.
+
+Special cases:
+
+- **TERMINATE orders** are auto-approved unconditionally when a rule exists
+  (recurring monthly cost is treated as `0`).
+- **UPDATE / RESTORE** use the same recurring monthly check; `switch_price` is
+  not counted.
+- The applicator (`marketplace.order_approval.try_apply_project_auto_approval`)
+  takes a `select_for_update(of=("self",))` lock on both the order and the
+  rule rows inside `transaction.atomic`, then reuses the same state-routing
+  helper as `approve_by_consumer` so the order transitions through
+  `PENDING_PROJECT` / `PENDING_PROVIDER` / `PENDING_START_DATE` / `EXECUTING`
+  identically to a manual consumer approval.
+
+Audit fields on `Order`:
+
+- `auto_approved_by_rule` — FK to the `ProjectOrderAutoApproval` that fired
+  (`SET_NULL` on rule deletion).
+- `auto_approved_cost_limit_snapshot` — limit at the moment of approval, so
+  the original decision remains explainable if the rule is later edited.
+- `consumer_reviewed_by` is set to the rule's `created_by` so existing
+  notification, audit-log and downstream consumers behave identically to a
+  manual approval.
+
+API surface: `/api/marketplace-project-order-auto-approvals/` (CRUD). Write
+actions are gated by `permission_factory(APPROVE_ORDER, ["project", "project.customer"])`
+with a staff bypass on create. The `marketplace-orders` list endpoint gains a
+`was_auto_approved` boolean filter; `OrderDetailsSerializer` exposes
+`auto_approved`, `auto_approved_by_rule_uuid`, `auto_approved_cost_limit_snapshot`.
 
 #### Provider Approval Rules
 
@@ -49542,7 +49600,7 @@ replaying history into the next LLM call.
 ## Configuration reference
 
 *For operators.* All keys are Constance-backed; see the full table in
-[`docs/admin/configuration-guide.md`](../admin/configuration-guide.md)
+[`docs/admin/configuration-guide.md`](../../admin-guide/mastermind-configuration/configuration-guide.md)
 section "AI assistant settings" (around line 2549). Quick reference:
 
 | Key | Type | Purpose |
@@ -49565,7 +49623,7 @@ section "AI assistant settings" (around line 2549). Quick reference:
 
 Four Celery tasks register through `MarketplaceChatExtension.celery_tasks`
 (`src/waldur_mastermind/chat/extension.py:20`). See
-[`docs/admin/scheduled.md`](../admin/scheduled.md) lines 120-123 for the
+[`docs/admin/scheduled.md`](../../admin-guide/mastermind-configuration/scheduled.md) lines 120-123 for the
 generated entries. Briefly:
 
 - `waldur-chat-reset-daily-token-usage` — daily at 00:00.
@@ -73142,6 +73200,7 @@ td:nth-child(4) {
 | `manage_maintenance_admin_announcements` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncement` | Manage AdminAnnouncement lifecycle based on MaintenanceAnnouncement state changes. |
 | `mark_synced_fields_as_read_only` | `Custom Signal (pre_serializer_fields)` | `OfferingOptionsUpdateSerializer` | No description |
 | `mark_synced_fields_as_read_only` | `Custom Signal (pre_serializer_fields)` | `OfferingOverviewUpdateSerializer` | No description |
+| `maybe_auto_approve_order_for_project` | `Django Signal (post_save)` | `marketplace.Order` | Auto-approve a newly created PENDING_CONSUMER order if the project has |
 | `notify_about_project_details_update` | `Django Signal (post_save)` | `marketplace_remote.ProjectUpdateRequest` | No description |
 | `notify_about_request_based_item_creation` | `Django Signal (post_save)` | `support.Issue` | No description |
 | `notify_approvers_when_order_is_created` | `Django Signal (post_save)` | `marketplace.Order` | Notify approvers when an order is created. |
@@ -73362,14 +73421,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 782
+Total unique handlers found: 783
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 412 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 312 handlers
+- **waldur_mastermind**: 313 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -77311,7 +77370,7 @@ In such cases, consider performing a test authentication to discover actual clai
 
 ## See Also
 
-- [OIDC Authentication Configuration](admin/configuration-guide.md#waldur_auth_social-plugin)
+- [OIDC Authentication Configuration](../admin-guide/mastermind-configuration/configuration-guide.md#waldur_auth_social-plugin)
 - [User Profile Attributes](user-profile-attributes.md)
 
 ---
@@ -83444,7 +83503,7 @@ After successful login (`state: OK`), the `/api/auth-valimo/result/` response wi
 
 ## Configuration
 
-The Valimo authentication method must be enabled in Waldur settings. See the [Configuration Guide](../admin/configuration-guide.md) for details on enabling authentication methods.
+The Valimo authentication method must be enabled in Waldur settings. See the [Configuration Guide](../../admin-guide/mastermind-configuration/configuration-guide.md) for details on enabling authentication methods.
 
 ---
 
@@ -85083,7 +85142,7 @@ The recommended approach for Docker-based deployments is to use environment vari
 | `SENTRY_DSN` | Sentry error tracking DSN |
 | `AUTH_TOKEN_LIFETIME` | Token lifetime in seconds |
 
-See the [Configuration Guide](admin/configuration-guide.md) for a complete list.
+See the [Configuration Guide](../admin-guide/mastermind-configuration/configuration-guide.md) for a complete list.
 
 ### Configuration Files
 
@@ -85099,7 +85158,7 @@ These files are loaded in order, allowing later files to override earlier settin
 
 ### Frontend Features
 
-Frontend feature flags are configured through the `WALDUR_CORE` settings. See the [Features documentation](admin/features.md) for available options.
+Frontend feature flags are configured through the `WALDUR_CORE` settings. See the [Features documentation](../admin-guide/mastermind-configuration/features.md) for available options.
 
 ---
 
