@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-17T02:05:00.407570Z
+Generated: 2026-05-17T12:08:27.865268Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -67365,174 +67365,318 @@ flowchart TD
 
 ---
 
-### Marketplace concept
-<!-- Source: docs/about/modules/marketplace.md -->
+### Resource lifecycle
+<!-- Source: docs/about/modules/lifecycle.md -->
 
-# Marketplace concept
+# Resource lifecycle
 
 ## Overview
 
-The Waldur Marketplace serves as a centralized platform for requesting, provisioning, and managing resources from various service providers. This guide explains key concepts and workflows in the Marketplace to help you effectively navigate and utilize its features.
+Every [marketplace](marketplace.md) order moves through a fixed state machine; once an order succeeds, the resource it creates has its own state machine. Operators and integrators rely on these two state machines to interpret webhook events, debug stuck provisioning, and write [policies](policies.md).
 
-## Core concepts
+## Order states
 
-### Marketplace framework
+```d2
+direction: right
 
-The Marketplace operates through four integrated modules:
+pending_consumer: pending\nconsumer
+pending_provider: pending\nprovider
+pending_project: pending\nproject
+pending_start: pending\nstart date
+executing
+done: done { style: { fill: "#c8e6c9" } }
+erred: erred { style: { fill: "#ffcdd2" } }
+canceled: canceled { style: { fill: "#eeeeee" } }
+rejected: rejected { style: { fill: "#ffcdd2" } }
 
-1. **Structure module**: Establishes organizational hierarchy through Organizations and Projects, with access controls enforced at the project level.
-
-2. **Service catalogue module**: Enables Service providers to configure Offerings with pricing models (Plans), resource components, and customized request forms.
-
-3. **Provisioning module**: Manages the complete resource lifecycle from order placement to resource creation, usage tracking, and termination.
-
-4. **Billing module**: Handles financial tracking, invoicing, and cost management for resources provisioned through the Marketplace.
-
-### Key components
-
-- **User**: An individual who accesses the Waldur system with specific permissions within one or more organizations.
-- **Organization**: A business entity that can act as a customer, a service provider, or both within the Waldur system.
-- **Project**: A logical container for resources that belongs to an organization, with its own access control settings.
-- **Project member**: A user who has been assigned specific permissions within a project.
-- **Service provider**: An organization authorized to publish and deliver services through Waldur.
-- **Marketplace plugin**: A software component that integrates a specific backend system (like OpenStack or SLURM) with the Waldur Marketplace.
-- **Order**: A formal request for resource provisioning submitted by a user.
-- **Resource**: The provisioned service instance that results from a fulfilled order.
-- **Offering**: A specific service available for provisioning (e.g., virtual machines, HPC compute time).
-- **Plan**: A pricing and resource allocation model for an offering.
-- **Plugin registry**: A central repository that maintains information about available backend services and their connection details.
-- **Invoice**: A financial document detailing resource usage costs for an organization.
-- **Invoice Item**: An individual billing entry for a specific resource's consumption.
-
-## Architectural framework
-
-```mermaid
-flowchart TD
-    %% Structure module
-    subgraph Structure[Structure module]
-        Org[Organization]
-        User[User]
-        Proj[Project]
-        ProjMember[Project member]
-        ServiceProvider[Service provider]
-    end
-    
-    %% Service catalogue module
-    subgraph Catalog[Service catalogue module]
-        Offering[Offering]
-        Plan[Plan]
-        PluginReg[Plugin registry]
-    end
-    
-    %% Provisioning module
-    subgraph Provisioning[Provisioning module]
-        Order[Order]
-        Resource[Resource]
-        MarketplacePlugin[Marketplace plugin]
-    end
-    
-    %% Billing module
-    subgraph Billing[Billing module]
-        Invoice[Invoice]
-        InvoiceItem[Invoice item]
-    end
-    
-    %% Key Relationships
-    Org -- has --> Proj
-    Org -- becomes --> ServiceProvider
-    User -- belongs to --> Proj
-    User -- creates --> ProjMember
-    ServiceProvider -- provides --> Offering
-    Offering -- connects to --> PluginReg
-    Offering -- defines --> Plan
-    
-    ProjMember -- submits --> Order
-    Order -- approved by --> ServiceProvider
-    Order -- creates --> Resource
-    MarketplacePlugin -- processes --> Resource
-    
-    Resource -- generates --> InvoiceItem
-    InvoiceItem -- belongs to --> Invoice
-    Invoice -- billed to --> Org
-    Resource -- instantiated from --> Offering
-    Proj -- contains --> Resource
-    
-    classDef structureModule fill:#5BAD60,stroke:#333,stroke-width:1px
-    classDef catalogModule fill:#5BAD60,stroke:#333,stroke-width:1px
-    classDef provisioningModule fill:#5BAD60,stroke:#333,stroke-width:1px
-    classDef billingModule fill:#5BAD60,stroke:#333,stroke-width:1px
-    
-    class Org,User,Proj,ProjMember,ServiceProvider structureModule
-    class Offering,Plan,PluginReg catalogModule
-    class Order,Resource,MarketplacePlugin provisioningModule
-    class Invoice,InvoiceItem billingModule
+pending_consumer -> pending_provider: consumer approves
+pending_consumer -> rejected: consumer rejects
+pending_provider -> pending_project: provider approves
+pending_provider -> rejected: provider rejects
+pending_project -> pending_start: project approves
+pending_project -> rejected
+pending_start -> executing: start date reached
+executing -> done
+executing -> erred
+pending_consumer -> canceled: user cancels
+pending_provider -> canceled
 ```
+
+| State | Code | Meaning |
+|---|---|---|
+| pending-consumer | 1 | Awaiting approval from the consumer organization. |
+| executing | 2 | Backend provisioning in progress. |
+| done | 3 | Resource provisioned successfully. |
+| erred | 4 | Provisioning failed; admin or retry needed. |
+| canceled | 5 | User canceled before processing. |
+| rejected | 6 | Approval denied. |
+| pending-provider | 7 | Awaiting approval from the service provider. |
+| pending-project | 8 | Awaiting in-project approval (when configured). |
+| pending-start-date | 9 | Approved but waiting for the configured start date. |
+
+## Resource states
+
+```d2
+direction: right
+
+creating: Creating
+ok: OK { style: { fill: "#c8e6c9" } }
+erred: Erred { style: { fill: "#ffcdd2" } }
+updating: Updating
+terminating: Terminating
+terminated: Terminated { style: { fill: "#eeeeee" } }
+
+creating -> ok
+creating -> erred
+ok -> updating: modify order
+updating -> ok
+updating -> erred
+ok -> terminating: terminate order
+terminating -> terminated
+terminating -> erred
+erred -> updating: retry
+erred -> terminating
+```
+
+| State | Code | Meaning |
+|---|---|---|
+| Creating | 1 | Initial provisioning underway. |
+| OK | 2 | Steady state; usage being reported. |
+| Erred | 3 | Last operation failed; resource is in an inconsistent state. |
+| Updating | 4 | A modify order is being applied. |
+| Terminating | 5 | Cleanup in progress. |
+| Terminated | 6 | Resource removed from the backend; record retained for billing. |
+
+## Recovering an erred order
+
+A staff user can retry an erred order from the UI or via the API. Retry locks the row, re-checks the state inside a transaction, and re-enqueues the backend operation — see the [backend concurrency guidance](../../developer-guide/core-concepts/marketplace-orders.md) for the implementation detail.
+
+## Related concepts
+
+- [Marketplace](marketplace.md) — where orders originate.
+- [Policies](policies.md) — automated reactions to state changes (e.g. terminate on overspend).
+- [Call management](call-management.md) — proposals that produce orders on approval.
+
+---
+
+### Marketplace
+<!-- Source: docs/about/modules/marketplace.md -->
+
+# Marketplace
+
+## Overview
+
+The Waldur Marketplace is the catalog and order pipeline through which projects request resources from service providers. It connects the [platform primitives](platform.md) (users, organizations, projects) to backend systems (OpenStack, SLURM, Rancher, remote Waldur instances, and others) through a uniform offering → order → resource flow.
+
+## Architecture
+
+```d2
+direction: down
+classes: {
+  structure:    { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  catalog:      { style: { fill: "#e1f5fe"; stroke: "#0277bd" } }
+  provisioning: { style: { fill: "#fff3e0"; stroke: "#ef6c00" } }
+  billing:      { style: { fill: "#f3e5f5"; stroke: "#7b1fa2" } }
+}
+
+structure: Structure {
+  org: Organization { class: structure }
+  project: Project { class: structure }
+  user: User { class: structure }
+  org -> project: owns
+  user -> project: member of
+}
+
+catalog: Service catalogue {
+  offering: Offering { class: catalog }
+  plan: Plan { class: catalog }
+  plugin: Plugin { class: catalog }
+  offering -> plan: priced by
+  offering -> plugin: backed by
+}
+
+provisioning: Provisioning {
+  order: Order { class: provisioning }
+  resource: Resource { class: provisioning }
+  order -> resource: creates
+}
+
+billing: Billing {
+  invoice_item: Invoice item { class: billing }
+  invoice: Invoice { class: billing }
+  invoice_item -> invoice: rolls up to
+}
+
+structure.project -> provisioning.order: submits
+catalog.offering -> provisioning.order: ordered
+provisioning.resource -> billing.invoice_item: usage
+billing.invoice -> structure.org: billed to
+```
+
+The four boxes correspond to four Django apps: `structure`, `marketplace`, `marketplace.processors`, and `invoices`.
+
+## Key concepts
+
+| Concept | One-liner | Reference |
+|---|---|---|
+| Offering | A service published by a service provider (VM family, HPC allocation, ticket queue, ...). | [Glossary](../terminology/glossary.md) |
+| Plan | One pricing and limits option attached to an offering. | [Glossary](../terminology/glossary.md) |
+| Order | A request to provision, modify, or terminate a resource. | [Lifecycle](lifecycle.md) |
+| Resource | The provisioned instance produced by a fulfilled order. | [Lifecycle](lifecycle.md) |
+| Plugin | The backend integration that an offering binds to (OpenStack, SLURM, ...). | [Plugins](#plugins) |
+| Invoice item | The billing record generated from a resource's usage. | [Billing](../../admin-guide/billing-and-accounting.md) |
 
 ## Offering requirements
 
-For an offering to appear in the Marketplace, it must include:
+An offering becomes orderable once it has:
 
-- **Category assignment**: Determines the offering's location in the Marketplace browsing hierarchy.
-- **Basic information**: Name, description, plugin type, and service settings.
-- **Plan configuration**: At least one plan defining resource limits and pricing structure.
-- **Component definitions**: Specific resources being measured or billed.
-- **Visibility settings**: Configuring which customers or projects can access the offering.
-- **Optional attributes**: Custom parameters that users must provide when ordering.
+- A **category** (controls where it appears in the catalogue).
+- One or more **plans** (defines pricing and limits).
+- **Components** (the metered or billed units — vCPU, GB-month, CPU-hours, ...).
+- A **plugin type** and matching service settings.
+- **Visibility** rules (public, per-customer, per-project).
 
-## Supported integration plugins
+Custom request-form attributes are optional.
 
-The Marketplace supports various backend systems through dedicated plugins. Here are examples of commonly used plugins:
+## Plugins
 
-- **OpenStack plugin**: Provisions virtual infrastructure including VMs, storage volumes, networks, and IP addresses.
-- **SLURM plugin**: Facilitates access to HPC cluster resources with consumption typically measured in CPU or GPU hours.
+The Marketplace is plugin-driven. Plugins shipped with Waldur include:
 
-These are just examples of the available integrations. Waldur's plugin architecture allows for connecting to a wide range of service backends. Each plugin has specific configuration requirements detailed in its dedicated documentation section.
+| Plugin | What it provisions |
+|---|---|
+| `openstack` | Tenants, VMs, volumes, networks, floating IPs |
+| `slurm` | HPC allocations (CPU/GPU hours, storage) |
+| `rancher` | Kubernetes clusters via Rancher |
+| `azure`, `vmware` | VMs on the respective backend |
+| `openportal` | Federated HPC accounts via the OpenPortal protocol |
+| `remote` | Resources hosted on another Waldur instance |
+| `support` | Ticket-backed offerings |
+| `script` | Arbitrary scripted provisioning |
+| `site-agent` | Anything brokered by `waldur-site-agent` |
 
-Service providers can leverage these existing plugins or develop custom integrations to make their specific services available through the Marketplace.
+Service providers can add new plugins by implementing the marketplace processor interface — see the [developer guide](../../developer-guide/core-concepts/marketplace.md).
+
+## Approval and policies
+
+Orders may be auto-approved, gated by an organization owner, or vetoed by a [policy](policies.md) (cost limit, usage limit, blacklist). Per-project auto-approval is configurable.
 
 ## Resource lifecycle
 
-Resources in the Marketplace follow a defined lifecycle:
+Orders and resources have their own state machines — see the dedicated [Lifecycle page](lifecycle.md).
 
-1. **Publication**: Service Provider creates and publishes an offering with associated plans.
-2. **Order placement**: User selects an offering, chooses a plan, and submits an order within a project context.
-3. **Approval process**: Orders may require authorization by project or customer owners based on configured policies.
-4. **Provisioning**: Upon approval, the system automatically provisions the requested resource via the appropriate plugin.
-5. **Usage monitoring**: The system tracks resource consumption for accounting and reporting purposes.
-6. **Management operations**: Users can perform lifecycle operations (update, pause, terminate) as permitted by the plugin and their access rights.
+## Related concepts
 
-## Next steps
+- [Platform](platform.md) — users, organizations, projects.
+- [Call management](call-management.md) — proposal-driven allocation that ends in marketplace orders.
+- [Lifecycle](lifecycle.md) — order and resource state machines.
 
-To learn more about specific offerings or how to perform common tasks in the Marketplace, refer to the following guides:
+## Examples
 
-- [Creating OpenStack offerings](../../user-guide/service-provider-organization/adding-an-offering.md#openstack-offering-creation)
-- [Setting up SLURM offerings](../../user-guide/service-provider-organization/adding-an-offering.md#slurm-offering-creation)
+!!! example "Requesting a VM"
+    1. Open the Marketplace and filter by **Virtual Machines**.
+    2. Pick an OpenStack offering and a plan.
+    3. Fill in the request form (name, SSH key, flavor).
+    4. Submit. After approval, the VM appears in the project.
 
-## Usage examples
+!!! example "HPC allocation"
+    1. Open the SLURM allocation under the project.
+    2. Check current CPU-hour and storage usage.
+    3. Modify the resource to request more hours if needed.
 
-Here are some common scenarios to help you understand how to use the Marketplace effectively:
+!!! tip "Cost control"
+    Use [policies](policies.md) to cap monthly spend per project rather than relying on after-the-fact invoice review.
 
-!!! example "Requesting a Virtual Machine"
-    1. Navigate to the Marketplace
-    2. Filter offerings by the "Virtual Machines" category
-    3. Select the OpenStack offering from your preferred provider
-    4. Choose the plan that matches your requirements (e.g., "Small VM" with 2 vCPUs, 4GB RAM)
-    5. Fill in required parameters (name, SSH key, etc.)
-    6. Submit your order
-    7. Once approved, your VM will be provisioned and appear in your project's resources
+---
 
-!!! example "Managing HPC allocation"
-    1. Access your project dashboard
-    2. Select the SLURM allocation from your resources list
-    3. View current usage statistics for CPU hours and storage
-    4. If needed, request an extension through the "Modify Resource" option
-    5. Submit jobs through the provided access methods
+### Platform
+<!-- Source: docs/about/modules/platform.md -->
 
-!!! tip "Cost optimization"
-    Monitor your resource usage regularly through the dashboard to avoid unexpected charges. For VM resources, remember to shut down instances when not in use, as many providers charge based on uptime regardless of actual CPU utilization.
+# Platform
 
-!!! note "Approval workflows"
-    Some offerings may require approval from your organization owner or the service provider before provisioning begins. You can check the status of your order in the Orders section of your project dashboard.
+## Overview
+
+Waldur organizes everything around three primitives: **users**, **organizations**, and **projects**. Users get roles inside organizations or projects; resources are grouped under projects; organizations carry the contractual and financial responsibility. Every other Waldur concept — marketplace orders, calls, invoices, policies, quotas — binds to one of these three.
+
+## Structure
+
+```d2
+direction: right
+classes: {
+  primitive: { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  derived: { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+}
+
+user: User { class: primitive; shape: person }
+org: Organization { class: primitive }
+project: Project { class: primitive }
+role: Role { class: derived }
+resource: Resource { class: derived }
+invoice: Invoice { class: derived }
+
+user -> role: assigned
+role -> org: scoped to
+role -> project: scoped to
+org -> project: owns
+project -> resource: contains
+org -> invoice: billed
+resource -> invoice: charged via items
+```
+
+## Key concepts
+
+| Concept | One-liner | Reference |
+|---|---|---|
+| User | A person or robot account; may hold global roles (staff, support). | [Glossary](../terminology/glossary.md) |
+| Organization | A legal entity acting as a customer, a service provider, or both. | [Glossary](../terminology/glossary.md) |
+| Project | An access-controlled container for resources inside an organization. | [Glossary](../terminology/glossary.md) |
+| Role | A named bundle of permissions, scoped to an organization or a project. | [Roles & permissions](../terminology/roles_and_permissions.md) |
+| Resource | A provisioned service instance (VM, HPC allocation, storage volume, ...). | [Marketplace](marketplace.md) |
+| Quota | An enforced upper bound on a measurable property within a scope. | [Admin guide](../../admin-guide/mastermind-configuration/configuration-guide.md) |
+
+## Installation types
+
+Waldur reuses the same primitives across three common installation types:
+
+| Type | Typical operator | What an Organization is | What a Project is |
+|---|---|---|---|
+| Cloud | Commercial or government IaaS | Customer company or agency | Tenant or environment |
+| Academic | Single university or research infra | Department or institute | Research group, lab, course |
+| Academic shared | Multi-institution federation | Always also a service provider | Allocation granted by a federated allocator |
+
+The role matrix for each shape — Owner, PI, Service Manager, etc. — is documented in [Roles & permissions](../terminology/roles_and_permissions.md).
+
+## Related concepts
+
+- [Marketplace](marketplace.md) — how a project obtains a resource.
+- [Call management](call-management.md) — how allocations are awarded through a structured proposal process.
+
+---
+
+### Policies
+<!-- Source: docs/about/modules/policies.md -->
+
+# Policies
+
+!!! note "Draft"
+    This page is a placeholder. Full content arrives with the next concept-page batch.
+
+## Overview
+
+Policies are rules that automatically react to events on [marketplace](marketplace.md) resources — typically to cap cost, cap usage, or terminate a misbehaving resource. They run alongside [quotas](platform.md#key-concepts): a quota refuses an action up front, a policy reacts to facts after the fact.
+
+## Key concepts
+
+| Concept | One-liner |
+|---|---|
+| Policy | A rule attached to a project, customer, or offering scope. |
+| Trigger | The signal that evaluates the policy (e.g. an invoice item being written). |
+| Action | What happens when the policy fires — threshold notification or immediate enforcement (block, terminate, ...). |
+| Period | The window over which the trigger sums data — monthly, quarterly, annual, or total. |
+
+## Related concepts
+
+- [Marketplace](marketplace.md) — what policies guard.
+- [Lifecycle](lifecycle.md) — the resource state transitions a policy can drive.
 
 ---
 
