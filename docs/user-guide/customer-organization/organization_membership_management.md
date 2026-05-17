@@ -1,8 +1,8 @@
 # Organization membership management
 
-Organization team contains users with different roles.
-
-Please see [this page](https://docs.waldur.com/latest/about/Concept/structure/#user-roles-in-organization) for User Rights based on Roles in the Organization.
+Organization team contains users with different roles. See
+[Roles and permissions](../../about/terminology/roles_and_permissions.md#user-roles-in-organization)
+for the per-role permission matrix.
 
 ## Adding organization members
 

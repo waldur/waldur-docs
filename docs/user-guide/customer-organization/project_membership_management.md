@@ -1,8 +1,8 @@
 # Project membership management
 
-Project team contains users with different roles.
-
-Please see [this page](https://docs.waldur.com/latest/about/Concept/structure/#user-roles-in-organization) for User Rights based on Roles in the Project.
+Project team contains users with different roles. See
+[Roles and permissions](../../about/terminology/roles_and_permissions.md#user-roles-in-organization)
+for the per-role permission matrix.
 
 ## Adding project members
 

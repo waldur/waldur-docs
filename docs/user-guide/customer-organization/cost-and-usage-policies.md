@@ -1,6 +1,8 @@
 # Cost and usage policies
 
-Waldur allows to set different cost and usage policies on organization, project and offering level. For example, this means that organization owners and service providers can enable different actions, when cost or usage exceedes predefines level.
+Define cost and usage policies on organization, project, or offering level to trigger
+actions when consumption crosses a threshold. For the concept and the trigger / action
+model, see [Policies](../../about/modules/policies.md).
 
 ## Cost policies for organizations
 
