@@ -55,4 +55,10 @@ The role matrix for each shape — Owner, PI, Service Manager, etc. — is docum
 ## Related concepts
 
 - [Marketplace](marketplace.md) — how a project obtains a resource.
+- [Lifecycle](lifecycle.md) — what happens to that resource over time.
+- [Billing](billing.md) — what the organization is invoiced for.
+- [Quotas](quotas.md) — up-front bounds on usage per scope.
+- [Policies](policies.md) — automated reactions when limits are crossed.
+- [Identity](identity.md) — how users get into Waldur.
+- [Support](support.md) — how tickets reach the right team.
 - [Call management](call-management.md) — how allocations are awarded through a structured proposal process.
