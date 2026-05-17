@@ -75,7 +75,6 @@ PRIORITY_SECTIONS = [
 # Patterns to exclude from llms-full.txt (too large or auto-generated)
 EXCLUDE_PATTERNS = [
     "docs/api-reference/**",                    # Auto-generated API docs (270+ files)
-    "docs/integrator-guide/APIs/api-changes/**", # API version diffs (50+ files)
     "**/img/**",                                # Image directories
     "**/*.png",                                 # Images
     "**/*.jpg",                                 # Images
