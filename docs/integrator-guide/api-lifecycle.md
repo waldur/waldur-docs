@@ -17,16 +17,6 @@ Releases are coordinated across all Waldur components (MasterMind, HomePort, Hel
 
 Every release includes a changelog entry in the [Changelog](../about/CHANGELOG.md) with categorized sections: features, improvements, bug fixes.
 
-### OpenAPI schema diffs
-
-For each release, an OpenAPI schema diff is auto-generated and published under the API Changes section (see e.g. [8.0.3 diff](APIs/api-changes/waldur-openapi-schema-8.0.3-diff.md)). These diffs show:
-
-- New endpoints added
-- Endpoints removed
-- Changed parameters, fields, or response structures
-
-For example, `waldur-openapi-schema-8.0.3-diff.md` lists all endpoint additions and removals between 8.0.2 and 8.0.3.
-
 ### SDK regeneration
 
 The Python, Go, and TypeScript SDKs are regenerated from the OpenAPI schema on each release. SDK users can pin to a specific version and review the updated schema before upgrading.

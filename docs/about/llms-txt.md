@@ -123,7 +123,6 @@ The llms.txt format follows the specification at [llmstxt.org](https://llmstxt.o
 The following are excluded from `llms-full.txt` to keep the file size reasonable:
 
 - **API Reference** (`/api-reference/`): 270+ auto-generated endpoint files
-- **API Changelogs** (`/integrator-guide/APIs/api-changes/`): 50+ version diff files
 - **Images and videos**: Binary content not useful for LLMs
 - **CHANGELOG.md**: Large file with detailed release history
 

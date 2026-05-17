@@ -531,7 +531,6 @@ This release strengthens AI Assistant security with prompt injection detection, 
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-8.0.5.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.5-diff)
 
 ---
 
@@ -587,7 +586,6 @@ This release introduces Keycloak-based user role management for marketplace offe
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-8.0.4.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.4-diff)
 
 ---
 
@@ -648,7 +646,6 @@ This release introduces two-way messaging between providers and consumers on pen
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-8.0.3.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.3-diff)
 
 ---
 
@@ -702,7 +699,6 @@ This release introduces an invoice finalization grace period, giving operators a
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-8.0.2.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.2-diff)
 
 ---
 
@@ -770,7 +766,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-8.0.1.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-8.0.1-diff)
 
 ---
 
@@ -791,7 +786,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 ### Resources
 
 <!-- - [OpenAPI Schema](../API/waldur-openapi-schema-7.9.8.yaml) -->
-<!-- - [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.8-diff.md) -->
 
 
 ## 7.9.7 - 2026-01-17
@@ -836,7 +830,7 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 <!-- ### Resources
 
 - [OpenAPI Schema](../API/waldur-openapi-schema-7.9.7.yaml)
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.7-diff.md) -->
+-->
 
 
 ## 7.9.6 - 2026-01-07
@@ -881,7 +875,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-7.9.6.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.6-diff)
 
 
 ## 7.9.5 - 2025-12-17
@@ -901,7 +894,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-7.9.5.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.5-diff)
 
 
 ## 7.9.4 - 2025-12-16
@@ -934,7 +926,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-7.9.4.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.4-diff)
 
 
 ## 7.9.3 - 2025-12-14
@@ -954,7 +945,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-7.9.3.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.3-diff)
 
 
 ## 7.9.2 - 2025-12-07
@@ -999,7 +989,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-7.9.2.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.2-diff)
 
 
 ## 7.9.1 - 2025-11-30
@@ -1057,7 +1046,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 ### Resources
 
 - [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-7.9.1.yaml)
-- [API Changes](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/waldur-openapi-schema-7.9.1-diff)
 
 ---
 
@@ -1140,7 +1128,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 ### Resources
 
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.9-diff.md)
 
 ---
 
@@ -1216,7 +1203,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 ### Resources
 
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.8-diff.md)
 
 ---
 
@@ -1286,7 +1272,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 ### Resources
 
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.7-diff.md)
 
 ---
 
@@ -1350,7 +1335,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 ### Resources
 
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.6-diff.md)
 
 ---
 
@@ -1407,7 +1391,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 ### Resources
 
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.5-diff.md)
 
 ---
 
@@ -1451,7 +1434,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 ### Resources
 
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.4-diff.md)
 
 ---
 
@@ -1486,7 +1468,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 ### Resources
 
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.3-diff.md)
 
 ---
 
@@ -1527,7 +1508,6 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 ### Resources
 
-- [API Changes](../integrator-guide/APIs/api-changes/waldur-openapi-schema-7.8.2-diff.md)
 
 ---
 
