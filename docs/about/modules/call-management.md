@@ -8,18 +8,20 @@ Call management in Waldur enables organizations to manage resource allocation th
 
 Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the proposing organization that initiated the call. Allocations are granted to this project, and team members who submitted the proposal are added to the project, ensuring the resources are immediately ready for use.
 
-## Stakeholder roles
+## Who does what
 
-Different user roles have specific responsibilities within the Call management system:
+For role definitions and the per-role permission matrix, see
+[Roles and permissions — User roles in Call management](../terminology/roles_and_permissions.md#user-roles-in-call-management).
+This page focuses on which role triggers which step of the call workflow:
 
-| Role | Assigned by | Primary responsibilities | Access level |
-| --- | --- | --- | --- |
-| Organization owner | Staff | <ul><li>Register organization as Call managing organization</li><li>Assign Call organisers</li><li>Oversee overall call management activities</li></ul> | Full access to all calls and organizational data |
-| Call organiser | Organization owner | <ul><li>Create calls</li><li>Define call purpose and guidelines</li><li>Assign Call Managers</li><li>Supervise call lifecycle</li></ul> | Access to calls they create and oversee |
-| Call manager | Call organiser | <ul><li>Configure call rounds</li><li>Request and manage offerings</li><li>Assign reviewers</li><li>Make allocation decisions</li><li>Monitor call progress</li></ul> | Detailed access to calls they are assigned to |
-| Reviewer | Call manager | <ul><li>Evaluate assigned proposals</li><li>Provide scores and feedback</li><li>Recommend approval/rejection</li></ul> | Access limited to assigned proposals |
-| Call Member/Applicant | Self-registration | <ul><li>Submit proposals</li><li>Request resources</li></ul> | Access to own proposals and public call information |
-| Service Provider | Staff | <ul><li>Provide offerings for calls</li><li>Approve/reject offering requests</li></ul> | Access to offering requests |
+| Step in the workflow | Triggered by | Assigned by |
+| --- | --- | --- |
+| Register organization as a Call managing organization | Organization owner | Staff |
+| Create a call and define its purpose | Call organiser | Organization owner |
+| Configure rounds, request offerings, assign reviewers | Call manager | Call organiser |
+| Evaluate proposals, score, recommend approval | Call reviewer | Call manager |
+| Submit a proposal, request resources | Applicant | Self-registration |
+| Approve or reject offering requests for a call | Service Provider | Staff |
 
 ## Workflow overview
 
