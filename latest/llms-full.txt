@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-17T12:08:27.865268Z
+Generated: 2026-05-17T12:55:30.559500Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -206,6 +206,49 @@ Organization that provides services to other organizations.
 | **Call reviewer**          | Call                | Reviews and evaluates submitted proposals within a call. |
 | **Proposal member**       | Proposal            | Manages individual proposals, controlling their status and related workflows. |
 
+## Default roles by scope (reference)
+
+The role names above are friendly labels for the per-installation matrices.
+Internally, Waldur ships a fixed set of roles grouped by the scope they apply to.
+Operators see these names in the administration interface and API payloads.
+
+| Scope | Role | Description | Active by default |
+|---|---|---|:---:|
+| Organization | Customer owner | Highest-level role in an organization; full administrative control. | Yes |
+| Organization | Customer manager | Managerial role for service providers within an organization. | Yes |
+| Organization | Customer support | Limited support access within an organization. | No |
+| Project | Project administrator | Full control over a project, including resource and order management. | Yes |
+| Project | Project manager | Adds permission-management capabilities on top of administrator. | Yes |
+| Project | Project member | Limited project access. | No |
+| Offering | Offering manager | Manages an offering's configuration and associated resources. | Yes |
+| Service provider | Service provider manager | Manages service-provider-specific settings and operations. | Yes |
+| Call managing organization | Customer call organizer | Organization-specific role for handling calls. | Yes |
+| Call | Call manager | Oversees calls and proposal approvals. | Yes |
+| Call | Call reviewer | Reviews submitted proposals. | Yes |
+| Proposal | Proposal manager | Manages proposals within a call. | Yes |
+
+Every role exposes the same attributes:
+
+- **Name** — unique identifier.
+- **Scope** — context in which the role is applicable (Organization, Project, Call, Offering, Service Provider, Proposal, Call managing organization).
+- **Description** — brief explanation of the role's purpose.
+- **Active** — whether the role is currently available for assignment.
+
+A user can hold one or more roles within any of those scopes simultaneously.
+
+### Managing roles in the administration interface
+
+Staff users can review and modify the defaults from the Waldur administration UI:
+
+1. Open the Administration panel.
+2. Select **User roles** under the Settings menu.
+3. Edit a role to change its permissions or active status, or disable it entirely.
+
+!!! warning
+    Apply the principle of least privilege; some roles are intentionally inactive
+    by default (e.g. **Customer support**). Audit role assignments regularly,
+    and document any custom role configurations.
+
 ---
 
 
@@ -216,45 +259,50 @@ Organization that provides services to other organizations.
 
 # Architecture
 
-Waldur is composed of several components that work together to provide a comprehensive cloud management platform.
+Waldur is composed of several runtime components that work together to provide a
+comprehensive cloud-management platform. For the higher-level data model — users,
+organizations, projects, and roles — see [Platform](../about/modules/platform.md).
 
 ## Components
 
-- **Homeport** (web client, graphical interface) - React application
-- **Waldur site agent** - Remote agent for managing provider resources and synchronizing data
-- **Mastermind API server** - Django/Django REST Framework application implementing the core business logic
-- **Celery workers** - Background processing of tasks
-- **Celery beat** - Scheduling of periodic tasks for background processing
-- **PostgreSQL database** - Storing persistent data, also serves as Celery result store in Kubernetes deployment
-- **RabbitMQ** - Tasks queue and result store for Celery
+- **Homeport** (web client) — React single-page application.
+- **Mastermind API server** — Django + Django REST Framework application implementing the business logic.
+- **Celery workers** — background processing of tasks.
+- **Celery beat** — scheduler for periodic tasks.
+- **PostgreSQL** — persistent storage; also serves as the Celery result store in Kubernetes deployments.
+- **RabbitMQ** — task queue and result store for Celery.
+- **Waldur site agent** — remote agent that manages provider resources and synchronises data on the provider side.
 
-## Architecture diagram
+## Runtime topology
 
-```mermaid
-flowchart TD
-    User[👤 User] --> Browser[🌐 Web Browser]
-    Browser --> |Sends request| Homeport[🏠 Homeport<br/>React Application]
-    Homeport --> |API calls| API[🔧 Mastermind API<br/>Django/DRF Server]
-    
-    Agent[🤖 Waldur Site Agent<br/>Remote Resource Manager] --> |API calls| API
-    
-    API --> |Saves data| DB[(🗄️ PostgreSQL<br/>Database)]
-    API --> |Pushes tasks| Queue[📋 Task Queue<br/>RabbitMQ]
-    
-    Worker[⚙️ Celery Worker<br/>Background Processing] --> |Pulls tasks| Queue
-    Worker --> |Saves results| DB
-    
-    Beat[⏰ Celery Beat<br/>Task Scheduler] --> |Schedules periodic tasks| Queue
-    
-    classDef frontend fill:#d5e8d4,stroke:#82b366,stroke-width:2px
-    classDef backend fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px
-    classDef infrastructure fill:#fff2cc,stroke:#d6b656,stroke-width:2px
-    classDef agent fill:#f8cecc,stroke:#b85450,stroke-width:2px
-    
-    class User,Browser,Homeport frontend
-    class API,Worker,Beat backend
-    class DB,Queue infrastructure
-    class Agent agent
+```d2
+direction: down
+classes: {
+  frontend:      { style: { fill: "#d5e8d4"; stroke: "#82b366" } }
+  backend:       { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
+  infra:         { style: { fill: "#fff2cc"; stroke: "#d6b656" } }
+  agent:         { style: { fill: "#f8cecc"; stroke: "#b85450" } }
+}
+
+user: User { class: frontend; shape: person }
+browser: Web browser { class: frontend }
+homeport: Homeport\n(React SPA) { class: frontend }
+api: Mastermind API\n(Django + DRF) { class: backend }
+worker: Celery worker { class: backend }
+beat: Celery beat { class: backend }
+db: PostgreSQL { class: infra; shape: cylinder }
+queue: RabbitMQ { class: infra; shape: queue }
+agent: Waldur site agent\n(remote) { class: agent }
+
+user -> browser
+browser -> homeport: serves SPA
+homeport -> api: REST calls
+agent -> api: REST calls
+api -> db: persist
+api -> queue: enqueue tasks
+worker -> queue: pull
+worker -> db: write results
+beat -> queue: enqueue periodic
 ```
 
 ---
@@ -19022,126 +19070,6 @@ Click on the evaluations below to provide the feedback.
 {% endfor %}
 
 ```
-
----
-
-
-## Roles
-
-### Waldur roles and permissions
-<!-- Source: docs/admin-guide/waldur-roles.md -->
-
-# Waldur roles and permissions
-
-## Overview
-
-Waldur provides a flexible Role-Based Access Control (RBAC) system, enabling administrators to manage user permissions efficiently. Roles define the actions users can perform within the system, ensuring structured and secure access to resources.
-
-This guide outlines Waldur's roles, their associated permissions, and how they govern access within the platform.
-
-## Managing roles in Waldur
-
-Roles in Waldur are structured to define user access within specific scopes. The key attributes of a role include:
-
-- **Name** – A unique identifier for the role
-- **Scope** – The context in which the role is applicable (e.g., Organization, Project, Call, etc.)
-- **Description** – A brief explanation of the role's purpose and responsibilities
-- **Active** – Indicates whether the role is currently available for assignment
-
-Users can be assigned one or more roles within an Organization, Project, Call, Offering, Service Provider, Proposal, or Call managing organization scope.
-
-## Default roles and permissions
-
-Waldur provides predefined roles to streamline access management across different scopes. Below is an overview of available roles, grouped by scope.
-
-### Organization roles
-
-**Scope**: Organization
-
-| Name | Description | Active |
-|------|-------------|--------|
-| Customer owner | The highest-level role in an organization, granting full administrative control | Yes |
-| Customer manager | A managerial role for service providers within an organization | Yes |
-| Customer support | Provides limited support access within an organization | No |
-
-### Project roles
-
-**Scope**: Project
-
-| Name | Description | Active |
-|------|-------------|--------|
-| Project administrator | Grants full control over a project, including resource and order management | Yes |
-| Project manager | Similar to the administrator role but includes additional permission management capabilities | Yes |
-| Project member | A limited role with basic project access | No |
-
-### Offering roles
-
-**Scope**: Offering
-
-| Name | Description | Active |
-|------|-------------|--------|
-| Offering manager | Manages an offering's configuration and associated resources | Yes |
-
-### Call managing organization roles
-
-**Scope**: Call managing organization
-
-| Name | Description | Active |
-|------|-------------|--------|
-| Customer call organizer | An organization-specific role for handling calls | Yes |
-
-### Call roles
-
-**Scope**: Call
-
-| Name | Description | Active |
-|------|-------------|--------|
-| Call manager  | Oversees calls and proposal approvals | Yes |
-| Call reviewer  | A role dedicated to reviewing submitted proposals | Yes |
-
-### Proposal roles
-
-**Scope**: Proposal
-
-| Name | Description | Active |
-|------|-------------|--------|
-| Proposal manager | Responsible for managing proposals within a call | Yes |
-
-### Service provider roles
-
-**Scope**: Service provider
-
-| Name | Description | Active |
-|------|-------------|--------|
-| Service provider manager  | Manages service provider-specific settings and operations | Yes |
-
-## Role assignment and management
-
-Roles are assigned to users based on their responsibilities and required access levels. Administrators can:
-
-- Add or remove user roles
-- Modify permissions associated with roles
-- Revoke roles manually or set expiration times for temporary access
-
-## Managing roles via the interface
-
-The Waldur administration interface offers an intuitive way to manage user roles. Staff users can:
-
-1. Navigate to the Administration panel
-2. Select the User roles section under Settings menu
-3. Modify existing roles by updating permissions or changing their status
-4. Disable roles as needed
-
-Using the administration interface simplifies role management and ensures a structured approach to access control.
-
-⚠️ **Important notes**:
-
-- Roles should follow the principle of least privilege
-- Some roles are disabled by default (e.g., Customer support)
-- Regular audits of role assignments are recommended
-- Certain roles are scope-restricted (e.g., Customer call organizer)
-- Changes to role permissions should be carefully considered
-- Document any custom role configurations
 
 ---
 
@@ -63488,7 +63416,9 @@ If configured in the **Assignment Configuration**:
 
 # Cost and usage policies
 
-Waldur allows to set different cost and usage policies on organization, project and offering level. For example, this means that organization owners and service providers can enable different actions, when cost or usage exceedes predefines level.
+Define cost and usage policies on organization, project, or offering level to trigger
+actions when consumption crosses a threshold. For the concept and the trigger / action
+model, see [Policies](../../about/modules/policies.md).
 
 ## Cost policies for organizations
 
@@ -63710,9 +63640,9 @@ To create a new one, click "Add" on the right. A popup opens with configuration 
 
 # Organization membership management
 
-Organization team contains users with different roles.
-
-Please see [this page](https://docs.waldur.com/latest/about/Concept/structure/#user-roles-in-organization) for User Rights based on Roles in the Organization.
+Organization team contains users with different roles. See
+[Roles and permissions](../../about/terminology/roles_and_permissions.md#user-roles-in-organization)
+for the per-role permission matrix.
 
 ## Adding organization members
 
@@ -63802,9 +63732,9 @@ When a project has a grace period configured:
 
 # Project membership management
 
-Project team contains users with different roles.
-
-Please see [this page](https://docs.waldur.com/latest/about/Concept/structure/#user-roles-in-organization) for User Rights based on Roles in the Project.
+Project team contains users with different roles. See
+[Roles and permissions](../../about/terminology/roles_and_permissions.md#user-roles-in-organization)
+for the per-role permission matrix.
 
 ## Adding project members
 
@@ -64651,19 +64581,9 @@ Images provide visual representation and marketing appeal. Each image requires:
 
 # Order management
 
-## Order lifecycle
-
-When a customer requests a resource from your offering, an order is created. Orders progress through several states:
-
-| State | Description |
-|-------|-------------|
-| **Pending consumer** | Waiting for consumer approval |
-| **Pending provider** | Waiting for provider approval |
-| **Executing** | Resource provisioning in progress |
-| **Done** | Order completed successfully |
-| **Erred** | Order failed with errors |
-| **Canceled** | Order was canceled |
-| **Rejected** | Order was rejected by provider |
+When a customer requests a resource from your offering, an order is created and
+moves through a fixed state machine — see [Order states](../../about/modules/lifecycle.md#order-states)
+for the full diagram and the numeric state codes used by the API.
 
 ## Managing orders
 
@@ -67271,18 +67191,20 @@ Call management in Waldur enables organizations to manage resource allocation th
 
 Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the proposing organization that initiated the call. Allocations are granted to this project, and team members who submitted the proposal are added to the project, ensuring the resources are immediately ready for use.
 
-## Stakeholder roles
+## Who does what
 
-Different user roles have specific responsibilities within the Call management system:
+For role definitions and the per-role permission matrix, see
+[Roles and permissions — User roles in Call management](../terminology/roles_and_permissions.md#user-roles-in-call-management).
+This page focuses on which role triggers which step of the call workflow:
 
-| Role | Assigned by | Primary responsibilities | Access level |
-| --- | --- | --- | --- |
-| Organization owner | Staff | <ul><li>Register organization as Call managing organization</li><li>Assign Call organisers</li><li>Oversee overall call management activities</li></ul> | Full access to all calls and organizational data |
-| Call organiser | Organization owner | <ul><li>Create calls</li><li>Define call purpose and guidelines</li><li>Assign Call Managers</li><li>Supervise call lifecycle</li></ul> | Access to calls they create and oversee |
-| Call manager | Call organiser | <ul><li>Configure call rounds</li><li>Request and manage offerings</li><li>Assign reviewers</li><li>Make allocation decisions</li><li>Monitor call progress</li></ul> | Detailed access to calls they are assigned to |
-| Reviewer | Call manager | <ul><li>Evaluate assigned proposals</li><li>Provide scores and feedback</li><li>Recommend approval/rejection</li></ul> | Access limited to assigned proposals |
-| Call Member/Applicant | Self-registration | <ul><li>Submit proposals</li><li>Request resources</li></ul> | Access to own proposals and public call information |
-| Service Provider | Staff | <ul><li>Provide offerings for calls</li><li>Approve/reject offering requests</li></ul> | Access to offering requests |
+| Step in the workflow | Triggered by | Assigned by |
+| --- | --- | --- |
+| Register organization as a Call managing organization | Organization owner | Staff |
+| Create a call and define its purpose | Call organiser | Organization owner |
+| Configure rounds, request offerings, assign reviewers | Call manager | Call organiser |
+| Evaluate proposals, score, recommend approval | Call reviewer | Call manager |
+| Submit a proposal, request resources | Applicant | Self-registration |
+| Approve or reject offering requests for a call | Service Provider | Staff |
 
 ## Workflow overview
 
