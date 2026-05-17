@@ -2,7 +2,7 @@
 
 Waldur is composed of several runtime components that work together to provide a
 comprehensive cloud-management platform. For the higher-level data model — users,
-organizations, projects, and roles — see [Platform](../about/modules/platform.md).
+organizations, projects, and roles — see [Platform](../about/concepts/platform.md).
 
 ## Components
 

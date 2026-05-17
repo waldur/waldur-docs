@@ -2,7 +2,7 @@
 
 Define cost and usage policies on organization, project, or offering level to trigger
 actions when consumption crosses a threshold. For the concept and the trigger / action
-model, see [Policies](../../about/modules/policies.md).
+model, see [Policies](../../about/concepts/policies.md).
 
 ## Cost policies for organizations
 

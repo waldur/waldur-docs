@@ -1,7 +1,7 @@
 # Order management
 
 When a customer requests a resource from your offering, an order is created and
-moves through a fixed state machine — see [Order states](../../about/modules/lifecycle.md#order-states)
+moves through a fixed state machine — see [Order states](../../about/concepts/lifecycle.md#order-states)
 for the full diagram and the numeric state codes used by the API.
 
 ## Managing orders

@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-17T13:45:26.458529Z
+Generated: 2026-05-17T14:26:37.651196Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -257,7 +257,7 @@ Staff users can review and modify the defaults from the Waldur administration UI
 
 Waldur is composed of several runtime components that work together to provide a
 comprehensive cloud-management platform. For the higher-level data model — users,
-organizations, projects, and roles — see [Platform](../about/modules/platform.md).
+organizations, projects, and roles — see [Platform](../about/concepts/platform.md).
 
 ## Components
 
@@ -63400,7 +63400,7 @@ If configured in the **Assignment Configuration**:
 
 Define cost and usage policies on organization, project, or offering level to trigger
 actions when consumption crosses a threshold. For the concept and the trigger / action
-model, see [Policies](../../about/modules/policies.md).
+model, see [Policies](../../about/concepts/policies.md).
 
 ## Cost policies for organizations
 
@@ -64564,7 +64564,7 @@ Images provide visual representation and marketing appeal. Each image requires:
 # Order management
 
 When a customer requests a resource from your offering, an order is created and
-moves through a fixed state machine — see [Order states](../../about/modules/lifecycle.md#order-states)
+moves through a fixed state machine — see [Order states](../../about/concepts/lifecycle.md#order-states)
 for the full diagram and the numeric state codes used by the API.
 
 ## Managing orders
@@ -66766,6 +66766,783 @@ When debugging, you'll need to set the required environment variables. Upon laun
 
 ## About
 
+### Billing & invoicing
+<!-- Source: docs/about/concepts/billing.md -->
+
+# Billing & invoicing
+
+## Overview
+
+Waldur tracks the consumption of every [marketplace](marketplace.md) resource and turns it into invoice items, which roll up into monthly invoices per [organization](platform.md). Operators decide pricing in the offering's [plan](marketplace.md); consumers see what they will be charged before they order. Credits, compensations, and prepaid charges are first-class — they are extra invoice items, not a separate billing pipeline.
+
+## How a charge flows
+
+```d2
+direction: down
+classes: {
+  source:  { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  derived: { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+  output:  { style: { fill: "#e1f5fe"; stroke: "#0277bd" } }
+}
+
+plan: Plan\n(price per unit) { class: source }
+component: Component\n(metered unit) { class: source }
+usage: Component usage\n(reported by plugin) { class: source }
+
+item: Invoice item\n(price × usage × period) { class: derived }
+credit: Credit\n(prepaid balance) { class: derived }
+compensation: Compensation\n(adjustment) { class: derived }
+
+invoice: Monthly invoice { class: output }
+org: Organization { class: output; shape: person }
+
+plan -> item: rate
+component -> usage: meters
+usage -> item: quantity
+item -> invoice: appended
+credit -> invoice: offset
+compensation -> invoice: offset
+invoice -> org: billed
+```
+
+## Key concepts
+
+| Concept | One-liner | Reference |
+|---|---|---|
+| Invoice item | A single line on an invoice — one resource, one component, one period. | [Glossary](../terminology/glossary.md) |
+| Invoice | A monthly statement aggregating all invoice items for one organization. | [Admin guide](../../admin-guide/billing-and-accounting.md) |
+| Billing model | How an offering charges: monthly (limit-based) or prepaid (one-time + recurring). | [Admin guide](../../admin-guide/billing-and-accounting.md#billing-models) |
+| Period | The window an invoice item covers — month, quarter, year, or total. | [Glossary](../terminology/glossary.md) |
+| Credit | A prepaid balance attached to an organization or project that offsets future invoice items. | [User guide](../../user-guide/customer-organization/credit-management.md) |
+| Compensation | An ad-hoc adjustment (refund, discount) applied to an invoice. | — |
+
+## Billing models
+
+Two models cover almost every offering and can be mixed within a single offering:
+
+- **Monthly (limit-based)** — billed each month based on reserved limits; limits can change anytime and the current invoice is adjusted accordingly. Default for OpenStack tenants.
+- **Prepaid (one-time + recurring)** — billed upfront for the full subscription period (`price × limit × months`). An end date is required; mid-period limit changes create supplementary charges for the remaining time.
+
+A "Maximum total" limit period exists for flat one-time charges (consultancy hours, setup fees).
+
+## Lifecycle
+
+1. Provider creates an offering with components and a plan.
+2. Consumer orders a resource — see [Lifecycle](lifecycle.md).
+3. Plugin reports component usage on a schedule.
+4. Waldur creates or updates invoice items for the current period.
+5. At month end the invoice is closed; credits and compensations are applied.
+6. Operator exports the invoice (PDF/CSV/XLSX) or integrates with a payment provider via the API.
+
+## Related concepts
+
+- [Marketplace](marketplace.md) — where pricing is defined.
+- [Lifecycle](lifecycle.md) — what state changes trigger billing events.
+- [Policies](policies.md) — cap spend before the invoice is closed.
+- [Platform](platform.md) — who gets billed.
+
+---
+
+### Call management
+<!-- Source: docs/about/concepts/call-management.md -->
+
+# Call management
+
+## Overview
+
+Call management in Waldur enables organizations to manage resource allocation through a structured application proposals and review process. This feature is particularly useful for research institutions, funding agencies, and organizations that need to allocate computational or infrastructure resources through a competitive process.
+
+## Introduction
+
+Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the proposing organization that initiated the call. Allocations are granted to this project, and team members who submitted the proposal are added to the project, ensuring the resources are immediately ready for use.
+
+## Who does what
+
+For role definitions and the per-role permission matrix, see
+[Roles and permissions — User roles in Call management](../terminology/roles_and_permissions.md#user-roles-in-call-management).
+This page focuses on which role triggers which step of the call workflow:
+
+| Step in the workflow | Triggered by | Assigned by |
+| --- | --- | --- |
+| Register organization as a Call managing organization | Organization owner | Staff |
+| Create a call and define its purpose | Call organiser | Organization owner |
+| Configure rounds, request offerings, assign reviewers | Call manager | Call organiser |
+| Evaluate proposals, score, recommend approval | Call reviewer | Call manager |
+| Submit a proposal, request resources | Applicant | Self-registration |
+| Approve or reject offering requests for a call | Service Provider | Staff |
+
+## Workflow overview
+
+The call management process follows a sequential workflow:
+
+1. **Preparation**: Organization setup and role assignment (Organization owner → Call organiser → Call manager)
+2. **Call setup**: Creation of call framework by Call organiser and detailed configuration by Call Manager
+3. **Resource preparation**: Request and confirmation of offerings from service providers
+4. **Submission period**: Opening call for proposal submissions
+5. **Evaluation**: Review and assessment of submitted proposals
+6. **Decision**: Acceptance or rejection of proposals
+7. **Allocation**: Automatic provisioning of resources for approved proposals
+8. **Monitoring**: Oversight of active allocations and reporting
+
+```mermaid
+flowchart TD
+    %% Styling
+    classDef orgOwner fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef callOrg fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef callMgr fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef reviewer fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    classDef applicant fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    classDef provider fill:#f1f8e9,stroke:#558b2f,stroke-width:2px,color:#000
+    classDef system fill:#f5f5f5,stroke:#616161,stroke-width:2px,color:#000
+    classDef decision fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#000
+    
+    %% Row 1: Stakeholders (Horizontal)
+    subgraph stakeholders["👥 Key Stakeholders"]
+        direction LR
+        R1["👤 Organization Owner<br/> Organization setup & Role assignment"] --> R2["📋 Call organiser<br/>Create & Oversee calls"] 
+        R2 --> R3["⚙️ Call manager<br/>Configure & Manage"]
+        R3 --> R4["🔍 Reviewer<br/>Evaluate proposals"]
+        R4 --> R5["📝 Applicant<br/>Submit proposals"]
+        R5 --> R6["✅ Service provider<br/>Approve resources"]
+    end
+    
+    %% Row 2: Setup to Submission (Horizontal)
+    subgraph setup["🏗️ Setup & Submission phase"]
+        direction LR
+        A[📋 Call organiser<br/>Create Call] --> B[👨‍💼 Assign<br/>Call Manager]
+        B --> C[⚙️ Configure Round<br/>& Settings]
+        C --> D[📋 Request<br/>Offerings]
+        D --> E[✅ Provider<br/>Approve Resources]
+        E --> F[🚀 Activate<br/>Call]
+        F --> G[📝 Applicants<br/>Submit Proposals]
+    end
+    
+    %% Row 3: Review to Completion (Horizontal)
+    subgraph review["🔍 Review & Allocation Phase"]
+        direction LR
+        H{Review<br/>Assignment} -->|Auto| I[🤖 Auto-assign<br/>Reviews]
+        H -->|Manual| J[👨‍💼 Manual<br/>Assignment]
+        I --> K[🔍 Reviewers<br/>Evaluate]
+        J --> K
+        K --> L{Final<br/>Decision}
+        L -->|Manager| M[👨‍💼 Accept/<br/>Reject]
+        L -->|Auto| N[🤖 Auto-approve<br/>if Score ≥ Threshold]
+        M --> O{Approved?}
+        N --> O
+        O -->|Yes| P[🏗️ Create Project &<br/>Allocate Resources]
+        O -->|No| Q[❌ Notify<br/>Rejection]
+        P --> S[📊 Monitor &<br/>Report]
+        Q --> S
+    end
+    
+    %% Connections between rows
+    stakeholders -.-> A
+    G --> H
+    
+    %% Apply styles
+    class R1,A orgOwner
+    class R2,B callOrg
+    class R3,C,F,J,M callMgr
+    class R4,K reviewer
+    class R5,G applicant
+    class R6,E provider
+    class I,N,P system
+    class H,L,O decision
+```
+
+---
+
+### Identity
+<!-- Source: docs/about/concepts/identity.md -->
+
+# Identity
+
+## Overview
+
+Waldur ships its own [user](platform.md) directory but is almost always fronted by an external identity provider (IdP) — SAML2 federation, an OIDC provider like Keycloak, an LDAP service, or a national auth service. SCIM provisioning lets the IdP push users and groups into Waldur, and outbound entitlement sync lets Waldur push group membership to downstream systems. Pick the topology that matches your federation; the [platform](platform.md) role model is the same regardless.
+
+## Topology
+
+```d2
+direction: down
+classes: {
+  ext:    { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  waldur: { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
+  down:   { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+}
+
+idp: Identity provider\n(SAML / OIDC / LDAP) { class: ext }
+scim_in: SCIM source\n(IdP-side) { class: ext }
+
+waldur_auth: Waldur auth { class: waldur }
+waldur_users: Waldur user directory { class: waldur }
+waldur_groups: Roles & memberships { class: waldur }
+
+scim_out: SCIM consumer\n(downstream system) { class: down }
+freeipa: FreeIPA / LDAP\n(allocation backend) { class: down }
+
+idp -> waldur_auth: SSO login
+scim_in -> waldur_users: provision users & groups
+waldur_auth -> waldur_users: just-in-time create
+waldur_users -> waldur_groups: assigned roles
+waldur_groups -> scim_out: push entitlements
+waldur_groups -> freeipa: account / project sync
+```
+
+## Key concepts
+
+| Concept | One-liner | Reference |
+|---|---|---|
+| Identity provider | The external system a user authenticates against (SAML2, OIDC, LDAP). | [Admin guide](../../admin-guide/identities/summary.md) |
+| Just-in-time provisioning | Waldur creates a user record on first successful login. | — |
+| SCIM (inbound) | The IdP pushes user / group changes into Waldur. | [Admin guide](../../admin-guide/mastermind-configuration/scim-identity-provider.md) |
+| SCIM (outbound) | Waldur pushes role / group entitlements to downstream systems. | [Admin guide](../../admin-guide/mastermind-configuration/scim-integration.md) |
+| Offering user | A backend-specific account Waldur creates on the provider side (e.g. a FreeIPA user for SLURM). | [Admin guide](../../admin-guide/offering-users.md) |
+| Role mapping | Translation of IdP groups / claims into Waldur roles. | [Roles](../terminology/roles_and_permissions.md) |
+
+## Supported providers
+
+| Provider | Protocol | Typical use |
+|---|---|---|
+| eduGAIN | SAML2 | Research-and-education federation. |
+| eduTEAMS | OIDC | Group management for research collaborations. |
+| Keycloak | OIDC / SAML2 | Open-source IdP; common standalone choice. |
+| TARA | OIDC | Estonian state authentication. |
+| MyAccessID | OIDC | European HPC federation gateway. |
+| LDAP / LDAPS | LDAP | Existing enterprise directories. |
+| FreeIPA | REST | Identity sync to a FreeIPA-backed allocation system. |
+| Valimo, social | OIDC / proprietary | National mobile-ID and social logins. |
+
+Per-provider setup lives in [admin-guide / identities](../../admin-guide/identities/summary.md).
+
+## Choosing the right combination
+
+- **Single corporate IdP**: front Waldur with Keycloak or your SAML IdP; let JIT handle user creation.
+- **Federated research access**: front with eduGAIN or MyAccessID; consider SCIM inbound if the federation supports it.
+- **Sync to allocation backends**: enable outbound SCIM (for SaaS targets) or FreeIPA sync (for SLURM/HPC clusters).
+- **Hybrid**: combine inbound SCIM (authoritative user list) with SAML SSO (authoritative login) and outbound entitlement sync.
+
+## Related concepts
+
+- [Platform](platform.md) — what a Waldur user looks like once authenticated.
+- [Roles and permissions](../terminology/roles_and_permissions.md) — what role mapping resolves to.
+
+---
+
+### Resource lifecycle
+<!-- Source: docs/about/concepts/lifecycle.md -->
+
+# Resource lifecycle
+
+## Overview
+
+Every [marketplace](marketplace.md) order moves through a fixed state machine; once an order succeeds, the resource it creates has its own state machine. Operators and integrators rely on these two state machines to interpret webhook events, debug stuck provisioning, and write [policies](policies.md).
+
+## Order states
+
+```d2
+direction: right
+
+pending_consumer: pending\nconsumer
+pending_provider: pending\nprovider
+pending_project: pending\nproject
+pending_start: pending\nstart date
+executing
+done: done { style: { fill: "#c8e6c9" } }
+erred: erred { style: { fill: "#ffcdd2" } }
+canceled: canceled { style: { fill: "#eeeeee" } }
+rejected: rejected { style: { fill: "#ffcdd2" } }
+
+pending_consumer -> pending_provider: consumer approves
+pending_consumer -> rejected: consumer rejects
+pending_provider -> pending_project: provider approves
+pending_provider -> rejected: provider rejects
+pending_project -> pending_start: project approves
+pending_project -> rejected
+pending_start -> executing: start date reached
+executing -> done
+executing -> erred
+pending_consumer -> canceled: user cancels
+pending_provider -> canceled
+```
+
+| State | Code | Meaning |
+|---|---|---|
+| pending-consumer | 1 | Awaiting approval from the consumer organization. |
+| executing | 2 | Backend provisioning in progress. |
+| done | 3 | Resource provisioned successfully. |
+| erred | 4 | Provisioning failed; admin or retry needed. |
+| canceled | 5 | User canceled before processing. |
+| rejected | 6 | Approval denied. |
+| pending-provider | 7 | Awaiting approval from the service provider. |
+| pending-project | 8 | Awaiting in-project approval (when configured). |
+| pending-start-date | 9 | Approved but waiting for the configured start date. |
+
+## Resource states
+
+```d2
+direction: right
+
+creating: Creating
+ok: OK { style: { fill: "#c8e6c9" } }
+erred: Erred { style: { fill: "#ffcdd2" } }
+updating: Updating
+terminating: Terminating
+terminated: Terminated { style: { fill: "#eeeeee" } }
+
+creating -> ok
+creating -> erred
+ok -> updating: modify order
+updating -> ok
+updating -> erred
+ok -> terminating: terminate order
+terminating -> terminated
+terminating -> erred
+erred -> updating: retry
+erred -> terminating
+```
+
+| State | Code | Meaning |
+|---|---|---|
+| Creating | 1 | Initial provisioning underway. |
+| OK | 2 | Steady state; usage being reported. |
+| Erred | 3 | Last operation failed; resource is in an inconsistent state. |
+| Updating | 4 | A modify order is being applied. |
+| Terminating | 5 | Cleanup in progress. |
+| Terminated | 6 | Resource removed from the backend; record retained for billing. |
+
+## Recovering an erred order
+
+A staff user can retry an erred order from the UI or via the API. Retry locks the row, re-checks the state inside a transaction, and re-enqueues the backend operation — see the [backend concurrency guidance](../../developer-guide/core-concepts/marketplace-orders.md) for the implementation detail.
+
+## Related concepts
+
+- [Marketplace](marketplace.md) — where orders originate.
+- [Policies](policies.md) — automated reactions to state changes (e.g. terminate on overspend).
+- [Call management](call-management.md) — proposals that produce orders on approval.
+
+---
+
+### Marketplace
+<!-- Source: docs/about/concepts/marketplace.md -->
+
+# Marketplace
+
+## Overview
+
+The Waldur Marketplace is the catalog and order pipeline through which projects request resources from service providers. It connects the [platform primitives](platform.md) (users, organizations, projects) to backend systems (OpenStack, SLURM, Rancher, remote Waldur instances, and others) through a uniform offering → order → resource flow.
+
+## Architecture
+
+```d2
+direction: down
+classes: {
+  structure:    { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  catalog:      { style: { fill: "#e1f5fe"; stroke: "#0277bd" } }
+  provisioning: { style: { fill: "#fff3e0"; stroke: "#ef6c00" } }
+  billing:      { style: { fill: "#f3e5f5"; stroke: "#7b1fa2" } }
+}
+
+structure: Structure {
+  org: Organization { class: structure }
+  project: Project { class: structure }
+  user: User { class: structure }
+  org -> project: owns
+  user -> project: member of
+}
+
+catalog: Service catalogue {
+  offering: Offering { class: catalog }
+  plan: Plan { class: catalog }
+  plugin: Plugin { class: catalog }
+  offering -> plan: priced by
+  offering -> plugin: backed by
+}
+
+provisioning: Provisioning {
+  order: Order { class: provisioning }
+  resource: Resource { class: provisioning }
+  order -> resource: creates
+}
+
+billing: Billing {
+  invoice_item: Invoice item { class: billing }
+  invoice: Invoice { class: billing }
+  invoice_item -> invoice: rolls up to
+}
+
+structure.project -> provisioning.order: submits
+catalog.offering -> provisioning.order: ordered
+provisioning.resource -> billing.invoice_item: usage
+billing.invoice -> structure.org: billed to
+```
+
+The four boxes correspond to four Django apps: `structure`, `marketplace`, `marketplace.processors`, and `invoices`.
+
+## Key concepts
+
+| Concept | One-liner | Reference |
+|---|---|---|
+| Offering | A service published by a service provider (VM family, HPC allocation, ticket queue, ...). | [Glossary](../terminology/glossary.md) |
+| Plan | One pricing and limits option attached to an offering. | [Glossary](../terminology/glossary.md) |
+| Order | A request to provision, modify, or terminate a resource. | [Lifecycle](lifecycle.md) |
+| Resource | The provisioned instance produced by a fulfilled order. | [Lifecycle](lifecycle.md) |
+| Plugin | The backend integration that an offering binds to (OpenStack, SLURM, ...). | [Plugins](#plugins) |
+| Invoice item | The billing record generated from a resource's usage. | [Billing](../../admin-guide/billing-and-accounting.md) |
+
+## Offering requirements
+
+An offering becomes orderable once it has:
+
+- A **category** (controls where it appears in the catalogue).
+- One or more **plans** (defines pricing and limits).
+- **Components** (the metered or billed units — vCPU, GB-month, CPU-hours, ...).
+- A **plugin type** and matching service settings.
+- **Visibility** rules (public, per-customer, per-project).
+
+Custom request-form attributes are optional.
+
+## Plugins
+
+The Marketplace is plugin-driven. Plugins shipped with Waldur include:
+
+| Plugin | What it provisions |
+|---|---|
+| `openstack` | Tenants, VMs, volumes, networks, floating IPs |
+| `slurm` | HPC allocations (CPU/GPU hours, storage) |
+| `rancher` | Kubernetes clusters via Rancher |
+| `azure`, `vmware` | VMs on the respective backend |
+| `openportal` | Federated HPC accounts via the OpenPortal protocol |
+| `remote` | Resources hosted on another Waldur instance |
+| `support` | Ticket-backed offerings |
+| `script` | Arbitrary scripted provisioning |
+| `site-agent` | Anything brokered by `waldur-site-agent` |
+
+Service providers can add new plugins by implementing the marketplace processor interface — see the [developer guide](../../developer-guide/core-concepts/marketplace.md).
+
+## Approval and policies
+
+Orders may be auto-approved, gated by an organization owner, or vetoed by a [policy](policies.md) (cost limit, usage limit, blacklist). Per-project auto-approval is configurable.
+
+## Resource lifecycle
+
+Orders and resources have their own state machines — see the dedicated [Lifecycle page](lifecycle.md).
+
+## Related concepts
+
+- [Platform](platform.md) — users, organizations, projects.
+- [Call management](call-management.md) — proposal-driven allocation that ends in marketplace orders.
+- [Lifecycle](lifecycle.md) — order and resource state machines.
+
+## Examples
+
+!!! example "Requesting a VM"
+    1. Open the Marketplace and filter by **Virtual Machines**.
+    2. Pick an OpenStack offering and a plan.
+    3. Fill in the request form (name, SSH key, flavor).
+    4. Submit. After approval, the VM appears in the project.
+
+!!! example "HPC allocation"
+    1. Open the SLURM allocation under the project.
+    2. Check current CPU-hour and storage usage.
+    3. Modify the resource to request more hours if needed.
+
+!!! tip "Cost control"
+    Use [policies](policies.md) to cap monthly spend per project rather than relying on after-the-fact invoice review.
+
+---
+
+### Platform
+<!-- Source: docs/about/concepts/platform.md -->
+
+# Platform
+
+## Overview
+
+Waldur organizes everything around three primitives: **users**, **organizations**, and **projects**. Users get roles inside organizations or projects; resources are grouped under projects; organizations carry the contractual and financial responsibility. Every other Waldur concept — marketplace orders, calls, invoices, policies, quotas — binds to one of these three.
+
+## Structure
+
+```d2
+direction: right
+classes: {
+  primitive: { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  derived: { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+}
+
+user: User { class: primitive; shape: person }
+org: Organization { class: primitive }
+project: Project { class: primitive }
+role: Role { class: derived }
+resource: Resource { class: derived }
+invoice: Invoice { class: derived }
+
+user -> role: assigned
+role -> org: scoped to
+role -> project: scoped to
+org -> project: owns
+project -> resource: contains
+org -> invoice: billed
+resource -> invoice: charged via items
+```
+
+## Key concepts
+
+| Concept | One-liner | Reference |
+|---|---|---|
+| User | A person or robot account; may hold global roles (staff, support). | [Glossary](../terminology/glossary.md) |
+| Organization | A legal entity acting as a customer, a service provider, or both. | [Glossary](../terminology/glossary.md) |
+| Project | An access-controlled container for resources inside an organization. | [Glossary](../terminology/glossary.md) |
+| Role | A named bundle of permissions, scoped to an organization or a project. | [Roles & permissions](../terminology/roles_and_permissions.md) |
+| Resource | A provisioned service instance (VM, HPC allocation, storage volume, ...). | [Marketplace](marketplace.md) |
+| Quota | An enforced upper bound on a measurable property within a scope. | [Admin guide](../../admin-guide/mastermind-configuration/configuration-guide.md) |
+
+## Installation types
+
+Waldur reuses the same primitives across three common installation types:
+
+| Type | Typical operator | What an Organization is | What a Project is |
+|---|---|---|---|
+| Cloud | Commercial or government IaaS | Customer company or agency | Tenant or environment |
+| Academic | Single university or research infra | Department or institute | Research group, lab, course |
+| Academic shared | Multi-institution federation | Always also a service provider | Allocation granted by a federated allocator |
+
+The role matrix for each shape — Owner, PI, Service Manager, etc. — is documented in [Roles & permissions](../terminology/roles_and_permissions.md).
+
+## Related concepts
+
+- [Marketplace](marketplace.md) — how a project obtains a resource.
+- [Lifecycle](lifecycle.md) — what happens to that resource over time.
+- [Billing](billing.md) — what the organization is invoiced for.
+- [Quotas](quotas.md) — up-front bounds on usage per scope.
+- [Policies](policies.md) — automated reactions when limits are crossed.
+- [Identity](identity.md) — how users get into Waldur.
+- [Support](support.md) — how tickets reach the right team.
+- [Call management](call-management.md) — how allocations are awarded through a structured proposal process.
+
+---
+
+### Policies
+<!-- Source: docs/about/concepts/policies.md -->
+
+# Policies
+
+## Overview
+
+Policies are automated reactions to events on [marketplace](marketplace.md) resources — typically to cap cost, cap usage, or terminate a misbehaving resource. They run alongside [quotas](quotas.md): a quota refuses an action up front, a policy reacts to facts after the fact within a period (this month's spend, this quarter's CPU-hours, this year's storage).
+
+## Model
+
+```d2
+direction: right
+classes: {
+  scope:   { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  policy:  { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+  action:  { style: { fill: "#e1f5fe"; stroke: "#0277bd" } }
+}
+
+org: Organization { class: scope }
+project: Project { class: scope }
+offering: Offering { class: scope }
+
+policy: Policy { class: policy }
+trigger: Trigger\n(invoice item, usage report) { class: policy }
+period: Period\n(month / quarter / year / total) { class: policy }
+
+notify: Notify { class: action }
+block: Block further orders { class: action }
+terminate: Terminate resources { class: action }
+
+org -> policy: attached to
+project -> policy
+offering -> policy
+trigger -> policy: evaluated by
+period -> policy: scoped to
+policy -> notify
+policy -> block
+policy -> terminate
+```
+
+## Key concepts
+
+| Concept | One-liner |
+|---|---|
+| Policy | A rule attached to a project, customer, or offering scope. |
+| Trigger | The signal that evaluates the policy — typically a new invoice item or usage report. |
+| Period | The window the trigger sums data over — month, quarter, year, or total. |
+| Action | What happens when the policy fires. |
+| Action type | **Threshold** (warn at N%, fire at 100%) or **immediate** (act the moment a condition is met). |
+
+## Action catalogue
+
+| Action | Effect |
+|---|---|
+| Notify project / customer | Email the project members or organization owners. |
+| Block creation of new resources | Refuse new orders on the affected scope. |
+| Terminate resources | Cancel running resources to stop the bleeding. |
+| Block SLURM jobs | (HPC) Pause new job submissions until consumption drops. |
+| Custom | Any action wired in via the policy plugin interface. |
+
+A single policy can attach multiple actions.
+
+## Lifecycle
+
+1. Staff (or organization owner, for project-scoped policies) defines a policy: scope, trigger, limit, period, actions.
+2. Waldur evaluates the policy each time a new trigger arrives (e.g. an invoice item is written, a SLURM usage report is ingested).
+3. When the threshold is crossed, the configured actions execute. A `has_fired` flag prevents repeated firing in the same period.
+4. At the next period boundary the flag resets.
+
+## Related concepts
+
+- [Quotas](quotas.md) — up-front bounds; pair with policies for defence in depth.
+- [Marketplace](marketplace.md) — what policies guard.
+- [Billing](billing.md) — invoice items are the primary trigger for cost policies.
+- [Lifecycle](lifecycle.md) — the resource state transitions an "immediate" policy can drive.
+
+---
+
+### Quotas
+<!-- Source: docs/about/concepts/quotas.md -->
+
+# Quotas
+
+## Overview
+
+Quotas are hard upper bounds on a measurable property within a scope — e.g. "this project can hold at most 20 VMs" or "this organization can use at most 500 vCPU". A quota refuses an action up front when the new value would exceed the limit. Quotas complement [policies](policies.md): a policy reacts after the fact (notify, terminate, block further orders), a quota stops the action before it happens.
+
+## Model
+
+```d2
+direction: right
+classes: {
+  scope: { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  q:     { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+}
+
+org: Organization { class: scope }
+project: Project { class: scope }
+offering: Offering { class: scope }
+
+q1: vCPU quota { class: q }
+q2: VM count quota { class: q }
+q3: Project count quota { class: q }
+
+org -> q1: limit + usage
+project -> q2: limit + usage
+org -> q3: limit + usage
+offering -> q1: contributes usage
+```
+
+A quota record is `(scope, name, limit, usage)`. Usage is recomputed from the current state of resources; the limit is set by an operator.
+
+## Key concepts
+
+| Concept | One-liner |
+|---|---|
+| Scope | The object the quota attaches to — organization, project, or offering. |
+| Limit | The maximum permitted value. `-1` means unlimited. |
+| Usage | The current measured value, derived from resources in scope. |
+| Enforcement point | The view or service action that calls `validate_quota_change()` before mutating state. |
+| Soft / hard | Some quotas allow brief overage (soft); most refuse the change (hard). |
+
+## Quotas vs. policies vs. plan limits
+
+| Mechanism | Decides when | Failure mode |
+|---|---|---|
+| **Plan limit** | At order time — what the user can request from this offering. | Order request rejected by the marketplace form. |
+| **Quota** | At resource mutation — would this push the scope's usage over the limit? | Action refused with a 400; no state change. |
+| **Policy** | After the fact — has usage / cost crossed a threshold within a period? | Notification, block further orders, terminate, or other configured action. |
+
+All three can be in play at once. The order of operations is plan → quota → action → policy.
+
+## Operating quotas
+
+- Set per-organization defaults at offering time (provider) or organization onboarding (operator).
+- Override per project to give a team more headroom without inflating the organization-wide cap.
+- Quota usage is exposed in the API and on every project / organization dashboard.
+
+## Related concepts
+
+- [Policies](policies.md) — post-hoc enforcement on cost or usage.
+- [Marketplace](marketplace.md) — where plan limits originate.
+- [Platform](platform.md) — the scopes a quota can attach to.
+
+---
+
+### Support
+<!-- Source: docs/about/concepts/support.md -->
+
+# Support
+
+## Overview
+
+Waldur exposes a "Support" interface so consumers and providers can raise tickets without leaving the portal. Tickets can live entirely inside Waldur or be brokered to an external service desk (Jira Service Management, Zammad, SMAX). The ticket lifecycle is the same regardless of backend — what changes is where the canonical record lives.
+
+## Topology
+
+```d2
+direction: down
+classes: {
+  ui:      { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
+  waldur:  { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
+  ext:     { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+}
+
+user: User { class: ui; shape: person }
+homeport: Homeport\nSupport view { class: ui }
+
+waldur_support: Waldur support backend { class: waldur }
+
+jira: Jira Service Management { class: ext }
+zammad: Zammad { class: ext }
+smax: SMAX { class: ext }
+builtin: Built-in tickets\n(stored in Waldur) { class: ext }
+
+user -> homeport
+homeport -> waldur_support: create / comment / close
+waldur_support -> jira: sync (configurable)
+waldur_support -> zammad: sync
+waldur_support -> smax: sync
+waldur_support -> builtin: store locally
+```
+
+## Key concepts
+
+| Concept | One-liner |
+|---|---|
+| Issue | A single ticket, with a type (incident, request, change, ...). |
+| Comment | A reply on an issue, by the reporter or staff. |
+| Attachment | A file attached to an issue or comment. |
+| Backend | The system of record — built-in, Jira, Zammad, or SMAX. |
+| Mapping | How Waldur issue types and statuses translate to the backend's. |
+
+## Backends at a glance
+
+| Backend | When to use | Where data lives |
+|---|---|---|
+| Built-in | Small deployments; no existing service desk. | Waldur DB. |
+| Jira SM | Existing Atlassian estate; rich SLA tooling. | Jira. |
+| Zammad | Open-source preference; multi-channel support. | Zammad. |
+| SMAX | Enterprise ITSM integration. | SMAX. |
+
+Setup lives in [admin-guide / service-desk](../../user-guide/staff-users/service-desk/service-desk-config.md) and the [integrations/service-desk](../../integrations/service-desk/service-desk-integrations.md) area for SMAX specifics.
+
+## Lifecycle
+
+1. User opens **Support** in the portal and creates an issue.
+2. Waldur posts the issue to the configured backend; the backend assigns an ID and returns it.
+3. Comments and status changes sync bidirectionally on the configured cadence.
+4. When the backend marks the issue resolved, Waldur reflects it in the portal.
+
+A status mismatch usually means the type/status mapping is out of date — see the per-backend configuration page.
+
+## Related concepts
+
+- [Platform](platform.md) — who can see which tickets (role-scoped).
+- [Marketplace](marketplace.md) — "support" can also be an offering type, with each order opening a ticket.
+
+---
+
 ### Contributing
 <!-- Source: docs/about/contributing.md -->
 
@@ -67152,430 +67929,6 @@ Token counts vary based on documentation updates. The llms-full.txt file is larg
 - [llms.txt Specification](https://llmstxt.org/)
 - [Waldur MCP Server](../integrations/waldur-mcp-server/README.md) - Model Context Protocol integration
 - [API Documentation](../integrator-guide/APIs/api.md) - REST API reference
-
----
-
-### Call management
-<!-- Source: docs/about/modules/call-management.md -->
-
-# Call management
-
-## Overview
-
-Call management in Waldur enables organizations to manage resource allocation through a structured application proposals and review process. This feature is particularly useful for research institutions, funding agencies, and organizations that need to allocate computational or infrastructure resources through a competitive process.
-
-## Introduction
-
-Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the proposing organization that initiated the call. Allocations are granted to this project, and team members who submitted the proposal are added to the project, ensuring the resources are immediately ready for use.
-
-## Who does what
-
-For role definitions and the per-role permission matrix, see
-[Roles and permissions — User roles in Call management](../terminology/roles_and_permissions.md#user-roles-in-call-management).
-This page focuses on which role triggers which step of the call workflow:
-
-| Step in the workflow | Triggered by | Assigned by |
-| --- | --- | --- |
-| Register organization as a Call managing organization | Organization owner | Staff |
-| Create a call and define its purpose | Call organiser | Organization owner |
-| Configure rounds, request offerings, assign reviewers | Call manager | Call organiser |
-| Evaluate proposals, score, recommend approval | Call reviewer | Call manager |
-| Submit a proposal, request resources | Applicant | Self-registration |
-| Approve or reject offering requests for a call | Service Provider | Staff |
-
-## Workflow overview
-
-The call management process follows a sequential workflow:
-
-1. **Preparation**: Organization setup and role assignment (Organization owner → Call organiser → Call manager)
-2. **Call setup**: Creation of call framework by Call organiser and detailed configuration by Call Manager
-3. **Resource preparation**: Request and confirmation of offerings from service providers
-4. **Submission period**: Opening call for proposal submissions
-5. **Evaluation**: Review and assessment of submitted proposals
-6. **Decision**: Acceptance or rejection of proposals
-7. **Allocation**: Automatic provisioning of resources for approved proposals
-8. **Monitoring**: Oversight of active allocations and reporting
-
-```mermaid
-flowchart TD
-    %% Styling
-    classDef orgOwner fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
-    classDef callOrg fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    classDef callMgr fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
-    classDef reviewer fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
-    classDef applicant fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
-    classDef provider fill:#f1f8e9,stroke:#558b2f,stroke-width:2px,color:#000
-    classDef system fill:#f5f5f5,stroke:#616161,stroke-width:2px,color:#000
-    classDef decision fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#000
-    
-    %% Row 1: Stakeholders (Horizontal)
-    subgraph stakeholders["👥 Key Stakeholders"]
-        direction LR
-        R1["👤 Organization Owner<br/> Organization setup & Role assignment"] --> R2["📋 Call organiser<br/>Create & Oversee calls"] 
-        R2 --> R3["⚙️ Call manager<br/>Configure & Manage"]
-        R3 --> R4["🔍 Reviewer<br/>Evaluate proposals"]
-        R4 --> R5["📝 Applicant<br/>Submit proposals"]
-        R5 --> R6["✅ Service provider<br/>Approve resources"]
-    end
-    
-    %% Row 2: Setup to Submission (Horizontal)
-    subgraph setup["🏗️ Setup & Submission phase"]
-        direction LR
-        A[📋 Call organiser<br/>Create Call] --> B[👨‍💼 Assign<br/>Call Manager]
-        B --> C[⚙️ Configure Round<br/>& Settings]
-        C --> D[📋 Request<br/>Offerings]
-        D --> E[✅ Provider<br/>Approve Resources]
-        E --> F[🚀 Activate<br/>Call]
-        F --> G[📝 Applicants<br/>Submit Proposals]
-    end
-    
-    %% Row 3: Review to Completion (Horizontal)
-    subgraph review["🔍 Review & Allocation Phase"]
-        direction LR
-        H{Review<br/>Assignment} -->|Auto| I[🤖 Auto-assign<br/>Reviews]
-        H -->|Manual| J[👨‍💼 Manual<br/>Assignment]
-        I --> K[🔍 Reviewers<br/>Evaluate]
-        J --> K
-        K --> L{Final<br/>Decision}
-        L -->|Manager| M[👨‍💼 Accept/<br/>Reject]
-        L -->|Auto| N[🤖 Auto-approve<br/>if Score ≥ Threshold]
-        M --> O{Approved?}
-        N --> O
-        O -->|Yes| P[🏗️ Create Project &<br/>Allocate Resources]
-        O -->|No| Q[❌ Notify<br/>Rejection]
-        P --> S[📊 Monitor &<br/>Report]
-        Q --> S
-    end
-    
-    %% Connections between rows
-    stakeholders -.-> A
-    G --> H
-    
-    %% Apply styles
-    class R1,A orgOwner
-    class R2,B callOrg
-    class R3,C,F,J,M callMgr
-    class R4,K reviewer
-    class R5,G applicant
-    class R6,E provider
-    class I,N,P system
-    class H,L,O decision
-```
-
----
-
-### Resource lifecycle
-<!-- Source: docs/about/modules/lifecycle.md -->
-
-# Resource lifecycle
-
-## Overview
-
-Every [marketplace](marketplace.md) order moves through a fixed state machine; once an order succeeds, the resource it creates has its own state machine. Operators and integrators rely on these two state machines to interpret webhook events, debug stuck provisioning, and write [policies](policies.md).
-
-## Order states
-
-```d2
-direction: right
-
-pending_consumer: pending\nconsumer
-pending_provider: pending\nprovider
-pending_project: pending\nproject
-pending_start: pending\nstart date
-executing
-done: done { style: { fill: "#c8e6c9" } }
-erred: erred { style: { fill: "#ffcdd2" } }
-canceled: canceled { style: { fill: "#eeeeee" } }
-rejected: rejected { style: { fill: "#ffcdd2" } }
-
-pending_consumer -> pending_provider: consumer approves
-pending_consumer -> rejected: consumer rejects
-pending_provider -> pending_project: provider approves
-pending_provider -> rejected: provider rejects
-pending_project -> pending_start: project approves
-pending_project -> rejected
-pending_start -> executing: start date reached
-executing -> done
-executing -> erred
-pending_consumer -> canceled: user cancels
-pending_provider -> canceled
-```
-
-| State | Code | Meaning |
-|---|---|---|
-| pending-consumer | 1 | Awaiting approval from the consumer organization. |
-| executing | 2 | Backend provisioning in progress. |
-| done | 3 | Resource provisioned successfully. |
-| erred | 4 | Provisioning failed; admin or retry needed. |
-| canceled | 5 | User canceled before processing. |
-| rejected | 6 | Approval denied. |
-| pending-provider | 7 | Awaiting approval from the service provider. |
-| pending-project | 8 | Awaiting in-project approval (when configured). |
-| pending-start-date | 9 | Approved but waiting for the configured start date. |
-
-## Resource states
-
-```d2
-direction: right
-
-creating: Creating
-ok: OK { style: { fill: "#c8e6c9" } }
-erred: Erred { style: { fill: "#ffcdd2" } }
-updating: Updating
-terminating: Terminating
-terminated: Terminated { style: { fill: "#eeeeee" } }
-
-creating -> ok
-creating -> erred
-ok -> updating: modify order
-updating -> ok
-updating -> erred
-ok -> terminating: terminate order
-terminating -> terminated
-terminating -> erred
-erred -> updating: retry
-erred -> terminating
-```
-
-| State | Code | Meaning |
-|---|---|---|
-| Creating | 1 | Initial provisioning underway. |
-| OK | 2 | Steady state; usage being reported. |
-| Erred | 3 | Last operation failed; resource is in an inconsistent state. |
-| Updating | 4 | A modify order is being applied. |
-| Terminating | 5 | Cleanup in progress. |
-| Terminated | 6 | Resource removed from the backend; record retained for billing. |
-
-## Recovering an erred order
-
-A staff user can retry an erred order from the UI or via the API. Retry locks the row, re-checks the state inside a transaction, and re-enqueues the backend operation — see the [backend concurrency guidance](../../developer-guide/core-concepts/marketplace-orders.md) for the implementation detail.
-
-## Related concepts
-
-- [Marketplace](marketplace.md) — where orders originate.
-- [Policies](policies.md) — automated reactions to state changes (e.g. terminate on overspend).
-- [Call management](call-management.md) — proposals that produce orders on approval.
-
----
-
-### Marketplace
-<!-- Source: docs/about/modules/marketplace.md -->
-
-# Marketplace
-
-## Overview
-
-The Waldur Marketplace is the catalog and order pipeline through which projects request resources from service providers. It connects the [platform primitives](platform.md) (users, organizations, projects) to backend systems (OpenStack, SLURM, Rancher, remote Waldur instances, and others) through a uniform offering → order → resource flow.
-
-## Architecture
-
-```d2
-direction: down
-classes: {
-  structure:    { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  catalog:      { style: { fill: "#e1f5fe"; stroke: "#0277bd" } }
-  provisioning: { style: { fill: "#fff3e0"; stroke: "#ef6c00" } }
-  billing:      { style: { fill: "#f3e5f5"; stroke: "#7b1fa2" } }
-}
-
-structure: Structure {
-  org: Organization { class: structure }
-  project: Project { class: structure }
-  user: User { class: structure }
-  org -> project: owns
-  user -> project: member of
-}
-
-catalog: Service catalogue {
-  offering: Offering { class: catalog }
-  plan: Plan { class: catalog }
-  plugin: Plugin { class: catalog }
-  offering -> plan: priced by
-  offering -> plugin: backed by
-}
-
-provisioning: Provisioning {
-  order: Order { class: provisioning }
-  resource: Resource { class: provisioning }
-  order -> resource: creates
-}
-
-billing: Billing {
-  invoice_item: Invoice item { class: billing }
-  invoice: Invoice { class: billing }
-  invoice_item -> invoice: rolls up to
-}
-
-structure.project -> provisioning.order: submits
-catalog.offering -> provisioning.order: ordered
-provisioning.resource -> billing.invoice_item: usage
-billing.invoice -> structure.org: billed to
-```
-
-The four boxes correspond to four Django apps: `structure`, `marketplace`, `marketplace.processors`, and `invoices`.
-
-## Key concepts
-
-| Concept | One-liner | Reference |
-|---|---|---|
-| Offering | A service published by a service provider (VM family, HPC allocation, ticket queue, ...). | [Glossary](../terminology/glossary.md) |
-| Plan | One pricing and limits option attached to an offering. | [Glossary](../terminology/glossary.md) |
-| Order | A request to provision, modify, or terminate a resource. | [Lifecycle](lifecycle.md) |
-| Resource | The provisioned instance produced by a fulfilled order. | [Lifecycle](lifecycle.md) |
-| Plugin | The backend integration that an offering binds to (OpenStack, SLURM, ...). | [Plugins](#plugins) |
-| Invoice item | The billing record generated from a resource's usage. | [Billing](../../admin-guide/billing-and-accounting.md) |
-
-## Offering requirements
-
-An offering becomes orderable once it has:
-
-- A **category** (controls where it appears in the catalogue).
-- One or more **plans** (defines pricing and limits).
-- **Components** (the metered or billed units — vCPU, GB-month, CPU-hours, ...).
-- A **plugin type** and matching service settings.
-- **Visibility** rules (public, per-customer, per-project).
-
-Custom request-form attributes are optional.
-
-## Plugins
-
-The Marketplace is plugin-driven. Plugins shipped with Waldur include:
-
-| Plugin | What it provisions |
-|---|---|
-| `openstack` | Tenants, VMs, volumes, networks, floating IPs |
-| `slurm` | HPC allocations (CPU/GPU hours, storage) |
-| `rancher` | Kubernetes clusters via Rancher |
-| `azure`, `vmware` | VMs on the respective backend |
-| `openportal` | Federated HPC accounts via the OpenPortal protocol |
-| `remote` | Resources hosted on another Waldur instance |
-| `support` | Ticket-backed offerings |
-| `script` | Arbitrary scripted provisioning |
-| `site-agent` | Anything brokered by `waldur-site-agent` |
-
-Service providers can add new plugins by implementing the marketplace processor interface — see the [developer guide](../../developer-guide/core-concepts/marketplace.md).
-
-## Approval and policies
-
-Orders may be auto-approved, gated by an organization owner, or vetoed by a [policy](policies.md) (cost limit, usage limit, blacklist). Per-project auto-approval is configurable.
-
-## Resource lifecycle
-
-Orders and resources have their own state machines — see the dedicated [Lifecycle page](lifecycle.md).
-
-## Related concepts
-
-- [Platform](platform.md) — users, organizations, projects.
-- [Call management](call-management.md) — proposal-driven allocation that ends in marketplace orders.
-- [Lifecycle](lifecycle.md) — order and resource state machines.
-
-## Examples
-
-!!! example "Requesting a VM"
-    1. Open the Marketplace and filter by **Virtual Machines**.
-    2. Pick an OpenStack offering and a plan.
-    3. Fill in the request form (name, SSH key, flavor).
-    4. Submit. After approval, the VM appears in the project.
-
-!!! example "HPC allocation"
-    1. Open the SLURM allocation under the project.
-    2. Check current CPU-hour and storage usage.
-    3. Modify the resource to request more hours if needed.
-
-!!! tip "Cost control"
-    Use [policies](policies.md) to cap monthly spend per project rather than relying on after-the-fact invoice review.
-
----
-
-### Platform
-<!-- Source: docs/about/modules/platform.md -->
-
-# Platform
-
-## Overview
-
-Waldur organizes everything around three primitives: **users**, **organizations**, and **projects**. Users get roles inside organizations or projects; resources are grouped under projects; organizations carry the contractual and financial responsibility. Every other Waldur concept — marketplace orders, calls, invoices, policies, quotas — binds to one of these three.
-
-## Structure
-
-```d2
-direction: right
-classes: {
-  primitive: { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  derived: { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
-}
-
-user: User { class: primitive; shape: person }
-org: Organization { class: primitive }
-project: Project { class: primitive }
-role: Role { class: derived }
-resource: Resource { class: derived }
-invoice: Invoice { class: derived }
-
-user -> role: assigned
-role -> org: scoped to
-role -> project: scoped to
-org -> project: owns
-project -> resource: contains
-org -> invoice: billed
-resource -> invoice: charged via items
-```
-
-## Key concepts
-
-| Concept | One-liner | Reference |
-|---|---|---|
-| User | A person or robot account; may hold global roles (staff, support). | [Glossary](../terminology/glossary.md) |
-| Organization | A legal entity acting as a customer, a service provider, or both. | [Glossary](../terminology/glossary.md) |
-| Project | An access-controlled container for resources inside an organization. | [Glossary](../terminology/glossary.md) |
-| Role | A named bundle of permissions, scoped to an organization or a project. | [Roles & permissions](../terminology/roles_and_permissions.md) |
-| Resource | A provisioned service instance (VM, HPC allocation, storage volume, ...). | [Marketplace](marketplace.md) |
-| Quota | An enforced upper bound on a measurable property within a scope. | [Admin guide](../../admin-guide/mastermind-configuration/configuration-guide.md) |
-
-## Installation types
-
-Waldur reuses the same primitives across three common installation types:
-
-| Type | Typical operator | What an Organization is | What a Project is |
-|---|---|---|---|
-| Cloud | Commercial or government IaaS | Customer company or agency | Tenant or environment |
-| Academic | Single university or research infra | Department or institute | Research group, lab, course |
-| Academic shared | Multi-institution federation | Always also a service provider | Allocation granted by a federated allocator |
-
-The role matrix for each shape — Owner, PI, Service Manager, etc. — is documented in [Roles & permissions](../terminology/roles_and_permissions.md).
-
-## Related concepts
-
-- [Marketplace](marketplace.md) — how a project obtains a resource.
-- [Call management](call-management.md) — how allocations are awarded through a structured proposal process.
-
----
-
-### Policies
-<!-- Source: docs/about/modules/policies.md -->
-
-# Policies
-
-!!! note "Draft"
-    This page is a placeholder. Full content arrives with the next concept-page batch.
-
-## Overview
-
-Policies are rules that automatically react to events on [marketplace](marketplace.md) resources — typically to cap cost, cap usage, or terminate a misbehaving resource. They run alongside [quotas](platform.md#key-concepts): a quota refuses an action up front, a policy reacts to facts after the fact.
-
-## Key concepts
-
-| Concept | One-liner |
-|---|---|
-| Policy | A rule attached to a project, customer, or offering scope. |
-| Trigger | The signal that evaluates the policy (e.g. an invoice item being written). |
-| Action | What happens when the policy fires — threshold notification or immediate enforcement (block, terminate, ...). |
-| Period | The window over which the trigger sums data — monthly, quarterly, annual, or total. |
-
-## Related concepts
-
-- [Marketplace](marketplace.md) — what policies guard.
-- [Lifecycle](lifecycle.md) — the resource state transitions a policy can drive.
 
 ---
 
