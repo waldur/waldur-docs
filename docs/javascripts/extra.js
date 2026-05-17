@@ -114,7 +114,6 @@ function initSearchFilters() {
         'admin-guide/mastermind-configuration/',
         'admin-guide/providers/site-agent/',
         'admin-guide/waldur-shell/',
-        'admin-guide/waldur-roles/',
         'developer-guide/core-concepts/',
         'developer-guide/plugins/',
         'developer-guide/ui/',
@@ -133,7 +132,6 @@ function initSearchFilters() {
         'admin-guide/deployment/',
         'admin-guide/debugging/',
         'admin-guide/rke2-setup/',
-        'admin-guide/managing-with-ansible/',
         'developer-guide/guides/',
         'integrator-guide/ansible/',
         'integrator-guide/SDK-Examples/'

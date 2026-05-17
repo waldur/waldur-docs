@@ -25,10 +25,6 @@ Example configuration is below, please adjust to your specific deployment. Once 
 visible at Waldur deployment URL: ``https://waldur.example.com/api-auth/saml2/metadata/``. That data needs to be
 propagated to the federation operator for inclusion into the federation.
 
-!!! tip
-    [Managed ansible](../managing-with-ansible.md) simplifies configuration of the eduGAIN integration and should
-    be a preferred method for all supported deployments.
-
 ```python
 import datetime
 
