@@ -21,10 +21,6 @@ The most typical aspects for configuration are:
 - Configuring [identity providers](../admin-guide/identities/summary.md). Waldur supports a range of OIDC and SAML based IdPs.
 - [Adding offerings](../user-guide/service-provider-organization/adding-an-offering.md) for sharing among Waldur users.
 
-!!! tip
-    For easier management of Waldur deployments and configuration we
-    provide [Ansible playbooks](../admin-guide/managing-with-ansible.md).
-
 ## Profit
 
 You are done! If you are happy and want to support the project, make sure you check the [support page](support.md).
