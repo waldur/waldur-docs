@@ -1,42 +1,47 @@
 # Architecture
 
-Waldur is composed of several components that work together to provide a comprehensive cloud management platform.
+Waldur is composed of several runtime components that work together to provide a
+comprehensive cloud-management platform. For the higher-level data model — users,
+organizations, projects, and roles — see [Platform](../about/modules/platform.md).
 
 ## Components
 
-- **Homeport** (web client, graphical interface) - React application
-- **Waldur site agent** - Remote agent for managing provider resources and synchronizing data
-- **Mastermind API server** - Django/Django REST Framework application implementing the core business logic
-- **Celery workers** - Background processing of tasks
-- **Celery beat** - Scheduling of periodic tasks for background processing
-- **PostgreSQL database** - Storing persistent data, also serves as Celery result store in Kubernetes deployment
-- **RabbitMQ** - Tasks queue and result store for Celery
+- **Homeport** (web client) — React single-page application.
+- **Mastermind API server** — Django + Django REST Framework application implementing the business logic.
+- **Celery workers** — background processing of tasks.
+- **Celery beat** — scheduler for periodic tasks.
+- **PostgreSQL** — persistent storage; also serves as the Celery result store in Kubernetes deployments.
+- **RabbitMQ** — task queue and result store for Celery.
+- **Waldur site agent** — remote agent that manages provider resources and synchronises data on the provider side.
 
-## Architecture diagram
+## Runtime topology
 
-```mermaid
-flowchart TD
-    User[👤 User] --> Browser[🌐 Web Browser]
-    Browser --> |Sends request| Homeport[🏠 Homeport<br/>React Application]
-    Homeport --> |API calls| API[🔧 Mastermind API<br/>Django/DRF Server]
-    
-    Agent[🤖 Waldur Site Agent<br/>Remote Resource Manager] --> |API calls| API
-    
-    API --> |Saves data| DB[(🗄️ PostgreSQL<br/>Database)]
-    API --> |Pushes tasks| Queue[📋 Task Queue<br/>RabbitMQ]
-    
-    Worker[⚙️ Celery Worker<br/>Background Processing] --> |Pulls tasks| Queue
-    Worker --> |Saves results| DB
-    
-    Beat[⏰ Celery Beat<br/>Task Scheduler] --> |Schedules periodic tasks| Queue
-    
-    classDef frontend fill:#d5e8d4,stroke:#82b366,stroke-width:2px
-    classDef backend fill:#dae8fc,stroke:#6c8ebf,stroke-width:2px
-    classDef infrastructure fill:#fff2cc,stroke:#d6b656,stroke-width:2px
-    classDef agent fill:#f8cecc,stroke:#b85450,stroke-width:2px
-    
-    class User,Browser,Homeport frontend
-    class API,Worker,Beat backend
-    class DB,Queue infrastructure
-    class Agent agent
+```d2
+direction: down
+classes: {
+  frontend:      { style: { fill: "#d5e8d4"; stroke: "#82b366" } }
+  backend:       { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
+  infra:         { style: { fill: "#fff2cc"; stroke: "#d6b656" } }
+  agent:         { style: { fill: "#f8cecc"; stroke: "#b85450" } }
+}
+
+user: User { class: frontend; shape: person }
+browser: Web browser { class: frontend }
+homeport: Homeport\n(React SPA) { class: frontend }
+api: Mastermind API\n(Django + DRF) { class: backend }
+worker: Celery worker { class: backend }
+beat: Celery beat { class: backend }
+db: PostgreSQL { class: infra; shape: cylinder }
+queue: RabbitMQ { class: infra; shape: queue }
+agent: Waldur site agent\n(remote) { class: agent }
+
+user -> browser
+browser -> homeport: serves SPA
+homeport -> api: REST calls
+agent -> api: REST calls
+api -> db: persist
+api -> queue: enqueue tasks
+worker -> queue: pull
+worker -> db: write results
+beat -> queue: enqueue periodic
 ```
