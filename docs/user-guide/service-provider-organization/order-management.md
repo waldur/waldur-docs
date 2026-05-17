@@ -1,18 +1,8 @@
 # Order management
 
-## Order lifecycle
-
-When a customer requests a resource from your offering, an order is created. Orders progress through several states:
-
-| State | Description |
-|-------|-------------|
-| **Pending consumer** | Waiting for consumer approval |
-| **Pending provider** | Waiting for provider approval |
-| **Executing** | Resource provisioning in progress |
-| **Done** | Order completed successfully |
-| **Erred** | Order failed with errors |
-| **Canceled** | Order was canceled |
-| **Rejected** | Order was rejected by provider |
+When a customer requests a resource from your offering, an order is created and
+moves through a fixed state machine — see [Order states](../../about/modules/lifecycle.md#order-states)
+for the full diagram and the numeric state codes used by the API.
 
 ## Managing orders
 
