@@ -94,3 +94,46 @@ Organization that provides services to other organizations.
 | **Call manager**           | Call                | Oversees the entire call process, including managing proposals, approving/rejecting applications, closing rounds, and handling permissions. |
 | **Call reviewer**          | Call                | Reviews and evaluates submitted proposals within a call. |
 | **Proposal member**       | Proposal            | Manages individual proposals, controlling their status and related workflows. |
+
+## Default roles by scope (reference)
+
+The role names above are friendly labels for the per-installation matrices.
+Internally, Waldur ships a fixed set of roles grouped by the scope they apply to.
+Operators see these names in the administration interface and API payloads.
+
+| Scope | Role | Description | Active by default |
+|---|---|---|:---:|
+| Organization | Customer owner | Highest-level role in an organization; full administrative control. | Yes |
+| Organization | Customer manager | Managerial role for service providers within an organization. | Yes |
+| Organization | Customer support | Limited support access within an organization. | No |
+| Project | Project administrator | Full control over a project, including resource and order management. | Yes |
+| Project | Project manager | Adds permission-management capabilities on top of administrator. | Yes |
+| Project | Project member | Limited project access. | No |
+| Offering | Offering manager | Manages an offering's configuration and associated resources. | Yes |
+| Service provider | Service provider manager | Manages service-provider-specific settings and operations. | Yes |
+| Call managing organization | Customer call organizer | Organization-specific role for handling calls. | Yes |
+| Call | Call manager | Oversees calls and proposal approvals. | Yes |
+| Call | Call reviewer | Reviews submitted proposals. | Yes |
+| Proposal | Proposal manager | Manages proposals within a call. | Yes |
+
+Every role exposes the same attributes:
+
+- **Name** — unique identifier.
+- **Scope** — context in which the role is applicable (Organization, Project, Call, Offering, Service Provider, Proposal, Call managing organization).
+- **Description** — brief explanation of the role's purpose.
+- **Active** — whether the role is currently available for assignment.
+
+A user can hold one or more roles within any of those scopes simultaneously.
+
+### Managing roles in the administration interface
+
+Staff users can review and modify the defaults from the Waldur administration UI:
+
+1. Open the Administration panel.
+2. Select **User roles** under the Settings menu.
+3. Edit a role to change its permissions or active status, or disable it entirely.
+
+!!! warning
+    Apply the principle of least privilege; some roles are intentionally inactive
+    by default (e.g. **Customer support**). Audit role assignments regularly,
+    and document any custom role configurations.

@@ -114,7 +114,6 @@ function initSearchFilters() {
         'admin-guide/mastermind-configuration/',
         'admin-guide/providers/site-agent/',
         'admin-guide/waldur-shell/',
-        'admin-guide/waldur-roles/',
         'developer-guide/core-concepts/',
         'developer-guide/plugins/',
         'developer-guide/ui/',
