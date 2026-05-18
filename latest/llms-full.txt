@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-17T15:21:48.849778Z
+Generated: 2026-05-18T02:07:27.106705Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -1754,6 +1754,8 @@ helm dependency update
 ## Readonly user configuration
 
 In order to enable /api/query/ endpoint please make sure that read-only user is configured.
+
+The endpoint executes caller-supplied SQL against the read replica, so the calling Waldur user must have the `is_staff` flag set. (Prior to Waldur 8.x the endpoint also accepted `is_support` users; this was tightened to staff-only because even a SELECT-only DB role still exposes token hashes, password hashes, and PII.)
 
 ```sql
 -- Create a read-only user
@@ -4166,6 +4168,8 @@ All-together /etc/waldur/icons/file_name_from_whitelabeling_directory
 ## Readonly PostgreSQL user configuration
 
 In order to enable /api/query/ endpoint please make sure that read-only user is configured both in PostgreSQL and in the environment variables.
+
+The endpoint executes caller-supplied SQL against the read replica, so the calling Waldur user must have the `is_staff` flag set. (Prior to Waldur 8.x the endpoint also accepted `is_support` users; this was tightened to staff-only because even a SELECT-only DB role still exposes token hashes, password hashes, and PII.)
 
 ### 1. Create PostgreSQL readonly user
 
