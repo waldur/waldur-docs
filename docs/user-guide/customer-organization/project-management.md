@@ -59,6 +59,37 @@ When a project has a grace period configured:
 !!! warning
     Once the grace period expires (i.e., the resource termination date is reached), all project resources will be scheduled for termination, just as they would on the regular end date.
 
+## Science domain
+
+If staff have configured a science-domain taxonomy and enabled the feature, every project can be tagged with one **Science domain** and one **Science sub-domain**. The tag helps with cross-project reporting and discovery.
+
+!!! note
+    If no domains have been created yet, or the feature is disabled by staff, the picker is hidden — both in the project create dialog and on the project metadata page.
+
+### Tag at project creation
+
+In the project create dialog, two selectors appear below the project name:
+
+1. Pick a **Science domain**.
+2. The **Science sub-domain** selector unlocks and lists only the sub-domains belonging to the chosen domain.
+
+Both selectors are optional. Leaving them blank simply omits the tag.
+
+![Science domain in the project create dialog](../img/science-domain-project-wizard.png)
+
+### Change later from project metadata
+
+To set or change the tag after creation:
+
+1. Open the project and switch to the **Edit** tab.
+2. Select **Metadata** in the tab strip.
+3. Find the **Science domain** row (shown as `Domain > Sub-domain`, or a dash if unset).
+4. Click the pencil icon, pick a domain and sub-domain, and confirm.
+
+![Science domain on project metadata](../img/science-domain-project-metadata.png)
+
+Only project managers, organization owners and staff can edit the tag.
+
 ## Order auto-approval
 
 Project owners and managers with the order-approval permission can configure a project-level rule that auto-approves marketplace orders on the consumer side when the order's estimated monthly cost is at or below a configured ceiling. This removes a manual step for predictable, low-value orders while keeping anything unusual under human review.
