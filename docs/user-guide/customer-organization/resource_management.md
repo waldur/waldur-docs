@@ -98,6 +98,23 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 !!! Info
     On the right pane, there will be a ’Checkout summary’ with the purchase overview and indicative VM cost (as part of the VPC package cost).
 
+### Config drive
+
+The Automation step has an **Enable config drive** toggle next to the start script field. A config drive is a small read-only disk attached to the instance at boot. Cloud-init reads metadata, the SSH key and the start script from it without going through the OpenStack metadata service on the network (`http://169.254.169.254`).
+
+![OpenStack instance Automation step with the Enable config drive toggle](../img/openstack-config-drive-instance.png)
+
+The toggle is pre-filled from the provider default. Enable it for instances that:
+
+- have no DHCP on their tenant network,
+- sit on an isolated network that cannot reach the metadata service, or
+- must read user data before networking is up.
+
+Leave it off for normal cases where the metadata service is reachable.
+
+!!! tip
+    Hover the question mark next to the field for a full explanation in the UI.
+
 - VM should reach into “Active” status when successfully provisioned. The “Access” field will show the IP address to access VM over SSH (Linux) or over RDP (Windows).
 
 ![VM ready](../img/VM_ready.jpg)

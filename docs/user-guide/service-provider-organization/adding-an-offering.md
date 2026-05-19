@@ -42,6 +42,23 @@ creating an offering is through a HomePort.
 
 8. If everything is completed and ready, click on **Activate** in the upper right corner to publish the offering.
 
+### Provisioning configuration
+
+The **Integration** → **Provisioning configuration** card groups options that change how instances and volumes are provisioned on the OpenStack backend. Most operators only need to touch a few of these; defaults are sensible.
+
+The card is split into tabs — Filtering, Console access, Network, **Operations**, Limits, IP mapping.
+
+#### Config drive
+
+The **Operations** tab includes a **Config drive enabled by default** toggle. A config drive is a small read-only disk attached to the instance at boot. Cloud-init reads metadata, the SSH key and any user-supplied start script from it, without going through the OpenStack metadata service on the network (`http://169.254.169.254`).
+
+![Provisioning configuration Operations tab with the Config drive toggle](../img/openstack-config-drive-provider.png)
+
+- Enable this when guests typically cannot reach the metadata service — for example, when tenant networks have no DHCP, or sit on an isolated segment.
+- Leave it off when the metadata service is reachable, which is the usual case.
+
+The toggle sets the **provider-wide default**. Users can override it per instance at order time (see [Config drive](../customer-organization/resource_management.md#config-drive) in the customer guide).
+
 ## SLURM offering creation
 
 1. Select organization, which will provide the offering.
