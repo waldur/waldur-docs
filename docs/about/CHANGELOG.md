@@ -1,5 +1,43 @@
 # Changelog
 
+## 8.0.9-rc.11 - 2026-05-19
+
+This release candidate introduces resource limit change requests, allowing users to formally request quota adjustments that go through an approval workflow with email notifications. Authentication has been hardened with a secure one-time token exchange mechanism replacing direct token handling in OAuth/SAML callbacks. OpenStack operators gain per-instance config drive control, and the call management module now supports duplicating existing calls with all their configuration intact.
+
+### What's New
+
+- **Resource limit change requests**: Users can now submit requests to change resource limits, which go through an approval workflow. Notifications are sent to relevant parties when a request is created, approved, or rejected.
+- **Per-instance OpenStack config drive**: Each OpenStack instance can now have its config drive setting overridden individually at provisioning time, independent of the offering default. The default is also exposed on public offerings so users can see it before deploying.
+- **Duplicate call action**: Protected calls in the proposal/call management module can now be duplicated via a new action and wizard dialog, carrying over rounds, offerings, role mappings, and resource templates.
+- **Likert scale and Rich text checklist questions**: Two new question types are available in checklists — Likert scale (for rating-style questions) and Rich text (for formatted free-text answers).
+- **Bulk round creation**: Multiple proposal rounds can now be created in a single API call using the new `rounds_bulk_set` action.
+
+### Improvements
+
+- **Secure token exchange for authentication**: OAuth and SAML login callbacks now exchange tokens via short-lived one-time codes rather than passing tokens directly, improving security for SSO flows.
+- **Zammad comment detection by author identity**: Waldur-originated Zammad comments are now identified by the author's identity rather than a body marker, making comment tracking more robust.
+- **Proposal rounds pagination**: The rounds list endpoint is now paginated, preventing slow responses on calls with many rounds.
+- **UX audit fixes**: Seven UX issues were addressed across settings pages, including auto-provisioning rules, cost policies, offering configuration sections, order details, and table toolbar controls.
+- **Custom event renderers for OpenStack firewall resources**: Audit log events for OpenStack firewall-like resources now display with richer, contextual detail in the event timeline.
+- **Old SLURM module removed**: The legacy standalone SLURM frontend module has been cleaned up; SLURM resources are now handled through the standard marketplace resource flows.
+
+### Bug Fixes
+
+- **Constance admin dropdowns**: Choice and multiple-choice configuration fields now render correctly in the admin interface.
+- **Checklist PATCH whitelist bypass**: A security fix prevents per-type field whitelists from being bypassed when updating min/max and file fields via PATCH.
+- **Permission deletion for resource-scoped roles**: Deleting permissions for resource-scoped roles now correctly passes the project ID, fixing cases where the delete action was incorrectly blocked.
+- **Celery-beat stale DB connection recovery**: Background task locking now recovers gracefully from stale database connections instead of failing silently.
+- **Usage-based component validation**: Value checks are skipped for usage-based components, preventing incorrect validation errors during usage reporting.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [17 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.10...8.0.9-rc.11) - resource limit change requests, config drive support, auth token exchange, checklist question types, proposal round improvements, and bug fixes
+- **Waldur Homeport**: [10 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.10...8.0.9-rc.11) - matching UI for all backend features plus UX audit fixes and legacy SLURM module cleanup
+
+### Resources
+
+---
+
 ## 8.0.9-rc.10 - 2026-05-16
 
 ### Highlights
