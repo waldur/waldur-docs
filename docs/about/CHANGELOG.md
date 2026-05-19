@@ -1,5 +1,24 @@
 # Changelog
 
+## 8.0.9-rc.12 - 2026-05-19
+
+This release focuses on reliability improvements across OpenStack networking, SLURM policy enforcement, and marketplace offering management. OpenStack floating IP attachment now fails fast and with clear error messages when encountering invalid or missing network port data, preventing silent failures. SLURM periodic policy handling is more stable, and several marketplace API correctness issues have been resolved.
+
+### Bug Fixes
+
+- **OpenStack floating IP attachment error handling**: Improved error handling when attaching floating IPs — the system now fails immediately if a port has no backend ID, and raises a clear error when Neutron reports the port as not found, rather than silently failing or producing confusing state.
+- **SLURM periodic policy feedback loops**: Fixed an issue where SLURM periodic policies could trigger unintended feedback loops when updating `resource.limits` or resetting raw usage, causing repeated or conflicting policy evaluations.
+- **Offering component limit period preservation**: Fixed a serialization issue where the limit period of an offering component was not preserved correctly when updating the component.
+- **Offering `backend_id` field update**: Fixed an issue that prevented updating the `backend_id` field of an offering via API call.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [5 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.11...8.0.9-rc.12) - bug fixes for OpenStack floating IP handling, SLURM policy stability, and marketplace serialization correctness.
+
+### Resources
+
+---
+
 ## 8.0.9-rc.11 - 2026-05-19
 
 This release candidate introduces resource limit change requests, allowing users to formally request quota adjustments that go through an approval workflow with email notifications. Authentication has been hardened with a secure one-time token exchange mechanism replacing direct token handling in OAuth/SAML callbacks. OpenStack operators gain per-instance config drive control, and the call management module now supports duplicating existing calls with all their configuration intact.
