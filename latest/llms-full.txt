@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-22T02:07:08.655822Z
+Generated: 2026-05-23T02:04:49.328031Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -55751,17 +55751,20 @@ Centralized data fetching logic wrapped in reusable hooks:
 
 ```typescript
 export const useOrganizationGroups = () => {
-  const user = useSelector(getUser);
+  const user = useUser();
   const query = useQuery({
     queryKey: ['organizationGroups'],
-    queryFn: () => getAllPages((page) =>
-      organizationGroupsList({ query: { page } })
-    ).then(items => items.map(item => ({ ...item, value: item.url }))),
+    queryFn: () =>
+      getAllPages((page) => organizationGroupsList({ query: { page } })).then(
+        (items) => items.map((item) => ({ ...item, value: item.url })),
+      ),
     staleTime: 5 * 60 * 1000,
   });
 
   const disabled = query.data?.length === 0 && !user.is_staff;
-  const tooltip = disabled ? translate('Access policies cannot be configured...') : undefined;
+  const tooltip = disabled
+    ? translate('Access policies cannot be configured...')
+    : undefined;
 
   return { ...query, disabled, tooltip };
 };
@@ -55801,9 +55804,7 @@ const saveProjectMutation = useManagedMutation({
   errorMessage: translate('Unable to create project.'),
   refetch, // Option 1: Pass a refetch callback directly
   // Option 2: Provide an array of query filters to automatically invalidate
-  invalidateQueries: [
-    { queryKey: ['CustomerProjects'] },
-  ],
+  invalidateQueries: [{ queryKey: ['CustomerProjects'] }],
 });
 
 // Use .mutateAsync for form submission
@@ -55822,12 +55823,12 @@ const onDelete = () => deleteMutation.mutate({});
 
 ### Refresh Strategies
 
-| Strategy | Implementation | Use Case |
-|----------|----------------|----------|
-| **Explicit Refetch** | `const { refetch } = useQuery(...); await refetch();` | Manual refresh after CRUD operations |
-| **Table Refresh Button** | `<TableRefreshButton onClick={() => props.fetch(true)} />` | User-initiated refresh |
-| **Automatic Polling** | `refetchInterval` in React Query | Real-time data updates |
-| **Query Invalidation** | `queryClient.invalidateQueries(['queryKey'])` | Cache invalidation |
+| Strategy                 | Implementation                                             | Use Case                             |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------ |
+| **Explicit Refetch**     | `const { refetch } = useQuery(...); await refetch();`      | Manual refresh after CRUD operations |
+| **Table Refresh Button** | `<TableRefreshButton onClick={() => props.fetch(true)} />` | User-initiated refresh               |
+| **Automatic Polling**    | `refetchInterval` in React Query                           | Real-time data updates               |
+| **Query Invalidation**   | `queryClient.invalidateQueries(['queryKey'])`              | Cache invalidation                   |
 
 ## Error Handling and Loading States
 
@@ -55867,11 +55868,7 @@ export const queryClient = new QueryClient({
 Primary API client with typed endpoints:
 
 ```typescript
-import {
-  projectsCreate,
-  projectsList,
-  customersList
-} from 'waldur-js-client';
+import { projectsCreate, projectsList, customersList } from 'waldur-js-client';
 
 // Typed API calls with request/response types
 const response = await projectsCreate({
@@ -56454,69 +56451,6 @@ This guide covers code quality standards, testing practices, and technical requi
 - Handle errors at appropriate level
 - Never silently swallow exceptions
 
-## Testing Strategy
-
-### Testing Frameworks
-
-- **Unit Tests**: Vitest with React Testing Library for component testing
-- **Integration Tests**: Cypress for end-to-end workflows
-
-#### Check Testing Framework Versions
-
-Check current versions
-
-yarn info vitest @testing-library/react cypress version```
-
-- Test files use `.test.ts/.test.tsx` extensions
-- Setup files in `test/setupTests.js`
-- Integrated coverage reporting
-
-### Test Guidelines
-
-- Test behavior, not implementation
-- One assertion per test when possible
-- Clear test names describing scenario
-- Use existing test utilities/helpers
-- Tests should be deterministic
-
-### Test Code Sharing & Mocking
-
-**Extracting Common Test Code**:
-
-- Extract shared test data into separate files (e.g., `test-utils.ts`)
-- Only mock what's actually imported by the component under test
-- Don't mock exports that aren't used - it adds unnecessary complexity
-- Verify import paths match actual usage (e.g., `./constants` vs `@/marketplace/common/constants`)
-
-**Vitest Mocking Constraints**:
-
-- `vi.mock()` calls must be at the top level, not inside functions
-- Vitest hoists mocks, so they can't reference variables defined later
-- Share test data as exported constants, not function calls
-- Mock the exact module path used in the component's imports
-
-**Example Pattern**:
-
-```js
-// test-utils.ts
-export const mockOffering = { uuid: '123', name: 'Test' };
-export const mockPlan = { uuid: '456', name: 'Plan' };
-
-// component.test.tsx
-import { mockOffering, mockPlan } from './test-utils';
-
-vi.mock('./constants', () => ({
-  getBillingPeriods: () => [...], // Only mock what's actually used
-  // Don't include ADD_PLAN_FORM_ID if component doesn't import it
-}));
-```
-
-**Code Duplication Detection**:
-
-- CI/CD uses `jscpd` with strict thresholds (typically 250 tokens)
-- Extract common patterns properly - don't game the detector with formatting
-- Shared test utilities reduce duplication and improve maintainability
-
 ## Development Guidelines
 
 ### TypeScript Configuration
@@ -56535,10 +56469,11 @@ vi.mock('./constants', () => ({
 
 #### Check Code Style Tool Versions
 
-```
+```bash
 Check current versions
 
-yarn info eslint prettier stylelint husky version```
+yarn info eslint prettier stylelint husky version
+```
 
 ### TypeScript and SDK Types
 
@@ -56568,12 +56503,6 @@ yarn info eslint prettier stylelint husky version```
 - `yarn style:check` - Check SCSS/CSS styles with Stylelint
 - `yarn deps:unused` - Check for unused dependencies with Knip
 - `yarn tsc` - Typescript type check
-
-#### Testing
-
-- `yarn test` - Run unit tests with Vitest
-- `yarn ci:test` - Run full integration test suite with Cypress
-- `yarn ci:run` - Run Cypress tests headless
 
 #### Dependency Management
 
@@ -56630,8 +56559,8 @@ The application features a comprehensive set of reusable UI components organized
 
 | Component | Location | Description | Key Features |
 |-----------|----------|-------------|--------------|
-| **WizardForm** | `src/form/WizardForm.tsx` | Multi-step form wizard | Step navigation, validation, progress indicator |
-| **VStepperFormStepCard** | `src/form/VStepperFormStep.tsx` | Card-based form step | Loading state, disabled state with tooltip |
+| **WizardForm** | `src/wizard/WizardForm.tsx` | Multi-step form wizard | Step navigation, validation, progress indicator |
+| **VStepperFormStepCard** | `src/wizard/VStepperFormStep.tsx` | Card-based form step | Loading state, disabled state with tooltip |
 | **AwesomeCheckbox** | `src/core/AwesomeCheckbox.tsx` | Enhanced checkbox | Switch-style, tooltip support |
 | **SelectField** | `src/form/SelectField.tsx` | Dropdown selection | Options, search, validation |
 | **StringField** | `src/form/StringField.tsx` | Text input field | Validation, placeholder, help text |
@@ -56897,7 +56826,7 @@ export const MyDeleteButton = ({ row, refetch }) => (
 | **CopyToClipboard** | `src/core/CopyToClipboard.tsx` | Copy functionality | Click to copy, success feedback |
 | **CopyToClipboardButton** | `src/core/CopyToClipboardButton.tsx` | Copy button | Icon button, tooltip |
 | **Tooltip** | `src/core/Tooltip.tsx` | Tooltip wrapper | Help text, positioning |
-| **ProgressSteps** | `src/core/ProgressSteps.tsx` | Step indicator | Multi-step processes, progress |
+| **ProgressSteps** | `src/wizard/ProgressSteps.tsx` | Step indicator | Multi-step processes, progress |
 
 ## Component Design Principles
 
@@ -57057,7 +56986,7 @@ The `DeployPageSidebar` provides:
 
 The BaseDeployPage component represents a well-architected, reusable foundation that allows different cloud services to implement their specific deployment workflows while maintaining consistency across the marketplace experience.
 
-## Type-Specific Fields in Redux Forms
+## Type-Specific Fields in React Final Form
 
 The application uses a sophisticated type-based field selection system for creating dynamic Redux forms, exemplified by the `SupportSettingsForm.tsx` component.
 
@@ -57100,9 +57029,9 @@ The application supports these field types:
 - **`integer`** - Numeric input using `NumberField`
 - **`secret_field`** - Password/secret input using `SecretField`
 
-### Redux Form Integration
+### React Final Form Integration
 
-All fields are wrapped with Redux Form's `Field` component and `FormGroup`:
+All fields are wrapped with React Final Form's `Field` component and `FormGroup`:
 
 ```js
 <Field
@@ -57228,7 +57157,7 @@ export const composeValidators = (...validators) => (value) =>
 2. **Fallback Strategy**: Always provide a default field type (typically `StringField`)
 3. **Props Interface**: Extend the base `FormField` interface for type safety
 4. **Validator Composition**: Use `composeValidators` for complex validation logic
-5. **Error Handling**: Integrate with Redux Form's meta.touched state for error display
+5. **Error Handling**: Integrate with React Final Form's meta.touched state for error display
 6. **Configuration-Driven**: Use data structures to define forms rather than hardcoding
 
 This type-specific field system enables dynamic form generation while maintaining type safety and consistent user experience across the application.
@@ -57535,7 +57464,7 @@ Key configuration props. Full interface is large — these are the most commonly
 import { FormGroup } from '@/marketplace/offerings/FormGroup';
 ```
 
-Use this version inside React Final Form. **Do not use `FormContainer` from `@/form`** — that is redux-form only and will cause errors.
+Use this version inside React Final Form.
 
 | Prop | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -57560,7 +57489,7 @@ Use this version inside React Final Form. **Do not use `FormContainer` from `@/f
 import { SelectField } from '@/form';
 ```
 
-Redux Form field component. In React Final Form use `<Field name="..." component={SelectField as any} />`.
+Form field component. Use as `<Field name="..." component={SelectField as any} />`.
 
 | Prop | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -57572,7 +57501,7 @@ Redux Form field component. In React Final Form use `<Field name="..." component
 | `isDisabled` | `boolean` | no | `false` | Disable the select |
 | `isClearable` | `boolean` | no | `false` | Show clear button |
 | `className` | `string` | no | — | Additional CSS classes |
-| `noUpdateOnBlur` | `boolean` | no | `false` | Skip redux-form blur update |
+| `noUpdateOnBlur` | `boolean` | no | `false` | Skip form blur update |
 
 ---
 
@@ -57582,7 +57511,7 @@ Redux Form field component. In React Final Form use `<Field name="..." component
 import { StringField } from '@/form';
 ```
 
-Redux Form field component. In React Final Form use `<Field name="..." component={StringField as any} />`.
+Form field component. Use as `<Field name="..." component={StringField as any} />`.
 
 | Prop | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -57737,9 +57666,11 @@ This guide covers development environment setup, build configuration, and essent
 
 ### Testing
 
+For detailed testing standards and strategy, see [Testing Standards & Strategy](docs/testing.md).
+
 - `yarn test` - Run unit tests with Vitest
-- `yarn ci:test` - Run full integration test suite with Cypress
-- `yarn ci:run` - Run Cypress tests headless
+- `yarn test:e2e` - Run Playwright E2E tests
+- `yarn test:visual` - Run Playwright visual regression tests
 
 ### Dependency Management
 
@@ -58262,39 +58193,33 @@ The generator will:
 
 ---
 
-### Form Migration Guide
-<!-- Source: docs/developer-guide/ui/form-migration.md -->
+### Forms Guide
+<!-- Source: docs/developer-guide/ui/forms.md -->
 
-# Form Migration Guide
+# Forms Guide
 
-The application contains **650+ form-related files** across three patterns, showing ongoing migration from Redux Form to React Final Form.
+Waldur HomePort exclusively uses **React Final Form** for standard forms and dialogs, and a custom **VStepperForm** component for complex multi-step wizards.
 
 ## Form Patterns Comparison
 
-| Aspect | Redux Form (Legacy, ~68%) | React Final Form (Modern, ~21%) | VStepperForm (Multi-step, ~7%) |
-|--------|------------|------------------|---------------------|
-| **State Storage** | Redux store | Local component state | Shared across steps |
-| **Performance** | Can cause unnecessary re-renders | Optimized subscription model | Step-based validation |
-| **Complexity** | More boilerplate required | Minimal boilerplate | Step progression |
-| **Persistence** | Persists across unmounts | Local to component lifecycle | Visual progress indicators |
-| **Integration** | Deep Redux integration | Isolated, no external dependencies | Complex deployments |
+| Aspect            | React Final Form (Standard)        | VStepperForm (Multi-step)  |
+| ----------------- | ---------------------------------- | -------------------------- |
+| **State Storage** | Local component state              | Shared across steps        |
+| **Performance**   | Optimized subscription model       | Step-based validation      |
+| **Complexity**    | Minimal boilerplate                | Step progression           |
+| **Persistence**   | Local to component lifecycle       | Visual progress indicators |
+| **Integration**   | Isolated, no external dependencies | Complex deployments        |
 
 ## Implementation Examples
 
-### Redux Form (Legacy)
+### React Final Form
+
+The standard form implementation uses a `<Form>` component that provides the `handleSubmit` method to its render prop.
 
 ```typescript
-export const PolicyCreateForm: FC<PolicyCreateFormProps> = (props) => (
-  <FormContainer submitting={props.submitting}>
-    <NumberField name="limit_cost" validate={required} />
-    <SelectField name="actions" validate={required} />
-  </FormContainer>
-);
-```
+import { Form } from 'react-final-form';
+import { SubmitButton } from '@/form';
 
-### React Final Form (Modern)
-
-```typescript
 <Form
   onSubmit={onSubmit}
   render={({ handleSubmit, submitting, invalid }) => (
@@ -58309,9 +58234,14 @@ export const PolicyCreateForm: FC<PolicyCreateFormProps> = (props) => (
 
 ## Field Group Pattern
 
-React Final Form uses reusable field groups for better organization:
+We use reusable field groups for better organization, separating the structure from the actual logic:
 
 ```typescript
+import { Field } from 'react-final-form';
+import { StringField } from '@/form';
+import { FormGroup } from '@/marketplace/offerings/FormGroup';
+import { translate } from '@/i18n';
+
 export const NameGroup = ({ customer }) => (
   <FormGroup label={translate('Project name')} required>
     <Field
@@ -58324,11 +58254,13 @@ export const NameGroup = ({ customer }) => (
 );
 ```
 
-**Benefits**: Separation of concerns, reusability, maintainability, testability
+**Benefits**: Separation of concerns, reusability, maintainability, testability.
 
 ## Key Patterns & Best Practices
 
 ### Validation
+
+Validation functions are pure functions that return an error string if invalid, or `undefined` if valid.
 
 ```typescript
 export const validateProjectName = (value, _, props) =>
@@ -58336,6 +58268,8 @@ export const validateProjectName = (value, _, props) =>
 ```
 
 ### Async Data Integration
+
+Use React Query inside forms to load asynchronous data:
 
 ```typescript
 const { data, isLoading, error, refetch } = useQuery({
@@ -58345,6 +58279,8 @@ const { data, isLoading, error, refetch } = useQuery({
 ```
 
 ### Modern Form Submission
+
+When writing the submission handler for modal dialogs, use `useManagedMutation` or handle success/error states natively.
 
 ```typescript
 const onSubmit = async (formData) => {
@@ -58358,64 +58294,9 @@ const onSubmit = async (formData) => {
 };
 ```
 
-## Migration Strategy
+## Error Handling
 
-- **New Components**: Use React Final Form
-- **Legacy Components**: Maintain Redux Form
-- **Hybrid Support**: Common field components work with both
-- **Gradual Migration**: Phase out Redux Form over time
-
-## Migration Detailed Guidelines
-
-### Form Distribution (as of December 2025)
-
-- **Redux Form (Legacy)**: ~467 files importing redux-form (~68%) - being phased out
-- **React Final Form (Modern)**: ~146 files importing react-final-form (~21%) - preferred for new development
-- **VStepperForm (Multi-step)**: ~50 files (~7%) - complex deployments
-- **FormContainer usage**: ~96 files - Redux Form wrapper components
-
-Note: Many files import redux-form for shared field components (SelectField, StringField, etc.) and table filters, not just form definitions.
-
-### Key Forms by Category
-
-- **User/Auth**: SigninForm, KeyCreateDialog (React Final Form)
-- **Projects**: ProjectCreateDialog, team dialogs (React Final Form)
-- **Resources**: OpenStack/VMware/Azure deploy steps (VStepperForm with Redux Form fields)
-- **Administration**: Mixed - newer dialogs use React Final Form
-- **Marketplace**: Deploy flows use VStepperForm, policy forms use React Final Form
-- **Table Filters**: Predominantly Redux Form (high migration priority)
-- **Proposals**: Multi-step wizards using VStepperForm
-
-### Areas Needing Migration
-
-1. **Table filters** - Most still use Redux Form field components
-2. **Resource action dialogs** - Many use FormContainer pattern
-3. **Invoice/Reporting filters** - Redux Form based
-4. **Customer management** - Mixed, older dialogs need migration
-
-## Post-Migration Cleanup
-
-**Essential Commands**:
-
-```bash
-yarn deps:unused           # Remove unused dependencies
-yarn lint:check           # Verify code standards
-yarn test path/to/tests   # Validate functionality
-yarn tsc --noEmit         # Check TypeScript compilation
-```
-
-**Cleanup Checklist**:
-
-- [ ] Remove unused Redux Form constants (`FORM_ID`)
-- [ ] Convert exported interfaces to internal if only used within component
-- [ ] Delete orphaned Redux Form files
-- [ ] Update imports to remove unused dependencies
-- [ ] Verify form context boundaries for React Final Form
-- [ ] Test modal structure and submit button access
-
-## Error Handling Migration
-
-**Issue**: Avoid unhandled promise rejections when migrating error handling.
+**Issue**: Avoid unhandled promise rejections when reporting API errors.
 
 **Solution**: Don't re-throw errors after `showErrorResponse()`:
 
@@ -58433,102 +58314,43 @@ catch (e) {
 }
 ```
 
-## Component Migration Patterns
+## Modal Form Architecture
 
-### Key Changes in Migration
+**Key Issue**: React Final Form context boundaries - submit buttons must be inside the `<Form>` component.
 
-1. **Form State**: Redux Form HOC → React Final Form `<Form>` component
-2. **Initial Values**: `useEffect` with `change` action → `initialValues` prop
-3. **Error Handling**: Redux actions → `useNotify` hook
-4. **Component Structure**: `FormContainer` wrapper → render prop pattern
-
-### Field Migration
+**Solution**: Move submit buttons inside the form context and provide a custom footer structure.
 
 ```typescript
-// ✅ Standard pattern (preferred)
-<Field
-  component={StringField as any}
-  name="username"
-  validate={required}
-/>
+// ✅ Correct structure
+import { ModalDialog } from '@/modal/ModalDialog';
 
-// ❌ Avoid creating typed adapters
-const TypedNumberField = Field as React.ComponentType<any>;
-```
-
-### Array Field Migration
-
-```typescript
-// Before: Redux Form
-const comp = fields.get(i);
-
-// After: React Final Form
-const comp = fields.value[i];
-
-// Setup with array mutators
 <Form
-  mutators={{ ...arrayMutators }}
-  render={({ handleSubmit }) => (
+  onSubmit={onSubmit}
+  render={({ handleSubmit, submitting, invalid }) => (
     <form onSubmit={handleSubmit}>
-      <PolicyCreateForm {...props} />
+      <ModalDialog
+        title={translate('New Project')}
+        footer={
+          <SubmitButton submitting={submitting} disabled={invalid} />
+        }
+      >
+        <ResourceForm />
+      </ModalDialog>
     </form>
   )}
 />
 ```
 
-### SDK Types Best Practices
-
-- Use `import { type ComponentUsage } from 'waldur-js-client'`
-- Prefer SDK types over custom interfaces
-- Handle type conversions: `parseFloat(component.usage)`
-
-## Modal Form Architecture Migration
-
-**Key Issue**: React Final Form context boundaries - submit buttons must be inside `<Form>` component.
-
-**Problem**: `useFormState` called outside form context:
-
-```typescript
-// ❌ Problematic structure
-<ModalDialog footer={<SubmitButton />}>
-  <Form><ResourceForm /></Form>
-</ModalDialog>
-```
-
-**Solution**: Move submit button inside form context:
-
-```typescript
-// ✅ Correct structure
-<ModalDialog>
-  <Form>
-    <ResourceForm />
-    <div className="modal-footer">
-      <SubmitButton />
-    </div>
-  </Form>
-</ModalDialog>
-```
-
-**Migration Steps**:
-
-1. Move submit button inside `<Form>` render function
-2. Use `modal-footer` class for styling consistency
-3. Remove `footer` prop from `ModalDialog`
-4. Test form state access (`useFormState`, `useField`)
-
 ## FormGroup Components
 
-**Two Types Available**:
+We have multiple `FormGroup` components, but you should favor the standard wrapper:
 
-1. **`@/form/FormGroup`** - Redux Form wrapper with comprehensive state management
-2. **`@/marketplace/offerings/FormGroup`** - Simple wrapper for labels/help text (preferred for React Final Form)
-
-### FormGroup Migration Patterns
+1. **`@/marketplace/offerings/FormGroup`** - Clean wrapper for labels/help text.
 
 ### Replace Manual Label/Field Combinations
 
 ```typescript
-// ❌ Before - Repetitive manual structure
+// ❌ Avoid repetitive manual structure
 <div className="mb-7">
   <label className="form-label fw-bolder text-dark fs-6 required">
     {translate('Username')}
@@ -58536,7 +58358,7 @@ const comp = fields.value[i];
   <Field component={StringField as any} name="username" />
 </div>
 
-// ✅ After - Clean FormGroup wrapper
+// ✅ Use clean FormGroup wrapper
 <FormGroup label={translate('Username')} required>
   <Field component={StringField as any} name="username" />
 </FormGroup>
@@ -58545,7 +58367,7 @@ const comp = fields.value[i];
 ### Convert Manual Tooltips to Help Props
 
 ```typescript
-// ❌ Before - Manual tooltip implementation
+// ❌ Manual tooltip implementation
 <label>
   {translate('Plan')}
   <Tip label={translate('Help text')}>
@@ -58553,7 +58375,7 @@ const comp = fields.value[i];
   </Tip>
 </label>
 
-// ✅ After - Built-in help prop
+// ✅ Built-in help prop
 <FormGroup
   label={translate('Plan')}
   help={translate('Help text')}
@@ -58562,20 +58384,27 @@ const comp = fields.value[i];
 </FormGroup>
 ```
 
-### Best Practices
+## Advanced Tooling
 
-1. **Props Effectiveness**: `hideLabel`, `spaceless` don't work with direct Field usage
-2. **CSS Classes**: Verify classes exist (avoid non-existent Tailwind classes like `space-y-4`)
-3. **Translations**: Make all text including prepositions translatable
-4. **FormGroup Choice**: Use marketplace FormGroup for React Final Form
+### Dirty Form Protection
 
-## Architecture Benefits
+If you want to prevent users from accidentally closing a modal dialog when a form has unsaved changes, use the `DirtyStateReporter` drop-in component anywhere inside your `<Form>` element:
 
-- **Flexibility**: Multiple form approaches for different use cases
-- **Consistency**: Shared field components across form systems
-- **Performance**: Modern forms use optimized re-rendering
-- **Maintainability**: Clear separation between legacy and modern patterns
-- **Developer Experience**: Reduced boilerplate in new forms
+```typescript
+import { DirtyStateReporter } from '@/core/DirtyFormContext';
+
+<Form
+  onSubmit={onSubmit}
+  render={({ handleSubmit }) => (
+    <form onSubmit={handleSubmit}>
+      <DirtyStateReporter />
+      <FormGroup label={translate('Name')}>
+        <Field component={StringField as any} name="name" />
+      </FormGroup>
+    </form>
+  )}
+/>
+```
 
 ---
 
@@ -60213,10 +60042,8 @@ Filters are defined using the `filters` prop of the Table component. This prop a
 Example:
 
 ```ts
-import { useSelector } from 'react-redux';
-import { getFormValues } from 'redux-form';
-
-const getFilterValues = getFormValues('FilterForm');
+import { Form, Field, useFormState } from 'react-final-form';
+import { TableFilterItem } from '@/table/TableFilterItem';
 
 export const FilterSet = () => (
   <TableFilterItem title="Filter field" name="custom">
@@ -60224,12 +60051,12 @@ export const FilterSet = () => (
   </TableFilterItem>
 );
 
-export const FilteredList = () => {
-  const filter = useSelector(getFilterValues);
+const FilteredListTable = () => {
+  const { values } = useFormState();
   const tableProps = useTable({
     table: 'FilteredList',
     fetchData: createFetcher(hooksList),
-    filter,
+    filter: values,
   });
 
   return (
@@ -60239,6 +60066,12 @@ export const FilteredList = () => {
     />
   );
 };
+
+export const FilteredList = () => (
+  <Form onSubmit={() => {}}>
+    {() => <FilteredListTable />}
+  </Form>
+);
 ```
 
 ### Filter positions
@@ -60264,13 +60097,13 @@ The flow:
 ```text
 User changes filter field
     ↓
-Redux Form stores value
+React Final Form stores value
     ↓
-TableFilterItem calls setFilter() → updates filtersStorage[]
+TableFilterItem calls onChange() → updates form state
     ↓
 Table re-fetches with new filter
     ↓
-Filter badges rendered from filtersStorage
+Filter badges rendered from form state
 ```
 
 ### URL query parameter sync
@@ -60278,28 +60111,37 @@ Filter badges rendered from filtersStorage
 Filters can be synced to URL query parameters for shareable links. Use utilities from `@/core/filters`:
 
 ```ts
-import {
-  syncFiltersToURL,
-  useReinitializeFilterFromUrl,
-  getQueryParams,
-} from '@/core/filters';
+import { useEffect, useMemo } from 'react';
+import { Form, useFormState } from 'react-final-form';
+import { syncFiltersToURL, getInitialValues } from '@/core/filters';
 
-const FILTER_FORM_ID = 'MyFilterForm';
-
-export const MyList = () => {
-  // Load filters from URL on mount and route changes
-  useReinitializeFilterFromUrl(FILTER_FORM_ID);
-
-  const formValues = useSelector(getFormValues(FILTER_FORM_ID));
+const MyListTable = () => {
+  const { values } = useFormState();
 
   // Sync filter changes to URL
   useEffect(() => {
-    if (formValues) {
-      syncFiltersToURL(formValues);
+    if (values) {
+      syncFiltersToURL(values);
     }
-  }, [formValues]);
+  }, [values]);
 
   // ... rest of component
+  return null;
+};
+
+export const MyList = () => {
+  // Load filters from URL on mount
+  const initialValues = useMemo(() => getInitialValues(), []);
+
+  return (
+    <Form
+      onSubmit={() => {}}
+      initialValues={initialValues}
+      subscription={{ values: true }}
+    >
+      {() => <MyListTable />}
+    </Form>
+  );
 };
 ```
 
@@ -60321,26 +60163,25 @@ The compact `uuid::name` format keeps URLs shorter while preserving display name
 When navigating between pages in the SPA:
 
 1. **URL params persist** - query string is preserved during navigation
-2. **Form re-initialization** - `useReinitializeFilterFromUrl` re-populates the form when route changes
-3. **Auto-show filter bar** - when `filtersStorage` has items, the filter bar auto-expands
+2. **Form initialization** - `getInitialValues` reads the URL to populate the form on mount
+3. **Auto-show filter bar** - when the form state has items, the filter bar auto-expands
 
 ```text
 Page A with filter → Navigate to Page B → Navigate back to Page A
      ↓                      ↓                      ↓
 URL updated            URL preserved         URL read, form populated
-with filters           (SPA routing)         filtersStorage updated
-                                             Table re-fetches
+with filters           (SPA routing)         Table re-fetches
 ```
 
 ### Default/initial filters
 
-To set default filter values that can be overridden by URL params:
+To set default filter values that can be overridden by URL params, pass them as arguments to `getInitialValues`:
 
 ```ts
 const defaultValues = { status: 'active' };
 
 // URL params take precedence over defaults
-useReinitializeFilterFromUrl(FILTER_FORM_ID, defaultValues);
+const initialValues = useMemo(() => getInitialValues(defaultValues), []);
 ```
 
 ### Cross-page filters (Resources sidebar)
@@ -60744,21 +60585,16 @@ Here's an example of a complex table combining multiple features (based on the R
 
 ```ts
 import { useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { getFormValues } from 'redux-form';
-import { createSelector } from 'reselect';
+import { Form, useFormState } from 'react-final-form';
 
 // Filter selector - transforms form values to API filter params
-const filtersSelector = createSelector(
-  getFormValues('ReviewerPoolFilter'),
-  (filters: any) => {
-    const result: Record<string, any> = {};
-    if (filters?.status) {
-      result.invitation_status = filters.status.value;
-    }
-    return result;
-  },
-);
+const selectReviewerPoolFilters = (filters: any) => {
+  const result: Record<string, any> = {};
+  if (filters?.status) {
+    result.invitation_status = filters.status.value;
+  }
+  return result;
+};
 
 // Tabs hook - defines sub-navigation within the table
 // Note: Include parent tab param (tab: 'reviewer-pool') to preserve context
@@ -60790,10 +60626,14 @@ const ExpandableRow = ({ row }) => (
   </div>
 );
 
-// Main component
-export const ReviewerPoolSection = ({ call }) => {
-  const formFilters = useSelector(filtersSelector);
+// Main table component
+const ReviewerPoolSectionTable = ({ call }) => {
+  const { values } = useFormState();
   const tabs = usePoolTabs();
+  const formFilters = useMemo(
+    () => selectReviewerPoolFilters(values),
+    [values]
+  );
 
   // Memoize filter to prevent infinite re-renders
   const filter = useMemo(
@@ -60864,6 +60704,12 @@ export const ReviewerPoolSection = ({ call }) => {
     />
   );
 };
+
+export const ReviewerPoolSection = ({ call }) => (
+  <Form onSubmit={() => {}}>
+    {() => <ReviewerPoolSectionTable call={call} />}
+  </Form>
+);
 ```
 
 ### Key patterns in complex tables
@@ -60912,124 +60758,211 @@ Please use "synchronise" instead of "pull" in action title.
 
 ---
 
-### Mocking HTTP Requests for Unit Tests
-<!-- Source: docs/developer-guide/ui/testing-http-mocks.md -->
+### Unit Test Template (Vitest + RTL)
+<!-- Source: docs/developer-guide/ui/test-templates/unit-test.md -->
 
-# Mocking HTTP Requests for Unit Tests
+# Unit Test Template (Vitest + RTL)
 
-When writing unit tests for frontend components, it's crucial to isolate the component from external dependencies, especially network requests. Mocking HTTP requests allows us to simulate API responses and test our components in a predictable and controlled environment. This guide describes how to use `nock`, `got`, and React Testing Library (RTL) to achieve this.
-By following these patterns, you can effectively mock HTTP requests in your unit tests, leading to more robust and reliable components.
+Use this template as a starting point for testing React components, especially Dialogs and Forms.
 
-## Key Libraries
-
-- **[Nock](https://github.com/nock/nock)**: A powerful HTTP server mocking and expectations library for Node.js. It allows you to intercept outgoing HTTP requests and provide custom responses.
-- **[Got](https://github.com/sindresorhus/got)**: A human-friendly and powerful HTTP request library for Node.js. We use it in tests to trigger the mocked endpoints and wait for `nock` to resolve them.
-- **[React Testing Library (RTL)](https://testing-library.com/docs/react-testing-library/intro/)**: A library for testing React components in a way that resembles how users interact with them.
-
-## Basic Setup
-
-To ensure a clean testing environment for each test case, we should set up `nock` before each test and clean up the mocks afterward. This is typically done in `beforeEach` and `afterEach` blocks.
-
-```js
+```tsx
 import { render, screen, waitFor } from '@testing-library/react';
-import { got } from 'got';
-import nock from 'nock';
-import { afterEach, beforeEach, describe, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// It's a good practice to define the base URL of your API to avoid repetition.
-const API_URL = '<http://example.com';>
+// 1. Mock external dependencies
+vi.mock('waldur-js-client');
+vi.mock('@/i18n', () => ({
+  translate: (message: string) => message,
+}));
+
+// 2. Define mock data and handlers
+const mockData = { id: 1, name: 'Test Item' };
+const mockHandler = vi.fn();
 
 describe('MyComponent', () => {
   beforeEach(() => {
-    // Setup nock to intercept requests to our API.
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders correctly', () => {
+    render(<MyComponent data={mockData} onAction={mockHandler} />);
+    
+    expect(screen.getByText('Test Item')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /action/i })).toBeInTheDocument();
+  });
+
+  it('triggers action on button click', async () => {
+    render(<MyComponent data={mockData} onAction={mockHandler} />);
+    
+    const button = screen.getByRole('button', { name: /action/i });
+    await userEvent.click(button);
+    
+    expect(mockHandler).toHaveBeenCalledWith(mockData);
+  });
+
+  it('handles loading state during form submission', async () => {
+    // Mock a pending promise
+    const slowAction = new Promise((resolve) => setTimeout(() => resolve({}), 100));
+    const mockSubmit = vi.fn().mockReturnValue(slowAction);
+    
+    render(<MyForm onSubmit={mockSubmit} />);
+    
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    await userEvent.click(submitButton);
+    
+    // Button should be disabled during submission
+    expect(submitButton).toBeDisabled();
+    
+    await waitFor(() => {
+      expect(submitButton).toBeEnabled();
+    });
+  });
+});
+```
+
+## Key Best Practices
+
+1.  **Use `userEvent`**: Prefer `userEvent.click()` over `fireEvent.click()` as it more accurately simulates user interaction.
+2.  **Role-based Queries**: Use `getByRole`, `getByLabelText`, etc., to ensure components are accessible.
+3.  **Wait for Changes**: Use `waitFor` or `findBy*` queries when dealing with async updates or state changes.
+4.  **Clear Mocks**: Always call `vi.clearAllMocks()` in `beforeEach` to prevent test interference.
+5.  **Mock Minimal**: Only mock the modules that are actually imported and used by the component under test.
+
+---
+
+### Testing Standards & Strategy
+<!-- Source: docs/developer-guide/ui/testing.md -->
+
+# Testing Standards & Strategy
+
+This guide covers the testing strategy, frameworks, and best practices for Waldur HomePort.
+
+## 1. The Testing Pyramid
+
+We follow the testing pyramid model to balance speed, cost, and confidence:
+
+- **Unit & Component Tests (Base)**: ~70% of tests. Fast, isolated, and focused on individual functions, hooks, and components.
+- **Integration Tests (Middle)**: ~20% of tests. Focused on interactions between multiple components or complex state management (e.g., full forms, complex tables).
+- **E2E & Visual Tests (Top)**: ~10% of tests. Critical user journeys and visual consistency across browsers and themes.
+
+---
+
+## 2. Unit & Component Testing (Vitest + RTL)
+
+Unit tests are used for testing React components and utilities. They are written in `.test.ts` or `.test.tsx` files located next to the code they test.
+
+### Standards
+- **Runner**: [Vitest](https://vitest.dev/)
+- **Utilities**:
+    - [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
+    - [@testing-library/user-event](https://testing-library.com/docs/user-event/intro/)
+- **Goal**: Verify behavior, not implementation. Use `screen.getByRole` or `screen.getByText` over test IDs when possible.
+- **Accessibility**: Integrate automated accessibility checks using `axe-core` within RTL tests where appropriate.
+
+### Mocking HTTP Requests
+When testing components that fetch data, use `nock` to intercept outgoing HTTP requests and provide custom responses.
+
+```typescript
+import { render, screen, waitFor } from '@testing-library/react';
+import nock from 'nock';
+import { afterEach, beforeEach, describe, it } from 'vitest';
+
+const API_URL = 'http://example.com';
+
+describe('MyComponent', () => {
+  beforeEach(() => {
     nock(API_URL)
       .get('/api/my-data/')
       .reply(200, { id: 1, name: 'Test Data' });
   });
 
   afterEach(() => {
-    // Clean up all nock interceptors after each test.
     nock.cleanAll();
   });
 
   it('should fetch and display data', async () => {
-    // Render your component which fetches data on mount.
     render(<MyComponent />);
+    // Verify mocked data appears
+    expect(await screen.findByText('Test Data')).toBeInTheDocument();
+  });
 
-    // Use got to trigger the request and wait for nock to handle it.
-    await waitFor(() => got(`${API_URL}/api/my-data/`));
+  it('should handle API errors', async () => {
+    nock(API_URL)
+      .get('/api/my-data/')
+      .reply(400, { error: 'Invalid request' });
 
-    // Assert that the component displays the mocked data.
-    expect(screen.getByText('Test Data')).toBeInTheDocument();
+    render(<MyComponent />);
+    // Verify error message appears
+    expect(await screen.findByText('Unable to load data.')).toBeInTheDocument();
   });
 });
 ```
 
-## Mocking Different Scenarios
-
-### Successful GET Request
-
-The example above shows a basic successful `GET` request. You can customize the response data to fit your test case.
-
-```js
-  nock('<http://example.com>')
-  .get('/api/organization-groups/')
-  .reply(200, [
-    { name: 'Group 1', uuid: 'group-1-uuid' },
-    { name: 'Group 2', uuid: 'group-2-uuid' },
-  ]);
-```
-
-### Mocking Failed Requests
-
-To test how your component handles API errors, you can mock a request to return an error status code.
-
-```js
-   nock('<http://example.com>')
-  .get('/api/organization-groups/')
-  .reply(400, { error: 'Invalid request' });
-
-// In your test:
-render(<MyComponent />);
-await waitFor(() =>
-  expect(
-    screen.getByText('Unable to load organization groups.'),
-  ).toBeInTheDocument(),
-);
-```
+### Mocking Constraints & Best Practices
+- **Manual Mocks**: Use `vi.mock()` for external modules. Calls must be at the top level (hoisted).
+- **Mock Minimal**: Only mock what's actually imported by the component under test.
+- **Test Code Sharing**:
+    - Extract shared test data into separate files (e.g., `test-utils.ts`).
+    - Share test data as exported constants, not function calls.
+- **Managed Mutations**: When testing components using `useManagedMutation`, verify that notifications and callbacks (e.g., `refetch`, `onSuccess`) are called correctly.
 
 ---
 
-### Testing
-<!-- Source: docs/developer-guide/ui/tests.md -->
+## 3. E2E & Visual Testing (Playwright)
 
-# Testing
+E2E and visual regression tests are implemented using [Playwright](https://playwright.dev/).
 
-## Unit tests
+### E2E Workflows
+- **Location**: `e2e/`
+- **Focus**: "Happy paths" for critical business logic (Login, Resource Ordering, Organization Management).
+- **API Mocking**: Use `page.route()` to isolate frontend tests from backend availability.
 
-Unit tests are used for testing React components and utilities. They are written in `.test.ts` or `.test.tsx` files located next to the code they test.
+### Visual Regression
+- **Location**: `e2e-visual/`
+- **Focus**: Dashboard charts, complex wizards, and theme consistency across dark/light modes.
+- **Thresholds**: `maxDiffPixelRatio: 0.01` to allow for minor anti-aliasing differences.
 
-Run tests using `yarn test` command.
+---
 
-Unit tests use written using:
+## 4. Quality Gates & Tools
 
-* [Vitest](https://vitest.dev/) as the test runner
-* [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/) for testing React components
-* [@testing-library/user-event](https://testing-library.com/docs/user-event/intro/) for simulating user interactions
+### Static Analysis
+- **ESLint**: Enforces code style and project-specific patterns (e.g., button variants, table imports).
+- **Stylelint**: Validates SCSS/CSS against design tokens.
+- **Knip**: Identifies unused files, dependencies, and exports.
+- **Madge**: Prevents circular dependencies.
 
-## E2E tests
+### Continuous Integration (CI)
+- All tests must pass on every PR.
+- Coverage reports are generated for every build (stored in `./coverage`).
+- Playwright traces and reports are archived for failure analysis.
 
-E2E tests are implemented using [Playwright](https://playwright.dev/).
+### Pre-commit Hooks
+- Husky and lint-staged enforce linting and formatting before commit.
 
-* Run E2E tests: `yarn test:e2e`
-* Run visual regression tests: `yarn test:visual`
-* Update visual snapshots: `yarn test:visual:update`
+---
 
-E2E tests are located in:
+## 5. Essential Commands
 
-* `e2e/` - E2E test specifications
-* `e2e-visual/` - Visual regression tests
-* `playwright.config.ts` - Playwright configuration
+| Command | Description |
+| :--- | :--- |
+| `yarn test` | Run unit tests with Vitest |
+| `yarn test:e2e` | Run E2E tests with Playwright |
+| `yarn test:visual` | Run visual regression tests |
+| `yarn test:visual:update` | Update visual snapshots |
+
+---
+
+## 6. Resources
+
+- [Unit Test Template](docs/test-templates/unit-test.md)
+- [Vitest Documentation](https://vitest.dev/)
+- [Playwright Documentation](https://playwright.dev/)
 
 ---
 
