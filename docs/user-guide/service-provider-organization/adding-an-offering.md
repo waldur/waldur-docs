@@ -224,6 +224,31 @@ If the offering is not needed anymore, then it is possible to archive it by sele
 
 ![Offering archive](../img/Offering_archive.png)
 
+## Embedding images in the offering description
+
+The **Description** and **Full description** fields use a rich Markdown editor. When image support is enabled, you can embed images directly into these descriptions — for example, an architecture diagram or a screenshot of the service.
+
+!!! note
+    This feature must be enabled by the platform administrator. Image embedding becomes available only when the `allow_display_of_images_in_markdown` feature is turned on, and uploading from your device additionally requires the `ENABLE_MARKDOWN_IMAGE_UPLOAD` setting. Uploaded images are limited to the size configured in `MARKDOWN_IMAGE_MAX_SIZE_MB` (5 MB by default).
+
+To add an image:
+
+1. On the offering's **Edit** page, find the **Description** or **Full description** field and click its **Edit** button.
+2. In the editor toolbar, click the **Insert image** button.
+
+    ![Markdown editor with the Insert image button](../img/offering-description-image-toolbar.png)
+
+3. In the dialog, either choose a file from your device to upload, or paste an image URL. Optionally fill in the **Alt** and **Title** fields, then click **Save**.
+
+    ![Upload an image dialog](../img/offering-description-image-upload-dialog.png)
+
+4. The image is uploaded and embedded in the description. Click **Update** to save your changes to the offering.
+
+    ![Image embedded in the description editor](../img/offering-description-image-embedded.png)
+
+!!! warning
+    Images are uploaded to the platform's media storage as soon as you add them, before you save the offering. Keep image sizes reasonable to stay within the configured upload limit.
+
 ## Configuring Getting Started Templates
 
 When setting up an offering, you can configure a "Getting Started" guide that will be shown to users after they provision a resource. This guide supports dynamic variables that are automatically replaced with actual resource values.
