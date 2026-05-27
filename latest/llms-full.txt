@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-05-26T14:06:40.256004Z
+Generated: 2026-05-27T02:04:48.538159Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -22192,11 +22192,10 @@ sudo chown root:root /etc/waldur/waldur-site-agent-config.yaml
 
 ### Debug Mode
 
-Enable debug logging by modifying service files:
+Enable debug logging by setting `log_level` in the agent configuration file:
 
-```ini
-[Service]
-Environment=WALDUR_SITE_AGENT_LOG_LEVEL=DEBUG
+```yaml
+log_level: DEBUG
 ```
 
 ## Performance Tuning
@@ -27022,10 +27021,10 @@ uv run waldur_site_agent -m report -c /etc/waldur/waldur-site-agent-config.yaml 
 
 ### Debugging
 
-Enable debug logging by setting environment variable:
+Enable debug logging by setting `log_level` in the agent configuration file:
 
-```bash
-export WALDUR_SITE_AGENT_LOG_LEVEL=DEBUG
+```yaml
+log_level: DEBUG
 ```
 
 ## Data Flow
@@ -27551,6 +27550,188 @@ The installation instructions in `docs/installation-ubuntu24.md` are **validated
 - **waldur-api-client**: 7.8.5 (latest dependency)
 
 This validation confirms Ubuntu 24.04 LTS as the **gold standard platform** for Waldur Site Agent deployments.
+
+---
+
+### Upgrading Waldur Site Agent
+<!-- Source: docs/admin-guide/providers/site-agent/docs/upgrading.md -->
+
+# Upgrading Waldur Site Agent
+
+This guide covers what to consider before upgrading, the recommended upgrade sequence,
+and how to validate that the new agent version works correctly with your Waldur Mastermind instance.
+
+## What to Consider Before Upgrading
+
+### The `waldur-api-client` pin is the compatibility contract
+
+The agent talks to Waldur Mastermind through the `waldur-api-client` Python package,
+which is a generated SDK pinned to an **exact version** in the agent's `pyproject.toml`.
+
+A compatible pair means:
+
+- No API endpoints used by the agent have been removed or had incompatible schema changes
+  in Mastermind since that SDK version was generated.
+
+When you upgrade the agent to a new release, its `waldur-api-client` pin almost always
+bumps too. Check the [CHANGELOG](../CHANGELOG.md) for entries about `waldur-api-client`
+upgrades — these indicate a new API surface is required and you must ensure Mastermind
+is recent enough to support it.
+
+### Review the CHANGELOG for breaking changes
+
+Before upgrading, read the CHANGELOG entries between your current version and the target
+version and look for:
+
+| Signal | What it means |
+|---|---|
+| New required configuration keys | Add them to the config file before starting the agent, or it will fail to start. |
+| Removed configuration keys | Remove them — the agent may reject an unrecognised key. |
+| Backend behaviour changes | Check the CHANGELOG description; verify flags and settings match the new expectations. |
+| New plugin packages | Install the relevant `waldur-site-agent-<plugin>` package if you use that backend. |
+
+### Verify Mastermind is compatible first
+
+The agent requires Mastermind to expose API endpoints that match its `waldur-api-client` pin.
+**Upgrade Mastermind before the agent** — a newer agent talking to an older Mastermind can
+fail with `404 Not Found` or schema validation errors on endpoints the old Mastermind
+does not yet expose.
+
+### STOMP / event-process mode
+
+If you run `agent-event-process`, also check whether any new event types were added.
+The agent subscribes to topics at startup; a configuration mismatch between agent and
+the RabbitMQ/STOMP broker does not prevent startup but can cause silent gaps in processing.
+
+---
+
+## Upgrade Order
+
+**Always upgrade Waldur Mastermind first, then the site agent.**
+
+```text
+1. Upgrade Waldur Mastermind
+2. Verify Mastermind is healthy (API responds, worker processes running)
+3. Stop site agent services
+4. Upgrade waldur-site-agent (and plugins)
+5. Update configuration if the release requires new keys
+6. Start site agent services
+7. Validate (see below)
+```
+
+### Why Mastermind first?
+
+The agent reads from and writes to Mastermind. During a Mastermind upgrade the agent
+can safely continue running against the old version — it will use existing endpoints.
+The reverse is not safe: a new agent may call endpoints that do not yet exist in an
+older Mastermind, causing immediate errors.
+
+### Stopping services
+
+```bash
+# Polling mode
+systemctl stop waldur-agent-order-process waldur-agent-membership-sync waldur-agent-report
+
+# Event-process (STOMP) mode
+systemctl stop waldur-agent-event-process waldur-agent-report
+```
+
+### Upgrading the package
+
+```bash
+# PyPI install
+pip install --upgrade waldur-site-agent
+
+# With specific plugins (upgrade all at once to keep versions in sync)
+pip install --upgrade \
+  waldur-site-agent \
+  waldur-site-agent-slurm \
+  waldur-site-agent-keycloak-client
+```
+
+All plugin packages share the same version number as the core package.
+**Always upgrade all installed plugins together with the core.**
+
+### Helm chart
+
+If you deploy via Helm, the chart version mirrors the agent release version.
+Update `image.tag` (or use the chart's default) and run:
+
+```bash
+helm upgrade waldur-site-agent waldur/waldur-site-agent --version <NEW_VERSION>
+```
+
+---
+
+## Validating the Upgrade
+
+### 1. Run diagnostics
+
+`waldur_site_diagnostics` checks connectivity, token permissions, offering availability,
+and backend health for every offering in the configuration:
+
+```bash
+waldur_site_diagnostics -c /etc/waldur/waldur-site-agent-config.yaml
+```
+
+A successful run prints `DIAGNOSTICS START … DIAGNOSTICS END` with no errors and exits 0.
+Any `ERROR` line indicates a problem to fix before starting production services.
+
+### 2. Smoke-test order processing
+
+After starting services, verify the agent is processing work by checking logs for
+normal activity within one reconciliation interval:
+
+```bash
+# Polling mode — look for successful order/membership cycles
+journalctl -u waldur-agent-order-process.service -f
+
+# Event-process mode — look for STOMP connection confirmation and heartbeats
+journalctl -u waldur-agent-event-process.service -f
+```
+
+Signs of a healthy agent:
+
+- `Connected to STOMP broker` (event-process mode)
+- `Processing orders…` / `Membership sync complete` (polling mode)
+- No repeated `ERROR` lines within the first few minutes
+- Heartbeat updates visible in Waldur UI under the offering's agent status
+
+### 3. Check the Waldur UI
+
+In the Waldur service provider interface, open the offering and verify:
+
+- Agent heartbeat timestamp is recent (updated within the last reconciliation interval)
+- No offering-level error banners
+
+### 4. Run a test order (optional but recommended for major upgrades)
+
+Place a small test order through Waldur and confirm the agent picks it up, provisions
+the backend resource, and transitions the order to `Done` within a reasonable time.
+
+---
+
+## SLURM Plugin
+
+See [SLURM Plugin Upgrade Notes](../plugins/slurm/docs/upgrading.md) for SLURM-specific
+`backend_settings` reference, QoS configuration, account hierarchy behaviour,
+and post-upgrade validation steps.
+
+---
+
+## Rollback
+
+The agent is stateless — its only persistent state is in Waldur Mastermind and the
+backend (e.g. SLURM accounts). Rolling back is safe as long as the older agent version
+is compatible with the current Mastermind version.
+
+```bash
+pip install waldur-site-agent==<PREVIOUS_VERSION>
+systemctl restart waldur-agent-*
+```
+
+If you also rolled back Mastermind, roll it back before rolling back the agent,
+following the same Mastermind-first order.
 
 ---
 
@@ -28088,6 +28269,7 @@ you push.
 - [Installation Guide](docs/installation.md)
 - [Configuration Reference](docs/configuration.md)
 - [Deployment Guide](docs/deployment.md)
+- [Upgrading Guide](docs/upgrading.md)
 - [Username Management](docs/offering-users.md)
 - [SLURM Usage Reporting Setup](docs/slurm-usage-reporting-setup.md)
 - [Releasing Guide](docs/releasing.md)
@@ -33894,20 +34076,30 @@ require LDAP integration), and operator troubleshooting tips.
 
 ### Event Processing Configuration
 
-```yaml
-# Event processing for real-time periodic limits
-event_processing:
-  enabled: true
-  stomp_settings:
-    host: "mastermind.example.com"
-    port: 61613
-    username: "site_agent"
-    password: "${STOMP_PASSWORD}"
+STOMP event processing is configured with top-level keys **on the offering**
+(not in a separate `event_processing` block):
 
-# Subscribe to periodic limits updates
-observable_object_types:
-  - "RESOURCE_PERIODIC_LIMITS_UPDATE"
+```yaml
+offerings:
+  - name: "My SLURM Cluster"
+    backend_type: "slurm"
+    # STOMP event processing for real-time periodic limits
+    stomp_enabled: true
+    stomp_ws_host: "mastermind.example.com"
+    stomp_ws_port: 443
+    stomp_ws_path: "/ws"          # optional WebSocket path
+    websocket_use_tls: true       # default true
+    backend_settings:
+      periodic_limits:
+        enabled: true
 ```
+
+The set of STOMP topics the agent subscribes to is **derived automatically**
+from the offering configuration — there is no user-settable
+`observable_object_types` key. When `backend_settings.periodic_limits.enabled`
+is `true`, the agent subscribes to the `RESOURCE_PERIODIC_LIMITS` topic
+(see `_determine_observable_object_types` in
+`waldur_site_agent/event_processing/utils.py`).
 
 ## Usage
 
@@ -33940,7 +34132,11 @@ uv run waldur_site_load_historical_usage \
 ```
 
 **Requirements for historical loading:**
-- **Staff user token** (regular offering tokens cannot submit historical data)
+- **Staff user token** (regular offering tokens cannot submit historical data).
+  Use `--no-staff-check` to bypass staff validation when submitting with a
+  service-provider token.
+- Optional flags: `--skip-user-usage` (submit resource-level totals only),
+  `--no-staff-check` (skip staff validation)
 - Resources must already exist in Waldur
 - SLURM accounting database must contain historical data for requested periods
 
@@ -34284,39 +34480,74 @@ sacctmgr modify account waldur_project123 set QoS=slowdown
 
 ```text
 plugins/slurm/tests/
-├── test_periodic_limits/          # Periodic limits functionality
+├── test_periodic_limits/                # Periodic limits functionality
 │   ├── test_periodic_limits_plugin.py
 │   ├── test_backend_integration.py
 │   ├── test_configuration_validation.py
 │   ├── test_mock_mastermind_signals.py
-│   ├── test_emulator_scenarios_*.py
-│   └── README.md
-├── test_historical_usage/         # SLURM-specific historical usage tests
+│   ├── test_emulator_integration.py
+│   ├── test_emulator_scenarios_direct.py
+│   ├── test_emulator_scenarios_working.py
+│   ├── test_real_emulator_scenarios.py
+│   ├── README.md
+│   ├── EMULATOR_USAGE.md
+│   └── TEST_SCENARIO_MAPPING.md
+├── test_historical_usage/               # SLURM-specific historical usage tests
 │   ├── test_integration.py
 │   ├── test_slurm_client_historical.py
 │   ├── test_slurm_backend_historical.py
 │   └── README.md
 │   # Note: Loader and backend utils tests moved to core tests/
-├── test_diagnostics.py            # Account diagnostics CLI
-├── test_order_processing.py       # Core functionality
-├── test_reporing.py               # Usage reporting
-└── test_membership_sync.py        # User management
+├── e2e/                                 # End-to-end tests (gated by WALDUR_E2E_TESTS)
+│   ├── test_e2e_api_optimizations.py
+│   ├── test_e2e_benchmark.py
+│   ├── test_e2e_ldap.py
+│   ├── test_e2e_order_reconciliation.py
+│   ├── test_e2e_partition_associations.py
+│   ├── test_e2e_policy.py
+│   ├── test_e2e_prepaid.py
+│   ├── test_e2e_qos_backcompat.py
+│   ├── test_e2e_qos_matrix.py
+│   ├── test_e2e_qos_polling.py
+│   ├── test_e2e_qos_stomp.py
+│   ├── test_e2e_restore.py
+│   └── test_e2e_stomp.py
+├── test_diagnostics.py                  # Account diagnostics CLI
+├── test_order_processing.py             # Order processing / resource lifecycle
+├── test_reporing.py                     # Usage reporting
+├── test_membership_sync.py              # User management
+├── test_parser.py                       # sacct/sacctmgr output parsing
+├── test_command_construction.py         # sacctmgr command construction
+├── test_prepaid_limits.py               # Prepaid (duration-based) limits
+├── test_prepaid_emulator.py             # Prepaid limits via emulator
+├── test_limit_echo_loop.py              # Limit echo-loop guard
+├── test_partition_associations.py       # Partition-scoped user associations
+├── test_project_reparenting.py          # Account reparenting
+├── test_username_set_race_condition.py  # Username set race condition
+├── test_timezone.py                     # Timezone handling in usage windows
+└── test_slurm_bin_path.py               # Configurable SLURM binary path
 ```
 
 ### Running Tests
 
+Run plugin tests from **inside the plugin directory** — the SLURM backend
+entry point only resolves when pytest runs from `plugins/slurm/` (running
+from the workspace root fails with `Unsupported backend type: slurm`).
+
 ```bash
+cd plugins/slurm
+
 # All tests
-uv run pytest plugins/slurm/tests/ -v
+uv run pytest tests/ -v
 
 # Periodic limits tests only
-uv run pytest plugins/slurm/tests/test_periodic_limits/ -v
+uv run pytest tests/test_periodic_limits/ -v
 
 # Historical usage tests only
-uv run pytest plugins/slurm/tests/test_historical_usage/ -v
+uv run pytest tests/test_historical_usage/ -v
 
 # With coverage
-uv run pytest plugins/slurm/tests/ --cov=waldur_site_agent_slurm --cov-report=html
+uv run pytest tests/ --cov=waldur_site_agent_slurm --cov-report=html
 ```
 
 ### Test Features
@@ -34352,8 +34583,8 @@ uv add --dev slurm-emulator
 # Install plugin in development mode
 uv sync --all-packages
 
-# Run tests
-uv run pytest plugins/slurm/tests/ -v
+# Run tests (from inside the plugin dir)
+cd plugins/slurm && uv run pytest tests/ -v
 ```
 
 ### Adding New Features
@@ -34367,11 +34598,11 @@ uv run pytest plugins/slurm/tests/ -v
 ### Debugging
 
 ```bash
-# Enable debug logging
-export WALDUR_SITE_AGENT_LOG_LEVEL=DEBUG
-
-# Run with verbose output
-uv run waldur_site_agent -m order_process -c config.yaml --verbose
+# Enable debug logging by setting log_level in the YAML config:
+#   log_level: DEBUG
+# (the agent reads log_level from the configuration file; there is no
+#  --verbose flag and no LOG_LEVEL environment variable for the main agent)
+uv run waldur_site_agent -m order_process -c config.yaml
 
 # Test specific functionality
 python -c "
@@ -34390,6 +34621,11 @@ print(client.list_accounts())
 offerings:
   - name: "HPC Cluster"
     backend_type: "slurm"
+    # STOMP event processing (top-level offering keys)
+    stomp_enabled: true
+    stomp_ws_host: "mastermind.example.com"
+    stomp_ws_port: 443
+    websocket_use_tls: true
     backend_settings:
       default_account: "root"
       customer_prefix: "waldur_"
@@ -34401,15 +34637,6 @@ offerings:
         enabled: true
         emulator_mode: false
         limit_type: "GrpTRESMins"
-
-# Event processing
-event_processing:
-  enabled: true
-  stomp_settings:
-    host: "mastermind.example.com"
-    port: 61613
-    username: "site_agent"
-    password: "${STOMP_PASSWORD}"
 ```
 
 ### Multi-Cluster Setup
@@ -34448,15 +34675,13 @@ offerings:
 offerings:
   - name: "Development Cluster"
     backend_type: "slurm"
+    # No STOMP needed for development
+    stomp_enabled: false
     backend_settings:
       periodic_limits:
         enabled: true
         emulator_mode: true
         emulator_base_url: "http://localhost:8080"
-
-# No event processing needed for development
-event_processing:
-  enabled: false
 ```
 
 ## Troubleshooting
@@ -34533,6 +34758,127 @@ For issues, bug reports, or feature requests related to the SLURM plugin, please
 The SLURM plugin provides enterprise-grade SLURM cluster integration with advanced
 features like periodic limits and historical data loading, making it suitable for
 production HPC environments.
+
+---
+
+### Upgrading the SLURM Plugin
+<!-- Source: docs/admin-guide/providers/site-agent/plugins/slurm/docs/upgrading.md -->
+
+# Upgrading the SLURM Plugin
+
+This page covers SLURM-specific considerations when upgrading `waldur-site-agent-slurm`.
+Read the [general upgrade guide](../../../docs/upgrading.md) first.
+
+## Required `backend_settings` keys
+
+The SLURM backend reads the following keys from `backend_settings`.
+Required keys must be present or the agent will fail to start.
+
+| Key | Required | Notes |
+|---|---|---|
+| `default_account` | **Yes** | Root SLURM account; must exist in the cluster |
+| `customer_prefix` | **Yes** | Prefix for customer-level SLURM accounts |
+| `project_prefix` | **Yes** | Prefix for project-level SLURM accounts |
+| `allocation_prefix` | **Yes** | Prefix for allocation accounts |
+| `cluster_name` | No | Must match the offering's `backend_id` in Waldur; required in multi-cluster setups |
+| `slurm_bin_path` | No | Default `/usr/bin` |
+| `parent_account` | No | Set for flat hierarchies (no customer tier); omit for nested hierarchy |
+| `default_partition` | No | Fallback SLURM partition |
+| `enforce_offering_partitions` | No | Default `false` |
+| `enable_user_homedir_account_creation` | No | Default `true` |
+| `default_homedir_umask` | No | Default `0077` |
+
+Check the [CHANGELOG](../../../CHANGELOG.md) for any new required keys before upgrading.
+
+## QoS configuration
+
+QoS state is driven by the `paused` and `downscaled` flags set by Waldur Mastermind
+(via policy or manual action). The agent maps these flags to SLURM QoS names:
+
+```yaml
+backend_settings:
+  qos_default: "normal"      # Applied when resource is active
+  qos_downscaled: "low"      # Applied when Mastermind sets downscaled=true
+  qos_paused: "pause"        # Applied when Mastermind sets paused=true
+```
+
+Optional per-account QoS creation during resource provisioning is available via
+`qos_management`:
+
+```yaml
+backend_settings:
+  qos_management:
+    enabled: true
+    # ...other QoS management keys
+```
+
+## Account hierarchy and `sync_resource_project`
+
+When a project is moved to a different customer in Waldur, the SLURM account's parent
+must be updated to reflect the new customer account. The agent handles this via
+`sync_resource_project`, called at:
+
+- **Polling mode**: every `order_process` or `membership_sync` cycle.
+- **Event-process (STOMP) mode**: on incoming `RESOURCE` events, and periodically every
+  reconciliation interval. Mastermind also pushes a `RESOURCE` event immediately when a
+  project moves, so the hierarchy is corrected without waiting for the next cycle.
+
+`sync_resource_project` is skipped when `parent_account` is set (flat hierarchy).
+
+## Validating after upgrade
+
+### Run diagnostics
+
+`waldur_site_diagnostics` calls `SlurmBackend.diagnostics()`, which prints the configured
+prefixes, `default_account`, and SLURM version, and returns an error if `sinfo` is
+unreachable:
+
+```bash
+waldur_site_diagnostics -c /etc/waldur/waldur-site-agent-config.yaml 2>&1 | grep -E "SLURM|slurm|ERROR"
+```
+
+A healthy output looks like:
+
+```text
+SLURM customer prefix          = hpc_c_
+SLURM project prefix           = hpc_p_
+SLURM allocation prefix        = hpc_a_
+SLURM default account          = root
+Slurm version: slurm 23.11.4
+```
+
+### Verify account hierarchy for recently moved projects (STOMP mode)
+
+If any project was moved between customers while the agent was not running or
+was on an older version, the SLURM account parent may be stale. Trigger a sync
+by restarting the agent or waiting for one reconciliation interval.
+
+To check a specific account's parent directly:
+
+```bash
+sacctmgr show account <allocation_account> format=Account,ParentName -P
+```
+
+### Confirm QoS names exist in SLURM
+
+If you use `qos_downscaled` or `qos_paused`, verify the referenced QoS objects
+exist in the cluster:
+
+```bash
+sacctmgr show qos format=Name -P
+```
+
+A QoS name in `backend_settings` that does not exist in SLURM will cause the
+downscale or pause action to fail with a `BackendError`.
+
+## Filesystem quotas
+
+If you use `homedir_quota` or `project_directory` (Lustre/CephFS/XFS quotas), no
+migration steps are required — quota configuration is read fresh on each resource
+creation or user add. After upgrading, run diagnostics and create a test resource to
+confirm quota-setting commands succeed.
+
+See [SLURM Storage Quotas](../../../docs/slurm-storage-quotas.md) for full configuration reference.
 
 ---
 
