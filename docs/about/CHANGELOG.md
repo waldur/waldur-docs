@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.0.9-rc.14 - 2026-05-29
+
+### Highlights
+
+This release candidate resolves a startup crash that affected users signing in through OIDC providers. Operators running identity-federated deployments should see reliable application bootstrap restored.
+
+### Bug Fixes
+
+- Fixed an application bootstrap crash that prevented the UI from loading for OIDC-authenticated sessions.
+
+### Core Component Activity
+
+- **Waldur Homeport**: [1 commit](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.13...8.0.9-rc.14) - OIDC session bootstrap fix.
+
+---
+
 ## 8.0.9-rc.13 - 2026-05-29
 
 ### Highlights
