@@ -1,5 +1,61 @@
 # Changelog
 
+## 8.0.9-rc.13 - 2026-05-29
+
+### Highlights
+
+This release strengthens security with restored CSRF protection on session-authenticated API endpoints and adds a per-user gate for personal access tokens. OpenStack operators gain richer tenant management with router external gateway controls, expanded quota actions, and audit logging. The frontend completes its long-running migration from redux-form to react-final-form and consolidates state management around React Query and hooks.
+
+### What's New
+
+- **OpenStack router external gateways**: Operators can now set, view, and remove external gateways on tenant routers from the UI, with full audit logging of changes.
+- **OpenStack tenant quota management**: New "Set quotas" and "Refresh quotas" actions on OpenStack tenants, with marketplace-managed warning badges and an unsaved-changes guard. `set_quotas` now accepts dynamic `gigabytes_<type>` keys plus `floating_ip_count`, `network_count`, `subnet_count`, and `port_count`.
+- **Per-user personal access token gate**: Administrators can now enable or disable personal access token creation on a per-user basis from the user form.
+- **Custom IP protocol numbers**: Security group rules support arbitrary IP protocol numbers beyond TCP/UDP/ICMP for both OpenStack and Rancher.
+- **Inference playground**: Resource view exposes a chat-style playground for talking to a resource's vLLM endpoint, gated by a new `expose_inference_playground` offering display option.
+- **Archived calls view**: Proposal call management now has a dedicated archived-calls tab with a banner and disabled actions on closed calls.
+- **Manual workflow transitions**: Proposal workflow steps support a manual transition mode with per-call step configuration and internal notes.
+- **Marketplace endpoint management**: New `set_endpoints` action lets providers update endpoints on marketplace resources.
+- **Offering description image upload**: Markdown editor in offering descriptions now supports inline image upload.
+- **VM resource metadata exposure**: VM resource lists show image and flavor names with filter support.
+- **Request limit changes for project members**: Project members (not just managers) can now request limit changes on resources.
+
+### Improvements
+
+- **Security — CSRF restored on session auth**: DRF `SessionAuthentication` no longer silently bypasses CSRF; cookie-authenticated state-changing endpoints are protected again. Django admin login continues to work via its own CSRF middleware (covered by regression tests).
+- **OIDC reliability**: Deactivated users now receive a clean rejection instead of a 500 error during OIDC login.
+- **SCIM reconciliation**: Reconcile now also triggers on recent offering-user and resource changes within the configured timeframe.
+- **Service-provider team privacy**: Non-consented users are hidden from SP resource teams when ToS enforcement is on; offering usernames are visible only to direct project members.
+- **Remote Waldur sync**: Only project-level permissions are synced to remote Waldur, avoiding unintended customer-level propagation.
+- **Termination order acceptance**: Users with appropriate permissions can now accept terminate orders that are pending consumer approval.
+- **EESSI catalog**: Duplicate upstream module versions are preserved instead of being silently dropped.
+- **Resource lifecycle**: Inactive actors are skipped when scheduling resource termination; system volume bootable flag is preserved during instance creation.
+- **Site agent notifications**: The site agent is notified when a project moves between customers.
+- **Logout cleanup**: Redirect storage is cleared on logout to prevent stale post-login redirects.
+- **SCIM tab fix**: Identity provider settings no longer show an empty SCIM tab.
+- **Checklist file answers**: File answers in checklists now process correctly on update and accept already-processed files.
+- **Estonian and Lithuanian translations**: Improved coverage; OpenStack "tenant" now renders as "privaatpilv" in Estonian.
+- **OpenStack tenant migration**: Subnet dropdown added for the source OpenStack in migration forms.
+- **Offering type filter scoping**: Provider offerings table only lists integration types the user can access.
+- **Disabled action menus**: Tables show disabled action menus instead of "N/A" text for unavailable actions.
+- **Reviewer profile UX**: Multiple UI consistency fixes across project, reviewer profile, user-edit pages, and modals.
+
+### Bug Fixes
+
+- Fix invoice lookup using billing_period instead of UTC date in usage billing.
+- Fix wrong resource URL in limit change request notification emails.
+- Return 400 (not 500) on ambiguous category title in offering import.
+- Bump `js-cookie`, `qs`, `brace-expansion`, and `ws` to patched versions to resolve known vulnerabilities.
+- Fix Python dependency vulnerability scan configuration.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [40 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.12...8.0.9-rc.13) - Security hardening (CSRF), OpenStack quota and security-group enhancements, proposal workflow improvements, checklist fixes, and broad OpenAPI typing refactors.
+- **Waldur Homeport**: [76 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.12...8.0.9-rc.13) - Completed redux-form → react-final-form migration, migrated Redux selectors/drawer/notifications/table actions to hooks and React Query, added router external gateway UI, inference playground, archived calls view, and quota management actions.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.9-rc.12...8.0.9-rc.13) - Metrics exporter image is now overridable.
+
+---
+
 ## 8.0.9-rc.12 - 2026-05-19
 
 This release focuses on reliability improvements across OpenStack networking, SLURM policy enforcement, and marketplace offering management. OpenStack floating IP attachment now fails fast and with clear error messages when encountering invalid or missing network port data, preventing silent failures. SLURM periodic policy handling is more stable, and several marketplace API correctness issues have been resolved.
