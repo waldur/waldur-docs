@@ -1,5 +1,43 @@
 # Changelog
 
+## 8.0.9-rc.15 - 2026-05-31
+
+### Highlights
+
+This release significantly expands OpenStack tenant network visibility and troubleshooting capabilities. Operators get a new tenant network topology view, router effective-routes inspection, instance connectivity diagnostics, and a network audit timeline — making it much easier to understand and debug complex tenant networking. VM deployment is also more transparent with quota state surfaced for flavors and floating IPs, and several form fixes improve reliability across allocation pools, sidebar filters, and topology export.
+
+### What's New
+
+- Tenant network topology tab: a new visualization (with Mermaid-based rendering, PNG export, and legend) shows the layout of networks, subnets, routers, and ports within a tenant. ([WAL-9971])
+- Router effective-routes endpoint and card: see the combined static and learned routes that actually apply to a router, alongside related network and subnet listings. ([WAL-9972])
+- Instance connectivity diagnose action: trigger a diagnostic on an OpenStack instance to surface connectivity problems directly from the UI. ([WAL-9976])
+- Network audit timeline endpoint on Tenant: review a chronological audit trail of network-related events scoped to a tenant. ([WAL-9975])
+- Inbound RBAC shares visible to target tenants: tenants now see RBAC policies shared into them, not just those they share outward. ([WAL-9973])
+- Set allowed address pairs as a first-class Port action, with the instance dialog migrated to use the Port endpoint. ([WAL-9977], [WAL-8599])
+- Checklist questions now support File and Multiple files question types in the UI. ([WAL-9393])
+- Custom IP protocol numbers are supported when authoring security group rules. ([WAL-9828])
+
+### Improvements
+
+- VM deploy flow surfaces flavor and floating IP quota state, so operators can see at a glance which options are blocked by quota. ([WAL-9948])
+- External-pool exhaustion is now surfaced clearly when creating a floating IP, instead of failing opaquely. ([WAL-9974])
+- Periodic orphan backfill now self-heals on a per-tenant basis, isolating failures to affected tenants. ([ONS-1175])
+- Frontend test infrastructure standardized with centralized mocks for more reliable test runs.
+
+### Bug Fixes
+
+- Subnet allocation pool fields now correctly persist user input.
+- Resources sidebar links restore the project/customer filter context.
+- Topology PNG export no longer fails with a tainted-canvas error.
+- `AsyncSelectField` now respects a caller-provided `getOptionLabel`.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.14...8.0.9-rc.15) — tenant network topology, router effective-routes, instance diagnostics, network audit timeline, inbound RBAC visibility, and Port-based allowed address pairs.
+- **Waldur Homeport**: [13 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.14...8.0.9-rc.15) — topology tab and export, effective-routes card, VM deploy quota surfacing, checklist file question types, custom IP protocols in security rules, and assorted form/test fixes.
+
+---
+
 ## 8.0.9-rc.14 - 2026-05-29
 
 ### Highlights
