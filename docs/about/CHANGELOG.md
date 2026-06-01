@@ -1,5 +1,43 @@
 # Changelog
 
+## 8.0.9-rc.16 - 2026-06-01
+
+### Highlights
+
+This release tightens OpenStack network security by restricting external gateways and floating IPs to networks the project actually has access to, and extends cost policy pre-flight enforcement across all policy scopes so over-limit orders are blocked before they consume resources. The proposal evaluation workflow gains a full set of UI components including a status stepper, and several papercut bugs in the marketplace, sidebar filters, and invoice tables have been fixed.
+
+### What's New
+
+- New proposal evaluation workflow UI: configurable workflow steps, decision actions, a workflow status stepper on proposals, and supporting widgets across call management and review screens.
+- Staff can now create maintenance announcements through a guided flow with an optional provider/offering picker.
+- Marketplace categories can now be ordered by title and group.
+
+### Improvements
+
+- External gateway selection on OpenStack routers is now restricted to shared networks or networks granted via RBAC, with the floating-IP create-router argument gated to match. Subnets supplied via `external_fixed_ips` are validated against the chosen network.
+- Cost policy pre-flight checks now block over-limit orders for every cost policy scope (project, customer, and offering), not just a subset.
+- Project and customer stats now exclude child offerings and report storage in GB instead of MB.
+- Invoice items table refreshes automatically after per-row actions so the view always reflects the latest state.
+- SAP invoice reports format `cond_value` independently of the operating system locale, avoiding inconsistent decimal separators.
+- Helm chart now allows overriding `PROJECT.MEMBER` permissions through `customRolePermissions`.
+
+### Bug Fixes
+
+- Floating-IP request orders no longer crash when offerings expose `select_openstack_*` options, and required validation no longer fires on boolean option fields.
+- Provider offerings list no longer hangs when a state filter is applied.
+- Resources sidebar links keep the active organization filter, and the sidebar resources filter no longer inherits unrelated query parameters from the host page.
+- Marketplace deploy page submits forms from the correct component.
+- Fixed Estonian translation for the "Instances count" quota.
+- Celery worker health probes in the Helm chart no longer trigger false liveness restarts.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [10 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.15...8.0.9-rc.16) - OpenStack network access hardening, cost policy pre-flight expansion, marketplace stats and ordering tweaks, SAP invoice locale fix.
+- **Waldur Homeport**: [11 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.15...8.0.9-rc.16) - Proposal workflow UI, staff maintenance creation flow, plus a batch of marketplace, sidebar, and invoice fixes.
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.0.9-rc.15...8.0.9-rc.16) - Configurable project member permissions and Celery worker health probe fix.
+
+---
+
 ## 8.0.9-rc.15 - 2026-05-31
 
 ### Highlights
