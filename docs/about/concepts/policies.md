@@ -2,7 +2,9 @@
 
 ## Overview
 
-Policies are automated reactions to events on [marketplace](marketplace.md) resources — typically to cap cost, cap usage, or terminate a misbehaving resource. They run alongside [quotas](quotas.md): a quota refuses an action up front, a policy reacts to facts after the fact within a period (this month's spend, this quarter's CPU-hours, this year's storage).
+Policies are automated reactions to events on [marketplace](marketplace.md) resources — typically to cap cost, cap usage, or terminate a misbehaving resource. They run alongside [quotas](quotas.md): a quota refuses an action up front, while most policy actions react to facts after the fact within a period (this month's spend, this quarter's CPU-hours, this year's storage).
+
+The one exception is the `block_creation_of_new_resources` action on cost policies: it is also evaluated **synchronously at order submission**, so an order that would push the projected period total above the limit is rejected with `400 Bad Request` before any resource or order row is persisted. The other actions (notify, terminate, throttle, …) still run from the post-invoice trigger.
 
 ## Model
 
@@ -51,7 +53,7 @@ policy -> terminate
 | Action | Effect |
 |---|---|
 | Notify project / customer | Email the project members or organization owners. |
-| Block creation of new resources | Refuse new orders on the affected scope. |
+| Block creation of new resources | Refuse new orders on the affected scope. Enforced synchronously at order submission — including `update_limits` and `switch_plan` orders that would increase cost. |
 | Terminate resources | Cancel running resources to stop the bleeding. |
 | Block SLURM jobs | (HPC) Pause new job submissions until consumption drops. |
 | Custom | Any action wired in via the policy plugin interface. |
