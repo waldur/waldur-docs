@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-06-01T02:04:51.031233Z
+Generated: 2026-06-01T06:51:46.123768Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -13939,7 +13939,7 @@ td:nth-child(4) {
 | `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | No description available |
 | `mark_agent_services_as_inactive` | `waldur_mastermind.marketplace_site_agent.mark_agent_services_as_inactive` | 5 minutes | No description available |
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
-| `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Create marketplace resources for OpenStack instances and volumes that exist in backend but are missing from marketplace. |
+| `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Heal marketplace state for every tenant that has orphan OpenStack<br>instances or volumes.<br><br>Previously this task called create_marketplace_resource_for_imported_resources<br>directly, which silently no-ops when the per-tenant Instance/Volume offering<br>is missing. That left orphan VMs invisible in the marketplace UI even after<br>the periodic task ran. Routing through self_heal_tenant_marketplace_model<br>recreates archived/missing per-tenant offerings first, then backfills the<br>orphan resources — so tenants no longer need a manual "Synchronise" click<br>after the offering-side state drifts. |
 | `marketplace-openstack.refresh-instance-backend-metadata` | `waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata` | 1 day | Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information. |
 | `marketplace-reset-stuck-updating-resources` | `waldur_mastermind.marketplace.reset_stuck_updating_resources` | 10 minutes | Reset marketplace resources stuck in UPDATING state.<br><br>This task handles two scenarios where a resource remains in UPDATING state:<br><br>1. The resource's UPDATE order has been completed (state=DONE) but the resource<br> state wasn't transitioned to OK due to a race condition.<br><br>2. The resource was set to UPDATING by a backend operation (e.g., sync/pull)<br> without an order, but the operation finished without updating the state.<br> In this case, if no UPDATE order exists or is executing, and the resource<br> has been stuck for more than 1 hour, it is reset to OK.<br><br>For each stuck resource, the task transitions it to OK state. |
 | `notification_about_project_ending` | `waldur_mastermind.marketplace.notification_about_project_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about projects ending in 1 day and 7 days. |
@@ -68893,7 +68893,9 @@ The role matrix for each shape — Owner, PI, Service Manager, etc. — is docum
 
 ## Overview
 
-Policies are automated reactions to events on [marketplace](marketplace.md) resources — typically to cap cost, cap usage, or terminate a misbehaving resource. They run alongside [quotas](quotas.md): a quota refuses an action up front, a policy reacts to facts after the fact within a period (this month's spend, this quarter's CPU-hours, this year's storage).
+Policies are automated reactions to events on [marketplace](marketplace.md) resources — typically to cap cost, cap usage, or terminate a misbehaving resource. They run alongside [quotas](quotas.md): a quota refuses an action up front, while most policy actions react to facts after the fact within a period (this month's spend, this quarter's CPU-hours, this year's storage).
+
+The one exception is the `block_creation_of_new_resources` action on cost policies: it is also evaluated **synchronously at order submission**, so an order that would push the projected period total above the limit is rejected with `400 Bad Request` before any resource or order row is persisted. The other actions (notify, terminate, throttle, …) still run from the post-invoice trigger.
 
 ## Model
 
@@ -68942,7 +68944,7 @@ policy -> terminate
 | Action | Effect |
 |---|---|
 | Notify project / customer | Email the project members or organization owners. |
-| Block creation of new resources | Refuse new orders on the affected scope. |
+| Block creation of new resources | Refuse new orders on the affected scope. Enforced synchronously at order submission — including `update_limits` and `switch_plan` orders that would increase cost. |
 | Terminate resources | Cancel running resources to stop the bleeding. |
 | Block SLURM jobs | (HPC) Pause new job submissions until consumption drops. |
 | Custom | Any action wired in via the policy plugin interface. |
@@ -74151,6 +74153,70 @@ def available_checklists(self, request):
 - onboarding_verification_deleted
 - onboarding_verification_deleted_by_task
 
+## Openstack_floating_ip
+
+- openstack_floating_ip_attached
+- openstack_floating_ip_connected
+- openstack_floating_ip_description_updated
+- openstack_floating_ip_detached
+- openstack_floating_ip_disconnected
+
+## Openstack_network
+
+- openstack_network_cleaned
+- openstack_network_created
+- openstack_network_deleted
+- openstack_network_imported
+- openstack_network_pulled
+- openstack_network_updated
+
+## Openstack_port
+
+- openstack_port_allowed_address_pairs_changed
+- openstack_port_cleaned
+- openstack_port_created
+- openstack_port_deleted
+- openstack_port_imported
+- openstack_port_pulled
+- openstack_port_security_disabled
+- openstack_port_security_enabled
+- openstack_port_security_groups_changed
+- openstack_port_updated
+
+## Openstack_rbac
+
+- openstack_rbac_policy_created
+- openstack_rbac_policy_deleted
+
+## Openstack_router
+
+- openstack_router_interface_added
+- openstack_router_interface_removed
+- openstack_router_updated
+
+## Openstack_security_group
+
+- openstack_security_group_cleaned
+- openstack_security_group_created
+- openstack_security_group_deleted
+- openstack_security_group_imported
+- openstack_security_group_pulled
+- openstack_security_group_rule_created
+- openstack_security_group_rule_deleted
+- openstack_security_group_rule_updated
+- openstack_security_group_rules_changed
+- openstack_security_group_updated
+
+## Openstack_subnet
+
+- openstack_subnet_cleaned
+- openstack_subnet_created
+- openstack_subnet_deleted
+- openstack_subnet_host_routes_changed
+- openstack_subnet_imported
+- openstack_subnet_pulled
+- openstack_subnet_updated
+
 ## Permissions
 
 - role_granted
@@ -74263,6 +74329,10 @@ def available_checklists(self, request):
 - openstack_port_security_enabled
 - openstack_port_security_groups_changed
 - openstack_port_updated
+- openstack_rbac_policy_created
+- openstack_rbac_policy_deleted
+- openstack_router_interface_added
+- openstack_router_interface_removed
 - openstack_router_updated
 - openstack_security_group_cleaned
 - openstack_security_group_created
@@ -74284,6 +74354,7 @@ def available_checklists(self, request):
 - openstack_subnet_cleaned
 - openstack_subnet_created
 - openstack_subnet_deleted
+- openstack_subnet_host_routes_changed
 - openstack_subnet_imported
 - openstack_subnet_pulled
 - openstack_subnet_updated
