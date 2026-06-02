@@ -1,5 +1,44 @@
 # Changelog
 
+## 8.0.9-rc.17 - 2026-06-02
+
+### Highlights
+
+This release improves reliability of usage-based billing by moving component usage processing to an asynchronous background task, and quiets noisy policy evaluation events for cleaner audit logs. Administrators get better visibility into offering option changes through extended change logging, and the admin Categories table gains sortable columns and group filtering. Several SDK-related bugs are fixed, including a missing session field and a nullable affiliation issue.
+
+### What's New
+
+- Admin Categories table now supports sortable Title and Group columns plus a Group filter for easier navigation of large category sets.
+- Offering change logging now captures changes to offering options, giving administrators a more complete audit trail.
+
+### Improvements
+
+- Component usage billing now runs as an asynchronous Celery task, improving responsiveness and reliability when processing usage reports.
+- SLURM policy evaluation no longer emits events for no-op evaluations, reducing noise in audit logs.
+- Workflow steps are now seeded as enabled when a call is created, removing the need for manual activation.
+- Resource edit actions now preserve an empty description value when the user intentionally clears it.
+
+### Bug Fixes
+
+- Fixed PgBouncer prepared statement errors in the Celery database result backend that could disrupt task result retrieval.
+- Fixed `/api/users/me/` to include the `has_active_session` field, restoring expected behavior for SDK clients.
+- Allowed the affiliation field to be nullable, resolving an SDK error when the value is not set.
+
+### Internal
+
+- Large frontend refactor migrating forms to HOC-wrapped autonomous field groups, improving form consistency and testability across the application.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.16...8.0.9-rc.17) - async usage billing, extended offering logging, SDK fixes, and policy event cleanup.
+- **Waldur Homeport**: [4 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.16...8.0.9-rc.17) - admin Categories table enhancements, resource edit fix, and a broad forms refactor.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.9-rc.17.yaml)
+
+---
+
 ## 8.0.9-rc.16 - 2026-06-01
 
 ### Highlights
