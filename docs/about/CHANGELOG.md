@@ -1,5 +1,25 @@
 # Changelog
 
+## 8.0.9-rc.18 - 2026-06-03
+
+### Highlights
+
+This release candidate focuses on stability under load and OpenStack capability discovery. Policy evaluation and Celery worker handling have been hardened to prevent timeouts and reduce churn during traffic spikes, while OpenStack now exposes placement traits per hypervisor for finer-grained scheduling decisions. The OpenAPI schema has also been refined to better reflect optional fields across several core models.
+
+### Improvements
+
+- Reduced worker timeouts and stabilised background processing by debouncing all policy trigger handlers and tightening Celery broker resilience with heartbeat, TCP keepalive, and less aggressive worker churn.
+- OpenStack now collects placement traits per resource provider into the Hypervisor model, enabling more accurate placement and filtering decisions ([WAL-9894]).
+- Improved OpenAPI schema accuracy by marking conditionally-removed User fields as optional and extending the relax-required hook to cover IdentityProvider, Message, and Issue resources.
+- Updated developer documentation covering configuration, CLI, events, handlers, and the modern autonomous `*Group` form architecture in Homeport.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [6 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.17...8.0.9-rc.18) - broker and policy resilience improvements, OpenStack hypervisor traits, and OpenAPI schema refinements.
+- **Waldur Homeport**: [1 commit](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.17...8.0.9-rc.18) - developer documentation update for autonomous form group architecture.
+
+---
+
 ## 8.0.9-rc.17 - 2026-06-02
 
 ### Highlights
