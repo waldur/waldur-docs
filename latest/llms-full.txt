@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-06-02T21:14:06.628926Z
+Generated: 2026-06-03T06:02:05.285122Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -58666,45 +58666,148 @@ Waldur HomePort exclusively uses **React Final Form** for standard forms and dia
 
 The standard form implementation uses a `<Form>` component that provides the `handleSubmit` method to its render prop.
 
-```typescript
+```tsx
 import { Form } from 'react-final-form';
-import { SubmitButton } from '@/form';
+import { SubmitButton, StringGroup } from '@/form';
 
 <Form
   onSubmit={onSubmit}
   render={({ handleSubmit, submitting, invalid }) => (
     <form onSubmit={handleSubmit}>
-      <OrganizationGroup />
-      <NameGroup />
+      <StringGroup name="organization" label={translate('Organization')} required />
+      <StringGroup name="name" label={translate('Name')} required />
       <SubmitButton submitting={submitting} disabled={invalid} />
     </form>
   )}
 />
 ```
 
-## Field Group Pattern
+## Autonomous Field Group Architecture (*Group Pattern)
 
-We use reusable field groups for better organization, separating the structure from the actual logic:
+To reduce boilerplate, improve type safety, and enforce UI consistency, Waldur uses the **Autonomous Field Group** pattern.
 
-```typescript
+We provide a set of components suffixed with `*Group` (e.g., `StringGroup`, `SelectGroup`, `SecretGroup`) created using the `withFormGroup` Higher-Order Component (HOC). These components autonomously bundle:
+
+1. The underlying input component (e.g., `StringField`)
+2. React Final Form's `<Field>` wrapper
+3. The layout, label, and validation structure via `<FormGroup>`
+
+### ❌ Bad Example: Manual Wrapping (Legacy)
+
+```tsx
 import { Field } from 'react-final-form';
-import { StringField } from '@/form';
-import { FormGroup } from '@/marketplace/offerings/FormGroup';
+import { StringField, FormGroup } from '@/form';
 import { translate } from '@/i18n';
 
-export const NameGroup = ({ customer }) => (
-  <FormGroup label={translate('Project name')} required>
-    <Field
-      component={StringField}
-      name="name"
-      validate={validateProjectName}
-      customer={customer}
-    />
-  </FormGroup>
+// Too much boilerplate, props split between two layers.
+<FormGroup 
+  label={translate('Project name')} 
+  description={translate('Provide a unique name.')}
+  required
+>
+  <Field
+    component={StringField}
+    name="name"
+    validate={validateProjectName}
+    maxLength={150}
+  />
+</FormGroup>
+```
+
+### ✅ Good Example: Autonomous Group (Modern)
+
+```tsx
+import { StringGroup } from '@/form';
+import { translate } from '@/i18n';
+
+// Clean, single component with unified props!
+<StringGroup
+  name="name"
+  label={translate('Project name')}
+  description={translate('Provide a unique name.')}
+  required
+  validate={validateProjectName}
+  maxLength={150}
+/>
+```
+
+### Rationale & Benefits
+
+1. **Reduced Boilerplate**: You don't need to import `Field`, the base component (`StringField`), and `FormGroup` separately.
+2. **Unified Props**: Form layout properties (`label`, `description`, `help`, `required`) and field logic properties (`name`, `validate`, `maxLength`) are cleanly passed to a single component.
+3. **Strict Type Checking**: The `withFormGroup` HOC intelligently strips out internal React Final Form props (`component`, `render`) and provides strong IntelliSense for the specific properties required by the underlying input component.
+4. **Consistency**: It enforces a single, standardized way to render labeled fields and their associated error messages or tooltips.
+
+### Available Autonomous Groups
+
+Most standard fields have a corresponding `*Group` component exported from `@/form`. A selection includes:
+
+- **Text & Input**: `StringGroup`, `TextGroup`, `SecretGroup`, `NumberGroup`, `EmailGroup`
+- **Selection**: `SelectGroup`, `AsyncSelectGroup`, `CreatableSelectGroup`, `BooleanGroup`, `RadioGroup`
+- **Advanced**: `DateGroup`, `DateTimeGroup`, `TimeGroup`, `MarkdownGroup`, `MonacoGroup` (Code Editor)
+- **Specialized**: `ImageGroup`, `FileUploadGroup`, `CountrySelectGroup`, `CommaSeparatedListGroup`
+
+### When to Use Manual `FormGroup` + `Field`
+
+While autonomous groups are the standard, there are specific architectural exceptions where manually separating `<Form.Group>` (or `FormGroup`) and `<Field>` (or `<FieldArray>`) remains the correct approach:
+
+1. **Complex Arrays (`FieldArray`)**: When mapping over an array of data (e.g., configuring multiple network allocation pools or IP rules), you typically want a single label for the entire collection rather than repeating the label for every row.
+2. **Multi-field Inline Layouts**: When several logical fields compose a single input concept (e.g., Start IP and End IP, Min/Max range, X/Y coordinates) that need to be grouped horizontally using `InputGroup` or a table layout.
+
+Example: Array of Inline Inputs
+
+```tsx
+import { Form, InputGroup } from 'react-bootstrap';
+import { Field } from 'react-final-form';
+import { FieldArray } from 'react-final-form-arrays';
+import { translate } from '@/i18n';
+
+// The Array Renderer
+const AllocationPoolsList = ({ fields }) => (
+  <>
+    {fields.map((name, index) => (
+      <InputGroup key={index} className="mb-3">
+        {/* Manual Field used here to strip out FormGroup wrappers inside the row */}
+        <Field name={`${name}.start`} component="input" className="form-control" />
+        <InputGroup.Text>-</InputGroup.Text>
+        <Field name={`${name}.end`} component="input" className="form-control" />
+      </InputGroup>
+    ))}
+  </>
+);
+
+// The Parent Container
+export const NetworkPoolField = () => (
+  {/* Manual FormGroup used here as the singular label wrapper for the whole list */}
+  <Form.Group>
+    <Form.Label>{translate('Allocation pools')}</Form.Label>
+    <FieldArray name="allocation_pools" component={AllocationPoolsList} />
+    <Form.Text>{translate('Define IP ranges for automatic assignment.')}</Form.Text>
+  </Form.Group>
 );
 ```
 
-**Benefits**: Separation of concerns, reusability, maintainability, testability.
+## Tooltips & Help Text
+
+Avoid creating manual tooltips or extra label wrappers. Use the built-in `help` or `tooltip` properties provided by the autonomous groups.
+
+```tsx
+// ❌ Manual tooltip implementation
+<label>
+  {translate('Plan')}
+  <Tip label={translate('Help text')}>
+    <QuestionIcon />
+  </Tip>
+</label>
+<Field component={SelectField} name="period" />
+
+// ✅ Built-in help prop with *Group component
+<SelectGroup
+  name="period"
+  label={translate('Plan')}
+  help={translate('Help text')}
+/>
+```
 
 ## Key Patterns & Best Practices
 
@@ -58770,7 +58873,7 @@ catch (e) {
 
 **Solution**: Move submit buttons inside the form context and provide a custom footer structure.
 
-```typescript
+```tsx
 // ✅ Correct structure
 import { ModalDialog } from '@/modal/ModalDialog';
 
@@ -58791,56 +58894,13 @@ import { ModalDialog } from '@/modal/ModalDialog';
 />
 ```
 
-## FormGroup Components
-
-We have multiple `FormGroup` components, but you should favor the standard wrapper:
-
-1. **`@/marketplace/offerings/FormGroup`** - Clean wrapper for labels/help text.
-
-### Replace Manual Label/Field Combinations
-
-```typescript
-// ❌ Avoid repetitive manual structure
-<div className="mb-7">
-  <label className="form-label fw-bolder text-dark fs-6 required">
-    {translate('Username')}
-  </label>
-  <Field component={StringField} name="username" />
-</div>
-
-// ✅ Use clean FormGroup wrapper
-<FormGroup label={translate('Username')} required>
-  <Field component={StringField} name="username" />
-</FormGroup>
-```
-
-### Convert Manual Tooltips to Help Props
-
-```typescript
-// ❌ Manual tooltip implementation
-<label>
-  {translate('Plan')}
-  <Tip label={translate('Help text')}>
-    <QuestionIcon />
-  </Tip>
-</label>
-
-// ✅ Built-in help prop
-<FormGroup
-  label={translate('Plan')}
-  help={translate('Help text')}
->
-  <Field component={SelectField} name="period" />
-</FormGroup>
-```
-
 ## Advanced Tooling
 
 ### Dirty Form Protection
 
 If you want to prevent users from accidentally closing a modal dialog when a form has unsaved changes, use the `DirtyStateReporter` drop-in component anywhere inside your `<Form>` element:
 
-```typescript
+```tsx
 import { DirtyStateReporter } from '@/core/DirtyFormContext';
 
 <Form
@@ -58848,9 +58908,7 @@ import { DirtyStateReporter } from '@/core/DirtyFormContext';
   render={({ handleSubmit }) => (
     <form onSubmit={handleSubmit}>
       <DirtyStateReporter />
-      <FormGroup label={translate('Name')}>
-        <Field component={StringField} name="name" />
-      </FormGroup>
+      <StringGroup name="name" label={translate('Name')} />
     </form>
   )}
 />
@@ -74081,6 +74139,8 @@ def available_checklists(self, request):
 - marketplace_offering_component_created
 - marketplace_offering_component_deleted
 - marketplace_offering_component_updated
+- marketplace_offering_options_updated
+- marketplace_offering_resource_options_updated
 - marketplace_plan_archived
 - marketplace_plan_component_current_price_updated
 - marketplace_plan_component_future_price_updated
@@ -75013,7 +75073,6 @@ td:nth-child(4) {
 | `create_resource_of_volume_if_instance_created` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
 | `create_resource_plan_period_when_resource_is_created` | `Django Signal (post_save)` | `marketplace.Resource` | Create a resource plan period when a resource is created. |
 | `create_screenshot_thumbnail` | `Django Signal (post_save)` | `marketplace.Screenshot` | Create a thumbnail for a screenshot. |
-| `customer_component_usage_policy_trigger_handler` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Evaluate customer component usage policies when component usage records change. |
 | `customer_credit_changed_handler` | `Django Signal (post_save)` | `invoices.CustomerCredit` | Handle customer credit value changes and evaluate related policies. |
 | `customer_credit_offerings_list_changed_handler` | `Django Signal (m2m_changed)` | `CustomerCredit_offerings` | No description |
 | `customer_estimated_cost_policy_trigger_handler` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Evaluate customer cost policies when invoice items are updated. |
@@ -75039,7 +75098,6 @@ td:nth-child(4) {
 | `handle_user_role_revoked` | `Custom Signal (role_revoked)` | `—` | Handle user role revocation by removing users from robot accounts |
 | `handler` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
 | `handler` | `Django Signal (post_save)` | `invoices.InvoiceItem` | No description |
-| `handler` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | No description |
 | `import_instances_and_volumes_if_tenant_has_been_imported` | `Custom Signal (resource_imported)` | `openstack.Tenant` | No description |
 | `import_instances_and_volumes_if_tenant_has_been_imported` | `Custom Signal (tenant_pull_succeeded)` | `openstack.Tenant` | No description |
 | `import_resource_metadata_when_resource_is_created` | `Django Signal (post_save)` | `marketplace.Resource` | Import OpenStack resource metadata when marketplace resource is created. |
@@ -75080,7 +75138,7 @@ td:nth-child(4) {
 | `notify_users_about_tos_update_signal` | `Django Signal (post_save)` | `marketplace.OfferingTermsOfService` | Notify users when ToS is updated and requires re-consent. |
 | `offering_component_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.OfferingComponent` | Log offering component creation and updates. |
 | `offering_component_has_been_deleted` | `Django Signal (post_delete)` | `marketplace.OfferingComponent` | Log offering component deletion. |
-| `offering_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Offering` | Log offering creation and state updates. |
+| `offering_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Offering` | Log offering creation and updates. |
 | `plan_component_has_been_updated` | `Django Signal (post_save)` | `marketplace.PlanComponent` | Log plan component updates. |
 | `plan_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Plan` | Log plan creation, update, and archiving events. |
 | `populate_volume_metadata_on_resource_creation` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
@@ -75097,7 +75155,8 @@ td:nth-child(4) {
 | `resource_options_have_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Handle script execution when marketplace resource options are changed. |
 | `resource_state_has_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Handle resource state changes. |
 | `run_reset_actions_upon_cost_policy_deletion` | `Django Signal (pre_delete)` | `policy.ProjectEstimatedCostPolicy` | Execute reset actions when a cost policy is deleted. |
-| `seed_mandatory_workflow_steps` | `Django Signal (post_save)` | `proposal.Call` | Pre-seed mandatory workflow steps (e.g. allocation_decision) on call creation. |
+| `schedule_component_usage_billing` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Thin post_save handler — schedules the async billing+policy task on commit. |
+| `seed_workflow_steps` | `Django Signal (post_save)` | `proposal.Call` | Pre-seed catalog workflow steps as enabled on call creation. |
 | `send_comment_added_notification` | `Django Signal (post_save)` | `support.Comment` | No description |
 | `send_course_account_deletion_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
 | `send_course_account_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
@@ -75118,7 +75177,6 @@ td:nth-child(4) {
 | `set_mtu_when_network_has_been_created` | `Django Signal (post_save)` | `openstack.Network` | No description |
 | `set_project_name_on_invoice_item_creation` | `Django Signal (post_save)` | `invoices.InvoiceItem` | No description |
 | `set_tax_percent_on_invoice_creation` | `Django Signal (pre_save)` | `invoices.Invoice` | No description |
-| `slurm_periodic_usage_policy_trigger_handler` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Lightweight signal handler that queues background policy evaluation. |
 | `soft_delete_resource_projects_when_resource_is_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Cascade Resource → TERMINATED into a soft-delete of its child ResourceProjects. |
 | `switch_resource_plan_period_when_plan_is_updated` | `Django Signal (post_save)` | `marketplace.Resource` | Switch the resource plan period when a resource's plan is updated. |
 | `sync_component_user_usage_when_allocation_user_usage_is_submitted` | `Django Signal (post_save)` | `waldur_openportal.AllocationUserUsage` | No description |
@@ -75203,7 +75261,6 @@ td:nth-child(4) {
 | `update_google_calendar_name_if_offering_name_has_been_changed` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `update_instances_ip_external_addresses` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `update_invoice_item_on_project_name_update` | `Django Signal (post_save)` | `structure.Project` | No description |
-| `update_invoice_when_usage_is_reported` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Handles billing when component usage is reported, with integrated prepaid logic. |
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_delete)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_marketplace_resource_limits_when_vm_is_updated` | `Custom Signal (vm_updated)` | `—` | No description |
@@ -75294,14 +75351,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 787
+Total unique handlers found: 784
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 412 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 317 handlers
+- **waldur_mastermind**: 314 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
