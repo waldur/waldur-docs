@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.0.9-rc.21 - 2026-06-03
+
+### Highlights
+
+This release fixes a configuration regression in the Waldur Docker image where custom Celery broker transport options supplied via overlay settings were being overwritten by defaults. Operators relying on tuned broker settings (e.g., visibility timeouts, SQS or Redis-specific options) will now see their overrides preserved as expected.
+
+### Bug Fixes
+
+- Preserved operator-supplied `CELERY_BROKER_TRANSPORT_OPTIONS` so settings overlays no longer clobber custom broker configuration.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [1 commit](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.20...8.0.9-rc.21) - fix to prevent the settings overlay from overwriting `CELERY_BROKER_TRANSPORT_OPTIONS`.
+
+---
+
 ## 8.0.9-rc.20 - 2026-06-03
 
 ### Highlights
