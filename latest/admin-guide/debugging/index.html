@@ -1884,6 +1884,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#watch-for-overlay-files-that-re-assign-celery_broker_transport_options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watch for overlay files that re-assign CELERY_BROKER_TRANSPORT_OPTIONS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#worker-recycling-cost-of-low-max_tasks_per_child" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1895,10 +1906,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#per-publish-confirm_timeout-is-not-exposed" class="md-nav__link">
+  <a href="#per-publish-confirm_timeout-is-plumbed-end-to-end-but-has-no-global-default" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Per-publish confirm_timeout is not exposed
+        Per-publish confirm_timeout is plumbed end-to-end but has no global default
       
     </span>
   </a>
@@ -1907,6 +1918,17 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlating-broker-logs-with-worker-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correlating broker logs with worker timeouts
+      
+    </span>
+  </a>
   
 </li>
         
@@ -13751,6 +13773,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#watch-for-overlay-files-that-re-assign-celery_broker_transport_options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watch for overlay files that re-assign CELERY_BROKER_TRANSPORT_OPTIONS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#worker-recycling-cost-of-low-max_tasks_per_child" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13762,10 +13795,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#per-publish-confirm_timeout-is-not-exposed" class="md-nav__link">
+  <a href="#per-publish-confirm_timeout-is-plumbed-end-to-end-but-has-no-global-default" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Per-publish confirm_timeout is not exposed
+        Per-publish confirm_timeout is plumbed end-to-end but has no global default
       
     </span>
   </a>
@@ -13774,6 +13807,17 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlating-broker-logs-with-worker-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correlating broker logs with worker timeouts
+      
+    </span>
+  </a>
   
 </li>
         
@@ -14541,6 +14585,26 @@ kombu <code>Connection</code>, the value must live inside <code>broker_transport
 <code>heartbeat=30</code>, the broker drops the connection after roughly 30 s of
 missed heartbeats — early enough to interrupt a stuck publisher before
 gunicorn's 30 s worker timeout.</p>
+<div class="admonition warning">
+<p class="admonition-title">Heartbeats do not pump on idle pool connections</p>
+<p>py-amqp only sends heartbeat frames from inside <code>drain_events()</code> /
+the connection's event loop. A producer connection sitting <strong>idle in
+the kombu pool</strong> between publishes has nothing pumping that loop, so
+no client-side heartbeat ever fires. Once the connection is idle for
+<code>2 × heartbeat</code>, the broker tears it down. The publisher does not
+learn about the close until its next publish — and if the FIN never
+arrived (NAT eviction, conntrack drop, replica failover), the next
+publish hangs in <code>recv()</code> waiting for an ACK from a peer that is
+gone.</p>
+<p>In other words: the heartbeat setting is necessary but <strong>not
+sufficient</strong> for the publisher path. The TCP keepalive settings
+below are what actually catch half-open pool connections, because
+they run at the kernel layer regardless of application activity.</p>
+<p>Background: <a href="https://github.com/celery/kombu/issues/621">kombu#621</a>,
+<a href="https://github.com/celery/kombu/issues/59">kombu#59</a> (open since
+2011),
+<a href="https://github.com/celery/celery/issues/9259">celery#9259</a>.</p>
+</div>
 <h4 id="tcp-keepalive-keys-must-be-integer-socket-constants">TCP keepalive: keys must be integer socket constants</h4>
 <p>py-amqp enables <code>SO_KEEPALIVE</code> unconditionally but ships defaults of
 <code>TCP_KEEPIDLE=60</code>, <code>TCP_KEEPINTVL=10</code>, <code>TCP_KEEPCNT=9</code> — a total ~150 s
@@ -14587,6 +14651,41 @@ tighter values so the kernel closes a stuck socket in ~25 s:</p>
 first connection attempt. Some constants (<code>TCP_KEEPIDLE</code> in
 particular) are Linux-only; the <code>getattr</code> guard above keeps the
 settings importable on macOS dev machines.</p>
+<h4 id="watch-for-overlay-files-that-re-assign-celery_broker_transport_options">Watch for overlay files that re-assign <code>CELERY_BROKER_TRANSPORT_OPTIONS</code></h4>
+<p>Django settings are merged by import order. Anything that does:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">CELERY_BROKER_TRANSPORT_OPTIONS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"confirm_publish"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>in a settings overlay (image-side <code>/etc/waldur/settings.py</code>, helm
+<code>override.conf.py</code>, an environment-specific
+<code>local_settings.py</code>, …) loaded <em>after</em> the base
+<code>celery_settings.py</code> <strong>replaces the dict wholesale</strong>. The <code>heartbeat</code>
+and <code>socket_settings</code> keys defined upstream are silently dropped. The
+process starts cleanly, the broker connects, every publish appears to
+succeed under nominal load — and the resilience knobs that catch
+half-open connections are simply not there. The first symptom is a
+slow drift of <code>WORKER TIMEOUT</code> events in gunicorn logs and audit
+events terminating about 30 s after their start.</p>
+<p>To avoid the trap, <strong>always merge</strong> into the existing dict in any
+overlay layer:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># In an overlay file (loaded after base celery_settings.py)</span>
+<span class="n">CELERY_BROKER_TRANSPORT_OPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="o">**</span><span class="n">CELERY_BROKER_TRANSPORT_OPTIONS</span><span class="p">,</span>
+    <span class="s2">"confirm_publish"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># or whatever this layer needs to add</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Or, preferred, keep the full dict in <strong>one</strong> place (the base settings
+file) and stop mentioning <code>CELERY_BROKER_TRANSPORT_OPTIONS</code> in
+overlays at all. The <code>audit_broker_config</code> management command (see
+below) detects the missing keys, but the static audit only catches
+the issue if you run it after the overlay has been applied — i.e.
+inside a running pod, not against a checkout of the source tree.</p>
+<p>The same caution applies to any Django setting whose value is a dict
+or list (<code>DATABASES</code>, <code>CACHES</code>, <code>LOGGING</code>, <code>INSTALLED_APPS</code>,
+<code>MIDDLEWARE</code>, …). Replacement is the default; merging is opt-in.</p>
 <h4 id="worker-recycling-cost-of-low-max_tasks_per_child">Worker recycling: cost of low <code>max_tasks_per_child</code></h4>
 <p>A low <code>CELERY_WORKER_MAX_TASKS_PER_CHILD</code> (e.g. 100) is often set
 defensively against memory leaks, but each recycle costs a fork +
@@ -14594,14 +14693,106 @@ full broker reconnect handshake. Under heavy publish load this churn
 measurably outweighs the leak protection. Values in the low
 thousands (1000–2000) are typical for production celery workers
 without leaks.</p>
-<h4 id="per-publish-confirm_timeout-is-not-exposed">Per-publish <code>confirm_timeout</code> is not exposed</h4>
-<p>py-amqp's <code>Channel._basic_publish</code> accepts a <code>confirm_timeout</code>
-keyword that bounds the confirm wait per call, but kombu's
-<code>Producer</code> does not surface it through Celery's app config (see
-<a href="https://github.com/celery/celery/issues/9259">celery#9259</a>). The
-heartbeat + TCP keepalive combination above is the configuration-only
-substitute. A future improvement is a custom <code>Producer</code> subclass that
-injects <code>confirm_timeout</code> on every publish.</p>
+<h4 id="per-publish-confirm_timeout-is-plumbed-end-to-end-but-has-no-global-default">Per-publish <code>confirm_timeout</code> is plumbed end-to-end but has no global default</h4>
+<p>In current pinned versions (celery 5.5.x, kombu 5.5.x, amqp 5.3.x) the
+<code>confirm_timeout</code> keyword reaches all the way from
+<code>task.apply_async(confirm_timeout=N)</code> down into
+<code>amqp.Channel.basic_publish_confirm(..., confirm_timeout=N)</code> →
+<code>self.wait([Basic.Ack, Basic.Nack], timeout=N)</code>. A timed-out wait
+raises <code>RecoverableChannelError</code>, which kombu treats as a recoverable
+publish error.</p>
+<p>There is, however, <strong>no Celery configuration setting that supplies a
+default <code>confirm_timeout</code> for every publish</strong>. Three options to apply
+one cluster-wide:</p>
+<ol>
+<li>Wrap <code>apply_async</code> / <code>delay</code> in a project helper that always sets
+   <code>confirm_timeout=N</code> (smallest blast radius)</li>
+<li>Subclass <code>kombu.Producer</code> to inject <code>confirm_timeout</code> in
+   <code>publish()</code> and wire the subclass into the Celery app's producer
+   pool (one place to maintain, covers all callsites)</li>
+<li>Set <code>CELERY_BROKER_POOL_LIMIT = 0</code> to disable the producer pool
+   entirely so every publish opens a fresh AMQP connection — this
+   sidesteps pool poisoning at the cost of a ~5–10 ms TCP+AMQP
+   handshake per publish (the workaround used by the original reporter
+   of <a href="https://github.com/celery/celery/issues/9259">celery#9259</a>)</li>
+</ol>
+<p>The heartbeat + TCP keepalive combination above remains the primary
+defense; per-publish <code>confirm_timeout</code> is belt-and-braces for when a
+half-open is hit <em>between</em> keepalive probes.</p>
+<div class="admonition note">
+<p class="admonition-title">Known upstream caveat</p>
+<p><a href="https://github.com/celery/py-amqp/issues/452">py-amqp#452</a> (open):
+when <code>confirm_timeout</code> fires, py-amqp raises
+<code>RecoverableChannelError</code> rather than
+<code>RecoverableConnectionError</code>, which can prevent kombu's
+<code>ensure()</code> from picking a fresh connection on retry. In practice
+the next publish acquires a different connection from the pool,
+but a tight <code>retry_policy</code> loop pinned to one connection can
+exhaust retries on the same dead socket.</p>
+</div>
+<h3 id="correlating-broker-logs-with-worker-timeouts">Correlating broker logs with worker timeouts</h3>
+<p>When a half-open connection is the root cause, the broker logs a
+warning each time it observes a client socket close without the
+matching AMQP <code>connection.close</code> handshake. Counting these warnings
+over time, and correlating against worker-timeout events in the API
+logs, gives a quick independent confirmation that publishers are
+dying mid-confirm rather than failing in some other layer.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Per-hour count of abrupt closes, current pod log buffer</span>
+<span class="k">for</span><span class="w"> </span>POD<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;broker-ns&gt;<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-l<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>app.kubernetes.io/component<span class="o">=</span>rabbitmq<span class="w"> </span>-o<span class="w"> </span>name<span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"--- </span><span class="nv">$POD</span><span class="s2"> ---"</span>
+<span class="w">  </span>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;broker-ns&gt;<span class="w"> </span>logs<span class="w"> </span><span class="s2">"</span><span class="nv">$POD</span><span class="s2">"</span><span class="w"> </span>--since<span class="o">=</span>24h<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-r<span class="w"> </span><span class="s2">"s/\x1B\[[0-9;]*[mK]//g"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">"client unexpectedly closed"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">'{print substr($1,1,10), substr($2,1,2)":00"}'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span><span class="p">|</span><span class="w"> </span>uniq<span class="w"> </span>-c<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-15
+<span class="k">done</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The <code>sed</code> strips ANSI colour codes — RabbitMQ tags warning lines with
+them and naive grep/awk counters drop the timestamps otherwise.</p>
+<p>Interpretation:</p>
+<ul>
+<li><strong>Cluster-wide baseline of tens per hour</strong>: routine kombu pool
+  churn (short-lived publishers, worker recycles). Heartbeat
+  negotiation is not happening — look for zero <code>missed heartbeats</code>
+  warnings as confirmation:</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;broker-ns&gt;<span class="w"> </span>logs<span class="w"> </span>&lt;broker-pod&gt;<span class="w"> </span>--since<span class="o">=</span>24h<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-c<span class="w"> </span><span class="s2">"missed heartbeats"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>A count of zero across 24 h means no client has negotiated
+  heartbeats with this cluster.</p>
+<ul>
+<li>
+<p><strong>Hundreds-to-thousands per hour, sustained</strong>: connection storm.
+  Most often a publisher with <code>broker_pool_limit=0</code> set on a busy
+  service, or a runaway reconnect loop. Cross-check API and worker
+  pods for <code>Connection.connect()</code> log lines.</p>
+</li>
+<li>
+<p><strong>Burst clustered around a known incident</strong>: a broker replica
+  flapped, evicted all existing connections, and publishers
+  reconnected. Healthy and expected after a broker restart.</p>
+</li>
+</ul>
+<p>To check whether a specific worker-timeout event correlates with a
+broker-side close on the same connection, line up timestamps. The
+modal Δ between an audit-log row that ends in <code>failed</code> and the
+nearest preceding broker <code>client unexpectedly closed</code> warning on the
+same node is the publisher's <code>recv()</code> budget — i.e. the gunicorn
+worker timeout. A consistent Δ of ~30 s across many events is a
+strong signal that worker timeouts are upstream of (and caused by)
+publishers stuck in <code>basic_publish_confirm</code>.</p>
 <h3 id="verifying-a-configuration-change-end-to-end">Verifying a configuration change end-to-end</h3>
 <p>The wrong setting will silently no-op and ship broken. Run the
 <code>audit_broker_config</code> management command for a static check, then

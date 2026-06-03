@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-06-03T15:41:56.991977Z
+Generated: 2026-06-03T17:33:28.679508Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -70514,6 +70514,27 @@ py-amqp sends a heartbeat frame at half the configured interval. With
 missed heartbeats — early enough to interrupt a stuck publisher before
 gunicorn's 30 s worker timeout.
 
+!!! warning "Heartbeats do not pump on idle pool connections"
+    py-amqp only sends heartbeat frames from inside `drain_events()` /
+    the connection's event loop. A producer connection sitting **idle in
+    the kombu pool** between publishes has nothing pumping that loop, so
+    no client-side heartbeat ever fires. Once the connection is idle for
+    `2 × heartbeat`, the broker tears it down. The publisher does not
+    learn about the close until its next publish — and if the FIN never
+    arrived (NAT eviction, conntrack drop, replica failover), the next
+    publish hangs in `recv()` waiting for an ACK from a peer that is
+    gone.
+
+    In other words: the heartbeat setting is necessary but **not
+    sufficient** for the publisher path. The TCP keepalive settings
+    below are what actually catch half-open pool connections, because
+    they run at the kernel layer regardless of application activity.
+
+    Background: [kombu#621](https://github.com/celery/kombu/issues/621),
+    [kombu#59](https://github.com/celery/kombu/issues/59) (open since
+    2011),
+    [celery#9259](https://github.com/celery/celery/issues/9259).
+
 #### TCP keepalive: keys must be integer socket constants
 
 py-amqp enables `SO_KEEPALIVE` unconditionally but ships defaults of
@@ -70549,6 +70570,47 @@ first connection attempt. Some constants (`TCP_KEEPIDLE` in
 particular) are Linux-only; the `getattr` guard above keeps the
 settings importable on macOS dev machines.
 
+#### Watch for overlay files that re-assign `CELERY_BROKER_TRANSPORT_OPTIONS`
+
+Django settings are merged by import order. Anything that does:
+
+```python
+CELERY_BROKER_TRANSPORT_OPTIONS = {"confirm_publish": True}
+```
+
+in a settings overlay (image-side `/etc/waldur/settings.py`, helm
+`override.conf.py`, an environment-specific
+`local_settings.py`, …) loaded *after* the base
+`celery_settings.py` **replaces the dict wholesale**. The `heartbeat`
+and `socket_settings` keys defined upstream are silently dropped. The
+process starts cleanly, the broker connects, every publish appears to
+succeed under nominal load — and the resilience knobs that catch
+half-open connections are simply not there. The first symptom is a
+slow drift of `WORKER TIMEOUT` events in gunicorn logs and audit
+events terminating about 30 s after their start.
+
+To avoid the trap, **always merge** into the existing dict in any
+overlay layer:
+
+```python
+# In an overlay file (loaded after base celery_settings.py)
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    **CELERY_BROKER_TRANSPORT_OPTIONS,
+    "confirm_publish": True,  # or whatever this layer needs to add
+}
+```
+
+Or, preferred, keep the full dict in **one** place (the base settings
+file) and stop mentioning `CELERY_BROKER_TRANSPORT_OPTIONS` in
+overlays at all. The `audit_broker_config` management command (see
+below) detects the missing keys, but the static audit only catches
+the issue if you run it after the overlay has been applied — i.e.
+inside a running pod, not against a checkout of the source tree.
+
+The same caution applies to any Django setting whose value is a dict
+or list (`DATABASES`, `CACHES`, `LOGGING`, `INSTALLED_APPS`,
+`MIDDLEWARE`, …). Replacement is the default; merging is opt-in.
+
 #### Worker recycling: cost of low `max_tasks_per_child`
 
 A low `CELERY_WORKER_MAX_TASKS_PER_CHILD` (e.g. 100) is often set
@@ -70558,15 +70620,102 @@ measurably outweighs the leak protection. Values in the low
 thousands (1000–2000) are typical for production celery workers
 without leaks.
 
-#### Per-publish `confirm_timeout` is not exposed
+#### Per-publish `confirm_timeout` is plumbed end-to-end but has no global default
 
-py-amqp's `Channel._basic_publish` accepts a `confirm_timeout`
-keyword that bounds the confirm wait per call, but kombu's
-`Producer` does not surface it through Celery's app config (see
-[celery#9259](https://github.com/celery/celery/issues/9259)). The
-heartbeat + TCP keepalive combination above is the configuration-only
-substitute. A future improvement is a custom `Producer` subclass that
-injects `confirm_timeout` on every publish.
+In current pinned versions (celery 5.5.x, kombu 5.5.x, amqp 5.3.x) the
+`confirm_timeout` keyword reaches all the way from
+`task.apply_async(confirm_timeout=N)` down into
+`amqp.Channel.basic_publish_confirm(..., confirm_timeout=N)` →
+`self.wait([Basic.Ack, Basic.Nack], timeout=N)`. A timed-out wait
+raises `RecoverableChannelError`, which kombu treats as a recoverable
+publish error.
+
+There is, however, **no Celery configuration setting that supplies a
+default `confirm_timeout` for every publish**. Three options to apply
+one cluster-wide:
+
+1. Wrap `apply_async` / `delay` in a project helper that always sets
+   `confirm_timeout=N` (smallest blast radius)
+2. Subclass `kombu.Producer` to inject `confirm_timeout` in
+   `publish()` and wire the subclass into the Celery app's producer
+   pool (one place to maintain, covers all callsites)
+3. Set `CELERY_BROKER_POOL_LIMIT = 0` to disable the producer pool
+   entirely so every publish opens a fresh AMQP connection — this
+   sidesteps pool poisoning at the cost of a ~5–10 ms TCP+AMQP
+   handshake per publish (the workaround used by the original reporter
+   of [celery#9259](https://github.com/celery/celery/issues/9259))
+
+The heartbeat + TCP keepalive combination above remains the primary
+defense; per-publish `confirm_timeout` is belt-and-braces for when a
+half-open is hit *between* keepalive probes.
+
+!!! note "Known upstream caveat"
+    [py-amqp#452](https://github.com/celery/py-amqp/issues/452) (open):
+    when `confirm_timeout` fires, py-amqp raises
+    `RecoverableChannelError` rather than
+    `RecoverableConnectionError`, which can prevent kombu's
+    `ensure()` from picking a fresh connection on retry. In practice
+    the next publish acquires a different connection from the pool,
+    but a tight `retry_policy` loop pinned to one connection can
+    exhaust retries on the same dead socket.
+
+### Correlating broker logs with worker timeouts
+
+When a half-open connection is the root cause, the broker logs a
+warning each time it observes a client socket close without the
+matching AMQP `connection.close` handshake. Counting these warnings
+over time, and correlating against worker-timeout events in the API
+logs, gives a quick independent confirmation that publishers are
+dying mid-confirm rather than failing in some other layer.
+
+```bash
+# Per-hour count of abrupt closes, current pod log buffer
+for POD in $(kubectl -n <broker-ns> get pods -l \
+        app.kubernetes.io/component=rabbitmq -o name); do
+  echo "--- $POD ---"
+  kubectl -n <broker-ns> logs "$POD" --since=24h 2>/dev/null \
+    | sed -r "s/\x1B\[[0-9;]*[mK]//g" \
+    | grep "client unexpectedly closed" \
+    | awk '{print substr($1,1,10), substr($2,1,2)":00"}' \
+    | sort | uniq -c | tail -15
+done
+```
+
+The `sed` strips ANSI colour codes — RabbitMQ tags warning lines with
+them and naive grep/awk counters drop the timestamps otherwise.
+
+Interpretation:
+
+- **Cluster-wide baseline of tens per hour**: routine kombu pool
+  churn (short-lived publishers, worker recycles). Heartbeat
+  negotiation is not happening — look for zero `missed heartbeats`
+  warnings as confirmation:
+
+  ```bash
+  kubectl -n <broker-ns> logs <broker-pod> --since=24h \
+    | grep -c "missed heartbeats"
+  ```
+
+  A count of zero across 24 h means no client has negotiated
+  heartbeats with this cluster.
+
+- **Hundreds-to-thousands per hour, sustained**: connection storm.
+  Most often a publisher with `broker_pool_limit=0` set on a busy
+  service, or a runaway reconnect loop. Cross-check API and worker
+  pods for `Connection.connect()` log lines.
+
+- **Burst clustered around a known incident**: a broker replica
+  flapped, evicted all existing connections, and publishers
+  reconnected. Healthy and expected after a broker restart.
+
+To check whether a specific worker-timeout event correlates with a
+broker-side close on the same connection, line up timestamps. The
+modal Δ between an audit-log row that ends in `failed` and the
+nearest preceding broker `client unexpectedly closed` warning on the
+same node is the publisher's `recv()` budget — i.e. the gunicorn
+worker timeout. A consistent Δ of ~30 s across many events is a
+strong signal that worker timeouts are upstream of (and caused by)
+publishers stuck in `basic_publish_confirm`.
 
 ### Verifying a configuration change end-to-end
 
