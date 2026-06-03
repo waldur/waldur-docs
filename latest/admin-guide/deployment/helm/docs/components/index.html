@@ -2283,6 +2283,67 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tuning-and-extension-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning and Extension Hooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tuning and Extension Hooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-deployment-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-deployment hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gunicorn-process-tuning-api-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gunicorn process tuning (api only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#celery-worker-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Celery worker concurrency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ingress-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingress annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -13188,6 +13249,67 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tuning-and-extension-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning and Extension Hooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tuning and Extension Hooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-deployment-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-deployment hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gunicorn-process-tuning-api-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gunicorn process tuning (api only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#celery-worker-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Celery worker concurrency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ingress-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingress annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -13635,6 +13757,119 @@ and how they interact with each other.</p>
 </li>
 <li>External message broker option</li>
 </ol>
+<h2 id="tuning-and-extension-hooks">Tuning and Extension Hooks</h2>
+<p>The chart exposes Bitnami-style extension hooks on the <code>api</code>, <code>worker</code>, <code>beat</code>, and <code>homeport</code> deployments so operators can inject site-specific configuration without forking. All defaults are empty — the rendered output is unchanged when the values are not set.</p>
+<h3 id="per-deployment-hooks">Per-deployment hooks</h3>
+<p>Available on each of <code>api</code>, <code>worker</code>, <code>beat</code>, <code>homeport</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;component&gt;.extraEnvVars</code></td>
+<td>list of EnvVar</td>
+<td>Extra container env vars (supports <code>value</code> and <code>valueFrom</code>)</td>
+</tr>
+<tr>
+<td><code>&lt;component&gt;.extraEnvVarsCM</code></td>
+<td>string</td>
+<td>Single ConfigMap name, rendered as <code>envFrom.configMapRef</code></td>
+</tr>
+<tr>
+<td><code>&lt;component&gt;.extraEnvVarsSecret</code></td>
+<td>string</td>
+<td>Single Secret name, rendered as <code>envFrom.secretRef</code></td>
+</tr>
+<tr>
+<td><code>&lt;component&gt;.extraVolumes</code></td>
+<td>list of Volume</td>
+<td>Extra volumes appended to the pod spec</td>
+</tr>
+<tr>
+<td><code>&lt;component&gt;.extraVolumeMounts</code></td>
+<td>list of VolumeMount</td>
+<td>Extra mounts appended to the main container</td>
+</tr>
+<tr>
+<td><code>&lt;component&gt;.podAnnotations</code></td>
+<td>object</td>
+<td>Merged onto the pod template metadata</td>
+</tr>
+<tr>
+<td><code>&lt;component&gt;.podLabels</code></td>
+<td>object</td>
+<td>Merged onto the pod template metadata</td>
+</tr>
+</tbody>
+</table>
+<p>For <code>beat</code>, hooks affect only the main beat container — the migration / DB-bootstrap init containers are left untouched.</p>
+<p>Example: scrape the API pod with Prometheus and mount a shared scratch PVC.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">api</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">podAnnotations</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">prometheus.io/scrape</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<span class="w">    </span><span class="nt">prometheus.io/port</span><span class="p">:</span><span class="w"> </span><span class="s">"8080"</span>
+<span class="w">  </span><span class="nt">extraVolumes</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scratch</span>
+<span class="w">      </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-api-scratch</span>
+<span class="w">  </span><span class="nt">extraVolumeMounts</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scratch</span>
+<span class="w">      </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/scratch</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="gunicorn-process-tuning-api-only">Gunicorn process tuning (api only)</h3>
+<p>The <code>gunicorn:</code> block translates into a <code>GUNICORN_CMD_ARGS</code> env var on the api container; gunicorn reads it at startup and appends it to its own argv. Any value left empty falls back to the gunicorn defaults baked into the image (<code>/etc/waldur/gunicorn.conf.py</code>).</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">gunicorn</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120</span><span class="w">           </span><span class="c1"># --timeout</span>
+<span class="w">  </span><span class="nt">gracefulTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span><span class="w">    </span><span class="c1"># --graceful-timeout</span>
+<span class="w">  </span><span class="nt">workers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w">             </span><span class="c1"># --workers</span>
+<span class="w">  </span><span class="nt">keepalive</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">           </span><span class="c1"># --keep-alive</span>
+<span class="w">  </span><span class="nt">maxRequests</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w">      </span><span class="c1"># --max-requests (recycle worker after N requests)</span>
+<span class="w">  </span><span class="nt">maxRequestsJitter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span><span class="w">  </span><span class="c1"># --max-requests-jitter</span>
+<span class="w">  </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w">          </span><span class="c1"># raw passthrough appended verbatim</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="celery-worker-concurrency">Celery worker concurrency</h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">celery</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">concurrency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w">        </span><span class="c1"># CELERYD_CONCURRENCY (default 10)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>This sets the number of child processes per worker pod. Combine with <code>replicaCount.worker</code> (and HPA, if enabled) to scale total parallelism. Note: increasing <code>concurrency</code> raises per-pod memory; size <code>workerResources</code> accordingly.</p>
+<h3 id="ingress-annotations">Ingress annotations</h3>
+<p><code>ingress.annotations</code> is a free-form map merged onto <strong>every</strong> ingress this chart renders — <code>api</code>, <code>api-admin</code>, <code>homeport</code>, <code>rmq-ws</code>, and <code>uvk-everypay</code>. It sits alongside the className-specific annotations the chart already templates (nginx, haproxy, traefik, openshift-default) and the cert-manager <code>cluster-issuer</code> annotation; ingress-controller and cert-manager keys should stay in their own values so they keep their conditional logic.</p>
+<p>The canonical use case is <a href="https://github.com/kubernetes-sigs/external-dns">external-dns</a>, which reads annotations on Ingress objects to manage DNS records:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">ingress</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">external-dns.alpha.kubernetes.io/ttl</span><span class="p">:</span><span class="w"> </span><span class="s">"60"</span><span class="w">           </span><span class="c1"># low TTL for fast cut-over during deploys</span>
+<span class="w">    </span><span class="nt">external-dns.alpha.kubernetes.io/hostname</span><span class="p">:</span><span class="w"> </span><span class="s">"api.example.com"</span>
+<span class="w">    </span><span class="nt">external-dns.alpha.kubernetes.io/cloudflare-proxied</span><span class="p">:</span><span class="w"> </span><span class="s">"false"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>A 60-second TTL is a common operator choice for production rollouts: short enough that resolvers pick up an IP change within a minute, long enough to avoid hammering the upstream DNS provider during steady state. The external-dns default is 300 seconds; set it explicitly per environment.</p>
+<p>All values must be strings (Kubernetes annotation requirement) — quote numeric and boolean values. Leaving the map empty (the default) keeps the rendered ingresses byte-identical to the baseline chart.</p>
 
 
 

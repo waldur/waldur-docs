@@ -1980,6 +1980,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#extension-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extension hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -12796,6 +12807,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#extension-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extension hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -12939,6 +12961,29 @@ name of which should be placed in <code>.Values.imagePullSecrets</code>.
 A secret can be created trough <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line">CLI</a>.</p>
 <h2 id="configuration-docs">Configuration docs</h2>
 <p>Configuration documentation: <a href="docs/">index</a></p>
+<h2 id="extension-hooks">Extension hooks</h2>
+<p>Each application deployment (<code>api</code>, <code>worker</code>, <code>beat</code>, <code>homeport</code>) exposes
+Bitnami-style extension hooks so site-specific configuration can be added
+without forking the chart:</p>
+<ul>
+<li><code>&lt;component&gt;.extraEnvVars</code> — extra container env vars</li>
+<li><code>&lt;component&gt;.extraEnvVarsCM</code> / <code>&lt;component&gt;.extraEnvVarsSecret</code> — ConfigMap / Secret as <code>envFrom</code></li>
+<li><code>&lt;component&gt;.extraVolumes</code> / <code>&lt;component&gt;.extraVolumeMounts</code> — extra volumes and mounts</li>
+<li><code>&lt;component&gt;.podAnnotations</code> / <code>&lt;component&gt;.podLabels</code> — extra pod metadata</li>
+</ul>
+<p>Two related top-level blocks tune the runtime:</p>
+<ul>
+<li><code>gunicorn.*</code> — <code>timeout</code>, <code>workers</code>, <code>maxRequests</code>, etc. for the API container (renders into <code>GUNICORN_CMD_ARGS</code>)</li>
+<li><code>celery.concurrency</code> — <code>CELERYD_CONCURRENCY</code> for worker pods</li>
+</ul>
+<p>Cross-cutting ingress annotations (merged onto every rendered Ingress) live under <code>ingress.annotations</code>. The canonical use case is controlling DNS TTL via <a href="https://github.com/kubernetes-sigs/external-dns">external-dns</a>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">ingress</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">external-dns.alpha.kubernetes.io/ttl</span><span class="p">:</span><span class="w"> </span><span class="s">"60"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>See <a href="docs/components/">docs/components.md</a> for the full reference (section "Tuning and Extension Hooks").</p>
 
 
 
