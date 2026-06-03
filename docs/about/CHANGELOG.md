@@ -130,7 +130,9 @@ This release improves reliability of usage-based billing by moving component usa
 
 ### Resources
 
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.9-rc.17.yaml)
+<!-- - [OpenAPI Schema](../API/waldur-openapi-schema-8.0.9-rc.17.yaml) -->
+<!-- RC releases skip OpenAPI schema generation, so this file is not produced. -->
+<!-- Matches the existing convention at line 1127 for the same situation. -->
 
 ---
 
