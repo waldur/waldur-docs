@@ -1,5 +1,39 @@
 # Changelog
 
+## 8.0.9-rc.19 - 2026-06-03
+
+### Highlights
+
+This release improves the group invitation flow with smarter post-acceptance routing, adds new operational tooling for diagnosing broker and Celery issues, and patches a security vulnerability in JWT handling. Deployments on Kubernetes gain Bitnami-style extension hooks for customizing core workloads without forking the chart.
+
+### What's New
+
+- Operators can now run `audit_broker_config` and `probe_broker_latency` management commands to inspect message broker configuration and measure end-to-end Celery latency for troubleshooting worker issues.
+- Helm chart now exposes Bitnami-style extension hooks (extra env vars, volumes, sidecars, init containers, pod annotations) for api, worker, beat, and homeport deployments, enabling customization without modifying the chart.
+
+### Improvements
+
+- Group invitation acceptance now returns the created project in the API response and the frontend routes users to the correct destination based on the acceptance outcome, giving a smoother onboarding experience [WAL-9997].
+- Resource project state column now uses the consistent design-system Badge component, aligning visual styling with the rest of the UI.
+- Form layouts consolidated under a single FormGroup component across ~90 dialogs and forms, improving visual consistency and reducing duplication.
+
+### Bug Fixes
+
+- Restored `?field=` response projection on API endpoints that override the `responses=` schema, so clients can again request a subset of fields on these endpoints.
+- ESLint `no-redundant-vi-mock` rule no longer flags legitimate mock setups in test/mocks directories.
+
+### Security
+
+- Upgraded PyJWT to 2.13.0 to address 4 CVEs.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [4 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.18...8.0.9-rc.19) - broker diagnostic commands, group invitation response improvements, OpenAPI projection fix, PyJWT security bump.
+- **Waldur Homeport**: [4 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.18...8.0.9-rc.19) - invitation acceptance routing, design-system Badge adoption, FormGroup consolidation, ESLint rule fix.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.9-rc.18...8.0.9-rc.19) - extension hooks for api/worker/beat/homeport deployments.
+
+---
+
 ## 8.0.9-rc.18 - 2026-06-03
 
 ### Highlights
