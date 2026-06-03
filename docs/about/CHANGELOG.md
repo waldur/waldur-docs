@@ -1,5 +1,30 @@
 # Changelog
 
+## 8.0.9-rc.20 - 2026-06-03
+
+### Highlights
+
+This release focuses on stability for billing, OpenStack usage tracking, and key UI workflows. Cost policies and usage-based invoicing are more reliable around edge cases, marketplace usage snapshots now stay in sync with every OpenStack tenant quota pull, and several crashes in booking, proposal rounds, and support drawers have been resolved.
+
+### Bug Fixes
+
+- Fixed a datetime/date type mismatch that could prevent usage-triggered invoice creation from succeeding.
+- Deferred cost policy publishing until after database commit and removed a recursive save in the project-name handler, eliminating a class of inconsistencies around month boundaries.
+- Booking resource details no longer crash when an offering has no schedules defined.
+- Round creation wizard no longer crashes when date and timezone fields are not pre-wrapped.
+
+### Improvements
+
+- Marketplace usage snapshots are now refreshed on every OpenStack tenant quota pull, keeping reported usage aligned with backend state.
+- Polished the Support requests drawer layout, including issue status presentation, type icons, and the quick-issue table.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [3 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.19...8.0.9-rc.20) - billing/policy reliability fixes and OpenStack usage snapshot refresh.
+- **Waldur Homeport**: [3 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.19...8.0.9-rc.20) - crash fixes in booking and proposal round wizard, plus Support drawer polish.
+
+---
+
 ## 8.0.9-rc.19 - 2026-06-03
 
 ### Highlights
