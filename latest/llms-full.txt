@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-06-04T02:04:42.336380Z
+Generated: 2026-06-04T17:05:06.508381Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -5054,6 +5054,10 @@ options:
 
 ```
 
+## audit_broker_config
+
+Audit Celery / RabbitMQ broker configuration for common publisher-reliability misconfigurations.
+
 ## axes_list_attempts
 
 List access attempts
@@ -6079,6 +6083,38 @@ options:
 ## print_settings_description
 
 Prints all Waldur feature description as typescript code.
+
+## probe_broker_latency
+
+Publish N no-op messages and report publish-confirm RTT percentiles. Safe on production; messages have no effect.
+
+```bash
+
+usage: waldur probe_broker_latency [--samples SAMPLES] [--countdown COUNTDOWN]
+                                   [--p99-threshold-ms P99_THRESHOLD_MS]
+                                   [--policy-class POLICY_CLASS] [--json]
+
+options:
+  --samples SAMPLES     Number of publishes to attempt (default: 100).
+  --countdown COUNTDOWN
+                        Celery countdown in seconds. The probe payload lands
+                        in a celery_delayed_* bucket sized for this delay and
+                        never executes within the probe's lifetime (default:
+                        86400).
+  --p99-threshold-ms P99_THRESHOLD_MS
+                        If set, exit non-zero when p99 publish-confirm RTT
+                        exceeds this many milliseconds. Useful for CI
+                        alerting.
+  --policy-class POLICY_CLASS
+                        Dotted path of a policy class for the no-op payload
+                        (default: waldur_mastermind.policy.models.OfferingEsti
+                        matedCostPolicy). Any class that
+                        evaluate_policies_async can import will work; the task
+                        body short-circuits because scope_id=-1 matches no
+                        rows.
+  --json                Emit results as a single JSON object on stdout.
+
+```
 
 ## pull_openstack_usage
 
@@ -65331,6 +65367,107 @@ you include unauthorised advanced fields.
 
 ---
 
+### Tenant network topology
+<!-- Source: docs/user-guide/customer-organization/tenant-network-topology.md -->
+
+# Tenant network topology
+
+The **Topology** tab in an OpenStack tenant gives you a single-screen view of
+how the tenant's networking is wired together — routers, networks, subnets,
+ports, instances, floating IPs, external networks and inbound RBAC shares —
+rendered as a static diagram with a legend and per-node tooltips.
+
+It is intended to answer questions like "which router does this subnet use as
+gateway?", "which ports belong to which subnet?" or "which networks are shared
+with us from another tenant?" without clicking through six separate tables.
+
+## Where to find it
+
+Open the OpenStack tenant resource and switch to **Networking → Topology**.
+The tab is the first item under Networking.
+
+[Image: Tenant Networking → Topology tab showing a four-subnet 100-VM tenant with the legend below the diagram]
+
+## What the diagram shows
+
+Each node represents an object in your tenant; each edge a relationship
+between two objects. Both the **colour** and the **shape** encode the
+object's type — the legend at the bottom of the panel is the visual key.
+
+| Node type | Shape | What it represents |
+| --- | --- | --- |
+| Tenant | green circle | The tenant resource itself — the root of the diagram. |
+| Router | green rhombus | An OpenStack router managed in this tenant. |
+| Network | blue rectangle | An internal (private) network owned by the tenant. |
+| Subnet | blue parallelogram | A subnet within an internal network (with its CIDR). |
+| Port | grey rounded box | A network port — either a router interface or an instance NIC. |
+| Instance | green subroutine box | A virtual machine running in this tenant. |
+| Floating IP | orange asymmetric box | A floating IP allocated to the tenant (attached or free). |
+| External network | red hexagon | A provider-level external network used as a gateway. |
+| RBAC share | purple back-parallelogram | A network shared *into* this tenant from another tenant. |
+
+Edges are styled by relation type:
+
+| Arrow style | Meaning |
+| --- | --- |
+| **Plain arrow** | Structural attachment (interface, port, instance NIC). |
+| **Dotted arrow** | Containment or a logical association (floating-IP, RBAC share). |
+| **Thick arrow** | Upstream / gateway connection. |
+
+## Hover for details
+
+Hover over any node to see a tooltip with its key attributes. The cursor
+changes to a help cursor (`?`) over nodes that carry extra information.
+
+Examples of what each node type surfaces:
+
+- **Tenant** — backend ID.
+- **Router** — backend ID, whether an external gateway is set, SNAT state,
+  external fixed IPs.
+- **Subnet** — CIDR, gateway IP, IP version, connection status, backend ID.
+- **Instance** — runtime state, state, flavor, backend ID.
+- **Floating IP** — public address, external address, runtime state, the
+  network it was allocated from.
+- **RBAC share** — policy type, source tenant name, source-network UUID.
+- **`N instances`** (collapsed cluster) — the count, plus a hint that the
+  cluster was collapsed for readability and the **Instances** tab shows the
+  detail.
+
+## Aggregation for busy tenants
+
+A tenant with more than a handful of instances on one subnet would render as
+dozens of identical boxes — both slow and hard to read. When a subnet has
+**more than 8 instance-bearing ports**, the diagram collapses the instances
+and their ports into a single `N instances` node connected directly to the
+subnet. The router interfaces themselves stay individually visible because
+they carry routing information.
+
+So a tenant with 100 VMs spread evenly across four subnets renders as four
+clean `25 instances` boxes — not 100 separate instance nodes.
+
+## When to use it
+
+- **Debugging connectivity** — confirm at a glance that a subnet is attached
+  to a router and that the router has an external gateway.
+- **Reviewing inbound shares** — RBAC shares from other tenants appear
+  explicitly as their own node and are linked into your tenant.
+- **Documenting your VPC** — the diagram is a deterministic snapshot you
+  can screenshot for handovers or change reviews.
+
+!!! note
+    The topology is a read-only view. To make changes, use the dedicated
+    tabs (Routers, Networks, Subnets, Ports, Floating IPs) or the per-row
+    actions on the relevant lists.
+
+!!! tip
+    The diagram is composed entirely from data that Waldur has already
+    pulled from OpenStack — opening the tab does not trigger any extra
+    Neutron calls. Refresh the page to re-fetch from Waldur's cached
+    state; use **Pull** on the parent tenant resource if you want to
+    refresh the cache itself.
+
+---
+
 ### Usage reports
 <!-- Source: docs/user-guide/customer-organization/usage_reports.md -->
 
@@ -76203,6 +76340,7 @@ td:nth-child(4) {
 | `import_instances_and_volumes_if_tenant_has_been_imported` | `Custom Signal (resource_imported)` | `openstack.Tenant` | No description |
 | `import_instances_and_volumes_if_tenant_has_been_imported` | `Custom Signal (tenant_pull_succeeded)` | `openstack.Tenant` | No description |
 | `import_resource_metadata_when_resource_is_created` | `Django Signal (post_save)` | `marketplace.Resource` | Import OpenStack resource metadata when marketplace resource is created. |
+| `import_usage_on_tenant_quotas_pulled` | `Custom Signal (tenant_quotas_pulled)` | `openstack.Tenant` | No description |
 | `init_resource_parent` | `Django Signal (post_save)` | `marketplace.Resource` | Initialize the parent resource for a newly created resource. |
 | `limit_update_failed` | `Custom Signal (resource_limit_update_failed)` | `marketplace.Resource` | Handle failed limit updates. |
 | `limit_update_succeeded` | `Custom Signal (resource_limit_update_succeeded)` | `marketplace.Resource` | Handle successful limit updates. |
@@ -76453,14 +76591,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 784
+Total unique handlers found: 785
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 412 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 314 handlers
+- **waldur_mastermind**: 315 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
