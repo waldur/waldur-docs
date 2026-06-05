@@ -1,5 +1,48 @@
 # Changelog
 
+## 8.0.9-rc.22 - 2026-06-05
+
+### Highlights
+
+This release introduces Matrix chat integration, bringing real-time team communication and voice/video calling directly into Waldur projects. Operators gain better OpenStack observability with per-request latency tracing, optional shared-secret authentication on webhook receivers, and stricter purchase order enforcement for resource updates. Several user-facing fixes address form glitches, crashes on tenant actions, and incorrect resource display IDs for federated offerings.
+
+### What's New
+
+- Matrix chat integration is now available for projects, enabling team conversations, room management, voice/video calls, emoji reactions, and an admin dashboard for room oversight. Server-side support includes an appservice for automated room provisioning, and a dedicated admin setup guide has been added.
+- Demo presets can now carry feature flag values, allowing imported environments to start with the right capabilities enabled out of the box.
+- The Waldur cleanup cron job in the Helm chart now ships with job-level guardrails to prevent runaway executions.
+
+### Improvements
+
+- Webhook receivers (Jira, SMAX, Zammad) can now require an optional shared-secret header, hardening inbound integrations against unauthorized callers.
+- OpenStack API calls are now traced with per-request latency, helping operators diagnose slow tenant operations.
+- Resource UPDATE orders now enforce the same purchase order upload requirement as new orders, with the UI showing the PO upload dialog whenever `require_purchase_order_upload` is set.
+- Project managers can now add resource team members directly without going through invitation flows.
+- The `close_course_account` flow is now idempotent, so re-running it against already-closed accounts no longer errors.
+- Proposal workflow stepper now handles empty states, rejected proposals, submission, and resource-step transitions more cleanly.
+- The user usage report action is now hidden from users without provider permissions, reducing menu clutter.
+- Table filters were refactored across the application for more consistent behavior, and offering details/edit views were unified onto a shared component.
+- The orphaned SlurmSection feature toggle was removed to clean up administrator-visible configuration.
+
+### Bug Fixes
+
+- Fixed a 500 error on the OpenStack instance rescue and unrescue endpoints.
+- Federated sync offerings on site agents now show the correct effective ID instead of falling back to the backend ID.
+- The `has_gpu` filter no longer skips mixed software packages that contain GPU modules.
+- Fixed a crash on the tenant edit action when the user context was undefined.
+- The OpenStack instance deploy form no longer renders a duplicate default subnet row.
+- Switching tabs in order details no longer triggers a full page reload.
+- Resource project team member and invitation actions now work as expected.
+- Form-plumbing props no longer leak onto DOM elements in date pickers and form groups.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [15 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.21...8.0.9-rc.22) - Matrix chat backend, webhook auth hardening, OpenStack tracing, and assorted marketplace fixes.
+- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.21...8.0.9-rc.22) - Matrix chat UI with calling, proposal workflow polish, table filter refactor, PO upload dialog, and several crash and UX fixes.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.9-rc.21...8.0.9-rc.22) - Added job guardrails to the Waldur cleanup cron job.
+
+---
+
 ## 8.0.9-rc.21 - 2026-06-03
 
 ### Highlights
