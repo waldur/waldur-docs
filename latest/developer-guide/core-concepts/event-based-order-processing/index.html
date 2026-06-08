@@ -1798,6 +1798,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../admin-guide/deployment/docker-compose/matrix-chat-add-on/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Matrix chat add on
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -13847,19 +13875,21 @@
   (connected to <code>core.User</code> post_save, not <code>OfferingUser</code>)</li>
 </ul>
 <p><strong>Message Payload Structure for create/update/delete Events:</strong></p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span>
-<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"offering_user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uuid-hex-string"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"user_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-uuid-hex-string"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"generated-username"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK|Requested|Creating|..."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"runtime_state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Active|Pending account linking|Pending additional validation"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"create|update|delete"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user@example.com"</span><span class="p">,</span><span class="w"> </span><span class="nt">"first_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Alice"</span><span class="p">},</span><span class="w">  </span><span class="c1">// create only</span>
 <span class="w">  </span><span class="nt">"changed_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"field1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"field2"</span><span class="p">]</span><span class="w">  </span><span class="c1">// update only</span>
@@ -13888,10 +13918,11 @@ changed fields are included.</p>
 <p><strong>Event Triggers:</strong></p>
 <ul>
 <li><strong>Create</strong>: When a new offering user account is created for a user in an offering</li>
-<li><strong>Update</strong>: When any field of an existing offering user is modified (username, state, etc.)</li>
+<li><strong>Update</strong>: When any field of an existing offering user is modified (username, state, runtime_state, etc.)</li>
 <li><strong>Delete</strong>: When an offering user account is removed from an offering</li>
 <li><strong>Attribute Update</strong>: When a User's profile fields change, filtered through each offering's <code>OfferingUserAttributeConfig</code></li>
 </ul>
+<p><strong><code>runtime_state</code> field:</strong> Both <code>create</code> and <code>update</code> messages include <code>runtime_state</code> alongside <code>state</code>. Consumers should use <code>runtime_state</code> to determine operational access status (e.g. TOU accepted, account linked) independently of the lifecycle <code>state</code>. See <a href="../offering-users/#runtime-states">OfferingUser States and Management</a> for details.</p>
 <h3 id="resource-periodic-limits-event-messages">Resource Periodic Limits Event Messages</h3>
 <p>Resource periodic limits events are published when SLURM periodic usage policies are applied to resources. These messages contain calculated SLURM settings including allocation limits, fairshare values, and QoS thresholds. The handler is located in <a href="https://github.com/waldur/waldur-mastermind/blob/develop/src/waldur_mastermind/policy/models.py">waldur_mastermind/policy/models.py</a>.</p>
 <p><strong>Message Payload Structure for Resource Periodic Limits:</strong></p>

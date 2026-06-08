@@ -1798,6 +1798,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../admin-guide/deployment/docker-compose/matrix-chat-add-on/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Matrix chat add on
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6847,10 +6875,10 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
-  <a href="#states" class="md-nav__link">
+  <a href="#lifecycle-states" class="md-nav__link">
     <span class="md-ellipsis">
       
-        States
+        Lifecycle States
       
     </span>
   </a>
@@ -7019,6 +7047,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#update-runtime-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Runtime State
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7029,6 +7068,34 @@
     <span class="md-ellipsis">
       
         OfferingUser Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime States
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Runtime States">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lifecycle-vs-runtime-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle vs Runtime State
       
     </span>
   </a>
@@ -13377,10 +13444,10 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
-  <a href="#states" class="md-nav__link">
+  <a href="#lifecycle-states" class="md-nav__link">
     <span class="md-ellipsis">
       
-        States
+        Lifecycle States
       
     </span>
   </a>
@@ -13549,6 +13616,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#update-runtime-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Runtime State
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -13559,6 +13637,34 @@
     <span class="md-ellipsis">
       
         OfferingUser Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime States
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Runtime States">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lifecycle-vs-runtime-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle vs Runtime State
       
     </span>
   </a>
@@ -13986,9 +14092,13 @@
                   
 
 <h1 id="offeringuser-states-and-management">OfferingUser States and Management</h1>
-<p>OfferingUser represents a user account created for a specific marketplace offering. It supports a finite state machine (FSM) that tracks the lifecycle of user account creation, validation, and management.</p>
-<h2 id="states">States</h2>
-<p>OfferingUser has the following states:</p>
+<p>OfferingUser represents a user account created for a specific marketplace offering. It tracks two independent state dimensions:</p>
+<ul>
+<li><strong>Lifecycle state</strong> (<code>state</code>): A finite state machine (FSM) tracking where the account is in the provisioning/deletion workflow.</li>
+<li><strong>Runtime state</strong> (<code>runtime_state</code>): An operational flag the service provider can set freely to signal whether the user currently has access to the service (e.g. TOU accepted, account linked). This is independent of lifecycle and can be updated at any time except when the account is <code>DELETED</code>.</li>
+</ul>
+<h2 id="lifecycle-states">Lifecycle States</h2>
+<p>OfferingUser has the following lifecycle states:</p>
 <table>
 <thead>
 <tr>
@@ -14179,13 +14289,118 @@
 <p><strong>Permissions:</strong> Requires <code>UPDATE_OFFERING_USER</code> permission on the offering's customer.</p>
 <p><strong>Valid states:</strong> All states except <code>DELETED</code></p>
 <p>Both fields are optional - you can update just the comment, just the URL, or both.</p>
+<h4 id="update-runtime-state">Update Runtime State</h4>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/update_runtime_state/</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">{</span>
+<span class="err">  "runtime_state": 1</span>
+<span class="err">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Where <code>runtime_state</code> is one of:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Integer</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Active</code></td>
+<td><code>1</code></td>
+<td>User can access the service normally</td>
+</tr>
+<tr>
+<td><code>Pending account linking</code></td>
+<td><code>2</code></td>
+<td>User must link an external account (e.g. MyAccessID) before access is granted</td>
+</tr>
+<tr>
+<td><code>Pending additional validation</code></td>
+<td><code>3</code></td>
+<td>User must complete additional validation (e.g. accept new Terms of Use)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Valid transitions:</strong> Any → Any (no FSM). Can be set regardless of lifecycle <code>state</code>, except when lifecycle is <code>DELETED</code>.</p>
+<p><strong>Permissions:</strong> Requires <code>UPDATE_OFFERING_USER</code> permission on the offering's customer.</p>
+<p><strong>Key use case — backfill sync:</strong> When a service provider syncs an external system (e.g. Puhuri), they can update <code>runtime_state</code> on users already in lifecycle <code>OK</code> without touching the provisioning FSM.</p>
 <h3 id="offeringuser-fields">OfferingUser Fields</h3>
 <p>When retrieving or updating OfferingUser objects, the following state-related fields are available:</p>
 <ul>
-<li><code>state</code> (string, read-only): Current state of the user account</li>
+<li><code>state</code> (string, read-only): Current lifecycle state of the user account (provisioning/deletion)</li>
+<li><code>runtime_state</code> (string, read-only): Current operational/access state of the user account</li>
 <li><code>service_provider_comment</code> (string, read-only): Comment from service provider for pending states</li>
 <li><code>service_provider_comment_url</code> (string, read-only): Optional URL link for additional information or actions related to the service provider comment</li>
 </ul>
+<h2 id="runtime-states">Runtime States</h2>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Integer</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Active</code></td>
+<td><code>1</code></td>
+<td>User has full access to the service</td>
+</tr>
+<tr>
+<td><code>Pending account linking</code></td>
+<td><code>2</code></td>
+<td>Access blocked; user must link an external account</td>
+</tr>
+<tr>
+<td><code>Pending additional validation</code></td>
+<td><code>3</code></td>
+<td>Access blocked; user must complete additional validation (e.g. TOU)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lifecycle-vs-runtime-state">Lifecycle vs Runtime State</h3>
+<p>These two fields are independent:</p>
+<table>
+<thead>
+<tr>
+<th><code>state</code> (lifecycle)</th>
+<th><code>runtime_state</code></th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OK</code></td>
+<td><code>Active</code></td>
+<td>Account provisioned and fully accessible</td>
+</tr>
+<tr>
+<td><code>OK</code></td>
+<td><code>Pending account linking</code></td>
+<td>Provisioned in Waldur, but blocked in backend (e.g. MyAccessID not linked yet)</td>
+</tr>
+<tr>
+<td><code>OK</code></td>
+<td><code>Pending additional validation</code></td>
+<td>Provisioned in Waldur, but blocked pending TOU acceptance</td>
+</tr>
+<tr>
+<td><code>Creating</code></td>
+<td><code>Active</code></td>
+<td>Account being created; default runtime state</td>
+</tr>
+</tbody>
+</table>
+<p>The lifecycle FSM (<code>state</code>) tracks Waldur-side provisioning. The <code>runtime_state</code> tracks operational access status as reported by the service provider. Service providers should update <code>runtime_state</code> via <code>update_runtime_state</code>, and upstream consumers should read both fields from STOMP messages.</p>
 <h2 id="backward-compatibility">Backward Compatibility</h2>
 <p>The system maintains backward compatibility with existing integrations:</p>
 <h3 id="automatic-state-transitions">Automatic State Transitions</h3>
