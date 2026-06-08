@@ -1,5 +1,59 @@
 # Changelog
 
+## 8.0.9-rc.23 - 2026-06-08
+
+### Highlights
+
+This release introduces optional Matrix chat as a deployable add-on with browser-friendly homeserver configuration, modernizes the homeport forms with a new Edit Field Architecture for inline editing across customer, project, and offering management screens, and lands a broad set of reliability fixes covering health checks, sidebar performance, breadcrumb navigation, and offering lifecycle management. Several CVE fixes via Django 6.0.6 and a sentry-sdk upgrade improve security posture.
+
+### What's New
+
+- Matrix chat is now available as an optional add-on for docker-compose deployments, with Caddy routing, Tuwunel homeserver, and a Waldur registration template.
+- Operators can configure a separate public homeserver URL in the Matrix setup wizard so browser clients can reach the homeserver when the backend uses an internal address (typical for docker-compose deployments behind a reverse proxy).
+- New offering user `runtime_state` field is exposed via the API, model, filters, and event handlers to track lifecycle state of offering users.
+- Resource display options can now require an effective ID for highlighted display, giving providers more control over what appears in resource summaries.
+- Homeport gains a new Edit Field Architecture that standardizes inline field editing across customer details, project management, offerings, proposals, reviewer profiles, and user support panels.
+
+### Improvements
+
+- Sidebar mounts no longer fire an N+1 burst of marketplace-categories requests, reducing load and flicker on navigation.
+- Offerings can now be deleted, paused, or archived without requiring billing plans to be present.
+- Deleting an offering now automatically revokes all offering-scoped roles.
+- Duplicate pending invitations from non-API creators are rejected to prevent confusion.
+- Health checks no longer report false-positive broker outages caused by stale connection pools.
+- Project Communication page shows a clearer non-member placeholder when the user lacks access.
+- Matrix room actions gate the Retry button on a stall threshold, and History export refresh is disabled when the chat room isn't active.
+- Organization breadcrumb links are hidden when the user lacks access to the organization, and non-navigable breadcrumb items no longer render as links.
+- The `sync_user_deactivation_status` periodic task no longer triggers N+1 queries.
+- CI now guards against unknown UI-Router state names, preventing dead navigation links from shipping.
+
+### Bug Fixes
+
+- Hooks order violation in the Create Resource button is fixed, preventing intermittent React errors.
+- `UserManageContainer` no longer crashes when `currentUser` is undefined.
+- Stale `admin-user-users` navigation targets are repointed to the `support-users` state.
+- End date change request labels are corrected.
+- Credit `end_date` day=1 validation is skipped on partial saves so credit updates don't fail spuriously.
+- Marketplace migration conflict between two 0239 leaf nodes is resolved.
+- Completion percentage denominator for user checklist completions is corrected.
+- Orphaned Kubernetes resource cleanup handles missing config gracefully instead of erroring.
+- Matrix API calls no longer fire when the feature key is absent.
+- `react-flatpickr` is upgraded with regression tests guarding against DOM leaks.
+
+### Security
+
+- Django bumped to 6.0.6 to address osv-scanner CVEs.
+- `sentry-sdk` upgraded with improved initialization for tasks and profiling.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [14 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.22...8.0.9-rc.23) - offering role revocation, offering user runtime state, Matrix public homeserver URL, credit/checklist fixes, Django CVE bump.
+- **Waldur Homeport**: [29 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.22...8.0.9-rc.23) - Edit Field Architecture rollout, sidebar and breadcrumb fixes, Matrix setup wizard public URL field, Vite 8 / flatpickr 4 / dependency cleanup.
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9-rc.22...8.0.9-rc.23) - new optional Matrix chat add-on with Caddy routing and Tuwunel templates.
+- **Waldur Helm**: maintenance updates only.
+
+---
+
 ## 8.0.9-rc.22 - 2026-06-05
 
 ### Highlights
