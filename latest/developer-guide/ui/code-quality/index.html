@@ -8249,6 +8249,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#ui-router-state-name-guard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI-Router state name guard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="UI-Router state name guard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opt-outs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Opt-outs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -13200,6 +13228,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#ui-router-state-name-guard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI-Router state name guard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="UI-Router state name guard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opt-outs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Opt-outs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -13324,6 +13380,15 @@ yarn<span class="w"> </span>info<span class="w"> </span>eslint<span class="w"> <
 <li><strong>Flat ESLint config</strong> format</li>
 <li><strong>Husky</strong> git hooks for automated quality checks</li>
 <li><strong>Yarn</strong> package management with lockfile integrity</li>
+</ul>
+<h2 id="ui-router-state-name-guard">UI-Router state name guard</h2>
+<p><code>src/state-names.test.ts</code> is a Vitest smoke test that asserts every literal UI-Router state name referenced from source (<code>&lt;Link state="..."&gt;</code>, <code>&lt;UISref state="..."&gt;</code>, <code>router.stateService.go('...')</code>, and breadcrumb <code>to:</code> fields) resolves to a state registered in <code>src/states.ts</code>. It catches the regression class where a route is renamed in a <code>routes.ts</code> module but call sites elsewhere keep the old name and silently 404.</p>
+<p>Dynamic references (<code>state={variable}</code>, <code>router.stateService.go(name)</code>, computed names) are skipped — the literal-string regexes do not match expression syntax.</p>
+<h3 id="opt-outs">Opt-outs</h3>
+<ul>
+<li><strong>Per-line</strong>: append <code>// state-check: ignore</code> to the line containing the literal. Use this for fixture data or constants where the literal value is intentionally not a real state name.</li>
+<li><strong>Global allowlist</strong> (in the test file): for values that are intentionally not in the registry but legitimately appear in the codebase (e.g., the <code>'404'</code> fallback used inside <code>useSref(state || '404', ...)</code> in <code>src/core/Link.tsx</code>). Keep this set small and add a comment explaining each entry.</li>
+<li><strong>Known-broken set</strong> (in the test file): for pre-existing broken references that require product knowledge to fix. Do not add new entries — fix the reference instead. When the last call site for an entry is gone, remove the entry.</li>
 </ul>
 
 
