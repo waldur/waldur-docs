@@ -165,17 +165,57 @@ Bids are factored into the matching algorithm with configurable weight.
 
 After matching, call managers create assignment batches to formally assign proposals to reviewers.
 
-### Creating assignment batches
+### Reviewer pool navigation
 
-1. Review matching suggestions and confirmed reviewer pool
-2. Create an **Assignment Batch** for each reviewer
-3. Add specific proposals to each batch (with affinity scores shown)
-4. Add optional **manager notes** for the reviewer
-5. Review and **send** the batch
+The **Reviewer pool** panel groups the call manager's reviewer-related views under a single tab strip:
+
+- **Pool** — the curated list of invited reviewers and their status.
+- **Discovery** — algorithm-suggested reviewers based on expertise and affinity.
+- **Assignment batches** — the per-reviewer assignment batches you've created, with status, item counts, sent/expiry dates, and per-row actions.
+- **Reviewer capacity** — how many active assignments each pool member has, with their configured maximum.
+- **COI** — flagged conflicts of interest awaiting manager review.
+
+![Assignment batches table](../img/assignment_batches_table.png)
+
+The header buttons on **Assignment batches** are:
+
+- **How it works** — open an explainer of the assignment flow.
+- **Manual assignment** — create a draft batch for a single reviewer with hand-picked proposals.
+- **Generate assignments** — let the matching algorithm build batches from the current reviewer pool and unassigned proposals.
+
+### Creating a manual assignment batch
+
+**Performed by:** Call manager
+
+1. Click **Manual assignment** on the **Assignment batches** tab.
+2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`) so you can avoid over-allocating.
+3. Pick one or more **proposals**. The selector keeps a single chip visible with a `+N more` indicator so the dialog stays compact when many proposals are added.
+4. Optionally add **manager notes** — internal context visible to other managers but not to the reviewer.
+5. Click **Create assignment**. A draft batch is created. The reviewer is **not** notified yet.
+
+![Manual assignment dialog](../img/manual_assignment_dialog.png)
+
+### Sending draft batches
+
+Drafts give you a final review checkpoint before reviewers see the assignment.
+
+1. Tick the checkbox next to one or more **Draft** batches. The toolbar shows `(N) Selected` and a **Send drafts (N)** button.
+2. Click **Send drafts (N)** to dispatch the selected batches. Reviewers receive the invitation email with a unique token; the batch status moves from **Draft** to **Sent**.
+3. Non-draft batches in the selection are ignored automatically.
+
+![Bulk send draft batches](../img/assignment_bulk_send.png)
+
+You can also send a single batch from the per-row 3-dot menu (**Send**).
+
+### Reviewing a batch
+
+Expanding a batch row shows its items — proposals, status, affinity, COI flags, decline reasons — and any **manager notes** captured at creation time.
+
+![Expanded batch showing manager notes and items](../img/assignment_batch_manager_notes.png)
 
 ### Batch lifecycle
 
-```
+```text
 DRAFT → SENT → RESPONDED / EXPIRED / CANCELLED
 ```
 
@@ -198,3 +238,18 @@ If configured in the **Assignment Configuration**:
 - When a reviewer declines, the system automatically finds the next-best reviewer
 - Maximum auto-reassignment attempts are configurable (default: 3)
 - Reminder emails sent before assignment expiry (configurable days before)
+
+### Managing reviewer capacity
+
+The **Reviewer capacity** tab lists every pool member and their current load. Use it to adjust the **Maximum assignments** per reviewer when workload, sabbaticals, or expertise concentration change during a call.
+
+![Reviewer capacity table](../img/reviewer_capacity_table.png)
+
+1. Switch to the **Reviewer capacity** tab in the Reviewer pool panel.
+2. Open the row 3-dot menu and choose **Edit capacity**.
+3. Update **Maximum assignments** and save.
+
+![Edit reviewer capacity dialog](../img/edit_reviewer_capacity.png)
+
+!!! tip
+    Lowering the maximum below a reviewer's current count won't unassign existing work — it just prevents new assignments until the load drops back below the cap.
