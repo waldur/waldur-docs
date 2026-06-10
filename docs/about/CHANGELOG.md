@@ -1,5 +1,44 @@
 # Changelog
 
+## 8.0.9-rc.24 - 2026-06-10
+
+### Highlights
+
+This release candidate strengthens account security and access control: SSRF protection for OIDC identity provider setup, correct visibility scoping for component usage data, and a reworked user deactivation flow with an explicit admin override. Service providers using GLauth-based LDAP integration get role-aware groups and a visual tree browser, while Matrix chat and video calls become more reliable across the stack. OpenStack operators benefit from better port security handling, a billing reconciliation tool, and several stability fixes.
+
+### What's New
+
+- Offerings integrated with GLauth now expose role-aware LDAP groups, and the offering integration page includes a searchable LDAP tree view for inspecting the generated configuration.
+- A new management command reconciles OpenStack instance billing against Placement allocations, helping operators detect billing discrepancies.
+- Operators can enforce a "max one project manager per project" policy via a new configuration option.
+
+### Improvements
+
+- User deactivation has been reworked: users without roles are no longer auto-deactivated incorrectly, staff must provide a reason when deactivating a user, and an admin override flag is now visible in user details.
+- OpenStack networks now sync the Neutron port security setting down to subnets, and the instance deployment form defaults its port security toggle from the selected subnet.
+- Resource limit-change and renewal views show a single period-aware price column, making cost changes easier to read.
+- Offering plugin options for required team role and resource name pattern can now be cleared by setting them to null, both via API and in the UI.
+- Matrix integration is more robust: higher credential throttle limits with a clearer throttle message, fixed video call drawer and appservice setup flow, and Docker Compose deployments now proxy LiveKit signaling and Matrix discovery endpoints correctly.
+- Long breadcrumbs no longer push page header actions off-screen, and long emails in the user list are truncated with the full value shown in a tooltip.
+- The notification template update dialog has been redesigned.
+- Reduced log noise from OpenStack tenant pulls and collapsed repetitive self-heal errors for broken offerings.
+
+### Bug Fixes
+
+- Blocked server-side request forgery (SSRF) in the OIDC identity provider discovery URL fetch.
+- Fixed the component usage API exposing data to all authenticated users regardless of their role.
+- Offering component limit period is now preserved when updating an offering instead of being reset.
+- Fixed a race between OpenStack router synchronization and deletion that could leave routers in an inconsistent state.
+- Fixed a crash in the global project creation button when the user was not yet loaded.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [15 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.23...8.0.9-rc.24) - access control hardening, GLauth groups, OpenStack networking and billing fixes
+- **Waldur Homeport**: [12 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.23...8.0.9-rc.24) - GLauth tree view, deactivation flow, pricing display, Matrix and layout fixes
+- **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9-rc.23...8.0.9-rc.24) - Matrix add-on proxying and startup fixes
+
+---
+
 ## 8.0.9-rc.23 - 2026-06-08
 
 ### Highlights
