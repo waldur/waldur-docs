@@ -1,5 +1,25 @@
 # Changelog
 
+## 8.0.9-rc.25 - 2026-06-10
+
+### Highlights
+
+This release candidate delivers two targeted frontend fixes. OpenStack port creation now correctly submits the selected network, restoring a workflow that previously failed silently. Additionally, administrators deactivating a user account must now provide a reason, improving accountability and audit trails for user management.
+
+### Bug Fixes
+
+- Fixed an issue where the network field was dropped from the OpenStack port creation payload, causing ports to be created without the selected network.
+
+### Improvements
+
+- The user edit form now requires a deactivation reason when deactivating a user account, with updated translations for German, Estonian, and Lithuanian.
+
+### Core Component Activity
+
+- **Waldur Homeport**: [2 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.24...8.0.9-rc.25) - OpenStack port creation fix and required deactivation reason in user management.
+
+---
+
 ## 8.0.9-rc.24 - 2026-06-10
 
 ### Highlights
