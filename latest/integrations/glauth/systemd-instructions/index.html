@@ -12870,22 +12870,30 @@
 <h1 id="systemd-setup-for-glauth-and-config-refresher">Systemd setup for glauth and config refresher</h1>
 <p>Prerequisites:</p>
 <ol>
-<li>Ensure <code>wget</code> is installed to a target machine as refreshing script uses it;</li>
-<li>Install glauth binary to <code>/usr/bin/glauth</code> upon staring glauth service, e.g. <a href="https://github.com/glauth/glauth/releases/download/v2.3.0/glauth-linux-amd64">glauth v2.3.0</a>.</li>
+<li>Ensure Python 3.9+ and <code>pip</code> are installed on the target machine, then install the refresher dependencies:</li>
 </ol>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>pip3<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>refresher/requirements.txt
+</code></pre></div></td></tr></tbody></table></div>
+<ol>
+<li>Install the glauth binary to <code>/usr/bin/glauth</code>. Use the same version as pinned by <code>GLAUTH_VERSION</code> in the <a href="../Dockerfile">Dockerfile</a>, e.g.:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>wget<span class="w"> </span>-O<span class="w"> </span>/usr/bin/glauth<span class="w"> </span>https://github.com/glauth/glauth/releases/download/GLAuth-v2.5.0/glauth-linux-amd64
+chmod<span class="w"> </span>+x<span class="w"> </span>/usr/bin/glauth
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="refresher-service">Refresher service</h2>
-<p>Copy the files from <a href="https://github.com/waldur/glauth">this repository</a> to a corresponding paths on the target host:</p>
+<p>Copy the files from <a href="https://github.com/waldur/glauth">this repository</a> to the corresponding paths on the target host:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>mkdir<span class="w"> </span>/etc/glauth
-cp<span class="w"> </span>systemd-conf/refresher/preconfig.cfg.template<span class="w"> </span>/etc/glauth/preconfig.cfg.template
-cp<span class="w"> </span>systemd-conf/refresher/refresher.env<span class="w"> </span>/etc/glauth/refresher.env
-cp<span class="w"> </span>systemd-conf/refresher/refresh-glauth-config.sh<span class="w"> </span>/usr/sbin/refresh-glauth-config.sh
-cp<span class="w"> </span>systemd-conf/refresher/refresh-glauth-config.service<span class="w"> </span>/etc/systemd/system/refresh-glauth-config.service
+cp<span class="w"> </span>refresher/preconfig.cfg.template<span class="w"> </span>/etc/glauth/preconfig.cfg.template
+cp<span class="w"> </span>systemd/refresher.env.example<span class="w"> </span>/etc/glauth/refresher.env
+cp<span class="w"> </span>refresher/refresh-glauth-config.py<span class="w"> </span>/usr/sbin/refresh-glauth-config.py
+cp<span class="w"> </span>systemd/refresh-glauth-config.service<span class="w"> </span>/etc/systemd/system/refresh-glauth-config.service
 </code></pre></div></td></tr></tbody></table></div>
-<p>Update <code>.env</code> file for the refresher service, i.e. <code>/etc/glauth/refresher.env</code>:</p>
+<p>Update the <code>.env</code> file for the refresher service, i.e. <code>/etc/glauth/refresher.env</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -12893,7 +12901,8 @@ cp<span class="w"> </span>systemd-conf/refresher/refresh-glauth-config.service<s
 <span class="normal">5</span>
 <span class="normal">6</span>
 <span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code>WALDUR_URL=https://waldur.example.com/api/
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code>WALDUR_URL=https://waldur.example.com/api/
 WALDUR_TOKEN=891a3dee2b905d08ed672d407308020d241c4f31
 WALDUR_OFFERING_UUID=94dd1cec1f3940ef017e
 WALDUR_API_VERIFY_TLS=false
@@ -12901,8 +12910,9 @@ LDAP_ADMIN_UIDNUMBER=4000
 LDAP_ADMIN_PGROUP=4000
 LDAP_ADMIN_USERNAME=admin
 LDAP_ADMIN_PASSWORD=Adm1n!
+LDAP_ADMIN_EMAIL=admin@example.com
 </code></pre></div></td></tr></tbody></table></div>
-<p>Update systemd daemon configs and start and enabled the service:</p>
+<p>Update systemd daemon configs and start and enable the service:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>systemctl<span class="w"> </span>daemon-reload
@@ -12911,11 +12921,11 @@ systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> 
 </code></pre></div></td></tr></tbody></table></div>
 <p>After some time, you should be able to check the prepared config file in <code>/etc/glauth/config.cfg</code></p>
 <h2 id="glauth-service">Glauth service</h2>
-<p>Ensure glauth binary is installed in <code>/usr/bin/glauth</code> and perform the same steps for the glauth service:</p>
+<p>Ensure the glauth binary is installed in <code>/usr/bin/glauth</code> and perform the same steps for the glauth service:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>cp<span class="w"> </span>systemd-conf/glauth/glauth.service<span class="w"> </span>/etc/systemd/system/glauth.service
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>cp<span class="w"> </span>systemd/glauth.service<span class="w"> </span>/etc/systemd/system/glauth.service
 systemctl<span class="w"> </span>daemon-reload
 systemctl<span class="w"> </span>start<span class="w"> </span>glauth
 systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>glauth
