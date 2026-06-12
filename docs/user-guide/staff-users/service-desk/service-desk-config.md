@@ -85,5 +85,7 @@ A popup will appear. Fill in the required fields and click **Update**.
 * **The maximum number of attempts to pull user from backend** - Set the maximum number of attempts to pull user data from the backend before the process is stopped.
 * **Creation source name** - Specify the source name used when creating tickets or records in SMAX.
 * **Smax verify ssl** - Toggle this setting to enable or disable SSL verification when communicating with the SMAX server.
+* **Smax certificate** - Optionally provide a custom CA certificate (PEM format) used to validate the TLS connection to the SMAX server. When set, it overrides the default CA bundle. This is useful when SMAX is hosted internally with a corporate or self-signed CA. The certificate is ignored if SSL verification is disabled.
+* **Smax webhook shared secret** - Shared secret expected in the `X-Webhook-Secret` header of inbound SMAX webhook deliveries. If left empty, webhook authentication is not enforced.
 
 ![Smax configuration](../../img/Smax_config.png)
