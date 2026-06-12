@@ -8257,6 +8257,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../developer-guide/ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../developer-guide/ui/api-integration/" class="md-nav__link">
         
   
@@ -13724,7 +13752,8 @@
 <ul>
 <li><strong>Empty values from non-owners are preserved.</strong> A SCIM <code>PUT</code> that omits an email previously set by Identity Bridge will not clear that email.</li>
 <li><strong>Per-attribute timestamps</strong> are refreshed on every write, even when the value is unchanged — useful for freshness-based reporting.</li>
-<li><strong>Deactivation</strong> routes through <code>remove_user_from_isd</code> and honours <code>FEDERATED_IDENTITY_DEACTIVATION_POLICY</code>: with the default <code>all_isds_removed</code> a user is only deactivated when no active sources remain; with <code>any_isd_removed</code> any removal deactivates.</li>
+<li><strong>Deactivation</strong> routes through <code>remove_user_from_isd</code> and honours <code>FEDERATED_IDENTITY_DEACTIVATION_POLICY</code>: with the default <code>any_isd_removed</code> any removal deactivates the user; with <code>all_isds_removed</code> a user is only deactivated when no active sources remain.</li>
+<li><strong>Deactivated users stay visible to SCIM.</strong> <code>GET /Users/{id}</code> returns them with <code>active: false</code>, they match <code>filter=active eq false</code>, and the IdP can reactivate them with <code>PATCH {op: replace, path: active, value: true}</code>.</li>
 </ul>
 <h2 id="scim-to-waldur-attribute-mapping">SCIM-to-Waldur attribute mapping</h2>
 <table>
@@ -13839,6 +13868,11 @@
 </tr>
 <tr>
 <td><code>replace</code> / <code>add</code> / <code>remove</code></td>
+<td><code>name</code></td>
+<td>Whole name object (<code>givenName</code>/<code>familyName</code>).</td>
+</tr>
+<tr>
+<td><code>replace</code> / <code>add</code> / <code>remove</code></td>
 <td><code>emails</code> / <code>phoneNumbers</code></td>
 <td>First primary entry wins.</td>
 </tr>
@@ -13846,6 +13880,11 @@
 <td><code>replace</code></td>
 <td><code>externalId</code></td>
 <td>Update; <code>remove</code> clears it.</td>
+</tr>
+<tr>
+<td><code>replace</code> / <code>add</code> / <code>remove</code></td>
+<td><code>urn:...:enterprise:2.0:User:organization</code></td>
+<td>URN-prefixed extension path (Entra ID style); also accepted for the Waldur extension fields and whole extension objects.</td>
 </tr>
 <tr>
 <td><code>replace</code></td>

@@ -1937,6 +1937,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="LiveKit / voice &amp; video notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#turn-relay-symmetric-nat-icloud-private-relay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TURN relay (symmetric NAT / iCloud Private Relay)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -8087,6 +8104,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../developer-guide/ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../developer-guide/ui/api-integration/" class="md-nav__link">
         
   
@@ -12975,6 +13020,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="LiveKit / voice &amp; video notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#turn-relay-symmetric-nat-icloud-private-relay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TURN relay (symmetric NAT / iCloud Private Relay)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -13147,6 +13209,16 @@ docker<span class="w"> </span>compose<span class="w"> </span>--profile<span clas
 <h2 id="livekit-voice-video-notes">LiveKit / voice &amp; video notes</h2>
 <p><code>WALDUR_LIVEKIT_NODE_IP</code> advertises the host's RTC media address to clients. The default <code>127.0.0.1</code> is correct for a local demo only — for any reachable deployment, set this to the host's external IP or DNS name so remote clients can connect. The RTC media ports (<code>WALDUR_MATRIX_RTC_TCP_PORT</code>/<code>UDP_PORT</code>, default 7881/7882) must also be reachable from clients.</p>
 <p><code>WALDUR_LIVEKIT_KEY</code> / <code>WALDUR_LIVEKIT_SECRET</code> default to development values. <strong>Override both</strong> for anything beyond a localhost demo.</p>
+<h3 id="turn-relay-symmetric-nat-icloud-private-relay">TURN relay (symmetric NAT / iCloud Private Relay)</h3>
+<p>Direct media to <code>WALDUR_LIVEKIT_NODE_IP</code> fails for clients behind symmetric NAT or proxies that don't carry WebRTC UDP. Enabling TURN gives LiveKit a relay those clients fall back to.</p>
+<p>Set <code>WALDUR_MATRIX_TURN_ENABLED=true</code> (within <code>--profile matrix-rtc</code>). The stack uses <strong>TURN/UDP on port 443</strong> — <code>udp_port</code> is the port LiveKit advertises to clients, and 443 is the firewall-friendly choice. Because the stack is single-host, the relay lives at <code>WALDUR_DOMAIN:443/udp</code> — the same IP that already serves the web UI, so <strong>no extra DNS record is needed</strong>.</p>
+<p>This mode needs <strong>no certificate</strong>: TURN/UDP isn't TLS, so there is nothing to provision or renew. It also doesn't collide with Caddy — Caddy binds <code>443/tcp</code> (HTTPS) while TURN takes <code>443/udp</code>, which is otherwise free on the host.</p>
+<p>Open <strong><code>443/udp</code></strong> on any upstream firewall / cloud security group (the same way <code>443/tcp</code> is already opened for the web UI).</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Confirm livekit is listening on 443/udp inside the container</span>
+docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>livekit<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'ss -lun | grep :443 || netstat -lun | grep :443'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Coverage note: TURN/UDP rescues symmetric-NAT clients and any network that permits outbound UDP on 443. It does <strong>not</strong> help clients on networks that block all outbound UDP (strict corporate firewalls) — that requires TURN/TLS on TCP 443, which on a single host means giving LiveKit its own IP or a layer-4 load balancer (the helm topology). For a single-host compose deployment, TURN/UDP is the pragmatic option.</p>
 <h2 id="apple-silicon">Apple Silicon</h2>
 <p>The Matrix component images already publish <code>linux/arm64</code>. The Waldur images may need a local arm64 rebuild because of <code>openportal</code>'s native dependency:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>

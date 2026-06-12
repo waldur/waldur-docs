@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-06-11T18:55:09.090395Z
+Generated: 2026-06-12T02:04:49.181590Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -4446,6 +4446,23 @@ On re-up, `waldur-matrix-init` generates fresh tokens, re-renders the descriptor
 `WALDUR_LIVEKIT_NODE_IP` advertises the host's RTC media address to clients. The default `127.0.0.1` is correct for a local demo only — for any reachable deployment, set this to the host's external IP or DNS name so remote clients can connect. The RTC media ports (`WALDUR_MATRIX_RTC_TCP_PORT`/`UDP_PORT`, default 7881/7882) must also be reachable from clients.
 
 `WALDUR_LIVEKIT_KEY` / `WALDUR_LIVEKIT_SECRET` default to development values. **Override both** for anything beyond a localhost demo.
+
+### TURN relay (symmetric NAT / iCloud Private Relay)
+
+Direct media to `WALDUR_LIVEKIT_NODE_IP` fails for clients behind symmetric NAT or proxies that don't carry WebRTC UDP. Enabling TURN gives LiveKit a relay those clients fall back to.
+
+Set `WALDUR_MATRIX_TURN_ENABLED=true` (within `--profile matrix-rtc`). The stack uses **TURN/UDP on port 443** — `udp_port` is the port LiveKit advertises to clients, and 443 is the firewall-friendly choice. Because the stack is single-host, the relay lives at `WALDUR_DOMAIN:443/udp` — the same IP that already serves the web UI, so **no extra DNS record is needed**.
+
+This mode needs **no certificate**: TURN/UDP isn't TLS, so there is nothing to provision or renew. It also doesn't collide with Caddy — Caddy binds `443/tcp` (HTTPS) while TURN takes `443/udp`, which is otherwise free on the host.
+
+Open **`443/udp`** on any upstream firewall / cloud security group (the same way `443/tcp` is already opened for the web UI).
+
+```bash
+# Confirm livekit is listening on 443/udp inside the container
+docker compose exec livekit sh -c 'ss -lun | grep :443 || netstat -lun | grep :443'
+```
+
+Coverage note: TURN/UDP rescues symmetric-NAT clients and any network that permits outbound UDP on 443. It does **not** help clients on networks that block all outbound UDP (strict corporate firewalls) — that requires TURN/TLS on TCP 443, which on a single host means giving LiveKit its own IP or a layer-4 load balancer (the helm topology). For a single-host compose deployment, TURN/UDP is the pragmatic option.
 
 ## Apple Silicon
 
@@ -14748,7 +14765,8 @@ Key consequences:
 
 - **Empty values from non-owners are preserved.** A SCIM `PUT` that omits an email previously set by Identity Bridge will not clear that email.
 - **Per-attribute timestamps** are refreshed on every write, even when the value is unchanged — useful for freshness-based reporting.
-- **Deactivation** routes through `remove_user_from_isd` and honours `FEDERATED_IDENTITY_DEACTIVATION_POLICY`: with the default `all_isds_removed` a user is only deactivated when no active sources remain; with `any_isd_removed` any removal deactivates.
+- **Deactivation** routes through `remove_user_from_isd` and honours `FEDERATED_IDENTITY_DEACTIVATION_POLICY`: with the default `any_isd_removed` any removal deactivates the user; with `all_isds_removed` a user is only deactivated when no active sources remain.
+- **Deactivated users stay visible to SCIM.** `GET /Users/{id}` returns them with `active: false`, they match `filter=active eq false`, and the IdP can reactivate them with `PATCH {op: replace, path: active, value: true}`.
 
 ## SCIM-to-Waldur attribute mapping
 
@@ -14776,8 +14794,10 @@ The handler accepts the subset that Okta, Microsoft Entra ID, and Keycloak emit:
 | `replace` | _omitted_ (value is a User dict) | Replace multiple top-level attributes at once (Okta style). |
 | `replace` | `active` | Toggle `is_active`; `false` runs the deactivation flow. |
 | `replace` | `name.givenName` / `name.familyName` | Update first / last name. |
+| `replace` / `add` / `remove` | `name` | Whole name object (`givenName`/`familyName`). |
 | `replace` / `add` / `remove` | `emails` / `phoneNumbers` | First primary entry wins. |
 | `replace` | `externalId` | Update; `remove` clears it. |
+| `replace` / `add` / `remove` | `urn:...:enterprise:2.0:User:organization` | URN-prefixed extension path (Entra ID style); also accepted for the Waldur extension fields and whole extension objects. |
 | `replace` | `userName` | Rejected — 400 `mutability`. |
 | `add` / `remove` / `replace` | `members` | Group membership delta. |
 | `add` / `remove` | `members[value eq "<uuid>"]` | Filter form used by Entra ID and Keycloak. |
@@ -56683,6 +56703,65 @@ When fixing performance or accuracy issues:
 
 ## UI Development
 
+### Developer Documentation Index
+<!-- Source: docs/developer-guide/ui/README.md -->
+
+# Developer Documentation Index
+
+Guides for working on Waldur HomePort. Start with [development-setup.md](development-setup.md) if you are new to the codebase. The root [CLAUDE.md](../CLAUDE.md) curates the most critical rules for day-to-day work.
+
+## Getting started
+
+| Guide                                              | Covers                                                                                 |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [development-setup.md](development-setup.md)       | Environment setup, essential commands, build tooling, browser debugging, i18n commands |
+| [development-workflow.md](development-workflow.md) | Planning, TDD, problem-solving approach                                                |
+| [architecture.md](architecture.md)                 | Redux store, UI-Router routing, component organization                                 |
+| [code-quality.md](code-quality.md)                 | Linting, formatting, TypeScript checks                                                 |
+| [testing.md](testing.md)                           | Vitest unit testing and E2E standards                                                  |
+
+## UI patterns
+
+| Guide                                                        | Covers                                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| [component-library.md](component-library.md)                 | Reusable UI components: buttons, modals, tables, filters — with prop references |
+| [ui-consistency-guidelines.md](ui-consistency-guidelines.md) | Empty states, buttons, loading indicators, tooltips, null-value display         |
+| [tables.md](tables.md)                                       | `useTable`, columns, filters, row actions, export                               |
+| [forms.md](forms.md)                                         | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection` |
+| [filter-migration-guide.md](filter-migration-guide.md)       | Generated table filters from the OpenAPI schema                                 |
+| [button-variant-linting.md](button-variant-linting.md)       | Design-token button variants and the ESLint rule enforcing them                 |
+| [theme.md](theme.md)                                         | Dark mode and theming, including third-party components                         |
+| [menu-navigation.md](menu-navigation.md)                     | Sidebar menu structure and state-based routing                                  |
+
+## API and data
+
+| Guide                                                      | Covers                                                                       |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [api-integration.md](api-integration.md)                   | React Query patterns, CRUD, data refresh, error handling                     |
+| [sdk.md](sdk.md)                                           | Regenerating the TypeScript SDK (`waldur-js-client`) from the backend schema |
+| [useManagedMutation.md](useManagedMutation.md)             | Mutation hook for modals: notifications, refetch, dialog closing             |
+| [storage-manager.md](storage-manager.md)                   | `StorageManager` abstraction over localStorage                               |
+| [permissions.md](permissions.md)                           | RBAC checks with `hasPermission()`                                           |
+| [configuration-management.md](configuration-management.md) | Settings UI, `SettingsDescription` / `FeaturesEnums` generation              |
+| [invitations.md](invitations.md)                           | Invitation flow architecture                                                 |
+
+## Localization and terminology
+
+| Guide                                          | Covers                                                           |
+| ---------------------------------------------- | ---------------------------------------------------------------- |
+| [i18n.md](i18n.md)                             | Translation extraction, tooling, workflow, LLM-assisted analysis |
+| [terminology_policy.md](terminology_policy.md) | UI terminology and spelling conventions                          |
+
+## Scripts in this directory
+
+| Script                                                 | Purpose                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------- |
+| [update-local-sdk.sh](update-local-sdk.sh)             | Regenerate and link the local TypeScript SDK (see [sdk.md](sdk.md)) |
+| [generate-sdk-catalog.py](generate-sdk-catalog.py)     | Generate a catalog of SDK functions from the OpenAPI schema         |
+| [generate-sdk-claude-md.py](generate-sdk-claude-md.py) | Generate SDK usage notes for LLM context                            |
+
+---
+
 ### API Integration Guide
 <!-- Source: docs/developer-guide/ui/api-integration.md -->
 
@@ -58399,8 +58478,10 @@ Use for **all empty states**. Always provide an actionable CTA via `callback`+`b
 #### Table
 
 ```ts
-import { Table } from '@/table';
+import Table from '@/table/Table';
 ```
+
+`Table` is not re-exported from the `@/table` barrel — always import it from the subpath.
 
 Key configuration props. Full interface is large — these are the most commonly used.
 
@@ -59131,7 +59212,7 @@ http://localhost:8001/projects/{uuid}/manage/?include_terminated=true&tab=genera
 - `yarn i18n:analyze <lang>` - Analyze translation quality (e.g., `yarn i18n:analyze et`)
 - `yarn i18n:check` - Check translation completeness
 - `yarn i18n:validate` - Validate translation file syntax
-- `yarn gettext:extract` - Extract translatable strings from source
+- `yarn i18n:extract` - Extract translatable strings from source
 
 ### Supported Languages
 
@@ -59679,6 +59760,9 @@ The backend endpoint behind `callback` must therefore accept partial updates (PA
 - `renderValue(value)` — override the read-only display. May return `null`/`undefined`; the HOC substitutes `DASH_ESCAPE_CODE`, so no manual dash fallback is needed.
 - `tooltip`, `iconNode` — propagate to the compact edit button (e.g. to flag IDP-managed fields with a lock icon).
 - `warnTooltip` — displays a warning marker next to the row's value, e.g. for fields with non-obvious side effects.
+- Any other prop is forwarded to the inner field when the modal opens — e.g. `placeholder` on `CommaSeparatedListEditField` reaches `CommaSeparatedListField`.
+
+For panel-wide access control, pass `hideActions={!canUpdate}` to the enclosing `<FormTable>` (or `TabbedSection`) — it hides the entire action column without conditional JSX around every field.
 
 ### Marketplace plugin credentials
 
@@ -59722,6 +59806,8 @@ import { TabbedSection } from '@/form/TabbedSection';
 - ❌ Don't add fields to a monolithic switch-based `EditFieldDialog`. The legacy `src/customer/details/EditFieldDialog.tsx`, `src/user/support/EditFieldDialog.tsx`, etc. have all been removed.
 - ❌ Don't write your own edit button + `openDialog(SomeEditDialog, …)` lazy loader when an `*EditField` would do — the standardized dialog handles validation, dirty-state, and submit wiring for you.
 - ❌ Don't render `*EditField` outside an `EditFieldProvider`. The HOC throws — you'll see `<withEditField(X)>: "scope" and "callback" must be provided…`.
+- ❌ Don't pass a component that is already wrapped with `withFormGroup` to `withEditField`. The edit dialog injects its own label, so a `*Group` component produces double labels — wrap the base field (e.g. `StringField`) instead.
+- ❌ Don't manually check for empty values with ternary operators — `withEditField` renders a dash (`—`) for missing values automatically.
 
 Canonical examples:
 
@@ -59893,150 +59979,6 @@ import { DirtyStateReporter } from '@/core/DirtyFormContext';
   )}
 />
 ```
-
-## Edit Field Architecture
-
-Waldur's Edit Field Architecture provides a declarative, strictly-typed, and highly reusable way to render read-only configuration panels that can be seamlessly edited.
-
-**The field brings its own edit component.** By leveraging `withEditField` and the `<EditFieldProvider>`, we bind the display logic and edit dialog automatically.
-
-**Benefits:**
-
-- **Zero Boilerplate:** No more manual row arrays.
-- **Decoupled Modals:** The generic `EditFieldDialog` doesn't know about specific fields. The field component passes itself to the modal automatically.
-- **Declarative Access Control:** Pass `isStaffOnly` to automatically handle rendering logic and indicators.
-
-### Core Concepts
-
-#### `withEditField` HOC
-
-Located in `@/form/withEditField.tsx`, this Higher-Order Component wraps any basic form field (like `StringField`, `EmailField`, `AwesomeCheckboxField`). It transforms the basic field into an autonomous component that knows how to:
-
-1. Read its value from a context scope.
-2. Render a read-only display via `<FormTable.Item>`.
-3. Render the `<FieldEditButton>` linking to a generic modal.
-4. Pass itself (the inner field) into the modal when clicked.
-
-#### Pre-bound Edit Fields
-
-Located in `@/form/editFields.tsx`, we export pre-bound instances of commonly used fields:
-
-```tsx
-export const StringEditField = withEditField(StringField);
-export const EmailEditField = withEditField(EmailField);
-export const SecretEditField = withEditField(SecretField);
-export const DateEditField = withEditField(DateField);
-export const CommaSeparatedListEditField = withEditField(CommaSeparatedListField);
-// ...and many more
-```
-
-#### `<EditFieldProvider>`
-
-A context provider that supplies the `scope` (the object being edited, like `customer` or `offering`) and the `callback` (the API function to trigger updates) to all child Edit Fields.
-
-### Examples
-
-#### Basic Usage
-
-```tsx
-import { EditFieldProvider, StringEditField, EmailEditField } from '@/form/editFields';
-
-export const CustomerPanel = ({ customer, update, canUpdate }) => (
-  <EditFieldProvider scope={customer} callback={update}>
-    <FormTable hideActions={!canUpdate}>
-      <StringEditField name="name" label="Name" />
-      <EmailEditField name="email" label="Email" />
-    </FormTable>
-  </EditFieldProvider>
-);
-```
-
-> **Note:**
-> Notice the `hideActions={!canUpdate}` on `<FormTable>`. This CSS-based toggle gracefully hides the action column completely if the user lacks update permissions, without requiring complex conditional JSX.
-
-#### Staff-Only Fields
-
-The architecture handles `StaffOnlyIndicator` automatically.
-
-```tsx
-<EditFieldProvider scope={customer} callback={update}>
-  <FormTable hideActions={!canUpdate}>
-    {/* Editable by anyone with update permissions */}
-    <StringEditField name="address" label="Address" />
-
-    {/* Only editable by Staff. Shows StaffOnlyIndicator automatically */}
-    <NumberEditField
-      name="max_service_accounts"
-      label="Max Service Accounts"
-      isStaffOnly
-    />
-  </FormTable>
-</EditFieldProvider>
-```
-
-If a non-staff user views this panel, they will see the value and the `StaffOnlyIndicator` badge, but the edit button will not be rendered.
-
-#### Formatting Read-Only Values
-
-Sometimes the read-only display needs specific formatting (e.g., date formats, phone formats) that differs from the raw context value. Use the `renderValue` prop:
-
-```tsx
-<StringEditField
-  name="phone_number"
-  label="Phone number"
-  renderValue={(val) => formatPhoneNumber(val)}
-/>
-
-<DateEditField
-  name="accounting_start_date"
-  label="Accounting Start Date"
-  renderValue={(val) => formatDate(val)}
-/>
-```
-
-#### Passing Props to the Inner Field
-
-Any property that isn't native to the `EditFieldProps` is automatically forwarded to the inner field when the modal opens.
-
-For instance, if you use `CommaSeparatedListEditField`, you can pass `placeholder` and it will be forwarded to `CommaSeparatedListField` when the user clicks edit:
-
-```tsx
-<CommaSeparatedListEditField
-  name="notification_emails"
-  label="Notification Emails"
-  description="Emails to receive billing alerts." // Renders as subtitle in the edit modal and under the FormTable label
-  placeholder="Enter comma-separated emails..."   // Forwarded to the inner form input component
-/>
-```
-
-#### Creating a Custom Edit Field
-
-If you have a highly specific form field that isn't exported from `editFields.tsx`, you can wrap it on the fly:
-
-```tsx
-import { withEditField } from '@/form/editFields';
-import { MultiCountrySelectField } from '@/form/MultiCountrySelectField';
-
-const MultiCountryEditField = withEditField(MultiCountrySelectField);
-
-export const RegionPanel = ({ scope, update }) => (
-  <EditFieldProvider scope={scope} callback={update}>
-    <FormTable>
-      <MultiCountryEditField name="allowed_countries" label="Allowed Countries" />
-    </FormTable>
-  </EditFieldProvider>
-);
-```
-
-### Best Practices
-
-> **Warning:**
-> **Do not write `props.resolve.name === 'my_field'` in generic modals.**
-> If you find yourself editing a `EditFieldDialog.tsx` file to add a new `switch` case for your field name, you are using the old architecture. Use `withEditField` instead.
-
-1. **Avoid Duplicate Wrappers:** Don't wrap a component that is already wrapped with `withFormGroup`. The `<EditFieldDialog>` automatically injects labels; using a `Group` component will result in double labels.
-2. **Rely on Native Fallbacks:** `withEditField` automatically handles missing values by rendering dashes (`—`). Do not manually check for empty values with ternary operators.
-3. **Use `hideActions`:** Always pass `hideActions={!canUpdate}` to the parent `<FormTable>` if you need conditional access control for the entire panel.
 
 ## Tabbed Sections (`TabbedSection`)
 
@@ -63073,7 +63015,7 @@ Avoid hardcoding colors that won't adapt:
 
 Components like react-select, Monaco Editor, and ECharts need explicit theme configuration via the `useTheme()` hook. Check existing implementations for examples:
 
-- `src/form/themed-select.tsx` - react-select theming
+- `src/form/select/theme.ts` - react-select theming
 - `src/form/MonacoField.tsx` - Monaco Editor theming
 - `src/core/EChart.tsx` - ECharts theming
 
