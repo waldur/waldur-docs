@@ -13488,11 +13488,11 @@
 <h3 id="generated-output">Generated Output</h3>
 <p>The script produces <code>src/table/generated/{OperationId}Filter.tsx</code> files. Each file exports:</p>
 <ul>
-<li><code>Pure{Name}Filter</code>: The presentation component.</li>
-<li><code>{Name}Filter</code>: The filter component using <code>react-final-form</code>.</li>
-<li><code>{Name}FilterFormData</code>: TypeScript interface for form values.</li>
+<li><code>{Name}Filter</code>: The filter component containing autonomous filter components (StringFilter, SelectFilter, etc.) that connect directly to Redux.</li>
+<li><code>{Name}FilterFormData</code>: TypeScript interface for filter values.</li>
 <li><code>{Name}FilterProps</code>: TypeScript interface for component props.</li>
-<li><code>select{Name}Filter</code>: A selector to transform form values into API query parameters.</li>
+<li><code>select{Name}Filter</code>: A selector to transform Redux filter values into API query parameters.</li>
+<li><code>{Name}FilterFormId</code>: A constant string used as the table ID (Redux key).</li>
 </ul>
 <hr>
 <h2 id="migration-process">Migration Process</h2>
@@ -13526,12 +13526,66 @@ Example: For <code>GET /api/customers/</code>, the operation ID might be <code>c
 </code></pre></div></td></tr></tbody></table></div>
 <p>This will create/update <code>src/table/generated/CustomersFilter.tsx</code>.</p>
 <h3 id="4-replace-the-manual-component">4. Replace the Manual Component</h3>
-<p>In your table definition (e.g., <code>CustomersList.tsx</code>), replace the manual filter component with the generated one.</p>
+<p>In your table definition (e.g., <code>CustomersList.tsx</code>), replace the manual filter component with the generated one. Use <code>useFilterValues</code> to get the Redux state and the generated selector to prepare the <code>filter</code> object for <code>useTable</code>.</p>
 <p><strong>Before:</strong></p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">CustomersFilter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./CustomersFilter'</span><span class="p">;</span><span class="w"> </span><span class="c1">// Manual file</span>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Form</span><span class="p">,</span><span class="w"> </span><span class="nx">useFormState</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-final-form'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">CustomersFilter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./CustomersFilter'</span><span class="p">;</span><span class="w"> </span><span class="c1">// Manual file</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">CustomersListTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">values</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useFormState</span><span class="p">();</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">selectManualFilter</span><span class="p">(</span><span class="nx">values</span><span class="p">),</span><span class="w"> </span><span class="p">[</span><span class="nx">values</span><span class="p">]);</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span><span class="w"> </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'customers'</span><span class="p">,</span><span class="w"> </span><span class="nx">fetchData</span><span class="p">,</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="p">});</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">Table</span><span class="w"> </span><span class="p">{...</span><span class="nx">tableProps</span><span class="p">}</span><span class="w"> </span><span class="nx">filters</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">CustomersFilter</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">CustomersList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">Form</span><span class="w"> </span><span class="nx">onSubmit</span><span class="o">=</span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{}}</span><span class="w"> </span><span class="nx">subscription</span><span class="o">=</span><span class="p">{{</span><span class="w"> </span><span class="nx">values</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="w"> </span><span class="p">}}</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">CustomersListTable</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/Form&gt;</span>
+<span class="p">);</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p><strong>After:</strong></p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">CustomersFilter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./generated/CustomersFilter'</span><span class="p">;</span><span class="w"> </span><span class="c1">// Generated file</span>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useFilterValues</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table/useFilterValues'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">CustomersFilter</span><span class="p">,</span><span class="w"> </span><span class="nx">selectCustomersFilter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./generated/CustomersFilter'</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">CustomersList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useFilterValues</span><span class="p">(</span><span class="s1">'customers'</span><span class="p">);</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">selectCustomersFilter</span><span class="p">(</span><span class="nx">values</span><span class="p">),</span><span class="w"> </span><span class="p">[</span><span class="nx">values</span><span class="p">]);</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'customers'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">fetchData</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">filter</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">syncFiltersToURL</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span><span class="w"> </span><span class="c1">// Enable automatic URL synchronization</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">Table</span><span class="w"> </span><span class="p">{...</span><span class="nx">tableProps</span><span class="p">}</span><span class="w"> </span><span class="nx">filters</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">CustomersFilter</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">;</span>
+<span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="5-verify-clean-up">5. Verify &amp; Clean Up</h3>
 <ul>

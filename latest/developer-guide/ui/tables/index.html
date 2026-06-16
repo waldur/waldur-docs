@@ -8609,6 +8609,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#filter-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#filter-positions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13428,6 +13439,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#filter-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#filter-positions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14166,6 +14188,7 @@
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="filters-feature">Filters feature</h2>
 <p>Filters are defined using the <code>filters</code> prop of the Table component. This prop accepts a React component that renders the filter UI.</p>
+<p>The recommended way to implement filters is using autonomous filter components from <code>@/table</code>. These components automatically connect to the table's Redux state.</p>
 <p>Example:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -14192,21 +14215,19 @@
 <span class="normal">23</span>
 <span class="normal">24</span>
 <span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Form</span><span class="p">,</span><span class="w"> </span><span class="nx">Field</span><span class="p">,</span><span class="w"> </span><span class="nx">useFormState</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-final-form'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">TableFilterItem</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table/TableFilterItem'</span><span class="p">;</span>
+<span class="normal">26</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">StringFilter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useFilterValues</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table/useFilterValues'</span><span class="p">;</span>
 
 <span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">FilterSet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
-<span class="w">  </span><span class="o">&lt;</span><span class="nx">TableFilterItem</span><span class="w"> </span><span class="nx">title</span><span class="o">=</span><span class="s2">"Filter field"</span><span class="w"> </span><span class="nx">name</span><span class="o">=</span><span class="s2">"custom"</span><span class="o">&gt;</span>
-<span class="w">    </span><span class="o">&lt;</span><span class="nx">Field</span><span class="w"> </span><span class="nx">name</span><span class="o">=</span><span class="s2">"custom"</span><span class="w"> </span><span class="nx">component</span><span class="o">=</span><span class="s2">"input"</span><span class="w"> </span><span class="o">/&gt;</span>
-<span class="w">  </span><span class="o">&lt;</span><span class="err">/TableFilterItem&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">StringFilter</span>
+<span class="w">    </span><span class="nx">title</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Filter field'</span><span class="p">)}</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">=</span><span class="s2">"custom"</span>
+<span class="w">    </span><span class="nx">placeholder</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Search...'</span><span class="p">)}</span>
+<span class="w">  </span><span class="o">/&gt;</span>
 <span class="p">);</span>
 
-<span class="kd">const</span><span class="w"> </span><span class="nx">FilteredListTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">values</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useFormState</span><span class="p">();</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">FilteredList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useFilterValues</span><span class="p">(</span><span class="s1">'FilteredList'</span><span class="p">);</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
 <span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'FilteredList'</span><span class="p">,</span>
 <span class="w">    </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="nx">hooksList</span><span class="p">),</span>
@@ -14220,13 +14241,19 @@
 <span class="w">    </span><span class="o">/&gt;</span>
 <span class="w">  </span><span class="p">);</span>
 <span class="p">};</span>
-
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">FilteredList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
-<span class="w">  </span><span class="o">&lt;</span><span class="nx">Form</span><span class="w"> </span><span class="nx">onSubmit</span><span class="o">=</span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{}}</span><span class="o">&gt;</span>
-<span class="w">    </span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">FilteredListTable</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
-<span class="w">  </span><span class="o">&lt;</span><span class="err">/Form&gt;</span>
-<span class="p">);</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="filter-components">Filter components</h3>
+<p>The following autonomous filter components are available in <code>@/table</code>:</p>
+<ul>
+<li><code>StringFilter</code>: Simple text input</li>
+<li><code>SelectFilter</code>: Dropdown for static options</li>
+<li><code>AsyncSelectFilter</code>: Dropdown for API-based options</li>
+<li><code>BooleanFilter</code>: Checkbox for boolean values</li>
+<li><code>DateFilter</code>: Date picker</li>
+<li><code>DateTimeFilter</code>: Date and time picker</li>
+<li><code>NumberFilter</code>: Number input</li>
+<li><code>NumberRangeFilter</code>: Range input for numbers</li>
+</ul>
 <h3 id="filter-positions">Filter positions</h3>
 <p>The <code>filterPosition</code> prop controls where filters are displayed:</p>
 <table>
@@ -14259,26 +14286,6 @@
 <li>Auto-expand the filter bar when filters are loaded from URL</li>
 </ul>
 <p>The flow:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span>
-<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code>User changes filter field
-    ↓
-React Final Form stores value
-    ↓
-TableFilterItem calls onChange() → updates form state
-    ↓
-Table re-fetches with new filter
-    ↓
-Filter badges rendered from form state
-</code></pre></div></td></tr></tbody></table></div>
-<h3 id="url-query-parameter-sync">URL query parameter sync</h3>
-<p>Filters can be synced to URL query parameters for shareable links. Use utilities from <code>@/core/filters</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -14289,60 +14296,38 @@ Filter badges rendered from form state
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useEffect</span><span class="p">,</span><span class="w"> </span><span class="nx">useMemo</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Form</span><span class="p">,</span><span class="w"> </span><span class="nx">useFormState</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-final-form'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">syncFiltersToURL</span><span class="p">,</span><span class="w"> </span><span class="nx">getInitialValues</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/core/filters'</span><span class="p">;</span>
-
-<span class="kd">const</span><span class="w"> </span><span class="nx">MyListTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">values</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useFormState</span><span class="p">();</span>
-
-<span class="w">  </span><span class="c1">// Sync filter changes to URL</span>
-<span class="w">  </span><span class="nx">useEffect</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">values</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">syncFiltersToURL</span><span class="p">(</span><span class="nx">values</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="p">[</span><span class="nx">values</span><span class="p">]);</span>
-
-<span class="w">  </span><span class="c1">// ... rest of component</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
-<span class="p">};</span>
-
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">MyList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="c1">// Load filters from URL on mount</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">initialValues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">getInitialValues</span><span class="p">(),</span><span class="w"> </span><span class="p">[]);</span>
-
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
-<span class="w">    </span><span class="o">&lt;</span><span class="nx">Form</span>
-<span class="w">      </span><span class="nx">onSubmit</span><span class="o">=</span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{}}</span>
-<span class="w">      </span><span class="nx">initialValues</span><span class="o">=</span><span class="p">{</span><span class="nx">initialValues</span><span class="p">}</span>
-<span class="w">      </span><span class="nx">subscription</span><span class="o">=</span><span class="p">{{</span><span class="w"> </span><span class="nx">values</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="w"> </span><span class="p">}}</span>
-<span class="w">    </span><span class="o">&gt;</span>
-<span class="w">      </span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">MyListTable</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
-<span class="w">    </span><span class="o">&lt;</span><span class="err">/Form&gt;</span>
-<span class="w">  </span><span class="p">);</span>
-<span class="p">};</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code>User changes autonomous filter (e.g. StringFilter)
+    ↓
+Component dispatches SET_FILTER to Redux
+    ↓
+Table state updated in Redux (filtersStorage)
+    ↓
+useTable hook receives new state
+    ↓
+Table re-fetches with new filter
+    ↓
+Filter badges rendered from filtersStorage
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="url-query-parameter-sync">URL query parameter sync</h3>
+<p>Filters can be synced to URL query parameters for shareable links. <code>useTable</code> provides built-in support for this via <code>syncFiltersToURL</code> option.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'MyList'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="nx">myList</span><span class="p">),</span>
+<span class="w">  </span><span class="nx">syncFiltersToURL</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">initialFilters</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="s1">'active'</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="c1">// Default values</span>
+<span class="p">});</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>When <code>syncFiltersToURL</code> is enabled:</p>
+<ol>
+<li><strong>Initial load</strong>: <code>useTable</code> reads URL parameters on mount and populates <code>filtersStorage</code>.</li>
+<li><strong>Automatic updates</strong>: Any changes to filters are automatically reflected in the URL.</li>
+<li><strong>Default values</strong>: <code>initialFilters</code> are used if corresponding URL parameters are missing.</li>
+</ol>
 <h4 id="url-format">URL format</h4>
 <p>Filters are stored in URL query parameters with compact encoding:</p>
 <table>
@@ -14365,9 +14350,9 @@ Filter badges rendered from form state
 <td><code>?org=abc123::My+Org</code></td>
 </tr>
 <tr>
-<td>Array</td>
-<td>JSON encoded</td>
-<td><code>?tags=["a","b"]</code></td>
+<td>Array of objects</td>
+<td><code>[uuid1::name1, uuid2::name2]</code></td>
+<td><code>?tags=["a1::T1","a2::T2"]</code></td>
 </tr>
 <tr>
 <td>Boolean</td>
@@ -14376,31 +14361,35 @@ Filter badges rendered from form state
 </tr>
 </tbody>
 </table>
-<p>The compact <code>uuid::name</code> format keeps URLs shorter while preserving display names for filter badges.</p>
+<p>The compact <code>uuid::name</code> format keeps URLs shorter while preserving display names for filter badges without needing additional API calls.</p>
 <h4 id="navigation-behavior">Navigation behavior</h4>
 <p>When navigating between pages in the SPA:</p>
 <ol>
-<li><strong>URL params persist</strong> - query string is preserved during navigation</li>
-<li><strong>Form initialization</strong> - <code>getInitialValues</code> reads the URL to populate the form on mount</li>
-<li><strong>Auto-show filter bar</strong> - when the form state has items, the filter bar auto-expands</li>
+<li><strong>URL params persist</strong> - query string is preserved during navigation.</li>
+<li><strong>Table initialization</strong> - <code>useTable</code> reads the URL to populate the Redux state on mount.</li>
+<li><strong>Auto-show filter bar</strong> - when filters are present in Redux, the filter bar auto-expands.</li>
 </ol>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>Page A with filter → Navigate to Page B → Navigate back to Page A
      ↓                      ↓                      ↓
-URL updated            URL preserved         URL read, form populated
+URL updated            URL preserved         URL read, state populated
 with filters           (SPA routing)         Table re-fetches
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="defaultinitial-filters">Default/initial filters</h3>
-<p>To set default filter values that can be overridden by URL params, pass them as arguments to <code>getInitialValues</code>:</p>
+<p>To set default filter values that can be overridden by URL params, use the <code>initialFilters</code> option in <code>useTable</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">defaultValues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="s1">'active'</span><span class="w"> </span><span class="p">};</span>
-
-<span class="c1">// URL params take precedence over defaults</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">initialValues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">getInitialValues</span><span class="p">(</span><span class="nx">defaultValues</span><span class="p">),</span><span class="w"> </span><span class="p">[]);</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'MyList'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="nx">myList</span><span class="p">),</span>
+<span class="w">  </span><span class="nx">syncFiltersToURL</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">initialFilters</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="s1">'active'</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="c1">// URL params take precedence over defaults</span>
+<span class="p">});</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="cross-page-filters-resources-sidebar">Cross-page filters (Resources sidebar)</h3>
 <p>The Resources sidebar filter (<code>src/navigation/sidebar/resources-filter/</code>) is a special case that:</p>
@@ -15043,7 +15032,7 @@ with filters           (SPA routing)         Table re-fetches
 <span class="err">/&gt;</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="complex-table-example">Complex table example</h2>
-<p>Here's an example of a complex table combining multiple features (based on the Reviewer Pool implementation):</p>
+<p>Here's an example of a complex table combining multiple features:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  1</span>
 <span class="normal">  2</span>
 <span class="normal">  3</span>
@@ -15163,26 +15152,23 @@ with filters           (SPA routing)         Table re-fetches
 <span class="normal">117</span>
 <span class="normal">118</span>
 <span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useMemo</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Form</span><span class="p">,</span><span class="w"> </span><span class="nx">useFormState</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-final-form'</span><span class="p">;</span>
+<span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useMemo</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">SelectFilter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useFilterValues</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table/useFilterValues'</span><span class="p">;</span>
 
-<span class="c1">// Filter selector - transforms form values to API filter params</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">selectReviewerPoolFilters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">filters</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">any</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{};</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">filters</span><span class="o">?</span><span class="p">.</span><span class="nx">status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">result</span><span class="p">.</span><span class="nx">invitation_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">filters</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">result</span><span class="p">;</span>
-<span class="p">};</span>
+<span class="c1">// Filter component</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ReviewerPoolFilter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">SelectFilter</span>
+<span class="w">    </span><span class="nx">title</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Status'</span><span class="p">)}</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">=</span><span class="s2">"status"</span>
+<span class="w">    </span><span class="nx">options</span><span class="o">=</span><span class="p">{[</span>
+<span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Accepted'</span><span class="p">),</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s1">'accepted'</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Pending'</span><span class="p">),</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s1">'pending'</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">]}</span>
+<span class="w">  </span><span class="o">/&gt;</span>
+<span class="p">);</span>
 
 <span class="c1">// Tabs hook - defines sub-navigation within the table</span>
-<span class="c1">// Note: Include parent tab param (tab: 'reviewer-pool') to preserve context</span>
 <span class="kd">const</span><span class="w"> </span><span class="nx">usePoolTabs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">TableTab</span><span class="p">[]</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(</span>
 <span class="w">    </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[</span>
@@ -15212,27 +15198,24 @@ with filters           (SPA routing)         Table re-fetches
 <span class="p">);</span>
 
 <span class="c1">// Main table component</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">ReviewerPoolSectionTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">call</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">values</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useFormState</span><span class="p">();</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">ReviewerPoolSection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">call</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useFilterValues</span><span class="p">(</span><span class="s1">'ReviewerPool'</span><span class="p">);</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tabs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">usePoolTabs</span><span class="p">();</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">formFilters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(</span>
-<span class="w">    </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">selectReviewerPoolFilters</span><span class="p">(</span><span class="nx">values</span><span class="p">),</span>
-<span class="w">    </span><span class="p">[</span><span class="nx">values</span><span class="p">]</span>
-<span class="w">  </span><span class="p">);</span>
 
-<span class="w">  </span><span class="c1">// Memoize filter to prevent infinite re-renders</span>
+<span class="w">  </span><span class="c1">// Memoize filter to prevent unnecessary re-renders</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(</span>
 <span class="w">    </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
 <span class="w">      </span><span class="nx">call_uuid</span><span class="o">:</span><span class="w"> </span><span class="kt">call.uuid</span><span class="p">,</span>
-<span class="w">      </span><span class="p">...</span><span class="nx">formFilters</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">invitation_status</span><span class="o">:</span><span class="w"> </span><span class="kt">values.status?.value</span><span class="p">,</span>
 <span class="w">    </span><span class="p">}),</span>
-<span class="w">    </span><span class="p">[</span><span class="nx">call</span><span class="p">.</span><span class="nx">uuid</span><span class="p">,</span><span class="w"> </span><span class="nx">formFilters</span><span class="p">],</span>
+<span class="w">    </span><span class="p">[</span><span class="nx">call</span><span class="p">.</span><span class="nx">uuid</span><span class="p">,</span><span class="w"> </span><span class="nx">values</span><span class="p">.</span><span class="nx">status</span><span class="p">],</span>
 <span class="w">  </span><span class="p">);</span>
 
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tableProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useTable</span><span class="p">({</span>
 <span class="w">    </span><span class="nx">table</span><span class="o">:</span><span class="w"> </span><span class="s1">'ReviewerPool'</span><span class="p">,</span>
 <span class="w">    </span><span class="nx">fetchData</span><span class="o">:</span><span class="w"> </span><span class="kt">createFetcher</span><span class="p">(</span><span class="nx">reviewerPoolList</span><span class="p">),</span>
 <span class="w">    </span><span class="nx">filter</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">syncFiltersToURL</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
 <span class="w">  </span><span class="p">});</span>
 
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">columns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMemo</span><span class="p">(</span>
@@ -15289,22 +15272,18 @@ with filters           (SPA routing)         Table re-fetches
 <span class="w">    </span><span class="o">/&gt;</span>
 <span class="w">  </span><span class="p">);</span>
 <span class="p">};</span>
-
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">ReviewerPoolSection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">call</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
-<span class="w">  </span><span class="o">&lt;</span><span class="nx">Form</span><span class="w"> </span><span class="nx">onSubmit</span><span class="o">=</span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{}}</span><span class="o">&gt;</span>
-<span class="w">    </span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">ReviewerPoolSectionTable</span><span class="w"> </span><span class="nx">call</span><span class="o">=</span><span class="p">{</span><span class="nx">call</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
-<span class="w">  </span><span class="o">&lt;</span><span class="err">/Form&gt;</span>
-<span class="p">);</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="key-patterns-in-complex-tables">Key patterns in complex tables</h3>
 <ol>
-<li><strong>Memoize filters</strong> - Always wrap filter objects in <code>useMemo</code> to prevent infinite re-renders when using selectors</li>
-<li><strong>Memoize columns</strong> - Define columns in <code>useMemo</code> for performance</li>
-<li><strong>Use tabs for sub-navigation</strong> - Tabs update URL params, allowing deep linking</li>
-<li><strong>Mark default tab</strong> - Use <code>default: true</code> to highlight the correct tab on initial load</li>
-<li><strong>Preserve parent tab context</strong> - When using nested subtabs, include parent tab params (e.g., <code>{ tab: 'reviewer-pool', pool_tab: 'pool' }</code>) to prevent navigation from losing context</li>
-<li><strong>Expandable rows for details</strong> - Show additional information without navigating away</li>
-<li><strong>Optional columns</strong> - Let users customize their view with <code>optional: true</code> and <code>hasOptionalColumns</code></li>
+<li><strong>Memoize filters</strong> - Always wrap filter objects in <code>useMemo</code> to prevent infinite re-renders when using values from <code>useFilterValues</code>.</li>
+<li><strong>Memoize columns</strong> - Define columns in <code>useMemo</code> for performance.</li>
+<li><strong>Use tabs for sub-navigation</strong> - Tabs update URL params, allowing deep linking.</li>
+<li><strong>Mark default tab</strong> - Use <code>default: true</code> to highlight the correct tab on initial load.</li>
+<li><strong>Preserve parent tab context</strong> - When using nested subtabs, include parent tab params (e.g., <code>{ tab: 'reviewer-pool', pool_tab: 'pool' }</code>) to prevent navigation from losing context.</li>
+<li><strong>Expandable rows for details</strong> - Show additional information without navigating away.</li>
+<li><strong>Optional columns</strong> - Let users customize their view with <code>optional: true</code> and <code>hasOptionalColumns</code>.</li>
+<li><strong>Autonomous filters</strong> - Use components like <code>SelectFilter</code> and <code>StringFilter</code> for automatic Redux integration.</li>
+<li><strong>URL synchronization</strong> - Enable <code>syncFiltersToURL: true</code> in <code>useTable</code> for shared links and session persistence.</li>
 </ol>
 
 
