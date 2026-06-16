@@ -1,5 +1,58 @@
 # Changelog
 
+## 8.0.9-rc.26 - 2026-06-16
+
+This release delivers a significant set of usability improvements across the marketplace, team management, and team chat areas. Operators gain new tools for managing resources at scale, service providers get better visibility into offering user states, and the Matrix team chat now supports fullscreen video calls, message drafts, and file uploads. A broad set of UI bug fixes — particularly around table pagination and permission checks — improves overall platform stability.
+
+### What's New
+
+- **Per-offering resource slug templates**: Service providers can now configure a custom slug template per offering, giving resources predictable, human-readable identifiers generated at provisioning time.
+- **Bulk change limits for resources**: Operators and service providers can now select multiple resources and change their limits in a single mass action, replacing the need to update each resource individually.
+- **Offering user runtime state visibility**: The offering users table now shows a `runtime_state` column, users with a non-standard state see a warning bar on their profile, and service providers can update the runtime state directly from the provider interface.
+- **Quick impersonate from global search**: Staff can now impersonate a user directly from the global search results without navigating to the user detail page.
+- **Force resource sync action on offerings**: Administrators can trigger a full synchronization of all resources under an offering in a single action, useful after infrastructure changes or site-agent reconnects.
+- **Active maintenance surfaced on resource views**: Resources affected by an active maintenance window now display a badge on the resource list and detail pages, so users can immediately understand why a resource may be unavailable.
+- **Port type column and deletion warnings**: The OpenStack tenant ports list now shows the port type (infrastructure vs. user-created), and deleting infrastructure ports displays an explicit warning to prevent accidental disruption.
+- **Team chat improvements**: The Matrix team chat now supports fullscreen video calls, message draft persistence, file uploads, and proper feature-flag gating for enablement.
+
+### Improvements
+
+- **SMAX custom CA certificate support**: Operators can now configure a custom CA certificate for SMAX TLS verification, enabling deployments with internal certificate authorities.
+- **PAT scope filtering by role**: Available personal access token scopes are now filtered by the requesting user's roles, reducing the risk of over-privileged tokens. Staff users are no longer exempt from PAT gate enforcement.
+- **ONLY_ONE_PROJECT_MANAGER enforcement in UI**: The frontend now enforces the `ONLY_ONE_PROJECT_MANAGER` setting when adding or inviting project managers, matching backend validation and preventing duplicate manager assignments.
+- **Resource `end_date_updated_at` field**: Marketplace resources now expose a timestamp for when their end date was last changed, enabling better auditing of lifecycle changes.
+- **Overdue credit handling made resilient**: The task that zeros overdue credits now handles edge cases more gracefully, and existing project credit records with missing end dates have been backfilled.
+- **glauth entities in structure export/import**: The structure export and import commands now include glauth-related entities, and explicitly imported auth tokens correctly replace auto-created tokens.
+- **SCIM identity provider fixes**: Deactivated user handling, schema discovery, and extension PATCH paths in the SCIM server have been corrected.
+- **Robot invitations skip expiry notifications**: Invitations created by robot accounts no longer send expiry notification emails, reducing noise for automated workflows.
+- **Service provider comments in runtime state updates**: Service providers can now set comments when updating an offering user's runtime state via the API.
+- **Configurable permissions in Helm chart**: The Helm `permissions-override` config now supports all roles and the full `customRolePermissions` structure.
+- **Matrix TURN relay for Docker Compose**: The single-host Docker Compose stack now includes a LiveKit TURN/UDP relay on port 443, enabling video calls for users behind symmetric NAT without requiring a separate IP or L4 load balancer.
+- **Table filter internals modernized**: Table filters across the entire frontend have been migrated off the `react-final-form` dependency, improving maintainability and filter state handling.
+
+### Bug Fixes
+
+- Fixed client-side table pagination broken across many static-data tables after the recent pagination rollout.
+- Fixed organization owners being unable to edit contact details.
+- Fixed project links not being clickable for users without dashboard access.
+- Fixed the offering media upload crashing after a recent form migration.
+- Fixed the Create button being stuck disabled in the course account batch import dialog.
+- Fixed a duplicate "Service Profile" entry appearing in the administration navigation menu.
+- Fixed several page-health defects found by a route sweep (invoice agreement info, robot account list, project card, provider offerings page).
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [26 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.25...8.0.9-rc.26) - resource slug templates, PAT improvements, SCIM fixes, credit resilience, SMAX CA support, offering resource sync action
+- **Waldur Homeport**: [32 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.25...8.0.9-rc.26) - bulk limit changes, offering user state UI, maintenance badges, quick impersonate, team chat enhancements, table filter migration, broad bug fixes
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.0.9-rc.25...8.0.9-rc.26) - full `customRolePermissions` support in permissions-override config
+- **Waldur Docker Compose**: [4 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9-rc.25...8.0.9-rc.26) - LiveKit TURN relay for Matrix video calls, CORS header fix for external Matrix clients
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.9-rc.26.yaml)
+
+---
+
 ## 8.0.9-rc.25 - 2026-06-10
 
 ### Highlights
