@@ -1,5 +1,27 @@
 # Changelog
 
+## 8.0.9-rc.27 - 2026-06-17
+
+### Highlights
+
+This release candidate focuses on stability fixes across the web interface. Several crashes have been resolved — notably when editing customer notification email contacts, when detaching all floating IPs from an OpenStack instance, and in administration search bars. Cookie consent now displays reliably in privacy-focused browsers like Brave, and a backend fix restores the ability to edit agent dependency fields.
+
+### Improvements
+
+- **Bug Fixes**
+  - Fixed a crash in the customer Contact panel when editing notification emails, and improved email field validation across notification and policy forms.
+  - Fixed a crash when detaching all floating IPs from an OpenStack instance.
+  - Fixed the marketplace settings search bar and removed a duplicate "no results" message in the features search.
+  - Renamed the cookie consent CSS class so privacy browsers such as Brave no longer hide the consent dialog.
+  - Restored write access to the dependencies field on site-agent identities so it can be updated again.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [1 commit](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.26...8.0.9-rc.27) - made the site-agent dependencies field writable again.
+- **Waldur Homeport**: [9 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.26...8.0.9-rc.27) - crash and validation fixes for notification email contacts, floating IP detach, administration search, and cookie consent display.
+
+---
+
 ## 8.0.9-rc.26 - 2026-06-16
 
 This release delivers a significant set of usability improvements across the marketplace, team management, and team chat areas. Operators gain new tools for managing resources at scale, service providers get better visibility into offering user states, and the Matrix team chat now supports fullscreen video calls, message drafts, and file uploads. A broad set of UI bug fixes — particularly around table pagination and permission checks — improves overall platform stability.
