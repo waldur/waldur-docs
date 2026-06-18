@@ -69,10 +69,6 @@ This release delivers a significant set of usability improvements across the mar
 - **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.0.9-rc.25...8.0.9-rc.26) - full `customRolePermissions` support in permissions-override config
 - **Waldur Docker Compose**: [4 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9-rc.25...8.0.9-rc.26) - LiveKit TURN relay for Matrix video calls, CORS header fix for external Matrix clients
 
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.0.9-rc.26.yaml)
-
 ---
 
 ## 8.0.9-rc.25 - 2026-06-10
