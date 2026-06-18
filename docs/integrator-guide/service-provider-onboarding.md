@@ -64,11 +64,11 @@ Body:
 
 | Field | Required | Description | Valid values |
 |-------|----------|-------------|--------------|
-| `type` | Yes | Component identifier | Any string (e.g. `node_hours`) |
-| `name` | Yes | Display name | Any string |
-| `measured_unit` | Yes | Unit label shown in the UI | Any string (e.g. `Node-hours`) |
-| `billing_type` | Yes | How the component is billed | `usage`, `limit` |
-| `limit_period` | No | Billing period for limits | `month`, `quarterly`, `annual`, `total` |
+| `type` | Yes | Component identifier, unique per offering | Alphanumeric, underscores, hyphens (e.g. `node_hours`) |
+| `name` | Yes | Display name | Any string (max 150 chars) |
+| `measured_unit` | No | Unit label shown in the UI | Any string (e.g. `Node-hours`); defaults to empty |
+| `billing_type` | Yes | How the component is billed | `fixed` (default), `usage`, `limit`, `one` (one-time), `few` (on plan switch) |
+| `limit_period` | No | Billing period for limits | `month` (default), `quarterly`, `annual`, `total` |
 | `limit_amount` | No | Global limit per resource (only for `usage` billing type) | Positive integer |
 | `unit_factor` | No | Conversion factor from backend units to `measured_unit` | Number (default: `1`) |
 
