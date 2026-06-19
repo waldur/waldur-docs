@@ -1,5 +1,42 @@
 # Changelog
 
+## 8.0.9-rc.28 - 2026-06-19
+
+### Highlights
+
+This release introduces Matrix chat infrastructure support for Kubernetes deployments, including LiveKit for real-time audio/video calls and backend observability endpoints for monitoring call activity. Operators managing SLURM offerings gain new bulk synchronization actions, and the frontend form architecture has been significantly modernized across 130+ components for improved consistency and maintainability.
+
+### What's New
+
+- **Matrix chat stack for Kubernetes**: Full Matrix homeserver deployment with LiveKit (real-time calls), JWT authentication service, Tuwunel configuration, Traefik ingress routing, and network policies — all manageable via the Helm chart. Backend adds LiveKit Calls observability API endpoints for administrators to monitor active calls and room activity.
+- **Bulk resource synchronization for SLURM offerings**: Service providers can now trigger a full synchronization of all resources in a SLURM offering via the site agent, useful for reconciling state after maintenance windows.
+- **Sync remote resource team members**: Staff users can now synchronize team member lists for remote resources directly from the resource actions menu.
+
+### Improvements
+
+- Migrated 130+ frontend form components to a standardized Group pattern with improved read-only form controls, providing a more consistent editing experience across the platform.
+- Offering attributes section now uses a tabbed layout with inline editing for a more streamlined provider experience.
+- Offering overview section refactored to use the standardized edit framework with improved field search capabilities.
+- OfferingUser profile list fields are now correctly typed as arrays in the API serializer.
+- Updated backend configuration and developer guide documentation.
+
+### Bug Fixes
+
+- Fixed incorrect Estonian translation for the "Go to dashboard" button.
+- Doubled Kubernetes cronjob memory limits to prevent out-of-memory failures during cleanup tasks.
+
+### Security
+
+- Bumped `cryptography` to 48.0.1 and `aiohttp` to 3.14.1 to address known OSV vulnerabilities.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [4 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9-rc.27...8.0.9-rc.28) - LiveKit observability endpoints, serializer fix, security dependency bumps, documentation updates
+- **Waldur Homeport**: [10 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9-rc.27...8.0.9-rc.28) - Resource sync actions, large-scale form architecture migration, offering attributes and overview refactoring, translation fix
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.0.9-rc.27...8.0.9-rc.28) - Full Matrix chat stack with LiveKit, cronjob memory increase
+
+---
+
 ## 8.0.9-rc.27 - 2026-06-17
 
 ### Highlights
