@@ -1,5 +1,37 @@
 # Changelog
 
+## 8.1.0-rc.1 - 2026-06-24
+
+### Highlights
+
+This release candidate focuses on running Waldur more reliably under load and giving operators new levers to keep memory in check. The Mastermind service now uses less memory by default, and both Helm and Docker Compose deployments expose new tuning knobs to recycle workers and control preloading. End users and providers also benefit from VAT-code support in user profiles, clearer remote-offering details, and several fixes to organization settings and policy evaluation.
+
+### Improvements
+
+- Reduced the Mastermind process memory footprint and added a memory-profiling harness, with matching deployment knobs: Helm and Docker Compose now expose gunicorn preload and a Celery per-child memory ceiling so operators can recycle workers and retune memory usage from their environment.
+- Added an affiliation VAT code field to user profiles, which can be exposed in offering user attributes and call applicant visibility settings.
+- Service providers can now update an offering when management is enabled for it.
+- Providers can now see project metadata directly in the provider project list.
+- The remote offering UUID is now shown in the provisioning configuration form, making remote offerings easier to identify.
+- OIDC block-message URLs on the login-failed page are now rendered as clickable links.
+- Disabled psycopg3 prepared statements on Django database connections to improve compatibility with connection poolers.
+
+### Bug Fixes
+
+- Fixed the country not being saved when editing organization settings.
+- Fixed a race condition that could cause lost updates during periodic SLURM usage-policy evaluation.
+- Fixed offering thumbnail import failing when the thumbnail path exceeded the previous length limit.
+- Remote offering pulls are now skipped when the backend ID is empty, avoiding unnecessary errors.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9...8.1.0-rc.1) - memory footprint reduction, VAT code field, offering management and policy fixes.
+- **Waldur Homeport**: [5 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9...8.1.0-rc.1) - organization settings fix, remote offering details, provider project metadata.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.0.9...8.1.0-rc.1) - exposes Mastermind memory tuning values.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.0.9...8.1.0-rc.1) - exposes Mastermind memory tuning environment knobs.
+
+---
+
 ## 8.0.9 - 2026-06-21
 
 ### Highlights
