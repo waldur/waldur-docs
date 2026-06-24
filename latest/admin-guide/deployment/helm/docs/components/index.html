@@ -2385,6 +2385,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#memory-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory tuning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ingress-annotations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13549,6 +13560,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#memory-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory tuning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ingress-annotations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14109,6 +14131,22 @@ and how they interact with each other.</p>
 <span class="w">  </span><span class="nt">concurrency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w">        </span><span class="c1"># CELERYD_CONCURRENCY (default 10)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>This sets the number of child processes per worker pod. Combine with <code>replicaCount.worker</code> (and HPA, if enabled) to scale total parallelism. Note: increasing <code>concurrency</code> raises per-pod memory; size <code>workerResources</code> accordingly.</p>
+<h3 id="memory-tuning">Memory tuning</h3>
+<p>The mastermind image already ships two memory optimisations enabled by default, so the lower footprint applies without any chart change:</p>
+<ul>
+<li><strong>gunicorn preload</strong> — the API master imports the application once and forks workers, which then share that import footprint copy-on-write instead of each holding a private copy. This is the dominant saving for the API pod.</li>
+<li><strong>jemalloc</strong> — preloaded via <code>LD_PRELOAD</code> in the image to curb allocator fragmentation in long-running prefork workers.</li>
+</ul>
+<p>Two values let operators retune:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">gunicorn</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">preload</span><span class="p">:</span><span class="w"> </span><span class="s">"false"</span><span class="w">         </span><span class="c1"># GUNICORN_PRELOAD; disable preloading (default: enabled in the image)</span>
+<span class="nt">celery</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">maxMemoryPerChild</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">400000</span><span class="w">  </span><span class="c1"># CELERY_WORKER_MAX_MEMORY_PER_CHILD (KB): recycle a child once it exceeds this</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>gunicorn.preload</code> renders the <code>GUNICORN_PRELOAD</code> env var on the api pod; leave it empty to keep the image default (enabled). <code>celery.maxMemoryPerChild</code> renders <code>CELERY_WORKER_MAX_MEMORY_PER_CHILD</code> on the worker pod — a hard per-child ceiling that recycles a child once it crosses the limit; empty or <code>0</code> disables it (the default).</p>
 <h3 id="ingress-annotations">Ingress annotations</h3>
 <p><code>ingress.annotations</code> is a free-form map merged onto <strong>every</strong> ingress this chart renders — <code>api</code>, <code>api-admin</code>, <code>homeport</code>, <code>rmq-ws</code>, and <code>uvk-everypay</code>. It sits alongside the className-specific annotations the chart already templates (nginx, haproxy, traefik, openshift-default) and the cert-manager <code>cluster-issuer</code> annotation; ingress-controller and cert-manager keys should stay in their own values so they keep their conditional logic.</p>
 <p>The canonical use case is <a href="https://github.com/kubernetes-sigs/external-dns">external-dns</a>, which reads annotations on Ingress objects to manage DNS records:</p>

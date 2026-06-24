@@ -7856,6 +7856,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#evaluation-lifecycle-and-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation Lifecycle and Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -8011,6 +8022,56 @@
     <span class="md-ellipsis">
       
         Scenario 3: Research Consortium with Flexible Limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worked Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-a-a-project-that-overshoots-mid-month-then-is-topped-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example A: A project that overshoots mid-month, then is topped up
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-b-a-corrected-usage-report-concurrency-safe-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example B: A corrected usage report (concurrency-safe restore)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-c-carryover-across-a-period-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example C: Carryover across a period boundary
       
     </span>
   </a>
@@ -13627,6 +13688,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#evaluation-lifecycle-and-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation Lifecycle and Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -13782,6 +13854,56 @@
     <span class="md-ellipsis">
       
         Scenario 3: Research Consortium with Flexible Limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worked Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-a-a-project-that-overshoots-mid-month-then-is-topped-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example A: A project that overshoots mid-month, then is topped up
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-b-a-corrected-usage-report-concurrency-safe-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example B: A corrected usage report (concurrency-safe restore)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-c-carryover-across-a-period-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example C: Carryover across a period boundary
       
     </span>
   </a>
@@ -14245,6 +14367,36 @@
 <li><code>request_slurm_resource_pausing</code> → Site agent applies <code>qos_paused</code> (e.g., "paused")</li>
 <li>Normal state → Site agent applies <code>qos_default</code> (e.g., "normal")</li>
 </ol>
+<h3 id="evaluation-lifecycle-and-concurrency">Evaluation Lifecycle and Concurrency</h3>
+<p>Each new or updated <code>ComponentUsage</code> queues an asynchronous evaluation of the
+affected resource against every applicable policy. Staff-triggered
+<code>evaluate</code> / <code>force-period-reset</code> API calls and the daily period-boundary task
+queue evaluations too. As a result, <strong>several evaluations of the same resource
+can run on different Celery workers at the same time</strong> — for example, one fired
+by a high-usage report and another fired moments later by a corrected,
+lower-usage report.</p>
+<p>A single evaluation of one resource performs the following steps:</p>
+<ol>
+<li>Re-reads the resource's live usage for the current period (no value is cached
+   from when the task was queued).</li>
+<li>Decides the target <code>paused</code> / <code>downscaled</code> state from that usage and the
+   policy thresholds.</li>
+<li>Applies the change and, if the state actually changed, publishes a STOMP
+   message to the site agent.</li>
+</ol>
+<p>To keep concurrent evaluations from interfering, evaluations of the <strong>same</strong>
+resource are serialized: each one locks the resource row and recomputes usage
+under the lock before deciding. This guarantees that the <strong>most recently
+committed usage wins</strong> — a slow evaluation that started from an old, high usage
+reading cannot overwrite a newer evaluation that has already restored the
+resource based on lower usage. Evaluations of <em>different</em> resources still run
+fully in parallel.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Because the decision is always recomputed from live usage under the lock,
+re-running an evaluation is safe and idempotent. If usage has not changed,
+the re-run is a no-op and emits no STOMP message.</p>
+</div>
 <h2 id="configuration-examples">Configuration Examples</h2>
 <h3 id="1-basic-notification-policy">1. Basic Notification Policy</h3>
 <p>Send notifications when usage reaches 80%:</p>
@@ -14469,6 +14621,159 @@
 <span class="p">)</span>
 <span class="n">policy</span><span class="o">.</span><span class="n">organization_groups</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">consortium_members</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h2 id="worked-examples">Worked Examples</h2>
+<p>The configuration snippets above define <em>policies</em>; the timelines below show how
+a policy behaves as real usage evolves. They assume a monthly policy with a
+1000 node-hour limit, <code>grace_ratio=0.2</code> (pause at 120%), and
+<code>actions="notify_organization_owners,request_slurm_resource_downscaling,request_slurm_resource_pausing"</code>.</p>
+<h3 id="example-a-a-project-that-overshoots-mid-month-then-is-topped-up">Example A: A project that overshoots mid-month, then is topped up</h3>
+<p>A research project burns through its monthly allocation early, gets throttled,
+and is restored after the owner buys more node-hours.</p>
+<table>
+<thead>
+<tr>
+<th>Day</th>
+<th>Usage</th>
+<th>% of limit</th>
+<th>Evaluation result</th>
+<th>Resource state</th>
+<th>Site agent QoS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>200</td>
+<td>20%</td>
+<td>below thresholds</td>
+<td>normal</td>
+<td><code>normal</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>820</td>
+<td>82%</td>
+<td>notify owners</td>
+<td>normal</td>
+<td><code>normal</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td>1010</td>
+<td>101%</td>
+<td>downscale</td>
+<td>downscaled</td>
+<td><code>slowdown</code></td>
+</tr>
+<tr>
+<td>18</td>
+<td>1250</td>
+<td>125%</td>
+<td>downscale + pause</td>
+<td>downscaled + paused</td>
+<td><code>blocked</code></td>
+</tr>
+<tr>
+<td>20</td>
+<td>limit raised to 2000 → 1250/2000 = 63%</td>
+<td>63%</td>
+<td>clear pause + downscale</td>
+<td>normal</td>
+<td><code>normal</code></td>
+</tr>
+</tbody>
+</table>
+<p>Each row is the state after that day's usage report is evaluated. Note that
+raising the limit on day 20 drops the percentage below all thresholds, so the
+next evaluation restores the resource — no manual QoS change is needed.</p>
+<h3 id="example-b-a-corrected-usage-report-concurrency-safe-restore">Example B: A corrected usage report (concurrency-safe restore)</h3>
+<p>Accounting first reports a usage spike, then immediately corrects it down. Two
+evaluations race, but the resource still ends in the correct, restored state.</p>
+<table>
+<thead>
+<tr>
+<th>Time</th>
+<th>Event</th>
+<th>Usage seen</th>
+<th>Evaluation outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10:00:00</td>
+<td>Usage reported as 1500 (150%)</td>
+<td>150%</td>
+<td>evaluation A queued → pause + downscale</td>
+</tr>
+<tr>
+<td>10:00:03</td>
+<td>Correction: usage overwritten to 0</td>
+<td>0%</td>
+<td>evaluation B queued → clear all</td>
+</tr>
+<tr>
+<td>10:00:04</td>
+<td>Evaluation B commits first</td>
+<td>0%</td>
+<td>resource restored to normal</td>
+</tr>
+<tr>
+<td>10:00:07</td>
+<td>Evaluation A finally runs</td>
+<td>0% (re-read under lock)</td>
+<td>no-op — usage is now 0%, nothing to pause</td>
+</tr>
+</tbody>
+</table>
+<p>Because evaluation A recomputes usage under the row lock, it sees the corrected
+0% rather than the stale 150% it was triggered with, and leaves the restored
+state untouched. The final state is <code>normal</code> / <code>qos_default</code>. See
+<a href="#evaluation-lifecycle-and-concurrency">Evaluation Lifecycle and Concurrency</a>.</p>
+<h3 id="example-c-carryover-across-a-period-boundary">Example C: Carryover across a period boundary</h3>
+<p>A monthly policy with <code>carryover_enabled=True</code> and <code>carryover_factor=50</code>
+(limit 1000) lets an under-using month lift the next month's effective ceiling.</p>
+<table>
+<thead>
+<tr>
+<th>Period</th>
+<th>Base limit</th>
+<th>Prev-period usage</th>
+<th>Carryover</th>
+<th>Effective limit</th>
+<th>700 node-hours used → %</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>January</td>
+<td>1000</td>
+<td>—</td>
+<td>0</td>
+<td>1000</td>
+<td>70% → normal</td>
+</tr>
+<tr>
+<td>February</td>
+<td>1000</td>
+<td>300 (Jan)</td>
+<td>min(700, 500) = 500</td>
+<td>1500</td>
+<td>700/1500 = 47% → normal</td>
+</tr>
+<tr>
+<td>March</td>
+<td>1000</td>
+<td>1400 (Feb, over)</td>
+<td>0</td>
+<td>1000</td>
+<td>700/1000 = 70% → normal</td>
+</tr>
+</tbody>
+</table>
+<p>January's unused 700 node-hours carries into February capped at 50% of the base
+(500), raising February's ceiling to 1500. February overshoots, so March starts
+fresh at the base limit with no carryover. See
+<a href="#debug-carryover-calculations">Debug Carryover Calculations</a> for the formula.</p>
 <h2 id="api-usage">API Usage</h2>
 <h3 id="create-policy-via-api">Create Policy via API</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
