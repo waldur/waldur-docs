@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-06-26T02:05:33.572631Z
+Generated: 2026-06-26T05:57:24.768161Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -57064,7 +57064,7 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | [ui-consistency-guidelines.md](ui-consistency-guidelines.md) | Empty states, buttons, loading indicators, tooltips, null-value display         |
 | [tables.md](tables.md)                                       | `useTable`, columns, filters, row actions, export                               |
 | [forms.md](forms.md)                                         | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection` |
-| [filter-migration-guide.md](filter-migration-guide.md)       | Generated table filters from the OpenAPI schema                                 |
+| [filter-migration-guide.md](table/filter-migration-guide.md)       | Generated table filters from the OpenAPI schema                                 |
 | [button-variant-linting.md](button-variant-linting.md)       | Design-token button variants and the ESLint rule enforcing them                 |
 | [theme.md](theme.md)                                         | Dark mode and theming, including third-party components                         |
 | [menu-navigation.md](menu-navigation.md)                     | Sidebar menu structure and state-based routing                                  |
@@ -59667,235 +59667,6 @@ When multiple valid approaches exist, choose based on:
 
 ---
 
-### Migration to Generated Table Filters
-<!-- Source: docs/developer-guide/ui/filter-migration-guide.md -->
-
-# Migration to Generated Table Filters
-
-This guide documents the transition from manually maintained table filters to automatically generated filters based on the OpenAPI schema.
-
-## Motivation & Vision
-
-### The Problem
-
-Manually writing filter components for every API endpoint leads to:
-
-- **Boilerplate**: Repetitive definitions of select fields, async paginators, and state management.
-- **Inconsistency**: Discrepancies between the frontend filters and the actual API parameters (e.g., incorrect query param names, missing options).
-- **Maintenance Burden**: When API changes (new filters, renamed parameters), developers must manually update the frontend code.
-
-### The Solution
-
-We generate filter components directly from the **OpenAPI schema** (`schema.json`). This ensures:
-
-1. **Single Source of Truth**: The frontend filters always match the API definition.
-2. **Type Safety**: Generated code uses TypeScript interfaces inferred from the schema.
-3. **Automatic Updates**: Regenerating filters updates them to reflect API changes instantly.
-4. **Standardization**: All filters use consistent UI components (`<Select>`, `<AsyncPaginate>`, etc.) and behavior.
-
----
-
-## Architecture
-
-The generation process is driven by:
-
-1. **`generate-filters.cjs`**: The Node.js script that parses the schema and outputs React components.
-2. **`generate-filters-config.yaml`**: A configuration file for customization (overrides, ordering, labels).
-3. **`waldur-js-client`**: Provides the TypeScript types and API client functions used by the generated code.
-
-### Generated Output
-
-The script produces `src/table/generated/{OperationId}Filter.tsx` files. Each file exports:
-
-- `{Name}Filter`: The filter component containing autonomous filter components (StringFilter, SelectFilter, etc.) that connect directly to Redux.
-- `{Name}FilterFormData`: TypeScript interface for filter values.
-- `{Name}FilterProps`: TypeScript interface for component props.
-- `select{Name}Filter`: A selector to transform Redux filter values into API query parameters.
-- `{Name}FilterFormId`: A constant string used as the table ID (Redux key).
-
----
-
-## Migration Process
-
-To migrate a manual filter to a generated one, follow these steps:
-
-### 1. Identify the OpenAPI Operation
-
-Find the `operationId` for the list endpoint you are filtering.
-Example: For `GET /api/customers/`, the operation ID might be `customers_list`.
-
-### 2. Configure `generate-filters-config.yaml`
-
-Add an entry for the operation if it doesn't exist. You can specify which filters to include (whitelist) or leave it empty to include all non-excluded filters.
-
-```yaml
-overrides:
-  customers_list:
-    # Optional: Customize component name (default: CustomersFilter)
-    componentName: CustomersFilter
-    # Optional: Whitelist specific filters to include
-    filters:
-      - name
-      - accounting_is_running
-      - organization_group
-```
-
-### 3. Run the Generator
-
-Execute the generation script:
-
-```bash
-node generate-filters.cjs
-```
-
-This will create/update `src/table/generated/CustomersFilter.tsx`.
-
-### 4. Replace the Manual Component
-
-In your table definition (e.g., `CustomersList.tsx`), replace the manual filter component with the generated one. Use `useFilterValues` to get the Redux state and the generated selector to prepare the `filter` object for `useTable`.
-
-**Before:**
-
-```typescript
-import { Form, useFormState } from 'react-final-form';
-import { CustomersFilter } from './CustomersFilter'; // Manual file
-
-const CustomersListTable = () => {
-  const { values } = useFormState();
-  const filter = useMemo(() => selectManualFilter(values), [values]);
-  const tableProps = useTable({ table: 'customers', fetchData, filter });
-  return <Table {...tableProps} filters={<CustomersFilter />} />;
-}
-
-export const CustomersList = () => (
-  <Form onSubmit={() => {}} subscription={{ values: true }}>
-    {() => <CustomersListTable />}
-  </Form>
-);
-```
-
-**After:**
-
-```typescript
-import { useFilterValues } from '@/table/useFilterValues';
-import { CustomersFilter, selectCustomersFilter } from './generated/CustomersFilter';
-
-export const CustomersList = () => {
-  const values = useFilterValues('customers');
-  const filter = useMemo(() => selectCustomersFilter(values), [values]);
-  const tableProps = useTable({
-    table: 'customers',
-    fetchData,
-    filter,
-    syncFiltersToURL: true, // Enable automatic URL synchronization
-  });
-  return <Table {...tableProps} filters={<CustomersFilter />} />;
-}
-```
-
-### 5. Verify & Clean Up
-
-- Check if the new filter behaves correctly in the UI.
-- Verify that types are correct.
-- Delete the old manual filter file.
-
----
-
-## Configuration & Customization (`generate-filters-config.yaml`)
-
-You can customize almost every aspect of the generated filters.
-
-### Key Configuration Options
-
-| Option | Description | Example |
-| :--- | :--- | :--- |
-| `label` | Custom label for the filter. | `label: "Organization"` |
-| `component` | React component to use. | `component: "Autocomplete"` |
-| `loadOptions` | API method for async loading. | `loadOptions: "customersList"` |
-| `valueField` | Field to use as value. | `valueField: "uuid"` |
-| `labelField` | Field to show in UI. | `labelField: "name"` |
-| `mapTo` | Map a renamed filter back to a specific API param. | `mapTo: "organization_group_uuid"` |
-| `options` | Hardcoded options for Select. | `options: [{ label: "Yes", value: true }]` |
-
-### Example Configuration
-
-```yaml
-overrides:
-  customers_list:
-    filters:
-      - organization_group
-
-  # Override specific parameters across ALL operations
-  parameters:
-    organization_group:
-      label: "Organization group"
-      component: "Autocomplete"
-      loadOptions: "organizationGroupsList"
-      valueField: "uuid"
-      labelField: "name"
-      # The API expects 'organization_group_uuid', but we call the filter 'organization_group'
-      mapTo: "organization_group_uuid"
-```
-
----
-
-## Tips & Quirks
-
-### 1. Renaming and `_uuid` Suffix
-
-The generator automatically drops `_uuid` suffixes from filter names for cleaner code (e.g., `customer_uuid` becomes `customer`).
-
-- **Quirk**: If you list filters in the `filters` whitelist in YAML, **you must use the renamed name** (e.g., `customer`, not `customer_uuid`), OR the original name if `mapTo` is correctly inferred.
-- **Tip**: The generator logic handles the mapping back to the original parameter name in the `select{Name}Filter` selector.
-
-### 2. Explicit Typing
-
-Generated components are strictly typed.
-
-- **Props**: `FunctionComponent<FilterProps>` defines what props the filter accepts.
-- **Form Data**: `FilterFormData` defines the shape of the form values.
-- **Callbacks**: `getOptionLabel`/`getOptionValue` have explicit type annotations (e.g., `(option: Customer) => option.name`).
-
-### 3. Autocomplete vs. Select
-
-- **Autocomplete**: Uses `AsyncPaginate`. Requires `loadOptions`, `valueField`, and `labelField` to be set or inferred.
-- **Select**: Uses standard `Select`. Used for enums, booleans, or fixed options.
-
-### 4. Handling Props (`props.*`)
-
-If a filter's options come from parent props (not an API call), use the `props.` prefix in configuration.
-
-```yaml
-parameters:
-  project_role:
-    options: "props.projectRoles" # Will generate props.projectRoles in component
-```
-
-The generator will:
-
-1. Infer the `FilterProps` interface containing `projectRoles`.
-2. Pass `props` to the component.
-3. Render `options={props.projectRoles}`.
-
-## Troubleshooting
-
-### "My filter is missing"
-
-- Check if it's in the `GenerateFiltersCI` exclusion list in `generate-filters.cjs`.
-- Check if it's referenced in the `yaml` whitelist correctly.
-
-### "My filter is a StringField but should be Autocomplete"
-
-- This usually means the schema inference didn't detect it as a relation.
-- **Fix**: Add an override in `generate-filters-config.yaml` setting `component: Autocomplete` and `loadOptions`.
-
-### "TypeScript errors in generated code"
-
-- Run `node generate-filters.cjs` to ensure the code is fresh.
-- Check if `waldur-js-client` exports the types you expect.
-
----
-
 ### Forms Guide
 <!-- Source: docs/developer-guide/ui/forms.md -->
 
@@ -61748,13 +61519,829 @@ export const Config = new JsonStorageManager<AppConfig>('config');
 
 ---
 
-### Table component
-<!-- Source: docs/developer-guide/ui/tables.md -->
+### Table Component: Column Setup & Configuration
+<!-- Source: docs/developer-guide/ui/table/column-setup.md -->
 
-# Table component
+# Table Component: Column Setup & Configuration
 
-1. State management is done via `useTable` React hook.
-2. Table rendering is done using `Table` component.
+Column behavior and display properties are configured within the `columns` array.
+
+---
+
+## Column Definition Properties
+
+The following properties can be set on each column object inside the `columns` array:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `title` | `ReactNode` | Column header title label. |
+| `render` | `React.ComponentType<{ row }>` | Render component function for row cell output. |
+| `orderField` | `string` | Makes the column sortable. Maps to django-style `?o=<orderField>` sorting queries. |
+| `copyField` | `(row) => string &#124; number` | Renders a clipboard-copy button next to the cell text. |
+| `ellipsis` | `boolean` | Defaults to `true` (truncates overflow). Set to `false` to wrap text. |
+| `disabledClick` | `boolean` | Set to `true` to block row click/expand events when interacting with cells. |
+| `width` | `string` | Set custom width (e.g. `'120px'` or `'15%'`). |
+| `meta` | `ReactNode` | Node placed in the header in front of the column name (e.g. tooltips). |
+| `className` | `string` | CSS class string applied to the cell `<td>` tags (e.g. `'text-end'`). |
+| `headerClassName` | `string` | CSS class string applied to the column title `<th>` tags (e.g. `'text-end'`). |
+| `optional` | `boolean` | Set to `true` to let users hide/toggle this column. |
+| `keys` | `string[]` | API field names required for this optional column to render. |
+| `filter` | `string` | Redux filter parameter name to apply cell click inline filtering. |
+| `inlineFilter` | `(row) => any` | Callback to extract the filter value payload when clicking cells. |
+
+---
+
+## Behavior Configurations
+
+### 1. Column Sorting (`orderField`)
+
+Set `orderField` to make a column sortable. Clicking on the column header will alternate between ascending (`?o=field`) and descending (`?o=-field`):
+
+```ts
+columns={[
+  {
+    title: translate('Name'),
+    render: ({ row }) => renderFieldOrDash(row.name),
+    orderField: 'name', // Sorted by name
+  },
+]}
+```
+
+### 2. Clipboard Copying (`copyField`)
+
+Use `copyField` to display a standard copy icon next to cell values:
+
+```ts
+{
+  title: translate('SSH Key Fingerprint'),
+  render: ({ row }) => renderFieldOrDash(row.fingerprint),
+  copyField: (row) => row.fingerprint, // Renders a copy icon button
+}
+```
+
+### 3. Click Propagation (`disabledClick`)
+
+Set `disabledClick: true` to prevent click actions (such as row selection or row expansion) from triggering when a user clicks on buttons, inputs, or links inside column cells:
+
+```ts
+{
+  title: translate('Actions'),
+  render: ({ row }) => <Button onClick={() => triggerAction(row)} />,
+  disabledClick: true, // Click event does not bubble up to the row <tr>
+}
+```
+
+### 4. Text Truncation (`ellipsis`)
+
+By default, columns truncate overflowing text with an ellipsis and display the full text in a browser tooltip on hover. Set `ellipsis: false` to force normal text wrapping instead:
+
+```ts
+{
+  title: translate('Detailed Description'),
+  render: ({ row }) => renderFieldOrDash(row.description),
+  ellipsis: false, // Disables truncation, wraps text
+}
+```
+
+---
+
+## Optional Columns
+
+You can let users customize their view by selecting which columns to show or hide.
+
+1. Set `hasOptionalColumns` directly on the `<Table>` component.
+2. Set `optional: true` on optional column definitions.
+3. Pass `id` and `keys` (list of API fields required for this column) to optimize API query payloads.
+4. Pass `mandatoryFields` to `useTable` options to ensure essential fields are always fetched.
+
+```tsx
+export const UsersTable = () => {
+  const tableProps = useTable({
+    table: 'users',
+    fetchData: createFetcher(usersList),
+    mandatoryFields: ['uuid', 'name'], // Always requested
+  });
+
+  return (
+    <Table
+      {...tableProps}
+      hasOptionalColumns
+      columns={[
+        {
+          id: 'name',
+          title: translate('Name'),
+          render: ({ row }) => renderFieldOrDash(row.name),
+          // Mandatory by default (no optional key)
+        },
+        {
+          id: 'email',
+          title: translate('Email'),
+          render: ({ row }) => renderFieldOrDash(row.email),
+          optional: true,
+          keys: ['email'], // Requested only when column is enabled
+        },
+        {
+          id: 'role',
+          title: translate('Role'),
+          render: ({ row }) => renderFieldOrDash(row.role),
+          optional: true,
+          keys: ['role', 'permissions'],
+        },
+      ]}
+    />
+  );
+};
+```
+
+---
+
+### Table Component: Data Fetching & Type Safety
+<!-- Source: docs/developer-guide/ui/table/fetching.md -->
+
+# Table Component: Data Fetching & Type Safety
+
+Data retrieval is configured via the `fetchData` option of the `useTable` hook.
+
+---
+
+## The `fetchData` Property
+
+The `fetchData` function is responsible for retrieving and returning paginated/filtered data for the table. It must return a promise that resolves to an object containing:
+
+- `rows` (array): The rows to render for the current page.
+- `resultCount` (number, optional): The total count of rows across all pages (required for pagination).
+- `nextPage` (number, optional): Page number of the next page of results.
+
+### 1. Using `createFetcher` with SDK Functions (Recommended)
+
+The standard approach is to pass an API client list function from `waldur-js-client` to `createFetcher`:
+
+```ts
+import { usersList } from 'waldur-js-client';
+import { createFetcher } from '@/table/api';
+
+const tableProps = useTable({
+  table: 'UsersList',
+  fetchData: createFetcher(usersList),
+});
+```
+
+#### Customizing Query and Path Parameters
+
+You can pass query overrides and path parameters for nested API endpoints:
+
+```ts
+import { projectsList } from 'waldur-js-client';
+
+const tableProps = useTable({
+  table: 'ProjectsList',
+  fetchData: createFetcher(projectsList, {
+    // Permanent query parameters
+    query: { is_active: true },
+    // Path parameters mapped to nested endpoints, e.g. /customers/{customer_uuid}/projects/
+    path: { customer_uuid: customerId },
+  }),
+});
+```
+
+#### Mapping Nested Arrays via `parser`
+
+If the API returns a nested response (an object instead of a direct array), use `parser` to extract the rows array:
+
+```ts
+import { checklistRetrieve } from 'waldur-js-client';
+
+const tableProps = useTable({
+  table: 'QuestionsList',
+  fetchData: createFetcher(checklistRetrieve, {
+    path: { uuid: checklistId },
+    // Extract array from nested checklist object response
+    parser: (data) => data.questions,
+  }),
+});
+```
+
+---
+
+### 2. Custom fetchData Implementation
+
+For custom client-side mock-ups or custom HTTP requests:
+
+```ts
+const fetchData = (request) => {
+  // request contains tableKey, currentPage, pageSize, filter, sorting, query
+  return Promise.resolve({
+    rows: localItems.slice(0, 10),
+    resultCount: localItems.length,
+  });
+};
+
+const tableProps = useTable({
+  table: 'CustomList',
+  fetchData,
+});
+```
+
+---
+
+### 3. Client-Side Paginated Fetcher for Static Data
+
+For static or local arrays that require full pagination, client-side sorting, and search matching, use `createClientPaginatedFetcher`:
+
+```ts
+import { createClientPaginatedFetcher } from '@/table/api';
+
+const myStaticItems = [
+  { uuid: '1', name: 'Item A', value: 10 },
+  { uuid: '2', name: 'Item B', value: 20 },
+];
+
+const tableProps = useTable({
+  table: 'StaticList',
+  fetchData: createClientPaginatedFetcher(myStaticItems, {
+    queryField: 'name', // Enables search query matching on the 'name' field
+  }),
+});
+```
+
+---
+
+### 4. Search Query Input (`queryField`)
+
+If you enable text-based search queries on the table (by passing the `hasQuery` prop to the `Table` component), you **must** specify `queryField` in the `useTable` options. This instructs `useTable` which query parameter name to use when passing the search term in the API request:
+
+```ts
+const tableProps = useTable({
+  table: 'UsersList',
+  fetchData: createFetcher(usersList),
+  queryField: 'name', // Maps search term to '?name=<search_term>'
+});
+```
+
+---
+
+## Type Safety
+
+The Table component supports TypeScript type inference.
+
+### 1. Automatic Type Inference
+
+When using `createFetcher` with SDK functions, the row type is automatically inferred from the SDK function's return type:
+
+```ts
+import { Project, projectsList } from 'waldur-js-client';
+
+const tableProps = useTable({
+  table: 'ProjectsList',
+  fetchData: createFetcher(projectsList),
+});
+
+// columns are automatically type-checked against the Project type
+<Table
+  {...tableProps}
+  columns={[
+    {
+      title: 'Name',
+      render: ({ row }) => renderFieldOrDash(row.name), // row is typed as Project
+    },
+    {
+      title: 'Invalid',
+      render: ({ row }) => row.non_existent_field, // TypeScript error!
+    },
+  ]}
+/>
+```
+
+### 2. Explicit Type Parameter
+
+For custom fetchers or when you need explicit control, pass the generic row type directly to `Table`:
+
+```ts
+interface MyRow {
+  id: string;
+  name: string;
+}
+
+<Table<MyRow>
+  {...tableProps}
+  columns={[
+    {
+      title: 'Name',
+      render: ({ row }) => renderFieldOrDash(row.name), // row is typed as MyRow
+    },
+  ]}
+/>
+```
+
+---
+
+### Migration to Generated Table Filters
+<!-- Source: docs/developer-guide/ui/table/filter-migration-guide.md -->
+
+# Migration to Generated Table Filters
+
+This guide documents the transition from manually maintained table filters to automatically generated filters based on the OpenAPI schema.
+
+## Motivation & Vision
+
+### The Problem
+
+Manually writing filter components for every API endpoint leads to:
+
+- **Boilerplate**: Repetitive definitions of select fields, async paginators, and state management.
+- **Inconsistency**: Discrepancies between the frontend filters and the actual API parameters (e.g., incorrect query param names, missing options).
+- **Maintenance Burden**: When API changes (new filters, renamed parameters), developers must manually update the frontend code.
+
+### The Solution
+
+We generate filter components directly from the **OpenAPI schema** (`schema.json`). This ensures:
+
+1. **Single Source of Truth**: The frontend filters always match the API definition.
+2. **Type Safety**: Generated code uses TypeScript interfaces inferred from the schema.
+3. **Automatic Updates**: Regenerating filters updates them to reflect API changes instantly.
+4. **Standardization**: All filters use consistent UI components (`<Select>`, `<AsyncPaginate>`, etc.) and behavior.
+
+---
+
+## Architecture
+
+The generation process is driven by:
+
+1. **`generate-filters.cjs`**: The Node.js script that parses the schema and outputs React components.
+2. **`generate-filters-config.yaml`**: A configuration file for customization (overrides, ordering, labels).
+3. **`waldur-js-client`**: Provides the TypeScript types and API client functions used by the generated code.
+
+### Generated Output
+
+The script produces `src/table/generated/{OperationId}Filter.tsx` files. Each file exports:
+
+- `{Name}Filter`: The filter component containing autonomous filter components (StringFilter, SelectFilter, etc.) that connect directly to Redux.
+- `{Name}FilterFormData`: TypeScript interface for filter values.
+- `{Name}FilterProps`: TypeScript interface for component props.
+- `select{Name}Filter`: A selector to transform Redux filter values into API query parameters.
+- `{Name}FilterFormId`: A constant string used as the table ID (Redux key).
+
+---
+
+## Migration Process
+
+To migrate a manual filter to a generated one, follow these steps:
+
+### 1. Identify the OpenAPI Operation
+
+Find the `operationId` for the list endpoint you are filtering.
+Example: For `GET /api/customers/`, the operation ID might be `customers_list`.
+
+### 2. Configure `generate-filters-config.yaml`
+
+Add an entry for the operation if it doesn't exist. You can specify which filters to include (whitelist) or leave it empty to include all non-excluded filters.
+
+```yaml
+overrides:
+  customers_list:
+    # Optional: Customize component name (default: CustomersFilter)
+    componentName: CustomersFilter
+    # Optional: Whitelist specific filters to include
+    filters:
+      - name
+      - accounting_is_running
+      - organization_group
+```
+
+### 3. Run the Generator
+
+Execute the generation script:
+
+```bash
+node generate-filters.cjs
+```
+
+This will create/update `src/table/generated/CustomersFilter.tsx`.
+
+### 4. Replace the Manual Component
+
+In your table definition (e.g., `CustomersList.tsx`), replace the manual filter component with the generated one. Use `useFilterValues` to get the Redux state and the generated selector to prepare the `filter` object for `useTable`.
+
+**Before:**
+
+```typescript
+import { Form, useFormState } from 'react-final-form';
+import { CustomersFilter } from './CustomersFilter'; // Manual file
+
+const CustomersListTable = () => {
+  const { values } = useFormState();
+  const filter = useMemo(() => selectManualFilter(values), [values]);
+  const tableProps = useTable({ table: 'customers', fetchData, filter });
+  return <Table {...tableProps} filters={<CustomersFilter />} />;
+}
+
+export const CustomersList = () => (
+  <Form onSubmit={() => {}} subscription={{ values: true }}>
+    {() => <CustomersListTable />}
+  </Form>
+);
+```
+
+**After:**
+
+```typescript
+import { useFilterValues } from '@/table/useFilterValues';
+import { CustomersFilter, selectCustomersFilter } from './generated/CustomersFilter';
+
+export const CustomersList = () => {
+  const values = useFilterValues('customers');
+  const filter = useMemo(() => selectCustomersFilter(values), [values]);
+  const tableProps = useTable({
+    table: 'customers',
+    fetchData,
+    filter,
+    syncFiltersToURL: true, // Enable automatic URL synchronization
+  });
+  return <Table {...tableProps} filters={<CustomersFilter />} />;
+}
+```
+
+### 5. Verify & Clean Up
+
+- Check if the new filter behaves correctly in the UI.
+- Verify that types are correct.
+- Delete the old manual filter file.
+
+---
+
+## Configuration & Customization (`generate-filters-config.yaml`)
+
+You can customize almost every aspect of the generated filters.
+
+### Key Configuration Options
+
+| Option | Description | Example |
+| :--- | :--- | :--- |
+| `label` | Custom label for the filter. | `label: "Organization"` |
+| `component` | React component to use. | `component: "Autocomplete"` |
+| `loadOptions` | API method for async loading. | `loadOptions: "customersList"` |
+| `valueField` | Field to use as value. | `valueField: "uuid"` |
+| `labelField` | Field to show in UI. | `labelField: "name"` |
+| `mapTo` | Map a renamed filter back to a specific API param. | `mapTo: "organization_group_uuid"` |
+| `options` | Hardcoded options for Select. | `options: [{ label: "Yes", value: true }]` |
+
+### Example Configuration
+
+```yaml
+overrides:
+  customers_list:
+    filters:
+      - organization_group
+
+  # Override specific parameters across ALL operations
+  parameters:
+    organization_group:
+      label: "Organization group"
+      component: "Autocomplete"
+      loadOptions: "organizationGroupsList"
+      valueField: "uuid"
+      labelField: "name"
+      # The API expects 'organization_group_uuid', but we call the filter 'organization_group'
+      mapTo: "organization_group_uuid"
+```
+
+---
+
+## Tips & Quirks
+
+### 1. Renaming and `_uuid` Suffix
+
+The generator automatically drops `_uuid` suffixes from filter names for cleaner code (e.g., `customer_uuid` becomes `customer`).
+
+- **Quirk**: If you list filters in the `filters` whitelist in YAML, **you must use the renamed name** (e.g., `customer`, not `customer_uuid`), OR the original name if `mapTo` is correctly inferred.
+- **Tip**: The generator logic handles the mapping back to the original parameter name in the `select{Name}Filter` selector.
+
+### 2. Explicit Typing
+
+Generated components are strictly typed.
+
+- **Props**: `FunctionComponent<FilterProps>` defines what props the filter accepts.
+- **Form Data**: `FilterFormData` defines the shape of the form values.
+- **Callbacks**: `getOptionLabel`/`getOptionValue` have explicit type annotations (e.g., `(option: Customer) => option.name`).
+
+### 3. Autocomplete vs. Select
+
+- **Autocomplete**: Uses `AsyncPaginate`. Requires `loadOptions`, `valueField`, and `labelField` to be set or inferred.
+- **Select**: Uses standard `Select`. Used for enums, booleans, or fixed options.
+
+### 4. Handling Props (`props.*`)
+
+If a filter's options come from parent props (not an API call), use the `props.` prefix in configuration.
+
+```yaml
+parameters:
+  project_role:
+    options: "props.projectRoles" # Will generate props.projectRoles in component
+```
+
+The generator will:
+
+1. Infer the `FilterProps` interface containing `projectRoles`.
+2. Pass `props` to the component.
+3. Render `options={props.projectRoles}`.
+
+## Troubleshooting
+
+### "My filter is missing"
+
+- Check if it's in the `GenerateFiltersCI` exclusion list in `generate-filters.cjs`.
+- Check if it's referenced in the `yaml` whitelist correctly.
+
+### "My filter is a StringField but should be Autocomplete"
+
+- This usually means the schema inference didn't detect it as a relation.
+- **Fix**: Add an override in `generate-filters-config.yaml` setting `component: Autocomplete` and `loadOptions`.
+
+### "TypeScript errors in generated code"
+
+- Run `node generate-filters.cjs` to ensure the code is fresh.
+- Check if `waldur-js-client` exports the types you expect.
+
+---
+
+### Table Component: Filters & URL Sync
+<!-- Source: docs/developer-guide/ui/table/filters.md -->
+
+# Table Component: Filters & URL Sync
+
+Filters allow users to slice datasets and sync selections across page refreshes.
+
+> [!IMPORTANT]
+> **Schema-Driven Filters**: Table filters must be **generated automatically from the OpenAPI schema**. Manually writing filter components is deprecated.
+> Refer to the [Migration to Generated Table Filters](filter-migration-guide.md) guide for details on configuring and running `node generate-filters.cjs`.
+
+---
+
+## Filter Integration Pattern
+
+To integrate a generated filter:
+
+1. Fetch the active values using `useFilterValues(tableId)`.
+2. Map the Redux filter values to query params using the generated selector `select{Name}Filter`.
+3. **Always memoize the filter object** to prevent unnecessary API fetches and infinite re-render loops.
+4. Pass the filter object to `useTable` and the generated filter component to the `Table` component.
+
+```ts
+import { useMemo } from 'react';
+import Table from '@/table/Table';
+import { createFetcher } from '@/table/api';
+import { useTable } from '@/table/useTable';
+import { useFilterValues } from '@/table/useFilterValues';
+import { renderFieldOrDash } from '@/table/utils';
+import { usersList } from 'waldur-js-client';
+
+// Import generated component and selector
+import { UsersFilter, selectUsersFilter } from './generated/UsersFilter';
+
+export const FilteredUsersList = () => {
+  const values = useFilterValues('users');
+
+  // ALWAYS memoize the filter query parameters!
+  const filter = useMemo(() => selectUsersFilter(values), [values]);
+
+  const tableProps = useTable({
+    table: 'users',
+    fetchData: createFetcher(usersList),
+    filter,
+    syncFiltersToURL: true, // Enables deep linking
+  });
+
+  return (
+    <Table
+      {...tableProps}
+      columns={[
+        {
+          title: translate('Name'),
+          render: ({ row }) => renderFieldOrDash(row.name),
+        },
+      ]}
+      filters={<UsersFilter />}
+    />
+  );
+};
+```
+
+---
+
+## Filter Layout Positions
+
+The `filterPosition` prop controls where the filter fields are displayed:
+
+| Position | Behavior |
+|----------|----------|
+| `header` | Filters are always visible inside the Card Header area. |
+| `menu` | Filters are housed in a dropdown menu, toggled via a filter button. |
+| `sidebar` | Filters open inside a sliding side drawer/panel. |
+
+---
+
+## URL Synchronization
+
+Filters can be synced to URL query parameters for shareable links by setting `syncFiltersToURL: true` inside `useTable` options:
+
+```ts
+const tableProps = useTable({
+  table: 'MyList',
+  fetchData: createFetcher(myList),
+  syncFiltersToURL: true,
+  initialFilters: { status: 'active' }, // Default fallback values
+});
+```
+
+When enabled:
+
+- Initial load populates the Redux store from URL search params.
+- Filter badges/chips are automatically displayed in the filter bar.
+- SPA navigation preserves query strings, restoring filter states on page reload or back navigation.
+
+### URL Compact Serialization Format
+
+Filters are stored in URL query parameters with compact encoding:
+
+| Value Type | URL Format | Example |
+|------------|------------|---------|
+| String | Direct value | `?name=test` |
+| Object with UUID | `uuid::name` | `?org=abc123::My+Org` |
+| Array of objects | `[uuid1::name1, uuid2::name2]` | `?tags=["a1::T1","a2::T2"]` |
+| Boolean | `true`/`false` | `?active=true` |
+
+The compact `uuid::name` format keeps URLs shorter while preserving display names for filter badges without needing additional API lookup calls.
+
+---
+
+## Cross-Page Filters (Resources Sidebar)
+
+The Resources sidebar filter (`src/navigation/sidebar/resources-filter/`) is a special case that:
+
+1. Syncs `organization` and `project` filters across multiple resource tables.
+2. Persists selections to `localStorage` for session persistence.
+3. Syncs parameters to the URL for shareable links.
+
+Priority resolution order:
+
+1. **URL params** (highest) - for shareable links.
+2. **localStorage** - for session persistence.
+3. **No filter** - shows all resources.
+
+---
+
+## Inline Filters
+
+Users can quickly filter table data by clicking values directly in the table cells, without opening filter menus. When a column configuration has `inlineFilter` and `filter` enabled:
+
+1. A filter icon appears when hovering over cells in that column.
+2. Clicking the icon adds a filter using the cell's value.
+3. The `inlineFilter` function transforms row data into the required filter value format.
+
+```ts
+{
+  title: translate('Organization'),
+  render: ({ row }) => renderFieldOrDash(row.customer_name),
+  filter: 'organization',  // The filter parameter name in Redux
+  inlineFilter: (row) => ({
+    name: row.customer_name,
+    uuid: row.customer_uuid
+  })
+}
+```
+
+---
+
+### Table Component: Form Integration (Final-Form)
+<!-- Source: docs/developer-guide/ui/table/form-integration.md -->
+
+# Table Component: Form Integration (Final-Form)
+
+The table component can be integrated as an input control inside `react-final-form` to allow users to select one or multiple rows as part of a form submission.
+
+---
+
+## Form Integration Properties
+
+To enable form integration, pass the following properties to the `<Table>` component:
+
+- **`fieldType`**: Set to `'radio'` (for single selection) or `'checkbox'` (for multi-selection). This automatically renders selection buttons in a leading column on each row.
+- **`fieldName`**: The path in form values where the selection should be stored (e.g. `'attributes.security_groups'`).
+- **`validate`**: An optional field validator (e.g. `required`).
+- **`rowValidate`**: A callback function `(row: RowType, formValues: any) => string | string[] | undefined` to validate individual rows based on overall form state. If it returns a string, that row is marked with an error.
+
+---
+
+## Basic Example
+
+```tsx
+import { Form } from 'react-final-form';
+import Table from '@/table/Table';
+import { useTable } from '@/table/useTable';
+import { createFetcher } from '@/table/api';
+import { securityGroupsList } from 'waldur-js-client';
+
+const required = (value) => (value ? undefined : translate('Selection is required'));
+
+export const FormSecurityGroupsField = () => {
+  const tableProps = useTable({
+    table: 'SecurityGroupsSelect',
+    fetchData: createFetcher(securityGroupsList),
+  });
+
+  return (
+    <Table
+      {...tableProps}
+      title={translate('Select Security Groups')}
+      fieldType="checkbox"
+      fieldName="attributes.security_groups"
+      validate={required}
+      columns={[
+        {
+          title: translate('Name'),
+          render: ({ row }) => renderFieldOrDash(row.name),
+        },
+        {
+          title: translate('Description'),
+          render: ({ row }) => renderFieldOrDash(row.description),
+        },
+      ]}
+    />
+  );
+};
+```
+
+---
+
+## Row Validation (`rowValidate`)
+
+You can perform dynamic validation checks on specific rows based on other values in the form. If a row is invalid, the table will display a hover warning icon next to the selection checkbox/radio:
+
+```tsx
+const checkQuotaLimit = (row, formValues) => {
+  if (row.cores > formValues.remaining_cores_quota) {
+    return translate('This flavor exceeds your project quota limit.');
+  }
+  return undefined;
+};
+
+// Usage inside Table:
+<Table
+  {...tableProps}
+  fieldType="radio"
+  fieldName="flavor"
+  rowValidate={checkQuotaLimit}
+/>
+```
+
+---
+
+### Table Component: Getting Started
+<!-- Source: docs/developer-guide/ui/table/getting-started.md -->
+
+# Table Component: Getting Started
+
+Waldur Homeport uses a unified table structure to display lists and grid data.
+
+- State management and API integration are handled via the `useTable` React hook.
+- Table rendering is done using the `Table` component.
+
+---
+
+## Core Guidelines
+
+To maintain UI/UX consistency and code quality across the application, always follow these core principles:
+
+1. **Imports from subpaths**: Do not use the barrel `@/table` import for core table components. Always import them from their specific subpaths.
+
+   ```ts
+   import Table from '@/table/Table';
+   import { useTable } from '@/table/useTable';
+   import { createFetcher } from '@/table/api';
+   import { ActionsDropdown } from '@/table/ActionsDropdown';
+   ```
+
+   *Note: Filter components (like `StringFilter`, `SelectFilter`) are barrel-exported and can be imported from `@/table`, but manual filter creation is deprecated in favor of generated filters.*
+
+2. **Null/Empty Values**: Never display raw null/undefined/empty string values or fallbacks like `|| 'N/A'`. Always wrap cell outputs with the `renderFieldOrDash` utility from `@/table/utils`.
+
+   ```ts
+   import { renderFieldOrDash } from '@/table/utils';
+   // ...
+   render: ({ row }) => renderFieldOrDash(row.description)
+   ```
+
+3. **Memoize Filters**: Always wrap filter objects in `useMemo` to prevent infinite re-renders when passing them to `useTable`.
+
+4. **Generated Table Filters**: Never write manual filter components. Always define and generate filters based on the OpenAPI schema.
+
+5. **3-Dots Row Actions**: Use the standard `ActionsDropdown` + `ActionItem` pattern for all row actions. Standalone inline buttons are discouraged.
+
+---
+
+## Basic Table Example
+
+Here is a standard implementation of a resource list showing simple text fields:
 
 ```ts
 import { rolesList } from 'waldur-js-client';
@@ -61763,6 +62350,7 @@ import { translate } from '@/i18n';
 import Table from '@/table/Table';
 import { createFetcher } from '@/table/api';
 import { useTable } from '@/table/useTable';
+import { renderFieldOrDash } from '@/table/utils';
 
 export const RolesList = () => {
   const tableProps = useTable({
@@ -61776,15 +62364,15 @@ export const RolesList = () => {
       columns={[
         {
           title: translate('Name'),
-          render: ({ row }) => row.name,
+          render: ({ row }) => renderFieldOrDash(row.name),
         },
         {
           title: translate('Description'),
-          render: ({ row }) => row.description,
+          render: ({ row }) => renderFieldOrDash(row.description),
         },
         {
           title: translate('Assigned users count'),
-          render: ({ row }) => row.users_count,
+          render: ({ row }) => renderFieldOrDash(row.users_count),
         },
       ]}
     />
@@ -61792,456 +62380,322 @@ export const RolesList = () => {
 };
 ```
 
-Column definition consists of two mandatory fields: `title` and `render`.
+Column definitions require two mandatory fields: `title` (column header label) and `render` (cell content rendering component/function).
 
-## fetchData property
+---
 
-The fetchData property is a function that retrieves data for the table. It should return a promise that resolves to an object containing `rows` (required) and optionally `resultCount` and `nextPage` for pagination.
+### Table Component: Layout Wrappers & Portals
+<!-- Source: docs/developer-guide/ui/table/layout-wrappers.md -->
 
-### Using createFetcher with SDK functions
+# Table Component: Layout Wrappers & Portals
 
-The recommended way is to use `createFetcher` with SDK functions from `waldur-js-client`:
+When rendering multiple tables within tabs, use the `TableWithTabs` wrapper component.
 
-```ts
-import { usersList } from 'waldur-js-client';
-import { createFetcher } from '@/table/api';
+---
 
-const tableProps = useTable({
-  table: 'UsersList',
-  fetchData: createFetcher(usersList),
-});
+## Table with Tabs Wrapper Component (`TableWithTabs`)
+
+`TableWithTabs` (`src/table/TableWithTabs.tsx`) is a layout wrapper that renders standard Bootstrap Nav tabs. Each tab maps to a lazy-loaded child component.
+
+This wrapper manages:
+
+- Active tab state.
+- Query parameter synchronization in the URL.
+- **Portals** passed down to child tables, allowing them to render search bars, reload triggers, and action buttons directly into the parent card's shared header toolbar.
+
+### Basic Usage
+
+```tsx
+import { lazyComponent } from '@/core/lazyComponent';
+import { translate } from '@/i18n';
+import { TableWithTabs } from '@/table/TableWithTabs';
+
+// Tabs should define a lazy-loaded component to render inside the panel
+const tabs = [
+  {
+    key: 'checklists',
+    title: translate('Checklists'),
+    component: lazyComponent(() =>
+      import('./checklists/ChecklistsTable').then((module) => ({
+        default: module.ChecklistsTable,
+      })),
+    ),
+  },
+  {
+    key: 'analytics',
+    title: translate('Analytics'),
+    component: lazyComponent(() =>
+      import('./analytics/AnalyticsAndReports').then((module) => ({
+        default: module.AnalyticsAndReports,
+      })),
+    ),
+  },
+];
+
+export const ChecklistManagement = () => {
+  return (
+    <TableWithTabs
+      title={translate('Checklist Management')}
+      tabs={tabs}
+      syncWithUrlKey="tab" // Syncs tab key state to ?tab=checklists in the URL
+    />
+  );
+};
 ```
 
-You can pass options to customize the request:
+---
 
-```ts
-import { projectsList } from 'waldur-js-client';
+## Component Properties
 
-const tableProps = useTable({
-  table: 'ProjectsList',
-  fetchData: createFetcher(projectsList, {
-    // Additional query parameters
-    query: { is_active: true },
-    // Path parameters for nested resources
-    path: { customer_uuid: customerId },
-  }),
-});
+| Property | Type | Description |
+|----------|------|-------------|
+| `title` | `ReactNode` | Card title text / elements. |
+| `subtitle` | `ReactNode` | Optional card subtitle. |
+| `tabs` | `TableTab[]` | Array of tab settings (each must have a `component` key). |
+| `syncWithUrlKey` | `string` | Query parameter key used to sync the active tab in the URL (optional). |
+| `data` | `Record<string, any>` | Optional properties/payload automatically passed down to all child tab components. |
+| `headerActions` | `ReactNode` | Actions rendered directly next to the tab navigation list. |
+| `actions` | `ReactNode` or `Array<{ activeKeys, component }>` | Actions rendered in the header toolbar. |
+
+---
+
+## Child Components Integration (Portals)
+
+When rendering a standard `<Table>` component inside a `TableWithTabs` pane, the tab wrapper automatically passes a `portal` prop containing DOM element references. You **must** forward this `portal` prop to your `<Table>` component to ensure its toolbar buttons and refresh buttons render in the correct card header slot:
+
+```tsx
+// Inside ChecklistsTable component:
+export const ChecklistsTable = ({ portal, ...props }) => {
+  const tableProps = useTable({
+    table: 'checklists',
+    fetchData: createFetcher(checklistsList),
+  });
+
+  return (
+    <Table
+      {...tableProps}
+      portal={portal} // Critical for card toolbar styling!
+      columns={columns}
+      hasQuery
+    />
+  );
+};
 ```
 
-### Using a parser to transform response data
+---
 
-When the API returns data in a nested structure, use the `parser` option:
+### Table Component: Row Actions & Selection
+<!-- Source: docs/developer-guide/ui/table/row-actions.md -->
 
-```ts
-import { checklistRetrieve } from 'waldur-js-client';
+# Table Component: Row Actions & Selection
 
-const tableProps = useTable({
-  table: 'QuestionsList',
-  fetchData: createFetcher(checklistRetrieve, {
-    path: { uuid: checklistId },
-    // Extract questions array from the response object
-    parser: (data) => data.questions,
-  }),
-});
-```
+Tables support interactive items, row actions, expandable sections, and multi-row selection.
 
-### Custom fetchData function
+---
 
-For static data or custom data sources, create a custom fetcher:
+## Row Actions
 
-```ts
-const fetchData = () => Promise.resolve({
-  rows: resource.items,
-  resultCount: resource.items.length,
-});
+Use the `rowActions` prop to render action menus on each row.
 
-const tableProps = useTable({
-  table: 'StaticList',
-  fetchData,
-});
-```
+### 1. Dropdown Action Menu (Recommended)
 
-## Type safety
+For a clean and consistent UI, group row-level actions into a 3-dots dropdown menu using `ActionsDropdownComponent` and `ActionItem`:
 
-The Table component supports TypeScript type inference. When using `createFetcher` with SDK functions, the row type is automatically inferred from the SDK function's return type.
+```tsx
+import { FC } from 'react';
+import { PencilSimple, Trash } from '@phosphor-icons/react';
 
-### Automatic type inference
+import { translate } from '@/i18n';
+import { ActionItem } from '@/resource/actions/ActionItem';
+import { ActionsDropdownComponent } from '@/table/ActionsDropdown';
 
-```ts
-import { Project, projectsList } from 'waldur-js-client';
+interface RowActionsProps {
+  row: MyRowType;
+  refetch: () => void;
+}
 
-const tableProps = useTable({
-  table: 'ProjectsList',
-  fetchData: createFetcher(projectsList),
-});
+export const RowActions: FC<RowActionsProps> = ({ row, refetch }) => {
+  const onDelete = () => handleDelete(row).then(refetch);
 
-// columns are type-checked against Project type
+  // Return null if no actions are available
+  if (row.status === 'completed') {
+    return null;
+  }
+
+  return (
+    <ActionsDropdownComponent>
+      <ActionItem
+        title={translate('Edit')}
+        action={() => handleEdit(row)}
+        iconNode={<PencilSimple weight="bold" />}
+      />
+      <ActionItem
+        title={translate('Delete')}
+        action={onDelete}
+        iconNode={<Trash weight="bold" />}
+        className="text-danger"
+        iconColor="danger"
+      />
+    </ActionsDropdownComponent>
+  );
+};
+
+// Usage inside Table:
 <Table
   {...tableProps}
-  columns={[
-    {
-      title: 'Name',
-      render: ({ row }) => row.name, // row is typed as Project
-    },
-    {
-      title: 'Invalid',
-      render: ({ row }) => row.invalid_field, // TypeScript error!
-    },
-  ]}
+  columns={columns}
+  rowActions={({ row }) => <RowActions row={row} refetch={tableProps.fetch} />}
 />
 ```
 
-### Explicit type parameter
+#### ActionItem Properties
 
-For custom fetchers or when you need explicit typing, use the generic parameter:
+| Property | Type | Description |
+|----------|------|-------------|
+| `title` | `string` | Action label text. |
+| `action` | `() => void` | Click handler callback. |
+| `iconNode` | `ReactNode` | Icon element (use Phosphor icons with `weight="bold"`). |
+| `disabled` | `boolean` | Disables the menu item. |
+| `className` | `string` | Custom CSS class string (e.g. `'text-danger'`). |
+| `iconColor` | `string` | Visual variant color theme (e.g. `'danger'`, `'success'`). |
 
-```ts
-interface MyRow {
-  id: string;
-  name: string;
-}
+### 2. Inline Row Action Buttons
 
-<Table<MyRow>
-  {...tableProps}
-  columns={[
-    {
-      title: 'Name',
-      render: ({ row }) => row.name, // row is typed as MyRow
-    },
-  ]}
-/>
-```
+For simple tables with very few actions, you can render buttons directly in the row cells:
 
-## Export feature
+```tsx
+import { CompactActionButton } from '@/table/CompactActionButton';
 
-Table component supports data export functionality. To enable it:
-
-1. Add `enableExport` prop to the Table component
-2. Configure export options in column definitions:
-
-```ts
-{
-  title: 'Name',
-  render: ({ row }) => row.name,
-  export: 'name' // Use field directly
-}
-
-{
-  title: 'Status',
-  render: ({ row }) => row.status,
-  export: row => formatStatus(row.status) // Custom formatter
-}
-
-{
-  title: 'Actions',
-  render: ({ row }) => <Button/>,
-  export: false // Exclude from export
-}
-```
-
-Optionally, specify `exportTitle` property for columns to customize the header in the exported file:
-
-```ts
-{
-  title: 'Name',
-  render: ({ row }) => row.name,
-  export: 'name',
-  exportTitle: 'User Name' // Custom header for export
-}
-```
-
-## Optional columns
-
-Table component supports optional columns that can be toggled by users. Optional columns allow users to customize their view by showing/hiding specific columns.
-
-1. Add `hasOptionalColumns` prop to enable optional columns functionality
-2. Configure columns with:
-
-    - `id` - unique column identifier
-    - `keys` - defines which fields should be requested from API (allows optimization by fetching only needed fields)
-    - `optional` - mark column as optional to allow toggling
-
-3. For actions column, you can specify mandatory fields that should always be fetched from API using `mandatoryFields` prop.
-
-Example:
-
-```ts
-export const UsersTable = () => {
-  const tableProps = useTable({
-    table: 'users',
-    fetchData: createFetcher(usersList),
-  });
-
-  return (
-    <Table
-      {...tableProps}
-      hasOptionalColumns
-      mandatoryFields={['uuid', 'name']}
-      columns={[
-        {
-          id: 'name',
-          title: translate('Name'),
-          render: ({ row }) => row.name,
-          optional: true,
-          keys: ['name'],
-        },
-        {
-          id: 'email',
-          title: translate('Email'),
-          render: ({ row }) => row.email,
-          optional: true,
-          keys: ['email'],
-        },
-        {
-          id: 'role',
-          title: translate('Role'),
-          render: ({ row }) => row.role,
-          optional: true,
-          keys: ['role', 'permissions'],
-        },
-      ]}
+const RowActions = ({ row }) => (
+  <div className="d-flex gap-2">
+    <CompactActionButton
+      action={() => handleEdit(row)}
+      title={translate('Edit')}
+      iconNode={<PencilSimple />}
     />
-  );
-};
-```
-
-## Ordering feature
-
-Table component supports column ordering. To enable it:
-
-1. Add `orderField` property to columns that should be sortable
-2. Clicking on column headers will toggle between ascending and descending order
-
-Example:
-
-```ts
-export const UsersTable = () => {
-  const tableProps = useTable({
-    table: 'users',
-    fetchData: createFetcher(usersList),
-  });
-
-  return (
-    <Table
-      {...tableProps}
-      columns={[
-        {
-          title: translate('Name'),
-          render: ({ row }) => row.name,
-          orderField: 'name',
-        },
-        {
-          title: translate('Email'),
-          render: ({ row }) => row.email,
-          orderField: 'email',
-        },
-      ]}
-    />
-  );
-};
-```
-
-## Filters feature
-
-Filters are defined using the `filters` prop of the Table component. This prop accepts a React component that renders the filter UI.
-
-The recommended way to implement filters is using autonomous filter components from `@/table`. These components automatically connect to the table's Redux state.
-
-Example:
-
-```ts
-import { StringFilter } from '@/table';
-import { useFilterValues } from '@/table/useFilterValues';
-
-export const FilterSet = () => (
-  <StringFilter
-    title={translate('Filter field')}
-    name="custom"
-    placeholder={translate('Search...')}
-  />
+  </div>
 );
 
-export const FilteredList = () => {
-  const values = useFilterValues('FilteredList');
-  const tableProps = useTable({
-    table: 'FilteredList',
-    fetchData: createFetcher(hooksList),
-    filter: values,
+<Table {...tableProps} columns={columns} rowActions={RowActions} />
+```
+
+---
+
+## Expandable Rows
+
+Expandable rows show extra details without navigating away.
+
+```tsx
+const ExpandableRowContent = ({ row }) => (
+  <div className="p-4">
+    <h5>{row.name}</h5>
+    <p>Description: {row.description}</p>
+  </div>
+);
+
+<Table
+  {...tableProps}
+  columns={columns}
+  expandableRow={ExpandableRowContent}
+/>
+```
+
+### Conditional Expandability (`isRowExpandable`)
+
+By default, all rows display carets if `expandableRow` is present. Disable card expansion for specific rows using `isRowExpandable`:
+
+```tsx
+<Table
+  {...tableProps}
+  columns={columns}
+  expandableRow={ExpandableRowContent}
+  isRowExpandable={(row) => row.has_details} // Returns true or false
+/>
+```
+
+---
+
+## Bulk Selection and Actions
+
+Tables support row selection and bulk batch actions in the toolbar.
+
+1. Set `enableMultiSelect` to render selection checkboxes on each row.
+2. Pass a component to `multiSelectActions` to render bulk operations on the selected items. It receives the selected `rows` and `refetch` callback.
+3. For destructive actions, use the `RemovalActionButton` to prompt users with a confirmation panel before execution.
+
+```tsx
+import { RemovalActionButton } from '@/table/RemovalActionButton';
+import { useManagedMutation } from '@/modal/useManagedMutation';
+
+const BulkDeleteButton = ({ rows, refetch }) => {
+  const { mutate, isPending } = useManagedMutation({
+    mutationFn: () => deleteMultipleItems(rows.map(r => r.uuid)),
+    successMessage: translate('Selected items deleted.'),
+    refetch,
+    confirmation: {
+      title: translate('Delete selected items'),
+      body: translate('Are you sure you want to delete {count} items?', { count: rows.length }),
+    }
   });
 
   return (
-    <Table
-      {...tableProps}
-      filters={<FilterSet />}
+    <RemovalActionButton
+      title={translate('Delete')}
+      action={mutate}
+      disabled={isPending}
     />
   );
 };
+
+// Usage in Table:
+<Table
+  {...tableProps}
+  columns={columns}
+  enableMultiSelect
+  multiSelectActions={BulkDeleteButton}
+/>
 ```
 
-### Filter components
+---
 
-The following autonomous filter components are available in `@/table`:
+### Table Component: Visual Customizations
+<!-- Source: docs/developer-guide/ui/table/visual-customizations.md -->
 
-- `StringFilter`: Simple text input
-- `SelectFilter`: Dropdown for static options
-- `AsyncSelectFilter`: Dropdown for API-based options
-- `BooleanFilter`: Checkbox for boolean values
-- `DateFilter`: Date picker
-- `DateTimeFilter`: Date and time picker
-- `NumberFilter`: Number input
-- `NumberRangeFilter`: Range input for numbers
+# Table Component: Visual Customizations
 
-### Filter positions
+Waldur Homeport tables support standard rendering styles, layouts, and display options.
 
-The `filterPosition` prop controls where filters are displayed:
+---
 
-| Position | Behavior |
-|----------|----------|
-| `header` | Filters always visible in card header |
-| `menu` | Filters in dropdown menu, toggled with filter button |
-| `sidebar` | Filters in drawer/sidebar panel |
+## Visual Styling Classes
 
-### Filter storage and badges
+Apply standard CSS class strings to target table wrapper elements:
 
-When filters are applied, they are stored in `filtersStorage` (Redux state) which is used to:
+| Prop/Location | Type | Description |
+|---|---|---|
+| `className` (Column) | `string` | Applied directly to `<td>` tags in that column (e.g. `'text-end'`). |
+| `headerClassName` (Column) | `string` | Applied directly to column title `<th>` tags. |
+| `headerClassName` (Table) | `string` | Applied to the Card Header toolbar wrapper. |
+| `titleClassName` (Table) | `string` | Applied to the card title element. |
+| `bodyClassName` (Table) | `string` | Applied to the main `Card.Body` wrapper. |
 
-- Display filter badges/chips in the filter bar
-- Show filter count on the filter toggle button
-- Auto-expand the filter bar when filters are loaded from URL
+---
 
-The flow:
+## Grid Mode Layout
 
-```text
-User changes autonomous filter (e.g. StringFilter)
-    ↓
-Component dispatches SET_FILTER to Redux
-    ↓
-Table state updated in Redux (filtersStorage)
-    ↓
-useTable hook receives new state
-    ↓
-Table re-fetches with new filter
-    ↓
-Filter badges rendered from filtersStorage
-```
+Tables can alternate between lists and grid cards. In grid mode, data is displayed as cards in a responsive grid layout.
 
-### URL query parameter sync
+- **`gridItem`**: React component class used to render each grid cell card.
+- **`gridSize`**: Responsive grid column sizes config object (e.g. `gridSize={{ sm: 6, md: 4 }}`).
+- **`gridSpace`**: Spacing level (0 to 6) between cards, mapped to the Bootstrap row gutter class `g-{gridSpace}` (defaults to `6`).
+- **`gridFixedWidth`**: Boolean. When enabled, renders grid items inside a fixed CSS Grid container (`className="grid-fixed-width"`) with a fixed card size instead of responsive columns.
+- **`initialMode`**: Default display mode on load (`'table'` or `'grid'`, defaults to `'table'`).
 
-Filters can be synced to URL query parameters for shareable links. `useTable` provides built-in support for this via `syncFiltersToURL` option.
-
-```ts
-const tableProps = useTable({
-  table: 'MyList',
-  fetchData: createFetcher(myList),
-  syncFiltersToURL: true,
-  initialFilters: { status: 'active' }, // Default values
-});
-```
-
-When `syncFiltersToURL` is enabled:
-
-1. **Initial load**: `useTable` reads URL parameters on mount and populates `filtersStorage`.
-2. **Automatic updates**: Any changes to filters are automatically reflected in the URL.
-3. **Default values**: `initialFilters` are used if corresponding URL parameters are missing.
-
-#### URL format
-
-Filters are stored in URL query parameters with compact encoding:
-
-| Value type | URL format | Example |
-|------------|------------|---------|
-| String | Direct value | `?name=test` |
-| Object with uuid | `uuid::name` | `?org=abc123::My+Org` |
-| Array of objects | `[uuid1::name1, uuid2::name2]` | `?tags=["a1::T1","a2::T2"]` |
-| Boolean | `true`/`false` | `?active=true` |
-
-The compact `uuid::name` format keeps URLs shorter while preserving display names for filter badges without needing additional API calls.
-
-#### Navigation behavior
-
-When navigating between pages in the SPA:
-
-1. **URL params persist** - query string is preserved during navigation.
-2. **Table initialization** - `useTable` reads the URL to populate the Redux state on mount.
-3. **Auto-show filter bar** - when filters are present in Redux, the filter bar auto-expands.
-
-```text
-Page A with filter → Navigate to Page B → Navigate back to Page A
-     ↓                      ↓                      ↓
-URL updated            URL preserved         URL read, state populated
-with filters           (SPA routing)         Table re-fetches
-```
-
-### Default/initial filters
-
-To set default filter values that can be overridden by URL params, use the `initialFilters` option in `useTable`:
-
-```ts
-const tableProps = useTable({
-  table: 'MyList',
-  fetchData: createFetcher(myList),
-  syncFiltersToURL: true,
-  initialFilters: { status: 'active' }, // URL params take precedence over defaults
-});
-```
-
-### Cross-page filters (Resources sidebar)
-
-The Resources sidebar filter (`src/navigation/sidebar/resources-filter/`) is a special case that:
-
-1. Syncs `organization` and `project` filters across multiple resource tables
-2. Persists to **localStorage** for session persistence
-3. Syncs to URL for shareable links
-
-Priority order:
-
-1. **URL params** (highest) - for shareable links
-2. **localStorage** - for session persistence
-3. **No filter** - shows all resources
-
-### Inline filters
-
-The feature allows users to quickly filter table data by clicking values directly in the table cells, without manually setting filters. When column has `inlineFilter` property enabled:
-
-1. A filter icon appears when hovering over cells in that column
-2. Clicking the icon adds a filter using the cell's value
-3. The `inlineFilter` function transforms row data into the filter value format
-
-Example:
-
-```ts
-{
-  title: translate('Organization'),
-  render: ({ row }) => row.customer_name,
-  filter: 'organization',  // Enable filtering
-  inlineFilter: (row) => ({
-    // Transform row data into filter value
-    name: row.customer_name,
-    uuid: row.customer_uuid
-  })
-}
-```
-
-## Grid mode
-
-Table component supports switching between table and grid views. In grid mode, data is displayed as cards in a responsive grid layout.
-
-To enable grid mode:
-
-1. Add `gridItem` prop to specify the component used to render each item in grid view
-2. Optionally customize grid layout using `gridSize` prop which accepts Bootstrap column properties
-3. Set `initialMode` to 'grid' if you want grid view by default (table view is default)
-
-Example:
-
-```ts
+```tsx
 export const GridListItem = ({ row }) => (
   <Card>
-    <CardHeader>{row.name}</CardHeader>
-    <CardBody>
-      <p>{row.description}</p>
-      <small>Users: {row.users_count}</small>
-    </CardBody>
+    <CardHeader>{renderFieldOrDash(row.name)}</CardHeader>
+    <CardBody>{renderFieldOrDash(row.description)}</CardBody>
   </Card>
 );
 
@@ -62255,341 +62709,139 @@ export const GridList = () => {
     <Table
       {...tableProps}
       gridItem={GridListItem}
-      gridSize="col-sm-6 col-md-4"
+      gridSize={{ sm: 6, md: 4 }}
+      gridSpace={4}
       initialMode="grid"
     />
   );
 };
 ```
 
-## Table tabs
+### Dynamic Layout Resolution (`initialModeResolver`)
 
-Table component supports tabs for switching between different views or data sets within the same table context. Tabs can navigate to different routes or update URL parameters.
+Use `initialModeResolver` to choose the default layout dynamically depending on the dataset size:
 
-### Basic tabs
-
-Define tabs using an array of `TableTab` objects:
-
-```ts
-import { TableTab } from '@/table/types';
-
-const tabs: TableTab[] = [
-  {
-    key: 'active',
-    title: translate('Active'),
-    params: { status: 'active' },
-  },
-  {
-    key: 'archived',
-    title: translate('Archived'),
-    params: { status: 'archived' },
-  },
-];
-
-<Table {...tableProps} tabs={tabs} />
-```
-
-### Tab properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `key` | `string` or `number` | Unique identifier for the tab |
-| `title` | `ReactNode` | Tab label (can include badges, icons) |
-| `params` | `Record<string, any>` | URL parameters to set when tab is selected |
-| `state` | `string` | Optional UI-router state to navigate to |
-| `default` | `boolean` | Mark as default tab when no other tab matches |
-
-### Default tab
-
-When navigating to a page without specific tab parameters, no tab will be highlighted by default. Use the `default: true` property to specify which tab should be selected when no URL parameters match:
-
-```ts
-export const useReviewerPoolTabs = (): TableTab[] => {
-  return useMemo(
-    () => [
-      {
-        key: 'pool',
-        title: translate('Pool'),
-        params: { tab: 'reviewer-pool', pool_tab: 'pool' },
-        default: true, // Selected when no pool_tab parameter
-      },
-      {
-        key: 'discovery',
-        title: translate('Discovery'),
-        params: { tab: 'reviewer-pool', pool_tab: 'discovery' },
-      },
-      {
-        key: 'assignments',
-        title: translate('Assignments'),
-        params: { tab: 'reviewer-pool', pool_tab: 'assignments' },
-      },
-    ],
-    [],
-  );
-};
-```
-
-### Preserving parent tab context
-
-When using subtabs within a parent tab context, you must include all parent tab parameters in each subtab's `params`. The `TableTabs` component replaces all URL parameters when navigating, so omitting parent params will cause navigation to lose context.
-
-**Wrong** - loses parent tab context:
-
-```ts
-// Parent tab is selected via ?tab=reviewer-pool
-// These subtabs will navigate to ?pool_tab=xxx, losing tab=reviewer-pool
-const tabs: TableTab[] = [
-  {
-    key: 'pool',
-    title: translate('Pool'),
-    params: { pool_tab: 'pool' }, // Missing tab: 'reviewer-pool'!
-  },
-  {
-    key: 'assignments',
-    title: translate('Assignments'),
-    params: { pool_tab: 'assignments' }, // Will redirect to wrong parent tab
-  },
-];
-```
-
-**Correct** - preserves parent tab context:
-
-```ts
-// Include the parent tab parameter in all subtabs
-const tabs: TableTab[] = [
-  {
-    key: 'pool',
-    title: translate('Pool'),
-    params: { tab: 'reviewer-pool', pool_tab: 'pool' },
-    default: true,
-  },
-  {
-    key: 'assignments',
-    title: translate('Assignments'),
-    params: { tab: 'reviewer-pool', pool_tab: 'assignments' },
-  },
-];
-```
-
-### Tabs with route navigation
-
-Tabs can navigate to different routes using the `state` property:
-
-```ts
-const tabs: TableTab[] = [
-  {
-    key: 'reviews',
-    title: translate('Reviews'),
-    state: 'reviews-all-reviews',
-  },
-  {
-    key: 'invitations',
-    title: translate('Invitations'),
-    state: 'reviews-invitations',
-  },
-];
-```
-
-### Tabs with counts
-
-Use custom components in `title` to show counts or badges:
-
-```ts
-const TabWithCount = ({ label, count }) => (
-  <span className="d-flex align-items-center gap-2">
-    {label}
-    {count > 0 && (
-      <Badge variant="primary" size="sm" pill>
-        {count}
-      </Badge>
-    )}
-  </span>
-);
-
-const tabs = [
-  {
-    key: 'pending',
-    title: <TabWithCount label={translate('Pending')} count={pendingCount} />,
-    params: { status: 'pending' },
-  },
-];
-```
-
-## Expandable rows
-
-Table supports expandable rows to show additional details for each row. When enabled, rows can be expanded/collapsed by clicking on them.
-
-```ts
-const ExpandableRowContent = ({ row }) => (
-  <div className="p-4">
-    <h5>{row.name}</h5>
-    <p>{row.description}</p>
-    <dl>
-      <dt>Created</dt>
-      <dd>{formatDate(row.created)}</dd>
-      <dt>Status</dt>
-      <dd>{row.status}</dd>
-    </dl>
-  </div>
-);
-
+```tsx
 <Table
   {...tableProps}
-  columns={columns}
-  expandableRow={ExpandableRowContent}
+  gridItem={GridListItem}
+  initialModeResolver={(resultCount) => (resultCount < 5 ? 'grid' : 'table')}
 />
 ```
 
-The expandable row component receives the full `row` object as a prop.
+---
 
-## Row actions
+## Headers & ActionBar Visibility
 
-Row actions add action buttons to each row. Use `rowActions` prop with a component that receives the row data.
+Adjust header toolbar visibility and standalone modes:
 
-### Dropdown menu (recommended)
+- **`hasActionBar={false}`**: Hides the card header toolbar (title, actions, search) entirely.
+- **`hasHeaders={false}`**: Hides column titles (`<thead>`).
+- **`hideIfEmpty={true}`**: Renders nothing (`null`) if the dataset contains no items.
+- **`standalone={true}`**: Renders the table directly without the wrapping Metronic Card layout (prevents double borders/paddings when nested in tabs, drawers, or cards).
 
-For a clean UI, use `ActionsDropdownComponent` with `ActionItem` to create a 3-dots dropdown menu:
+---
 
-```ts
-import { FC, useCallback } from 'react';
-import { PencilSimple, Trash, EnvelopeSimple } from '@phosphor-icons/react';
+## Table Title & Resource Customization
 
-import { translate } from '@/i18n';
-import { useManagedMutation } from '@/modal/useManagedMutation';
-import { ActionItem } from '@/resource/actions/ActionItem';
-import { ActionsDropdownComponent } from '@/table/ActionsDropdown';
+- **`title`**: String or React Node overriding the table header title.
+- **`hideTitle`**: Boolean to hide the title header.
+- **`alterTitle`**: Auto-resolved page title calculated by `useTable` from breadcrumbs. Used as a default fallback when `title` is not provided.
+- **`subtitle`**: Secondary text displayed below the title.
+- **`verboseName`**: Defines the resource type name. It is automatically title-cased as a fallback for the title header and used dynamically in empty and search-miss placeholder screens (e.g., "There are no projects yet.", "No projects found matching current filters.").
+- **`emptyMessage`**: React Node to completely override the text displayed when the table contains zero rows.
 
-interface RowActionsProps {
-  row: MyRowType;
-  refetch: () => void;
-}
+---
 
-// Usage with useManagedMutation
-export const RowActions: FC<RowActionsProps> = ({ row, refetch }) => {
-  const { mutate: handleDelete, isPending: isDeleting } = useManagedMutation({
-    mutationFn: () => deleteItem({ path: { uuid: row.uuid } }),
-    successMessage: translate('Item deleted successfully.'),
-    errorMessage: translate('Failed to delete item.'),
-    refetch,
-    confirmation: {
-      title: translate('Delete item'),
-      body: translate('Are you sure you want to delete {name}?', {
-        name: row.name,
-      }),
-    },
-  });
+## Table-Wide Dropdown Actions
 
-  // NOTE: Use .mutate() for button actions, not .mutateAsync()
-  const onDelete = () => handleDelete({});
+For list actions that affect the table globally, instead of using `tableActions` which renders buttons directly in the toolbar, you can group them into a 3-dots dropdown menu using the `dropdownActions` prop. Customize the size using `dropdownActionsSize` (`'sm'` or `'lg'`, default: `'lg'`):
 
-  // Conditionally show actions based on row state
-  const canEdit = row.status === 'draft';
-  const canDelete = row.status !== 'completed';
-
-  // Return null if no actions available
-  if (!canEdit && !canDelete) {
-    return null;
-  }
-
-  return (
-    <ActionsDropdownComponent>
-      {canEdit && (
-        <ActionItem
-          title={translate('Edit')}
-          action={() => handleEdit(row)}
-          iconNode={<PencilSimple weight="bold" />}
-        />
-      )}
-      {canDelete && (
-        <ActionItem
-          title={translate('Delete')}
-          action={onDelete}
-          iconNode={<Trash weight="bold" />}
-          className="text-danger"
-          iconColor="danger"
-          disabled={isDeleting}
-        />
-      )}
-    </ActionsDropdownComponent>
-  );
-};
-
-// Usage in table
+```tsx
 <Table
   {...tableProps}
-  columns={columns}
-  rowActions={({ row }) => <RowActions row={row} refetch={tableProps.fetch} />}
-/>
-```
-
-### ActionItem properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `title` | `string` | Action label text |
-| `action` | `() => void` | Click handler |
-| `iconNode` | `ReactNode` | Icon component (use Phosphor icons with `weight="bold"`) |
-| `disabled` | `boolean` | Disable the action |
-| `className` | `string` | Additional CSS classes (e.g., `text-danger`) |
-| `iconColor` | `string` | Icon color variant (e.g., `danger`, `success`) |
-
-### Inline buttons
-
-For simple cases with few actions, use inline buttons:
-
-```ts
-const RowActions = ({ row }) => (
-  <div className="d-flex gap-2">
-    <ActionButton
-      action={() => handleEdit(row)}
-      title={translate('Edit')}
-      iconNode={<PencilIcon />}
-    />
-    <ActionButton
-      action={() => handleDelete(row)}
-      title={translate('Delete')}
-      iconNode={<TrashIcon />}
-      variant="danger"
-    />
-  </div>
-);
-
-<Table {...tableProps} columns={columns} rowActions={RowActions} />
-```
-
-## Table actions
-
-Table actions appear in the table header toolbar. Use for actions that affect the whole table or for creating new items:
-
-```ts
-<Table
-  {...tableProps}
-  columns={columns}
-  tableActions={
+  dropdownActions={
     <>
-      <button className="btn btn-primary btn-sm" onClick={handleCreate}>
-        <PlusIcon className="me-1" />
-        {translate('Create new')}
-      </button>
-      <button className="btn btn-outline-secondary btn-sm" onClick={handleExport}>
-        <DownloadIcon className="me-1" />
-        {translate('Export')}
-      </button>
+      <DropdownItem onClick={handleBulkImport}>{translate('Import from file')}</DropdownItem>
+      <DropdownItem onClick={handleDeleteAll}>{translate('Clear list')}</DropdownItem>
     </>
   }
 />
 ```
 
-## Complex table example
+---
 
-Here's an example of a complex table combining multiple features:
+## Cache & Pagination Modifiers
+
+- **`staleTime`**: Pass inside `useTable` (in milliseconds) to configure the underlying React Query cache, preventing the table from executing API queries on remount if data has been fetched within the stale time window.
+- **`initialPageSize`**: Pass directly to `<Table>` to override the default pagination page size (which defaults to 10). Use the `PAGE_SIZE_COMPACT` (5) constant from `@/table/constants` for embedded/drawer tables, or `PAGE_SIZE_FULL` (10) for primary list views.
+- **`rowClass`**: Pass a callback to apply custom styling to `<tr>` elements based on row data:
+
+  ```ts
+  rowClass={({ row }) => row.status === 'erred' ? 'table-danger' : ''}
+  ```
+
+- **`equalColWidth`**: Set to `true` to give all columns without an explicit width set the exact same width. By default, the first data column is allocated double the width of the remaining columns.
+- **Row & Card Hover Shadows (`hoverShadow`, `hoverable`)**:
+  - `hoverShadow`: Defaults to `true`, displaying shadow elevation on cell/card hover. Can be customized with a boolean or a mode config object: `hoverShadow={{ table: true, grid: false }}`.
+  - `hoverable`: Set to `true` to enable Bootstrap's `.table-hover` background coloring on row hover. Defaults to `false`.
+
+---
+
+## Placeholders Customization
+
+Customize empty/error displays:
+
+- **`placeholderComponent`**: React Node rendering a custom blank slate instead of the default icon/text.
+- **`placeholderActions`**: Action buttons rendered below the placeholder.
+- **`placeholderHasRetry`**: Defaults to `true` (renders a retry link on error). Set to `false` to hide the link.
+
+---
+
+### Table Component Documentation
+<!-- Source: docs/developer-guide/ui/tables.md -->
+
+# Table Component Documentation
+
+Waldur Homeport uses a unified table structure to display list data, grids, search queries, and custom filters.
+
+To make table integration rules, properties, and layouts easier to navigate, the documentation is divided into **8 modular pillars**:
+
+---
+
+## Documentation Pillars
+
+| Pillar | Description |
+| :--- | :--- |
+| **[Pillar 1: Getting Started](./table/getting-started.md)** | Core import rules, Null/Empty wrappers (`renderFieldOrDash`), and a basic example. |
+| **[Pillar 2: Data Fetching & Type Safety](./table/fetching.md)** | `fetchData` handlers, `createFetcher` (SDK functions), custom mock fetchers, `createClientPaginatedFetcher` (static lists), search query input (`queryField`), and type safety. |
+| **[Pillar 3: Column Setup & Configuration](./table/column-setup.md)** | Column parameters (width, alignment, copying, ellipsis, click blocking), sorting, optional columns, and key fetching. |
+| **[Pillar 4: Row Actions & Selection](./table/row-actions.md)** | 3-dots action menus (`ActionsDropdown` + `ActionItem`), row expansion (`isRowExpandable`), multi-select, and bulk toolbars. |
+| **[Pillar 5: Filters & URL Sync](./table/filters.md)** | OpenAPI generated filters, Redux caching, syncing to URL query formatting (`uuid::name`), and cell inline filtering. |
+| **[Pillar 6: Visual Customizations](./table/visual-customizations.md)** | Grid layouts (`gridItem` + `gridSize` + `gridSpace`), custom empty placeholders, header titles, styling class triggers, and standalone mode. |
+| **[Pillar 7: Layout Wrappers & Portals](./table/layout-wrappers.md)** | Rendering multiple tables within tabs (`TableWithTabs`) and forwarding rendering portals (`portal`). |
+| **[Pillar 8: Form Integration](./table/form-integration.md)** | Embedding tables as input fields in `react-final-form` (`fieldType`, `fieldName`, `rowValidate`). |
+
+---
+
+## Complex Table Example
+
+Below is a complete, real-world example demonstrating how multiple advanced features (automatic titles, filters, subtabs, expandable rows, and optional columns) are combined:
 
 ```ts
 import { useMemo } from 'react';
-import { SelectFilter } from '@/table';
+import Table from '@/table/Table';
+import { useTable } from '@/table/useTable';
+import { createFetcher } from '@/table/api';
 import { useFilterValues } from '@/table/useFilterValues';
+import { renderFieldOrDash } from '@/table/utils';
+import { Badge } from 'react-bootstrap';
+import { translate } from '@/i18n';
+import { ActionsDropdown } from '@/table/ActionsDropdown';
+import { ActionItem } from '@/resource/actions/ActionItem';
+import { TableTab } from '@/table/types';
 
-// Filter component
+// 1. Filter component
 const ReviewerPoolFilter = () => (
   <SelectFilter
     title={translate('Status')}
@@ -62601,7 +62853,7 @@ const ReviewerPoolFilter = () => (
   />
 );
 
-// Tabs hook - defines sub-navigation within the table
+// 2. Tabs hook - defines sub-navigation within the table
 const usePoolTabs = (): TableTab[] => {
   return useMemo(
     () => [
@@ -62621,7 +62873,7 @@ const usePoolTabs = (): TableTab[] => {
   );
 };
 
-// Expandable row component
+// 3. Expandable row component
 const ExpandableRow = ({ row }) => (
   <div className="p-4">
     <h6>{row.reviewer_name}</h6>
@@ -62630,12 +62882,12 @@ const ExpandableRow = ({ row }) => (
   </div>
 );
 
-// Main table component
+// 4. Main Section Component
 export const ReviewerPoolSection = ({ call }) => {
   const values = useFilterValues('ReviewerPool');
   const tabs = usePoolTabs();
 
-  // Memoize filter to prevent unnecessary re-renders
+  // ALWAYS memoize filter queries to prevent infinite re-render loops!
   const filter = useMemo(
     () => ({
       call_uuid: call.uuid,
@@ -62706,18 +62958,6 @@ export const ReviewerPoolSection = ({ call }) => {
   );
 };
 ```
-
-### Key patterns in complex tables
-
-1. **Memoize filters** - Always wrap filter objects in `useMemo` to prevent infinite re-renders when using values from `useFilterValues`.
-2. **Memoize columns** - Define columns in `useMemo` for performance.
-3. **Use tabs for sub-navigation** - Tabs update URL params, allowing deep linking.
-4. **Mark default tab** - Use `default: true` to highlight the correct tab on initial load.
-5. **Preserve parent tab context** - When using nested subtabs, include parent tab params (e.g., `{ tab: 'reviewer-pool', pool_tab: 'pool' }`) to prevent navigation from losing context.
-6. **Expandable rows for details** - Show additional information without navigating away.
-7. **Optional columns** - Let users customize their view with `optional: true` and `hasOptionalColumns`.
-8. **Autonomous filters** - Use components like `SelectFilter` and `StringFilter` for automatic Redux integration.
-9. **URL synchronization** - Enable `syncFiltersToURL: true` in `useTable` for shared links and session persistence.
 
 ---
 
