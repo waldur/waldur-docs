@@ -204,7 +204,35 @@ function initSearchFilters() {
         }
     }
 
+    // Known top-level documentation sections. Used to strip any leading
+    // version segment that `mike` prepends on the deployed site
+    // (e.g. "latest/admin-guide/..." or "8.1.0/admin-guide/...").
+    var SECTIONS = [
+        'about', 'admin-guide', 'API', 'developer-guide',
+        'integrations', 'integrator-guide', 'user-guide'
+    ];
+
+    function stripVersionPrefix(path) {
+        // Find the earliest known section appearing as a full path segment
+        // and slice the path from there, dropping any version prefix.
+        var best = -1;
+        for (var i = 0; i < SECTIONS.length; i++) {
+            var seg = SECTIONS[i] + '/';
+            var idx = path.indexOf(seg);
+            while (idx !== -1) {
+                if (idx === 0 || path.charAt(idx - 1) === '/') {
+                    if (best === -1 || idx < best) best = idx;
+                    break;
+                }
+                idx = path.indexOf(seg, idx + 1);
+            }
+        }
+        return best > 0 ? path.slice(best) : path;
+    }
+
     function classifyPath(path) {
+        path = stripVersionPrefix(path);
+
         // Changelog
         if (path.indexOf('about/CHANGELOG') === 0) return 'changelog';
 
@@ -224,6 +252,7 @@ function initSearchFilters() {
 
         // Fall through to section-based defaults
         var section = path.split('/')[0];
+        if (section === 'API') return 'reference';
         if (section === 'admin-guide') return 'admin';
         if (section === 'developer-guide') return 'developer';
         if (section === 'integrator-guide' || section === 'integrations') return 'integrations';
