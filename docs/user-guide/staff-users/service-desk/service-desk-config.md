@@ -89,3 +89,64 @@ A popup will appear. Fill in the required fields and click **Update**.
 * **Smax webhook shared secret** - Shared secret expected in the `X-Webhook-Secret` header of inbound SMAX webhook deliveries. If left empty, webhook authentication is not enforced.
 
 ![Smax configuration](../../img/Smax_config.png)
+
+## Synchronising changes back to Waldur (webhooks)
+
+The configuration above lets Waldur **push** tickets to the service desk and poll for updates. To make changes that happen **inside** the service desk (status transitions, new agent comments, resolution) appear in Waldur in near real time, configure an outbound webhook in the service desk system that calls back to Waldur whenever a ticket changes.
+
+Without a webhook, Waldur only learns about changes during the periodic background synchronisation, so updates made in the service desk can be delayed.
+
+### How it works
+
+Each backend exposes a dedicated, unauthenticated receiver endpoint on the Waldur API. When the service desk fires a webhook, Waldur looks up the local issue by the backend ticket ID carried in the payload and re-synchronises that single issue — pulling the latest status and comments, and updating the linked order's output where applicable.
+
+| Backend | Webhook endpoint (relative to the Waldur API host) | Ticket identifier expected in the payload |
+|---------|-----------------------------------------------------|-------------------------------------------|
+| Zammad | `/api/support-zammad-webhook/` | `ticket.id` (Zammad ticket ID) |
+| Atlassian | `/api/support-jira-webhook/` | `issue.key` (Jira issue key) |
+| SMAX | `/api/support-smax-webhook/` | `id` (SMAX request/entity ID) |
+
+So, for an instance served at `https://waldur.example.com`, the Zammad callback URL is `https://waldur.example.com/api/support-zammad-webhook/`.
+
+### Securing the webhook
+
+The receiver endpoints are not protected by the normal Waldur authentication, so anyone who knows the URL could post to them. To prevent this, set a **webhook shared secret** in the corresponding service desk configuration (for example **Zammad webhook shared secret**). Waldur then expects the same value in an `X-Webhook-Secret` HTTP header on every inbound delivery:
+
+* If the shared secret is **empty**, Waldur accepts unauthenticated requests (legacy behaviour).
+* If the shared secret is **set**, Waldur rejects any request that does not carry a matching `X-Webhook-Secret` header with `403 Forbidden`.
+
+!!! warning
+    Because the endpoints are unauthenticated by default, securing them is strongly recommended for any production deployment. Treat the secret like a password and serve Waldur over HTTPS so the header is not exposed in transit.
+
+### Zammad configuration
+
+Zammad sends webhooks via a **webhook** definition that is invoked by a **trigger** (or scheduler). The steps below follow the [Zammad webhook documentation](https://admin-docs.zammad.org/en/latest/manage/webhook/add.html).
+
+1. **Create the webhook in Zammad.** Open the Zammad admin panel and go to **Manage → Webhook → New Webhook**. Configure:
+    * **Name** — for example `Waldur sync`.
+    * **Endpoint** — `https://<your-waldur-host>/api/support-zammad-webhook/`.
+    * **Request method** — `POST`.
+    * **SSL verification** — keep enabled (disable only for self-signed certificates in test setups).
+
+    Leave the **Custom Payload** toggle off. Zammad's [default payload](https://admin-docs.zammad.org/en/latest/manage/webhook/payload.html) already includes the `ticket` object with its `id`, which is the only field Waldur needs to identify the issue.
+
+2. **Invoke the webhook from a trigger.** A webhook does nothing on its own — go to **Manage → Trigger → New Trigger**, set the conditions that should propagate to Waldur (for example *Action is updated* on tickets in the group used for Waldur), and under **Perform Changes** add a **Webhook** action pointing at the webhook created above.
+
+3. **Match the issue.** Waldur reads `ticket.id` from the payload and looks up the local issue whose backend ID equals that value, then re-synchronises its status and comments.
+
+!!! warning
+    Zammad's webhook configuration does **not** support arbitrary custom HTTP headers — it only offers HTTP Basic authentication, a Bearer token, or an HMAC-SHA1 signature, none of which set the `X-Webhook-Secret` header that Waldur checks. To enforce the **Zammad webhook shared secret**, inject the `X-Webhook-Secret` header in a reverse proxy in front of Waldur (e.g. Nginx `proxy_set_header X-Webhook-Secret <secret>;` on the webhook location). If you cannot inject the header, leave the shared secret empty and restrict access to the endpoint by network controls instead.
+
+### Atlassian configuration
+
+1. In Waldur, set a value in the **JIRA webhook shared secret** field of the Atlassian configuration and save.
+2. In Jira / Jira Service Management, create a webhook (or an automation rule with a *Send web request* action) that fires on issue and comment events.
+3. Point it at `https://<your-waldur-host>/api/support-jira-webhook/` using the `POST` method, sending the standard Jira webhook JSON payload (it already includes `webhookEvent` and the `issue` object with its `key`).
+4. Add an `X-Webhook-Secret` header matching the configured shared secret.
+
+### SMAX configuration
+
+1. In Waldur, set a value in the **Smax webhook shared secret** field of the SMAX configuration and save.
+2. In SMAX, create an outbound webhook / notification rule that triggers when a request relevant to Waldur changes (for example on status change or new comment).
+3. Point the webhook at `https://<your-waldur-host>/api/support-smax-webhook/` using the `POST` method, with a JSON body carrying the request's identifier in the `id` field (matching the SMAX entity ID Waldur stored when it created the ticket).
+4. Add an `X-Webhook-Secret` header matching the configured shared secret.
