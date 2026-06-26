@@ -5886,6 +5886,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#account-settings-users-vs-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account settings: users vs. accounts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#periodic-limits-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14006,6 +14017,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#account-settings-users-vs-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account settings: users vs. accounts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#periodic-limits-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14680,12 +14702,14 @@ installation instructions, see the main <a href="../../docs/installation/">Insta
 <span class="normal">17</span>
 <span class="normal">18</span>
 <span class="normal">19</span>
-<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"My</span><span class="nv"> </span><span class="s">SLURM</span><span class="nv"> </span><span class="s">Cluster"</span>
 <span class="w">    </span><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
 <span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
 <span class="w">      </span><span class="c1"># Core SLURM account management</span>
 <span class="w">      </span><span class="nt">default_account</span><span class="p">:</span><span class="w"> </span><span class="s">"root"</span>
+<span class="w">      </span><span class="c1"># root_account: "root"   # optional, see "Account settings" below</span>
 <span class="w">      </span><span class="nt">customer_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur_"</span>
 <span class="w">      </span><span class="nt">project_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur_"</span>
 <span class="w">      </span><span class="nt">allocation_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur_"</span>
@@ -14701,6 +14725,38 @@ installation instructions, see the main <a href="../../docs/installation/">Insta
 <span class="w">        </span><span class="nt">unit</span><span class="p">:</span><span class="w"> </span><span class="s">"GPU-Hours"</span>
 <span class="w">        </span><span class="nt">unit_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="account-settings-users-vs-accounts">Account settings: users vs. accounts</h3>
+<p>Two settings control how the agent places objects in the SLURM account tree.
+They serve <strong>different</strong> purposes and are easy to confuse:</p>
+<ul>
+<li><strong><code>default_account</code></strong> applies to <strong>users</strong>. It is the <code>DefaultAccount=</code> set
+  on every user association — the account a user's jobs charge against when they
+  don't pass <code>-A</code>. Set it to a restricted account (e.g. <code>restricted_access</code>) to
+  stop users from submitting under the root account by default.</li>
+<li><strong><code>root_account</code></strong> applies to <strong>accounts</strong>. It is the parent under which the
+  top-tier (customer) account of the default hierarchy is created — i.e. the
+  real root of the account tree. Optional; defaults to the value of
+  <code>default_account</code>, then to <code>"root"</code>.</li>
+</ul>
+<p>In the default 3-tier hierarchy the agent creates
+<code>root_account → customer → project → allocation</code>, and every user
+association gets <code>DefaultAccount=default_account</code>.</p>
+<p>Historically a single <code>default_account</code> setting was used for <strong>both</strong> roles.
+That is correct only when both values are the same (e.g. both <code>"root"</code>, as in
+the examples above). If you want users to default to a restricted account
+<strong>without</strong> parenting the whole account tree under it, set the two
+independently:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default_account</span><span class="p">:</span><span class="w"> </span><span class="s">"restricted_access"</span><span class="w">  </span><span class="c1"># users land here by default</span>
+<span class="w">  </span><span class="nt">root_account</span><span class="p">:</span><span class="w"> </span><span class="s">"root"</span><span class="w">                  </span><span class="c1"># account tree is rooted at root</span>
+</code></pre></div></td></tr></tbody></table></div>
+<blockquote>
+<p>A flat hierarchy (project account created directly under a fixed parent,
+with no customer tier) is configured separately via the <code>parent_account</code>
+setting; when <code>parent_account</code> is set, <code>root_account</code> is not used.</p>
+</blockquote>
 <h3 id="periodic-limits-configuration">Periodic Limits Configuration</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>

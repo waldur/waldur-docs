@@ -13098,6 +13098,78 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#synchronising-changes-back-to-waldur-webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synchronising changes back to Waldur (webhooks)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Synchronising changes back to Waldur (webhooks)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#securing-the-webhook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Securing the webhook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zammad-configuration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zammad configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atlassian-configuration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atlassian configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smax-configuration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SMAX configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -13244,6 +13316,78 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#synchronising-changes-back-to-waldur-webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Synchronising changes back to Waldur (webhooks)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Synchronising changes back to Waldur (webhooks)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#securing-the-webhook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Securing the webhook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zammad-configuration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zammad configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atlassian-configuration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atlassian configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smax-configuration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SMAX configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -13339,6 +13483,86 @@
 <li><strong>Smax webhook shared secret</strong> - Shared secret expected in the <code>X-Webhook-Secret</code> header of inbound SMAX webhook deliveries. If left empty, webhook authentication is not enforced.</li>
 </ul>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../../img/Smax_config.png" data-desc-position="bottom"><img alt="Smax configuration" src="../../../img/Smax_config.png"></a></p>
+<h2 id="synchronising-changes-back-to-waldur-webhooks">Synchronising changes back to Waldur (webhooks)</h2>
+<p>The configuration above lets Waldur <strong>push</strong> tickets to the service desk and poll for updates. To make changes that happen <strong>inside</strong> the service desk (status transitions, new agent comments, resolution) appear in Waldur in near real time, configure an outbound webhook in the service desk system that calls back to Waldur whenever a ticket changes.</p>
+<p>Without a webhook, Waldur only learns about changes during the periodic background synchronisation, so updates made in the service desk can be delayed.</p>
+<h3 id="how-it-works">How it works</h3>
+<p>Each backend exposes a dedicated, unauthenticated receiver endpoint on the Waldur API. When the service desk fires a webhook, Waldur looks up the local issue by the backend ticket ID carried in the payload and re-synchronises that single issue — pulling the latest status and comments, and updating the linked order's output where applicable.</p>
+<table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Webhook endpoint (relative to the Waldur API host)</th>
+<th>Ticket identifier expected in the payload</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zammad</td>
+<td><code>/api/support-zammad-webhook/</code></td>
+<td><code>ticket.id</code> (Zammad ticket ID)</td>
+</tr>
+<tr>
+<td>Atlassian</td>
+<td><code>/api/support-jira-webhook/</code></td>
+<td><code>issue.key</code> (Jira issue key)</td>
+</tr>
+<tr>
+<td>SMAX</td>
+<td><code>/api/support-smax-webhook/</code></td>
+<td><code>id</code> (SMAX request/entity ID)</td>
+</tr>
+</tbody>
+</table>
+<p>So, for an instance served at <code>https://waldur.example.com</code>, the Zammad callback URL is <code>https://waldur.example.com/api/support-zammad-webhook/</code>.</p>
+<h3 id="securing-the-webhook">Securing the webhook</h3>
+<p>The receiver endpoints are not protected by the normal Waldur authentication, so anyone who knows the URL could post to them. To prevent this, set a <strong>webhook shared secret</strong> in the corresponding service desk configuration (for example <strong>Zammad webhook shared secret</strong>). Waldur then expects the same value in an <code>X-Webhook-Secret</code> HTTP header on every inbound delivery:</p>
+<ul>
+<li>If the shared secret is <strong>empty</strong>, Waldur accepts unauthenticated requests (legacy behaviour).</li>
+<li>If the shared secret is <strong>set</strong>, Waldur rejects any request that does not carry a matching <code>X-Webhook-Secret</code> header with <code>403 Forbidden</code>.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Because the endpoints are unauthenticated by default, securing them is strongly recommended for any production deployment. Treat the secret like a password and serve Waldur over HTTPS so the header is not exposed in transit.</p>
+</div>
+<h3 id="zammad-configuration_1">Zammad configuration</h3>
+<p>Zammad sends webhooks via a <strong>webhook</strong> definition that is invoked by a <strong>trigger</strong> (or scheduler). The steps below follow the <a href="https://admin-docs.zammad.org/en/latest/manage/webhook/add.html">Zammad webhook documentation</a>.</p>
+<ol>
+<li>
+<p><strong>Create the webhook in Zammad.</strong> Open the Zammad admin panel and go to <strong>Manage → Webhook → New Webhook</strong>. Configure:</p>
+<ul>
+<li><strong>Name</strong> — for example <code>Waldur sync</code>.</li>
+<li><strong>Endpoint</strong> — <code>https://&lt;your-waldur-host&gt;/api/support-zammad-webhook/</code>.</li>
+<li><strong>Request method</strong> — <code>POST</code>.</li>
+<li><strong>SSL verification</strong> — keep enabled (disable only for self-signed certificates in test setups).</li>
+</ul>
+<p>Leave the <strong>Custom Payload</strong> toggle off. Zammad's <a href="https://admin-docs.zammad.org/en/latest/manage/webhook/payload.html">default payload</a> already includes the <code>ticket</code> object with its <code>id</code>, which is the only field Waldur needs to identify the issue.</p>
+</li>
+<li>
+<p><strong>Invoke the webhook from a trigger.</strong> A webhook does nothing on its own — go to <strong>Manage → Trigger → New Trigger</strong>, set the conditions that should propagate to Waldur (for example <em>Action is updated</em> on tickets in the group used for Waldur), and under <strong>Perform Changes</strong> add a <strong>Webhook</strong> action pointing at the webhook created above.</p>
+</li>
+<li>
+<p><strong>Match the issue.</strong> Waldur reads <code>ticket.id</code> from the payload and looks up the local issue whose backend ID equals that value, then re-synchronises its status and comments.</p>
+</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Zammad's webhook configuration does <strong>not</strong> support arbitrary custom HTTP headers — it only offers HTTP Basic authentication, a Bearer token, or an HMAC-SHA1 signature, none of which set the <code>X-Webhook-Secret</code> header that Waldur checks. To enforce the <strong>Zammad webhook shared secret</strong>, inject the <code>X-Webhook-Secret</code> header in a reverse proxy in front of Waldur (e.g. Nginx <code>proxy_set_header X-Webhook-Secret &lt;secret&gt;;</code> on the webhook location). If you cannot inject the header, leave the shared secret empty and restrict access to the endpoint by network controls instead.</p>
+</div>
+<h3 id="atlassian-configuration_1">Atlassian configuration</h3>
+<ol>
+<li>In Waldur, set a value in the <strong>JIRA webhook shared secret</strong> field of the Atlassian configuration and save.</li>
+<li>In Jira / Jira Service Management, create a webhook (or an automation rule with a <em>Send web request</em> action) that fires on issue and comment events.</li>
+<li>Point it at <code>https://&lt;your-waldur-host&gt;/api/support-jira-webhook/</code> using the <code>POST</code> method, sending the standard Jira webhook JSON payload (it already includes <code>webhookEvent</code> and the <code>issue</code> object with its <code>key</code>).</li>
+<li>Add an <code>X-Webhook-Secret</code> header matching the configured shared secret.</li>
+</ol>
+<h3 id="smax-configuration_1">SMAX configuration</h3>
+<ol>
+<li>In Waldur, set a value in the <strong>Smax webhook shared secret</strong> field of the SMAX configuration and save.</li>
+<li>In SMAX, create an outbound webhook / notification rule that triggers when a request relevant to Waldur changes (for example on status change or new comment).</li>
+<li>Point the webhook at <code>https://&lt;your-waldur-host&gt;/api/support-smax-webhook/</code> using the <code>POST</code> method, with a JSON body carrying the request's identifier in the <code>id</code> field (matching the SMAX entity ID Waldur stored when it created the ticket).</li>
+<li>Add an <code>X-Webhook-Secret</code> header matching the configured shared secret.</li>
+</ol>
 
 
 
