@@ -224,6 +224,30 @@ If the offering is not needed anymore, then it is possible to archive it by sele
 
 ![Offering archive](../img/Offering_archive.png)
 
+## Restricting who can see and order an offering
+
+By default a shared offering is visible to everyone in the marketplace catalog. You can restrict an offering so that only users holding specific **project or organization roles** can see and order it.
+
+Open the offering's edit page and go to **Integration → Operations → Orders & approval**. In the **Restrict to roles** field, select one or more roles (for example *Project manager* and *Project administrator*).
+
+![Restrict to roles field](../img/offering-restrict-to-roles.png)
+
+The dropdown lists both project roles and organization roles, so you can combine them (for example *Organization owner* and *Project manager*):
+
+![Selecting roles to restrict the offering](../img/offering-restrict-to-roles-dropdown.png)
+
+When the field is set:
+
+- The offering is **hidden from the marketplace catalog** for users who do not hold one of the selected roles. Existing consumers who already have resources from the offering keep access to it.
+- Only users holding one of the selected roles **in the target project or its organization** can create an order for it. Other users get a "restricted to designated project roles" error.
+- When the offering is opened from the marketplace, the order form's **organization** and **project** selectors only list the organizations and projects where the user holds one of the required roles, so a user cannot accidentally order into a project where they lack access.
+- Staff and support users are not affected and can always see and order the offering.
+
+!!! note
+    This setting controls **visibility and ordering** only. Whether a user's order skips consumer-side approval depends on whether their role has the order-approval permission — it is not granted by this restriction. Provider-side review continues to follow the offering's type.
+
+Leave the field empty to remove the restriction and make the offering available to everyone again.
+
 ## Embedding images in the offering description
 
 The **Description** and **Full description** fields use a rich Markdown editor. When image support is enabled, you can embed images directly into these descriptions — for example, an architecture diagram or a screenshot of the service.
