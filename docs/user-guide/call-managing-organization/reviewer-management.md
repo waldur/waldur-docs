@@ -23,13 +23,14 @@ Each reviewer profile includes:
 
 ### Managing your reviewer profile
 
-1. Navigate to your **User Profile**
-2. Select the **Reviewer Profile** section
-3. Fill in your biography, ORCID ID, and availability status
-4. Add **affiliations** with your current and past institutions
-5. Add **expertise categories** with your proficiency level for each
-6. Add relevant **publications** for matching purposes
-7. Set your profile to **Published** when ready to receive review assignments
+1. Open the **Reviews** page from the sidebar and create or open your reviewer profile from the profile panel
+2. Fill in your biography, ORCID ID, and availability status
+3. Add **affiliations** with your current and past institutions
+4. Add **expertise categories** with your proficiency level for each
+5. Add relevant **publications** for matching purposes
+6. Set your profile to **Published** when ready to receive review assignments
+
+The profile editor is organised into four tabs — **Profile info**, **Affiliations**, **Expertise**, and **Publications** — and you can connect and sync your **ORCID** record to import affiliations and publications automatically.
 
 ## Reviewer pool management
 
@@ -53,8 +54,8 @@ When a reviewer is added to a pool:
 
 1. An email invitation is sent with a unique acceptance token
 2. The reviewer can **accept** or **decline** the invitation without logging in
-3. On acceptance, the reviewer must have a published profile
-4. The reviewer is prompted to self-declare any conflicts of interest
+3. On acceptance, the reviewer must have a published profile (they are prompted to create or publish one if they do not)
+4. The call's COI policy is shown on the acceptance page
 
 Invitation statuses: **Pending** | **Accepted** | **Declined** | **Expired**
 
@@ -67,12 +68,17 @@ Waldur includes an automated COI detection system to ensure fair and unbiased pe
 
 ### COI types detected
 
-| COI Type | Description |
+Waldur recognises around twenty specific conflict types, grouped into broad families:
+
+| Family | Specific types (examples) |
 |---|---|
-| Institutional (same) | Reviewer and proposal PI share the same institution |
-| Financial (direct) | Reviewer has financial interest related to the proposal |
-| Relational (family) | Familial relationship between reviewer and applicant |
-| Co-authorship | Recent co-authored publications between reviewer and applicant |
+| Institutional | Same institution, same department, former institution, consortium membership |
+| Financial | Direct financial interest related to the proposal |
+| Relational | Family, supervisor, mentor/mentee, or editorial relationship |
+| Co-authorship | Recent or older co-authored publications |
+| Collaboration & role | Active or grant collaboration, named on the proposal, conference organiser, competitor, professional-society membership |
+
+Each specific type is mapped to a severity and a handling rule in the call's **Type handling** COI settings (see below).
 
 ### Severity levels
 
@@ -83,7 +89,7 @@ Waldur includes an automated COI detection system to ensure fair and unbiased pe
 ### Detection methods
 
 - **Automated**: System cross-references reviewer affiliations and publications against proposal team data
-- **Self-disclosed**: Reviewers declare conflicts during pool acceptance
+- **Self-disclosed**: Conflicts declared by the reviewer
 - **Reported**: Third parties report potential conflicts
 - **Manager-identified**: Call managers manually flag conflicts
 
@@ -91,30 +97,52 @@ Waldur includes an automated COI detection system to ensure fair and unbiased pe
 
 **Performed by:** Call manager
 
-1. Navigate to call settings
-2. Select the **COI Settings** section
-3. Configure per-call settings:
-    - COI type weights and severity thresholds
-    - Publication matching parameters (year range, author matching method)
-    - Automated detection sensitivity
+1. Open the call's **Edit** view
+2. Select **COI settings**
+
+The COI configuration is organised into four tabs:
+
+| Tab | Purpose |
+|---|---|
+| **Detection** | Lookback periods (co-authorship, institutional), shared-publication thresholds, "same department" / "same institution" toggles |
+| **Automation** | Auto-detect toggles per source (co-authorship search, institutional matching, declared conflicts) — determines what runs without manual triggering |
+| **Type handling** | For each conflict type, choose whether it triggers **recusal**, requires a **management plan**, or is **disclosure only** — used by the detector when assigning severities |
+| **Invitations** | Disclosure level shown to reviewers when they accept a pool invitation — controls how much of the proposal team and contents is exposed |
+
+A summary dialog (from the section header) lists every setting at a glance, and inline tooltips explain each COI concept.
+
+![COI detection settings](../img/scenario_coi_config.png)
+
+!!! note
+    Once a call is **activated**, most COI configuration fields are locked to keep detection results reproducible. To change a locked setting, deactivate the call (and re-run detection afterwards).
 
 ### Running COI detection
 
 1. Click **Run COI Detection** in the call management dashboard
 2. The system runs a batch detection job (processed in the background)
-3. Review detected conflicts in the **Conflicts** tab
+3. Review detected conflicts in the **COI** tab of the Reviewer pool
 4. For each conflict, choose to **Dismiss**, **Waive** (with justification), or **Recuse** the reviewer
 
-### COI disclosure forms
+### COI review interface
 
-Reviewers are presented with a disclosure form when accepting a pool invitation:
+The **COI** tab is the operational view used to triage all detected and declared conflicts on the call.
 
-1. General conflict declaration
-2. Financial interest details (entity type, relationship, amount range)
-3. Self-declared conflicts with specific proposals
+- **Status filters** — narrow the list to *Pending*, *Dismissed*, *Waived*, or *Recused*.
+- **Severity styling** — each row is styled by severity (Real conflict / Apparent conflict / Potential conflict) so high-severity rows stand out at a glance.
+- **Expandable rows** — expand a row to see the evidence behind a detected conflict: shared publications with venues and years, shared affiliations with overlapping date ranges, and self-disclosed text.
+- **Waive dialog** — choosing **Waive** opens a dialog that requires a written **justification** (the management plan) before the conflict can be cleared. The justification, the manager, and the timestamp are recorded on the conflict and stay visible to staff users.
+- **Recuse** — removes the reviewer from the proposal and, if any review or assignment item already exists, marks it as cancelled.
+
+![Detected conflicts with severity styling](../img/scenario_coi_severities.png)
+
+![Expanded COI evidence](../img/scenario_coi_evidence.png)
+
+### COI gating on assignments
+
+When a conflict exists between a reviewer and a proposal, the corresponding assignment item is **blocked** until the conflict is resolved (dismissed, waived, or the reviewer recused). Staff users can **force-unblock** a blocked assignment when a strong operational reason exists; the override is flagged on the assignment.
 
 !!! warning
-    Staff users can override COI blocks on specific assignments with an audit trail. All overrides are recorded with the overriding user, reason, and timestamp.
+    All staff overrides are recorded with the overriding user, reason, and timestamp, and remain visible to staff.
 
 ## Reviewer-proposal matching
 
@@ -136,30 +164,39 @@ Waldur uses algorithmic matching to suggest optimal reviewer-proposal assignment
 2. Select the **Matching Configuration** section
 3. Configure:
     - **Affinity method**: Keyword, TF-IDF, or Combined
-    - **Weights**: Keyword weight vs text weight (must sum to 1.0)
-    - **Constraints**: Min/max reviewers per proposal, min/max proposals per reviewer
+    - **Weights**: Keyword weight and text weight (the interface flags when they do not sum to 1.0, which is recommended for best results)
+    - **Assignment algorithm**: how batches balance load — MinMax (balanced load), FairFlow, or Hungarian
+    - **Constraints**: Min/max reviewers per proposal, max proposals per reviewer
     - **Threshold**: Minimum affinity score for suggestions
-    - **Reviewer bids**: Whether to incorporate reviewer preferences
+    - **Reviewer bids**: Whether to incorporate reviewer preferences, and their weight
+
+![Matching configuration](../img/scenario_matching_settings.png)
 
 ### Generating suggestions
 
-1. Click **Generate Suggestions** in the matching section
-2. The system computes affinity scores for all reviewer-proposal pairs
-3. Results appear in the **Suggestions** tab with:
-    - Affinity score (0-1)
-    - Matched keywords
-    - Top matching proposals
-4. Accept or reject each suggestion
+1. In the **Reviewer pool > Discovery** tab, click **Generate matches**
+2. In the **Generate reviewer matches** dialog, choose what to match reviewers against:
+    - **Call description** — match against the call's own description
+    - **All proposals** — match each reviewer against every proposal
+    - **Selected proposals** — match against a chosen subset
+    - **Custom keywords** — supply your own keywords and pick a search mode (*Expertise keywords only* or *Full text search*)
+3. Optionally open **Advanced options** to set a **Minimum match score (%)** cut-off
+4. The system computes affinity scores and the results appear in the Discovery table
+
+![Reviewer suggestions with affinity scores](../img/scenario_pool_discovery.png)
+
+The Discovery table has **Reviewer / Affinity / Status / Reviewed by / Actions** columns. Each suggestion row shows:
+
+- **Affinity score** as a percentage. Hovering the score reveals the **Score breakdown** tooltip — the *Keyword match*, *Text similarity*, and *Combined* components.
+- **Status** — *Awaiting manager review* (newly generated), *Manager approved*, *Manager rejected*, or *Invitation sent*.
+- **Reviewed by** — the manager who last actioned the suggestion.
+- **Expand row** to see the full reviewer profile summary (biography, expertise, recent publications) without leaving the page.
+
+For each suggestion you can **Confirm** (queue for invitation) or **Reject**, or use **Invite by email** to send a direct invitation to a candidate who is not yet in the pool. Bulk **Confirm all**, **Reject all**, and **Delete all** actions act on the whole table.
 
 ### Reviewer bidding
 
-If enabled, reviewers can express preferences for proposals:
-
-- **Want to review**: Eager to evaluate this proposal
-- **Cannot review**: Unable to review (workload, expertise mismatch)
-- **Conflict**: Self-declared conflict with this proposal
-
-Bids are factored into the matching algorithm with configurable weight.
+The matching configuration can incorporate **reviewer bids** — preference signals (*Eager to review*, *Willing to review*, *Not willing to review*, *Has conflict of interest*) weighted by a configurable **bid weight**. Bidding is part of the matching backend; there is no reviewer-facing bidding screen in the current interface, so bids are managed as configuration rather than collected from reviewers directly.
 
 ## Assignment workflow (Stage 2)
 
