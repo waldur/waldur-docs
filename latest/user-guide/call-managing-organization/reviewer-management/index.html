@@ -10,7 +10,7 @@
         <link rel="canonical" href="https://docs.waldur.com/latest/user-guide/call-managing-organization/reviewer-management/">
       
       
-        <link rel="prev" href="../proposal-id-configuration/">
+        <link rel="prev" href="../reviewer-guide/">
       
       
         <link rel="next" href="../../customer-organization/cost-and-usage-policies/">
@@ -11571,6 +11571,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../reviewer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reviewer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -11779,10 +11807,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#coi-disclosure-forms" class="md-nav__link">
+  <a href="#coi-review-interface" class="md-nav__link">
     <span class="md-ellipsis">
       
-        COI disclosure forms
+        COI review interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coi-gating-on-assignments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COI gating on assignments
       
     </span>
   </a>
@@ -13649,10 +13688,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#coi-disclosure-forms" class="md-nav__link">
+  <a href="#coi-review-interface" class="md-nav__link">
     <span class="md-ellipsis">
       
-        COI disclosure forms
+        COI review interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coi-gating-on-assignments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COI gating on assignments
       
     </span>
   </a>
@@ -13865,14 +13915,14 @@
 </div>
 <h3 id="managing-your-reviewer-profile">Managing your reviewer profile</h3>
 <ol>
-<li>Navigate to your <strong>User Profile</strong></li>
-<li>Select the <strong>Reviewer Profile</strong> section</li>
+<li>Open the <strong>Reviews</strong> page from the sidebar and create or open your reviewer profile from the profile panel</li>
 <li>Fill in your biography, ORCID ID, and availability status</li>
 <li>Add <strong>affiliations</strong> with your current and past institutions</li>
 <li>Add <strong>expertise categories</strong> with your proficiency level for each</li>
 <li>Add relevant <strong>publications</strong> for matching purposes</li>
 <li>Set your profile to <strong>Published</strong> when ready to receive review assignments</li>
 </ol>
+<p>The profile editor is organised into four tabs — <strong>Profile info</strong>, <strong>Affiliations</strong>, <strong>Expertise</strong>, and <strong>Publications</strong> — and you can connect and sync your <strong>ORCID</strong> record to import affiliations and publications automatically.</p>
 <h2 id="reviewer-pool-management">Reviewer pool management</h2>
 <p>Call managers build a curated pool of reviewers for each call.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/reviewer_dashboard.png" data-desc-position="bottom"><img alt="Reviewer dashboard" src="../../img/reviewer_dashboard.png"></a></p>
@@ -13892,8 +13942,8 @@
 <ol>
 <li>An email invitation is sent with a unique acceptance token</li>
 <li>The reviewer can <strong>accept</strong> or <strong>decline</strong> the invitation without logging in</li>
-<li>On acceptance, the reviewer must have a published profile</li>
-<li>The reviewer is prompted to self-declare any conflicts of interest</li>
+<li>On acceptance, the reviewer must have a published profile (they are prompted to create or publish one if they do not)</li>
+<li>The call's COI policy is shown on the acceptance page</li>
 </ol>
 <p>Invitation statuses: <strong>Pending</strong> | <strong>Accepted</strong> | <strong>Declined</strong> | <strong>Expired</strong></p>
 <div class="admonition note">
@@ -13903,32 +13953,38 @@
 <h2 id="conflict-of-interest-coi-detection">Conflict of interest (COI) detection</h2>
 <p>Waldur includes an automated COI detection system to ensure fair and unbiased peer review.</p>
 <h3 id="coi-types-detected">COI types detected</h3>
+<p>Waldur recognises around twenty specific conflict types, grouped into broad families:</p>
 <table>
 <thead>
 <tr>
-<th>COI Type</th>
-<th>Description</th>
+<th>Family</th>
+<th>Specific types (examples)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Institutional (same)</td>
-<td>Reviewer and proposal PI share the same institution</td>
+<td>Institutional</td>
+<td>Same institution, same department, former institution, consortium membership</td>
 </tr>
 <tr>
-<td>Financial (direct)</td>
-<td>Reviewer has financial interest related to the proposal</td>
+<td>Financial</td>
+<td>Direct financial interest related to the proposal</td>
 </tr>
 <tr>
-<td>Relational (family)</td>
-<td>Familial relationship between reviewer and applicant</td>
+<td>Relational</td>
+<td>Family, supervisor, mentor/mentee, or editorial relationship</td>
 </tr>
 <tr>
 <td>Co-authorship</td>
-<td>Recent co-authored publications between reviewer and applicant</td>
+<td>Recent or older co-authored publications</td>
+</tr>
+<tr>
+<td>Collaboration &amp; role</td>
+<td>Active or grant collaboration, named on the proposal, conference organiser, competitor, professional-society membership</td>
 </tr>
 </tbody>
 </table>
+<p>Each specific type is mapped to a severity and a handling rule in the call's <strong>Type handling</strong> COI settings (see below).</p>
 <h3 id="severity-levels">Severity levels</h3>
 <ul>
 <li><strong>Real</strong>: Confirmed conflict that must be addressed</li>
@@ -13938,39 +13994,72 @@
 <h3 id="detection-methods">Detection methods</h3>
 <ul>
 <li><strong>Automated</strong>: System cross-references reviewer affiliations and publications against proposal team data</li>
-<li><strong>Self-disclosed</strong>: Reviewers declare conflicts during pool acceptance</li>
+<li><strong>Self-disclosed</strong>: Conflicts declared by the reviewer</li>
 <li><strong>Reported</strong>: Third parties report potential conflicts</li>
 <li><strong>Manager-identified</strong>: Call managers manually flag conflicts</li>
 </ul>
 <h3 id="configuring-coi-detection">Configuring COI detection</h3>
 <p><strong>Performed by:</strong> Call manager</p>
 <ol>
-<li>Navigate to call settings</li>
-<li>Select the <strong>COI Settings</strong> section</li>
-<li>Configure per-call settings:<ul>
-<li>COI type weights and severity thresholds</li>
-<li>Publication matching parameters (year range, author matching method)</li>
-<li>Automated detection sensitivity</li>
-</ul>
-</li>
+<li>Open the call's <strong>Edit</strong> view</li>
+<li>Select <strong>COI settings</strong></li>
 </ol>
+<p>The COI configuration is organised into four tabs:</p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Detection</strong></td>
+<td>Lookback periods (co-authorship, institutional), shared-publication thresholds, "same department" / "same institution" toggles</td>
+</tr>
+<tr>
+<td><strong>Automation</strong></td>
+<td>Auto-detect toggles per source (co-authorship search, institutional matching, declared conflicts) — determines what runs without manual triggering</td>
+</tr>
+<tr>
+<td><strong>Type handling</strong></td>
+<td>For each conflict type, choose whether it triggers <strong>recusal</strong>, requires a <strong>management plan</strong>, or is <strong>disclosure only</strong> — used by the detector when assigning severities</td>
+</tr>
+<tr>
+<td><strong>Invitations</strong></td>
+<td>Disclosure level shown to reviewers when they accept a pool invitation — controls how much of the proposal team and contents is exposed</td>
+</tr>
+</tbody>
+</table>
+<p>A summary dialog (from the section header) lists every setting at a glance, and inline tooltips explain each COI concept.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_coi_config.png" data-desc-position="bottom"><img alt="COI detection settings" src="../../img/scenario_coi_config.png"></a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Once a call is <strong>activated</strong>, most COI configuration fields are locked to keep detection results reproducible. To change a locked setting, deactivate the call (and re-run detection afterwards).</p>
+</div>
 <h3 id="running-coi-detection">Running COI detection</h3>
 <ol>
 <li>Click <strong>Run COI Detection</strong> in the call management dashboard</li>
 <li>The system runs a batch detection job (processed in the background)</li>
-<li>Review detected conflicts in the <strong>Conflicts</strong> tab</li>
+<li>Review detected conflicts in the <strong>COI</strong> tab of the Reviewer pool</li>
 <li>For each conflict, choose to <strong>Dismiss</strong>, <strong>Waive</strong> (with justification), or <strong>Recuse</strong> the reviewer</li>
 </ol>
-<h3 id="coi-disclosure-forms">COI disclosure forms</h3>
-<p>Reviewers are presented with a disclosure form when accepting a pool invitation:</p>
-<ol>
-<li>General conflict declaration</li>
-<li>Financial interest details (entity type, relationship, amount range)</li>
-<li>Self-declared conflicts with specific proposals</li>
-</ol>
+<h3 id="coi-review-interface">COI review interface</h3>
+<p>The <strong>COI</strong> tab is the operational view used to triage all detected and declared conflicts on the call.</p>
+<ul>
+<li><strong>Status filters</strong> — narrow the list to <em>Pending</em>, <em>Dismissed</em>, <em>Waived</em>, or <em>Recused</em>.</li>
+<li><strong>Severity styling</strong> — each row is styled by severity (Real conflict / Apparent conflict / Potential conflict) so high-severity rows stand out at a glance.</li>
+<li><strong>Expandable rows</strong> — expand a row to see the evidence behind a detected conflict: shared publications with venues and years, shared affiliations with overlapping date ranges, and self-disclosed text.</li>
+<li><strong>Waive dialog</strong> — choosing <strong>Waive</strong> opens a dialog that requires a written <strong>justification</strong> (the management plan) before the conflict can be cleared. The justification, the manager, and the timestamp are recorded on the conflict and stay visible to staff users.</li>
+<li><strong>Recuse</strong> — removes the reviewer from the proposal and, if any review or assignment item already exists, marks it as cancelled.</li>
+</ul>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_coi_severities.png" data-desc-position="bottom"><img alt="Detected conflicts with severity styling" src="../../img/scenario_coi_severities.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_coi_evidence.png" data-desc-position="bottom"><img alt="Expanded COI evidence" src="../../img/scenario_coi_evidence.png"></a></p>
+<h3 id="coi-gating-on-assignments">COI gating on assignments</h3>
+<p>When a conflict exists between a reviewer and a proposal, the corresponding assignment item is <strong>blocked</strong> until the conflict is resolved (dismissed, waived, or the reviewer recused). Staff users can <strong>force-unblock</strong> a blocked assignment when a strong operational reason exists; the override is flagged on the assignment.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Staff users can override COI blocks on specific assignments with an audit trail. All overrides are recorded with the overriding user, reason, and timestamp.</p>
+<p>All staff overrides are recorded with the overriding user, reason, and timestamp, and remain visible to staff.</p>
 </div>
 <h2 id="reviewer-proposal-matching">Reviewer-proposal matching</h2>
 <p>Waldur uses algorithmic matching to suggest optimal reviewer-proposal assignments.</p>
@@ -14004,33 +14093,39 @@
 <li>Select the <strong>Matching Configuration</strong> section</li>
 <li>Configure:<ul>
 <li><strong>Affinity method</strong>: Keyword, TF-IDF, or Combined</li>
-<li><strong>Weights</strong>: Keyword weight vs text weight (must sum to 1.0)</li>
-<li><strong>Constraints</strong>: Min/max reviewers per proposal, min/max proposals per reviewer</li>
+<li><strong>Weights</strong>: Keyword weight and text weight (the interface flags when they do not sum to 1.0, which is recommended for best results)</li>
+<li><strong>Assignment algorithm</strong>: how batches balance load — MinMax (balanced load), FairFlow, or Hungarian</li>
+<li><strong>Constraints</strong>: Min/max reviewers per proposal, max proposals per reviewer</li>
 <li><strong>Threshold</strong>: Minimum affinity score for suggestions</li>
-<li><strong>Reviewer bids</strong>: Whether to incorporate reviewer preferences</li>
+<li><strong>Reviewer bids</strong>: Whether to incorporate reviewer preferences, and their weight</li>
 </ul>
 </li>
 </ol>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_matching_settings.png" data-desc-position="bottom"><img alt="Matching configuration" src="../../img/scenario_matching_settings.png"></a></p>
 <h3 id="generating-suggestions">Generating suggestions</h3>
 <ol>
-<li>Click <strong>Generate Suggestions</strong> in the matching section</li>
-<li>The system computes affinity scores for all reviewer-proposal pairs</li>
-<li>Results appear in the <strong>Suggestions</strong> tab with:<ul>
-<li>Affinity score (0-1)</li>
-<li>Matched keywords</li>
-<li>Top matching proposals</li>
+<li>In the <strong>Reviewer pool &gt; Discovery</strong> tab, click <strong>Generate matches</strong></li>
+<li>In the <strong>Generate reviewer matches</strong> dialog, choose what to match reviewers against:<ul>
+<li><strong>Call description</strong> — match against the call's own description</li>
+<li><strong>All proposals</strong> — match each reviewer against every proposal</li>
+<li><strong>Selected proposals</strong> — match against a chosen subset</li>
+<li><strong>Custom keywords</strong> — supply your own keywords and pick a search mode (<em>Expertise keywords only</em> or <em>Full text search</em>)</li>
 </ul>
 </li>
-<li>Accept or reject each suggestion</li>
+<li>Optionally open <strong>Advanced options</strong> to set a <strong>Minimum match score (%)</strong> cut-off</li>
+<li>The system computes affinity scores and the results appear in the Discovery table</li>
 </ol>
-<h3 id="reviewer-bidding">Reviewer bidding</h3>
-<p>If enabled, reviewers can express preferences for proposals:</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_pool_discovery.png" data-desc-position="bottom"><img alt="Reviewer suggestions with affinity scores" src="../../img/scenario_pool_discovery.png"></a></p>
+<p>The Discovery table has <strong>Reviewer / Affinity / Status / Reviewed by / Actions</strong> columns. Each suggestion row shows:</p>
 <ul>
-<li><strong>Want to review</strong>: Eager to evaluate this proposal</li>
-<li><strong>Cannot review</strong>: Unable to review (workload, expertise mismatch)</li>
-<li><strong>Conflict</strong>: Self-declared conflict with this proposal</li>
+<li><strong>Affinity score</strong> as a percentage. Hovering the score reveals the <strong>Score breakdown</strong> tooltip — the <em>Keyword match</em>, <em>Text similarity</em>, and <em>Combined</em> components.</li>
+<li><strong>Status</strong> — <em>Awaiting manager review</em> (newly generated), <em>Manager approved</em>, <em>Manager rejected</em>, or <em>Invitation sent</em>.</li>
+<li><strong>Reviewed by</strong> — the manager who last actioned the suggestion.</li>
+<li><strong>Expand row</strong> to see the full reviewer profile summary (biography, expertise, recent publications) without leaving the page.</li>
 </ul>
-<p>Bids are factored into the matching algorithm with configurable weight.</p>
+<p>For each suggestion you can <strong>Confirm</strong> (queue for invitation) or <strong>Reject</strong>, or use <strong>Invite by email</strong> to send a direct invitation to a candidate who is not yet in the pool. Bulk <strong>Confirm all</strong>, <strong>Reject all</strong>, and <strong>Delete all</strong> actions act on the whole table.</p>
+<h3 id="reviewer-bidding">Reviewer bidding</h3>
+<p>The matching configuration can incorporate <strong>reviewer bids</strong> — preference signals (<em>Eager to review</em>, <em>Willing to review</em>, <em>Not willing to review</em>, <em>Has conflict of interest</em>) weighted by a configurable <strong>bid weight</strong>. Bidding is part of the matching backend; there is no reviewer-facing bidding screen in the current interface, so bids are managed as configuration rather than collected from reviewers directly.</p>
 <h2 id="assignment-workflow-stage-2">Assignment workflow (Stage 2)</h2>
 <p>After matching, call managers create assignment batches to formally assign proposals to reviewers.</p>
 <h3 id="reviewer-pool-navigation">Reviewer pool navigation</h3>

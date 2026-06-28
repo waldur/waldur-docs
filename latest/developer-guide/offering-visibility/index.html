@@ -9602,6 +9602,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#role-based-restriction-restricted_to_roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role-based restriction (restricted_to_roles)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#use-cases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11841,6 +11852,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/call-managing-organization/reviewer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reviewer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/call-managing-organization/reviewer-management/" class="md-nav__link">
         
   
@@ -13508,6 +13547,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#role-based-restriction-restricted_to_roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role-based restriction (restricted_to_roles)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#use-cases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13736,6 +13786,16 @@
 <li><code>true</code> if the user has at least one accessible, non-archived plan</li>
 <li><code>false</code> if all plans are restricted to organization groups the user doesn't belong to</li>
 </ul>
+<h2 id="role-based-restriction-restricted_to_roles">Role-based restriction (<code>restricted_to_roles</code>)</h2>
+<p>Independently of <code>RESTRICTED_OFFERING_VISIBILITY_MODE</code> (which governs organization-group/plan access), an individual offering can be restricted to specific <strong>project or organization roles</strong> via the <code>restricted_to_roles</code> plugin option — a list of role names, e.g. <code>["PROJECT.MANAGER", "PROJECT.ADMIN"]</code>. It is set per offering under <strong>Integration → Operations → Orders &amp; approval</strong> in the UI, or via the <code>update_integration</code> API.</p>
+<p>When set:</p>
+<ul>
+<li>The offering is <strong>hidden from the catalog</strong> for users who do not hold one of the listed roles in any scope. Users who already consume resources from the offering keep access.</li>
+<li>Only users holding one of the listed roles <strong>on the target project or its customer</strong> can create an order; others are rejected with HTTP 403. Staff and support bypass the check.</li>
+<li><code>is_accessible</code> is <code>false</code> for users who lack the roles.</li>
+<li>The order form's organization and project selectors are limited to scopes where the user holds one of the roles.</li>
+</ul>
+<p>Approval is unaffected: whether an order skips consumer review still depends on the role's <code>ORDER.APPROVE</code> permission, exactly as for any other offering. Role names must be valid project- or organization-scoped roles.</p>
 <h2 id="use-cases">Use Cases</h2>
 <h3 id="public-marketplace-default">Public Marketplace (default)</h3>
 <p>Use <code>show_all</code> for open marketplaces where users should see all available offerings and learn about restrictions when they try to order.</p>
