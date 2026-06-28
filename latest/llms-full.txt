@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-06-27T02:04:53.602241Z
+Generated: 2026-06-28T02:04:49.975445Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -22197,7 +22197,9 @@ These settings can be used in `backend_settings` for any backend type.
 
 ```yaml
 backend_settings:
-  default_account: "root"                              # Default parent account
+  default_account: "root"                              # DefaultAccount= on user associations
+  # root_account: "root"                               # Parent of top-tier customer account
+  # default_account_policy: "common"                   # common (default) | individual | none
   customer_prefix: "hpc_"                              # Prefix for customer accounts
   project_prefix: "hpc_"                               # Prefix for project accounts
   allocation_prefix: "hpc_"                            # Prefix for allocation accounts
@@ -25763,7 +25765,7 @@ offerings:
 
     # Backend-specific settings (passed to __init__ as backend_settings)
     backend_settings:
-      default_account: "root"            # Default parent account
+      default_account: "root"            # DefaultAccount= on user associations
       customer_prefix: "cust_"           # Prefix for customer-level accounts
       project_prefix: "proj_"            # Prefix for project-level accounts
       allocation_prefix: "alloc_"        # Prefix for allocation-level accounts
@@ -27576,7 +27578,7 @@ offerings:
 
     backend_type: "slurm"
     backend_settings:
-      default_account: "root"           # Root account in SLURM
+      default_account: "root"           # DefaultAccount= on user associations
       customer_prefix: "hpc_"           # Prefix for customer accounts
       project_prefix: "hpc_"            # Prefix for project accounts
       allocation_prefix: "hpc_"         # Prefix for allocation accounts
@@ -27617,7 +27619,7 @@ offerings:
 
 #### Backend Settings
 
-- `default_account`: Root account in SLURM cluster
+- `default_account`: `DefaultAccount=` set on user associations in the SLURM cluster
 - Prefixes: Used to identify accounts created by the agent (for filtering)
 
 #### Backend Components
@@ -34777,8 +34779,11 @@ They serve **different** purposes and are easy to confuse:
   `default_account`, then to `"root"`.
 
 In the default 3-tier hierarchy the agent creates
-`root_account → customer → project → allocation`, and every user
-association gets `DefaultAccount=default_account`.
+`root_account → customer → project → allocation`. Under the default
+`default_account_policy: common`, every user association gets
+`DefaultAccount=default_account`. The `individual` and `none` policies
+change which account (if any) is used — see
+[Upgrading](docs/upgrading.md#default_account_policy) for the trade-offs.
 
 Historically a single `default_account` setting was used for **both** roles.
 That is correct only when both values are the same (e.g. both `"root"`, as in
@@ -35538,6 +35543,7 @@ Required keys must be present or the agent will fail to start.
 | Key | Required | Notes |
 |---|---|---|
 | `default_account` | **Yes** | `DefaultAccount=` set on user associations; must exist in the cluster |
+| `default_account_policy` | No | `common` (default), `individual`, or `none` — see below |
 | `root_account` | No | Parent of the top-tier customer account. Defaults to `default_account`, then `root` |
 | `customer_prefix` | **Yes** | Prefix for customer-level SLURM accounts |
 | `project_prefix` | **Yes** | Prefix for project-level SLURM accounts |
@@ -35551,6 +35557,30 @@ Required keys must be present or the agent will fail to start.
 | `default_homedir_umask` | No | Default `0077` |
 
 Check the [CHANGELOG](../../../CHANGELOG.md) for any new required keys before upgrading.
+
+## `default_account_policy`
+
+Controls which account is passed as `DefaultAccount=` when the agent creates a
+user→account association (`sacctmgr add user …`). The default account is where a
+user's jobs charge when they submit without an explicit `-A`/`--account`.
+
+- **`common`** (default) — `DefaultAccount=<default_account>` on every
+  association. Stable: always references the configured, backend-verified
+  account.
+- **`individual`** — `DefaultAccount=<resource_id>` (the per-resource account).
+  Keeps users off the org-wide root by default, **but** when that resource is
+  terminated and its account deleted, the user's `DefaultAccount` dangles and
+  SLURM rejects their job submissions until an operator repairs it.
+- **`none`** — `DefaultAccount=` omitted entirely; sacctmgr auto-assigns for new
+  users. Relies on the deployment's sacctmgr auto-assignment for brand-new users;
+  for an existing user whose prior default account was deleted, the stale default
+  is left unchanged (they may be unable to submit until repaired).
+
+`common` is the safe default and is what most deployments should use. Only switch
+to `individual` or `none` if you understand the dangling-`DefaultAccount` failure
+modes above and have an operational process to handle them. An invalid value
+(e.g. a typo) raises an error at agent startup rather than silently falling back
+to `common`.
 
 ## QoS configuration
 

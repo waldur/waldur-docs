@@ -5865,6 +5865,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#default_account_policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        default_account_policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#qos-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13290,6 +13301,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#default_account_policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        default_account_policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#qos-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13408,6 +13430,11 @@ Required keys must be present or the agent will fail to start.</p>
 <td><code>DefaultAccount=</code> set on user associations; must exist in the cluster</td>
 </tr>
 <tr>
+<td><code>default_account_policy</code></td>
+<td>No</td>
+<td><code>common</code> (default), <code>individual</code>, or <code>none</code> — see below</td>
+</tr>
+<tr>
 <td><code>root_account</code></td>
 <td>No</td>
 <td>Parent of the top-tier customer account. Defaults to <code>default_account</code>, then <code>root</code></td>
@@ -13465,6 +13492,28 @@ Required keys must be present or the agent will fail to start.</p>
 </tbody>
 </table>
 <p>Check the <a href="../../../../CHANGELOG/">CHANGELOG</a> for any new required keys before upgrading.</p>
+<h2 id="default_account_policy"><code>default_account_policy</code></h2>
+<p>Controls which account is passed as <code>DefaultAccount=</code> when the agent creates a
+user→account association (<code>sacctmgr add user …</code>). The default account is where a
+user's jobs charge when they submit without an explicit <code>-A</code>/<code>--account</code>.</p>
+<ul>
+<li><strong><code>common</code></strong> (default) — <code>DefaultAccount=&lt;default_account&gt;</code> on every
+  association. Stable: always references the configured, backend-verified
+  account.</li>
+<li><strong><code>individual</code></strong> — <code>DefaultAccount=&lt;resource_id&gt;</code> (the per-resource account).
+  Keeps users off the org-wide root by default, <strong>but</strong> when that resource is
+  terminated and its account deleted, the user's <code>DefaultAccount</code> dangles and
+  SLURM rejects their job submissions until an operator repairs it.</li>
+<li><strong><code>none</code></strong> — <code>DefaultAccount=</code> omitted entirely; sacctmgr auto-assigns for new
+  users. Relies on the deployment's sacctmgr auto-assignment for brand-new users;
+  for an existing user whose prior default account was deleted, the stale default
+  is left unchanged (they may be unable to submit until repaired).</li>
+</ul>
+<p><code>common</code> is the safe default and is what most deployments should use. Only switch
+to <code>individual</code> or <code>none</code> if you understand the dangling-<code>DefaultAccount</code> failure
+modes above and have an operational process to handle them. An invalid value
+(e.g. a typo) raises an error at agent startup rather than silently falling back
+to <code>common</code>.</p>
 <h2 id="qos-configuration">QoS configuration</h2>
 <p>QoS state is driven by the <code>paused</code> and <code>downscaled</code> flags set by Waldur Mastermind
 (via policy or manual action). The agent maps these flags to SLURM QoS names:</p>
