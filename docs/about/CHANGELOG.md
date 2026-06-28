@@ -1,5 +1,38 @@
 # Changelog
 
+## 8.1.0-rc.2 - 2026-06-29
+
+### Highlights
+
+This release gives offering owners finer control over who can see and order their marketplace offerings, with a new per-offering role restriction that is fully configurable from the offering settings. User profiles and provider records now capture organization address and VAT code, making it easier to collect the billing and identity details needed for procurement. Several reliability fixes round out the release, including correct usage-history exports, more stable account pages, and a database compatibility fix for deployments.
+
+### What's New
+
+- **Per-offering role restriction**: Offering owners can now restrict an offering to specific user roles, controlling its visibility and orderability directly from the offering settings, with the matching backend enforcement.
+- **Organization address and VAT code**: User profiles, provider records, and service provider user views now support an organization address and organization VAT code, exposed through the profile UI, provider form, and completion banner.
+
+### Improvements
+
+- The user edit form now prevents changing the username, avoiding accidental account identity changes.
+- The organization manage page now remembers the active tab when navigating, so you return to where you left off.
+- Bulk course account creation now returns a clearer error message when something goes wrong.
+- SLURM raw usage is no longer reset for single-shot offerings, keeping usage accounting accurate for one-off allocations.
+- Usage history exports now honor the selected user filter so the exported data matches what is shown on screen.
+
+### Bug Fixes
+
+- Fixed sidebar resource counters showing stale numbers from a previously active workspace on global pages.
+- Fixed the FreeIPA account page failing to load for users without a profile.
+- Disabled prepared statements for the psycopg3 database driver to resolve a connection-pooling compatibility issue in deployments.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [5 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.1...8.1.0-rc.2) - per-offering role restrictions, organization address/VAT fields, and SLURM usage accounting fix.
+- **Waldur Homeport**: [14 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.1...8.1.0-rc.2) - offering role restriction controls, organization profile fields, and several UI reliability fixes (excludes dependency and docs updates).
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.1...8.1.0-rc.2) - disabled psycopg3 prepared statements for database compatibility.
+
+---
+
 ## 8.1.0-rc.1 - 2026-06-24
 
 ### Highlights
