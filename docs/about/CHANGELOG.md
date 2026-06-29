@@ -1,5 +1,29 @@
 # Changelog
 
+## 8.1.0-rc.3 - 2026-06-29
+
+### Highlights
+
+This release candidate sharpens OpenStack networking and invitation workflows. Operators can now edit allowed address pairs directly from the tenant ports view, with IP address details properly exposed in the API. Invitees who follow expired or canceled invitation links now see a clear explanation instead of a confusing 404 page, and scheduling maintenance windows is faster thanks to a unified date range picker with a live impact summary.
+
+### Improvements
+
+- **OpenStack allowed address pairs**: You can now manage allowed address pairs from the tenant ports view, and the OpenStack port read schema exposes the `ip_address` field so pair details are visible through the API (WAL-10067, WAL-10068).
+- **Maintenance window scheduling**: The separate start/end datetime fields have been replaced with a single range picker, and a live impact summary now shows the effect of the chosen window as you fill in the form (WAL-9983).
+- **Invitation handling**: Expired and canceled invitations now return their details to invitees so they understand why a link no longer works.
+
+### Bug Fixes
+
+- Following an expired or invalid invitation link no longer redirects to a 404 page; the dialog explains the invitation's status instead.
+- Corrected a Lithuanian translation string.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [2 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.2...8.1.0-rc.3) - OpenStack port schema and invitation detail improvements.
+- **Waldur Homeport**: [4 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.2...8.1.0-rc.3) - allowed address pairs editing, maintenance window picker, and invitation dialog fixes.
+
+---
+
 ## 8.1.0-rc.2 - 2026-06-29
 
 ### Highlights
