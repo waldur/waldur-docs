@@ -14495,6 +14495,11 @@
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>Non-alphanumeric characters (except <code>-</code>, <code>_</code>, <code>.</code>) are replaced with hyphens; duplicate hyphens are collapsed; leading/trailing hyphens are stripped. If the pattern is malformed, the endpoint falls back to the default naming behavior.</p>
+<p>The related <code>resource_slug_template</code> option (e.g. <code>{project_slug}-{counter}</code>) generates a unique resource <strong>slug</strong>, which the Waldur Site Agent uses as the backend ID (e.g. the SLURM account name).</p>
+<div class="admonition warning">
+<p class="admonition-title">Do not combine <code>resource_slug_template</code> with the <code>project_slug</code> account name policy</p>
+<p>For site-agent-managed offerings, the <code>account_name_generation_policy</code> plugin option (under <a href="#offering-users-identity-management">Offering Users</a>) is an <strong>alternative</strong> way to make backend IDs unique. When it is set to <code>project_slug</code>, the agent <strong>ignores the resource slug</strong> and instead derives the backend ID from the project slug plus its own incrementing counter — producing IDs like <code>prefix-test-prj-01-2-31</code> even when the slug is already unique. If you configure a <code>resource_slug_template</code>, leave <code>account_name_generation_policy</code> <strong>unset</strong> so the unique slug is used directly.</p>
+</div>
 <h3 id="display-and-ui">Display and UI</h3>
 <table>
 <thead>
@@ -14548,6 +14553,12 @@
 <td>string</td>
 <td><code>"waldur_username"</code></td>
 <td>How usernames are generated: <code>waldur_username</code>, <code>anonymized</code>, <code>service_provider</code>, <code>full_name</code>, <code>freeipa</code>, <code>eduteams</code></td>
+</tr>
+<tr>
+<td><code>account_name_generation_policy</code></td>
+<td>string</td>
+<td>none</td>
+<td>Site-agent backend ID (e.g. SLURM account name) generation. Unset = use the resource slug as-is; <code>project_slug</code> = derive from the project slug with an incrementing counter. Do not combine with <code>resource_slug_template</code> (see <a href="#resource-naming">Resource Naming</a>)</td>
 </tr>
 <tr>
 <td><code>initial_uidnumber</code></td>

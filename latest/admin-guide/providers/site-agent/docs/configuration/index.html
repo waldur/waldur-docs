@@ -4198,6 +4198,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#account-name-generation-vs-resource-slug-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account name generation vs. resource slug templates
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -14263,6 +14274,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#account-name-generation-vs-resource-slug-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account name generation vs. resource slug templates
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -14890,6 +14912,28 @@ mismatches at month boundaries.</p>
   <code>project_slug</code> account name generation policy is used. Set to a lower value
   if collisions are rare or a higher value for large deployments.</li>
 </ul>
+<h3 id="account-name-generation-vs-resource-slug-templates">Account name generation vs. resource slug templates</h3>
+<p>The offering's <code>account_name_generation_policy</code> plugin option (set in Waldur,
+not in the agent config) controls how the agent derives a resource's backend ID
+(e.g. the SLURM account name):</p>
+<ul>
+<li><strong>Unset (default)</strong> — the agent uses the resource's slug verbatim:
+  <code>{allocation_prefix}{resource_slug}</code>. If the offering also defines a
+  <code>resource_slug_template</code> (e.g. <code>{project_slug}-{counter}</code>), the slug is already
+  unique and is used as-is, with <strong>no extra suffix</strong>.</li>
+<li><strong><code>project_slug</code></strong> — the agent <strong>ignores the resource slug</strong> and instead
+  derives the backend ID from the <em>project</em> slug, appending an incrementing
+  <code>-{counter}</code> on each collision to disambiguate multiple resources in the same
+  project.</li>
+</ul>
+<blockquote>
+<p><strong>Warning:</strong> <code>account_name_generation_policy: project_slug</code> and
+<code>resource_slug_template</code> are two mutually exclusive ways to make backend IDs
+unique. If you set both, the <code>project_slug</code> policy wins and appends its own
+counter on top of (and ignoring) your template — producing IDs like
+<code>prefix-test-prj-01-2-31</code>. If you use a <code>resource_slug_template</code>, leave
+<code>account_name_generation_policy</code> <strong>unset</strong> so the unique slug is used directly.</p>
+</blockquote>
 <h2 id="backend-specific-settings">Backend-Specific Settings</h2>
 <h3 id="slurm-backend-settings">SLURM Backend Settings</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
