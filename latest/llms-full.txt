@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-01T09:01:29.393780Z
+Generated: 2026-07-01T20:12:04.261689Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -27294,6 +27294,285 @@ uv sync --all-packages
 
 ---
 
+### Design: Optional SLURM REST API (slurmrestd) Execution Mode
+<!-- Source: docs/admin-guide/providers/site-agent/docs/slurm-rest-api-design.md -->
+
+# Design: Optional SLURM REST API (slurmrestd) Execution Mode
+
+Status: implemented
+Author: Waldur team
+
+This is a design record for the optional `slurmrestd` execution mode, kept
+to explain the non-obvious decisions behind it (hand-rolled client, hybrid
+REST/CLI split, version mapping, no silent fallback). The feature is built;
+the sections below describe what was implemented. User-facing configuration
+lives in [the SLURM plugin README](../plugins/slurm/README.md).
+
+## Summary
+
+Add an optional execution mode to the SLURM plugin that talks to
+`slurmrestd` over HTTP instead of shelling out to `sacctmgr` /
+`scancel`. The mode is selected per offering via `backend_settings`,
+defaults to the existing CLI behavior, and requires no changes to the
+core agent or to the `SlurmBackend` business logic.
+
+The scope is limited to functionality the REST API provides
+**directly**: account, association, user, QOS and limit management,
+plus job listing/cancellation and health checks. Usage reporting has no
+direct REST equivalent (no `sreport`-style aggregation endpoint) and
+therefore **stays on the `sacct` CLI in both modes** — REST mode is a
+hybrid: REST for management operations, CLI for accounting reports.
+
+The implementation is a second client class, `SlurmRestClient`, behind a
+shared client interface — a **hand-rolled httpx client pinned to a
+configurable API version**, not a generated OpenAPI client.
+
+## Motivation
+
+- The agent currently requires SLURM client binaries and a working
+  munge/SACK auth domain on the host it runs on. A REST mode moves the
+  management path (accounts, associations, limits, QOS) to HTTP + JWT.
+  Note: because usage reporting stays on `sacct` for now, REST mode
+  does not yet remove the need for CLI binaries on hosts that collect
+  usage — fully remote deployment is future work.
+- Structured JSON responses remove a whole class of output-parsing
+  fragility (`--parsable2` pipe-splitting, locale/format drift between
+  SLURM releases).
+- Several deployments already run `slurmrestd` for other tooling
+  (Slurm-web, AWS PCS, custom portals); integrating with it is becoming
+  the standard pattern.
+
+## Background: the CLI architecture
+
+All SLURM interaction funnels through
+`plugins/slurm/waldur_site_agent_slurm/client.py`:
+
+- `SlurmClient._execute_command()` builds command lines
+  (`sacctmgr --parsable2 --noheader --immediate ...`), injects cluster
+  filtering, and runs them via `BaseClient.execute_command()`
+  (subprocess).
+- Output is parsed into typed structures: `ClientResource`,
+  `Association`, `SlurmReportLine`.
+- `SlurmBackend.__init__` instantiates `SlurmClient` directly; the
+  backend only calls public client methods and never touches command
+  syntax itself.
+- Non-SLURM operations (homedir creation, project directories, Lustre
+  quotas, `id -u` checks) live on the **backend**, not the client, and
+  are out of scope — they behave identically in both modes.
+
+The client's public method surface (~35 methods) is therefore the
+natural swap point. Its weakness today: only the 13 `BaseClient`
+methods have an interface contract; the ~20 SLURM-specific extension
+methods (QOS, fairshare, parents, partitions, job control) do not.
+
+## slurmrestd background
+
+- Two namespaces: `/slurm/vX` (slurmctld: jobs, partitions, ping) and
+  `/slurmdb/vX` (slurmdbd: accounts, associations, users, QOS, TRES).
+- Content schemas come from versioned `data_parser/v0.0.XX` plugins.
+  Each SLURM major release ships ~4 versions; a version lives ~2 years
+  (4 major releases), then is removed. As of mid-2026:
+  - `v0.0.42` — widest deployed common denominator (SLURM 24.11–26.05).
+  - `v0.0.43` — SLURM 25.05–27.05.
+- Authentication: JWT via `X-SLURM-USER-TOKEN` + `X-SLURM-USER-NAME`
+  headers (or `Authorization: Bearer`). Since SLURM 25.05 running
+  slurmrestd as root/SlurmUser is unsupported; the production pattern
+  is slurmrestd on a unix socket or localhost TCP, agent authenticating
+  as an unprivileged user with `AdminLevel=Administrator` in slurmdbd —
+  the same privilege model as the `sacctmgr` path today.
+- API quirks that the client must handle:
+  - HTTP 200 with a non-empty `errors[]` array in the body — the body,
+    not the status code, is authoritative.
+  - "Maybe-unset" numbers are tri-state structs
+    `{"set": bool, "infinite": bool, "number": N}`; clearing a limit
+    means sending `set: false`, not `null`.
+  - No pagination — job queries must always be bounded with
+    `start_time` / `end_time` and use `skip_steps=true`.
+
+### Why not a generated OpenAPI client
+
+SchedMD publishes no official Python client and only smoke-tests the
+spec against openapi-generator. Community experience with generated
+clients is poor: spec validation failures (`--skip-validate-spec`
+required), `RecursionError` on package import due to spec size,
+generator-version churn, and awkward handling of the tri-state numeric
+structs. Production integrators (Slurm-web, AWS PCS consumers)
+hand-roll thin clients against the small endpoint set they need. We
+need ~15 endpoints; a thin client with a per-version field-mapping
+layer is smaller, debuggable, and testable.
+
+## Design
+
+### 1. A shared client interface
+
+`SlurmClientInterface` (ABC, `waldur_site_agent_slurm/interface.py`)
+captures the full public surface of `SlurmClient`: the `BaseClient`
+methods plus all SLURM-specific extensions (`get/set_account_parent`,
+`create_association_with_partition(s)`, QOS management, fairshare,
+`cancel_active_user_jobs`, `list_active_user_jobs`,
+`get_historical_usage_report`, ...).
+
+Both `SlurmClient` (CLI) and `SlurmRestClient` implement it.
+`SlurmBackend` keeps calling `self.client.*` unchanged; its only new
+responsibility is choosing the client class from `execution_mode`.
+
+### 2. `SlurmRestClient`
+
+Lives in `waldur_site_agent_slurm/rest_client.py`: a thin transport
+layer (`httpx`) with endpoint mappings and payload builders.
+
+- **httpx**, not requests: unix-socket support via
+  `httpx.HTTPTransport(uds=...)` and a single client type for both UDS
+  and TCP. Declared as an optional extra
+  (`waldur-site-agent-slurm[rest]`) so CLI-only deployments gain no
+  dependency.
+- API version is a config string (`api_version`, default `v0.0.43`);
+  URLs are templated (`/slurmdb/{ver}/associations`). Payload
+  field-name differences between versions are isolated in a small
+  mapping layer.
+- Every response is checked for body-level `errors[]` / `warnings[]`;
+  errors map to `BackendError` (same exception contract as CLI).
+  Warnings are logged. Single-entity existence lookups pass
+  `allow_errors=True` so a "not found" answer reads as absent rather
+  than raising.
+- Idempotency semantics mirror the CLI client (e.g. the CLI suppresses
+  "Nothing modified" on `modify`; REST equivalents are similarly
+  tolerant of no-op updates).
+- The `executed_commands` log mirrors the CLI client's for debugging
+  and tests; in REST mode it also surfaces the commands run by the
+  delegated CLI client (usage reporting, RawUsage reset).
+- Responses are converted into the same typed structures
+  (`ClientResource`, `Association`, `SlurmReportLine`) so parsers and
+  backend logic are reused, not duplicated.
+
+### 3. Operation mapping
+
+| CLI today | REST equivalent |
+|---|---|
+| `sacctmgr add/show/remove account` | `POST/GET/DELETE /slurmdb/vX/accounts`, `/account/{name}` |
+| `sacctmgr add user ... account=...` | `POST /slurmdb/vX/users_association` / `/associations` |
+| `sacctmgr modify account set GrpTRESMins=...` | `POST /slurmdb/vX/associations` with `max.tres.group.minutes` |
+| `sacctmgr modify ... set qos/fairshare/parent` | association payload fields `qos`, `shares_raw`, `parent_account` |
+| `sacctmgr show association ...` (limits, users, QOS) | `GET /slurmdb/vX/associations?account=...&cluster=...` |
+| QOS create/delete/modify | `GET/POST/DELETE /slurmdb/vX/qos` |
+| `scancel -A account [-u user]` | `GET /slurm/vX/jobs` filtered, then `DELETE /slurm/vX/job/{id}` per job |
+| `sacctmgr --version` (health check) | `GET /slurm/vX/ping` and `GET /slurmdb/vX/ping` |
+| `sacct --starttime --endtime --accounts ...` | **Stays on CLI** — no direct REST equivalent (see Usage reporting) |
+| `sacctmgr modify account set RawUsage=0` | **Stays on CLI** — no REST equivalent (see Limitations) |
+
+### 4. Usage reporting — out of scope, stays on CLI
+
+There is no `sreport` equivalent in the REST API: the only path would
+be fetching raw `/slurmdb/vX/jobs` records and re-implementing the
+aggregation (requested TRES × elapsed minutes per account/user)
+client-side. That is **not** functionality the REST API provides
+directly, and it feeds billing — re-deriving it from job records would
+need a full accounting period of validation against `sacct` before it
+could be trusted.
+
+Decision: usage reporting (`get_usage_report`,
+`get_historical_usage_report`) is excluded from `SlurmRestClient` and
+keeps using `sacct` in both modes. In `execution_mode: rest`, the
+backend wires the usage-report methods to the existing CLI client
+(composition: `SlurmRestClient` delegates these methods to an internal
+`SlurmClient`), so `SlurmBackend` still sees a single client object.
+
+Moving usage reporting to REST (client-side aggregation from
+`/slurmdb/jobs`) can be revisited later as a separate proposal.
+
+### 5. Authentication
+
+Config supports, in order of preference:
+
+1. `token_file` — path to a JWT, re-read on HTTP 401, so an external
+   rotator (e.g. a cron job running `scontrol token`) keeps the agent
+   working without restarts.
+2. `token_env` — environment variable name holding a static token
+   (consistent with existing secret handling in the agent).
+
+Future (not in initial scope): self-minted HS256 tokens from a shared
+`jwt_key`, and JWKS-based RS256 for Keycloak-integrated sites.
+
+The client sends both `X-SLURM-USER-TOKEN` and `X-SLURM-USER-NAME`.
+
+### 6. Configuration
+
+Backward compatible — absence of the new keys means CLI mode:
+
+```yaml
+offerings:
+  - name: "My SLURM Cluster"
+    backend_type: "slurm"
+    backend_settings:
+      # ... all existing settings unchanged ...
+      execution_mode: "rest"      # "cli" (default) | "rest"
+      rest_api:
+        url: "unix:///run/slurmrestd/slurmrestd.sock"  # or http://localhost:6820
+        api_version: "v0.0.43"   # default; pin to what your SLURM ships
+        username: "waldur-agent"
+        token_file: "/etc/waldur/slurmrestd.token"
+        # token_env: SLURM_JWT     # alternative to token_file
+        verify_ssl: true           # for TLS-terminating reverse proxies
+```
+
+`SlurmBackendSettingsSchema` has an `execution_mode` literal and a
+nested `rest_api` model (required iff `execution_mode: rest`).
+`diagnostics()` reports the mode, endpoint, API version, and ping
+results for both namespaces.
+
+### 7. Limitations (documented, not worked around silently)
+
+- Usage reporting stays on the `sacct` CLI (see section 4), so REST
+  mode still requires SLURM client binaries and cluster auth on hosts
+  that run usage collection.
+- `reset_raw_usage` (`sacctmgr modify account set RawUsage=0`) has no
+  REST endpoint and likewise stays on the CLI client.
+- Beyond these two explicitly delegated operations, there is no
+  automatic REST→CLI fallback on errors: silent divergence between
+  modes is worse than a loud failure. The mode is an explicit
+  per-offering choice.
+- The slurmdb write path is younger than the CLI (crash in
+  `accounts_association` and a QOS POST memory leak were fixed only in
+  SLURM 25.11). REST mode therefore stays **opt-in** with CLI as the
+  default for the foreseeable future, and the docs state the minimum
+  recommended SLURM version (25.11) for REST mode even where older
+  API versions would technically work.
+
+## Testing
+
+- **Unit tests** (`tests/test_rest_client.py`) with `httpx.MockTransport`,
+  asserting request paths, query params, and payloads — the REST analogue
+  of `tests/test_command_construction.py`.
+- **Config tests** (`tests/test_rest_mode_config.py`) cover schema
+  validation and client selection.
+- **E2E against slurm-emulator** (`tests/e2e/test_e2e_rest_api.py`):
+  the emulator ships a slurmrestd-compatible API (v0.0.46); the suite
+  starts it as a subprocess and drives the real `SlurmRestClient` over
+  HTTP. Gated by `WALDUR_E2E_TESTS` and skipped unless the emulator's
+  slurmrestd app is importable.
+- **E2E against real slurmrestd**: still future work — a containerized
+  slurmrestd + slurmdbd, gated like the existing e2e suites.
+
+## Future work
+
+Tracked separately, not part of this design:
+
+- Usage reporting via REST (client-side aggregation from
+  `/slurmdb/jobs`), enabling fully CLI-free deployments.
+- Self-minted HS256 / JWKS-based authentication.
+
+## References
+
+- SLURM REST API client guide: <https://slurm.schedmd.com/rest_clients.html>
+- slurmrestd: <https://slurm.schedmd.com/slurmrestd.html>
+- JWT auth: <https://slurm.schedmd.com/jwt.html>
+- API reference (latest): <https://slurm.schedmd.com/rest_api.html>
+- OpenAPI release notes: <https://slurm.schedmd.com/openapi_release_notes.html>
+- Slurm-web architecture (prior art for the colocated-agent pattern):
+  <https://docs.rackslab.io/slurm-web/overview/architecture.html>
+
+---
+
 ### SLURM Storage Quotas
 <!-- Source: docs/admin-guide/providers/site-agent/docs/slurm-storage-quotas.md -->
 
@@ -34844,6 +35123,42 @@ offerings:
         unit: "GPU-Hours"
         unit_factor: 60
 ```
+
+### REST API Execution Mode (optional)
+
+The plugin can talk to [slurmrestd](https://slurm.schedmd.com/slurmrestd.html)
+instead of shelling out to `sacctmgr`/`scancel` for account, association,
+QoS and limit management. Usage reporting still uses `sacct` (the REST API
+has no `sreport` equivalent) — see
+[docs/slurm-rest-api-design.md](../../docs/slurm-rest-api-design.md) for the
+full design, scope and limitations.
+
+```yaml
+offerings:
+  - name: "My SLURM Cluster"
+    backend_type: "slurm"
+    backend_settings:
+      # ... basic settings as above ...
+      cluster_name: "mycluster"      # required in REST mode
+      execution_mode: "rest"         # "cli" (default) | "rest"
+      rest_api:
+        # http(s)://host:port or unix:///path/to/socket
+        url: "unix:///run/slurmrestd/slurmrestd.sock"
+        api_version: "v0.0.43"
+        username: "waldur-agent"
+        token_file: "/etc/waldur/slurmrestd.token"
+        # token_env: SLURM_JWT       # alternative to token_file
+```
+
+Requires the optional `httpx` dependency:
+
+```bash
+pip install 'waldur-site-agent-slurm[rest]'
+```
+
+The JWT token is re-read from `token_file` on HTTP 401, so an external
+rotator (e.g. a cron job running `scontrol token`) keeps the agent working
+without restarts. Recommended SLURM version for REST mode: 25.11 or newer.
 
 ### Account settings: users vs. accounts
 
@@ -74321,6 +74636,310 @@ A service provider can grant access mentioned in the previous section to all res
   #  'detail': 'Offering users have been set.'
   # }
 ```
+
+---
+
+### SLURM periodic usage policies: lifecycle and debugging
+<!-- Source: docs/admin-guide/operators/slurm-periodic-usage-policies.md -->
+
+# SLURM periodic usage policies: lifecycle and debugging
+
+This guide explains **how SLURM periodic usage policies behave at runtime** and
+**how to debug them across every layer** — from the Waldur UI down to `sacctmgr`
+on the cluster. It is written for operators and support engineers who need to
+answer questions like *"why did the usage reset run at 08:10 instead of
+midnight?"* or *"did the reset actually reach SLURM?"*.
+
+For **how to create and configure** a policy (actions, thresholds, carryover,
+API payloads), see the companion reference:
+[SLURM periodic usage policy configuration](../../developer-guide/guides/slurm-periodic-usage-policy-configuration.md).
+For the **agent-side implementation**, see the
+[SLURM site-agent plugin](../providers/site-agent/plugins/slurm/README.md).
+
+## Architecture
+
+A periodic usage policy spans five layers. Waldur Mastermind owns the policy and
+decides *what* the limits should be; the site agent translates that into
+`sacctmgr` calls on the cluster.
+
+```mermaid
+flowchart LR
+    UI["Waldur UI<br/>Execution log"]
+    subgraph MM["Waldur Mastermind"]
+        Beat["Celery beat<br/>sync every 10 min"]
+        Policy["SlurmPeriodicUsagePolicy"]
+        Cache[("Period-marker<br/>cache")]
+        DB[("SlurmCommandHistory<br/>SlurmPolicyEvaluationLog")]
+        Beat --> Policy
+        Policy --> Cache
+        Policy --> DB
+    end
+    Policy -- "STOMP: apply_periodic_settings<br/>{reset_raw_usage, grp_tres_mins, fairshare}" --> Agent
+    subgraph Agent["Waldur site agent"]
+        Consumer["periodic_limits consumer"]
+    end
+    Agent -- "sacctmgr / sshare" --> SLURM["SLURM controller"]
+    Agent -. "report-command-result (callback)" .-> Policy
+    UI -. reads .-> DB
+```
+
+Key point: the connection between Mastermind and the agent is a **message
+queue**, and publishing is **fire-and-forget**. Mastermind records that it *sent*
+a command; the agent confirms execution asynchronously through the
+`report-command-result` callback (if it is configured to do so).
+
+## The scheduling model
+
+There is **no fixed clock time** at which a raw-usage reset runs. Resets are
+emitted by a periodic sync task, gated on the billing period changing.
+
+| Beat task | Schedule (UTC) | Role |
+|-----------|----------------|------|
+| `sync_slurm_periodic_settings` | every 10 minutes (`*/10`) | Recomputes limits and emits `reset_raw_usage` at period boundaries |
+| `reset_slurm_policies_on_period_boundary` | daily at 01:00 | Re-evaluates stale paused/downscaled resources at a new period |
+| `check_polices` | daily at 02:00 | General policy evaluation |
+| `cleanup_slurm_evaluation_logs` | daily at 03:00 | Log retention |
+
+The **billing period is calendar-based**, derived from today's date and the
+offering component's limit period — it does **not** depend on invoice generation
+or any database row existing:
+
+| Limit period | Period string example |
+|--------------|-----------------------|
+| Monthly | `2026-07` |
+| Quarterly | `2026-Q3` |
+| Annual | `2026` |
+| Total (single-shot) | `total` |
+
+!!! note "Resets are decoupled from invoicing"
+    The monthly invoice task runs at 00:00 UTC on the 1st, but the SLURM reset
+    does **not** wait for it. A reset can be emitted before any invoice for the
+    new period exists. Invoice/usage data only feeds the carryover *allocation
+    numbers*, never the decision to reset.
+
+### When is `reset_raw_usage` set?
+
+`reset_raw_usage` is **not a stored field** on the resource or the policy — it is
+a transient boolean in the `apply_periodic_settings` message that Mastermind
+sends to the site agent on each sync. When it is `true`, the agent runs
+`sacctmgr … set RawUsage=0`. Do not confuse it with the policy's persistent
+`raw_usage_reset` option (default enabled), which only says the policy is
+*allowed* to reset at period boundaries.
+
+On each 10-minute tick, for each resource, the flag is computed as:
+
+```mermaid
+flowchart TD
+    A["sync tick (every 10 min)"] --> B{"raw usage reset<br/>configured?"}
+    B -- No --> Z["reset_raw_usage = False"]
+    B -- Yes --> C{"single-shot?<br/>(period == total)"}
+    C -- Yes --> Z
+    C -- No --> D{"last synced period<br/>changed?"}
+    D -- No --> Z
+    D -- Yes --> Y["reset_raw_usage = True"]
+```
+
+The "last synced period" is a cache marker that is advanced **only after a
+successful publish to the agent**. This is the crux of the timing behaviour.
+
+### End-to-end reset flow
+
+```mermaid
+sequenceDiagram
+    participant Beat as Celery beat (*/10)
+    participant Policy as Policy
+    participant Cache as Period marker
+    participant Broker as Message broker
+    participant Agent as Site agent
+    participant SLURM as SLURM
+
+    Beat->>Policy: sync_slurm_periodic_settings()
+    Policy->>Policy: subscription registered? (EventSubscriptionQueue)
+    Note over Policy: if NOT → skip resource entirely<br/>(nothing emitted, marker not advanced)
+    Policy->>Cache: read last synced period
+    Policy->>Policy: current period = today + limit_period
+    alt boundary crossed and subscription live
+        Policy->>Broker: publish apply_periodic_settings (reset_raw_usage=true)
+        Policy->>Cache: record current period
+        Policy->>Policy: create SlurmCommandHistory (executed_at = now)
+        Broker->>Agent: deliver settings
+        Agent->>SLURM: sacctmgr modify account <acct> set RawUsage=0
+        Agent-->>Policy: report-command-result (success/failure)
+    else same period, or no subscription
+        Note over Policy: no reset emitted
+    end
+```
+
+### Why a reset can land at 08:10 instead of midnight
+
+Because the reset is emitted on the **first 10-minute tick at which the
+resource's agent subscription is live in the new period** — not at the boundary
+itself. Common reasons the emit is later than 00:00 UTC:
+
+1. **Agent subscription not yet registered.** If the offering has no live
+   `resource_periodic_limits` subscription, the sync task skips the resource
+   entirely: nothing is emitted, and the period marker is not advanced. The
+   reset fires on the first tick after the agent (re)connects. If the agent came
+   up at ~08:00, the reset shows at 08:10.
+2. **Celery beat / worker backlog.** The `*/10` task must actually run, and the
+   publish is queued via a worker; a backlog delays both.
+3. **Loss of the period marker (spurious re-fire).** The marker lives in the
+   Django cache, which in production is a `DatabaseCache` table (`waldur_cache`)
+   with Django's default `MAX_ENTRIES=300`. If the marker is culled (the table
+   exceeds 300 rows) or the cache is cleared (an operational `cache.clear()`),
+   the next sync treats the period as unsynced and *re-fires* the reset. This
+   causes a duplicate or a mid-period reset, not a late one. A Mastermind
+   redeploy does **not** cause this — the DB cache table survives restarts.
+
+## Reading the execution log correctly
+
+The UI exposes the log via **Offering → SLURM policy → Policy info → Execution
+log**, with two tabs: **Evaluation history** and **Command history**. The command
+history is backed by `SlurmCommandHistory`
+(`marketplaceSlurmPeriodicUsagePoliciesCommandHistoryList`).
+
+Three fields routinely cause misreadings:
+
+| Field | What it actually means |
+|-------|------------------------|
+| `executed_at` | Time Mastermind **emitted** the command (row creation), **not** when SLURM ran it. It is never back-dated to the period boundary. |
+| `success` | Optimistic default `True` at creation. It flips to `False` **only if** the agent posts a failure through `report-command-result`. A green "OK" is not positive proof of execution. |
+| `billing_period` | Stored on the row but **not shown** in the command-history table. Query it via the API or Django admin to confirm which period a reset belongs to. |
+
+!!! tip "The reliable confirmation signal"
+    To confirm the agent actually applied a command, look at the **evaluation
+    log's** `site_agent_confirmed` (`True` / `False` / `None`), not the command
+    history's `success` flag. `None` means the agent never reported back.
+
+## Debugging playbook
+
+Work top-down. Each layer narrows the cause.
+
+```mermaid
+flowchart TD
+    Start["Reset missing / late / duplicated"] --> UI{"Row in UI<br/>execution log?"}
+    UI -- No --> Sub{"Agent subscription<br/>(resource_periodic_limits)<br/>registered?"}
+    Sub -- No --> FixSub["Agent not connected —<br/>check site-agent logs & queue"]
+    Sub -- Yes --> Beat["Check celery beat/worker<br/>ran the */10 task"]
+    UI -- Yes --> Time{"executed_at as expected?"}
+    Time -- "Late" --> Late["Subscription/agent came up late,<br/>or beat backlog"]
+    Time -- "Duplicated" --> Evict["Cache marker culled<br/>or cache.clear()"]
+    Time -- "Yes" --> Confirmed{"site_agent_confirmed?"}
+    Confirmed -- "False / None" --> AgentSLURM["Confirm on cluster<br/>(SLURM layer below)"]
+    Confirmed -- "True" --> Done["Emitted and confirmed —<br/>verify value on cluster if disputed"]
+```
+
+### Layer 1 — Waldur UI
+
+- Open the **Execution log** for the policy. In **Command history**, find the
+  `reset_usage` row and note `executed_at` (emit time), `execution_mode`, and the
+  `shell_command` (which contains the account name).
+- Switch to **Evaluation history** and check `site_agent_confirmed` for the same
+  resource and period.
+
+### Layer 2 — Mastermind
+
+- **Query the period a reset belongs to and spot duplicates** (Django admin or
+  ORM), since `billing_period` is not in the UI table:
+
+  ```python
+  SlurmCommandHistory.objects.filter(
+      resource__name="<resource>", command_type="reset_usage",
+  ).values("executed_at", "billing_period", "success", "execution_mode")
+  ```
+
+  One row per period → normal boundary reset. Two rows in the same period →
+  a re-fire from the period marker being culled from the cache or a
+  `cache.clear()`.
+- **Check beat health** — confirm the `*/10` task is actually running in the
+  scheduler and that workers are not backlogged.
+- **Status and dry-run** without waiting for the next tick:
+
+  ```bash
+  waldur slurm_policy_status --policy <UUID> --resource <UUID>
+  waldur evaluate_slurm_policy --policy <UUID> --resource <UUID> --dry-run
+  ```
+
+- **Force a reset** immediately (staff-only) when you have confirmed it is
+  warranted:
+
+  ```bash
+  curl -X POST https://waldur.example.com/api/marketplace-slurm-periodic-usage-policies/POLICY_UUID/force-period-reset/ \
+    -H "Authorization: Token <staff-token>"
+  ```
+
+### Layer 3 — Site agent
+
+- Confirm the agent is connected and that a `resource_periodic_limits`
+  subscription/queue exists for the offering. A missing subscription is the most
+  common reason a reset is skipped or late.
+- Check the agent logs around the emit time for receipt of the
+  `apply_periodic_settings` message and the resulting `sacctmgr` call.
+- Run the agent's account diagnostics (see the site-agent SLURM plugin docs).
+
+### Layer 4 — SLURM (verify on the cluster)
+
+The Waldur account name equals the resource's `backend_id`; copy it from the
+`shell_command` in the execution log. Then, on the cluster:
+
+- **Ground-truth run time and actor** — SLURM's own audit trail:
+
+  ```bash
+  sacctmgr show transactions Start=2026-07-01 \
+    format=TimeStamp,Actor,Action,Info,Where
+  ```
+
+  Look for the modify that set the account's usage to 0 — SLURM records the
+  `RawUsage=0` reset in its transaction table like any other association change,
+  with `Actor` set to the account that ran it. Its `TimeStamp` is the
+  authoritative time the reset ran, independent of Waldur.
+
+- **Current usage**:
+
+  ```bash
+  sshare -A <account> -o Account,User,RawUsage,GrpTRESRaw
+  ```
+
+  `RawUsage` is decayed fair-share usage refreshed every `PriorityCalcPeriod`
+  (~5 min) and jobs accrue against it continuously, so it will not read exactly
+  `0` shortly after a reset.
+
+- **Is SLURM auto-resetting, or only Waldur?**
+
+  ```bash
+  scontrol show config | grep -iE 'Priority(DecayHalfLife|UsageResetPeriod|CalcPeriod)'
+  ```
+
+  `PriorityUsageResetPeriod = NONE` means SLURM never auto-resets usage — every
+  reset comes from the `sacctmgr` command pushed by the agent. This is the
+  expected configuration for Waldur-managed budgets.
+
+- **The enforced limit**:
+
+  ```bash
+  sacctmgr show assoc account=<account> \
+    format=Account,User,GrpTRESMins,GrpTRES,Fairshare
+  ```
+
+!!! warning "Reconcile time zones before concluding"
+    The UI renders `executed_at` in the viewer's browser time zone, Mastermind
+    stores it in UTC, and the cluster log may use local time. Convert everything
+    to UTC before comparing the Waldur emit time against the SLURM run time.
+
+## Troubleshooting scenarios
+
+| Symptom | Likely cause | Confirm with |
+|---------|--------------|--------------|
+| No reset at all this period | Agent subscription not registered; resource not `OK` | Layer 3 subscription check; `slurm_policy_status` |
+| Reset emitted, but hours after midnight | Agent/subscription came up late, or beat backlog | Agent connect time; beat run history |
+| Two resets in the same period | Period marker culled from cache (`MAX_ENTRIES`) or `cache.clear()` | Mastermind ORM query on `billing_period` |
+| UI shows "OK" but usage not reset on cluster | `success` never confirmed; agent failed silently | `site_agent_confirmed`; `sacctmgr show transactions` |
+| Carryover allocation looks wrong | Previous-period `ComponentUsage` not finalized when settings were computed | Compare `ComponentUsage` for the previous period |
+
+## See also
+
+- [SLURM periodic usage policy configuration](../../developer-guide/guides/slurm-periodic-usage-policy-configuration.md)
+- [SLURM site-agent plugin](../providers/site-agent/plugins/slurm/README.md)
 
 ---
 
