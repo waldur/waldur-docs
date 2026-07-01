@@ -1,5 +1,32 @@
 # Changelog
 
+## 8.1.0-rc.4 - 2026-07-01
+
+### Highlights
+
+This release candidate hardens several edge cases that could disrupt everyday operations. Staff and support users can now review historical role assignments — including who revoked a role and why — making access audits far easier. Marketplace resource provisioning is more reliable under heavy churn, project creation no longer fails unexpectedly on long descriptions, and OpenStack port security changes are now safer.
+
+### What's New
+
+- Staff and support users can now look up historical user roles, including revocation reason and who revoked each role, improving access auditing and troubleshooting.
+
+### Improvements
+
+- Offering configuration now warns when a project-slug account naming policy conflicts with the resource slug template, so operators can catch misconfigurations before they cause provisioning issues (backend guidance and UI warnings on the offering integration screens).
+- Disabling port security is now rejected when allowed address pairs are configured on an OpenStack port, preventing an unsafe network configuration.
+
+### Bug Fixes
+
+- Fixed a double counter appearing in generated resource slugs when resources are created and deleted in rapid succession.
+- Fixed a server error (HTTP 500) that occurred when creating a project whose description exceeded the length limit after HTML cleanup; the request now returns a proper validation error.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [6 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.3...8.1.0-rc.4) - historical role lookup, marketplace slug and project validation fixes, and OpenStack port security hardening.
+- **Waldur Homeport**: [1 commit](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.3...8.1.0-rc.4) - warns when account naming policy conflicts with the resource slug template on offering integration screens.
+
+---
+
 ## 8.1.0-rc.3 - 2026-06-29
 
 ### Highlights
