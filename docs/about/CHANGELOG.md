@@ -1,5 +1,37 @@
 # Changelog
 
+## 8.1.0-rc.5 - 2026-07-02
+
+### Highlights
+
+This release brings a redesigned Matrix team chat experience with voice messages and in-app calls, backed by new observability tooling for administrators. Operators gain more control over scheduled maintenance windows with extend, end-early, and cancel actions, and can now report or backfill usage for prepaid components. Several fixes address crashes and empty data in offering details and marketplace navigation, making day-to-day administration more reliable.
+
+### What's New
+
+- Matrix team chat has been redesigned with a unified chat drawer, voice messages, typing indicators, and in-call widgets. Voice message playback is enabled end-to-end, with the necessary media policy allowances added to the Helm and Docker Compose deployments.
+- Administrators get a new LiveKit Calls observability tab in the Matrix admin dashboard, showing active rooms and call details.
+- Providers can now report and backfill usage for prepaid components, giving more flexibility in how consumption is recorded.
+- Scheduled maintenance windows can now be extended, ended early, or cancelled directly from a cleaned-up maintenance action menu.
+
+### Improvements
+
+- Workflow steps can no longer be enabled while a step they depend on is still disabled, preventing invalid proposal workflow configurations.
+
+### Bug Fixes
+
+- Fixed empty fields showing in the offering user details dialog.
+- Fixed a crash on the offering Customers tab and corrected sub-tab navigation.
+- Fixed a crash in error handling when transport-level HTTP errors occurred during service integrations.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [3 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.4...8.1.0-rc.5) - Prepaid usage reporting, a transport-error handling fix, and internal config generation refactoring.
+- **Waldur Homeport**: [6 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.4...8.1.0-rc.5) - Matrix chat redesign, LiveKit call observability, maintenance actions, and marketplace/offering fixes.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.4...8.1.0-rc.5) - Content security policy update to support voice message media.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.0-rc.4...8.1.0-rc.5) - Content security policy update to support voice message media.
+
+---
+
 ## 8.1.0-rc.4 - 2026-07-01
 
 ### Highlights
