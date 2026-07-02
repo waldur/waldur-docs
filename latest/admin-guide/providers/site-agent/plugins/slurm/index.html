@@ -6604,6 +6604,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#verifying-a-raw-usage-reset-on-the-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying a raw-usage reset on the cluster
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -14774,6 +14785,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#verifying-a-raw-usage-reset-on-the-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying a raw-usage reset on the cluster
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -15853,6 +15875,49 @@ python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span
 <span class="s2">print(result)</span>
 <span class="s2">"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="verifying-a-raw-usage-reset-on-the-cluster">Verifying a raw-usage reset on the cluster</h3>
+<p>When a periodic policy resets raw usage, Mastermind emits an
+<code>apply_periodic_settings</code> message with <code>reset_raw_usage: true</code>, and this plugin
+runs <code>sacctmgr modify account &lt;account&gt; set RawUsage=0</code>. The account name is the
+Waldur resource's <code>backend_id</code>. To confirm what actually happened on SLURM —
+independent of what the Waldur UI shows — use these commands (replace
+<code>waldur_project123</code> with the account):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Ground-truth run time and actor of the reset (SLURM's own audit log)</span>
+sacctmgr<span class="w"> </span>show<span class="w"> </span>transactions<span class="w"> </span><span class="nv">Start</span><span class="o">=</span><span class="m">2024</span>-01-01<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">format</span><span class="o">=</span>TimeStamp,Actor,Action,Info,Where
+
+<span class="c1"># Current raw (fair-share) usage — refreshed every PriorityCalcPeriod (~5 min),</span>
+<span class="c1"># so it will not read exactly 0 shortly after a reset</span>
+sshare<span class="w"> </span>-A<span class="w"> </span>waldur_project123<span class="w"> </span>-o<span class="w"> </span>Account,User,RawUsage,GrpTRESRaw
+
+<span class="c1"># Confirm SLURM is not also auto-resetting usage on its own schedule.</span>
+<span class="c1"># PriorityUsageResetPeriod = NONE means resets come only from this plugin.</span>
+scontrol<span class="w"> </span>show<span class="w"> </span>config<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-iE<span class="w"> </span><span class="s1">'Priority(DecayHalfLife|UsageResetPeriod|CalcPeriod)'</span>
+
+<span class="c1"># The limit the reset is measured against</span>
+sacctmgr<span class="w"> </span>show<span class="w"> </span>assoc<span class="w"> </span><span class="nv">account</span><span class="o">=</span>waldur_project123<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">format</span><span class="o">=</span>Account,User,GrpTRESMins,GrpTRES,Fairshare
+</code></pre></div></td></tr></tbody></table></div>
+<blockquote>
+<p><strong>Note:</strong> the <code>executed_at</code> timestamp in the Waldur execution log is
+Mastermind's <strong>emit</strong> time, not the cluster run time. <code>sacctmgr show
+transactions</code> above is the authoritative source for when the reset actually
+applied. Reconcile all timestamps in UTC before drawing conclusions.</p>
+</blockquote>
 <h2 id="support">Support</h2>
 <p>For issues, bug reports, or feature requests related to the SLURM plugin, please check:</p>
 <ol>
