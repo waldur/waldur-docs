@@ -184,35 +184,57 @@ Custom components appear alongside built-in components in the order form and pri
 
 ## Volume discounts
 
-Service providers can configure volume discounts on plan components to incentivize larger orders. When a customer orders a quantity that meets or exceeds a configured threshold, a percentage discount is automatically applied.
+Service providers can configure volume discounts on a plan's components to reward
+larger usage. A discount grants a percentage reduction on a component once the
+customer's usage reaches a threshold, and is applied automatically when the
+invoice is finalized.
 
 ### Configuring discounts
 
 1. Navigate to the offering's **Edit** → **Accounting** → **Plans** tab.
-2. Select a plan and click the **Discounts** button.
-3. For each component, set:
-    - **Discount threshold**: the minimum quantity required to trigger the discount
-    - **Discount rate**: the percentage discount (0–100%)
-4. Save changes.
+2. Open a plan's **⋮** actions menu and choose **Edit discounts**.
+3. For each component, build the discount and pick its scope, then save.
 
-For example, setting a threshold of 16 cores and a rate of 10% means customers ordering 16 or more CPU cores receive a 10% price reduction on that component.
+![Edit discounts dialog with the tier builder and scope selector](../img/volume-discount-tier-builder.png)
 
-### How customers see discounts
+#### Tier builder
 
-During order creation, discount information is displayed directly on the component:
+Add one or more **tiers** — each grants a percentage discount once usage reaches
+a threshold (*when usage ≥ N → X % off*). Add several tiers for graduated
+pricing; higher thresholds take precedence. Use the **Preview** field to check
+the resulting discount for a sample usage. Leave a component with no tiers for no
+discount.
 
-- **Before threshold is met**: the discount hint appears in gray text (e.g., "10% off for 16+ cores"), informing the customer about the available discount.
+#### Discount scope
 
-![Order form showing discount hints in gray when below threshold](../img/order-discount-hint.png)
+Each component has a **Discount scope**:
 
-- **When threshold is met**: the hint turns green and the total price reflects the discounted rate. A "Volume discount savings" row appears in the order summary.
+- **Aggregated across the customer's resources** (default) — usage is summed
+  across all of the customer's resources of the offering before the discount is
+  applied, so consolidating usage can reach a higher tier.
+- **Per resource** — each resource is discounted on its own usage independently.
 
-![Order form showing active discounts in green with reduced prices](../img/order-discount-active.png)
+#### Advanced formula
 
-![Order summary showing Volume discount savings](../img/order-discount-summary.png)
+For discounts that are not simple tiers (for example a capped continuous
+discount such as `MIN(20, usage / 100)`), switch to **Advanced: edit formula**
+and enter a formula directly. The formula returns a percentage (clamped to
+0–100) as a function of the usage bound to `usage`, and supports the functions
+`MIN`, `MAX`, `LN`, `LOG10`, `FLOOR`, `CEIL`, `POW` and `ABS`.
+
+### How discounts appear
+
+Volume discounts are computed at invoice finalization, not at order time, so the
+exact saving depends on the customer's actual usage for the month. On the
+customer's invoice the discount appears as a separate negative line paired with
+each discounted component — see
+[volume discounts on invoices](../customer-organization/affiliate-earnings.md#volume-discounts-on-invoices).
 
 !!! tip
-    Volume discounts are applied per component. You can set different thresholds and rates for different components within the same plan to create tiered pricing structures.
+    Discounts are configured per plan. When a customer has resources on
+    different plans of the same offering, keep a component's discount consistent
+    across the plans, since the aggregated discount uses one plan's formula for
+    the whole offering component.
 
 ## Offering management
 
