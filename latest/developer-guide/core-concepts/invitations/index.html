@@ -7599,6 +7599,73 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-a-request-to-join-is-submitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a request to join is submitted
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="When a request to join is submitted">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recipient-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipient resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-a-request-is-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a request is rejected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#individual-invitation-requests-for-contrast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Individual invitation requests (for contrast)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#advanced-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -15057,6 +15124,73 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-a-request-to-join-is-submitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a request to join is submitted
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="When a request to join is submitted">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recipient-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipient resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-a-request-is-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a request is rejected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#individual-invitation-requests-for-contrast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Individual invitation requests (for contrast)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#advanced-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -16030,6 +16164,79 @@ previously deleted.</p>
 <li><code>invitation_approved</code> - Auto-created user credentials</li>
 <li><code>permission_request_submitted</code> - Permission request notification</li>
 </ul>
+<h2 id="notifications">Notifications</h2>
+<p>Group invitations rely on the marketplace notification framework
+(<code>users.*</code> keys registered in <code>waldur_core/structure/notifications.py</code>). Each
+notification maps to a database <code>Notification</code> row that staff can toggle and
+whose templates they can override from the UI
+(<strong>Support → User management → Notifications</strong>, backed by
+<code>/api/notification-messages/</code>). If a notification is <strong>disabled</strong>, delivery is
+silently skipped — this is the first thing to check when an expected email is
+not received.</p>
+<h3 id="when-a-request-to-join-is-submitted">When a request to join is submitted</h3>
+<p>When a user submits a request against a group invitation, a
+<code>PermissionRequest</code> is created and transitioned to <code>PENDING</code>. The
+<code>post_save</code> handler
+<code>create_notification_about_permission_request_has_been_submitted</code>
+(<code>waldur_core/users/handlers.py</code>) queues
+<code>send_mail_notification_about_permission_request_has_been_submitted</code>
+(<code>waldur_core/users/tasks.py</code>) on transaction commit, which sends the
+<code>users.permission_request_submitted</code> notification to the approvers.</p>
+<h4 id="recipient-resolution">Recipient resolution</h4>
+<p>Recipients are resolved in
+<code>get_users_for_notification_about_request_has_been_submitted</code> and
+<code>get_customer_notification_emails</code>
+(<code>waldur_core/users/utils.py</code>) and combined as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Recipient set</th>
+<th>How it is resolved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Approvers</strong></td>
+<td>Users holding a role that grants the scope's <em>create permission</em> (e.g. <code>CREATE_CUSTOMER_PERMISSION</code> for a customer-scoped invitation, <code>CREATE_PROJECT_PERMISSION</code> for a project-scoped one). For project scopes, the parent customer's qualifying owners are included too. Users with a blank email or <code>notifications_enabled=False</code> are excluded.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Organization contacts</strong></td>
+<td>The invitation customer's contact <code>email</code> field plus every address in its comma-separated <code>notification_emails</code> field.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Staff (fallback)</strong></td>
+<td>Active staff users with a valid email — used <strong>only</strong> when priorities 1 and 2 yield no recipients.</td>
+</tr>
+</tbody>
+</table>
+<p>The final list is the union of priorities 1 and 2 (de-duplicated, blanks
+dropped); if that union is empty it falls back to priority 3. If even staff are
+unavailable, a warning is logged and no email is sent.</p>
+<p>This means an organization can be notified about join requests even when no
+member currently holds the approver permission — by setting the organization's
+<strong>contact email</strong> or <strong>notification emails</strong>. Those fields are configured on
+the organization (<strong>Edit organization → Contact information</strong>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>auto_approve</code> invitations still emit <code>permission_request_submitted</code> to the
+approvers before the request is immediately approved, because <code>submit()</code>
+runs before <code>approve()</code>.</p>
+</div>
+<h3 id="when-a-request-is-rejected">When a request is rejected</h3>
+<p>Rejecting a <code>PermissionRequest</code> triggers
+<code>create_notification_about_permission_request_has_been_rejected</code>
+→ <code>send_mail_notification_about_permission_request_has_been_rejected</code>, which
+sends <code>users.permission_request_rejected</code> to the requester
+(<code>permission_request.created_by</code>) only.</p>
+<h3 id="individual-invitation-requests-for-contrast">Individual invitation requests (for contrast)</h3>
+<p>The separate individual-invitation flow
+(<code>ONLY_STAFF_CAN_INVITE_USERS</code>) uses <code>send_invitation_requested</code> and the
+<code>users.invitation_requested</code> template, which notifies <strong>staff only</strong> — it does
+not consult organization owners or the customer notification emails.</p>
 <h2 id="advanced-features">Advanced Features</h2>
 <h3 id="auto-approval">Auto-Approval</h3>
 <p>Group invitations with <code>auto_approve=True</code> skip manual review and immediately approve

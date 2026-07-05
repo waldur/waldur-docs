@@ -9727,6 +9727,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#role-based-approval-skip-auto_approve_for_roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role-based approval skip (auto_approve_for_roles)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#use-cases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13672,6 +13683,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#role-based-approval-skip-auto_approve_for_roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role-based approval skip (auto_approve_for_roles)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#use-cases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13910,6 +13932,16 @@
 <li>The order form's organization and project selectors are limited to scopes where the user holds one of the roles.</li>
 </ul>
 <p>Approval is unaffected: whether an order skips consumer review still depends on the role's <code>ORDER.APPROVE</code> permission, exactly as for any other offering. Role names must be valid project- or organization-scoped roles.</p>
+<h2 id="role-based-approval-skip-auto_approve_for_roles">Role-based approval skip (<code>auto_approve_for_roles</code>)</h2>
+<p>Independently of <code>restricted_to_roles</code>, an offering can designate <strong>project or organization roles whose orders skip consumer review</strong> via the <code>auto_approve_for_roles</code> plugin option — a list of role names, e.g. <code>["PROJECT.MANAGER"]</code>. It is set per offering under <strong>Integration → Operations → Orders &amp; approval</strong> in the UI, or via the <code>update_integration</code> API. <strong>Only staff can change this option</strong> (service providers and customer owners cannot), even though they may edit other integration settings.</p>
+<p>When set:</p>
+<ul>
+<li>An order whose creator holds one of the listed roles <strong>on the target project or its customer</strong> skips the consumer review step (it is auto-approved by the consumer), without the role needing the global <code>ORDER.APPROVE</code> permission.</li>
+<li>The role must be held in the order's own project/customer scope — holding it in an unrelated project does not auto-approve.</li>
+<li>Provider-side review still applies: the order proceeds to <code>PENDING_PROVIDER</code> unless the provider also auto-approves.</li>
+<li>Offerings requiring a purchase-order upload still block auto-approval until the attachment is present.</li>
+</ul>
+<p>This option is orthogonal to <code>restricted_to_roles</code>: an offering can be public and still auto-approve for a role, restricted without auto-approving, or both. Role names must be valid project- or organization-scoped roles.</p>
 <h2 id="use-cases">Use Cases</h2>
 <h3 id="public-marketplace-default">Public Marketplace (default)</h3>
 <p>Use <code>show_all</code> for open marketplaces where users should see all available offerings and learn about restrictions when they try to order.</p>

@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-04T02:05:00.057776Z
+Generated: 2026-07-05T02:04:55.843936Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -11084,7 +11084,7 @@ Sent to the user who submitted a permission request to inform them that their re
 
 ### users.permission_request_submitted
 
-Sent to staff or customer owners about a submitted permission request.
+Sent about a submitted permission request to the organization owners and managers who can approve it, and to the organization's contact and notification emails. Falls back to staff when none of these are available.
 
 #### Templates
 
@@ -43989,6 +43989,70 @@ The system uses several email templates (`waldur_core/users/templates/`):
 - `invitation_expired` - Expiration notification
 - `invitation_approved` - Auto-created user credentials
 - `permission_request_submitted` - Permission request notification
+
+## Notifications
+
+Group invitations rely on the marketplace notification framework
+(`users.*` keys registered in `waldur_core/structure/notifications.py`). Each
+notification maps to a database `Notification` row that staff can toggle and
+whose templates they can override from the UI
+(**Support → User management → Notifications**, backed by
+`/api/notification-messages/`). If a notification is **disabled**, delivery is
+silently skipped — this is the first thing to check when an expected email is
+not received.
+
+### When a request to join is submitted
+
+When a user submits a request against a group invitation, a
+`PermissionRequest` is created and transitioned to `PENDING`. The
+`post_save` handler
+`create_notification_about_permission_request_has_been_submitted`
+(`waldur_core/users/handlers.py`) queues
+`send_mail_notification_about_permission_request_has_been_submitted`
+(`waldur_core/users/tasks.py`) on transaction commit, which sends the
+`users.permission_request_submitted` notification to the approvers.
+
+#### Recipient resolution
+
+Recipients are resolved in
+`get_users_for_notification_about_request_has_been_submitted` and
+`get_customer_notification_emails`
+(`waldur_core/users/utils.py`) and combined as follows:
+
+| Priority | Recipient set | How it is resolved |
+|----------|---------------|--------------------|
+| 1 | **Approvers** | Users holding a role that grants the scope's *create permission* (e.g. `CREATE_CUSTOMER_PERMISSION` for a customer-scoped invitation, `CREATE_PROJECT_PERMISSION` for a project-scoped one). For project scopes, the parent customer's qualifying owners are included too. Users with a blank email or `notifications_enabled=False` are excluded. |
+| 2 | **Organization contacts** | The invitation customer's contact `email` field plus every address in its comma-separated `notification_emails` field. |
+| 3 | **Staff (fallback)** | Active staff users with a valid email — used **only** when priorities 1 and 2 yield no recipients. |
+
+The final list is the union of priorities 1 and 2 (de-duplicated, blanks
+dropped); if that union is empty it falls back to priority 3. If even staff are
+unavailable, a warning is logged and no email is sent.
+
+This means an organization can be notified about join requests even when no
+member currently holds the approver permission — by setting the organization's
+**contact email** or **notification emails**. Those fields are configured on
+the organization (**Edit organization → Contact information**).
+
+!!! note
+    `auto_approve` invitations still emit `permission_request_submitted` to the
+    approvers before the request is immediately approved, because `submit()`
+    runs before `approve()`.
+
+### When a request is rejected
+
+Rejecting a `PermissionRequest` triggers
+`create_notification_about_permission_request_has_been_rejected`
+→ `send_mail_notification_about_permission_request_has_been_rejected`, which
+sends `users.permission_request_rejected` to the requester
+(`permission_request.created_by`) only.
+
+### Individual invitation requests (for contrast)
+
+The separate individual-invitation flow
+(`ONLY_STAFF_CAN_INVITE_USERS`) uses `send_invitation_requested` and the
+`users.invitation_requested` template, which notifies **staff only** — it does
+not consult organization owners or the customer notification emails.
 
 ## Advanced Features
 
@@ -86065,6 +86129,19 @@ When set:
 - The order form's organization and project selectors are limited to scopes where the user holds one of the roles.
 
 Approval is unaffected: whether an order skips consumer review still depends on the role's `ORDER.APPROVE` permission, exactly as for any other offering. Role names must be valid project- or organization-scoped roles.
+
+## Role-based approval skip (`auto_approve_for_roles`)
+
+Independently of `restricted_to_roles`, an offering can designate **project or organization roles whose orders skip consumer review** via the `auto_approve_for_roles` plugin option — a list of role names, e.g. `["PROJECT.MANAGER"]`. It is set per offering under **Integration → Operations → Orders & approval** in the UI, or via the `update_integration` API. **Only staff can change this option** (service providers and customer owners cannot), even though they may edit other integration settings.
+
+When set:
+
+- An order whose creator holds one of the listed roles **on the target project or its customer** skips the consumer review step (it is auto-approved by the consumer), without the role needing the global `ORDER.APPROVE` permission.
+- The role must be held in the order's own project/customer scope — holding it in an unrelated project does not auto-approve.
+- Provider-side review still applies: the order proceeds to `PENDING_PROVIDER` unless the provider also auto-approves.
+- Offerings requiring a purchase-order upload still block auto-approval until the attachment is present.
+
+This option is orthogonal to `restricted_to_roles`: an offering can be public and still auto-approve for a role, restricted without auto-approving, or both. Role names must be valid project- or organization-scoped roles.
 
 ## Use Cases
 
