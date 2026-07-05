@@ -140,32 +140,31 @@ If it turns out that initial limits for the resource are too low or higher than 
 
 ## Volume discounts
 
-Some offerings may have volume discounts configured on their components. When ordering a resource, you can see discount information directly on the order form.
+Some offerings have volume discounts configured on their components by the
+service provider. A discount reduces the price of a component once your usage
+reaches a threshold.
 
-### How to identify available discounts
+**In the order form**, a discount is shown live — a green *− X % volume
+discount* next to the component and a reduced total — only when it can be
+computed up front. That is the case when the discount applies **per resource**
+and the quantity is fixed at order time (limit-based, prepaid one-time or
+fixed-price components).
 
-Each component with a volume discount shows a hint below the unit price, for example: **"10% off for 16+ cores"**. This tells you the discount percentage and the minimum quantity required to activate it.
+For everything else the exact saving cannot be known until the invoice is
+finalized — usage-based components (metered later), or discounts calculated on
+your **total** usage of a component across the whole organization (which depends
+on your other resources). In those cases the order form shows a *"Volume
+discount applied on your invoice"* note instead of a price.
 
-When your requested quantity is **below the threshold**, the hint appears in gray text — informing you that a discount is available if you increase the quantity.
+![Volume discounts in the order form](../img/order-form-discount-preview.png)
 
-![Order form showing discount hints in gray when quantity is below threshold](../img/order-discount-hint.png)
+In the example above, *Reserved GPUs* is discounted per resource, so the 15 %
+tier is applied live and reflected in both the component total and the *Volume
+discount savings* summary. *Reserved storage* is discounted on the
+organization-wide total, so it shows the deferred note instead — its saving is
+calculated when the invoice is finalized.
 
-### When the discount is active
-
-Once your requested quantity **meets or exceeds the threshold**, the discount hint turns green and the total price for that component is automatically reduced.
-
-![Order form showing active discounts in green with reduced prices](../img/order-discount-active.png)
-
-In the example above:
-
-- **CPU Cores**: 20 cores at €10.00/core with 10% discount = **€180.00** (instead of €200.00)
-- **NVMe Storage**: 600 GB at €0.50/GB with 15% discount = **€255.00** (instead of €300.00)
-
-### Discount savings in the order summary
-
-The order summary panel on the right shows a **"Volume discount savings"** line with the total amount saved across all components. This negative value is already reflected in the total price.
-
-![Order summary showing Volume discount savings line](../img/order-discount-summary.png)
-
-!!! tip
-    You can experiment with different quantities to see how discounts affect your total cost before submitting the order. The prices update in real time as you change the values.
+Either way, the discount appears as a separate line on your invoice, paired with
+each discounted component. See
+[volume discounts on invoices](affiliate-earnings.md#volume-discounts-on-invoices)
+for how to read the breakdown.
