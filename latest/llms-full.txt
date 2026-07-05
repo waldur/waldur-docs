@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-05T02:04:55.843936Z
+Generated: 2026-07-05T12:09:35.210489Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -66934,6 +66934,68 @@ The **Reviewer capacity** tab lists every pool member and their current load. Us
 
 ---
 
+### Affiliate earnings and volume discounts
+<!-- Source: docs/user-guide/customer-organization/affiliate-earnings.md -->
+
+# Affiliate earnings and volume discounts
+
+If your organization is an **affiliate** — you refer another organization under
+the [affiliate program](../staff-users/affiliate-program.md) — you can track the
+fees you have earned. If your organization receives **volume discounts**, they
+appear on your invoices. Both are visible to organization owners.
+
+## Viewing affiliate earnings
+
+Open your organization's **Accounting → Affiliate earnings** page. The tab lists
+one row per affiliate link, showing the referred organization, the fee
+percentage, whether the link is active, and the total earned.
+
+[Image: Affiliate earnings]
+
+The page shows:
+
+- **Total distributable credit** and **Total credit balance** — summary cards.
+  The distributable credit is the **withdrawable balance**: the part of your
+  credit that came from earnings, as opposed to promotional credit granted by
+  staff.
+- **Affiliate links** — one row per link; expand a row to see its **monthly
+  accruals** (one row per fee, with the invoice period, amount and date).
+- **Credit transactions** — a button that opens the full ledger of how your
+  credit changed over time (earned fees, staff adjustments, payouts and more)
+  with the type, amount, comment and date of each entry.
+
+!!! note
+    For privacy, the earnings view shows only the amount, the period, and the
+    referred organization's name. It never exposes what the referred
+    organization purchased.
+
+Earned fees are added to your organization's credit. The **Adjust withdrawable
+balance** button on this page is available to staff only.
+
+## Volume discounts on invoices
+
+When your organization qualifies for a volume discount, it is applied when the
+invoice is finalized and appears as a separate discount line paired with each
+discounted component. Open an invoice from **Accounting → Invoices** and expand
+a resource to see the breakdown.
+
+[Image: Volume discount lines on an invoice]
+
+Each discount line is shown in green with a negative amount, indented directly
+under the component it applies to (for example, *↳ Volume discount — CPU Cores
+(15%)*). Hover over the information icon to see the discount percentage, the
+formula, and the usage the discount was based on. The discount is distributed
+across the individual components, so every project's share of the saving is
+reflected in its own line items.
+
+!!! tip
+    Depending on how the service provider configured the component, a discount
+    is calculated either on your **total** usage of that component across the
+    whole organization — so consolidating usage can push you into a higher
+    discount tier — or on each resource's own usage.
+
+---
+
 ### Cost and usage policies
 <!-- Source: docs/user-guide/customer-organization/cost-and-usage-policies.md -->
 
@@ -67610,35 +67672,34 @@ If it turns out that initial limits for the resource are too low or higher than 
 
 ## Volume discounts
 
-Some offerings may have volume discounts configured on their components. When ordering a resource, you can see discount information directly on the order form.
+Some offerings have volume discounts configured on their components by the
+service provider. A discount reduces the price of a component once your usage
+reaches a threshold.
 
-### How to identify available discounts
+**In the order form**, a discount is shown live — a green *− X % volume
+discount* next to the component and a reduced total — only when it can be
+computed up front. That is the case when the discount applies **per resource**
+and the quantity is fixed at order time (limit-based, prepaid one-time or
+fixed-price components).
 
-Each component with a volume discount shows a hint below the unit price, for example: **"10% off for 16+ cores"**. This tells you the discount percentage and the minimum quantity required to activate it.
+For everything else the exact saving cannot be known until the invoice is
+finalized — usage-based components (metered later), or discounts calculated on
+your **total** usage of a component across the whole organization (which depends
+on your other resources). In those cases the order form shows a *"Volume
+discount applied on your invoice"* note instead of a price.
 
-When your requested quantity is **below the threshold**, the hint appears in gray text — informing you that a discount is available if you increase the quantity.
+[Image: Volume discounts in the order form]
 
-[Image: Order form showing discount hints in gray when quantity is below threshold]
+In the example above, *Reserved GPUs* is discounted per resource, so the 15 %
+tier is applied live and reflected in both the component total and the *Volume
+discount savings* summary. *Reserved storage* is discounted on the
+organization-wide total, so it shows the deferred note instead — its saving is
+calculated when the invoice is finalized.
 
-### When the discount is active
-
-Once your requested quantity **meets or exceeds the threshold**, the discount hint turns green and the total price for that component is automatically reduced.
-
-[Image: Order form showing active discounts in green with reduced prices]
-
-In the example above:
-
-- **CPU Cores**: 20 cores at €10.00/core with 10% discount = **€180.00** (instead of €200.00)
-- **NVMe Storage**: 600 GB at €0.50/GB with 15% discount = **€255.00** (instead of €300.00)
-
-### Discount savings in the order summary
-
-The order summary panel on the right shows a **"Volume discount savings"** line with the total amount saved across all components. This negative value is already reflected in the total price.
-
-[Image: Order summary showing Volume discount savings line]
-
-!!! tip
-    You can experiment with different quantities to see how discounts affect your total cost before submitting the order. The prices update in real time as you change the values.
+Either way, the discount appears as a separate line on your invoice, paired with
+each discounted component. See
+[volume discounts on invoices](affiliate-earnings.md#volume-discounts-on-invoices)
+for how to read the breakdown.
 
 ---
 
@@ -68404,35 +68465,57 @@ Custom components appear alongside built-in components in the order form and pri
 
 ## Volume discounts
 
-Service providers can configure volume discounts on plan components to incentivize larger orders. When a customer orders a quantity that meets or exceeds a configured threshold, a percentage discount is automatically applied.
+Service providers can configure volume discounts on a plan's components to reward
+larger usage. A discount grants a percentage reduction on a component once the
+customer's usage reaches a threshold, and is applied automatically when the
+invoice is finalized.
 
 ### Configuring discounts
 
 1. Navigate to the offering's **Edit** → **Accounting** → **Plans** tab.
-2. Select a plan and click the **Discounts** button.
-3. For each component, set:
-    - **Discount threshold**: the minimum quantity required to trigger the discount
-    - **Discount rate**: the percentage discount (0–100%)
-4. Save changes.
+2. Open a plan's **⋮** actions menu and choose **Edit discounts**.
+3. For each component, build the discount and pick its scope, then save.
 
-For example, setting a threshold of 16 cores and a rate of 10% means customers ordering 16 or more CPU cores receive a 10% price reduction on that component.
+[Image: Edit discounts dialog with the tier builder and scope selector]
 
-### How customers see discounts
+#### Tier builder
 
-During order creation, discount information is displayed directly on the component:
+Add one or more **tiers** — each grants a percentage discount once usage reaches
+a threshold (*when usage ≥ N → X % off*). Add several tiers for graduated
+pricing; higher thresholds take precedence. Use the **Preview** field to check
+the resulting discount for a sample usage. Leave a component with no tiers for no
+discount.
 
-- **Before threshold is met**: the discount hint appears in gray text (e.g., "10% off for 16+ cores"), informing the customer about the available discount.
+#### Discount scope
 
-[Image: Order form showing discount hints in gray when below threshold]
+Each component has a **Discount scope**:
 
-- **When threshold is met**: the hint turns green and the total price reflects the discounted rate. A "Volume discount savings" row appears in the order summary.
+- **Aggregated across the customer's resources** (default) — usage is summed
+  across all of the customer's resources of the offering before the discount is
+  applied, so consolidating usage can reach a higher tier.
+- **Per resource** — each resource is discounted on its own usage independently.
 
-[Image: Order form showing active discounts in green with reduced prices]
+#### Advanced formula
 
-[Image: Order summary showing Volume discount savings]
+For discounts that are not simple tiers (for example a capped continuous
+discount such as `MIN(20, usage / 100)`), switch to **Advanced: edit formula**
+and enter a formula directly. The formula returns a percentage (clamped to
+0–100) as a function of the usage bound to `usage`, and supports the functions
+`MIN`, `MAX`, `LN`, `LOG10`, `FLOOR`, `CEIL`, `POW` and `ABS`.
+
+### How discounts appear
+
+Volume discounts are computed at invoice finalization, not at order time, so the
+exact saving depends on the customer's actual usage for the month. On the
+customer's invoice the discount appears as a separate negative line paired with
+each discounted component — see
+[volume discounts on invoices](../customer-organization/affiliate-earnings.md#volume-discounts-on-invoices).
 
 !!! tip
-    Volume discounts are applied per component. You can set different thresholds and rates for different components within the same plan to create tiered pricing structures.
+    Discounts are configured per plan. When a customer has resources on
+    different plans of the same offering, keep a component's discount consistent
+    across the plans, since the aggregated discount uses one plan's formula for
+    the whole offering component.
 
 ## Offering management
 
@@ -69055,6 +69138,88 @@ administration page:
 - **General** - Common settings for all catalog types
 - **EESSI** - Settings specific to EESSI catalog integration
 - **Spack** - Settings specific to Spack catalog integration
+
+---
+
+### Affiliate program (staff)
+<!-- Source: docs/user-guide/staff-users/affiliate-program.md -->
+
+# Affiliate program (staff)
+
+The affiliate program lets one organization (the **affiliate**) earn a fee from
+the finalized invoices of another organization (the **referred** organization).
+Affiliate links are configured by staff.
+
+!!! note
+    The affiliate program is opt-in and gated by two switches. Enable the
+    **`AFFILIATES_ENABLED`** setting under **Administration → Marketplace →
+    Settings → Affiliates** to expose the affiliate API and start accruing fees,
+    and switch on the **`reseller.affiliates`** feature (Administration →
+    Feature toggles) to show the affiliate menus and pages. Both must be on;
+    while either is off, existing links stay dormant.
+
+[Image: Affiliates enabled setting under Marketplace settings]
+
+!!! tip
+    Volume discounts are a separate feature configured by the **service
+    provider** on the offering's plan components — see
+    [configuring volume discounts](../service-provider-organization/adding-an-offering.md#volume-discounts).
+
+## Managing affiliate links
+
+Open **Support → Customer support → Affiliate program** to see all affiliate
+links.
+
+[Image: Affiliate program administration]
+
+Each link records:
+
+- **Referred organization** — the organization whose invoices generate the fee.
+- **Affiliate organization** — the organization that earns the fee.
+- **Fee %** — the percentage of each finalized invoice's net price (pre-tax,
+  post-compensation) paid to the affiliate.
+- **Active**, **Start date**, **End date** — control when the link accrues fees.
+- **Total earned** — the lifetime fee accrued through the link.
+
+Click **Add affiliate link** to create a link. Pick the referred and affiliate
+organizations, set the fee percentage and the active window, and save.
+
+### How fees accrue
+
+When an invoice is finalized at the end of the month, an affiliate fee is
+computed on its net price and added to the affiliate organization's credit
+balance. Accrual is idempotent — re-running finalization never pays a fee
+twice. Fees for a referred organization are only visible to the affiliate as an
+amount and period; the affiliate never sees the referred organization's invoice
+contents.
+
+## Adjusting the withdrawable balance
+
+The **withdrawable balance** is the part of an organization's credit that came
+from earnings (such as affiliate fees) rather than promotional grants. Staff can
+adjust it manually — for example to record a negotiated top-up, a payout or a
+clawback.
+
+Open the affiliate organization's **Accounting → Affiliate earnings** page and
+click **Adjust withdrawable balance** (staff only).
+
+[Image: Adjust withdrawable balance dialog showing the current and new balance]
+
+Enter a signed **amount** (positive to grant, negative to reduce) and a
+**comment** describing the reason. The dialog shows the current withdrawable
+balance and the resulting new balance as you type. The adjustment is recorded as
+a `Withdrawable adjustment` entry in the credit-transaction ledger and changes
+the total credit value by the same amount.
+
+!!! note
+    A reduction cannot exceed the current withdrawable balance — a payout can
+    only draw down earned credit, never staff-granted promotional credit.
+
+Click **Credit transactions** on the same page to see the full ledger — every
+change to the credit value with its type, amount, comment and date. It is
+visible to staff and to the organization's owners.
+
+[Image: Credit transactions ledger]
 
 ---
 
