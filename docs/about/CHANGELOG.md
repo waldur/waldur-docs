@@ -1,5 +1,40 @@
 # Changelog
 
+## 8.1.0-rc.6 - 2026-07-06
+
+### Highlights
+
+This release introduces a complete affiliate program with volume discounts, letting operators offer partners referral links, track earnings, and apply component-level discount formulas backed by a credit ledger — all surfaced in the UI. Maintenance announcements become far more manageable, with automatic start/completion, editing while scheduled, and cleaner visibility rules. Providers gain finer control over consumer approvals and offering settings, while several fixes improve whitelabeling, GLAuth configuration, and resource lifecycle handling.
+
+### What's New
+
+- **Affiliate program and volume discounts (WAL-10026).** Operators can now create and manage affiliate links, apply limit- and component-based discount formulas to plans, and track partner fee accrual through a new credit ledger. The UI surfaces volume discounts, affiliate earnings, credit transactions, and a plan discount editor.
+- **Role-based consumer approval skipping.** Offerings can now auto-approve orders for consumers holding specific roles, configurable through a new staff-only control in offering settings.
+- **Historical user roles (WAL-10031).** Administrators can view a user's past roles and revoke or restore them directly from the affiliations list.
+
+### Improvements
+
+- **Maintenance announcements.** Scheduled announcements now start and complete automatically (WAL-10070), can be edited while still scheduled (WAL-9985), and outdated announcements are hidden from resource views (WAL-10054).
+- Permission requests now notify the customer's contact and notification email addresses so approvals are not missed (ONS-1263).
+- End-date-triggered resource terminations are now forced through even when a stuck approval would otherwise block them.
+- Prepaid usage-based components now appear in the resource Usage history tab (WAL-10075), and the order start date field is hidden when its feature is disabled (WAL-10074).
+- User and tenant imports gained a `managed_isds` field and now apply preset quota limits and usages on import (WAL-9951).
+- Staff can now see router gateway advanced options on any network (RWA-44).
+- GLAuth group configuration is now emitted as proper array-of-tables, with improved config viewer rendering and badge contrast.
+- Unstable quota-full and quota-75% notifications have been removed to reduce noisy, unreliable alerts.
+
+### Bug Fixes
+
+- Whitelabeling icon URLs no longer use an internal host pulled from cached configuration.
+- Fixed the silent first playback of Matrix voice messages.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [16 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.5...8.1.0-rc.6) - affiliate program and credit ledger, maintenance automation, approval and notification refinements.
+- **Waldur Homeport**: [13 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.5...8.1.0-rc.6) - affiliate and discount UI, maintenance announcement actions, user role history, and assorted fixes.
+
+---
+
 ## 8.1.0-rc.5 - 2026-07-02
 
 ### Highlights
