@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-06T05:40:29.371334Z
+Generated: 2026-07-06T12:38:41.599372Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -68027,6 +68027,49 @@ Open the row actions menu and select **Revoke**. The token is permanently deacti
 
 ---
 
+### Your POSIX identity on Linux and HPC offerings
+<!-- Source: docs/user-guide/end-users/posix-identity.md -->
+
+# Your POSIX identity on Linux and HPC offerings
+
+When you get access to a Linux or HPC offering — for example a SLURM cluster
+or a storage service that provisions a Unix account for you — the service
+provider assigns you two numeric identifiers:
+
+- a **UID** (user id), which identifies your personal account, and
+- a **primary GID** (group id), which identifies your default group.
+
+These numbers are how the underlying systems track file ownership, disk
+quotas and job scheduling. You normally never type them yourself: you log in
+with your username and SSH key, and the cluster maps you to your UID and GID
+behind the scenes.
+
+## What to expect
+
+- **They are stable.** Your UID and primary GID stay the same for the lifetime
+    of your account, so files you create keep their ownership and your jobs are
+    accounted to you consistently.
+- **They are unique within a provider.** Each service provider keeps its own
+    pool of identifiers, so no two people on that provider's systems share a
+    UID, and a user's id never collides with a project or role group id.
+- **They are managed for you.** You do not request or change these numbers —
+    the provider allocates them automatically from a reserved pool when your
+    account is created.
+
+Your service provider can look up the UID and primary GID that were assigned to
+your account, which is useful when you open a support request about file
+permissions or scheduling.
+
+[Image: Assigned UID and GID of offering users]
+
+!!! note
+    If you have accounts with more than one service provider, your UID and GID
+    may differ between them — each provider numbers its own users
+    independently. Within a single provider they stay consistent across all of
+    that provider's offerings.
+
+---
+
 ### User guide
 <!-- Source: docs/user-guide/index.md -->
 
@@ -68490,6 +68533,312 @@ Images provide visual representation and marketing appeal. Each image requires:
 
 ---
 
+### Shared project storage with GLAuth and SSSD
+<!-- Source: docs/user-guide/service-provider-organization/glauth-sssd-shared-storage.md -->
+
+# Shared project storage with GLAuth and SSSD
+
+Waldur assigns each offering user a POSIX **UID** and **primary GID** and each
+project (and resource role) a shared **GID**, then exposes them — together with
+group membership — through a [GLAuth (LDAP) directory](glauth-user-accounts.md).
+A Linux backend such as an HPC login node consumes that directory with
+[SSSD](https://sssd.io/) so that ordinary POSIX tooling (`getent`, `id`, file
+ownership) resolves Waldur identities. This page shows how to connect such a host
+and use the project GIDs to own **shared project folders** with the correct group
+permissions.
+
+## Connecting an SSSD client to GLAuth
+
+Point SSSD at the GLAuth server as an LDAP identity provider. GLAuth serves users
+as `posixAccount` entries named by `cn` and groups as `posixGroup` entries named
+by `ou`, carrying `memberUid`, so three attribute-mapping settings differ from
+the SSSD defaults:
+
+```ini
+# /etc/sssd/sssd.conf   (mode 0600, root-owned)
+[sssd]
+config_file_version = 2
+services = nss, pam
+domains = glauth
+
+[domain/glauth]
+id_provider = ldap
+auth_provider = ldap
+ldap_uri = ldap://glauth.example.org:3893
+ldap_search_base = dc=glauth,dc=com
+ldap_default_bind_dn = cn=serviceuser,ou=svcaccts,dc=glauth,dc=com
+ldap_default_authtok = <service-account-password>
+
+# GLAuth specifics:
+ldap_schema = rfc2307        # groups list members via memberUid
+ldap_user_name = cn          # users are cn=<user>, no uid attribute
+ldap_group_name = ou         # groups are ou=<group>, no cn attribute
+```
+
+Add `sss` to the `passwd`, `group` and `shadow` databases in
+`/etc/nsswitch.conf` and start SSSD. Users and their **full group membership**
+now resolve — `id` lists a user's project groups, not just their primary group:
+
+[Image: SSSD resolving Waldur users, groups and shared folders]
+
+!!! note "Why rfc2307"
+    GLAuth's own documentation warns that SSSD "does not properly list users
+    belonging to a given group" under `rfc2307bis`. Use `rfc2307` (which resolves
+    membership via `memberUid`) so that `id <user>` returns the project groups
+    and group-based file permissions work.
+
+## Shared project folders
+
+Because every project has a stable, provider-unique GID, a shared directory owned
+by that GID — with the **setgid** bit — becomes a project folder that only its
+members can write to, and every file created inside inherits the project group:
+
+```bash
+# for a project whose Waldur GID is 8501
+mkdir -p /shared/myproject
+chgrp 8501 /shared/myproject
+chmod 2770 /shared/myproject      # rwxrws--- : group members read/write, setgid
+```
+
+A project member can then write to the folder and their files stay group-owned by
+the project; a non-member is denied (see the screenshot above). Drive this from
+the [`glauth_tree`](glauth-user-accounts.md) export (the authoritative list of
+project/role groups and their GIDs) so folders appear automatically as projects
+are created.
+
+## Cleaning up orphaned folders
+
+When a project or resource is deleted its group disappears from Waldur and from
+the directory, but any shared folder it owned remains on disk, owned by a GID
+nobody can be a member of any more. Reconcile the folders against the current
+`glauth_tree` (and `getent group`) periodically: a folder whose GID is gone from
+Waldur **and** no longer resolvable over LDAP is an **orphan** and can be
+archived or removed.
+
+[Image: Detecting orphaned shared folders]
+
+!!! warning
+    Treat a folder as an orphan only when the group is authoritatively gone from
+    Waldur — not merely unresolved. If the directory or API is temporarily
+    unreachable, quarantine (move aside) rather than delete, so a transient
+    outage never destroys live project data.
+
+## Reference implementation
+
+A complete, runnable example of this pipeline — a GLAuth server fed by Waldur, an
+SSSD client container, automatic shared-folder provisioning and an orphan
+detector — lives in the
+[`glauth-sssd-demo`](https://code.opennodecloud.com/waldur/waldur-integration-testing/-/tree/main/glauth-sssd-demo)
+directory of the integration-testing repository.
+
+---
+
+### GLAuth (LDAP) user accounts
+<!-- Source: docs/user-guide/service-provider-organization/glauth-user-accounts.md -->
+
+# GLAuth (LDAP) user accounts
+
+Linux and HPC offerings provisioned through the Waldur site agent expose their
+offering users to a [GLAuth](https://glauth.github.io/) (LDAP) directory, so
+that clusters and other backends can authenticate them. Each account is
+rendered with a numeric **UID/GID** (see
+[Managing POSIX ID pools](posix-id-pools.md)) plus a set of LDAP attributes
+derived from the Waldur user.
+
+This page describes the account attributes a service provider can control and
+how they map to LDAP.
+
+## Where the settings live
+
+Open the offering and go to **Edit → Integration → User management**. The
+panel collects every option that affects how offering users and their GLAuth
+records are generated.
+
+[Image: User management settings for a site-agent offering]
+
+## Account attributes
+
+| Setting | Effect |
+|---------|--------|
+| Manage POSIX/LDAP account | Master switch (default on). When **off**, the offering's users carry only a username — no UID/GID, home directory, login shell or GLAuth exposure — and the POSIX settings below are hidden. Turn it off for offerings that only need a username. |
+| Shared user password | If set, becomes the password (`passsha256`) for every offering user. |
+| Enable automatic creation of offering users | Create offering users automatically when a user gains project access to an active resource. |
+| Enable automatic deletion of offering users | Mark offering users for deletion automatically when project access is lost. |
+| Account name / Username generation policy | How the POSIX login name (and `preferredUsername`) is generated — from the Waldur username, a service-provider-assigned name, an anonymized prefix, or an identity claim. |
+| Home directory prefix | Prepended to the username to form `homeDir` (LDAP `homeDirectory`); defaults to `/home/`. |
+| Login shell | Default login shell assigned to every account (LDAP `loginShell`); defaults to `/bin/bash`. |
+| Expose display name in GLAuth | Emit the user's full name as a `displayName` custom attribute (LDAP `displayName`). |
+| Expose Waldur username in GLAuth | Emit the Waldur username as a `waldurUsername` custom attribute, alongside the generated POSIX login name. |
+
+To change a value, click the pencil on its row and confirm. For example, the
+**Login shell** can be set to any path your backend expects:
+
+[Image: Editing the login shell]
+
+## How attributes map to LDAP
+
+For each offering user, the GLAuth record is built from the Waldur user and the
+settings above:
+
+| LDAP attribute | Source |
+|----------------|--------|
+| `uid` / `cn` (`name`) | The Waldur username. |
+| `givenName` | The user's first name. |
+| `sn` | The user's last name. |
+| `mail` | The user's email. |
+| `uidNumber` / `gidNumber` | Allocated from the offering's [POSIX ID pool](posix-id-pools.md). |
+| `homeDirectory` | `Home directory prefix` + the generated login name. |
+| `loginShell` | The `Login shell` setting. |
+| `preferredUsername` | The generated POSIX login name. |
+| `displayName` | The user's full name — only when **Expose display name** is enabled. |
+| `waldurUsername` | The Waldur username — only when **Expose Waldur username** is enabled. |
+
+!!! note "Login name vs. directory identity"
+    The LDAP `uid`/`cn` is always the **Waldur** username, while the POSIX
+    login (`preferredUsername`, `homeDir`) follows the **Account/Username
+    generation policy**. Under the anonymized or service-provider policies these
+    two differ. Enable **Expose Waldur username** if your downstream systems
+    need to correlate the POSIX login back to the original Waldur account.
+
+To inspect the rendered output at any time, use **View GLAuth configuration**
+on the User management panel.
+
+## Sourcing UID and GID
+
+By default both the `uidNumber` and the `gidNumber` of every account are
+allocated from the offering's [POSIX ID pool](posix-id-pools.md). An offering can
+instead take either identifier from the **Waldur user's own attributes** —
+`uid_number` and `primary_gid` — which are typically populated from an
+identity-provider claim (an OIDC/SAML `uidNumber`/`gidNumber`) during login. Two
+per-offering options control this:
+
+| Option | Values | Effect |
+|--------|--------|--------|
+| `uid_source` | `pool` (default) / `user_attribute` | Where each account's UID comes from: the pool, or the user's `uid_number` attribute. |
+| `gid_source` | `pool` (default) / `user_attribute` | Where each account's primary GID comes from: the pool, or the user's `primary_gid` attribute. |
+
+This is how a **federated deployment** keeps a user's UID stable and identical
+across every provider (it belongs to the identity, not to any one site) while
+still letting each provider allocate project and role **GIDs** locally.
+
+!!! tip "Collision-free pairing"
+    Set `uid_source = user_attribute` **together with a GID-only pool** (a pool
+    whose UID range is left empty — see
+    [Managing POSIX ID pools](posix-id-pools.md#how-a-pool-works)). Waldur then
+    never allocates a UID that could clash with the externally-supplied one, and
+    the GIDs still come from the pool. When an account is sourced from a user
+    attribute that is missing, Waldur leaves that identifier unset and logs a
+    warning rather than falling back to the pool.
+
+### Exposing the POSIX identity attributes
+
+The user's `uid_number` and `primary_gid` are only visible to a provider if the
+offering exposes them. On the offering's **Integration → Advanced → User
+attribute exposure** configuration, enable **POSIX UID** and **POSIX primary
+GID** (they appear once the matching profile attributes are enabled for the
+deployment). Once exposed, each value is returned on the offering-user API
+alongside the user's other exposed attributes, so a provider can confirm the
+federated UID/GID a user brings — useful when the offering is sourcing from the
+user attribute rather than the pool.
+
+## Username-only offerings
+
+If an offering only needs a username — no Linux account, GIDs or GLAuth
+exposure — turn **Manage POSIX/LDAP account** off. Its users then keep just
+their username; Waldur stops assigning UIDs, GIDs, home directories and login
+shells, and the account never appears in the GLAuth directory. This lets a
+provider run username-only offerings next to full HPC offerings without
+changing any instance-wide setting.
+
+## Per-user overrides
+
+The login shell, home directory, **UID** and **primary GID** default from the
+offering-level settings and the [POSIX ID pool allocator](posix-id-pools.md),
+but a provider can override them for an individual account. On the provider's
+**Offering users** list (or the offering's **Users** tab), open the row's
+actions menu and choose **Edit POSIX attributes**.
+
+[Image: Editing a single user's POSIX attributes]
+
+- An explicit **home-directory** override is preserved even if the username
+  later changes (an auto-derived one re-follows the username).
+- Setting a **UID** or **primary GID** records that value as the account's
+  identity in the offering's pool, and the allocator skips it when handing out
+  sequential numbers so it can never collide with an automatic assignment.
+
+!!! warning "Override constraints"
+    A UID/GID override must fall **within the offering's pool range**, and a
+    value already in use by another account is rejected — the database enforces
+    that no two accounts share a UID and no two groups share a GID.
+
+## Group memberships
+
+Expanding an offering user shows the **project group GIDs** they belong to —
+the shared GIDs emitted in their GLAuth `otherGroups` — each with its owning
+organization, a link to the project (when you may open it) and the POSIX ID
+pool the GID came from.
+
+[Image: Project group GIDs of an offering user]
+
+The same information is available project-side: on a project, open
+**Manage → POSIX identities** to see every GID assigned to the project across
+offerings — both project groups and resource/role groups, with their offering,
+provider and scope. The GID values are copy-pastable.
+
+[Image: A project's POSIX identities]
+
+## Role groups
+
+Beyond the per-project groups, an offering can emit a **GLAuth group for each
+role** a user holds on a **resource** or a **resource project** (a sub-project of
+a resource). This lets a provider grant shared-storage or scheduler access from
+Waldur roles instead of static Unix groups. Two per-offering plugin options turn
+it on, each mapping a Waldur **role name** to the short name used in the group:
+
+| Option | Maps | Example |
+|--------|------|---------|
+| `resource_role_map` | resource role name → group role name | `{"ClusterAdmin": "admin"}` |
+| `resource_project_role_map` | resource-project role name → group role name | `{"ProjectMember": "member"}` |
+
+The group name is rendered from a template (overridable per offering):
+
+| Option | Default template |
+|--------|------------------|
+| `resource_role_group_template` | `${resource_slug}_${role_name}` |
+| `resource_project_role_group_template` | `${resource_slug}_${rp_uuid_short}_${role_name}` |
+
+Each role group is a `posixGroup` whose `gidNumber` is allocated from the
+offering's [POSIX ID pool](posix-id-pools.md), with the users holding that role
+as its `memberUid`s. A group is emitted **only** for a role listed in the maps,
+and **only** while at least one user actually holds it — so the directory stays
+limited to the access a provider has opted into.
+
+For example, with the maps above and a resource `cluster` whose `ClusterAdmin`
+is `alice`, GLAuth gains a group `cluster_admin` (member `alice`); a resource
+project `team-x` under it whose `ProjectMember` is `bob` yields
+`cluster_<rp-uuid>_member` (member `bob`). Both appear next to the project
+groups under `ou=groups` in the offering's **View GLAuth configuration** viewer.
+
+## Reviewing a user's identifiers
+
+Expanding an offering user also shows a **POSIX identifiers** table with the
+account's UID and primary GID and, for each, the **POSIX ID pool** it is tracked
+by. A value that is not tracked by a pool — seeded from a preset or imported
+before pool management existed — is shown as **Not from a pool**.
+
+[Image: POSIX identifiers of an offering user]
+
+A user can review all of their own identifiers in one place: on their profile,
+open **Remote accounts** and use the **POSIX identities** action. The popup
+consolidates every UID, primary GID and project group GID across all the
+offerings they have an account on, each tagged with its offering and the pool
+it came from. Because each offering runs its own directory and pool, the same
+project can appear under several offerings with different GIDs.
+
+[Image: Consolidated POSIX identities of a user]
+
+---
+
 ### OpenStack tenant quotas
 <!-- Source: docs/user-guide/service-provider-organization/openstack-tenant-quotas.md -->
 
@@ -68784,6 +69133,141 @@ The table below summarises which recovery action is exposed in HomePort for each
 | SLURM | — | — | Yes | API only |
 | Rancher | — | — | Yes | API only |
 | Script | — | — | Yes | API only |
+
+---
+
+### Managing POSIX ID pools
+<!-- Source: docs/user-guide/service-provider-organization/posix-id-pools.md -->
+
+# Managing POSIX ID pools
+
+Linux and HPC offerings provision local accounts and groups for their users —
+for example through GLAuth (LDAP) and the Waldur site agent that feeds SLURM
+clusters. Each such account needs a numeric POSIX **UID** (user id) and
+**GID** (group id). A POSIX ID pool lets a service provider reserve the number
+blocks Waldur allocates from, so that user and group identifiers stay unique
+and predictable across all of the provider's offerings.
+
+!!! note
+    POSIX ID pools are how Waldur allocates UIDs and GIDs — an offering only
+    hands out identifiers when a pool resolves for it. If you do not see the
+    **POSIX ID pools** menu under your provider workspace, ask the platform
+    operator to make it visible (the `marketplace.show_posix_id_pools` feature
+    flag).
+
+## How a pool works
+
+A pool holds **two independent number ranges** — one for UIDs and one for GIDs —
+each defined by a minimum and a maximum. UIDs and GIDs are separate namespaces,
+so a UID and a GID may share the same number, but no two accounts ever share a
+UID, and no two groups ever share a GID.
+
+A pool must define **at least one** of the two ranges, but either may be left
+empty to source that identifier **externally** instead of from the pool. The
+common case is a federated deployment where each user's UID is a property of
+their identity (delivered as an OIDC/SAML `uidNumber` claim and the same on every
+site), while project and role **GIDs** are allocated per provider by Waldur: give
+such an offering a **GID-only** pool (leave the UID range empty) and set its
+UID source to the user attribute (see
+[GLAuth user accounts → sourcing UID/GID](glauth-user-accounts.md#sourcing-uid-and-gid)).
+Pairing a GID-only pool with externally-sourced UIDs guarantees a Waldur-allocated
+UID can never collide with the identity provider's.
+
+A pool is attached to one of two scopes:
+
+| Scope | Use it when… |
+|-------|--------------|
+| **Service provider** (default) | One identifier space shared by all of your offerings. Most providers need only this. |
+| **Offering** (override) | A single offering needs its own isolated number space — for example a separate cluster with its own LDAP directory. |
+
+When Waldur needs an identifier for an offering, it uses the offering's own pool
+if one is defined, otherwise the service-provider pool. If neither resolves, the
+affected accounts are left without a UID/GID and are excluded from the GLAuth
+output until a pool is configured.
+
+## Creating a pool
+
+1. Open your provider workspace, go to **Marketplace → POSIX ID pools** and
+    click **Add**.
+
+    [Image: POSIX ID pools list]
+
+2. Choose the **Scope**. Keep **Service provider (default)** for a provider-wide
+    pool, or pick **Offering (override)** and select the offering for an
+    isolated per-offering pool.
+
+3. Enter the **Minimum** and **Maximum** for the **UID** and/or the **GID**
+    range (all inclusive). Define at least one range; leave a range empty only
+    when that identifier is sourced externally (see the note above). Each range
+    is all-or-nothing — set both its bounds or neither. Optionally add a
+    description, and click **Create**.
+
+    [Image: Creating a POSIX ID pool]
+
+!!! warning "Pools of one provider may not overlap within a namespace"
+    Across a provider's pools, UID ranges must not overlap each other and GID
+    ranges must not overlap each other — one provider is treated as one POSIX
+    identifier space per namespace. A UID range *may* share numbers with a GID
+    range (the two namespaces are independent). If you try to save an
+    overlapping pool, Waldur rejects it and names the conflicting pool, so an
+    offering override must use a number band disjoint from the provider default
+    (for example provider UIDs `100000–199999`, an isolated offering's UIDs
+    `300000–399999`).
+
+## Which pool applies to an offering
+
+Resolution is simple: an offering uses its **own** pool if it has one, otherwise
+the **service-provider** pool. To check, open the offering and go to **Edit →
+Integration → User management** — the panel shows the pool in effect for that
+offering, with a link to manage the provider's pools.
+
+## Monitoring utilisation
+
+The pools list shows the UID and GID utilisation of every pool at a glance.
+Expand a pool row for the full per-namespace breakdown — capacity, the number of
+identifiers in use, and the next value the allocator will hand out for each
+namespace. A namespace that the pool does not manage (an empty range) is shown
+as **Not managed by this pool — sourced externally** rather than a utilisation
+bar.
+
+[Image: POSIX ID pool utilisation]
+
+The utilisation bar turns amber as a namespace fills and red once it crosses the
+threshold (90% by default), so you can widen the range before it runs out. An
+exhausted namespace stops account creation with a clear error until more numbers
+are available.
+
+## How identifiers are assigned
+
+Identifiers are handed out sequentially from the resolved pool as offering
+users, robot accounts and groups are created — a high-water mark advances per
+namespace. The assigned values are stored on each account, so you can review the
+**UID** and **GID** in the provider's **Offering users** list.
+
+[Image: Offering users with UID and GID columns]
+
+When an offering user or group is deleted, its identifiers are **released** and
+recycled automatically: the next account created from the same pool reuses the
+lowest released value before the high-water mark advances further. Released
+records are kept as an audit trail and are visible in a pool's **identities**
+view.
+
+## Pinning specific UIDs/GIDs
+
+Sometimes an account must keep a **specific** UID or GID — for example to match
+an identity that already exists on the backend. Set it from **Edit POSIX
+attributes** on the offering user (see
+[Per-user overrides](glauth-user-accounts.md#per-user-overrides)). The value
+must fall **within the offering's pool** and must not already be in use; the
+allocator then skips it when handing out sequential numbers, so a pinned value
+never collides with an automatically assigned one.
+
+!!! note
+    Valid POSIX ids run from `1000` (below is reserved for system accounts) to
+    `4294967294`. If an offering needs a number band entirely separate from the
+    provider default — for instance a block reserved for manually pinned
+    identities — give that offering its own **offering-override pool** rather
+    than pinning outside the provider pool's range.
 
 ---
 
