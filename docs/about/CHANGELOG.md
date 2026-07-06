@@ -1,5 +1,41 @@
 # Changelog
 
+## 8.1.0-rc.7 - 2026-07-06
+
+### Highlights
+
+This release introduces centralized POSIX UID/GID pool management, giving providers a reliable way to allocate and track user and group IDs across offerings — with full management UI for ID ranges, per-user identities, and project groups. Marketplace visitors can now get help before logging in through a new anonymous AI assistant, and OpenStack operators gain tools to diagnose and clean up duplicate tenant offerings. Billing accuracy improves for OpenStack instances by sourcing usage directly from Placement allocations.
+
+### What's New
+
+- POSIX UID/GID pool management: providers can define ID ranges, allocate stable UID/GID values to users and groups, override individual identities, and view allocation statistics. This spans backend pool models, backfill migrations, and a full management interface covering provider offerings, per-user identities, and project groups.
+- Anonymous marketplace AI assistant: visitors can now chat with an AI assistant to explore offerings and get help before signing in, complete with streaming responses and feedback controls.
+- OpenStack duplicate-offering diagnostics: a new admin page surfaces duplicate tenant offerings, backed by an API and a `dedupe_tenant_offerings` command with self-heal and SMAX logging to help operators identify and resolve conflicts.
+- OpenStack billing source selector: operators can choose to source instance component usage from Placement allocations, configurable per offering, for more accurate usage-based billing.
+
+### Improvements
+
+- Maintenance announcements now support overrun metrics, ordering, and bucket filtering, making it easier to track and organize scheduled maintenance windows.
+- Admin announcements collapse into a single group once more than three are active, reducing header clutter.
+
+### Bug Fixes
+
+- Certificate uploads now correctly validate the `.pem` file extension.
+- Fixed shifted columns in the remote accounts table.
+- Order summary popups now receive the correct form context so submitted details display accurately.
+- Resource action buttons no longer go stale after syncing on the resource details page.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [5 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.6...8.1.0-rc.7) - POSIX ID pools, OpenStack duplicate-offering diagnostics, Placement-based billing, maintenance metrics, and certificate validation fix.
+- **Waldur Homeport**: [10 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.6...8.1.0-rc.7) - POSIX ID management UI, anonymous AI assistant, duplicate offerings admin page, and several UI fixes.
+
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.1.0-rc.7.yaml)
+
+---
+
 ## 8.1.0-rc.6 - 2026-07-06
 
 ### Highlights
