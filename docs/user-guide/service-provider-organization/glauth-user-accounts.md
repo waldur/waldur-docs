@@ -44,23 +44,32 @@ settings above:
 
 | LDAP attribute | Source |
 |----------------|--------|
-| `uid` / `cn` (`name`) | The Waldur username. |
+| `cn` (`name`) | The generated POSIX login name (per the **Account/Username generation policy**). GLAuth serves no `uid` attribute. |
 | `givenName` | The user's first name. |
 | `sn` | The user's last name. |
 | `mail` | The user's email. |
 | `uidNumber` / `gidNumber` | Allocated from the offering's [POSIX ID pool](posix-id-pools.md). |
 | `homeDirectory` | `Home directory prefix` + the generated login name. |
 | `loginShell` | The `Login shell` setting. |
-| `preferredUsername` | The generated POSIX login name. |
+| `preferredUsername` | The generated POSIX login name — the same value as `cn`, kept as a custom attribute for compatibility. |
 | `displayName` | The user's full name — only when **Expose display name** is enabled. |
 | `waldurUsername` | The Waldur username — only when **Expose Waldur username** is enabled. |
 
 !!! note "Login name vs. directory identity"
-    The LDAP `uid`/`cn` is always the **Waldur** username, while the POSIX
-    login (`preferredUsername`, `homeDir`) follows the **Account/Username
-    generation policy**. Under the anonymized or service-provider policies these
-    two differ. Enable **Expose Waldur username** if your downstream systems
-    need to correlate the POSIX login back to the original Waldur account.
+    The LDAP `cn` (`name`) **is** the generated POSIX login name — the value
+    produced by the **Account/Username generation policy** — and `homeDir`
+    follows it. The original **Waldur** username is exposed only through the
+    optional `waldurUsername` attribute; enable **Expose Waldur username** if
+    downstream systems need to correlate the POSIX login back to the Waldur
+    account.
+
+!!! warning "Key SSSD off `cn`, not `preferredUsername`"
+    On the client set `ldap_user_name = cn` (see
+    [Shared project storage with GLAuth and SSSD](glauth-sssd-shared-storage.md)).
+    GLAuth **cannot filter searches on custom attributes**, so
+    `ldap_user_name = preferredUsername` matches nothing and no user ever
+    resolves (empty `getent`, failed key-based SSH login). `cn` already carries
+    the generated login name, so keying off it is correct and sufficient.
 
 To inspect the rendered output at any time, use **View GLAuth configuration**
 on the User management panel.
