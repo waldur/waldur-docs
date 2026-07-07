@@ -12622,6 +12622,17 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
+  <a href="#how-the-pieces-fit-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the pieces fit together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#connecting-an-sssd-client-to-glauth" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -12633,10 +12644,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ssh-key-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSH key login
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#shared-project-folders" class="md-nav__link">
     <span class="md-ellipsis">
       
         Shared project folders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
       
     </span>
   </a>
@@ -13615,6 +13648,17 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
+  <a href="#how-the-pieces-fit-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the pieces fit together
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#connecting-an-sssd-client-to-glauth" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13626,10 +13670,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ssh-key-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSH key login
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#shared-project-folders" class="md-nav__link">
     <span class="md-ellipsis">
       
         Shared project folders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
       
     </span>
   </a>
@@ -13682,6 +13748,28 @@ A Linux backend such as an HPC login node consumes that directory with
 ownership) resolves Waldur identities. This page shows how to connect such a host
 and use the project GIDs to own <strong>shared project folders</strong> with the correct group
 permissions.</p>
+<h2 id="how-the-pieces-fit-together">How the pieces fit together</h2>
+<p>Identities flow one way — from Waldur, through GLAuth, to the login node — and
+POSIX tooling and <code>sshd</code> consume them there:</p>
+<pre class="mermaid"><code>flowchart LR
+  subgraph Waldur
+    A["Offering users&lt;br/&gt;(UID/GID, home, shell)"]
+    K["User SSH keys"]
+    G["Project / role GIDs&lt;br/&gt;+ group membership"]
+  end
+  A --&gt; R
+  K --&gt; R
+  G --&gt; R
+  R["GLAuth config refresher&lt;br/&gt;(glauth_users_config / glauth_tree API)"] --&gt; L[("GLAuth&lt;br/&gt;LDAP :3893")]
+  L --&gt;|LDAP| S["SSSD&lt;br/&gt;on the login node"]
+  S --&gt; N["nss_sss&lt;br/&gt;getent / id"]
+  S --&gt; SK["sss_ssh_authorizedkeys"]
+  SK --&gt;|AuthorizedKeysCommand| D[sshd]
+  D --&gt; U((User logs in&lt;br/&gt;with their SSH key))
+  N --&gt; F["Shared project folders&lt;br/&gt;owned by the project GID"]</code></pre>
+<p>Note that the login name a user types is the GLAuth <strong><code>cn</code></strong> (the generated POSIX
+login name), and their SSH keys reach <code>sshd</code> as GLAuth's <code>sshPublicKey</code> attribute
+— both details drive the SSSD settings below.</p>
 <h2 id="connecting-an-sssd-client-to-glauth">Connecting an SSSD client to GLAuth</h2>
 <p>Point SSSD at the GLAuth server as an LDAP identity provider. GLAuth serves users
 as <code>posixAccount</code> entries named by <code>cn</code> and groups as <code>posixGroup</code> entries named
@@ -13704,11 +13792,16 @@ the SSSD defaults:</p>
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
-<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># /etc/sssd/sssd.conf   (mode 0600, root-owned)</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># /etc/sssd/sssd.conf   (mode 0600, root-owned)</span>
 <span class="k">[sssd]</span>
 <span class="na">config_file_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2</span>
-<span class="na">services</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">nss, pam</span>
+<span class="na">services</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">nss, pam, ssh</span><span class="w">     </span><span class="c1"># ssh backs sss_ssh_authorizedkeys (see below)</span>
 <span class="na">domains</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">glauth</span>
+
+<span class="k">[ssh]</span>
 
 <span class="k">[domain/glauth]</span>
 <span class="na">id_provider</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ldap</span>
@@ -13722,7 +13815,15 @@ the SSSD defaults:</p>
 <span class="na">ldap_schema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">rfc2307</span><span class="w">        </span><span class="c1"># groups list members via memberUid</span>
 <span class="na">ldap_user_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cn</span><span class="w">          </span><span class="c1"># users are cn=&lt;user&gt;, no uid attribute</span>
 <span class="na">ldap_group_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ou</span><span class="w">         </span><span class="c1"># groups are ou=&lt;group&gt;, no cn attribute</span>
+<span class="na">ldap_user_ssh_public_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">sshPublicKey</span><span class="w">   </span><span class="c1"># keys for sss_ssh_authorizedkeys</span>
 </code></pre></div></td></tr></tbody></table></div>
+<div class="admonition warning">
+<p class="admonition-title">Use <code>cn</code>, not <code>preferredUsername</code></p>
+<p>The login name must be <code>ldap_user_name = cn</code>. GLAuth cannot filter searches
+on custom attributes, so <code>ldap_user_name = preferredUsername</code> matches no one
+— <code>getent</code> returns nothing and key-based SSH login fails. <code>cn</code> already holds
+the generated login name.</p>
+</div>
 <p>Add <code>sss</code> to the <code>passwd</code>, <code>group</code> and <code>shadow</code> databases in
 <code>/etc/nsswitch.conf</code> and start SSSD. Users and their <strong>full group membership</strong>
 now resolve — <code>id</code> lists a user's project groups, not just their primary group:</p>
@@ -13734,6 +13835,24 @@ belonging to a given group" under <code>rfc2307bis</code>. Use <code>rfc2307</co
 membership via <code>memberUid</code>) so that <code>id &lt;user&gt;</code> returns the project groups
 and group-based file permissions work.</p>
 </div>
+<h2 id="ssh-key-login">SSH key login</h2>
+<p>Each Waldur user's SSH public keys are exported as GLAuth's <code>sshPublicKey</code>
+attribute. With the <code>ssh</code> responder enabled above, <code>sss_ssh_authorizedkeys</code>
+returns them, so <code>sshd</code> can authorise key-based logins <strong>straight from the
+directory</strong> — no per-user <code>authorized_keys</code> file on the node:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># The keys GLAuth serves for a user — exactly what sshd will authorise:</span>
+sss_ssh_authorizedkeys<span class="w"> </span>&lt;login-name&gt;
+</code></pre></div></td></tr></tbody></table></div>
+<p>Point <code>sshd</code> at that command with a drop-in under <code>/etc/ssh/sshd_config.d/</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys
+AuthorizedKeysCommandUser nobody
+PubkeyAuthentication yes
+</code></pre></div></td></tr></tbody></table></div>
+<p>Reload <code>sshd</code>. A user can now <code>ssh &lt;login-name&gt;@&lt;node&gt;</code> with the private key
+matching any SSH key on their Waldur account.</p>
 <h2 id="shared-project-folders">Shared project folders</h2>
 <p>Because every project has a stable, provider-unique GID, a shared directory owned
 by that GID — with the <strong>setgid</strong> bit — becomes a project folder that only its
@@ -13751,6 +13870,92 @@ the project; a non-member is denied (see the screenshot above). Drive this from
 the <a href="../glauth-user-accounts/"><code>glauth_tree</code></a> export (the authoritative list of
 project/role groups and their GIDs) so folders appear automatically as projects
 are created.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p>When users do not resolve or cannot log in, work outwards from GLAuth. The
+commands and output below were captured against a live GLAuth + SSSD pair.</p>
+<p><strong>1. Is GLAuth reachable and serving accounts?</strong> Bind as the service account and
+list users. A failure here is a GLAuth, bind-DN or password problem — not SSSD:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gp">$ </span>ldapsearch<span class="w"> </span>-x<span class="w"> </span>-H<span class="w"> </span>ldap://glauth.example.org:3893<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-D<span class="w"> </span><span class="s2">"cn=serviceuser,ou=svcaccts,dc=glauth,dc=com"</span><span class="w"> </span>-w<span class="w"> </span><span class="s1">'&lt;password&gt;'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-b<span class="w"> </span><span class="s2">"dc=glauth,dc=com"</span><span class="w"> </span><span class="s2">"(objectclass=posixAccount)"</span><span class="w"> </span>cn<span class="w"> </span>uidNumber
+<span class="go">cn: dig_00038</span>
+<span class="go">uidNumber: 10028</span>
+<span class="gp"># </span>numEntries:<span class="w"> </span>...
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>2. Does a specific user carry the expected attributes</strong>, including its key?</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gp">$ </span>ldapsearch<span class="w"> </span>-x<span class="w"> </span>-H<span class="w"> </span>ldap://glauth.example.org:3893<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-D<span class="w"> </span><span class="s2">"cn=serviceuser,ou=svcaccts,dc=glauth,dc=com"</span><span class="w"> </span>-w<span class="w"> </span><span class="s1">'&lt;password&gt;'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-b<span class="w"> </span><span class="s2">"dc=glauth,dc=com"</span><span class="w"> </span><span class="s2">"(cn=dig_00038)"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>cn<span class="w"> </span>uidNumber<span class="w"> </span>gidNumber<span class="w"> </span>homeDirectory<span class="w"> </span>loginShell<span class="w"> </span>sshPublicKey
+<span class="go">cn: dig_00038</span>
+<span class="go">uidNumber: 10028</span>
+<span class="go">gidNumber: 1028</span>
+<span class="go">homeDirectory: /home/dig_00038</span>
+<span class="go">loginShell: /bin/bash</span>
+<span class="go">sshPublicKey: ssh-ed25519 AAAA...</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>3. Does SSSD resolve the user and their keys?</strong></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gp">$ </span>getent<span class="w"> </span>passwd<span class="w"> </span>dig_00038
+<span class="go">dig_00038:*:10028:1028:dig_00038:/home/dig_00038:/bin/bash</span>
+
+<span class="gp">$ </span>id<span class="w"> </span>dig_00038
+<span class="go">uid=10028(dig_00038) gid=1028(dig_00038) groups=1028(dig_00038)</span>
+
+<span class="gp">$ </span>sss_ssh_authorizedkeys<span class="w"> </span>dig_00038
+<span class="go">ssh-ed25519 AAAA...</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>If steps 1–2 succeed but these return nothing, SSSD is misconfigured — most
+often <code>ldap_user_name</code> is not <code>cn</code>, <code>ldap_schema</code> is <code>rfc2307bis</code>, or the cache
+is stale.</p>
+<p><strong>4. Inspect SSSD directly</strong>, then force a fresh lookup after changing config or
+Waldur data:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gp">$ </span>sssctl<span class="w"> </span>domain-status<span class="w"> </span>glauth
+<span class="go">Online status: Online</span>
+<span class="go">Active servers:</span>
+<span class="go">LDAP: glauth.example.org</span>
+
+<span class="gp">$ </span>sssctl<span class="w"> </span>user-checks<span class="w"> </span>dig_00038
+<span class="go">pam_acct_mgmt: Success</span>
+<span class="go">...</span>
+<span class="go">SSSD nss user lookup result:</span>
+<span class="go"> - user name: dig_00038</span>
+<span class="go"> - user id: 10028</span>
+
+<span class="gp">$ </span>sss_cache<span class="w"> </span>-E<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>sssd
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="cleaning-up-orphaned-folders">Cleaning up orphaned folders</h2>
 <p>When a project or resource is deleted its group disappears from Waldur and from
 the directory, but any shared folder it owned remains on disk, owned by a GID

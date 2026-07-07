@@ -13893,8 +13893,8 @@ settings above:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>uid</code> / <code>cn</code> (<code>name</code>)</td>
-<td>The Waldur username.</td>
+<td><code>cn</code> (<code>name</code>)</td>
+<td>The generated POSIX login name (per the <strong>Account/Username generation policy</strong>). GLAuth serves no <code>uid</code> attribute.</td>
 </tr>
 <tr>
 <td><code>givenName</code></td>
@@ -13922,7 +13922,7 @@ settings above:</p>
 </tr>
 <tr>
 <td><code>preferredUsername</code></td>
-<td>The generated POSIX login name.</td>
+<td>The generated POSIX login name — the same value as <code>cn</code>, kept as a custom attribute for compatibility.</td>
 </tr>
 <tr>
 <td><code>displayName</code></td>
@@ -13936,11 +13936,21 @@ settings above:</p>
 </table>
 <div class="admonition note">
 <p class="admonition-title">Login name vs. directory identity</p>
-<p>The LDAP <code>uid</code>/<code>cn</code> is always the <strong>Waldur</strong> username, while the POSIX
-login (<code>preferredUsername</code>, <code>homeDir</code>) follows the <strong>Account/Username
-generation policy</strong>. Under the anonymized or service-provider policies these
-two differ. Enable <strong>Expose Waldur username</strong> if your downstream systems
-need to correlate the POSIX login back to the original Waldur account.</p>
+<p>The LDAP <code>cn</code> (<code>name</code>) <strong>is</strong> the generated POSIX login name — the value
+produced by the <strong>Account/Username generation policy</strong> — and <code>homeDir</code>
+follows it. The original <strong>Waldur</strong> username is exposed only through the
+optional <code>waldurUsername</code> attribute; enable <strong>Expose Waldur username</strong> if
+downstream systems need to correlate the POSIX login back to the Waldur
+account.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Key SSSD off <code>cn</code>, not <code>preferredUsername</code></p>
+<p>On the client set <code>ldap_user_name = cn</code> (see
+<a href="../glauth-sssd-shared-storage/">Shared project storage with GLAuth and SSSD</a>).
+GLAuth <strong>cannot filter searches on custom attributes</strong>, so
+<code>ldap_user_name = preferredUsername</code> matches nothing and no user ever
+resolves (empty <code>getent</code>, failed key-based SSH login). <code>cn</code> already carries
+the generated login name, so keying off it is correct and sufficient.</p>
 </div>
 <p>To inspect the rendered output at any time, use <strong>View GLAuth configuration</strong>
 on the User management panel.</p>

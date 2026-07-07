@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-07T14:26:49.414723Z
+Generated: 2026-07-07T16:53:34.446184Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -68585,6 +68585,34 @@ ownership) resolves Waldur identities. This page shows how to connect such a hos
 and use the project GIDs to own **shared project folders** with the correct group
 permissions.
 
+## How the pieces fit together
+
+Identities flow one way — from Waldur, through GLAuth, to the login node — and
+POSIX tooling and `sshd` consume them there:
+
+```mermaid
+flowchart LR
+  subgraph Waldur
+    A["Offering users<br/>(UID/GID, home, shell)"]
+    K["User SSH keys"]
+    G["Project / role GIDs<br/>+ group membership"]
+  end
+  A --> R
+  K --> R
+  G --> R
+  R["GLAuth config refresher<br/>(glauth_users_config / glauth_tree API)"] --> L[("GLAuth<br/>LDAP :3893")]
+  L -->|LDAP| S["SSSD<br/>on the login node"]
+  S --> N["nss_sss<br/>getent / id"]
+  S --> SK["sss_ssh_authorizedkeys"]
+  SK -->|AuthorizedKeysCommand| D[sshd]
+  D --> U((User logs in<br/>with their SSH key))
+  N --> F["Shared project folders<br/>owned by the project GID"]
+```
+
+Note that the login name a user types is the GLAuth **`cn`** (the generated POSIX
+login name), and their SSH keys reach `sshd` as GLAuth's `sshPublicKey` attribute
+— both details drive the SSSD settings below.
+
 ## Connecting an SSSD client to GLAuth
 
 Point SSSD at the GLAuth server as an LDAP identity provider. GLAuth serves users
@@ -68596,8 +68624,10 @@ the SSSD defaults:
 # /etc/sssd/sssd.conf   (mode 0600, root-owned)
 [sssd]
 config_file_version = 2
-services = nss, pam
+services = nss, pam, ssh     # ssh backs sss_ssh_authorizedkeys (see below)
 domains = glauth
+
+[ssh]
 
 [domain/glauth]
 id_provider = ldap
@@ -68611,7 +68641,14 @@ ldap_default_authtok = <service-account-password>
 ldap_schema = rfc2307        # groups list members via memberUid
 ldap_user_name = cn          # users are cn=<user>, no uid attribute
 ldap_group_name = ou         # groups are ou=<group>, no cn attribute
+ldap_user_ssh_public_key = sshPublicKey   # keys for sss_ssh_authorizedkeys
 ```
+
+!!! warning "Use `cn`, not `preferredUsername`"
+    The login name must be `ldap_user_name = cn`. GLAuth cannot filter searches
+    on custom attributes, so `ldap_user_name = preferredUsername` matches no one
+    — `getent` returns nothing and key-based SSH login fails. `cn` already holds
+    the generated login name.
 
 Add `sss` to the `passwd`, `group` and `shadow` databases in
 `/etc/nsswitch.conf` and start SSSD. Users and their **full group membership**
@@ -68624,6 +68661,29 @@ now resolve — `id` lists a user's project groups, not just their primary group
     belonging to a given group" under `rfc2307bis`. Use `rfc2307` (which resolves
     membership via `memberUid`) so that `id <user>` returns the project groups
     and group-based file permissions work.
+
+## SSH key login
+
+Each Waldur user's SSH public keys are exported as GLAuth's `sshPublicKey`
+attribute. With the `ssh` responder enabled above, `sss_ssh_authorizedkeys`
+returns them, so `sshd` can authorise key-based logins **straight from the
+directory** — no per-user `authorized_keys` file on the node:
+
+```bash
+# The keys GLAuth serves for a user — exactly what sshd will authorise:
+sss_ssh_authorizedkeys <login-name>
+```
+
+Point `sshd` at that command with a drop-in under `/etc/ssh/sshd_config.d/`:
+
+```text
+AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys
+AuthorizedKeysCommandUser nobody
+PubkeyAuthentication yes
+```
+
+Reload `sshd`. A user can now `ssh <login-name>@<node>` with the private key
+matching any SSH key on their Waldur account.
 
 ## Shared project folders
 
@@ -68643,6 +68703,74 @@ the project; a non-member is denied (see the screenshot above). Drive this from
 the [`glauth_tree`](glauth-user-accounts.md) export (the authoritative list of
 project/role groups and their GIDs) so folders appear automatically as projects
 are created.
+
+## Troubleshooting
+
+When users do not resolve or cannot log in, work outwards from GLAuth. The
+commands and output below were captured against a live GLAuth + SSSD pair.
+
+**1. Is GLAuth reachable and serving accounts?** Bind as the service account and
+list users. A failure here is a GLAuth, bind-DN or password problem — not SSSD:
+
+```console
+$ ldapsearch -x -H ldap://glauth.example.org:3893 \
+    -D "cn=serviceuser,ou=svcaccts,dc=glauth,dc=com" -w '<password>' \
+    -b "dc=glauth,dc=com" "(objectclass=posixAccount)" cn uidNumber
+cn: dig_00038
+uidNumber: 10028
+# numEntries: ...
+```
+
+**2. Does a specific user carry the expected attributes**, including its key?
+
+```console
+$ ldapsearch -x -H ldap://glauth.example.org:3893 \
+    -D "cn=serviceuser,ou=svcaccts,dc=glauth,dc=com" -w '<password>' \
+    -b "dc=glauth,dc=com" "(cn=dig_00038)" \
+    cn uidNumber gidNumber homeDirectory loginShell sshPublicKey
+cn: dig_00038
+uidNumber: 10028
+gidNumber: 1028
+homeDirectory: /home/dig_00038
+loginShell: /bin/bash
+sshPublicKey: ssh-ed25519 AAAA...
+```
+
+**3. Does SSSD resolve the user and their keys?**
+
+```console
+$ getent passwd dig_00038
+dig_00038:*:10028:1028:dig_00038:/home/dig_00038:/bin/bash
+
+$ id dig_00038
+uid=10028(dig_00038) gid=1028(dig_00038) groups=1028(dig_00038)
+
+$ sss_ssh_authorizedkeys dig_00038
+ssh-ed25519 AAAA...
+```
+
+If steps 1–2 succeed but these return nothing, SSSD is misconfigured — most
+often `ldap_user_name` is not `cn`, `ldap_schema` is `rfc2307bis`, or the cache
+is stale.
+
+**4. Inspect SSSD directly**, then force a fresh lookup after changing config or
+Waldur data:
+
+```console
+$ sssctl domain-status glauth
+Online status: Online
+Active servers:
+LDAP: glauth.example.org
+
+$ sssctl user-checks dig_00038
+pam_acct_mgmt: Success
+...
+SSSD nss user lookup result:
+ - user name: dig_00038
+ - user id: 10028
+
+$ sss_cache -E && systemctl restart sssd
+```
 
 ## Cleaning up orphaned folders
 
@@ -68720,23 +68848,32 @@ settings above:
 
 | LDAP attribute | Source |
 |----------------|--------|
-| `uid` / `cn` (`name`) | The Waldur username. |
+| `cn` (`name`) | The generated POSIX login name (per the **Account/Username generation policy**). GLAuth serves no `uid` attribute. |
 | `givenName` | The user's first name. |
 | `sn` | The user's last name. |
 | `mail` | The user's email. |
 | `uidNumber` / `gidNumber` | Allocated from the offering's [POSIX ID pool](posix-id-pools.md). |
 | `homeDirectory` | `Home directory prefix` + the generated login name. |
 | `loginShell` | The `Login shell` setting. |
-| `preferredUsername` | The generated POSIX login name. |
+| `preferredUsername` | The generated POSIX login name — the same value as `cn`, kept as a custom attribute for compatibility. |
 | `displayName` | The user's full name — only when **Expose display name** is enabled. |
 | `waldurUsername` | The Waldur username — only when **Expose Waldur username** is enabled. |
 
 !!! note "Login name vs. directory identity"
-    The LDAP `uid`/`cn` is always the **Waldur** username, while the POSIX
-    login (`preferredUsername`, `homeDir`) follows the **Account/Username
-    generation policy**. Under the anonymized or service-provider policies these
-    two differ. Enable **Expose Waldur username** if your downstream systems
-    need to correlate the POSIX login back to the original Waldur account.
+    The LDAP `cn` (`name`) **is** the generated POSIX login name — the value
+    produced by the **Account/Username generation policy** — and `homeDir`
+    follows it. The original **Waldur** username is exposed only through the
+    optional `waldurUsername` attribute; enable **Expose Waldur username** if
+    downstream systems need to correlate the POSIX login back to the Waldur
+    account.
+
+!!! warning "Key SSSD off `cn`, not `preferredUsername`"
+    On the client set `ldap_user_name = cn` (see
+    [Shared project storage with GLAuth and SSSD](glauth-sssd-shared-storage.md)).
+    GLAuth **cannot filter searches on custom attributes**, so
+    `ldap_user_name = preferredUsername` matches nothing and no user ever
+    resolves (empty `getent`, failed key-based SSH login). `cn` already carries
+    the generated login name, so keying off it is correct and sufficient.
 
 To inspect the rendered output at any time, use **View GLAuth configuration**
 on the User management panel.
