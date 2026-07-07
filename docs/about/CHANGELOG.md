@@ -1,5 +1,34 @@
 # Changelog
 
+## 8.1.0-rc.8 - 2026-07-07
+
+### Highlights
+
+This release sharpens identity management and resource visibility. GLAuth directory integration now surfaces per-user personal groups and uses the offering username as the account name, giving operators clearer, more accurate LDAP/SSSD trees. OpenStack users can see live quota usage directly on tenant resource details, and a race condition that could disrupt tenant creation with dependent provisioning has been fixed for more reliable deployments.
+
+### What's New
+
+- GLAuth directory trees now surface each user's personal group, both in the backend tree view and the Homeport GLAuth Directory tree view, so operators can see per-user group membership at a glance.
+- OpenStack tenant resources now display live quota usage on their details page, letting users track real-time consumption without leaving the resource view.
+
+### Improvements
+
+- GLAuth accounts now use the offering username as the account name, aligning directory identities with marketplace usernames.
+- Resource mass actions now use consistent naming: the batch "Destroy" action is labeled "Terminate", and the "Unlink" action wording was reinforced to reduce confusion. German, Estonian, and Lithuanian translations were updated to match.
+- The embedded AI assistant was upgraded (@assistant-ui/react 0.14.26) for a smoother chat experience.
+
+### Bug Fixes
+
+- Fixed a race condition during tenant creation that could interfere with provisioning of dependent resources.
+- Raised the default log level to INFO to quiet noisy debug output during service startup.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [9 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.7...8.1.0-rc.8) - GLAuth account naming and personal-group support, tenant creation race fix, and logging cleanup.
+- **Waldur Homeport**: [4 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.7...8.1.0-rc.8) - Live OpenStack quota usage, GLAuth personal groups in the directory tree, resource action naming, and an AI assistant upgrade.
+
+---
+
 ## 8.1.0-rc.7 - 2026-07-06
 
 ### Highlights
