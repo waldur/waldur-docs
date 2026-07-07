@@ -59,10 +59,6 @@ This release introduces centralized POSIX UID/GID pool management, giving provid
 - **Waldur Mastermind**: [5 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.6...8.1.0-rc.7) - POSIX ID pools, OpenStack duplicate-offering diagnostics, Placement-based billing, maintenance metrics, and certificate validation fix.
 - **Waldur Homeport**: [10 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.6...8.1.0-rc.7) - POSIX ID management UI, anonymous AI assistant, duplicate offerings admin page, and several UI fixes.
 
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-8.1.0-rc.7.yaml)
-
 ---
 
 ## 8.1.0-rc.6 - 2026-07-06

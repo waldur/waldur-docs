@@ -28,9 +28,14 @@ Scan Python dependencies:
 Test mkdocs:
   image: registry.hpc.ut.ee/mirror/library/python:3.13
   stage: test
+  # Also gate master pushes (e.g. release changelog commits), not just MRs —
+  # otherwise a broken relative link lands on master and fails every open MR.
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
   script:
+    # Fast pre-check with a clear message before the slow full build.
+    - python scripts/check-changelog-api-links.py
     - pip install uv
     - uv sync --frozen
     # mkdocs-material and mkdocs-materialx both claim the `material/` namespace and
