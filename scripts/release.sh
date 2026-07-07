@@ -110,13 +110,6 @@ FULL_PROMPT="${PROMPT_TEMPLATE//\{VERSION\}/$VERSION}"
 FULL_PROMPT="${FULL_PROMPT//\{PREV_VERSION\}/$PREV_TAG}"
 FULL_PROMPT="${FULL_PROMPT//\{DATE\}/$DATE}"
 
-# For RC releases, append a note to skip the OpenAPI Resources section
-if [ "$IS_RC" = "true" ]; then
-    FULL_PROMPT="${FULL_PROMPT}
-
-IMPORTANT: This is an RC (release candidate) release. Do NOT include the OpenAPI Resources section (OpenAPI schema links, API changes diff) because no schema is generated for RC releases."
-fi
-
 COMMIT_DATA=$(cat "$CACHE_DIR/commit-data.json")
 
 generate_changelog() {
@@ -225,6 +218,31 @@ open(sys.argv[1], 'w').writelines(out)
         echo "  Removed any existing entries for $VERSION (and RCs of $BASE_VERSION)"
     fi
 
+    # Normalize the generated entry's footer deterministically instead of
+    # trusting the LLM: strip any "### Resources" / trailing "---" it emitted,
+    # then re-add the OpenAPI schema link ONLY for stable releases. RC releases
+    # ship no schema, so a relative link would dangle and fail
+    # `mkdocs build --strict`. Idempotent — safe to re-run on a cached entry.
+    python3 - "$CACHE_DIR/changelog-entry.md" "$VERSION" "$IS_RC" <<'PY'
+import re, sys
+path, version, is_rc = sys.argv[1], sys.argv[2], sys.argv[3] == "true"
+text = open(path).read()
+text = re.split(r'\n###\s+Resources\b', text, maxsplit=1)[0].rstrip()
+text = re.sub(r'\n-{3,}\s*$', '', text).rstrip()
+if not is_rc:
+    text += (
+        "\n\n### Resources\n\n"
+        f"- [OpenAPI Schema](../API/waldur-openapi-schema-{version}.yaml)"
+    )
+text += "\n\n---\n"
+open(path, "w").write(text)
+PY
+    if [ "$IS_RC" = "true" ]; then
+        echo "  Entry footer normalized (RC — no OpenAPI schema link)."
+    else
+        echo "  Entry footer normalized (stable — OpenAPI schema link added)."
+    fi
+
     # Prepend new entry
     {
         echo "# Changelog"
@@ -249,6 +267,11 @@ if [[ "$push_choice" != "y" && "$push_choice" != "Y" ]]; then
     echo "Aborted. Changelog is committed locally. You can push manually."
     exit 0
 fi
+
+# Guard: never push a changelog whose relative OpenAPI schema links dangle —
+# that would fail `mkdocs build --strict` and poison master (and every open MR).
+echo "  Validating changelog OpenAPI schema links..."
+python3 "$SCRIPT_DIR/check-changelog-api-links.py"
 
 git push origin master
 cd "$PROJECT_DIR"

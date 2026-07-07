@@ -37,17 +37,9 @@ List each core repository with its commit count and compare link. Use this exact
 
 Only include repos that have changes. Skip repos with zero commits.
 
-### 4. Resources
-
-Always end with:
-
-```
-### Resources
-
-- [OpenAPI Schema](../API/waldur-openapi-schema-{VERSION}.yaml)
-```
-
-End the entry with a `---` separator line.
+Do not add a "Resources" / OpenAPI Schema section or a trailing `---` separator —
+the release script appends those deterministically (and omits the schema link for
+RC releases, which ship no schema).
 
 ## Rules
 

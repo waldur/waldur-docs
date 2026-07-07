@@ -659,11 +659,16 @@ class MultiRepoChangelogGenerator:
                         changelog_parts.append(f"- {clean_subject}")
                     changelog_parts.append("")
 
-            # Resources
-            changelog_parts.append("### Resources")
-            changelog_parts.append("")
-            changelog_parts.append(f"- [OpenAPI Schema](https://raw.githubusercontent.com/waldur/api-docs/main/docs/API/waldur-openapi-schema-{current_tag}.yaml)")
-            changelog_parts.append("")
+            # Resources — RC releases ship no OpenAPI schema, so omit the link
+            # for them (a dangling relative link fails `mkdocs build --strict`).
+            # For stable releases use a relative link into docs/API/, matching
+            # the schema committed by the `Tag all repositories` CI job in the
+            # same run.
+            if "-rc." not in current_tag:
+                changelog_parts.append("### Resources")
+                changelog_parts.append("")
+                changelog_parts.append(f"- [OpenAPI Schema](../API/waldur-openapi-schema-{current_tag}.yaml)")
+                changelog_parts.append("")
             changelog_parts.append("---")
 
             return '\n'.join(changelog_parts), all_analyses
