@@ -1,5 +1,44 @@
 # Changelog
 
+## 8.1.0-rc.9 - 2026-07-08
+
+### Highlights
+
+This release strengthens resource lifecycle management and identity handling. Operators can now let terminated resources be restored through a self-service action, appoint Call organizers directly as organization owners, and provision user SSH keys automatically over SCIM. A batch of order-form and profile-editing fixes resolves cases where selections were silently dropped or saved in the wrong format, making marketplace ordering and user administration more reliable.
+
+### What's New
+
+- Terminated resources can now be restored: offerings gain a toggle to allow restoration, users get a restore action on eligible resources, and the resulting support tickets are clearly marked as restorations ([WAL-10086]).
+- Organization owners can appoint Call organizers directly, streamlining call management without needing higher-level administrators (call-audit F1.1/F1.2).
+- User SSH public keys can now be managed automatically through inbound SCIM provisioning.
+- Identity provider forms now support extra fields and full attribute mapping for more complete provider configuration.
+- Maintenance reporting adds an actual-vs-scheduled overlay and an overrun column, making it easy to see how maintenance windows compared to plan ([WAL-9984]).
+- The order form now previews volume-based discounts wherever they can be computed up front ([WAL-10026]).
+- A new `CHECK_FOR_UPDATES` setting lets administrators disable the outbound GitHub version check.
+
+### Improvements
+
+- All user profile attributes are now admin-selectable, with the frontend profile editor aligned to the backend attribute set.
+- Project creators are now notified when someone requests permission to auto-create a project.
+- In-progress maintenance announcements can now be edited after they start.
+- Resource usage and credit filters are now scoped to the selected resource for clearer reporting.
+- HEAD-based count operations are now available (opt-in) on nested and detail-list endpoints for lighter-weight totals.
+
+### Bug Fixes
+
+- Fixed OpenStack tenant and instance option values being dropped on order submission, including a backend fix to render non-string dictionary keys instead of failing ([WAL-10085]).
+- Fixed profile select fields submitting option objects instead of plain string values, and the full user record is now loaded in the support details popup.
+- Fixed identity provider protected fields being submitted as a string on update.
+- Fixed reviewer alternative names being stored as a string instead of a list.
+- Fixed blank option text in several async select dropdowns (auto-provisioning rules, Azure location pickers, offering creation, and token scope pickers).
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [12 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.8...8.1.0-rc.9) - resource restoration, Call organizer permissions, SCIM SSH keys, and order serialization fixes.
+- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.8...8.1.0-rc.9) - restore actions, identity provider and profile form fixes, maintenance reporting, and discount previews.
+
+---
+
 ## 8.1.0-rc.8 - 2026-07-07
 
 ### Highlights
