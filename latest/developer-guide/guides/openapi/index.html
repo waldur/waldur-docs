@@ -7804,6 +7804,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#count-endpoints-count_action-and-head-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Count endpoints (@count_action) and HEAD efficiency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#get_description" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13978,6 +13989,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#count-endpoints-count_action-and-head-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Count endpoints (@count_action) and HEAD efficiency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#get_description" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14319,6 +14341,10 @@
 <td>Document authentication schemes</td>
 <td>Authentication extension in <code>openapi_extensions.py</code></td>
 </tr>
+<tr>
+<td>Expose a <code>count</code> (<code>*Count</code> SDK method) for a detail list action</td>
+<td><code>@count_action</code> decorator on the <code>@action</code> (see §2)</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Validation command:</strong></p>
@@ -14375,7 +14401,7 @@
 <li>
 <p><strong>Edge Cases Handled</strong>:</p>
 <ol>
-<li><strong>HEAD method for Lists</strong>: We map the <code>HEAD</code> HTTP method to a "count" operation for list views. The inspector provides a custom description and a simple <code>200</code> response. Crucially, it returns <code>None</code> for detail views (<code>/api/users/{uuid}/</code>), effectively hiding this non-sensical operation.</li>
+<li><strong>HEAD method → <code>count</code> operations</strong>: We map <code>HEAD</code> to a <code>_count</code> operation so clients can read the total via the <code>x-result-count</code> header without downloading a body (the generated SDKs expose these as <code>*Count</code> methods). This is on by default for <strong>collections</strong> — top-level <em>and</em> nested, since <code>NestedSimpleRouter</code> mirrors the <code>head</code>→<code>get</code> mapping of <code>SortedDefaultRouter</code>. For <strong>detail views</strong> the inspector returns <code>None</code> (a count of a single object is meaningless), <em>except</em> for detail-scoped list actions that opt in via the <code>@count_action</code> decorator (e.g. <code>UserRoleMixin.list_users</code> → <code>/api/projects/{uuid}/list_users/</code>). If a list route sets an explicit <code>@extend_schema(operation_id=…)</code>, its auto-added HEAD companion would inherit an id ending in <code>_list</code> and collide with the GET, so the inspector renames it to a distinct <code>_count</code> id. See <a href="#count-endpoints-count_action-and-head-efficiency">Count endpoints</a> below.</li>
 <li><strong>Custom Permissions Metadata</strong>: This is a powerful feature for our frontend developers. If a view action has a <code>_permissions</code> attribute (e.g., <code>create_permissions</code>), the inspector extracts this data and injects it into the schema under a custom <code>x-permissions</code> vendor extension. This allows the frontend to understand the permissions required for an action without hardcoding them.</li>
 </ol>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -14394,6 +14420,43 @@
 </code></pre></div></td></tr></tbody></table></div>
 </li>
 </ul>
+<h4 id="count-endpoints-count_action-and-head-efficiency">Count endpoints (<code>@count_action</code>) and HEAD efficiency</h4>
+<p>Every collection exposes a <code>_count</code> HEAD operation automatically. To add one to
+a <strong>detail-scoped list action</strong>, stack <code>@count_action</code> (from
+<code>waldur_core.core.views</code>) on top of <code>@action</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_core.core.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_action</span>
+
+<span class="nd">@count_action</span>
+<span class="nd">@action</span><span class="p">(</span><span class="n">detail</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_users</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">uuid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="o">...</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The count must be <strong>cheap</strong>: the <code>x-result-count</code> header comes from the
+paginator's <code>COUNT(*)</code>, so a HEAD request must not serialise rows. Standard
+<code>ListModelMixin.list</code> is already optimised for this (the <code>optimized_head_list</code>
+monkey-patch in <code>core/views.py</code>). A <strong>custom action</strong> that serialises its own
+page must short-circuit HEAD itself, <em>after</em> applying all filters:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paginate_queryset</span><span class="p">(</span><span class="n">queryset</span><span class="p">)</span>   <span class="c1"># filters already applied above</span>
+<span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"HEAD"</span><span class="p">:</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_paginated_response</span><span class="p">([])</span>  <span class="c1"># count only — no serialisation</span>
+<span class="n">serializer</span> <span class="o">=</span> <span class="n">MySerializer</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_paginated_response</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Because both GET and HEAD run through the same <code>filter_queryset</code> / action-body
+filtering before pagination, the count always reflects the same query filters as
+the list: <code>count(filter) == len(list(filter))</code>. Runtime <code>HEAD</code> works even for
+routes not documented in the schema because <code>ViewSetMixin.as_view</code> aliases
+<code>HEAD</code>→<code>GET</code>; the schema plumbing above is only what makes the SDK <code>*Count</code>
+method exist.</p>
 <h4 id="get_description"><code>get_description()</code></h4>
 <ul>
 <li><strong>Purpose</strong>: To pull the docstring from the correct viewset <em>action</em> (<code>create</code>, <code>retrieve</code>, <code>my_action</code>) rather than from the view class itself.</li>
