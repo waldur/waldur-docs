@@ -10961,6 +10961,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#6-provisioning-a-slurm-allocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Provisioning a SLURM Allocation
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -13762,6 +13773,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#6-provisioning-a-slurm-allocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Provisioning a SLURM Allocation
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -13934,13 +13956,7 @@
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">"waldur_openstack_tenant"</span><span class="w"> </span><span class="nv">"vpc"</span><span class="w"> </span><span class="p">{</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">"waldur_openstack_tenant"</span><span class="w"> </span><span class="nv">"vpc"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">name</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">"terraform-e2e-vpc"</span>
 <span class="w">  </span><span class="na">project</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nv">waldur_structure_project.project.url</span>
 <span class="w">  </span><span class="na">offering</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.waldur_marketplace_offering.openstack_vpc.url</span>
@@ -13954,12 +13970,6 @@
 
 <span class="w">  </span><span class="na">skip_connection_extnet</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
 <span class="w">  </span><span class="na">skip_creation_of_default_router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
-
-<span class="w">  </span><span class="nb">timeouts</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">create</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"1m"</span>
-<span class="w">    </span><span class="na">update</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"1m"</span>
-<span class="w">    </span><span class="na">delete</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"1m"</span>
-<span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="4-network-configuration">4. Network Configuration</h3>
@@ -14092,6 +14102,56 @@
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="6-provisioning-a-slurm-allocation">6. Provisioning a SLURM Allocation</h3>
+<p>You can also request other marketplace offerings, such as a SLURM HPC allocation, using the generic <code>waldur_marketplace_order</code> resource.</p>
+<p>First, fetch the SLURM marketplace offering:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Fetch SLURM marketplace offering</span>
+<span class="kr">data</span><span class="w"> </span><span class="nc">"waldur_marketplace_offering"</span><span class="w"> </span><span class="nv">"slurm_offering"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nb">filters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"SLURM HPC Allocation"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Then, create a SLURM allocation order:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Create a SLURM allocation order</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"waldur_marketplace_order"</span><span class="w"> </span><span class="nv">"slurm_order"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">offering</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.waldur_marketplace_offering.slurm_offering.url</span>
+<span class="w">  </span><span class="na">project</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nv">waldur_structure_project.project.url</span>
+<span class="w">  </span><span class="na">plan</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nv">data.waldur_marketplace_offering.slurm_offering.plans[0].url</span>
+
+<span class="w">  </span><span class="nb">attributes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">name</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">"terraform-e2e-slurm"</span>
+<span class="w">    </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"SLURM allocation created by Terraform"</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nb">limits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">cpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
+<span class="w">    </span><span class="na">ram</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">20</span>
+<span class="w">    </span><span class="na">gpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="outputs">Outputs</h2>
 <p>You can output the UUIDs and URLs of the created resources to use them elsewhere or reference them in scripts.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -14112,7 +14172,11 @@
 <span class="normal">16</span>
 <span class="normal">17</span>
 <span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kr">output</span><span class="w"> </span><span class="nv">"project_uuid"</span><span class="w"> </span><span class="p">{</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kr">output</span><span class="w"> </span><span class="nv">"project_uuid"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">waldur_structure_project.project.id</span>
 <span class="p">}</span>
 
@@ -14130,6 +14194,10 @@
 
 <span class="kr">output</span><span class="w"> </span><span class="nv">"instance_uuid"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">waldur_openstack_instance.instance.id</span>
+<span class="p">}</span>
+
+<span class="kr">output</span><span class="w"> </span><span class="nv">"slurm_order_uuid"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">waldur_marketplace_order.slurm_order.id</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 
