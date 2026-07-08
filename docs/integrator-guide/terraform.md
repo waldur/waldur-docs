@@ -111,12 +111,6 @@ resource "waldur_openstack_tenant" "vpc" {
 
   skip_connection_extnet          = true
   skip_creation_of_default_router = true
-
-  timeouts {
-    create = "1m"
-    update = "1m"
-    delete = "1m"
-  }
 }
 ```
 
@@ -197,6 +191,43 @@ resource "waldur_openstack_instance" "instance" {
 }
 ```
 
+### 6. Provisioning a SLURM Allocation
+
+You can also request other marketplace offerings, such as a SLURM HPC allocation, using the generic `waldur_marketplace_order` resource.
+
+First, fetch the SLURM marketplace offering:
+
+```hcl
+# Fetch SLURM marketplace offering
+data "waldur_marketplace_offering" "slurm_offering" {
+  filters = {
+    name = "SLURM HPC Allocation"
+  }
+}
+```
+
+Then, create a SLURM allocation order:
+
+```hcl
+# Create a SLURM allocation order
+resource "waldur_marketplace_order" "slurm_order" {
+  offering = data.waldur_marketplace_offering.slurm_offering.url
+  project  = waldur_structure_project.project.url
+  plan     = data.waldur_marketplace_offering.slurm_offering.plans[0].url
+
+  attributes = {
+    name        = "terraform-e2e-slurm"
+    description = "SLURM allocation created by Terraform"
+  }
+
+  limits = {
+    cpu = 10
+    ram = 20
+    gpu = 2
+  }
+}
+```
+
 ## Outputs
 
 You can output the UUIDs and URLs of the created resources to use them elsewhere or reference them in scripts.
@@ -220,5 +251,9 @@ output "permission_uuid" {
 
 output "instance_uuid" {
   value = waldur_openstack_instance.instance.id
+}
+
+output "slurm_order_uuid" {
+  value = waldur_marketplace_order.slurm_order.id
 }
 ```
