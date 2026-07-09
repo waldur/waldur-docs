@@ -14,11 +14,15 @@ From the popup, select organization, then set estimated cost limit and finally c
 
 ## Cost policies for projects
 
-Organization owners can set different cost policies for projects under particular organization. To add a new policy, open Organizations menu from the left and then Accounting -> Cost policies from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
+Organization owners can set different cost policies for projects under particular organization. To add a new policy, open Organizations menu from the left and then Policy -> Cost policies from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
     ![Cost policy for project](../img/Cost_policies_projects.png)
 
 From the popup, select project, then set estimated cost limit and finally choose the action (what happens, when the limit is reached).
     ![New project cost policy](../img/New_project_policy.png)
+
+When exactly one project is selected, the policy can optionally be limited to a single resource. Use the "Limit to resource" field to pick a resource: only that resource's cost is then measured against the limit, and the policy's actions (for example pausing, downscaling or scheduled termination) apply only to that resource. Leaving the field empty keeps the policy scoped to the whole project. Blocking the creation of new resources is not available for resource-scoped policies, since that action is project-wide.
+
+By default, the policy accounts for any available project or organization credit — credit is subtracted before the limit is enforced, so a project with sufficient credit does not trigger the policy. Disable "Account for available credit" to enforce the limit against the raw invoice cost, regardless of credit balance.
 
 ## Cost policies for offerings
 
