@@ -12711,6 +12711,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pausing-or-downscaling-resources-on-usage-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pausing or downscaling resources on usage limit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pausing or downscaling resources on usage limit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enabling-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-behaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it behaves
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#adding-custom-components" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14061,6 +14111,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pausing-or-downscaling-resources-on-usage-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pausing or downscaling resources on usage limit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pausing or downscaling resources on usage limit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enabling-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-behaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it behaves
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#adding-custom-components" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14512,6 +14612,36 @@ opening of an SSH client if configured for the browser. Out of the box works on 
 </tr>
 </tbody>
 </table>
+<h2 id="pausing-or-downscaling-resources-on-usage-limit">Pausing or downscaling resources on usage limit</h2>
+<p>For offerings with <strong>limit-based</strong> components, Waldur can automatically restrict a resource once its reported usage reaches the component's limit for the current accounting period — pausing or downscaling the resource until usage drops back below the limit. Use this when a limit should act as a hard ceiling on consumption, not only as a billing basis.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>The offering has at least one <strong>limit-based</strong> component with a limit configured for an accounting period (monthly, quarterly, annual or total).</li>
+<li>Usage is reported against that component, either by the service provider or by the backend.</li>
+</ul>
+<h3 id="enabling-it">Enabling it</h3>
+<ol>
+<li>Open the offering's <strong>Edit</strong> page, go to the <strong>Integration</strong> settings and open the <strong>Resource lifecycle</strong> tab.</li>
+<li>Set <strong>Action on usage limit</strong> to one of:<ul>
+<li><strong>Pause</strong> — the resource is paused when the limit is reached.</li>
+<li><strong>Downscale</strong> — the resource is downscaled when the limit is reached.</li>
+</ul>
+</li>
+<li>Leave the field empty to disable the behavior.</li>
+<li>Click <strong>Save</strong>.</li>
+</ol>
+<p>Pause and downscale are mutually exclusive — an offering uses at most one of them.</p>
+<h3 id="how-it-behaves">How it behaves</h3>
+<ul>
+<li>When the reported usage of any limit-based component reaches or exceeds its limit for the current period, the resource is automatically <strong>paused</strong> or <strong>downscaled</strong>, according to the offering setting.</li>
+<li>The restriction is <strong>lifted automatically</strong> when usage drops back below the limit — for example, when a new billing period resets the period's usage, or when the component's limit is raised.</li>
+<li>For the <strong>Total</strong> accounting period, usage accumulates over the whole life of the resource and never resets, so the restriction is lifted only if the limit is increased.</li>
+<li>The feature toggles the same <strong>Paused</strong> / <strong>Downscaled</strong> state shown on the resource page. Only restrictions applied by this feature are lifted automatically — a resource paused manually, by a grace period, or by a cost and usage policy is left untouched.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For provider backends that enforce these states (such as SLURM via the site agent), pausing blocks further usage and downscaling reduces the resource's share. For other backends the state is recorded and visible, but enforcement depends on the backend.</p>
+</div>
 <h2 id="adding-custom-components">Adding custom components</h2>
 <p>Service providers can add custom accounting components to any offering alongside the built-in ones. This is useful for non-infrastructure services like consultancy hours, support packages, or training credits.</p>
 <p>To add a custom component:</p>

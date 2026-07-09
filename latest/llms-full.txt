@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-09T14:34:38.803720Z
+Generated: 2026-07-09T16:38:56.098197Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -68404,6 +68404,36 @@ One-time components also support **Min value** and **Max value** constraints, wh
 | **Limit-based** (monthly) | Every month | `price × limit` per month | Adjusted on current month's invoice |
 | **One-time + prepaid** (upfront) | Once at creation | `price × limit × months` | Supplementary charge for `(new - old) × remaining months` |
 | **Limit-based / Total** (one-time) | Once at creation | `price × limit` | Incremental charge for difference |
+
+## Pausing or downscaling resources on usage limit
+
+For offerings with **limit-based** components, Waldur can automatically restrict a resource once its reported usage reaches the component's limit for the current accounting period — pausing or downscaling the resource until usage drops back below the limit. Use this when a limit should act as a hard ceiling on consumption, not only as a billing basis.
+
+### Prerequisites
+
+- The offering has at least one **limit-based** component with a limit configured for an accounting period (monthly, quarterly, annual or total).
+- Usage is reported against that component, either by the service provider or by the backend.
+
+### Enabling it
+
+1. Open the offering's **Edit** page, go to the **Integration** settings and open the **Resource lifecycle** tab.
+2. Set **Action on usage limit** to one of:
+    - **Pause** — the resource is paused when the limit is reached.
+    - **Downscale** — the resource is downscaled when the limit is reached.
+3. Leave the field empty to disable the behavior.
+4. Click **Save**.
+
+Pause and downscale are mutually exclusive — an offering uses at most one of them.
+
+### How it behaves
+
+- When the reported usage of any limit-based component reaches or exceeds its limit for the current period, the resource is automatically **paused** or **downscaled**, according to the offering setting.
+- The restriction is **lifted automatically** when usage drops back below the limit — for example, when a new billing period resets the period's usage, or when the component's limit is raised.
+- For the **Total** accounting period, usage accumulates over the whole life of the resource and never resets, so the restriction is lifted only if the limit is increased.
+- The feature toggles the same **Paused** / **Downscaled** state shown on the resource page. Only restrictions applied by this feature are lifted automatically — a resource paused manually, by a grace period, or by a cost and usage policy is left untouched.
+
+!!! note
+    For provider backends that enforce these states (such as SLURM via the site agent), pausing blocks further usage and downscaling reduces the resource's share. For other backends the state is recorded and visible, but enforcement depends on the backend.
 
 ## Adding custom components
 
