@@ -1,5 +1,34 @@
 # Changelog
 
+## 8.1.0-rc.10 - 2026-07-10
+
+### Highlights
+
+This release makes grant call management substantially more capable, giving call managers a drivable proposal workflow engine where allocation timing, panel staffing, and per-proposal step actions are all handled directly from the call UI. Operators also gain finer control over resource lifecycle and cost governance: offerings can now automatically pause or downscale resources when reported usage hits a component limit, grace periods can be disabled per offering, and project cost policies can be scoped to individual resources.
+
+### What's New
+
+- Offerings can now automatically pause or downscale a resource when its reported usage reaches the configured component limit, with a new selector in the offering's lifecycle policy section to choose the action to take (WAL-10094).
+- Staff can disable the grace period on a per-offering basis, and resource end dates now account for whether a grace period applies, shown consistently across resource lists and details.
+- The proposal workflow engine is now drivable end to end: call managers can run per-proposal workflow step actions from the call-manager UI, allocation timing is configured as part of the call step configuration, and workflow steps can provision resources on completion.
+- Panel members can be assigned directly from the call's team tab.
+
+### Improvements
+
+- Project cost policies can now be scoped to an individual resource and include a toggle for whether credits apply, giving finer control over cost governance and compensation.
+- Allocation policy has been consolidated onto the call workflow, with proposals rejected on a negative outcome for clearer, more predictable review handling.
+
+### Bug Fixes
+
+- Fixed a crash on the reviewer review page when a proposal round was missing (call-audit F4.3).
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.9...8.1.0-rc.10) - usage-limit auto-pause/downscale, per-offering grace-period control, resource-scoped cost policies, and proposal workflow engine consolidation.
+- **Waldur Homeport**: [8 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.9...8.1.0-rc.10) - UI for usage-limit actions, grace-period disabling, resource-scoped cost policies, and call workflow management.
+
+---
+
 ## 8.1.0-rc.9 - 2026-07-08
 
 ### Highlights
