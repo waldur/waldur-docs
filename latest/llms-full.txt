@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-09T02:06:11.218900Z
+Generated: 2026-07-09T14:34:38.803720Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -8150,6 +8150,14 @@ URL for sending telemetry data.
 **Default value:** 1
 
 Telemetry service version.
+
+#### CHECK_FOR_UPDATES
+
+**Type:** bool
+
+**Default value:** True
+
+If true, the version endpoint queries GitHub for the latest released Waldur version. Disable in deployments without outbound internet access to avoid failed requests to api.github.com.
 
 ### Custom Scripts
 
@@ -66924,11 +66932,15 @@ From the popup, select organization, then set estimated cost limit and finally c
 
 ## Cost policies for projects
 
-Organization owners can set different cost policies for projects under particular organization. To add a new policy, open Organizations menu from the left and then Accounting -> Cost policies from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
+Organization owners can set different cost policies for projects under particular organization. To add a new policy, open Organizations menu from the left and then Policy -> Cost policies from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
     [Image: Cost policy for project]
 
 From the popup, select project, then set estimated cost limit and finally choose the action (what happens, when the limit is reached).
     [Image: New project cost policy]
+
+When exactly one project is selected, the policy can optionally be limited to a single resource. Use the "Limit to resource" field to pick a resource: only that resource's cost is then measured against the limit, and the policy's actions (for example pausing, downscaling or scheduled termination) apply only to that resource. Leaving the field empty keeps the policy scoped to the whole project. Blocking the creation of new resources is not available for resource-scoped policies, since that action is project-wide.
+
+By default, the policy accounts for any available project or organization credit — credit is subtracted before the limit is enforced, so a project with sufficient credit does not trigger the policy. Disable "Account for available credit" to enforce the limit against the raw invoice cost, regardless of credit balance.
 
 ## Cost policies for offerings
 
@@ -81388,7 +81400,7 @@ td:nth-child(4) {
 | `revoke_roles_on_offering_deletion` | `Django Signal (pre_delete)` | `marketplace.Offering` | Revoke active user roles bound to an offering before it is deleted. |
 | `run_reset_actions_upon_cost_policy_deletion` | `Django Signal (pre_delete)` | `policy.ProjectEstimatedCostPolicy` | Execute reset actions when a cost policy is deleted. |
 | `schedule_component_usage_billing` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Thin post_save handler — schedules the async billing+policy task on commit. |
-| `seed_workflow_steps` | `Django Signal (post_save)` | `proposal.Call` | Pre-seed catalog workflow steps as enabled on call creation. |
+| `seed_workflow_steps` | `Django Signal (post_save)` | `proposal.Call` | Seed catalog workflow steps on call creation. |
 | `send_comment_added_notification` | `Django Signal (post_save)` | `support.Comment` | No description |
 | `send_course_account_deletion_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
 | `send_course_account_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
