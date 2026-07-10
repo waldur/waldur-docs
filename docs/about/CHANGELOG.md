@@ -1,5 +1,28 @@
 # Changelog
 
+## 8.1.0-rc.11 - 2026-07-10
+
+### Highlights
+
+This release focuses on reliability and correctness. Resource limit handling in the marketplace is now more robust against stale data, the SLURM policy reporting endpoint is faster under load, and the grant proposal review workflow has been cleaned up to remove a legacy approval path. A form editing fix in the interface makes working with repeated field groups more dependable.
+
+### Improvements
+
+- Resource limit formatting and the set-limits action now safely ignore orphaned limit keys, preventing errors when offering configurations drift out of sync with stored resource data.
+- The grant proposal review workflow has retired the legacy Accept/Reject path and added guards around call activation and allocation, so proposals move through review states more consistently. A data migration backfills any workflow instances that were left in an inconsistent state.
+
+### Bug Fixes
+
+- Fixed an N+1 query in the SLURM report-command-result action, reducing database load and improving response times for policy reporting.
+- Corrected the edit field dialog so that editing fields within a field array works as expected.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [3 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.10...8.1.0-rc.11) - marketplace limit safeguards, SLURM policy query optimization, and proposal workflow cleanup.
+- **Waldur Homeport**: [1 commit](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.10...8.1.0-rc.11) - fix for editing fields within field arrays.
+
+---
+
 ## 8.1.0-rc.10 - 2026-07-10
 
 ### Highlights
