@@ -13795,7 +13795,7 @@ td:nth-child(4) {
 <td><code>notification_about_resource_ending</code></td>
 <td><code>waldur_mastermind.marketplace.notification_about_resource_ending</code></td>
 <td>Cron: <code>0 10 * * * (m/h/dM/MY/d)</code></td>
-<td>Send notifications about resources ending in 1 day and 7 days.</td>
+<td>Send notifications about resources ending in 1 day and 7 days.<br><br>"Ending" is the resource's effective end date — the earliest of its own end<br>date and the project-driven termination date. Resources whose offering<br>disables the grace period terminate on the raw project end date (earlier than<br>the project's effective end date that notification_about_project_ending<br>announces), so they are pulled in by their project's raw end date even without<br>an own end date — but only when the project has an actual grace window,<br>otherwise raw == effective and the project-ending notice already covers them.</td>
 </tr>
 <tr>
 <td><code>notify-managers-of-expired-batches</code></td>
@@ -14222,6 +14222,12 @@ td:nth-child(4) {
 <td><code>waldur_mastermind.marketplace.calculate_usage_for_current_month</code></td>
 <td>1 hour</td>
 <td>Calculate marketplace resource usage for the current month across all customers and projects.</td>
+</tr>
+<tr>
+<td><code>waldur-marketplace-re-evaluate-usage-limit-restrictions</code></td>
+<td><code>waldur_mastermind.marketplace.re_evaluate_usage_limit_restrictions</code></td>
+<td>1 hour</td>
+<td>Lift usage-limit restrictions when a new period resets reported usage.<br><br>A restriction applied by <code>evaluate_usage_limit_restriction</code> is normally<br>lifted on the next usage report. When a new billing period begins and no new<br>usage is reported, this periodic task re-evaluates every currently restricted<br>resource so month/quarter/annual restrictions clear on rollover. <code>total</code><br>restrictions never roll over and are only lifted when the limit is raised.</td>
 </tr>
 <tr>
 <td><code>waldur-marketplace-script-cleanup-orphaned-k8s-resources</code></td>
