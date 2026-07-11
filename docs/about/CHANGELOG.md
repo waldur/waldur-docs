@@ -1,5 +1,41 @@
 # Changelog
 
+## 8.1.0-rc.12 - 2026-07-11
+
+### Highlights
+
+This release strengthens Waldur's marketplace and call-management workflows. OpenStack instance orders are now checked against project allocations before they are submitted, so users get immediate feedback instead of a late provisioning failure. Cost-policy and usage-limit pausing is more accurate and faster to react, and the reasons behind a paused resource are now shown clearly in the UI. Call managers get a streamlined proposal workflow with clearer activation preconditions.
+
+### What's New
+
+- OpenStack instance orders now run a pre-flight allocation check at submission time, so orders that would exceed the project's allocation are caught up front rather than failing during provisioning.
+- Call managers can now drive step completion for all non-applicant workflow steps, and the applicant team is captured at submission time, giving a more predictable proposal review process.
+
+### Improvements
+
+- Paused resources now display the actual usage-limit reason instead of a generic "manually" label, both on the resource flags and in the policy attribution banner, so operators understand why a resource was paused.
+- Cost-policy cost is now aggregated directly in the database, removing per-item Python summation and N+1 queries for faster, more scalable policy evaluation.
+- The Add-member dialog now offers only the roles the current user is actually allowed to grant, reducing confusing failed assignments.
+- Resource order history now shows the "Restore" order type explicitly.
+- Legacy proposal Accept/Reject actions were removed in favour of surfacing activation preconditions directly, simplifying the proposal actions.
+- Disabled buttons now show a tooltip explaining why they are unavailable.
+
+### Bug Fixes
+
+- Usage-limit pausing now checks the per-resource limit rather than only the component's limit amount, so resources are paused based on their own configured limits.
+- Fixed cost-policy pausing latency, closed a debounce blind window, and corrected the resource name shown in the activity log.
+
+### Security
+
+- Upgraded Django from 6.0.6 to 6.0.7 to address known vulnerabilities.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.11...8.1.0-rc.12) - usage-limit and cost-policy accuracy and performance, OpenStack pre-flight allocation check, call-management workflow, and a Django security bump.
+- **Waldur Homeport**: [12 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.11...8.1.0-rc.12) - clearer pause reasons, call-management proposal UI, grantable-role filtering, order history and button UX improvements, plus added test coverage.
+
+---
+
 ## 8.1.0-rc.11 - 2026-07-10
 
 ### Highlights
