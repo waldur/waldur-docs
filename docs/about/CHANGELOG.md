@@ -1,5 +1,44 @@
 # Changelog
 
+## 8.1.0-rc.13 - 2026-07-13
+
+### Highlights
+
+This release significantly advances the call and proposal management workflow: reviewers now work through structured checklists, technical assessments, and conflict-of-interest confirmations, while call managers gain quicker ways to review proposals and inspect existing reviews. Billing reliability improves with fixes that prevent plan periods from being missed on mid-month usage reports and on resources that reach an active state through non-standard paths. Operators also benefit from API response compression across deployments, and OpenStack users get clearer visibility of 1:1 NAT public IPs on floating IPs.
+
+### What's New
+
+- Proposal reviews now support a full workflow with per-step checklists, technical assessments, and conflict-of-interest confirmation, spanning both the backend workflow engine and the reviewer UI. Required checklists must be answered before a step can be completed, and the compliance checklist has graduated out of experimental UI into general availability.
+- Call managers can now review a proposal themselves directly from the proposal actions, and can open a Reviews popup to inspect all reviews on a proposal from the management view.
+- The `backfill_plan_periods` management command now accepts offering, resource, and date filters so operators can target specific backfill runs.
+
+### Improvements
+
+- Archived calls are now consistently read-only across the entire edit surface, with the frontend read-only state aligned to backend enforcement and a new indicator for whether a call has proposals.
+- Rounds can now be created and edited on active calls, and call scopes link to their management dashboard from Roles & permissions.
+- Reviewers no longer see proposal team-role expiration details, and submitted-proposal team roles are exempted from automatic expiration so access is not lost mid-review.
+- Proposal resource-requests now show the requested resource limits, review notification links point to the review-scoped route, and the Documents tab is hidden on public call views when empty.
+- API responses are now compressed on both Helm (Traefik) and Docker Compose (Caddy) deployments, reducing bandwidth and improving load times.
+- OpenStack floating IPs now display the associated 1:1 NAT public IP.
+- Bumped click and pillow to patch OSV-flagged vulnerabilities.
+
+### Bug Fixes
+
+- Mid-month usage reports now resolve the correct plan period so billing is no longer skipped, and plan periods are created on any transition into an active (OK) state rather than only from the creating state.
+- Fixed public IP mapping not being set when an OpenStack floating IP port is attached after the fact.
+- Compliance checklist "No" answers no longer incorrectly block proposal submission.
+- Fixed a crash in read-only proposal plan-component summaries and removed redundant toolbars.
+- Queries no longer retry on 4xx errors, and falsy table column entries are now filtered centrally to avoid rendering artifacts.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [17 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.12...8.1.0-rc.13) - proposal workflow engine, billing plan-period fixes, and call-management presets
+- **Waldur Homeport**: [18 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.12...8.1.0-rc.13) - proposal review workflow UI, call read-only alignment, and floating IP display
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.12...8.1.0-rc.13) - API response compression on ingress
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.0-rc.12...8.1.0-rc.13) - API response compression in Caddy
+
+---
+
 ## 8.1.0-rc.12 - 2026-07-11
 
 ### Highlights
