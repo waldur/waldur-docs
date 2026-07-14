@@ -113,12 +113,12 @@ class TestMultiRepoChangelogGenerator(unittest.TestCase):
         self.assertFalse(self.generator.should_exclude_file('main.go', 'terraform-provider-waldur'))
 
     def test_terraform_changelog_extraction(self):
-        """Test if the script correctly extracts only the first version block from CHANGELOG.md"""
+        """Test if the script correctly extracts the requested version block from CHANGELOG.md"""
         repo_path = Path(self.temp_dir)
         changelog_file = repo_path / "CHANGELOG.md"
 
         # Test case: missing file
-        self.assertEqual(self.generator._extract_terraform_changelog(repo_path), "")
+        self.assertEqual(self.generator._extract_terraform_changelog(repo_path, "v8.0.9"), "")
 
         # Test case: populated file
         mock_content = """# Changelog
@@ -137,13 +137,25 @@ class TestMultiRepoChangelogGenerator(unittest.TestCase):
 """
         changelog_file.write_text(mock_content)
 
-        extracted = self.generator._extract_terraform_changelog(repo_path)
-        expected = (
+        # Extraction for matching version (with 'v')
+        extracted_v = self.generator._extract_terraform_changelog(repo_path, "v8.0.9")
+        expected_v = (
             "### ⚠️ Breaking changes\n\n"
             "- `core_ssh_public_key`: attribute `fingerprint_md5` type changed from `types.Int64` to `types.String`\n"
             "- `customer_permission`: attribute `role` is now required"
         )
-        self.assertEqual(extracted, expected)
+        self.assertEqual(extracted_v, expected_v)
+
+        # Extraction for matching version (without 'v')
+        extracted_no_v = self.generator._extract_terraform_changelog(repo_path, "8.0.9")
+        self.assertEqual(extracted_no_v, expected_v)
+
+        # Extraction for another existing version in the file
+        extracted_other = self.generator._extract_terraform_changelog(repo_path, "v8.0.8")
+        self.assertEqual(extracted_other, "### Added\n- New resource `structure_project`")
+
+        # Extraction for a non-existing version
+        self.assertEqual(self.generator._extract_terraform_changelog(repo_path, "v8.0.10"), "")
 
     def test_ansible_changelog_extraction(self):
         """Test if the script extracts breaking changes section from multiple collections READMEs"""

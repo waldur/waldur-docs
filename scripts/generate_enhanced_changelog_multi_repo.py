@@ -257,23 +257,28 @@ class MultiRepoChangelogGenerator:
             return []
         return [f for f in output.split('\n') if f.strip()]
 
-    def _extract_terraform_changelog(self, repo_path):
-        """Extract the top entry in CHANGELOG.md representing the current release changes"""
+    def _extract_terraform_changelog(self, repo_path, version):
+        """Extract the entry in CHANGELOG.md representing the requested release version changes"""
         changelog_file = repo_path / "CHANGELOG.md"
         if not changelog_file.is_file():
             return ""
         try:
             content = changelog_file.read_text()
-            # Extract content under the first version header
             lines = content.splitlines()
             extracted = []
             capture = False
+            
+            # Version match patterns: e.g. "## v8.0.9" or "## 8.0.9"
+            version_str = version.lstrip('v')
+            version_headers = [f"## v{version_str}", f"## {version_str}"]
+            
             for line in lines:
                 if line.startswith("## "):
                     if capture:
                         break # Reach next entry
-                    capture = True
-                    continue
+                    if line.strip() in version_headers:
+                        capture = True
+                        continue
                 if capture:
                     extracted.append(line)
             return "\n".join(extracted).strip()
@@ -740,7 +745,7 @@ class MultiRepoChangelogGenerator:
 
             # Extract and format Terraform and Ansible changelogs
             tf_path = self.temp_dir / "terraform-provider-waldur"
-            tf_notes = self._extract_terraform_changelog(tf_path)
+            tf_notes = self._extract_terraform_changelog(tf_path, current_tag)
 
             ansible_path = self.temp_dir / "ansible-waldur-module-next"
             ansible_notes = self._extract_ansible_changelog(ansible_path, current_tag)
