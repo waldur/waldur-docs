@@ -16,7 +16,7 @@ def get_enhanced_entry(version, prev_version):
     try:
         print(f"Generating enhanced entry for {version} (since {prev_version})")
         result = subprocess.run([
-            'python3', 'scripts/generate-enhanced-changelog-multiRepo.py', 
+            'python3', 'scripts/generate_enhanced_changelog_multi_repo.py', 
             version, prev_version
         ], capture_output=True, text=True, timeout=300)
         

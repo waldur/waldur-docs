@@ -83,7 +83,7 @@ python3 scripts/sync-external-docs.py --list-local
 
 ```bash
 # Generate enhanced changelog entry for a specific version
-python3 scripts/generate-enhanced-changelog-multiRepo.py 7.9.0 7.8.9
+python3 scripts/generate_enhanced_changelog_multi_repo.py 7.9.0 7.8.9
 
 # Regenerate individual changelog entries with enhanced format
 python3 scripts/regenerate-changelog-entry.py 7.9.0 7.8.9
@@ -155,7 +155,7 @@ git push origin 8.0.4
 The changelog Python script supports a `--json-output` mode that emits structured commit data (with bodies and per-commit file lists) instead of markdown:
 
 ```bash
-python3 scripts/generate-enhanced-changelog-multiRepo.py 8.0.4 8.0.3 \
+python3 scripts/generate_enhanced_changelog_multi_repo.py 8.0.4 8.0.3 \
     --json-output \
     --local-repos '{"waldur-mastermind":"../waldur-mastermind","waldur-homeport":"../waldur-homeport"}'
 ```

@@ -4,7 +4,6 @@ Enhanced changelog generator for Waldur - analyzes multiple repositories like Gi
 """
 
 import argparse
-import os
 import sys
 import subprocess
 import re
@@ -24,16 +23,19 @@ class MultiRepoChangelogGenerator:
             'waldur-prometheus-exporter': 'https://github.com/waldur/waldur-prometheus-exporter.git',
             'py-client': 'https://github.com/waldur/py-client.git',
             'js-client': 'https://github.com/waldur/js-client.git',
-            'go-client': 'https://github.com/waldur/go-client.git'
+            'go-client': 'https://github.com/waldur/go-client.git',
+            'ansible-waldur-module-next': 'https://github.com/waldur/ansible-waldur-module-next.git',
+            'terraform-provider-waldur': 'https://github.com/waldur/terraform-provider-waldur.git'
         }
         # Define which repositories are core (not auto-generated)
         self.core_repositories = {
             'waldur-mastermind', 'waldur-homeport', 'waldur-helm',
             'waldur-docker-compose', 'waldur-prometheus-exporter'
         }
-        # SDK clients are auto-generated from MasterMind OpenAPI schema
+        # SDK clients and providers are auto-generated from MasterMind OpenAPI schema
         self.generated_repositories = {
-            'py-client', 'js-client', 'go-client'
+            'py-client', 'js-client', 'go-client',
+            'ansible-waldur-module-next', 'terraform-provider-waldur'
         }
         self.temp_dir = None
         self.local_repos = local_repos or {}
@@ -255,6 +257,66 @@ class MultiRepoChangelogGenerator:
             return []
         return [f for f in output.split('\n') if f.strip()]
 
+    def _extract_terraform_changelog(self, repo_path):
+        """Extract the top entry in CHANGELOG.md representing the current release changes"""
+        changelog_file = repo_path / "CHANGELOG.md"
+        if not changelog_file.is_file():
+            return ""
+        try:
+            content = changelog_file.read_text()
+            # Extract content under the first version header
+            lines = content.splitlines()
+            extracted = []
+            capture = False
+            for line in lines:
+                if line.startswith("## "):
+                    if capture:
+                        break # Reach next entry
+                    capture = True
+                    continue
+                if capture:
+                    extracted.append(line)
+            return "\n".join(extracted).strip()
+        except Exception as e:
+            print(f"Error reading TF changelog: {e}", file=sys.stderr)
+            return ""
+
+    def _extract_ansible_changelog(self, repo_path, version):
+        """Extract versioned breaking change notes from Ansible collections' READMEs"""
+        collections_root = repo_path / "ansible_waldur_module" / "ansible_collections"
+        if not collections_root.is_dir():
+            return ""
+        
+        extracted_entries = []
+        try:
+            # Locate all README.md files
+            for readme_path in sorted(collections_root.glob("*/*/README.md")):
+                content = readme_path.read_text()
+                version_header = f"## Breaking Changes for {version}"
+                if version_header in content:
+                    lines = content.splitlines()
+                    capture = False
+                    entry_lines = []
+                    for line in lines:
+                        if line.startswith(version_header):
+                            capture = True
+                            continue
+                        if capture:
+                            # Stop at next header or generator boilerplate
+                            if line.startswith("## ") or line.startswith("# "):
+                                break
+                            entry_lines.append(line)
+                    
+                    collection_name = ".".join(readme_path.parts[-3:-1])
+                    raw_entry = "\n".join(entry_lines).strip()
+                    if raw_entry:
+                        extracted_entries.append(f"#### Collection `{collection_name}`\n\n{raw_entry}")
+            
+            return "\n\n".join(extracted_entries)
+        except Exception as e:
+            print(f"Error reading Ansible changelog: {e}", file=sys.stderr)
+            return ""
+
     def analyze_commit_categories(self, commits):
         """Categorize commits by type"""
         categories = {
@@ -351,6 +413,16 @@ class MultiRepoChangelogGenerator:
             'go-client': [
                 'waldur/',  # Auto-generated from OpenAPI
                 'docs/',  # Auto-generated docs
+            ],
+            'ansible-waldur-module-next': [
+                'ansible_waldur_module/ansible_collections/',
+                'docs/',
+            ],
+            'terraform-provider-waldur': [
+                'internal/',
+                'services/',
+                'docs/',
+                'provider-manifest.json'
             ]
         }
 
@@ -608,16 +680,23 @@ class MultiRepoChangelogGenerator:
                     else:
                         changelog_parts.append(f"- **{display_name}**: No changes")
 
-            # Show SDK status separately if any were updated
+            # Show SDK and Provider status separately if any were updated
             sdk_updates = [repo for repo, analysis in all_analyses.items()
                           if repo in self.generated_repositories and analysis['has_changes']]
             if sdk_updates:
                 changelog_parts.append("")
-                changelog_parts.append("### SDK Updates (Auto-generated)")
+                changelog_parts.append("### SDK & Integration Updates (Auto-generated)")
                 changelog_parts.append("")
                 for repo_name in sdk_updates:
                     analysis = all_analyses[repo_name]
-                    display_name = repo_name.replace('-', ' ').title().replace('Py ', 'Python ').replace('Js ', 'JavaScript ')
+                    display_names_map = {
+                        'py-client': 'Python SDK',
+                        'js-client': 'JavaScript SDK',
+                        'go-client': 'Go SDK',
+                        'ansible-waldur-module-next': 'Ansible Modules',
+                        'terraform-provider-waldur': 'Terraform Provider'
+                    }
+                    display_name = display_names_map.get(repo_name, repo_name.replace('-', ' ').title().replace('Py ', 'Python ').replace('Js ', 'JavaScript '))
                     commit_count = analysis['commit_count']
 
                     changelog_parts.append(f"- **{display_name}**: [{commit_count} commits](https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag})")
@@ -658,6 +737,22 @@ class MultiRepoChangelogGenerator:
                         clean_subject = self._clean_commit_subject(commit['subject'], 'general')
                         changelog_parts.append(f"- {clean_subject}")
                     changelog_parts.append("")
+
+            # Extract and format Terraform and Ansible changelogs
+            tf_path = self.temp_dir / "terraform-provider-waldur"
+            tf_notes = self._extract_terraform_changelog(tf_path)
+
+            ansible_path = self.temp_dir / "ansible-waldur-module-next"
+            ansible_notes = self._extract_ansible_changelog(ansible_path, current_tag)
+
+            if tf_notes or ansible_notes:
+                changelog_parts.append("### Integrations & Ecosystem Breaking Changes\n")
+                if tf_notes:
+                    tf_notes_formatted = re.sub(r'^###\s+(.*)', r'#### Terraform Provider: \1', tf_notes, flags=re.MULTILINE)
+                    changelog_parts.append(f"{tf_notes_formatted}\n")
+                if ansible_notes:
+                    ansible_notes_formatted = ansible_notes.replace("#### Collection", "#### Ansible Collection:")
+                    changelog_parts.append(f"{ansible_notes_formatted}\n")
 
             # Resources — RC releases ship no OpenAPI schema, so omit the link
             # for them (a dangling relative link fails `mkdocs build --strict`).

@@ -80,7 +80,7 @@ echo "[1/5] Collecting commit data from local repositories..."
 LOCAL_REPOS='{"waldur-mastermind":"'"$PROJECT_DIR"'/../waldur-mastermind","waldur-homeport":"'"$PROJECT_DIR"'/../waldur-homeport","waldur-helm":"'"$PROJECT_DIR"'/../waldur-helm","waldur-docker-compose":"'"$PROJECT_DIR"'/../waldur-docker-compose"}'
 
 collect_commit_data() {
-    python3 "$SCRIPT_DIR/generate-enhanced-changelog-multiRepo.py" "$VERSION" "$PREV_TAG" \
+    python3 "$SCRIPT_DIR/generate_enhanced_changelog_multi_repo.py" "$VERSION" "$PREV_TAG" \
         --json-output --local-repos "$LOCAL_REPOS" > "$CACHE_DIR/commit-data.json"
 }
 

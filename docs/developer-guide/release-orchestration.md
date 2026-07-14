@@ -132,7 +132,7 @@ This single job performs all tagging, config updates, changelog, and schema gene
 **1. Changelog generation** (in `before_script`)
 
 - Detects the previous version from `CHANGELOG.md`
-- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using `generate-enhanced-changelog-multiRepo.py`
+- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using `generate_enhanced_changelog_multi_repo.py`
 - Rotates old entries (keeps last 20)
 
 **2. `publiccode.yml` update**

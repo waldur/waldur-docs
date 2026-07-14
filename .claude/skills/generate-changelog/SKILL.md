@@ -20,10 +20,10 @@ Waldur uses multi-repository analysis for professional changelog entries.
 
 ```bash
 # Generate changelog for a new release
-python3 scripts/generate-enhanced-changelog-multiRepo.py <new_version> <previous_version>
+python3 scripts/generate_enhanced_changelog_multi_repo.py <new_version> <previous_version>
 
 # Example: Generate changelog for 7.9.1 from 7.9.0
-python3 scripts/generate-enhanced-changelog-multiRepo.py 7.9.1 7.9.0
+python3 scripts/generate_enhanced_changelog_multi_repo.py 7.9.1 7.9.0
 
 # Regenerate a specific entry
 python3 scripts/regenerate-changelog-entry.py <new_version> <previous_version>
