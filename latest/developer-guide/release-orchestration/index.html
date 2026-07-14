@@ -9903,10 +9903,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#deploy-stage-sdk-release-jobs-parallel" class="md-nav__link">
+  <a href="#post-deploy-stage-sdk-releases-and-code-generation-parallel" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deploy stage — SDK release jobs (parallel)
+        Post-deploy stage — SDK releases and code generation (parallel)
       
     </span>
   </a>
@@ -9914,10 +9914,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#post-deploy-stage" class="md-nav__link">
+  <a href="#post-deploy-stage-generate-consolidated-changelog-job" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Post-deploy stage
+        Post-deploy stage — Generate consolidated changelog job
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-deploy-stage-announce-release-on-slack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-deploy stage — Announce release on Slack
       
     </span>
   </a>
@@ -14015,10 +14026,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#deploy-stage-sdk-release-jobs-parallel" class="md-nav__link">
+  <a href="#post-deploy-stage-sdk-releases-and-code-generation-parallel" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deploy stage — SDK release jobs (parallel)
+        Post-deploy stage — SDK releases and code generation (parallel)
       
     </span>
   </a>
@@ -14026,10 +14037,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#post-deploy-stage" class="md-nav__link">
+  <a href="#post-deploy-stage-generate-consolidated-changelog-job" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Post-deploy stage
+        Post-deploy stage — Generate consolidated changelog job
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-deploy-stage-announce-release-on-slack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-deploy stage — Announce release on Slack
       
     </span>
   </a>
@@ -14332,36 +14354,41 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
 <span class="w">  </span><span class="nt">trigger</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur/waldur-helm</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h4 id="deploy-stage-tag-all-repositories-job">Deploy stage — <code>Tag all repositories</code> job</h4>
-<p>This single job performs all tagging, config updates, changelog, and schema generation sequentially:</p>
-<p><strong>1. Changelog generation</strong> (in <code>before_script</code>)</p>
-<ul>
-<li>Detects the previous version from <code>CHANGELOG.md</code></li>
-<li>If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using <code>generate_enhanced_changelog_multi_repo.py</code></li>
-<li>Rotates old entries (keeps last 20)</li>
-</ul>
-<p><strong>2. <code>publiccode.yml</code> update</strong></p>
+<p>This single job performs all tagging, config updates, and schema generation sequentially:</p>
+<p><strong>1. <code>publiccode.yml</code> update</strong> (in <code>before_script</code>)</p>
 <ul>
 <li>Sets <code>softwareVersion</code> and <code>releaseDate</code></li>
+<li>Commits and pushes to master</li>
 </ul>
-<p><strong>3. Commit and push</strong> changelog + <code>publiccode.yml</code> to master</p>
-<p><strong>4. Tag waldur-mastermind</strong> + generate OpenAPI schema</p>
+<p><strong>2. Tag waldur-mastermind</strong> + generate OpenAPI schema</p>
 <ul>
 <li>Clones waldur-mastermind, creates the version tag</li>
 <li>Installs mastermind dependencies and runs <code>waldur spectacular</code> to generate <code>waldur-openapi-schema-{version}.yaml</code></li>
 <li>Commits the schema file to waldur-docs</li>
 </ul>
-<p><strong>5. Tag waldur-homeport</strong> — clone, tag, push</p>
-<p><strong>6. Update and tag waldur-helm</strong> — updates <code>version</code> and <code>appVersion</code> in <code>waldur/Chart.yaml</code>, <code>imageTag</code> in <code>waldur/values.yaml</code>, commits, then tags</p>
-<p><strong>7. Update and tag waldur-docker-compose</strong> — updates <code>WALDUR_MASTERMIND_IMAGE_TAG</code> and <code>WALDUR_HOMEPORT_IMAGE_TAG</code> in <code>.env.example</code>, commits, then tags</p>
-<p><strong>8. Tag waldur-prometheus-exporter</strong> — clone, tag, push</p>
-<h4 id="deploy-stage-sdk-release-jobs-parallel">Deploy stage — SDK release jobs (parallel)</h4>
-<p>Three separate jobs release the SDKs, each running in parallel:</p>
+<p><strong>3. Tag waldur-homeport</strong> — clone, tag, push</p>
+<p><strong>4. Update and tag waldur-helm</strong> — updates <code>version</code> and <code>appVersion</code> in <code>waldur/Chart.yaml</code>, <code>imageTag</code> in <code>waldur/values.yaml</code>, commits, then tags</p>
+<p><strong>5. Update and tag waldur-docker-compose</strong> — updates <code>WALDUR_MASTERMIND_IMAGE_TAG</code> and <code>WALDUR_HOMEPORT_IMAGE_TAG</code> in <code>.env.example</code>, commits, then tags</p>
+<p><strong>6. Tag waldur-prometheus-exporter</strong> — clone, tag, push</p>
+<h4 id="post-deploy-stage-sdk-releases-and-code-generation-parallel">Post-deploy stage — SDK releases and code generation (parallel)</h4>
+<p>These jobs run in parallel once the deploy stage completes and the OpenAPI schema is published:</p>
 <ul>
 <li><strong>Python SDK</strong> — clones <code>py-client</code> from GitHub, bumps version in <code>pyproject.toml</code>, commits, tags, pushes</li>
 <li><strong>JS/TS SDK</strong> — clones <code>js-client</code>, bumps version in <code>package.json</code> and <code>package-lock.json</code>, commits, tags, pushes</li>
 <li><strong>Go SDK</strong> — clones <code>go-client</code>, creates tag, pushes (Go modules use git tags for versioning)</li>
+<li><strong>Terraform provider generation</strong> — triggers <code>terraform-provider-waldur-generator</code> pipeline to regenerate the provider from the new OpenAPI schema</li>
+<li><strong>Ansible collection generation</strong> — triggers <code>ansible-waldur-generator</code> pipeline to regenerate the collection</li>
 </ul>
-<h4 id="post-deploy-stage">Post-deploy stage</h4>
+<h4 id="post-deploy-stage-generate-consolidated-changelog-job">Post-deploy stage — <code>Generate consolidated changelog</code> job</h4>
+<p>Runs after all SDK releases and code generation jobs complete (using DAG <code>needs</code> with <code>optional: true</code>):</p>
+<ul>
+<li>Detects the previous version from <code>CHANGELOG.md</code></li>
+<li>If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using <code>generate_enhanced_changelog_multi_repo.py</code></li>
+<li>Now includes Terraform breaking changes and Ansible collection notes since those repos have been updated</li>
+<li>Rotates old entries (keeps last 20)</li>
+<li>Commits and pushes the consolidated changelog to master</li>
+</ul>
+<h4 id="post-deploy-stage-announce-release-on-slack">Post-deploy stage — Announce release on Slack</h4>
 <ul>
 <li><strong>Build tagged pages</strong> — deploys versioned documentation to GitHub Pages using <code>mike deploy $CI_COMMIT_TAG</code></li>
 </ul>

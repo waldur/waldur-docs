@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-14T14:02:39.235519Z
+Generated: 2026-07-14T15:06:53.335046Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -92873,43 +92873,48 @@ Test Helm deployment before tagging:
 
 #### Deploy stage — `Tag all repositories` job
 
-This single job performs all tagging, config updates, changelog, and schema generation sequentially:
+This single job performs all tagging, config updates, and schema generation sequentially:
 
-**1. Changelog generation** (in `before_script`)
-
-- Detects the previous version from `CHANGELOG.md`
-- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using `generate_enhanced_changelog_multi_repo.py`
-- Rotates old entries (keeps last 20)
-
-**2. `publiccode.yml` update**
+**1. `publiccode.yml` update** (in `before_script`)
 
 - Sets `softwareVersion` and `releaseDate`
+- Commits and pushes to master
 
-**3. Commit and push** changelog + `publiccode.yml` to master
-
-**4. Tag waldur-mastermind** + generate OpenAPI schema
+**2. Tag waldur-mastermind** + generate OpenAPI schema
 
 - Clones waldur-mastermind, creates the version tag
 - Installs mastermind dependencies and runs `waldur spectacular` to generate `waldur-openapi-schema-{version}.yaml`
 - Commits the schema file to waldur-docs
 
-**5. Tag waldur-homeport** — clone, tag, push
+**3. Tag waldur-homeport** — clone, tag, push
 
-**6. Update and tag waldur-helm** — updates `version` and `appVersion` in `waldur/Chart.yaml`, `imageTag` in `waldur/values.yaml`, commits, then tags
+**4. Update and tag waldur-helm** — updates `version` and `appVersion` in `waldur/Chart.yaml`, `imageTag` in `waldur/values.yaml`, commits, then tags
 
-**7. Update and tag waldur-docker-compose** — updates `WALDUR_MASTERMIND_IMAGE_TAG` and `WALDUR_HOMEPORT_IMAGE_TAG` in `.env.example`, commits, then tags
+**5. Update and tag waldur-docker-compose** — updates `WALDUR_MASTERMIND_IMAGE_TAG` and `WALDUR_HOMEPORT_IMAGE_TAG` in `.env.example`, commits, then tags
 
-**8. Tag waldur-prometheus-exporter** — clone, tag, push
+**6. Tag waldur-prometheus-exporter** — clone, tag, push
 
-#### Deploy stage — SDK release jobs (parallel)
+#### Post-deploy stage — SDK releases and code generation (parallel)
 
-Three separate jobs release the SDKs, each running in parallel:
+These jobs run in parallel once the deploy stage completes and the OpenAPI schema is published:
 
 - **Python SDK** — clones `py-client` from GitHub, bumps version in `pyproject.toml`, commits, tags, pushes
 - **JS/TS SDK** — clones `js-client`, bumps version in `package.json` and `package-lock.json`, commits, tags, pushes
 - **Go SDK** — clones `go-client`, creates tag, pushes (Go modules use git tags for versioning)
+- **Terraform provider generation** — triggers `terraform-provider-waldur-generator` pipeline to regenerate the provider from the new OpenAPI schema
+- **Ansible collection generation** — triggers `ansible-waldur-generator` pipeline to regenerate the collection
 
-#### Post-deploy stage
+#### Post-deploy stage — `Generate consolidated changelog` job
+
+Runs after all SDK releases and code generation jobs complete (using DAG `needs` with `optional: true`):
+
+- Detects the previous version from `CHANGELOG.md`
+- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using `generate_enhanced_changelog_multi_repo.py`
+- Now includes Terraform breaking changes and Ansible collection notes since those repos have been updated
+- Rotates old entries (keeps last 20)
+- Commits and pushes the consolidated changelog to master
+
+#### Post-deploy stage — Announce release on Slack
 
 - **Build tagged pages** — deploys versioned documentation to GitHub Pages using `mike deploy $CI_COMMIT_TAG`
 
