@@ -192,70 +192,21 @@ Tag all repositories:
         export IS_RC=true
         echo "RC release detected — skipping OpenAPI schema and publiccode.yml"
       fi
-    - PREV_TAG=$(grep "^## " docs/about/CHANGELOG.md | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
-    # Check if changelog entry already exists (e.g., created by local release script)
-    - |
-      if grep -q "^## ${VERSION}" docs/about/CHANGELOG.md; then
-        echo "Changelog entry for ${VERSION} already exists — skipping auto-generation."
-      else
-        echo "No existing entry — generating changelog automatically..."
-        echo "Generating enhanced changelog for $VERSION (since $PREV_TAG)"
-        python3 scripts/generate_enhanced_changelog_multi_repo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
-        echo "Generated enhanced changelog entry:"
-        cat /tmp/new_entry.md
-        # Remove any existing RC entries for the same base version
-        if [ "$IS_RC" = "true" ]; then
-          BASE_VERSION="${VERSION%%-rc.*}"
-        else
-          BASE_VERSION="$VERSION"
-        fi
-        awk -v base="$BASE_VERSION" '
-          BEGIN { skip=0; pat="^## " base "-rc\\.[0-9]+" }
-          $0 ~ pat { skip=1; next }
-          skip && /^---$/ { skip=0; next }
-          skip && /^## / { skip=0 }
-          !skip { print }
-        ' docs/about/CHANGELOG.md > /tmp/cleaned_changelog.md && mv /tmp/cleaned_changelog.md docs/about/CHANGELOG.md
-        # Update changelog with rotation (keep only last 20 entries)
-        if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
-          echo "Rotating old changelog entries to archive..."
-          head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
-          mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
-        fi
-        # Add new entry to top of changelog
-        echo -e "# Changelog\n" > /tmp/final_changelog.md
-        cat /tmp/new_entry.md >> /tmp/final_changelog.md
-        echo "" >> /tmp/final_changelog.md
-        tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md
-        mv /tmp/final_changelog.md docs/about/CHANGELOG.md
-      fi
-    # Update publiccode.yml with release version and date
+    # Update publiccode.yml with release version and date (changelog is generated in postdeploy)
     - |
       if [ "$IS_RC" != "true" ]; then
         sed -i "s/^softwareVersion: .*/softwareVersion: ${VERSION}/" publiccode.yml
         sed -i "s/^releaseDate: .*/releaseDate: $(date +%Y-%m-%d)/" publiccode.yml
+        git add publiccode.yml
+        if ! git diff --cached --quiet; then
+          git --no-pager diff --cached --stat
+          git commit -m "Release ${CI_COMMIT_TAG}: update publiccode.yml"
+          git push -o ci.skip origin master
+        else
+          echo "No publiccode.yml changes to commit."
+        fi
       else
         echo "RC release — skipping publiccode.yml update."
-      fi
-    - |
-      if [ "$IS_RC" != "true" ]; then
-        git add publiccode.yml docs/about/CHANGELOG.md
-        if ! git diff --cached --quiet; then
-          git --no-pager diff --cached --stat
-          git commit -m "Release ${CI_COMMIT_TAG}: update changelog and publiccode.yml"
-          git push -o ci.skip origin master
-        else
-          echo "No release metadata changes to commit."
-        fi
-      else
-        git add docs/about/CHANGELOG.md
-        if ! git diff --cached --quiet; then
-          git --no-pager diff --cached --stat
-          git commit -m "Release ${CI_COMMIT_TAG}: update changelog"
-          git push -o ci.skip origin master
-        else
-          echo "No changelog changes to commit."
-        fi
       fi
     - cd ../
   script:
@@ -334,7 +285,7 @@ Release Python SDK:
   image:
     name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
     entrypoint: [""]
-  stage: deploy
+  stage: postdeploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   before_script: *build_before_script
@@ -353,7 +304,7 @@ Release TypeScript/JavaScript SDK:
   image:
     name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
     entrypoint: [""]
-  stage: deploy
+  stage: postdeploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   before_script: *build_before_script
@@ -376,7 +327,7 @@ Release Go SDK:
   image:
     name: registry.hpc.ut.ee/mirror/alpine/git:v2.49.1
     entrypoint: [""]
-  stage: deploy
+  stage: postdeploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   before_script: *build_before_script
@@ -387,12 +338,89 @@ Release Go SDK:
     - git push origin $CI_COMMIT_TAG || echo "Tag $CI_COMMIT_TAG already pushed to go-client"
     - git push origin main || echo "main already up to date in go-client"
 
+Generate consolidated changelog:
+  image: registry.hpc.ut.ee/mirror/library/python:3.13
+  stage: postdeploy
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
+  needs:
+    - "Tag all repositories"
+    - job: "Release Python SDK"
+      optional: true
+    - job: "Release TypeScript/JavaScript SDK"
+      optional: true
+    - job: "Release Go SDK"
+      optional: true
+    - job: "Trigger Terraform provider generation"
+      optional: true
+    - job: "Trigger Ansible collection generation"
+      optional: true
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends git
+    - git config --global user.name "$GITLAB_USER_NAME"
+    - git config --global user.email "$GITLAB_USER_EMAIL"
+    - git remote set-url origin "https://gitlab-ci-token:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git fetch origin master
+    - git branch -D master || true
+    - git checkout --track origin/master
+    - git pull
+    - export VERSION=${CI_COMMIT_TAG}
+    - |
+      if [[ "$CI_COMMIT_TAG" =~ -rc\. ]]; then
+        export IS_RC=true
+      fi
+    - PREV_TAG=$(grep "^## " docs/about/CHANGELOG.md | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
+    - |
+      if grep -q "^## ${VERSION}" docs/about/CHANGELOG.md; then
+        echo "Changelog entry for ${VERSION} already exists — skipping."
+      else
+        echo "Generating consolidated changelog for $VERSION (since $PREV_TAG)"
+        python3 scripts/generate_enhanced_changelog_multi_repo.py $VERSION $PREV_TAG | sed -n '/^## /,/^---$/p' | head -n -1 > /tmp/new_entry.md
+        echo "Generated changelog entry:"
+        cat /tmp/new_entry.md
+        # Remove any existing RC entries for the same base version
+        if [ "$IS_RC" = "true" ]; then
+          BASE_VERSION="${VERSION%%-rc.*}"
+        else
+          BASE_VERSION="$VERSION"
+        fi
+        awk -v base="$BASE_VERSION" '
+          BEGIN { skip=0; pat="^## " base "-rc\\.[0-9]+" }
+          $0 ~ pat { skip=1; next }
+          skip && /^---$/ { skip=0; next }
+          skip && /^## / { skip=0 }
+          !skip { print }
+        ' docs/about/CHANGELOG.md > /tmp/cleaned_changelog.md && mv /tmp/cleaned_changelog.md docs/about/CHANGELOG.md
+        # Update changelog with rotation (keep only last 20 entries)
+        if [ $(grep -c "^## " docs/about/CHANGELOG.md) -gt 20 ]; then
+          echo "Rotating old changelog entries to archive..."
+          head -n $(awk '/^## /{count++} count==20{print NR-1; exit}' docs/about/CHANGELOG.md) docs/about/CHANGELOG.md > /tmp/rotated_changelog.md 2>/dev/null || cp docs/about/CHANGELOG.md /tmp/rotated_changelog.md
+          mv /tmp/rotated_changelog.md docs/about/CHANGELOG.md
+        fi
+        # Add new entry to top of changelog
+        echo -e "# Changelog\n" > /tmp/final_changelog.md
+        cat /tmp/new_entry.md >> /tmp/final_changelog.md
+        echo "" >> /tmp/final_changelog.md
+        tail -n +3 docs/about/CHANGELOG.md >> /tmp/final_changelog.md
+        mv /tmp/final_changelog.md docs/about/CHANGELOG.md
+        # Commit and push changelog
+        git add docs/about/CHANGELOG.md
+        if ! git diff --cached --quiet; then
+          git --no-pager diff --cached --stat
+          git commit -m "Release ${CI_COMMIT_TAG}: update changelog"
+          git pull --rebase origin master
+          git push -o ci.skip origin master
+        else
+          echo "No changelog changes to commit."
+        fi
+      fi
+
 Announce release on Slack:
   image: registry.hpc.ut.ee/mirror/library/python:3.13
   stage: postdeploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
-  needs: ["Tag all repositories"]
+  needs: ["Generate consolidated changelog"]
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
     - git fetch origin master --quiet
