@@ -438,3 +438,15 @@ Trigger Terraform provider generation:
     project: waldur/terraform-provider-waldur-generator
     branch: main
     strategy: depend
+
+Trigger Ansible collection generation:
+  stage: postdeploy
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+  variables:
+    WALDUR_DOCS_VERSION: "$CI_COMMIT_TAG"
+  trigger:
+    project: waldur/ansible-waldur-generator
+    branch: main
+    strategy: depend
+
