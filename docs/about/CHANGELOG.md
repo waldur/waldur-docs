@@ -1,5 +1,31 @@
 # Changelog
 
+## 8.1.0-rc.14 - 2026-07-14
+
+### Highlights
+
+This release hardens OpenStack VM handling: startup scripts (user_data) are now clearly flagged as plaintext both in the portal and in the API, and instance and volume names accept longer values so real-world naming and imaging no longer hit truncation limits. A marketplace software-catalog cleanup bug that could abort with an integrity error is fixed, and several proposal-call management screens are easier to navigate. A dependency security update rounds out the release.
+
+### Improvements
+
+- OpenStack startup scripts (user_data) are now clearly marked as stored in plaintext — a warning appears on the instance create form, and the value is redacted from backend logs so sensitive content is not exposed.
+- Instance and volume names, image names, and directly-connected IP lists now support much larger values (names up to 255 characters), avoiding truncation for longer identifiers and larger network configurations.
+- The proposal call editor's Configuration tab is now organized as a dropdown of focused panels, and the call-manage dashboard shows workflow steps in a read-only table, making call setup and review clearer.
+- The Matrix chat rooms poll now runs only for authenticated users, avoiding unnecessary requests before sign-in.
+- Updated httplib2 and setuptools to resolve known security vulnerabilities.
+
+### Bug Fixes
+
+- Fixed an integrity error during software catalog cleanup by skipping links that already exist, so catalog syncs complete reliably.
+- Corrected OpenAPI list field types so generated SDK clients accurately reflect the API.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.13...8.1.0-rc.14) - OpenStack field widening and user_data redaction, software catalog cleanup fix, OpenAPI type corrections, and a security dependency bump.
+- **Waldur Homeport**: [5 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.13...8.1.0-rc.14) - user_data plaintext warning, proposal-call management UI refinements, Matrix poll gating, and migration to SDK-generated count methods.
+
+---
+
 ## 8.1.0-rc.13 - 2026-07-13
 
 ### Highlights
