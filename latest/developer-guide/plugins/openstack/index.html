@@ -18414,6 +18414,15 @@ independently.</p>
                     -&gt; Signal handlers update marketplace resource state
 </code></pre></div></td></tr></tbody></table></div>
 <p>For <strong>instance creation</strong>, the processor resolves the parent tenant from the offering scope, then passes attributes (name, flavor, image, security groups, networks, SSH key, user_data) to the Instance ViewSet.</p>
+<blockquote>
+<p><strong>Security note on <code>user_data</code>:</strong> cloud-init <code>user_data</code> is handled as plain text
+throughout the stack. It is stored unencrypted in the Waldur database (and in the
+marketplace order's <code>attributes</code>), forwarded to OpenStack where any process running
+on the instance can read it via the metadata service (<code>169.254.169.254</code>), and it is
+only base64-encoded (not encrypted) on the wire. Do not place unencrypted secrets
+such as passwords, private keys or API tokens in <code>user_data</code>; reference a secrets
+manager or inject them through an encrypted channel instead.</p>
+</blockquote>
 <p>For <strong>instance deletion</strong>, the processor validates that the instance is in a deletable state (SHUTOFF + OK, or ERRED) before proceeding. Both <code>destroy</code> (delete instance, keep volumes) and <code>force_destroy</code> (delete instance and all attached volumes) modes are supported.</p>
 <h3 id="automatic-offering-creation">Automatic Offering Creation</h3>
 <p>When <code>AUTOMATICALLY_CREATE_PRIVATE_OFFERING</code> is <code>True</code> (the default), transitioning a tenant to the OK state triggers automatic creation of:</p>
