@@ -201,5 +201,58 @@ General boilerplate docs.
         self.assertEqual(self.generator._extract_ansible_changelog(repo_path, "8.0.10"), "")
 
 
+import consolidate_changelog
+
+
+class TestConsolidateChangelog(unittest.TestCase):
+    def test_get_previous_tag(self):
+        content = """# Changelog
+
+## 8.1.0-rc.1 - 2026-07-15
+Test RC.
+
+## 8.0.9 - 2026-07-14
+Test stable.
+
+## 8.0.8-rc.1 - 2026-07-13
+"""
+        tag = consolidate_changelog.get_previous_tag(content)
+        self.assertEqual(tag, "8.0.9")
+
+    def test_clean_rc_entries(self):
+        content = """# Changelog
+
+## 8.1.0-rc.2 - 2026-07-15
+RC 2
+---
+
+## 8.1.0-rc.1 - 2026-07-14
+RC 1
+---
+
+## 8.0.9 - 2026-07-13
+Stable
+---
+"""
+        cleaned = consolidate_changelog.clean_rc_entries(content, "8.1.0")
+        self.assertNotIn("8.1.0-rc.2", cleaned)
+        self.assertNotIn("8.1.0-rc.1", cleaned)
+        self.assertIn("8.0.9", cleaned)
+        self.assertIn("Stable\n---", cleaned)
+
+    def test_rotate_changelog(self):
+        entries = []
+        for i in range(25):
+            entries.append(f"## 8.0.{i} - 2026-07-{i}\nEntry {i}\n---")
+        
+        content = "\n\n".join(entries)
+        rotated = consolidate_changelog.rotate_changelog(content, 20)
+        
+        self.assertIn("## 8.0.0", rotated)
+        self.assertIn("## 8.0.19", rotated)
+        self.assertNotIn("## 8.0.20", rotated)
+        self.assertNotIn("## 8.0.24", rotated)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,66 +1,20 @@
 # Release Orchestration
 
-This document describes the automated release orchestration system that coordinates releases across the entire Waldur ecosystem from the `waldur-docs` repository.
+This document describes the automated, decentralized CI/CD release orchestration system that coordinates releases across the entire Waldur ecosystem from the `waldur-docs` repository.
 
 ## Overview
 
-The `waldur-docs` repository serves as the central orchestration hub for Waldur releases. When a version tag (e.g., `8.0.6`) is pushed to this repository, it triggers a GitLab CI pipeline that:
+The `waldur-docs` repository serves as the central orchestration hub for Waldur releases. To avoid monolithic bottlenecks, Waldur relies on **GitLab CI/CD Multi-Project Triggers** and **Directed Acyclic Graphs (DAG)**.
 
-1. **Tests deployment configurations** against downstream repos
-2. **Generates and commits a changelog** with cross-repository diff links
-3. **Updates `publiccode.yml`** with the new version and date
-4. **Tags all downstream repositories** with the same version
-5. **Updates version references** in Helm charts and Docker Compose configs
-6. **Generates an OpenAPI schema** from waldur-mastermind
-7. **Releases SDKs** (Python, JS/TS, Go) with updated version numbers
-8. **Deploys versioned documentation** to GitHub Pages
+When a version tag (e.g., `8.0.6`) is pushed to `waldur-docs`, it acts merely as an **orchestrator/router**. It delegates the release authority to the downstream repositories themselves by triggering their native pipelines and passing the target `$RELEASE_VERSION`.
 
-## Release flow diagram
+This ensures:
 
-```mermaid
-flowchart TD
-  A[Run scripts/release.sh VERSION<br/>or push tag manually] --> B{GitLab CI pipeline<br/>triggered on tag}
+1. **Parallel Execution:** Releases happen concurrently across the ecosystem.
+2. **Resilience:** A failure in one downstream pipeline does not halt independent components.
+3. **Separation of Concerns:** Repositories own their specific deployment mechanics.
 
-  B --> C[Test stage]
-  C --> C1[Test Docker Compose<br/>deployment<br/><i>triggers waldur-docker-compose</i>]
-  C --> C2[Test Helm<br/>deployment<br/><i>triggers waldur-helm</i>]
-
-  C1 --> D{All tests pass?}
-  C2 --> D
-
-  D -->|No| E[Pipeline fails]
-  D -->|Yes| F[Deploy stage]
-
-  F --> F1["<b>Tag all repositories</b> job<br/>(single job, sequential steps)"]
-  F --> F2[Release Python SDK<br/><i>py-client</i>]
-  F --> F3[Release JS/TS SDK<br/><i>js-client</i>]
-  F --> F4[Release Go SDK<br/><i>go-client</i>]
-
-  F1 --> F1a[Generate changelog<br/>+ update publiccode.yml]
-  F1a --> F1b[Tag waldur-mastermind<br/>+ generate OpenAPI schema]
-  F1b --> F1c[Tag waldur-homeport]
-  F1c --> F1d[Update + tag waldur-helm<br/><i>Chart.yaml, values.yaml</i>]
-  F1d --> F1e[Update + tag waldur-docker-compose<br/><i>.env.example</i>]
-  F1e --> F1f[Tag waldur-prometheus-exporter]
-
-  F1f --> G[Release complete]
-  F2 --> G
-  F3 --> G
-  F4 --> G
-
-  G --> H[Post-deploy stage]
-  H --> H1[Deploy tagged docs<br/>to GitHub Pages<br/><i>mike deploy VERSION</i>]
-
-  style A fill:#e1f5fe
-  style G fill:#c8e6c9
-  style E fill:#ffcdd2
-  style F fill:#fff3e0
-```
-
-!!! note
-    `Build latest pages` (deploying the `latest` docs alias) runs on every push to `master`, not as part of the tag pipeline.
-
-## Coordinated repositories
+## Coordinated Repositories
 
 ### Core components
 
@@ -78,8 +32,10 @@ flowchart TD
 - **py-client** — Python SDK (hosted on GitHub)
 - **js-client** — TypeScript/JavaScript SDK (hosted on GitHub)
 - **go-client** — Go SDK (hosted on GitHub)
+- **terraform-provider-waldur-generator** — Terraform Provider (hosted on GitHub)
+- **ansible-waldur-generator** — Ansible Collection (hosted on GitHub)
 
-## Release process
+## Release Process
 
 ### For maintainers
 
@@ -107,70 +63,91 @@ git tag -a 8.0.6 -m "Release 8.0.6"
 git push origin 8.0.6
 ```
 
-### CI pipeline stages
+## Pipeline Stages & Execution Flow
 
-#### Test stage
+The release orchestration pipeline inside `waldur-docs` strictly utilizes sequential pipeline stages to natively enforce the logical flow of a release and its dependency chain.
 
-Deployment tests are triggered in downstream repositories:
+```mermaid
+graph TD
+    subgraph 1. Test Stage
+        T[Linting, Regex Tests, Code Scans]
+    end
 
-```yaml
-Test Docker Compose deployment before tagging:
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
-  trigger: waldur/waldur-docker-compose
+    subgraph 2. Release Stage
+        C1(Release Mastermind)
+    end
 
-Test Helm deployment before tagging:
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
-  trigger: waldur/waldur-helm
+    subgraph 3. Schema Stage
+        O[Generate OpenAPI Schema]
+    end
+
+    subgraph 4. SDKs Stage
+        S1(Generate and release API Docs)
+        S2(Generate and release Python SDK)
+        S3(Generate and release TypeScript SDK)
+        S4(Generate and release Go SDK)
+        S5(Generate and release Terraform Provider)
+        S6(Generate and release Ansible Collection)
+    end
+
+    subgraph 5. Infrastructure Stage
+        D1(Release Homeport)
+        D2(Release Prometheus Exporter)
+        D3(Release Helm)
+        D4(Release Docker Compose)
+    end
+
+    subgraph 6. Finalize Stage
+        CH[Generate Consolidated Changelog]
+        MK[Build Tagged MkDocs Pages]
+        SL[Announce on Slack]
+    end
+
+    T --> C1
+    C1 --> O
+    O --> S1 & S2 & S3 & S4 & S5 & S6
+    S1 & S2 & S3 & S4 & S5 & S6 --> D1 & D2 & D3 & D4
+    D1 & D2 & D3 & D4 --> CH
+    CH --> MK
+    CH --> SL
 ```
 
-#### Deploy stage — `Tag all repositories` job
+### Stage 1: `test`
 
-This single job performs all tagging, config updates, and schema generation sequentially:
+Performs static analysis, linting, and checks on the orchestration logic itself.
 
-**1. `publiccode.yml` update** (in `before_script`)
+### Stage 2: `release` (Core Component)
 
-- Sets `softwareVersion` and `releaseDate`
-- Commits and pushes to master
+The orchestrator fires a multi-project trigger to `waldur-mastermind`. This ensures the core API is tagged and published first.
 
-**2. Tag waldur-mastermind** + generate OpenAPI schema
+### Stage 3: `schema` (Schema Generation)
 
-- Clones waldur-mastermind, creates the version tag
-- Installs mastermind dependencies and runs `waldur spectacular` to generate `waldur-openapi-schema-{version}.yaml`
-- Commits the schema file to waldur-docs
+The pipeline downloads the `waldur-openapi-schema.yaml` and `waldur-typescript-schema.yaml` generated in the preceding `release` stage by `waldur-mastermind`'s pipeline (using GitLab's cross-project artifacts `needs` feature). It then commits the versioned schema file back to `waldur-docs`.
 
-**3. Tag waldur-homeport** — clone, tag, push
+### Stage 4: `sdks` (First-Layer Consumers)
 
-**4. Update and tag waldur-helm** — updates `version` and `appVersion` in `waldur/Chart.yaml`, `imageTag` in `waldur/values.yaml`, commits, then tags
+With the OpenAPI schema generated, the pipeline triggers the first-layer consumers of that schema: SDKs, Terraform, Ansible, and API Docs. These pipelines ingest the schema to generate their codebases and publish to package registries (NPM, PyPI, etc.).
 
-**5. Update and tag waldur-docker-compose** — updates `WALDUR_MASTERMIND_IMAGE_TAG` and `WALDUR_HOMEPORT_IMAGE_TAG` in `.env.example`, commits, then tags
+### Stage 5: `infrastructure` (Second-Layer Consumers & Infrastructure)
 
-**6. Tag waldur-prometheus-exporter** — clone, tag, push
+This stage triggers components that rely on the artifacts published in earlier stages:
 
-#### Post-deploy stage — SDK releases and code generation (parallel)
+- **Homeport:** Dynamically updates its `yarn.lock` to install the newly published JS SDK, performs a compilation test, and tags itself.
+- **Prometheus Exporter:** Dynamically updates its dependency to point to the newly published Python SDK package.
+- **Helm & Docker Compose:** Update their image tags to match the newly released Mastermind and Homeport versions.
 
-These jobs run in parallel once the deploy stage completes and the OpenAPI schema is published:
+### Stage 6: `finalize` (Finalization)
 
-- **Python SDK** — clones `py-client` from GitHub, bumps version in `pyproject.toml`, commits, tags, pushes
-- **JS/TS SDK** — clones `js-client`, bumps version in `package.json` and `package-lock.json`, commits, tags, pushes
-- **Go SDK** — clones `go-client`, creates tag, pushes (Go modules use git tags for versioning)
-- **Terraform provider generation** — triggers `terraform-provider-waldur-generator` pipeline to regenerate the provider from the new OpenAPI schema
-- **Ansible collection generation** — triggers `ansible-waldur-generator` pipeline to regenerate the collection
+The `Generate consolidated changelog` job acts as the final synchronization barrier. It explicitly waits for all triggers across the `release`, `sdks`, and `infrastructure` stages to finish.
 
-#### Post-deploy stage — `Generate consolidated changelog` job
+When the entire Waldur ecosystem has successfully released, this job:
 
-Runs after all SDK releases and code generation jobs complete (using DAG `needs` with `optional: true`):
-
-- Detects the previous version from `CHANGELOG.md`
-- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using `generate_enhanced_changelog_multi_repo.py`
-- Now includes Terraform breaking changes and Ansible collection notes since those repos have been updated
-- Rotates old entries (keeps last 20)
-- Commits and pushes the consolidated changelog to master
-
-#### Post-deploy stage — Announce release on Slack
-
-- **Build tagged pages** — deploys versioned documentation to GitHub Pages using `mike deploy $CI_COMMIT_TAG`
+- Detects the previous version from `CHANGELOG.md`.
+- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), it auto-generates one using `generate_enhanced_changelog_multi_repo.py`.
+- Includes Terraform breaking changes and Ansible collection notes since those downstream repos have been updated.
+- Rotates old entries (keeps the last 20).
+- Updates `publiccode.yml`.
+- Commits and pushes the final documentation commit to master.
 
 ### Validation
 
@@ -183,6 +160,14 @@ The release is complete when:
 - [ ] Documentation is deployed with the new version
 - [ ] Changelog is updated with cross-repository diff links
 - [ ] OpenAPI schema is committed
+
+## Shared Release Templates
+
+To avoid duplicating boilerplate git commands across the downstream repositories, we utilize a shared CI template hosted in `waldur-pipelines/templates/release/tag-release.yml`.
+
+Downstream repositories consume this template using `extends: .release-tag-base`.
+
+For repositories that require file modifications prior to tagging (e.g., injecting the new version into Helm charts), they extend the template and leverage the custom `!reference [.release-tag-base, tag_script]` block. This allows them to execute their specific `sed` substitutions and `git commit` commands, then seamlessly hand execution back to the shared template to create and push the git tag.
 
 ## Changelog
 
@@ -215,7 +200,7 @@ Each release also includes a versioned OpenAPI schema file at `docs/API/waldur-o
 
 ## RC (Release Candidate) releases
 
-RC releases allow testing a full deployment stack before committing to a stable release. An RC tag triggers the same tagging and version-update workflow across downstream repos, but skips artifacts that should only be produced for stable releases.
+RC releases allow testing a full deployment stack before committing to a stable release. An RC tag triggers the tagging and version-update workflow across downstream repos, but skips artifacts that should only be produced for stable releases (like SDKs).
 
 ### Tag format
 
@@ -246,9 +231,8 @@ git push origin 8.0.6-rc.1
 | Test Docker Compose deployment | Yes | Yes |
 | Test Helm deployment | Yes | Yes |
 | Generate changelog | Yes | **Yes** (replaced by stable) |
-| Update `publiccode.yml` | Yes | **Skipped** |
 | Generate OpenAPI schema | Yes | **Skipped** |
-| Release SDKs (Python, JS, Go) | Yes | **Skipped** |
+| Release SDKs & Terraform/Ansible | Yes | **Skipped** |
 | Deploy versioned documentation | Yes | **Skipped** |
 
 ### Promoting RC to stable
