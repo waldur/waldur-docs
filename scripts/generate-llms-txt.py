@@ -12,7 +12,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 # Site configuration
@@ -194,7 +194,7 @@ class LLMSTxtGenerator:
             "",
             f"> {SITE_DESCRIPTION.replace(chr(10), ' ')}",
             "",
-            f"Generated: {datetime.utcnow().isoformat()}Z",
+            f"Generated: {datetime.now(timezone.utc).replace(tzinfo=None).isoformat()}Z",
             f"Source: {SITE_URL}",
             "",
             "---",
