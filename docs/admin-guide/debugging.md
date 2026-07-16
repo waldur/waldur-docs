@@ -76,7 +76,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker ps | grep waldur-mastermind-api
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl get pods -n waldur -l app=waldur-mastermind-api
    ```
@@ -93,7 +93,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api cat /etc/waldur/override.conf.py
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur get configmap api-override-config -o yaml
    ```
@@ -105,7 +105,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-worker celery -A waldur_core.server inspect active
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-worker -o name | head -1) -- celery -A waldur_core.server inspect active
    ```
@@ -115,7 +115,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-worker celery -A waldur_core.server inspect ping
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-worker -o name | head -1) -- celery -A waldur_core.server inspect ping
    ```
@@ -127,7 +127,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose - if you have direct access
    docker exec -it waldur-mastermind-api waldur shell -c "from django.db import connection; connection.ensure_connection(); print('Connected')"
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-api -o name | head -1) -- waldur shell -c "from django.db import connection; connection.ensure_connection(); print('Connected')"
    ```
@@ -136,8 +136,8 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
 
    ```sql
    -- For PostgreSQL 9.6+
-   SELECT pid, now() - pg_stat_activity.query_start AS duration, query 
-   FROM pg_stat_activity 
+   SELECT pid, now() - pg_stat_activity.query_start AS duration, query
+   FROM pg_stat_activity
    WHERE state = 'active' AND now() - pg_stat_activity.query_start > interval '5 seconds'
    ORDER BY duration DESC;
    ```
@@ -149,7 +149,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Set token in environment variable first
    export WALDUR_TOKEN="your_token_here"
-   
+
    # Then use it safely
    curl -v -H "Authorization: Token $WALDUR_TOKEN" https://your-waldur-instance/api/customers/
    ```
@@ -169,7 +169,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api waldur shell -c "from rest_framework.authtoken.models import Token; print(Token.objects.filter(key='your_token_here').exists())"
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-api -o name | head -1) -- waldur shell -c "from rest_framework.authtoken.models import Token; print(Token.objects.filter(key='your_token_here').exists())"
    ```
@@ -188,7 +188,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api waldur shell -c "from waldur_mastermind.marketplace import models; print(models.Resource.objects.filter(uuid='RESOURCE_UUID').values('state', 'error_message'))"
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-api -o name | head -1) -- waldur shell -c "from waldur_mastermind.marketplace import models; print(models.Resource.objects.filter(uuid='RESOURCE_UUID').values('state', 'error_message'))"
    ```
@@ -1167,5 +1167,3 @@ waldur:
 
 For production troubleshooting, use targeted logging instead of
 enabling full debug mode.
-
-

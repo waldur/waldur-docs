@@ -162,7 +162,7 @@ with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
             client=client,
             customer_uuid=customer.uuid
         )
-            
+
         for tenant in tenants:
             if not tenant.marketplace_resource_uuid:
                 continue

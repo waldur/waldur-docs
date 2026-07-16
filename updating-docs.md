@@ -92,7 +92,7 @@ sources:
 settings:
   preserve_local:
     - "index.md"
-    - ".pages" 
+    - ".pages"
     - "README.md"
   max_sync_age_hours: 24
 ```

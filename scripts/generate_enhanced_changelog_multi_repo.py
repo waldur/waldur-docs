@@ -13,29 +13,36 @@ from datetime import datetime
 from pathlib import Path
 import json
 
+
 class MultiRepoChangelogGenerator:
     def __init__(self, local_repos=None):
         self.repositories = {
-            'waldur-mastermind': 'https://github.com/waldur/waldur-mastermind.git',
-            'waldur-homeport': 'https://github.com/waldur/waldur-homeport.git',
-            'waldur-helm': 'https://github.com/waldur/waldur-helm.git',
-            'waldur-docker-compose': 'https://github.com/waldur/waldur-docker-compose.git',
-            'waldur-prometheus-exporter': 'https://github.com/waldur/waldur-prometheus-exporter.git',
-            'py-client': 'https://github.com/waldur/py-client.git',
-            'js-client': 'https://github.com/waldur/js-client.git',
-            'go-client': 'https://github.com/waldur/go-client.git',
-            'ansible-waldur-module-next': 'https://github.com/waldur/ansible-waldur-module-next.git',
-            'terraform-provider-waldur': 'https://github.com/waldur/terraform-provider-waldur.git'
+            "waldur-mastermind": "https://github.com/waldur/waldur-mastermind.git",
+            "waldur-homeport": "https://github.com/waldur/waldur-homeport.git",
+            "waldur-helm": "https://github.com/waldur/waldur-helm.git",
+            "waldur-docker-compose": "https://github.com/waldur/waldur-docker-compose.git",
+            "waldur-prometheus-exporter": "https://github.com/waldur/waldur-prometheus-exporter.git",
+            "py-client": "https://github.com/waldur/py-client.git",
+            "js-client": "https://github.com/waldur/js-client.git",
+            "go-client": "https://github.com/waldur/go-client.git",
+            "ansible-waldur-module-next": "https://github.com/waldur/ansible-waldur-module-next.git",
+            "terraform-provider-waldur": "https://github.com/waldur/terraform-provider-waldur.git",
         }
         # Define which repositories are core (not auto-generated)
         self.core_repositories = {
-            'waldur-mastermind', 'waldur-homeport', 'waldur-helm',
-            'waldur-docker-compose', 'waldur-prometheus-exporter'
+            "waldur-mastermind",
+            "waldur-homeport",
+            "waldur-helm",
+            "waldur-docker-compose",
+            "waldur-prometheus-exporter",
         }
         # SDK clients and providers are auto-generated from MasterMind OpenAPI schema
         self.generated_repositories = {
-            'py-client', 'js-client', 'go-client',
-            'ansible-waldur-module-next', 'terraform-provider-waldur'
+            "py-client",
+            "js-client",
+            "go-client",
+            "ansible-waldur-module-next",
+            "terraform-provider-waldur",
         }
         self.temp_dir = None
         self.local_repos = local_repos or {}
@@ -45,8 +52,7 @@ class MultiRepoChangelogGenerator:
         """Run command and return output"""
         try:
             result = subprocess.run(
-                cmd, shell=True, cwd=cwd,
-                capture_output=True, text=True, check=True
+                cmd, shell=True, cwd=cwd, capture_output=True, text=True, check=True
             )
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
@@ -88,8 +94,11 @@ class MultiRepoChangelogGenerator:
                 try:
                     result = subprocess.run(
                         f"git rev-parse origin/{branch}",
-                        shell=True, cwd=repo_path,
-                        capture_output=True, text=True, check=True,
+                        shell=True,
+                        cwd=repo_path,
+                        capture_output=True,
+                        text=True,
+                        check=True,
                     )
                     if result.stdout.strip():
                         remote_ref = f"origin/{branch}"
@@ -105,8 +114,12 @@ class MultiRepoChangelogGenerator:
         """Check if a tag exists in the repository"""
         try:
             result = subprocess.run(
-                f"git rev-parse {tag}", shell=True, cwd=repo_path,
-                capture_output=True, text=True, check=True
+                f"git rev-parse {tag}",
+                shell=True,
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
             )
             return bool(result.stdout.strip())
         except subprocess.CalledProcessError:
@@ -120,24 +133,24 @@ class MultiRepoChangelogGenerator:
             if not all_tags:
                 return None
 
-            tags = [t.strip() for t in all_tags.split('\n') if t.strip()]
+            tags = [t.strip() for t in all_tags.split("\n") if t.strip()]
 
             # Try to find exact match first
             if target_tag in tags:
                 return target_tag
 
             # Find closest tag (prefer earlier version)
-            target_parts = target_tag.split('.')
+            target_parts = target_tag.split(".")
             if len(target_parts) >= 3:
                 try:
                     major, minor, patch = map(int, target_parts[:3])
 
                     # Look for closest earlier version
                     best_match = None
-                    best_distance = float('inf')
+                    best_distance = float("inf")
 
                     for tag in tags:
-                        tag_parts = tag.split('.')
+                        tag_parts = tag.split(".")
                         if len(tag_parts) >= 3:
                             try:
                                 t_major, t_minor, t_patch = map(int, tag_parts[:3])
@@ -158,7 +171,7 @@ class MultiRepoChangelogGenerator:
                     pass
 
             return None
-        except:
+        except Exception:
             return None
 
     def get_commits_between_tags(self, repo_path, prev_tag, current_tag, enrich=False):
@@ -173,43 +186,57 @@ class MultiRepoChangelogGenerator:
                 # since the tag doesn't exist yet (pre-release)
                 remote_ref = self.fetch_and_get_remote_ref(repo_path)
                 actual_current = remote_ref
-                print(f"    Tag {current_tag} not found in {repo_path.name}, using {remote_ref}", file=sys.stderr)
+                print(
+                    f"    Tag {current_tag} not found in {repo_path.name}, using {remote_ref}",
+                    file=sys.stderr,
+                )
             else:
                 actual_current = self.find_closest_tag(repo_path, current_tag)
                 if not actual_current:
-                    print(f"    Warning: No suitable current tag found for {repo_path.name}", file=sys.stderr)
+                    print(
+                        f"    Warning: No suitable current tag found for {repo_path.name}",
+                        file=sys.stderr,
+                    )
                     return []
 
         if not self.check_tag_exists(repo_path, prev_tag):
             actual_prev = self.find_closest_tag(repo_path, prev_tag)
             if not actual_prev:
-                print(f"    Warning: No suitable previous tag found for {repo_path.name}, using commit history", file=sys.stderr)
+                print(
+                    f"    Warning: No suitable previous tag found for {repo_path.name}, using commit history",
+                    file=sys.stderr,
+                )
                 # Fallback to recent commit history
-                fmt = '%h|%s|%an|%ad'
+                fmt = "%h|%s|%an|%ad"
                 if enrich:
-                    fmt = '%h|%s|%an|%ad|%b'
+                    fmt = "%h|%s|%an|%ad|%b"
                 cmd = f"git log --pretty=format:'{fmt}' --date=short --no-merges -n 10"
                 output = self.run_command(cmd, cwd=repo_path)
                 commits = []
-                for line in output.split('\n'):
+                for line in output.split("\n"):
                     if line.strip():
-                        parts = line.split('|')
+                        parts = line.split("|")
                         if len(parts) >= 4:
                             commit = {
-                                'hash': parts[0],
-                                'subject': parts[1],
-                                'author': parts[2],
-                                'date': parts[3]
+                                "hash": parts[0],
+                                "subject": parts[1],
+                                "author": parts[2],
+                                "date": parts[3],
                             }
                             if enrich:
-                                body = parts[4] if len(parts) > 4 else ''
-                                commit['body'] = body[:500]
-                                commit['changed_files'] = self._get_commit_files(repo_path, parts[0])
+                                body = parts[4] if len(parts) > 4 else ""
+                                commit["body"] = body[:500]
+                                commit["changed_files"] = self._get_commit_files(
+                                    repo_path, parts[0]
+                                )
                             commits.append(commit)
                 return commits[:5]  # Return recent 5 commits
 
         if actual_prev != prev_tag or actual_current != current_tag:
-            print(f"    Using tags {actual_prev}..{actual_current} instead of {prev_tag}..{current_tag} for {repo_path.name}", file=sys.stderr)
+            print(
+                f"    Using tags {actual_prev}..{actual_current} instead of {prev_tag}..{current_tag} for {repo_path.name}",
+                file=sys.stderr,
+            )
 
         # Use NUL separator for robust parsing of commit body
         if enrich:
@@ -221,32 +248,36 @@ class MultiRepoChangelogGenerator:
         commits = []
         if enrich:
             # Split on NUL to handle multiline bodies
-            entries = [e.strip() for e in output.split('\x00') if e.strip()]
+            entries = [e.strip() for e in output.split("\x00") if e.strip()]
             for entry in entries:
                 # First line contains hash|subject|author|date|body_start
-                parts = entry.split('|', 4)
+                parts = entry.split("|", 4)
                 if len(parts) >= 4:
                     commit = {
-                        'hash': parts[0],
-                        'subject': parts[1],
-                        'author': parts[2],
-                        'date': parts[3],
+                        "hash": parts[0],
+                        "subject": parts[1],
+                        "author": parts[2],
+                        "date": parts[3],
                     }
-                    body = parts[4] if len(parts) > 4 else ''
-                    commit['body'] = body.strip()[:500]
-                    commit['changed_files'] = self._get_commit_files(repo_path, parts[0])
+                    body = parts[4] if len(parts) > 4 else ""
+                    commit["body"] = body.strip()[:500]
+                    commit["changed_files"] = self._get_commit_files(
+                        repo_path, parts[0]
+                    )
                     commits.append(commit)
         else:
-            for line in output.split('\n'):
+            for line in output.split("\n"):
                 if line.strip():
-                    parts = line.split('|')
+                    parts = line.split("|")
                     if len(parts) >= 4:
-                        commits.append({
-                            'hash': parts[0],
-                            'subject': parts[1],
-                            'author': parts[2],
-                            'date': parts[3]
-                        })
+                        commits.append(
+                            {
+                                "hash": parts[0],
+                                "subject": parts[1],
+                                "author": parts[2],
+                                "date": parts[3],
+                            }
+                        )
         return commits
 
     def _get_commit_files(self, repo_path, commit_hash):
@@ -255,7 +286,7 @@ class MultiRepoChangelogGenerator:
         output = self.run_command(cmd, cwd=repo_path)
         if not output:
             return []
-        return [f for f in output.split('\n') if f.strip()]
+        return [f for f in output.split("\n") if f.strip()]
 
     def _extract_terraform_changelog(self, repo_path, version):
         """Extract the entry in CHANGELOG.md representing the requested release version changes"""
@@ -267,15 +298,15 @@ class MultiRepoChangelogGenerator:
             lines = content.splitlines()
             extracted = []
             capture = False
-            
+
             # Version match patterns: e.g. "## v8.0.9" or "## 8.0.9"
-            version_str = version.lstrip('v')
+            version_str = version.lstrip("v")
             version_headers = [f"## v{version_str}", f"## {version_str}"]
-            
+
             for line in lines:
                 if line.startswith("## "):
                     if capture:
-                        break # Reach next entry
+                        break  # Reach next entry
                     if line.strip() in version_headers:
                         capture = True
                         continue
@@ -291,7 +322,7 @@ class MultiRepoChangelogGenerator:
         collections_root = repo_path / "ansible_waldur_module" / "ansible_collections"
         if not collections_root.is_dir():
             return ""
-        
+
         extracted_entries = []
         try:
             # Locate all README.md files
@@ -311,12 +342,14 @@ class MultiRepoChangelogGenerator:
                             if line.startswith("## ") or line.startswith("# "):
                                 break
                             entry_lines.append(line)
-                    
+
                     collection_name = ".".join(readme_path.parts[-3:-1])
                     raw_entry = "\n".join(entry_lines).strip()
                     if raw_entry:
-                        extracted_entries.append(f"#### Collection `{collection_name}`\n\n{raw_entry}")
-            
+                        extracted_entries.append(
+                            f"#### Collection `{collection_name}`\n\n{raw_entry}"
+                        )
+
             return "\n\n".join(extracted_entries)
         except Exception as e:
             print(f"Error reading Ansible changelog: {e}", file=sys.stderr)
@@ -325,28 +358,28 @@ class MultiRepoChangelogGenerator:
     def analyze_commit_categories(self, commits):
         """Categorize commits by type"""
         categories = {
-            'features': [],
-            'fixes': [],
-            'breaking': [],
-            'security': [],
-            'refactor': [],
-            'docs': [],
-            'chore': [],
-            'other': []
+            "features": [],
+            "fixes": [],
+            "breaking": [],
+            "security": [],
+            "refactor": [],
+            "docs": [],
+            "chore": [],
+            "other": [],
         }
 
         patterns = {
-            'features': r'^(feat|feature|add|implement)[\s\(:]|new\s+|added?\s+',
-            'fixes': r'^(fix|bugfix|resolve|patch)[\s\(:]|fixed?\s+|bug\s+',
-            'breaking': r'^(break|BREAKING|break\(|BREAKING\s*CHANGE)|breaking\s+',
-            'security': r'^(sec|security)[\s\(:]|security|vulnerability|CVE',
-            'refactor': r'^(refactor|perf|optimize)[\s\(:]|refactor|performance',
-            'docs': r'^(doc|docs)[\s\(:]|documentation|readme|guide',
-            'chore': r'^(chore|build|ci|test)[\s\(:]|update.*version|bump|release'
+            "features": r"^(feat|feature|add|implement)[\s\(:]|new\s+|added?\s+",
+            "fixes": r"^(fix|bugfix|resolve|patch)[\s\(:]|fixed?\s+|bug\s+",
+            "breaking": r"^(break|BREAKING|break\(|BREAKING\s*CHANGE)|breaking\s+",
+            "security": r"^(sec|security)[\s\(:]|security|vulnerability|CVE",
+            "refactor": r"^(refactor|perf|optimize)[\s\(:]|refactor|performance",
+            "docs": r"^(doc|docs)[\s\(:]|documentation|readme|guide",
+            "chore": r"^(chore|build|ci|test)[\s\(:]|update.*version|bump|release",
         }
 
         for commit in commits:
-            subject = commit['subject'].lower()
+            subject = commit["subject"].lower()
             categorized = False
 
             for category, pattern in patterns.items():
@@ -356,92 +389,92 @@ class MultiRepoChangelogGenerator:
                     break
 
             if not categorized:
-                categories['other'].append(commit)
+                categories["other"].append(commit)
 
         return categories
 
     def should_exclude_file(self, file_path, repo_name):
         """Check if a file should be excluded from statistics (auto-generated files)"""
         exclude_patterns = {
-            'waldur-homeport': [
-                'template.json',  # Auto-generated template file
-                'package-lock.json',  # Auto-generated dependency lock
-                'yarn.lock',  # Auto-generated dependency lock
-                '*.generated.*',  # Any generated files
-                'dist/',  # Build output
-                'build/',  # Build output
-                'tests/',  # Test files don't represent functional changes
-                'test.',  # Test files (prefix pattern)
-                '.spec.',  # Spec files (test pattern)
-                '__tests__/',  # Jest test directory
-                '*.test.',  # Test files with .test. pattern
-                '*.spec.',  # Spec files with .spec. pattern
+            "waldur-homeport": [
+                "template.json",  # Auto-generated template file
+                "package-lock.json",  # Auto-generated dependency lock
+                "yarn.lock",  # Auto-generated dependency lock
+                "*.generated.*",  # Any generated files
+                "dist/",  # Build output
+                "build/",  # Build output
+                "tests/",  # Test files don't represent functional changes
+                "test.",  # Test files (prefix pattern)
+                ".spec.",  # Spec files (test pattern)
+                "__tests__/",  # Jest test directory
+                "*.test.",  # Test files with .test. pattern
+                "*.spec.",  # Spec files with .spec. pattern
             ],
-            'waldur-mastermind': [
-                'package-lock.json',
-                'poetry.lock',  # Auto-generated dependency lock
-                'migrations/',  # Database migration files (often auto-generated)
-                '*.pyc',  # Compiled Python files
-                '__pycache__/',  # Python cache
-                'tests/',  # Test files don't represent functional changes
-                'test_',  # Test files (prefix pattern)
-                '/tests/',  # Test directories anywhere in path
-                'docs/admin/configuration-guide.md',  # Auto-generated from print_settings
-                'docs/admin/features.md',  # Auto-generated from print_features_docs
-                'docs/admin/notifications.md',  # Auto-generated from print_notifications
-                'docs/admin/cli-guide.md',  # Auto-generated from print_commands
-                'docs/events.md',  # Auto-generated from print_events
-                'docs/admin/templates.md',  # Auto-generated from print_templates
-                'docs/admin/scheduled.md',  # Auto-generated from print_scheduled_jobs
-                'docs/mixins.md',  # Auto-generated from print_mixins
-                'docs/handlers.md',  # Auto-generated from print_registered_handlers
-                'docs/core_structure.mmd',  # Auto-generated Mermaid diagram
-                'docs/core_permissions.mmd',  # Auto-generated Mermaid diagram
-                'docs/marketplace_category.mmd',  # Auto-generated Mermaid diagram
-                'docs/marketplace_catalog.mmd',  # Auto-generated Mermaid diagram
-                'docs/marketplace_provision.mmd',  # Auto-generated Mermaid diagram
+            "waldur-mastermind": [
+                "package-lock.json",
+                "poetry.lock",  # Auto-generated dependency lock
+                "migrations/",  # Database migration files (often auto-generated)
+                "*.pyc",  # Compiled Python files
+                "__pycache__/",  # Python cache
+                "tests/",  # Test files don't represent functional changes
+                "test_",  # Test files (prefix pattern)
+                "/tests/",  # Test directories anywhere in path
+                "docs/admin/configuration-guide.md",  # Auto-generated from print_settings
+                "docs/admin/features.md",  # Auto-generated from print_features_docs
+                "docs/admin/notifications.md",  # Auto-generated from print_notifications
+                "docs/admin/cli-guide.md",  # Auto-generated from print_commands
+                "docs/events.md",  # Auto-generated from print_events
+                "docs/admin/templates.md",  # Auto-generated from print_templates
+                "docs/admin/scheduled.md",  # Auto-generated from print_scheduled_jobs
+                "docs/mixins.md",  # Auto-generated from print_mixins
+                "docs/handlers.md",  # Auto-generated from print_registered_handlers
+                "docs/core_structure.mmd",  # Auto-generated Mermaid diagram
+                "docs/core_permissions.mmd",  # Auto-generated Mermaid diagram
+                "docs/marketplace_category.mmd",  # Auto-generated Mermaid diagram
+                "docs/marketplace_catalog.mmd",  # Auto-generated Mermaid diagram
+                "docs/marketplace_provision.mmd",  # Auto-generated Mermaid diagram
             ],
-            'waldur-docker-compose': [
-                '.env.example',  # Auto-updated example environment file
+            "waldur-docker-compose": [
+                ".env.example",  # Auto-updated example environment file
             ],
-            'py-client': [
-                'waldur_client/',  # Auto-generated from OpenAPI
-                'docs/',  # Auto-generated docs
-                'dist/',  # Build artifacts
+            "py-client": [
+                "waldur_client/",  # Auto-generated from OpenAPI
+                "docs/",  # Auto-generated docs
+                "dist/",  # Build artifacts
             ],
-            'js-client': [
-                'lib/',  # Auto-generated from OpenAPI
-                'docs/',  # Auto-generated docs
-                'dist/',  # Build artifacts
-                'package-lock.json',
+            "js-client": [
+                "lib/",  # Auto-generated from OpenAPI
+                "docs/",  # Auto-generated docs
+                "dist/",  # Build artifacts
+                "package-lock.json",
             ],
-            'go-client': [
-                'waldur/',  # Auto-generated from OpenAPI
-                'docs/',  # Auto-generated docs
+            "go-client": [
+                "waldur/",  # Auto-generated from OpenAPI
+                "docs/",  # Auto-generated docs
             ],
-            'ansible-waldur-module-next': [
-                'ansible_waldur_module/ansible_collections/',
-                'docs/',
+            "ansible-waldur-module-next": [
+                "ansible_waldur_module/ansible_collections/",
+                "docs/",
             ],
-            'terraform-provider-waldur': [
-                'internal/',
-                'services/',
-                'docs/',
-                'provider-manifest.json'
-            ]
+            "terraform-provider-waldur": [
+                "internal/",
+                "services/",
+                "docs/",
+                "provider-manifest.json",
+            ],
         }
 
         patterns = exclude_patterns.get(repo_name, [])
-        file_name = file_path.split('/')[-1]  # Get just filename
+        file_name = file_path.split("/")[-1]  # Get just filename
 
         for pattern in patterns:
-            if pattern.endswith('/'):
+            if pattern.endswith("/"):
                 # Directory pattern
                 if pattern[:-1] in file_path:
                     return True
-            elif '*' in pattern:
+            elif "*" in pattern:
                 # Wildcard pattern (simple)
-                if pattern.replace('*', '') in file_name:
+                if pattern.replace("*", "") in file_name:
                     return True
             else:
                 # Exact match
@@ -456,7 +489,9 @@ class MultiRepoChangelogGenerator:
         actual_prev = prev_tag
         actual_current = current_tag
         if not self.check_tag_exists(repo_path, current_tag):
-            actual_current = self.fetch_and_get_remote_ref(repo_path) if self.local_repos else None
+            actual_current = (
+                self.fetch_and_get_remote_ref(repo_path) if self.local_repos else None
+            )
         if not self.check_tag_exists(repo_path, prev_tag):
             actual_prev = self.find_closest_tag(repo_path, prev_tag)
         if not actual_prev or not actual_current:
@@ -466,11 +501,13 @@ class MultiRepoChangelogGenerator:
 
         # Get changed files
         files_cmd = f"git diff --name-only {actual_prev}..{actual_current}"
-        all_changed_files = self.run_command(files_cmd, cwd=repo_path).split('\n')
+        all_changed_files = self.run_command(files_cmd, cwd=repo_path).split("\n")
         all_changed_files = [f for f in all_changed_files if f.strip()]
 
         # Filter out auto-generated files
-        changed_files = [f for f in all_changed_files if not self.should_exclude_file(f, repo_name)]
+        changed_files = [
+            f for f in all_changed_files if not self.should_exclude_file(f, repo_name)
+        ]
 
         # Get line changes excluding auto-generated files
         numstat_cmd = f"git diff --numstat {actual_prev}..{actual_current}"
@@ -480,9 +517,9 @@ class MultiRepoChangelogGenerator:
         removed_lines = 0
         excluded_files_count = 0
 
-        for line in numstat.split('\n'):
+        for line in numstat.split("\n"):
             if line.strip():
-                parts = line.split('\t')
+                parts = line.split("\t")
                 if len(parts) >= 3:
                     try:
                         file_path = parts[2]
@@ -490,35 +527,39 @@ class MultiRepoChangelogGenerator:
                             excluded_files_count += 1
                             continue
 
-                        added_lines += int(parts[0]) if parts[0] != '-' else 0
-                        removed_lines += int(parts[1]) if parts[1] != '-' else 0
+                        added_lines += int(parts[0]) if parts[0] != "-" else 0
+                        removed_lines += int(parts[1]) if parts[1] != "-" else 0
                     except ValueError:
                         pass
 
         return {
-            'files_changed': len(changed_files),
-            'lines_added': added_lines,
-            'lines_removed': removed_lines,
-            'changed_files': changed_files[:10],
-            'excluded_files': excluded_files_count,
-            'total_files_changed': len(all_changed_files)
+            "files_changed": len(changed_files),
+            "lines_added": added_lines,
+            "lines_removed": removed_lines,
+            "changed_files": changed_files[:10],
+            "excluded_files": excluded_files_count,
+            "total_files_changed": len(all_changed_files),
         }
 
-    def analyze_repository(self, repo_name, repo_path, prev_tag, current_tag, enrich=False):
+    def analyze_repository(
+        self, repo_name, repo_path, prev_tag, current_tag, enrich=False
+    ):
         """Analyze a single repository between two tags"""
         print(f"Analyzing {repo_name} ({prev_tag}..{current_tag})", file=sys.stderr)
 
-        commits = self.get_commits_between_tags(repo_path, prev_tag, current_tag, enrich=enrich)
+        commits = self.get_commits_between_tags(
+            repo_path, prev_tag, current_tag, enrich=enrich
+        )
         categories = self.analyze_commit_categories(commits)
         file_changes = self.get_file_changes(repo_path, prev_tag, current_tag)
 
         return {
-            'repo_name': repo_name,
-            'commit_count': len(commits),
-            'commits': commits,
-            'categories': categories,
-            'file_changes': file_changes,
-            'has_changes': len(commits) > 0
+            "repo_name": repo_name,
+            "commit_count": len(commits),
+            "commits": commits,
+            "categories": categories,
+            "file_changes": file_changes,
+            "has_changes": len(commits) > 0,
         }
 
     def _get_repo_path(self, repo_name, repo_url, temp_dir):
@@ -529,15 +570,17 @@ class MultiRepoChangelogGenerator:
                 print(f"Using local repo: {local_path}", file=sys.stderr)
                 return local_path
             else:
-                print(f"Warning: local repo path {local_path} not found, skipping {repo_name}", file=sys.stderr)
+                print(
+                    f"Warning: local repo path {local_path} not found, skipping {repo_name}",
+                    file=sys.stderr,
+                )
                 return None
         return self.clone_repo(repo_name, repo_url, temp_dir)
 
     def generate_json_output(self, current_tag, prev_tag):
         """Generate structured JSON output with enriched commit data"""
         need_temp = any(
-            repo_name not in self.local_repos
-            for repo_name in self.repositories
+            repo_name not in self.local_repos for repo_name in self.repositories
         )
         if need_temp:
             self.temp_dir = Path(tempfile.mkdtemp(prefix="waldur_changelog_"))
@@ -550,51 +593,57 @@ class MultiRepoChangelogGenerator:
             core_added = 0
             core_removed = 0
 
-            repos_to_analyze = self.local_repos.keys() if self.local_repos else self.repositories.keys()
+            repos_to_analyze = (
+                self.local_repos.keys()
+                if self.local_repos
+                else self.repositories.keys()
+            )
 
             for repo_name in repos_to_analyze:
-                repo_url = self.repositories.get(repo_name, '')
+                repo_url = self.repositories.get(repo_name, "")
                 repo_path = self._get_repo_path(repo_name, repo_url, self.temp_dir)
                 if repo_path is None:
                     continue
-                analysis = self.analyze_repository(repo_name, repo_path, prev_tag, current_tag, enrich=True)
+                analysis = self.analyze_repository(
+                    repo_name, repo_path, prev_tag, current_tag, enrich=True
+                )
                 all_analyses[repo_name] = analysis
 
-                if analysis['has_changes'] and repo_name in self.core_repositories:
-                    core_commits += analysis['commit_count']
-                    core_files += analysis['file_changes'].get('files_changed', 0)
-                    core_added += analysis['file_changes'].get('lines_added', 0)
-                    core_removed += analysis['file_changes'].get('lines_removed', 0)
+                if analysis["has_changes"] and repo_name in self.core_repositories:
+                    core_commits += analysis["commit_count"]
+                    core_files += analysis["file_changes"].get("files_changed", 0)
+                    core_added += analysis["file_changes"].get("lines_added", 0)
+                    core_removed += analysis["file_changes"].get("lines_removed", 0)
 
             # Build JSON structure
             output = {
-                'version': current_tag,
-                'previous_version': prev_tag,
-                'date': datetime.now().strftime('%Y-%m-%d'),
-                'summary_stats': {
-                    'core_commits': core_commits,
-                    'core_files_changed': core_files,
-                    'core_lines_added': core_added,
-                    'core_lines_removed': core_removed,
+                "version": current_tag,
+                "previous_version": prev_tag,
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "summary_stats": {
+                    "core_commits": core_commits,
+                    "core_files_changed": core_files,
+                    "core_lines_added": core_added,
+                    "core_lines_removed": core_removed,
                 },
-                'repositories': {},
+                "repositories": {},
             }
 
             for repo_name, analysis in all_analyses.items():
                 # Convert category lists (commit dicts are already serialisable)
                 categories_serializable = {}
-                for cat, cat_commits in analysis['categories'].items():
+                for cat, cat_commits in analysis["categories"].items():
                     categories_serializable[cat] = [c for c in cat_commits]
 
-                output['repositories'][repo_name] = {
-                    'is_core': repo_name in self.core_repositories,
-                    'is_generated': repo_name in self.generated_repositories,
-                    'commit_count': analysis['commit_count'],
-                    'has_changes': analysis['has_changes'],
-                    'commits': analysis['commits'],
-                    'categories': categories_serializable,
-                    'file_changes': analysis['file_changes'],
-                    'compare_url': f"https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag}",
+                output["repositories"][repo_name] = {
+                    "is_core": repo_name in self.core_repositories,
+                    "is_generated": repo_name in self.generated_repositories,
+                    "commit_count": analysis["commit_count"],
+                    "has_changes": analysis["has_changes"],
+                    "commits": analysis["commits"],
+                    "categories": categories_serializable,
+                    "file_changes": analysis["file_changes"],
+                    "compare_url": f"https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag}",
                 }
 
             return json.dumps(output, indent=2)
@@ -621,46 +670,72 @@ class MultiRepoChangelogGenerator:
             # Analyze each repository
             for repo_name, repo_url in self.repositories.items():
                 repo_path = self.clone_repo(repo_name, repo_url, self.temp_dir)
-                analysis = self.analyze_repository(repo_name, repo_path, prev_tag, current_tag)
+                analysis = self.analyze_repository(
+                    repo_name, repo_path, prev_tag, current_tag
+                )
                 all_analyses[repo_name] = analysis
 
                 # Only count core repositories in main statistics
-                if analysis['has_changes'] and repo_name in self.core_repositories:
-                    core_commits += analysis['commit_count']
-                    core_files += analysis['file_changes'].get('files_changed', 0)
-                    core_added += analysis['file_changes'].get('lines_added', 0)
-                    core_removed += analysis['file_changes'].get('lines_removed', 0)
+                if analysis["has_changes"] and repo_name in self.core_repositories:
+                    core_commits += analysis["commit_count"]
+                    core_files += analysis["file_changes"].get("files_changed", 0)
+                    core_added += analysis["file_changes"].get("lines_added", 0)
+                    core_removed += analysis["file_changes"].get("lines_removed", 0)
 
             # Generate changelog entry
             changelog_parts = []
 
             # Header
-            date_str = datetime.now().strftime('%Y-%m-%d')
+            date_str = datetime.now().strftime("%Y-%m-%d")
             changelog_parts.append(f"## {current_tag} - {date_str}")
             changelog_parts.append("")
 
             # Release summary in proper list format
-            active_core_repos = len([a for repo, a in all_analyses.items() if a['has_changes'] and repo in self.core_repositories])
-            active_sdk_repos = len([a for repo, a in all_analyses.items() if a['has_changes'] and repo in self.generated_repositories])
+            active_core_repos = len(
+                [
+                    a
+                    for repo, a in all_analyses.items()
+                    if a["has_changes"] and repo in self.core_repositories
+                ]
+            )
+            active_sdk_repos = len(
+                [
+                    a
+                    for repo, a in all_analyses.items()
+                    if a["has_changes"] and repo in self.generated_repositories
+                ]
+            )
 
             if core_commits > 0:
                 changelog_parts.append("### Release Summary")
                 changelog_parts.append("")
-                changelog_parts.append(f"- **Release Impact:** {core_commits} commits across {active_core_repos} core repositories")
+                changelog_parts.append(
+                    f"- **Release Impact:** {core_commits} commits across {active_core_repos} core repositories"
+                )
                 if core_files > 0:
-                    changelog_parts.append(f"- **Functional Changes:** {core_files} files changed with +{core_added}/-{core_removed} lines")
+                    changelog_parts.append(
+                        f"- **Functional Changes:** {core_files} files changed with +{core_added}/-{core_removed} lines"
+                    )
                 if active_sdk_repos > 0:
-                    changelog_parts.append(f"- **SDK Updates:** {active_sdk_repos} auto-generated clients updated from OpenAPI schema")
+                    changelog_parts.append(
+                        f"- **SDK Updates:** {active_sdk_repos} auto-generated clients updated from OpenAPI schema"
+                    )
                 changelog_parts.append("")
-                changelog_parts.append("!!! note \"Statistics Note\"")
-                changelog_parts.append("    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.")
+                changelog_parts.append('!!! note "Statistics Note"')
+                changelog_parts.append(
+                    "    Excludes tests, auto-generated files, and SDK client code for accurate development metrics."
+                )
                 changelog_parts.append("")
             else:
                 changelog_parts.append("### Release Summary")
                 changelog_parts.append("")
-                changelog_parts.append("- **Release Impact:** Minor release with configuration and documentation updates")
+                changelog_parts.append(
+                    "- **Release Impact:** Minor release with configuration and documentation updates"
+                )
                 if active_sdk_repos > 0:
-                    changelog_parts.append(f"- **SDK Updates:** {active_sdk_repos} auto-generated clients updated")
+                    changelog_parts.append(
+                        f"- **SDK Updates:** {active_sdk_repos} auto-generated clients updated"
+                    )
                 changelog_parts.append("")
 
             # Component status - separate core from generated with improved formatting
@@ -668,26 +743,31 @@ class MultiRepoChangelogGenerator:
             changelog_parts.append("")
             for repo_name, analysis in all_analyses.items():
                 if repo_name in self.core_repositories:
-                    display_name = repo_name.replace('-', ' ').title()
-                    if analysis['has_changes']:
-                        commit_count = analysis['commit_count']
-                        files_count = analysis['file_changes'].get('files_changed', 0)
-                        lines_added = analysis['file_changes'].get('lines_added', 0)
-                        lines_removed = analysis['file_changes'].get('lines_removed', 0)
+                    display_name = repo_name.replace("-", " ").title()
+                    if analysis["has_changes"]:
+                        commit_count = analysis["commit_count"]
+                        files_count = analysis["file_changes"].get("files_changed", 0)
+                        lines_added = analysis["file_changes"].get("lines_added", 0)
+                        lines_removed = analysis["file_changes"].get("lines_removed", 0)
 
                         component_info = f"- **{display_name}**: [{commit_count} commits](https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag})"
                         if files_count > 0:
                             component_info += f" · {files_count} files changed"
                             if lines_added > 0 or lines_removed > 0:
-                                component_info += f" (+{lines_added}/-{lines_removed} lines)"
+                                component_info += (
+                                    f" (+{lines_added}/-{lines_removed} lines)"
+                                )
 
                         changelog_parts.append(component_info)
                     else:
                         changelog_parts.append(f"- **{display_name}**: No changes")
 
             # Show SDK and Provider status separately if any were updated
-            sdk_updates = [repo for repo, analysis in all_analyses.items()
-                          if repo in self.generated_repositories and analysis['has_changes']]
+            sdk_updates = [
+                repo
+                for repo, analysis in all_analyses.items()
+                if repo in self.generated_repositories and analysis["has_changes"]
+            ]
             if sdk_updates:
                 changelog_parts.append("")
                 changelog_parts.append("### SDK & Integration Updates (Auto-generated)")
@@ -695,51 +775,71 @@ class MultiRepoChangelogGenerator:
                 for repo_name in sdk_updates:
                     analysis = all_analyses[repo_name]
                     display_names_map = {
-                        'py-client': 'Python SDK',
-                        'js-client': 'JavaScript SDK',
-                        'go-client': 'Go SDK',
-                        'ansible-waldur-module-next': 'Ansible Modules',
-                        'terraform-provider-waldur': 'Terraform Provider'
+                        "py-client": "Python SDK",
+                        "js-client": "JavaScript SDK",
+                        "go-client": "Go SDK",
+                        "ansible-waldur-module-next": "Ansible Modules",
+                        "terraform-provider-waldur": "Terraform Provider",
                     }
-                    display_name = display_names_map.get(repo_name, repo_name.replace('-', ' ').title().replace('Py ', 'Python ').replace('Js ', 'JavaScript '))
-                    commit_count = analysis['commit_count']
+                    display_name = display_names_map.get(
+                        repo_name,
+                        repo_name.replace("-", " ")
+                        .title()
+                        .replace("Py ", "Python ")
+                        .replace("Js ", "JavaScript "),
+                    )
+                    commit_count = analysis["commit_count"]
 
-                    changelog_parts.append(f"- **{display_name}**: [{commit_count} commits](https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag})")
+                    changelog_parts.append(
+                        f"- **{display_name}**: [{commit_count} commits](https://github.com/waldur/{repo_name}/compare/{prev_tag}...{current_tag})"
+                    )
 
             changelog_parts.append("")
 
             # Notable changes from core repos (all commits, no categorization)
             all_notable_changes = []
             for repo_name, analysis in all_analyses.items():
-                if repo_name in self.core_repositories and analysis['has_changes']:
+                if repo_name in self.core_repositories and analysis["has_changes"]:
                     # Get all commits, not just categorized ones
-                    for commit in analysis['commits']:
+                    for commit in analysis["commits"]:
                         all_notable_changes.append((commit, repo_name))
 
             if all_notable_changes:
                 changelog_parts.append("### Notable Changes")
                 changelog_parts.append("")
                 # Sort by date and limit to most recent/important ones
-                sorted_changes = sorted(all_notable_changes, key=lambda x: x[0]['date'])[-6:]  # Latest 6 for better readability
+                sorted_changes = sorted(
+                    all_notable_changes, key=lambda x: x[0]["date"]
+                )[-6:]  # Latest 6 for better readability
 
                 for change, repo_name in sorted_changes:
-                    clean_subject = self._clean_commit_subject(change['subject'], 'general')
-                    commit_hash = change['hash']
-                    display_repo = repo_name.replace('-', ' ').title()
+                    clean_subject = self._clean_commit_subject(
+                        change["subject"], "general"
+                    )
+                    commit_hash = change["hash"]
+                    display_repo = repo_name.replace("-", " ").title()
 
                     # Use proper markdown list format
-                    changelog_parts.append(f"- **{clean_subject}** ([{commit_hash}](https://github.com/waldur/{repo_name}/commit/{commit_hash}) - {display_repo})")
+                    changelog_parts.append(
+                        f"- **{clean_subject}** ([{commit_hash}](https://github.com/waldur/{repo_name}/commit/{commit_hash}) - {display_repo})"
+                    )
 
                 changelog_parts.append("")
 
             # Repository-specific highlights
             for repo_name, analysis in all_analyses.items():
-                if analysis['has_changes'] and analysis['commit_count'] > 5:  # Only show repos with significant changes
-                    changelog_parts.append(f"### {repo_name.replace('-', ' ').title()} Highlights")
+                if (
+                    analysis["has_changes"] and analysis["commit_count"] > 5
+                ):  # Only show repos with significant changes
+                    changelog_parts.append(
+                        f"### {repo_name.replace('-', ' ').title()} Highlights"
+                    )
                     changelog_parts.append("")
-                    top_commits = analysis['commits'][:3]  # Top 3 commits
+                    top_commits = analysis["commits"][:3]  # Top 3 commits
                     for commit in top_commits:
-                        clean_subject = self._clean_commit_subject(commit['subject'], 'general')
+                        clean_subject = self._clean_commit_subject(
+                            commit["subject"], "general"
+                        )
                         changelog_parts.append(f"- {clean_subject}")
                     changelog_parts.append("")
 
@@ -751,12 +851,21 @@ class MultiRepoChangelogGenerator:
             ansible_notes = self._extract_ansible_changelog(ansible_path, current_tag)
 
             if tf_notes or ansible_notes:
-                changelog_parts.append("### Integrations & Ecosystem Breaking Changes\n")
+                changelog_parts.append(
+                    "### Integrations & Ecosystem Breaking Changes\n"
+                )
                 if tf_notes:
-                    tf_notes_formatted = re.sub(r'^###\s+(.*)', r'#### Terraform Provider: \1', tf_notes, flags=re.MULTILINE)
+                    tf_notes_formatted = re.sub(
+                        r"^###\s+(.*)",
+                        r"#### Terraform Provider: \1",
+                        tf_notes,
+                        flags=re.MULTILINE,
+                    )
                     changelog_parts.append(f"{tf_notes_formatted}\n")
                 if ansible_notes:
-                    ansible_notes_formatted = ansible_notes.replace("#### Collection", "#### Ansible Collection:")
+                    ansible_notes_formatted = ansible_notes.replace(
+                        "#### Collection", "#### Ansible Collection:"
+                    )
                     changelog_parts.append(f"{ansible_notes_formatted}\n")
 
             # Resources — RC releases ship no OpenAPI schema, so omit the link
@@ -767,11 +876,13 @@ class MultiRepoChangelogGenerator:
             if "-rc." not in current_tag:
                 changelog_parts.append("### Resources")
                 changelog_parts.append("")
-                changelog_parts.append(f"- [OpenAPI Schema](../API/waldur-openapi-schema-{current_tag}.yaml)")
+                changelog_parts.append(
+                    f"- [OpenAPI Schema](../API/waldur-openapi-schema-{current_tag}.yaml)"
+                )
                 changelog_parts.append("")
             changelog_parts.append("---")
 
-            return '\n'.join(changelog_parts), all_analyses
+            return "\n".join(changelog_parts), all_analyses
 
         finally:
             # Cleanup
@@ -782,22 +893,22 @@ class MultiRepoChangelogGenerator:
     def _clean_commit_subject(self, subject, category):
         """Clean commit subjects for better readability with proper capitalization"""
         patterns = {
-            'features': r'^(feat|feature|add|implement|new)(\([^)]*\))?[\s:]?\s*',
-            'fixes': r'^(fix|bugfix|resolve|patch)(\([^)]*\))?[\s:]?\s*',
-            'refactor': r'^(refactor|perf|optimize|improve)(\([^)]*\))?[\s:]?\s*',
-            'general': r'^(chore|build|ci|test|docs)(\([^)]*\))?[\s:]?\s*'
+            "features": r"^(feat|feature|add|implement|new)(\([^)]*\))?[\s:]?\s*",
+            "fixes": r"^(fix|bugfix|resolve|patch)(\([^)]*\))?[\s:]?\s*",
+            "refactor": r"^(refactor|perf|optimize|improve)(\([^)]*\))?[\s:]?\s*",
+            "general": r"^(chore|build|ci|test|docs)(\([^)]*\))?[\s:]?\s*",
         }
 
         # Remove category prefixes
-        pattern = patterns.get(category, '')
+        pattern = patterns.get(category, "")
         if pattern:
-            subject = re.sub(pattern, '', subject, flags=re.IGNORECASE).strip()
+            subject = re.sub(pattern, "", subject, flags=re.IGNORECASE).strip()
 
         # Clean up common prefixes and brackets
-        subject = re.sub(r'^\[.*?\]\s*', '', subject)  # Remove [TAG] prefixes
-        subject = re.sub(r'^\w+-\d+\s*:\s*', '', subject)  # Remove ISSUE-123: prefixes
-        subject = re.sub(r'^\w+-\d+\s+', '', subject)  # Remove ISSUE-123 prefixes
-        subject = re.sub(r'^\(.*?\)\s*', '', subject)  # Remove (scope) prefixes
+        subject = re.sub(r"^\[.*?\]\s*", "", subject)  # Remove [TAG] prefixes
+        subject = re.sub(r"^\w+-\d+\s*:\s*", "", subject)  # Remove ISSUE-123: prefixes
+        subject = re.sub(r"^\w+-\d+\s+", "", subject)  # Remove ISSUE-123 prefixes
+        subject = re.sub(r"^\(.*?\)\s*", "", subject)  # Remove (scope) prefixes
 
         # Clean up and capitalize properly
         subject = subject.strip()
@@ -805,28 +916,36 @@ class MultiRepoChangelogGenerator:
         # Handle special cases for proper sentence formatting
         if subject:
             # Capitalize first letter
-            subject = subject[0].upper() + subject[1:] if len(subject) > 1 else subject.upper()
+            subject = (
+                subject[0].upper() + subject[1:]
+                if len(subject) > 1
+                else subject.upper()
+            )
 
             # Ensure sentence ends with period if it doesn't already end with punctuation
-            if not re.search(r'[.!?]$', subject):
-                subject += '.'
+            if not re.search(r"[.!?]$", subject):
+                subject += "."
 
         return subject
 
+
 def main():
     parser = argparse.ArgumentParser(
-        description='Enhanced changelog generator for Waldur - analyzes multiple repositories'
+        description="Enhanced changelog generator for Waldur - analyzes multiple repositories"
     )
-    parser.add_argument('current_tag', help='Current release tag (e.g., 7.9.0)')
-    parser.add_argument('previous_tag', help='Previous release tag (e.g., 7.8.9)')
+    parser.add_argument("current_tag", help="Current release tag (e.g., 7.9.0)")
+    parser.add_argument("previous_tag", help="Previous release tag (e.g., 7.8.9)")
     parser.add_argument(
-        '--json-output', action='store_true',
-        help='Output structured JSON instead of markdown (includes enriched commit data)'
+        "--json-output",
+        action="store_true",
+        help="Output structured JSON instead of markdown (includes enriched commit data)",
     )
     parser.add_argument(
-        '--local-repos', type=str, default=None,
+        "--local-repos",
+        type=str,
+        default=None,
         help='JSON mapping of repo names to local paths, e.g. \'{"waldur-mastermind":"/path/to/repo"}\'. '
-             'Only listed repos are analyzed; repos not in the mapping are skipped.'
+        "Only listed repos are analyzed; repos not in the mapping are skipped.",
     )
     args = parser.parse_args()
 
@@ -842,7 +961,10 @@ def main():
             sys.exit(1)
 
     if args.json_output:
-        print(f"Generating JSON commit data for {current_tag} (since {prev_tag})", file=sys.stderr)
+        print(
+            f"Generating JSON commit data for {current_tag} (since {prev_tag})",
+            file=sys.stderr,
+        )
         generator = MultiRepoChangelogGenerator(local_repos=local_repos)
         try:
             json_output = generator.generate_json_output(current_tag, prev_tag)
@@ -852,16 +974,22 @@ def main():
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
             import traceback
+
             traceback.print_exc(file=sys.stderr)
             sys.exit(1)
     else:
-        print(f"Generating enhanced changelog for {current_tag} (since {prev_tag})", file=sys.stderr)
+        print(
+            f"Generating enhanced changelog for {current_tag} (since {prev_tag})",
+            file=sys.stderr,
+        )
         print("This will clone multiple repositories - please wait...", file=sys.stderr)
 
         generator = MultiRepoChangelogGenerator(local_repos=local_repos)
 
         try:
-            enhanced_changelog, analyses = generator.generate_enhanced_changelog(current_tag, prev_tag)
+            enhanced_changelog, analyses = generator.generate_enhanced_changelog(
+                current_tag, prev_tag
+            )
 
             # For GitLab CI, just output the changelog without debug info
             print(enhanced_changelog)
@@ -871,7 +999,9 @@ def main():
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
             import traceback
+
             traceback.print_exc(file=sys.stderr)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

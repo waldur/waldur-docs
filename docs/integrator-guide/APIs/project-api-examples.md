@@ -281,7 +281,7 @@ x-xss-protection: 1; mode=block
 ## List project permissions
 
 ```bash
-$ http --pretty=format -v https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246" 
+$ http --pretty=format -v https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246"
 GET /api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate

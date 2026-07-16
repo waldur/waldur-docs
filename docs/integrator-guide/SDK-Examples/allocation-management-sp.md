@@ -133,7 +133,7 @@ In order to get a proper order, SP owner can use `marketplace_orders_list` metho
 ```python
 from waldur_api_client.api.marketplace_orders import (
     marketplace_orders_approve_by_provider,
-    marketplace_orders_reject_by_provider, 
+    marketplace_orders_reject_by_provider,
     marketplace_orders_list,
     MarketplaceOrdersListStateItem
 )
@@ -371,7 +371,7 @@ from waldur_api_client.api.marketplace_public_offerings import marketplace_publi
 from waldur_api_client.api.marketplace_plan_components import marketplace_plan_components_list
 from waldur_api_client.api.marketplace_component_usages import marketplace_component_usages_set_usage
 from waldur_api_client.api.marketplace_resources import marketplace_resources_plan_periods_list
-from waldur_api_client.models import ComponentUsageCreateRequest, ComponentUsageItemRequest 
+from waldur_api_client.models import ComponentUsageCreateRequest, ComponentUsageItemRequest
 
 # Get offering details
 offering = marketplace_public_offerings_retrieve.sync(
@@ -552,7 +552,7 @@ result = marketplace_service_providers_list.sync(
 # 'description': '<description>'
 # 'image': '<image_url>'
 # 'offering_count': 5
-# 'organization_groups': []  
+# 'organization_groups': []
 # 'url': '<service_provider_url>'
 # 'uuid': '<service_provider_uuid>'
 ```

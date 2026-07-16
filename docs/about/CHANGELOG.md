@@ -1799,4 +1799,3 @@ Waldur 8.0.1 is a major release that introduces Arrow accounting integration for
 
 
 ---
-

@@ -54,6 +54,15 @@ stages:
 #  script:
 #    - node lint-markdown.mjs
 
+Run linters:
+  image: ghcr.io/astral-sh/uv:python3.13-bookworm
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+  script:
+    - uvx prek run --all-files
+
 Scan Python dependencies:
   extends: .Vulnerability scan template
   variables:

@@ -30,25 +30,20 @@ PRIORITY_SECTIONS = [
     ("docs/index.md", "Introduction"),
     ("docs/about/getting-started.md", "Getting Started"),
     ("docs/about/terminology", "Terminology"),
-
     # Architecture and deployment
     ("docs/admin-guide/architecture.md", "Architecture"),
     ("docs/admin-guide/hardware-requirements.md", "Hardware Requirements"),
     ("docs/admin-guide/deployment/helm", "Helm Deployment"),
     ("docs/admin-guide/deployment/docker-compose", "Docker Compose Deployment"),
     ("docs/admin-guide/checklist-for-production.md", "Production Checklist"),
-
     # Configuration
     ("docs/admin-guide/mastermind-configuration", "MasterMind Configuration"),
     ("docs/admin-guide/waldur-roles.md", "Roles"),
     ("docs/admin-guide/billing-and-accounting.md", "Billing"),
-
     # Identity providers
     ("docs/admin-guide/identities", "Identity Providers"),
-
     # Cloud providers
     ("docs/admin-guide/providers", "Cloud Providers"),
-
     # API Integration - high priority for integrators
     ("docs/integrator-guide/APIs/authentication.md", "API Authentication"),
     ("docs/integrator-guide/APIs/permissions.md", "API Permissions"),
@@ -56,35 +51,31 @@ PRIORITY_SECTIONS = [
     ("docs/integrator-guide/api-lifecycle.md", "API Versioning and Change Policy"),
     ("docs/integrator-guide/sdk.md", "Python SDK"),
     ("docs/integrator-guide/APIs/project-api-examples.md", "API Examples"),
-
     # Developer guide
     ("docs/developer-guide/core-concepts", "Core Concepts"),
     ("docs/developer-guide/guides", "Development Guides"),
     ("docs/developer-guide/ui", "UI Development"),
-
     # User guide
     ("docs/user-guide", "User Guide"),
-
     # Integrations
     ("docs/integrations", "Integrations"),
-
     # About section
     ("docs/about", "About"),
 ]
 
 # Patterns to exclude from llms-full.txt (too large or auto-generated)
 EXCLUDE_PATTERNS = [
-    "docs/api-reference/**",                    # Auto-generated API docs (270+ files)
-    "**/img/**",                                # Image directories
-    "**/*.png",                                 # Images
-    "**/*.jpg",                                 # Images
-    "**/*.jpeg",                                # Images
-    "**/*.gif",                                 # Images
-    "**/*.svg",                                 # SVG files
-    "**/*.mp4",                                 # Videos
-    "**/*.webm",                                # Videos
-    "**/.pages",                                # Navigation config
-    "**/CHANGELOG.md",                          # Large changelog
+    "docs/api-reference/**",  # Auto-generated API docs (270+ files)
+    "**/img/**",  # Image directories
+    "**/*.png",  # Images
+    "**/*.jpg",  # Images
+    "**/*.jpeg",  # Images
+    "**/*.gif",  # Images
+    "**/*.svg",  # SVG files
+    "**/*.mp4",  # Videos
+    "**/*.webm",  # Videos
+    "**/.pages",  # Navigation config
+    "**/CHANGELOG.md",  # Large changelog
 ]
 
 # Files that should always be included even if in excluded directories
@@ -105,7 +96,9 @@ class LLMSTxtGenerator:
 
         # Check force include first
         for pattern in FORCE_INCLUDE:
-            if file_path.match(pattern) or file_str.endswith(pattern.replace("docs/", "")):
+            if file_path.match(pattern) or file_str.endswith(
+                pattern.replace("docs/", "")
+            ):
                 return False
 
         # Check exclude patterns
@@ -122,39 +115,41 @@ class LLMSTxtGenerator:
     def clean_content(self, content: str) -> str:
         """Clean markdown content for LLM consumption."""
         # Remove HTML comments
-        content = re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)
+        content = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)
 
         # Remove YAML front matter
-        content = re.sub(r'^---\n.*?\n---\n', '', content, flags=re.DOTALL)
+        content = re.sub(r"^---\n.*?\n---\n", "", content, flags=re.DOTALL)
 
         # Remove image references (keep alt text as description)
-        content = re.sub(r'!\[([^\]]*)\]\([^)]+\)', r'[Image: \1]', content)
+        content = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"[Image: \1]", content)
 
         # Remove video embeds
-        content = re.sub(r'<video[^>]*>.*?</video>', '[Video content]', content, flags=re.DOTALL)
+        content = re.sub(
+            r"<video[^>]*>.*?</video>", "[Video content]", content, flags=re.DOTALL
+        )
 
         # Remove external document markers
-        content = re.sub(r'<!-- EXTERNAL DOCUMENT.*?-->', '', content, flags=re.DOTALL)
+        content = re.sub(r"<!-- EXTERNAL DOCUMENT.*?-->", "", content, flags=re.DOTALL)
 
         # Normalize multiple blank lines to single
-        content = re.sub(r'\n{3,}', '\n\n', content)
+        content = re.sub(r"\n{3,}", "\n\n", content)
 
         return content.strip()
 
     def get_file_title(self, file_path: Path, content: str) -> str:
         """Extract title from markdown file."""
         # Try to find H1 header
-        match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+        match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
         if match:
             return match.group(1).strip()
 
         # Fall back to filename
-        return file_path.stem.replace('-', ' ').replace('_', ' ').title()
+        return file_path.stem.replace("-", " ").replace("_", " ").title()
 
     def read_markdown_file(self, file_path: Path) -> Optional[str]:
         """Read and clean a markdown file."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
         except (IOError, UnicodeDecodeError) as e:
             print(f"Warning: Could not read {file_path}: {e}", file=sys.stderr)
@@ -168,19 +163,25 @@ class LLMSTxtGenerator:
         for path_pattern, section_name in PRIORITY_SECTIONS:
             pattern_path = self.docs_path.parent / path_pattern
 
-            if pattern_path.is_file() and pattern_path.suffix == '.md':
-                if not self.should_exclude(pattern_path) and pattern_path not in self.processed_files:
+            if pattern_path.is_file() and pattern_path.suffix == ".md":
+                if (
+                    not self.should_exclude(pattern_path)
+                    and pattern_path not in self.processed_files
+                ):
                     collected.append((pattern_path, section_name))
                     self.processed_files.add(pattern_path)
             elif pattern_path.is_dir():
                 # Collect all markdown files in directory
-                for md_file in sorted(pattern_path.rglob('*.md')):
-                    if not self.should_exclude(md_file) and md_file not in self.processed_files:
+                for md_file in sorted(pattern_path.rglob("*.md")):
+                    if (
+                        not self.should_exclude(md_file)
+                        and md_file not in self.processed_files
+                    ):
                         collected.append((md_file, section_name))
                         self.processed_files.add(md_file)
 
         # Then, collect any remaining files not yet processed
-        for md_file in sorted(self.docs_path.rglob('*.md')):
+        for md_file in sorted(self.docs_path.rglob("*.md")):
             if not self.should_exclude(md_file) and md_file not in self.processed_files:
                 collected.append((md_file, "Additional Documentation"))
                 self.processed_files.add(md_file)
@@ -233,7 +234,7 @@ class LLMSTxtGenerator:
                 lines.append("---")
                 lines.append("")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def generate(self, full_txt: bool = True):
         """Generate llms.txt files."""
@@ -252,12 +253,12 @@ class LLMSTxtGenerator:
             content = self.generate_llms_full_txt()
 
             output_file = self.output_path / "llms-full.txt"
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
             # Calculate stats
             file_count = len(self.processed_files)
-            line_count = content.count('\n')
+            line_count = content.count("\n")
             word_count = len(content.split())
             char_count = len(content)
 
@@ -277,32 +278,25 @@ def main():
         description="Generate llms.txt and llms-full.txt for LLM documentation access"
     )
     parser.add_argument(
-        '--docs-path',
-        default='docs',
-        help='Path to documentation directory (default: docs)'
+        "--docs-path",
+        default="docs",
+        help="Path to documentation directory (default: docs)",
     )
     parser.add_argument(
-        '--output-path',
-        default='docs',
-        help='Path for output files (default: docs)'
+        "--output-path", default="docs", help="Path for output files (default: docs)"
     )
     parser.add_argument(
-        '--no-full',
-        action='store_true',
-        help='Skip generating llms-full.txt'
+        "--no-full", action="store_true", help="Skip generating llms-full.txt"
     )
     parser.add_argument(
-        '--stats-only',
-        action='store_true',
-        help='Only show statistics, do not generate files'
+        "--stats-only",
+        action="store_true",
+        help="Only show statistics, do not generate files",
     )
 
     args = parser.parse_args()
 
-    generator = LLMSTxtGenerator(
-        docs_path=args.docs_path,
-        output_path=args.output_path
-    )
+    generator = LLMSTxtGenerator(docs_path=args.docs_path, output_path=args.output_path)
 
     if args.stats_only:
         print("Analyzing documentation structure...")
@@ -321,5 +315,5 @@ def main():
         generator.generate(full_txt=not args.no_full)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

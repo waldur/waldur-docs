@@ -182,7 +182,7 @@ resource "waldur_openstack_instance" "instance" {
   ssh_public_key     = waldur_core_ssh_public_key.ssh_key.url
   system_volume_size = 1024
   data_volume_size   = 1024
-  
+
   ports = [
     {
       subnet = waldur_openstack_subnet.subnet.url

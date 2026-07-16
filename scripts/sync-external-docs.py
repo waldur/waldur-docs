@@ -16,43 +16,46 @@ from datetime import datetime
 import re
 import argparse
 
+
 class ExternalDocSyncer:
-    def __init__(self, config_file='external-sources.yml', dry_run=False):
+    def __init__(self, config_file="external-sources.yml", dry_run=False):
         self.config = self.load_config(config_file)
-        self.settings = self.config.get('settings', {})
-        self.temp_base = Path(self.settings.get('temp_dir', '.temp_clones'))
-        self.external_marker = self.settings.get('external_marker_template', '')
-        self.preserve_local = self.settings.get('preserve_local', [])
+        self.settings = self.config.get("settings", {})
+        self.temp_base = Path(self.settings.get("temp_dir", ".temp_clones"))
+        self.external_marker = self.settings.get("external_marker_template", "")
+        self.preserve_local = self.settings.get("preserve_local", [])
         self.dry_run = dry_run
 
     def load_config(self, config_file):
         """Load the external sources configuration."""
-        with open(config_file, 'r') as f:
+        with open(config_file, "r") as f:
             return yaml.safe_load(f)
 
     def get_auth_token(self, source):
         """Get authentication token for a source repository."""
-        auth_config = source.get('auth', {})
-        token_env = auth_config.get('token_env')
+        auth_config = source.get("auth", {})
+        token_env = auth_config.get("token_env")
 
         if token_env:
             token = os.getenv(token_env)
             if not token:
-                print(f"Warning: Authentication token {token_env} not found in environment")
+                print(
+                    f"Warning: Authentication token {token_env} not found in environment"
+                )
                 return None
             return token
         return None
 
     def clone_repository(self, source, source_key):
         """Clone a repository to a temporary directory."""
-        repo_url = source['repository']
-        branch = source['branch']
+        repo_url = source["repository"]
+        branch = source["branch"]
 
         # Create authenticated URL if token is available
         token = self.get_auth_token(source)
-        if token and repo_url.startswith('https://'):
+        if token and repo_url.startswith("https://"):
             # Insert token into URL: https://token@gitlab.com/...
-            repo_url = repo_url.replace('https://', f'https://oauth2:{token}@')
+            repo_url = repo_url.replace("https://", f"https://oauth2:{token}@")
 
         temp_dir = self.temp_base / source_key
 
@@ -72,21 +75,31 @@ class ExternalDocSyncer:
 
             try:
                 # Clone with depth=1 for faster cloning
-                subprocess.run([
-                    'git', 'clone',
-                    '--branch', branch,
-                    '--depth', '1',
-                    repo_url, str(temp_dir)
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "git",
+                        "clone",
+                        "--branch",
+                        branch,
+                        "--depth",
+                        "1",
+                        repo_url,
+                        str(temp_dir),
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
                 return temp_dir
 
             except subprocess.CalledProcessError as e:
-                print(f"Error cloning repository (attempt {attempt}/{max_retries}): {e}")
+                print(
+                    f"Error cloning repository (attempt {attempt}/{max_retries}): {e}"
+                )
                 print(f"Stdout: {e.stdout.decode()}")
                 print(f"Stderr: {e.stderr.decode()}")
                 if attempt < max_retries:
-                    backoff = 2 ** attempt  # 2, 4, 8, 16 seconds
+                    backoff = 2**attempt  # 2, 4, 8, 16 seconds
                     print(f"Retrying in {backoff}s...")
                     time.sleep(backoff)
 
@@ -98,7 +111,9 @@ class ExternalDocSyncer:
         rel_path = str(file_path)
 
         for pattern in excludes:
-            if fnmatch.fnmatch(file_name, pattern) or fnmatch.fnmatch(rel_path, pattern):
+            if fnmatch.fnmatch(file_name, pattern) or fnmatch.fnmatch(
+                rel_path, pattern
+            ):
                 return True
         return False
 
@@ -122,12 +137,12 @@ class ExternalDocSyncer:
         links between them break. This resolves each relative link in the source
         tree and rewrites it to the correct relative path in the local tree.
         """
-        mappings = source.get('mappings', [])
+        mappings = source.get("mappings", [])
         if len(mappings) < 2:
             return content
 
-        current_remote = Path(current_mapping['remote'])
-        current_local = Path(current_mapping['local'])
+        current_remote = Path(current_mapping["remote"])
+        current_local = Path(current_mapping["local"])
 
         # Sort all mappings longest-remote-first so we always match the most
         # specific one. When mappings nest (e.g. `docs/` AND `docs/admin/` on the
@@ -137,13 +152,13 @@ class ExternalDocSyncer:
         # target file doesn't exist under the broader local path.
         all_mappings = [
             {
-                'remote': Path(m['remote']),
-                'local': Path(m['local']),
-                'is_current': m is current_mapping,
+                "remote": Path(m["remote"]),
+                "local": Path(m["local"]),
+                "is_current": m is current_mapping,
             }
             for m in mappings
         ]
-        all_mappings.sort(key=lambda m: len(m['remote'].parts), reverse=True)
+        all_mappings.sort(key=lambda m: len(m["remote"].parts), reverse=True)
 
         file_source_dir = current_remote / Path(rel_file_path).parent
         file_local_dir = current_local / Path(rel_file_path).parent
@@ -154,13 +169,13 @@ class ExternalDocSyncer:
             suffix = match.group(3)
 
             # Skip non-relative links
-            if url.startswith(('http://', 'https://', 'mailto:', '#', '/')):
+            if url.startswith(("http://", "https://", "mailto:", "#", "/")):
                 return match.group(0)
 
             # Split anchor/query from path
-            anchor = ''
+            anchor = ""
             path_part = url
-            for sep in ('#', '?'):
+            for sep in ("#", "?"):
                 if sep in path_part:
                     idx = path_part.index(sep)
                     anchor = path_part[idx:]
@@ -176,24 +191,22 @@ class ExternalDocSyncer:
             # Find the most specific mapping that owns the resolved path.
             for m in all_mappings:
                 try:
-                    rel_in_m = Path(resolved).relative_to(m['remote'])
+                    rel_in_m = Path(resolved).relative_to(m["remote"])
                 except ValueError:
                     continue
-                if m['is_current']:
+                if m["is_current"]:
                     # Target lands in the same mapping as the source — no rewrite.
                     return match.group(0)
-                new_target = m['local'] / rel_in_m
+                new_target = m["local"] / rel_in_m
                 new_rel = os.path.relpath(str(new_target), str(file_local_dir))
-                new_rel = new_rel.replace('\\', '/')
+                new_rel = new_rel.replace("\\", "/")
                 return prefix + new_rel + anchor + suffix
 
             return match.group(0)
 
         # Rewrite inline and image links: [text](url) and ![alt](url)
         content = re.sub(
-            r'(!?\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))',
-            rewrite_match,
-            content
+            r'(!?\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))', rewrite_match, content
         )
 
         return content
@@ -202,11 +215,30 @@ class ExternalDocSyncer:
         """Check if a file is binary by checking its extension."""
         # Common binary file extensions
         binary_extensions = {
-            '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.svg',
-            '.pdf', '.zip', '.tar', '.gz', '.bz2',
-            '.exe', '.dll', '.so', '.dylib',
-            '.mp3', '.mp4', '.avi', '.mov',
-            '.woff', '.woff2', '.ttf', '.eot'
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".bmp",
+            ".ico",
+            ".svg",
+            ".pdf",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".bz2",
+            ".exe",
+            ".dll",
+            ".so",
+            ".dylib",
+            ".mp3",
+            ".mp4",
+            ".avi",
+            ".mov",
+            ".woff",
+            ".woff2",
+            ".ttf",
+            ".eot",
         }
 
         return file_path.suffix.lower() in binary_extensions
@@ -214,73 +246,75 @@ class ExternalDocSyncer:
     def has_external_marker(self, file_path):
         """Check if a file has an external document marker."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read(500)  # Just read first 500 chars
-                return '<!-- EXTERNAL DOCUMENT' in content
+                return "<!-- EXTERNAL DOCUMENT" in content
         except (IOError, UnicodeDecodeError):
             return False
 
     def extract_content_without_marker(self, content):
         """Extract content without the external marker and timestamp."""
-        if '<!-- EXTERNAL DOCUMENT' not in content:
+        if "<!-- EXTERNAL DOCUMENT" not in content:
             return content
-        
+
         # Find the end of the marker
-        pattern = r'<!-- EXTERNAL DOCUMENT.*?-->\s*'
-        return re.sub(pattern, '', content, flags=re.DOTALL)
-    
+        pattern = r"<!-- EXTERNAL DOCUMENT.*?-->\s*"
+        return re.sub(pattern, "", content, flags=re.DOTALL)
+
     def extract_existing_marker_timestamp(self, content):
         """Extract the existing timestamp from an external marker."""
-        if '<!-- EXTERNAL DOCUMENT' not in content:
+        if "<!-- EXTERNAL DOCUMENT" not in content:
             return None
-        
+
         # Find Last Sync timestamp
-        pattern = r'Last Sync: ([^\n\r]+)'
+        pattern = r"Last Sync: ([^\n\r]+)"
         match = re.search(pattern, content)
         if match:
             return match.group(1)
         return None
 
-    def add_external_marker(self, content, source, mapping, remote_file, temp_dir, sync_time=None):
+    def add_external_marker(
+        self, content, source, mapping, remote_file, temp_dir, sync_time=None
+    ):
         """Add external document marker to file content."""
         # Calculate the relative path from the temp_dir's remote path
-        remote_base = temp_dir / mapping['remote']
+        remote_base = temp_dir / mapping["remote"]
         rel_file_path = remote_file.relative_to(remote_base)
 
         # Construct the clean remote path
-        clean_remote_path = f"{mapping['remote']}/{rel_file_path}".replace('\\', '/')
+        clean_remote_path = f"{mapping['remote']}/{rel_file_path}".replace("\\", "/")
 
         # Use provided timestamp or generate new one
         if sync_time is None:
             sync_time = datetime.now().isoformat()
 
         marker = self.external_marker.format(
-            repository=source['repository'],
-            branch=source['branch'],
+            repository=source["repository"],
+            branch=source["branch"],
             remote_path=clean_remote_path,
-            local_path=mapping['local'],
-            sync_time=sync_time
+            local_path=mapping["local"],
+            sync_time=sync_time,
         )
 
         # Remove existing marker if present
-        if '<!-- EXTERNAL DOCUMENT' in content:
-            pattern = r'<!-- EXTERNAL DOCUMENT.*?-->\s*'
-            content = re.sub(pattern, '', content, flags=re.DOTALL)
+        if "<!-- EXTERNAL DOCUMENT" in content:
+            pattern = r"<!-- EXTERNAL DOCUMENT.*?-->\s*"
+            content = re.sub(pattern, "", content, flags=re.DOTALL)
 
-        return marker + '\n\n' + content
+        return marker + "\n\n" + content
 
     def get_subdirectory_mappings(self, source, current_mapping):
         """Get subdirectories that have their own mappings with different targets."""
         subdirs_to_exclude = []
-        current_remote = Path(current_mapping['remote'])
-        current_local = Path(current_mapping['local'])
+        current_remote = Path(current_mapping["remote"])
+        current_local = Path(current_mapping["local"])
 
-        for mapping in source.get('mappings', []):
+        for mapping in source.get("mappings", []):
             if mapping == current_mapping:
                 continue
 
-            other_remote = Path(mapping['remote'])
-            other_local = Path(mapping['local'])
+            other_remote = Path(mapping["remote"])
+            other_local = Path(mapping["local"])
 
             # Check if other mapping is a subdirectory of current mapping
             try:
@@ -303,20 +337,22 @@ class ExternalDocSyncer:
 
     def sync_mapping(self, source, mapping, temp_dir):
         """Sync a single mapping from remote to local."""
-        remote_path = temp_dir / mapping['remote']
-        local_path = Path(mapping['local'])
+        remote_path = temp_dir / mapping["remote"]
+        local_path = Path(mapping["local"])
 
         if not remote_path.exists():
             print(f"  Warning: Remote path {mapping['remote']} does not exist")
-            return {'synced': 0, 'removed': 0, 'warnings': 1}
+            return {"synced": 0, "removed": 0, "warnings": 1}
 
-        stats = {'synced': 0, 'removed': 0, 'warnings': 0}
-        excludes = source.get('excludes', [])
+        stats = {"synced": 0, "removed": 0, "warnings": 0}
+        excludes = source.get("excludes", [])
 
         # Get subdirectories that should be excluded from this sync
         excluded_subdirs = self.get_subdirectory_mappings(source, mapping)
         if excluded_subdirs:
-            print(f"    Excluding subdirectories with separate mappings: {', '.join(str(s) for s in excluded_subdirs)}")
+            print(
+                f"    Excluding subdirectories with separate mappings: {', '.join(str(s) for s in excluded_subdirs)}"
+            )
 
         # Track which local files should remain (those from remote)
         expected_files = set()
@@ -349,54 +385,77 @@ class ExternalDocSyncer:
                     if self.dry_run:
                         if local_path.exists():
                             # Compare binary content
-                            with open(remote_path, 'rb') as f:
+                            with open(remote_path, "rb") as f:
                                 remote_content = f.read()
-                            with open(local_path, 'rb') as f:
+                            with open(local_path, "rb") as f:
                                 local_content = f.read()
                             if remote_content != local_content:
-                                print(f"    [DRY RUN] Would update binary: {local_path.name}")
+                                print(
+                                    f"    [DRY RUN] Would update binary: {local_path.name}"
+                                )
                             else:
                                 print(f"    [DRY RUN] No change: {local_path.name}")
                         else:
-                            print(f"    [DRY RUN] Would create binary: {local_path.name}")
+                            print(
+                                f"    [DRY RUN] Would create binary: {local_path.name}"
+                            )
                     else:
                         shutil.copy2(remote_path, local_path)
                         print(f"    Synced binary: {local_path.name}")
                 else:
                     # Handle text files
-                    with open(remote_path, 'r', encoding='utf-8') as f:
+                    with open(remote_path, "r", encoding="utf-8") as f:
                         remote_content = f.read()
 
                     # Check if local file exists and compare content without timestamp
                     existing_content = None
                     existing_timestamp = None
                     content_changed = True
-                    
+
                     if local_path.exists():
                         try:
-                            with open(local_path, 'r', encoding='utf-8') as f:
+                            with open(local_path, "r", encoding="utf-8") as f:
                                 existing_content = f.read()
-                            
-                            if remote_path.suffix.lower() == '.md':
+
+                            if remote_path.suffix.lower() == ".md":
                                 # Extract content without marker for comparison
-                                existing_content_clean = self.extract_content_without_marker(existing_content)
+                                existing_content_clean = (
+                                    self.extract_content_without_marker(
+                                        existing_content
+                                    )
+                                )
                                 # Compare with new content
-                                content_changed = existing_content_clean != remote_content
+                                content_changed = (
+                                    existing_content_clean != remote_content
+                                )
                                 if not content_changed:
                                     # Content hasn't changed, preserve existing timestamp
-                                    existing_timestamp = self.extract_existing_marker_timestamp(existing_content)
+                                    existing_timestamp = (
+                                        self.extract_existing_marker_timestamp(
+                                            existing_content
+                                        )
+                                    )
                             else:
                                 content_changed = existing_content != remote_content
                         except (IOError, UnicodeDecodeError):
                             content_changed = True  # If we can't read, assume changed
 
                     # Only add marker and timestamp if content changed or file doesn't exist
-                    if remote_path.suffix.lower() == '.md':
+                    if remote_path.suffix.lower() == ".md":
                         if content_changed:
-                            content = self.add_external_marker(remote_content, source, mapping, remote_path, temp_dir)
+                            content = self.add_external_marker(
+                                remote_content, source, mapping, remote_path, temp_dir
+                            )
                         else:
                             # Content unchanged, preserve existing timestamp
-                            content = self.add_external_marker(remote_content, source, mapping, remote_path, temp_dir, existing_timestamp)
+                            content = self.add_external_marker(
+                                remote_content,
+                                source,
+                                mapping,
+                                remote_path,
+                                temp_dir,
+                                existing_timestamp,
+                            )
                     else:
                         content = remote_content
 
@@ -411,7 +470,7 @@ class ExternalDocSyncer:
                             print(f"    [DRY RUN] Would create: {local_path.name}")
                     else:
                         if content_changed or not local_path.exists():
-                            with open(local_path, 'w', encoding='utf-8') as f:
+                            with open(local_path, "w", encoding="utf-8") as f:
                                 f.write(content)
                             print(f"    Synced: {local_path.name}")
                         else:
@@ -419,11 +478,11 @@ class ExternalDocSyncer:
 
                 # Only count as synced if content actually changed
                 if content_changed or not local_path.exists():
-                    stats['synced'] += 1
+                    stats["synced"] += 1
 
             except (IOError, UnicodeDecodeError) as e:
                 print(f"    Error processing {local_path.name}: {e}")
-                stats['warnings'] += 1
+                stats["warnings"] += 1
 
             return stats
 
@@ -436,7 +495,7 @@ class ExternalDocSyncer:
                 print(f"    [DRY RUN] Would create directory: {local_path}")
 
         # Copy files from remote to local
-        for remote_file in remote_path.rglob('*'):
+        for remote_file in remote_path.rglob("*"):
             if remote_file.is_file():
                 if self.should_exclude(remote_file, excludes):
                     continue
@@ -455,7 +514,9 @@ class ExternalDocSyncer:
                     local_file.parent.mkdir(parents=True, exist_ok=True)
                 else:
                     if not local_file.parent.exists():
-                        print(f"    [DRY RUN] Would create directory: {local_file.parent}")
+                        print(
+                            f"    [DRY RUN] Would create directory: {local_file.parent}"
+                        )
 
                 # Process file based on whether it's binary or text
                 try:
@@ -466,12 +527,14 @@ class ExternalDocSyncer:
                         if self.dry_run:
                             if local_file.exists():
                                 # Compare binary content
-                                with open(remote_file, 'rb') as f:
+                                with open(remote_file, "rb") as f:
                                     remote_content = f.read()
-                                with open(local_file, 'rb') as f:
+                                with open(local_file, "rb") as f:
                                     local_content = f.read()
                                 if remote_content != local_content:
-                                    print(f"    [DRY RUN] Would update binary: {rel_path}")
+                                    print(
+                                        f"    [DRY RUN] Would update binary: {rel_path}"
+                                    )
                                 else:
                                     print(f"    [DRY RUN] No change: {rel_path}")
                             else:
@@ -481,11 +544,11 @@ class ExternalDocSyncer:
                             print(f"    Synced binary: {rel_path}")
                     else:
                         # Handle text files
-                        with open(remote_file, 'r', encoding='utf-8') as f:
+                        with open(remote_file, "r", encoding="utf-8") as f:
                             remote_content = f.read()
 
                         # Rewrite cross-mapping links for markdown files
-                        if remote_file.suffix.lower() == '.md':
+                        if remote_file.suffix.lower() == ".md":
                             remote_content = self.rewrite_links(
                                 remote_content, source, mapping, str(rel_path)
                             )
@@ -494,32 +557,57 @@ class ExternalDocSyncer:
                         existing_content = None
                         existing_timestamp = None
                         content_changed = True
-                        
+
                         if local_file.exists():
                             try:
-                                with open(local_file, 'r', encoding='utf-8') as f:
+                                with open(local_file, "r", encoding="utf-8") as f:
                                     existing_content = f.read()
-                                
-                                if remote_file.suffix.lower() == '.md':
+
+                                if remote_file.suffix.lower() == ".md":
                                     # Extract content without marker for comparison
-                                    existing_content_clean = self.extract_content_without_marker(existing_content)
+                                    existing_content_clean = (
+                                        self.extract_content_without_marker(
+                                            existing_content
+                                        )
+                                    )
                                     # Compare with new content
-                                    content_changed = existing_content_clean != remote_content
+                                    content_changed = (
+                                        existing_content_clean != remote_content
+                                    )
                                     if not content_changed:
                                         # Content hasn't changed, preserve existing timestamp
-                                        existing_timestamp = self.extract_existing_marker_timestamp(existing_content)
+                                        existing_timestamp = (
+                                            self.extract_existing_marker_timestamp(
+                                                existing_content
+                                            )
+                                        )
                                 else:
                                     content_changed = existing_content != remote_content
                             except (IOError, UnicodeDecodeError):
-                                content_changed = True  # If we can't read, assume changed
+                                content_changed = (
+                                    True  # If we can't read, assume changed
+                                )
 
                         # Only add marker and timestamp if content changed or file doesn't exist
-                        if remote_file.suffix.lower() == '.md':
+                        if remote_file.suffix.lower() == ".md":
                             if content_changed:
-                                content = self.add_external_marker(remote_content, source, mapping, remote_file, temp_dir)
+                                content = self.add_external_marker(
+                                    remote_content,
+                                    source,
+                                    mapping,
+                                    remote_file,
+                                    temp_dir,
+                                )
                             else:
                                 # Content unchanged, preserve existing timestamp
-                                content = self.add_external_marker(remote_content, source, mapping, remote_file, temp_dir, existing_timestamp)
+                                content = self.add_external_marker(
+                                    remote_content,
+                                    source,
+                                    mapping,
+                                    remote_file,
+                                    temp_dir,
+                                    existing_timestamp,
+                                )
                         else:
                             content = remote_content
 
@@ -534,7 +622,7 @@ class ExternalDocSyncer:
                                 print(f"    [DRY RUN] Would create: {rel_path}")
                         else:
                             if content_changed or not local_file.exists():
-                                with open(local_file, 'w', encoding='utf-8') as f:
+                                with open(local_file, "w", encoding="utf-8") as f:
                                     f.write(content)
                                 print(f"    Synced: {rel_path}")
                             else:
@@ -542,14 +630,14 @@ class ExternalDocSyncer:
 
                     # Only count as synced if content actually changed
                     if content_changed or not local_file.exists():
-                        stats['synced'] += 1
+                        stats["synced"] += 1
 
                 except (IOError, UnicodeDecodeError) as e:
                     print(f"    Error processing {rel_path}: {e}")
-                    stats['warnings'] += 1
+                    stats["warnings"] += 1
 
         # Check for local files that should be removed
-        for local_file in local_path.rglob('*'):
+        for local_file in local_path.rglob("*"):
             if local_file.is_file() and local_file not in expected_files:
                 # Check if this file should be preserved
                 should_preserve = False
@@ -559,21 +647,29 @@ class ExternalDocSyncer:
                         break
 
                 if should_preserve:
-                    print(f"    Preserved local file: {local_file.relative_to(local_path)}")
+                    print(
+                        f"    Preserved local file: {local_file.relative_to(local_path)}"
+                    )
                     continue
 
                 # Check if file has external marker (indicating it was previously synced)
                 # Only check markdown files for markers
                 if self.has_external_marker(local_file):
                     if self.dry_run:
-                        print(f"    [DRY RUN] Would remove obsolete file: {local_file.relative_to(local_path)}")
+                        print(
+                            f"    [DRY RUN] Would remove obsolete file: {local_file.relative_to(local_path)}"
+                        )
                     else:
-                        print(f"    Removed obsolete external file: {local_file.relative_to(local_path)}")
+                        print(
+                            f"    Removed obsolete external file: {local_file.relative_to(local_path)}"
+                        )
                         local_file.unlink()
-                    stats['removed'] += 1
-                elif local_file.suffix.lower() == '.md':
-                    print(f"    Warning: Local file without external marker: {local_file.relative_to(local_path)}")
-                    stats['warnings'] += 1
+                    stats["removed"] += 1
+                elif local_file.suffix.lower() == ".md":
+                    print(
+                        f"    Warning: Local file without external marker: {local_file.relative_to(local_path)}"
+                    )
+                    stats["warnings"] += 1
 
         # Remove empty directories (skip in dry-run mode)
         if not self.dry_run:
@@ -593,20 +689,20 @@ class ExternalDocSyncer:
 
     def sync_source(self, source_key, source):
         """Sync all mappings for a source repository."""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Syncing: {source['name']}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # Clone repository
         temp_dir = self.clone_repository(source, source_key)
         if not temp_dir:
-            return {'synced': 0, 'removed': 0, 'warnings': 1}
+            return {"synced": 0, "removed": 0, "warnings": 1}
 
-        total_stats = {'synced': 0, 'removed': 0, 'warnings': 0}
+        total_stats = {"synced": 0, "removed": 0, "warnings": 0}
 
         try:
             # Process each mapping
-            for mapping in source.get('mappings', []):
+            for mapping in source.get("mappings", []):
                 print(f"\n  Mapping: {mapping['remote']} -> {mapping['local']}")
                 print(f"  Description: {mapping['description']}")
 
@@ -616,7 +712,9 @@ class ExternalDocSyncer:
                 for key in total_stats:
                     total_stats[key] += stats[key]
 
-                print(f"    Files synced: {stats['synced']}, removed: {stats['removed']}, warnings: {stats['warnings']}")
+                print(
+                    f"    Files synced: {stats['synced']}, removed: {stats['removed']}, warnings: {stats['warnings']}"
+                )
 
         finally:
             # Cleanup temporary directory
@@ -632,9 +730,9 @@ class ExternalDocSyncer:
             print("DRY RUN MODE - No changes will be made")
         print(f"Config: {len(self.config['sources'])} sources configured")
 
-        total_stats = {'synced': 0, 'removed': 0, 'warnings': 0}
+        total_stats = {"synced": 0, "removed": 0, "warnings": 0}
 
-        for source_key, source in self.config['sources'].items():
+        for source_key, source in self.config["sources"].items():
             if source_filter and source_key not in source_filter:
                 continue
 
@@ -645,12 +743,12 @@ class ExternalDocSyncer:
                 total_stats[key] += stats[key]
 
         # Print summary
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         if self.dry_run:
             print("DRY RUN SUMMARY")
         else:
             print("SYNC SUMMARY")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         if self.dry_run:
             print(f"Files that would be synced: {total_stats['synced']}")
@@ -660,8 +758,10 @@ class ExternalDocSyncer:
             print(f"Total files removed: {total_stats['removed']}")
         print(f"Total warnings: {total_stats['warnings']}")
 
-        if total_stats['warnings'] > 0:
-            print(f"\n⚠️  {total_stats['warnings']} warnings encountered. Review the output above.")
+        if total_stats["warnings"] > 0:
+            print(
+                f"\n⚠️  {total_stats['warnings']} warnings encountered. Review the output above."
+            )
             return 1
 
         if self.dry_run:
@@ -673,53 +773,53 @@ class ExternalDocSyncer:
     def list_sources(self):
         """List all configured sources."""
         print("Configured External Sources:")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
-        for source_key, source in self.config['sources'].items():
+        for source_key, source in self.config["sources"].items():
             print(f"\n{source_key}:")
             print(f"  Name: {source['name']}")
             print(f"  Repository: {source['repository']}")
             print(f"  Branch: {source['branch']}")
             print(f"  Mappings: {len(source.get('mappings', []))}")
 
-            for mapping in source.get('mappings', []):
+            for mapping in source.get("mappings", []):
                 print(f"    {mapping['remote']} -> {mapping['local']}")
 
-    def list_local_docs(self, docs_path='docs'):
+    def list_local_docs(self, docs_path="docs"):
         """List documentation that is purely local (not from external sources)."""
         from pathlib import Path
-        
+
         docs_path = Path(docs_path)
         if not docs_path.exists():
             print(f"Error: Documentation directory {docs_path} does not exist")
             return
 
         external_paths = set()
-        for source in self.config['sources'].values():
-            for mapping in source.get('mappings', []):
-                external_paths.add(Path(mapping['local']))
+        for source in self.config["sources"].values():
+            for mapping in source.get("mappings", []):
+                external_paths.add(Path(mapping["local"]))
 
         local_files = []
         external_files = []
 
-        for md_file in docs_path.rglob('*.md'):
-            if md_file.name.startswith('.'):
+        for md_file in docs_path.rglob("*.md"):
+            if md_file.name.startswith("."):
                 continue
-                
+
             has_marker = self.has_external_marker(md_file)
-            
+
             if has_marker:
                 external_files.append(md_file.relative_to(docs_path))
             else:
                 # Check if under any external path but still local
                 is_under_external = any(
-                    self._is_under_path(md_file, ext_path) 
+                    self._is_under_path(md_file, ext_path)
                     for ext_path in external_paths
                 )
                 local_files.append((md_file.relative_to(docs_path), is_under_external))
 
         print("Local Documentation Files (not imported from external sources):")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Total local files: {len(local_files)}")
         print(f"Total external files: {len(external_files)}")
         print()
@@ -743,18 +843,29 @@ class ExternalDocSyncer:
         except ValueError:
             return False
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Sync external documentation')
-    parser.add_argument('--config', '-c', default='external-sources.yml',
-                        help='Configuration file path')
-    parser.add_argument('--sources', '-s', nargs='*',
-                        help='Specific sources to sync (default: all)')
-    parser.add_argument('--list', '-l', action='store_true',
-                        help='List configured sources and exit')
-    parser.add_argument('--list-local', action='store_true',
-                        help='List local documentation files (not from external sources)')
-    parser.add_argument('--dry-run', '-n', action='store_true',
-                        help='Show what would be synced without making changes')
+    parser = argparse.ArgumentParser(description="Sync external documentation")
+    parser.add_argument(
+        "--config", "-c", default="external-sources.yml", help="Configuration file path"
+    )
+    parser.add_argument(
+        "--sources", "-s", nargs="*", help="Specific sources to sync (default: all)"
+    )
+    parser.add_argument(
+        "--list", "-l", action="store_true", help="List configured sources and exit"
+    )
+    parser.add_argument(
+        "--list-local",
+        action="store_true",
+        help="List local documentation files (not from external sources)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        "-n",
+        action="store_true",
+        help="Show what would be synced without making changes",
+    )
 
     args = parser.parse_args()
 
@@ -775,5 +886,6 @@ def main():
         print(f"Error: {e}")
         return 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

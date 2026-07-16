@@ -7,7 +7,7 @@ Documentation for Waldur, an open-source hybrid cloud management platform. This 
 - **admin-guide/** - System deployment, configuration, and administration
 - **developer-guide/** - Architecture, development setup, and contribution guidelines
 - **user-guide/** - End-user functionality and interfaces
-- **integrator-guide/** - API documentation and third-party integrations  
+- **integrator-guide/** - API documentation and third-party integrations
 - **integrations/** - Specific integration implementations
 - **about/** - Project overview, governance, and changelog
 

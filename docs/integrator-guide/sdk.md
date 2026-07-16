@@ -59,7 +59,7 @@ the trick below can be used to disable validation of certificates by SDK, beware
 
 ```python
 client = AuthenticatedClient(
-    base_url="https://internal_api.example.com", 
+    base_url="https://internal_api.example.com",
     token="SuperSecretToken",
     verify_ssl=False,
 )
@@ -69,7 +69,7 @@ Sometimes you may need to authenticate to a server (especially an internal serve
 
 ```python
 client = AuthenticatedClient(
-    base_url="https://internal_api.example.com", 
+    base_url="https://internal_api.example.com",
     token="SuperSecretToken",
     verify_ssl="/path/to/certificate_bundle.pem",
 )

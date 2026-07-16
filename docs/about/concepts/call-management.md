@@ -47,17 +47,17 @@ flowchart TD
     classDef provider fill:#f1f8e9,stroke:#558b2f,stroke-width:2px,color:#000
     classDef system fill:#f5f5f5,stroke:#616161,stroke-width:2px,color:#000
     classDef decision fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#000
-    
+
     %% Row 1: Stakeholders (Horizontal)
     subgraph stakeholders["👥 Key Stakeholders"]
         direction LR
-        R1["👤 Organization Owner<br/> Organization setup & Role assignment"] --> R2["📋 Call organiser<br/>Create & Oversee calls"] 
+        R1["👤 Organization Owner<br/> Organization setup & Role assignment"] --> R2["📋 Call organiser<br/>Create & Oversee calls"]
         R2 --> R3["⚙️ Call manager<br/>Configure & Manage"]
         R3 --> R4["🔍 Reviewer<br/>Evaluate proposals"]
         R4 --> R5["📝 Applicant<br/>Submit proposals"]
         R5 --> R6["✅ Service provider<br/>Approve resources"]
     end
-    
+
     %% Row 2: Setup to Submission (Horizontal)
     subgraph setup["🏗️ Setup & Submission phase"]
         direction LR
@@ -68,7 +68,7 @@ flowchart TD
         E --> F[🚀 Activate<br/>Call]
         F --> G[📝 Applicants<br/>Submit Proposals]
     end
-    
+
     %% Row 3: Review to Completion (Horizontal)
     subgraph review["🔍 Review & Allocation Phase"]
         direction LR
@@ -86,11 +86,11 @@ flowchart TD
         P --> S[📊 Monitor &<br/>Report]
         Q --> S
     end
-    
+
     %% Connections between rows
     stakeholders -.-> A
     G --> H
-    
+
     %% Apply styles
     class R1,A orgOwner
     class R2,B callOrg

@@ -27,7 +27,9 @@ from pathlib import Path
 from typing import Optional
 
 DOCS_BASE = "https://docs.waldur.com/latest/about/CHANGELOG/"
-CHANGELOG_PATH = Path(__file__).resolve().parent.parent / "docs" / "about" / "CHANGELOG.md"
+CHANGELOG_PATH = (
+    Path(__file__).resolve().parent.parent / "docs" / "about" / "CHANGELOG.md"
+)
 
 # Slack Block Kit limits
 MAX_HEADER_CHARS = 150
@@ -132,7 +134,10 @@ def build_blocks(entry: str) -> tuple[list[dict], str]:
 
     subs = split_subsections(entry)
     blocks: list[dict] = [
-        {"type": "header", "text": {"type": "plain_text", "text": trim(title, MAX_HEADER_CHARS)}}
+        {
+            "type": "header",
+            "text": {"type": "plain_text", "text": trim(title, MAX_HEADER_CHARS)},
+        }
     ]
 
     # Each subsection becomes its own section block so each fits within the
@@ -172,7 +177,10 @@ def build_blocks(entry: str) -> tuple[list[dict], str]:
 
 
 def _section(text: str) -> dict:
-    return {"type": "section", "text": {"type": "mrkdwn", "text": trim(text, MAX_SECTION_CHARS)}}
+    return {
+        "type": "section",
+        "text": {"type": "mrkdwn", "text": trim(text, MAX_SECTION_CHARS)},
+    }
 
 
 def _activity_summary(body: str) -> str:
@@ -199,7 +207,10 @@ def post(webhook_url: str, blocks: list[dict], fallback_text: str) -> bool:
                 print(f"slack response: {body}", file=sys.stderr)
             return True
     except urllib.error.HTTPError as e:
-        print(f"slack webhook returned {e.code}: {e.read().decode()[:300]}", file=sys.stderr)
+        print(
+            f"slack webhook returned {e.code}: {e.read().decode()[:300]}",
+            file=sys.stderr,
+        )
     except urllib.error.URLError as e:
         print(f"slack webhook error: {e}", file=sys.stderr)
     return False
