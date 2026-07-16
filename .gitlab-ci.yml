@@ -5,6 +5,14 @@ include:
     file: "/templates/test/vulnerability-scan.yml"
   - .gitlab-ci-external-sync.yml
 
+variables:
+  BUILD_SDK:
+    value: "false"
+    options:
+      - "false"
+      - "true"
+    description: "Set to true to run only the SDK schema and client generation stage."
+
 stages:
   - test
   - release
@@ -30,6 +38,7 @@ stages:
 
 .rules-sdk-release:
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "web" && $BUILD_SDK == "true"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $BUILD_SDK == "true"'
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   variables:
@@ -58,6 +67,8 @@ Run linters:
   image: ghcr.io/astral-sh/uv:python3.13-bookworm
   stage: test
   rules:
+    - if: '$BUILD_SDK == "true"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
@@ -67,6 +78,13 @@ Scan Python dependencies:
   extends: .Vulnerability scan template
   variables:
     LOCKFILE_PATH: "uv.lock"
+  rules:
+    - if: '$BUILD_SDK == "true"'
+      when: never
+    - if: '$SKIP_TESTS == "true" || $SKIP_TESTS == "yes"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 .setup_mkdocs_steps: &setup_mkdocs_steps
   - pip install uv
@@ -87,6 +105,8 @@ Test mkdocs:
   # Also gate master pushes (e.g. release changelog commits), not just MRs —
   # otherwise a broken relative link lands on master and fails every open MR.
   rules:
+    - if: '$BUILD_SDK == "true"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "master"'
   variables:
@@ -155,6 +175,9 @@ Generate OpenAPI schema:
   variables:
     MASTERMIND_REF: "develop"
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "web" && $BUILD_SDK == "true"'
+      variables:
+        MASTERMIND_REF: "develop"
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $BUILD_SDK == "true"'
       variables:
         MASTERMIND_REF: "develop"
@@ -310,6 +333,8 @@ Deploy MkDocs pages:
     - git branch -D gh-pages || true
     - git fetch origin gh-pages:gh-pages || true
   rules:
+    - if: '$BUILD_SDK == "true"'
+      when: never
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   needs:
