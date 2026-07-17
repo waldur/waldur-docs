@@ -187,14 +187,63 @@ Generate OpenAPI schema:
   needs: []
   script:
     - |
-      apk add --no-cache curl
+      apk add --no-cache curl jq
       fetch_schema() {
         local filename="$1"
-        if curl --fail --show-error --silent --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate+OpenAPI+schema" -o "${filename}"; then
-          echo "Successfully fetched ${filename} using JOB-TOKEN."
+        
+        download_with_token() {
+          local token_header="$1"
+          local token_val="$2"
+          
+          # Try direct download by ref first (simplest, uses latest successful pipeline)
+          echo "Attempting direct download by ref $MASTERMIND_REF..."
+          if curl --fail --show-error --silent --header "${token_header}: ${token_val}" \
+            "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate+OpenAPI+schema" -o "${filename}"; then
+            echo "Successfully fetched ${filename} using direct ref download."
+            return 0
+          fi
+          
+          # Fallback: Query pipelines to find the latest successful pipeline ID on the ref
+          echo "Direct download failed. Querying latest successful pipeline for ref $MASTERMIND_REF..."
+          local pipelines_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines?ref=$MASTERMIND_REF&status=success"
+          local pipelines_json
+          pipelines_json=$(curl --fail --silent --header "${token_header}: ${token_val}" "$pipelines_url" 2>/dev/null)
+          
+          if [ -n "$pipelines_json" ] && [ "$pipelines_json" != "[]" ]; then
+            local pipeline_id
+            pipeline_id=$(echo "$pipelines_json" | jq -r '.[0].id' 2>/dev/null)
+            if [ -n "$pipeline_id" ] && [ "$pipeline_id" != "null" ]; then
+              echo "Found successful pipeline ID: $pipeline_id. Resolving job ID..."
+              local jobs_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines/${pipeline_id}/jobs"
+              local jobs_json
+              jobs_json=$(curl --fail --silent --header "${token_header}: ${token_val}" "$jobs_url" 2>/dev/null)
+              if [ -n "$jobs_json" ]; then
+                local job_id
+                job_id=$(echo "$jobs_json" | jq -r '.[] | select(.name == "Generate OpenAPI schema") | .id' 2>/dev/null)
+                if [ -n "$job_id" ] && [ "$job_id" != "null" ]; then
+                  echo "Found job ID: $job_id. Downloading artifact..."
+                  if curl --fail --show-error --silent --header "${token_header}: ${token_val}" \
+                    "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/${job_id}/artifacts/raw/${filename}" -o "${filename}"; then
+                    echo "Successfully fetched ${filename} using job ID."
+                    return 0
+                  fi
+                fi
+              fi
+            fi
+          fi
+          return 1
+        }
+
+        if download_with_token "JOB-TOKEN" "$CI_JOB_TOKEN"; then
+          return 0
         else
-          echo "JOB-TOKEN fetch failed for ${filename}, trying GITLAB_TOKEN..."
-          curl --fail --show-error --silent --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate+OpenAPI+schema" -o "${filename}"
+          echo "JOB-TOKEN download failed, trying GITLAB_TOKEN..."
+          if download_with_token "PRIVATE-TOKEN" "$GITLAB_TOKEN"; then
+            return 0
+          else
+            echo "ERROR: Failed to fetch ${filename}"
+            return 1
+          fi
         fi
       }
       fetch_schema waldur-openapi-schema.yaml
