@@ -211,33 +211,35 @@ Generate OpenAPI schema:
             return 0
           fi
           
-          # 3. Fallback: Query pipelines to find the latest successful pipeline ID on the ref
-          echo "Direct download options failed. Querying latest successful pipeline for ref $MASTERMIND_REF..."
-          local pipelines_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines?ref=$MASTERMIND_REF&status=success"
+          # 3. Fallback: Query pipelines to find the latest successful job on the ref
+          echo "Direct download options failed. Querying pipelines for ref $MASTERMIND_REF..."
+          local pipelines_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines?ref=$MASTERMIND_REF"
           local pipelines_json
           pipelines_json=$(curl --fail --silent --header "${token_header}: ${token_val}" "$pipelines_url" 2>/dev/null)
           
           if [ -n "$pipelines_json" ] && [ "$pipelines_json" != "[]" ]; then
-            local pipeline_id
-            pipeline_id=$(echo "$pipelines_json" | jq -r '.[0].id' 2>/dev/null)
-            if [ -n "$pipeline_id" ] && [ "$pipeline_id" != "null" ]; then
-              echo "Found successful pipeline ID: $pipeline_id. Resolving job ID..."
-              local jobs_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines/${pipeline_id}/jobs"
-              local jobs_json
-              jobs_json=$(curl --fail --silent --header "${token_header}: ${token_val}" "$jobs_url" 2>/dev/null)
-              if [ -n "$jobs_json" ]; then
-                local job_id
-                job_id=$(echo "$jobs_json" | jq -r '.[] | select(.name == "Generate OpenAPI schema") | .id' 2>/dev/null)
-                if [ -n "$job_id" ] && [ "$job_id" != "null" ]; then
-                  echo "Found job ID: $job_id. Downloading artifact..."
-                  if curl --fail --show-error --silent -L --header "${token_header}: ${token_val}" \
-                    "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/${job_id}/artifacts/raw/${filename}" -o "${filename}"; then
-                    echo "Successfully fetched ${filename} using job ID."
-                    return 0
+            local pipeline_ids
+            pipeline_ids=$(echo "$pipelines_json" | jq -r '.[0:5][].id' 2>/dev/null)
+            for pipeline_id in $pipeline_ids; do
+              if [ -n "$pipeline_id" ] && [ "$pipeline_id" != "null" ]; then
+                echo "Checking pipeline ID: $pipeline_id for successful Generate OpenAPI schema job..."
+                local jobs_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines/${pipeline_id}/jobs"
+                local jobs_json
+                jobs_json=$(curl --fail --silent --header "${token_header}: ${token_val}" "$jobs_url" 2>/dev/null)
+                if [ -n "$jobs_json" ]; then
+                  local job_id
+                  job_id=$(echo "$jobs_json" | jq -r '.[] | select(.name == "Generate OpenAPI schema" and .status == "success") | .id' 2>/dev/null)
+                  if [ -n "$job_id" ] && [ "$job_id" != "null" ]; then
+                    echo "Found job ID: $job_id in pipeline $pipeline_id. Downloading artifact..."
+                    if curl --fail --show-error --silent -L --header "${token_header}: ${token_val}" \
+                      "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/${job_id}/artifacts/raw/${filename}" -o "${filename}"; then
+                      echo "Successfully fetched ${filename} using job ID."
+                      return 0
+                    fi
                   fi
                 fi
               fi
-            fi
+            done
           fi
           return 1
         }
