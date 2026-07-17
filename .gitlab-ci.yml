@@ -195,16 +195,24 @@ Generate OpenAPI schema:
           local token_header="$1"
           local token_val="$2"
           
-          # Try direct download by ref first (simplest, uses latest successful pipeline)
-          echo "Attempting direct download by ref $MASTERMIND_REF..."
-          if curl --fail --show-error --silent --header "${token_header}: ${token_val}" \
-            "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate+OpenAPI+schema" -o "${filename}"; then
-            echo "Successfully fetched ${filename} using direct ref download."
+          # 1. Try direct API download by ref (simplest, uses latest successful pipeline)
+          echo "Attempting direct API download by ref $MASTERMIND_REF..."
+          if curl --fail --show-error --silent -L --header "${token_header}: ${token_val}" \
+            "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate%20OpenAPI%20schema" -o "${filename}"; then
+            echo "Successfully fetched ${filename} using direct API ref download."
             return 0
           fi
           
-          # Fallback: Query pipelines to find the latest successful pipeline ID on the ref
-          echo "Direct download failed. Querying latest successful pipeline for ref $MASTERMIND_REF..."
+          # 2. Try direct Web URL download by ref (works with repo-only tokens)
+          echo "Direct API download failed. Attempting web URL download by ref $MASTERMIND_REF..."
+          if curl --fail --show-error --silent -L --header "${token_header}: ${token_val}" \
+            "https://code.opennodecloud.com/waldur/waldur-mastermind/-/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate%20OpenAPI%20schema" -o "${filename}"; then
+            echo "Successfully fetched ${filename} using web URL ref download."
+            return 0
+          fi
+          
+          # 3. Fallback: Query pipelines to find the latest successful pipeline ID on the ref
+          echo "Direct download options failed. Querying latest successful pipeline for ref $MASTERMIND_REF..."
           local pipelines_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines?ref=$MASTERMIND_REF&status=success"
           local pipelines_json
           pipelines_json=$(curl --fail --silent --header "${token_header}: ${token_val}" "$pipelines_url" 2>/dev/null)
@@ -222,7 +230,7 @@ Generate OpenAPI schema:
                 job_id=$(echo "$jobs_json" | jq -r '.[] | select(.name == "Generate OpenAPI schema") | .id' 2>/dev/null)
                 if [ -n "$job_id" ] && [ "$job_id" != "null" ]; then
                   echo "Found job ID: $job_id. Downloading artifact..."
-                  if curl --fail --show-error --silent --header "${token_header}: ${token_val}" \
+                  if curl --fail --show-error --silent -L --header "${token_header}: ${token_val}" \
                     "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/${job_id}/artifacts/raw/${filename}" -o "${filename}"; then
                     echo "Successfully fetched ${filename} using job ID."
                     return 0
