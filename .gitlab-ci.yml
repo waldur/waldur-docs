@@ -193,22 +193,44 @@ Generate OpenAPI schema:
       fetch_schema() {
         local filename="$1"
         
+        # A GitLab sign-in/error page is returned with HTTP 200, so curl --fail
+        # does not reject it. Validate that a downloaded file is actually an
+        # OpenAPI document, otherwise the job would "succeed" with an HTML page
+        # and poison the downstream SDK codegen.
+        is_schema_file() {
+          local f="$1"
+          [ -s "$f" ] || return 1
+          case "$(head -c 64 "$f" | tr -d '[:space:]')" in
+            '<'*) return 1 ;;
+          esac
+          grep -qE '^(openapi|swagger)[[:space:]]*:' "$f" || return 1
+          return 0
+        }
+
+        try_url() {
+          local url="$1" header="$2" val="$3"
+          if curl --fail --show-error --silent -L --header "${header}: ${val}" "$url" -o "${filename}" \
+            && is_schema_file "${filename}"; then
+            return 0
+          fi
+          rm -f "${filename}"
+          return 1
+        }
+
         download_with_token() {
           local token_header="$1"
           local token_val="$2"
           
           # 1. Try direct API download by ref (simplest, uses latest successful pipeline)
           echo "Attempting direct API download by ref $MASTERMIND_REF..."
-          if curl --fail --show-error --silent -L --header "${token_header}: ${token_val}" \
-            "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate%20OpenAPI%20schema" -o "${filename}"; then
+          if try_url "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate%20OpenAPI%20schema" "$token_header" "$token_val"; then
             echo "Successfully fetched ${filename} using direct API ref download."
             return 0
           fi
           
           # 2. Try direct Web URL download by ref (works with repo-only tokens)
           echo "Direct API download failed. Attempting web URL download by ref $MASTERMIND_REF..."
-          if curl --fail --show-error --silent -L --header "${token_header}: ${token_val}" \
-            "https://code.opennodecloud.com/waldur/waldur-mastermind/-/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate%20OpenAPI%20schema" -o "${filename}"; then
+          if try_url "https://code.opennodecloud.com/waldur/waldur-mastermind/-/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate%20OpenAPI%20schema" "$token_header" "$token_val"; then
             echo "Successfully fetched ${filename} using web URL ref download."
             return 0
           fi
@@ -233,8 +255,7 @@ Generate OpenAPI schema:
                   job_id=$(echo "$jobs_json" | jq -r '.[] | select(.name == "Generate OpenAPI schema" and .status == "success") | .id' 2>/dev/null)
                   if [ -n "$job_id" ] && [ "$job_id" != "null" ]; then
                     echo "Found job ID: $job_id in pipeline $pipeline_id. Downloading artifact..."
-                    if curl --fail --show-error --silent -L --header "${token_header}: ${token_val}" \
-                      "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/${job_id}/artifacts/raw/${filename}" -o "${filename}"; then
+                    if try_url "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/${job_id}/artifacts/raw/${filename}" "$token_header" "$token_val"; then
                       echo "Successfully fetched ${filename} using job ID."
                       return 0
                     fi
@@ -258,8 +279,8 @@ Generate OpenAPI schema:
           fi
         fi
       }
-      fetch_schema waldur-openapi-schema.yaml
-      fetch_schema waldur-typescript-schema.yaml
+      fetch_schema waldur-openapi-schema.yaml || exit 1
+      fetch_schema waldur-typescript-schema.yaml || exit 1
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
         echo "Generated OpenAPI schema for ${CI_COMMIT_TAG}, committing to waldur-docs"
