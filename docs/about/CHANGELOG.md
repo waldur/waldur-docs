@@ -1,5 +1,27 @@
 # Changelog
 
+## 8.1.0-rc.16 - 2026-07-19
+
+### Highlights
+
+This release makes supporting documents easier to find on public offering pages. Prospective customers browsing an offering can now see its documents tab directly in the public view, so they can review terms, guides, and other reference material before requesting access — without needing to sign in first. The documents view is also better behaved, staying hidden when an offering has no documents to show.
+
+### What's New
+
+- Offering documents are now available directly from the public view of an offering, letting visitors browse attached documents without logging in.
+
+### Improvements
+
+- The public documents tab now appears regardless of whether pricing is concealed, and the documents dialog handles its open/close state more cleanly.
+- The documents tab is automatically hidden on the public offering page when no documents have been attached, avoiding an empty section.
+- Added test coverage for the offering documents view, including adding and removing documents.
+
+### Core Component Activity
+
+- **Waldur Homeport**: [5 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.15...8.1.0-rc.16) - Exposed offering documents in the public view, refined its visibility and dialog behavior, and added test coverage.
+
+---
+
 ## 8.1.0-rc.15 - 2026-07-19
 
 ### Highlights
