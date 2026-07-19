@@ -1,5 +1,45 @@
 # Changelog
 
+## 8.1.0-rc.15 - 2026-07-19
+
+### Highlights
+
+This release strengthens access control and marketplace governance. Providers can now restrict resource and offering access to specific network subnets, and restricted offerings are automatically hidden from users who cannot order them. Organizations gain scoped custom roles for finer-grained permission management, and operators get searchable chat history plus richer logging around maintenance announcements. A batch of performance fixes removes N+1 queries and a multi-second table refresh hang, making large deployments noticeably more responsive.
+
+### What's New
+
+- Providers can define allowed access subnets for resources and offerings, with an offering-level opt-in and management UI for default and per-resource subnet lists.
+- Organizations can now create and manage organization-scoped custom roles, with matching UI for cloning, editing, and assigning them.
+- Restricted marketplace offerings that a user cannot order are now hidden from the catalog, the deploy action is disabled for inaccessible offerings, and categories can be filtered by accessibility.
+- Chat conversation content is now full-text searchable, backed by database GIN indexes.
+- Maintenance announcements now record creation and state-change events, and the announcement actions and success notifications were corrected.
+- Marketplace offerings support uploading documentation files that are shown to end users on the public offering page.
+- LLM inference offerings gain a dedicated inference service view with an interactive playground for testing models.
+- Provider offering Backend ID rules are now editable directly in the Integration tab.
+
+### Improvements
+
+- The reviewer dashboard pages (assignments, calls, invitations, profile) were polished per design review.
+- The `/api/users/me` and `/api/roles` payloads were trimmed to return only needed fields, reducing response size, with org-group role details fetched from the dedicated user-permissions endpoint.
+- User name and surname sync is now skipped for users whose identity is already provided via eduTEAMS.
+
+### Bug Fixes
+
+- Fixed a roughly 8-second table refresh hang caused by an aborted-request retry storm.
+- Reconciled Instance and Volume resources left orphaned under terminated tenants.
+- Removed N+1 query patterns in category component usage writes and organization-group resource counts.
+- URL-restored table filters are now scoped to fields owned by each table, preventing cross-table filter leakage.
+- The customer quotas report now loads correctly by seeding a default quota name.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [18 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.14...8.1.0-rc.15) - access subnets, organization-scoped roles, chat search, maintenance logging, and query performance fixes.
+- **Waldur Homeport**: [21 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.14...8.1.0-rc.15) - access subnet UI, custom roles UI, inference playground, offering documents, and table filter fixes.
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.14...8.1.0-rc.15) - maintenance updates only.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.0-rc.14...8.1.0-rc.15) - maintenance updates only.
+
+---
+
 ## 8.1.0-rc.14 - 2026-07-14
 
 ### Highlights
