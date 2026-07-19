@@ -311,9 +311,13 @@ Release Waldur Mastermind:
     branch: develop
     strategy: depend
 
+# Runs in the `release` stage (alongside Mastermind), not `infrastructure`, so the
+# image producers always finish before the consumers (Docker Compose, Helm) that
+# pull those tags. Prevents consumers from pinning/pulling an image that a failed
+# or incomplete component release never published.
 Release Waldur Homeport:
   extends: .rules-rc-release
-  stage: infrastructure
+  stage: release
   trigger:
     project: waldur/waldur-homeport
     branch: develop
