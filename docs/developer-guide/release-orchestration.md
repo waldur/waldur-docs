@@ -29,11 +29,12 @@ This ensures:
 
 ### SDKs & client libraries
 
-- **py-client** — Python SDK (hosted on GitHub)
-- **js-client** — TypeScript/JavaScript SDK (hosted on GitHub)
-- **go-client** — Go SDK (hosted on GitHub)
-- **terraform-provider-waldur-generator** — Terraform Provider (hosted on GitHub)
-- **ansible-waldur-generator** — Ansible Collection (hosted on GitHub)
+- **py-client** — Python SDK
+- **js-client** — TypeScript/JavaScript SDK
+- **go-client** — Go SDK
+- **rs-client** — Rust SDK
+- **terraform-provider-waldur-generator** — Terraform Provider
+- **ansible-waldur-generator** — Ansible Collection
 
 ## Release Process
 
@@ -86,8 +87,9 @@ graph TD
         S2(Generate and release Python SDK)
         S3(Generate and release TypeScript SDK)
         S4(Generate and release Go SDK)
-        S5(Generate and release Terraform Provider)
-        S6(Generate and release Ansible Collection)
+        S5(Generate and release Rust SDK)
+        S6(Generate and release Terraform Provider)
+        S7(Generate and release Ansible Collection)
     end
 
     subgraph 5. Infrastructure Stage
@@ -105,8 +107,8 @@ graph TD
 
     T --> C1
     C1 --> O
-    O --> S1 & S2 & S3 & S4 & S5 & S6
-    S1 & S2 & S3 & S4 & S5 & S6 --> D1 & D2 & D3 & D4
+    O --> S1 & S2 & S3 & S4 & S5 & S6 & S7
+    S1 & S2 & S3 & S4 & S5 & S6 & S7 --> D1 & D2 & D3 & D4
     D1 & D2 & D3 & D4 --> CH
     CH --> MK
     CH --> SL
@@ -122,11 +124,40 @@ The orchestrator fires a multi-project trigger to `waldur-mastermind`. This ensu
 
 ### Stage 3: `schema` (Schema Generation)
 
-The pipeline downloads the `waldur-openapi-schema.yaml` and `waldur-typescript-schema.yaml` generated in the preceding `release` stage by `waldur-mastermind`'s pipeline (using GitLab's cross-project artifacts `needs` feature). It then commits the versioned schema file back to `waldur-docs`.
+The pipeline fetches the `waldur-openapi-schema.yaml` (and, where needed, `waldur-typescript-schema.yaml`) generated in the preceding `release` stage by `waldur-mastermind`'s pipeline, using the shared `.fetch-openapi-schema` CI template (see [Shared schema-fetch template](#shared-schema-fetch-template) below). It then commits the versioned schema file back to `waldur-docs`.
 
 ### Stage 4: `sdks` (First-Layer Consumers)
 
-With the OpenAPI schema generated, the pipeline triggers the first-layer consumers of that schema: SDKs, Terraform, Ansible, and API Docs. These pipelines ingest the schema to generate their codebases and publish to package registries (NPM, PyPI, etc.).
+With the OpenAPI schema generated, the pipeline triggers the first-layer consumers of that schema: SDKs (Python, TypeScript, Go, Rust), Terraform, Ansible, and API Docs. These pipelines ingest the schema (each via the same `.fetch-openapi-schema` template) to generate their codebases and publish to package registries (NPM, PyPI, etc.) where applicable. The Rust SDK does not yet publish to crates.io — it only commits generated code to `rs-client`'s `main` branch (and a tag on stable releases), same as `go-client`.
+
+### Triggering an individual SDK build
+
+Two ways to exercise SDK generation without doing a full release:
+
+- **Orchestrated, all SDKs at once**: on `waldur-docs`, use GitLab's **Run pipeline** with the CI/CD variable `BUILD_SDK=true` on the `master` branch. This satisfies the `.rules-sdk-release` rule shared by every `Generate and release *` job, so it fans out to Python, TypeScript, Go, Rust, Terraform, and Ansible simultaneously — there is no per-SDK toggle.
+- **Standalone, a single SDK**: go directly to that SDK's own repository and use **Run pipeline** there. This currently only works for `rs-client`, whose `Build Rust SDK` / `Release Rust SDK` jobs accept `CI_PIPELINE_SOURCE == "web"` in addition to `"pipeline"`/`"trigger"`. No variables are needed; since `RELEASE_VERSION` is empty on a manual run, it takes the nightly-commit path (no tag). `go-client`, `py-client`, and `js-client` do not have this enabled — their build jobs only run when triggered as a child of `waldur-docs`' pipeline (`"pipeline"`/`"trigger"` sources), so running their pipeline directly from their own project does nothing beyond the always-on schema fetch.
+
+### Shared schema-fetch template
+
+Every downstream repository that needs the OpenAPI schema (`waldur-docs`, `rs-client`, `go-client`, `py-client`, `js-client`, `api-docs`, `ansible-waldur-generator`, `terraform-provider-waldur-generator`) fetches it the same way, via `extends: .fetch-openapi-schema` (defined in `waldur-pipelines/templates/utils/release-utils.yml`). Consumers just declare a `Fetch OpenAPI schema` job and depend on its artifacts:
+
+```yaml
+Fetch OpenAPI schema:
+  extends: .fetch-openapi-schema
+
+Build My SDK:
+  needs:
+    - job: Fetch OpenAPI schema
+      artifacts: true
+```
+
+The template is a self-contained Python script with no bash/curl/jq dependency. It:
+
+1. **For pipeline/trigger/release runs**, looks up a successful `Generate OpenAPI schema` job in `waldur-mastermind`'s pipelines via the GitLab API, downloading and extracting its artifacts. Requests try `CI_JOB_TOKEN` first and fall back to the `GITLAB_TOKEN` CI/CD variable on an auth failure, since a job token's cross-project access is scoped per project and isn't always allow-listed.
+2. **Otherwise (or as a fallback)**, resolves the latest published schema version from the **public GitHub mirror** of `waldur-docs` (`api.github.com` + `raw.githubusercontent.com`) and downloads it from there — deliberately not the internal GitLab API, which 404s for repos whose job tokens aren't cross-project allow-listed (GitLab returns 404 rather than 403 on scope violations, to avoid leaking project existence).
+3. **Validates** that whatever was downloaded is actually an OpenAPI document before declaring success, rejecting HTML sign-in/error pages that GitLab can return with an HTTP 200.
+
+Set `DOWNLOAD_TYPESCRIPT_SCHEMA: "true"` in the job's `variables` to also produce `waldur-typescript-schema.yaml` as an artifact (used by `js-client`).
 
 ### Stage 5: `infrastructure` (Second-Layer Consumers & Infrastructure)
 
