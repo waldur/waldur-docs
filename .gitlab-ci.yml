@@ -3,6 +3,8 @@ include:
     file: "/templates/test/check-merge-compatibility.yml"
   - project: "waldur/waldur-pipelines"
     file: "/templates/test/vulnerability-scan.yml"
+  - project: "waldur/waldur-pipelines"
+    file: "/templates/utils/release-utils.yml"
   - .gitlab-ci-external-sync.yml
 
 variables:
@@ -47,10 +49,7 @@ stages:
 .sdk-trigger-base:
   extends: .rules-sdk-release
   stage: sdks
-  needs:
-    - Generate OpenAPI schema
-  variables:
-    PARENT_PIPELINE_ID: $CI_PIPELINE_ID
+  needs: []
 
 #Lint MD files:
 #  image: registry.hpc.ut.ee/mirror/library/node:lts-alpine
@@ -169,118 +168,14 @@ Test changelog generation:
 #    back to waldur-docs during stable releases, which trigger jobs cannot do.
 # 3. Keeps orchestrator runner images lightweight (alpine/git instead of python + system deps).
 Generate OpenAPI schema:
-  extends: .rules-sdk-release
-  image:
-    name: registry.hpc.ut.ee/mirror/alpine/git:latest
-    entrypoint: [""]
+  extends: .fetch-openapi-schema
   stage: schema
   variables:
-    MASTERMIND_REF: "develop"
+    DOWNLOAD_TYPESCRIPT_SCHEMA: "true"
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "web" && $BUILD_SDK == "true"'
-      variables:
-        MASTERMIND_REF: "develop"
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $BUILD_SDK == "true"'
-      variables:
-        MASTERMIND_REF: "develop"
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
-      variables:
-        MASTERMIND_REF: "$CI_COMMIT_TAG"
-  needs: []
   script:
-    - |
-      apk add --no-cache curl jq
-      fetch_schema() {
-        local filename="$1"
-        
-        # A GitLab sign-in/error page is returned with HTTP 200, so curl --fail
-        # does not reject it. Validate that a downloaded file is actually an
-        # OpenAPI document, otherwise the job would "succeed" with an HTML page
-        # and poison the downstream SDK codegen.
-        is_schema_file() {
-          local f="$1"
-          [ -s "$f" ] || return 1
-          case "$(head -c 64 "$f" | tr -d '[:space:]')" in
-            '<'*) return 1 ;;
-          esac
-          grep -qE '^(openapi|swagger)[[:space:]]*:' "$f" || return 1
-          return 0
-        }
-
-        try_url() {
-          local url="$1" header="$2" val="$3"
-          if curl --fail --show-error --silent -L --header "${header}: ${val}" "$url" -o "${filename}" \
-            && is_schema_file "${filename}"; then
-            return 0
-          fi
-          rm -f "${filename}"
-          return 1
-        }
-
-        download_with_token() {
-          local token_header="$1"
-          local token_val="$2"
-          
-          # 1. Try direct API download by ref (simplest, uses latest successful pipeline)
-          echo "Attempting direct API download by ref $MASTERMIND_REF..."
-          if try_url "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate%20OpenAPI%20schema" "$token_header" "$token_val"; then
-            echo "Successfully fetched ${filename} using direct API ref download."
-            return 0
-          fi
-          
-          # 2. Try direct Web URL download by ref (works with repo-only tokens)
-          echo "Direct API download failed. Attempting web URL download by ref $MASTERMIND_REF..."
-          if try_url "https://code.opennodecloud.com/waldur/waldur-mastermind/-/jobs/artifacts/$MASTERMIND_REF/raw/${filename}?job=Generate%20OpenAPI%20schema" "$token_header" "$token_val"; then
-            echo "Successfully fetched ${filename} using web URL ref download."
-            return 0
-          fi
-          
-          # 3. Fallback: Query pipelines to find the latest successful job on the ref
-          echo "Direct download options failed. Querying pipelines for ref $MASTERMIND_REF..."
-          local pipelines_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines?ref=$MASTERMIND_REF"
-          local pipelines_json
-          pipelines_json=$(curl --fail --silent --header "${token_header}: ${token_val}" "$pipelines_url" 2>/dev/null)
-          
-          if [ -n "$pipelines_json" ] && [ "$pipelines_json" != "[]" ]; then
-            local pipeline_ids
-            pipeline_ids=$(echo "$pipelines_json" | jq -r '.[0:5][].id' 2>/dev/null)
-            for pipeline_id in $pipeline_ids; do
-              if [ -n "$pipeline_id" ] && [ "$pipeline_id" != "null" ]; then
-                echo "Checking pipeline ID: $pipeline_id for successful Generate OpenAPI schema job..."
-                local jobs_url="https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/pipelines/${pipeline_id}/jobs"
-                local jobs_json
-                jobs_json=$(curl --fail --silent --header "${token_header}: ${token_val}" "$jobs_url" 2>/dev/null)
-                if [ -n "$jobs_json" ]; then
-                  local job_id
-                  job_id=$(echo "$jobs_json" | jq -r '.[] | select(.name == "Generate OpenAPI schema" and .status == "success") | .id' 2>/dev/null)
-                  if [ -n "$job_id" ] && [ "$job_id" != "null" ]; then
-                    echo "Found job ID: $job_id in pipeline $pipeline_id. Downloading artifact..."
-                    if try_url "https://code.opennodecloud.com/api/v4/projects/waldur%2Fwaldur-mastermind/jobs/${job_id}/artifacts/raw/${filename}" "$token_header" "$token_val"; then
-                      echo "Successfully fetched ${filename} using job ID."
-                      return 0
-                    fi
-                  fi
-                fi
-              fi
-            done
-          fi
-          return 1
-        }
-
-        if download_with_token "JOB-TOKEN" "$CI_JOB_TOKEN"; then
-          return 0
-        else
-          echo "JOB-TOKEN download failed, trying GITLAB_TOKEN..."
-          if download_with_token "PRIVATE-TOKEN" "$GITLAB_TOKEN"; then
-            return 0
-          else
-            echo "ERROR: Failed to fetch ${filename}"
-            return 1
-          fi
-        fi
-      }
-      fetch_schema waldur-openapi-schema.yaml || exit 1
-      fetch_schema waldur-typescript-schema.yaml || exit 1
+    - !reference [.fetch-openapi-schema, script]
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
         echo "Generated OpenAPI schema for ${CI_COMMIT_TAG}, committing to waldur-docs"
@@ -295,11 +190,6 @@ Generate OpenAPI schema:
         git add docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml
         git diff --cached --quiet && echo "OpenAPI schema already committed" || (git commit -m "Add OpenAPI schema for ${CI_COMMIT_TAG}" && git pull --rebase origin master && git push -o ci.skip origin master)
       fi
-  artifacts:
-    paths:
-      - waldur-openapi-schema.yaml
-      - waldur-typescript-schema.yaml
-    expire_in: 1 day
 
 Release Waldur Mastermind:
   extends: .rules-rc-release
