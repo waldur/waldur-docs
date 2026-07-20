@@ -35,6 +35,11 @@ This ensures:
 - **rs-client** — Rust SDK
 - **terraform-provider-waldur-generator** — Terraform Provider
 - **ansible-waldur-generator** — Ansible Collection
+- **waldur-cli-generator** — scriptable CLI (generates
+  [waldur-cli](https://code.opennodecloud.com/waldur/waldur-cli) by parsing rs-client's
+  generated methods, not the OpenAPI schema directly). A second-layer consumer, not a
+  first-layer SDK: it needs rs-client's *published* output, so it's triggered from the
+  `infrastructure` stage (same reasoning as Homeport/Prometheus-exporter below), not `sdks`.
 
 ## Release Process
 
@@ -97,6 +102,7 @@ graph TD
         D2(Release Prometheus Exporter)
         D3(Release Helm)
         D4(Release Docker Compose)
+        D5(Generate and release Waldur CLI)
     end
 
     subgraph 6. Finalize Stage
@@ -108,8 +114,8 @@ graph TD
     T --> C1
     C1 --> O
     O --> S1 & S2 & S3 & S4 & S5 & S6 & S7
-    S1 & S2 & S3 & S4 & S5 & S6 & S7 --> D1 & D2 & D3 & D4
-    D1 & D2 & D3 & D4 --> CH
+    S1 & S2 & S3 & S4 & S5 & S6 & S7 --> D1 & D2 & D3 & D4 & D5
+    D1 & D2 & D3 & D4 & D5 --> CH
     CH --> MK
     CH --> SL
 ```
