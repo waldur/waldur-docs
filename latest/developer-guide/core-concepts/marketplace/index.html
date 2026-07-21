@@ -8369,6 +8369,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/organization-roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Organization roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/presets/" class="md-nav__link">
         
   
@@ -12820,6 +12848,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/customer-organization/resource-access-subnets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resource access subnets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/customer-organization/resource_management/" class="md-nav__link">
         
   
@@ -13834,6 +13890,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/staff-users/organization-roles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Organization-scoped roles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/staff-users/organization_onboarding/" class="md-nav__link">
         
   
@@ -14041,10 +14125,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6_19">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6_20">
         
           
-          <label class="md-nav__link" for="__nav_6_6_19" id="__nav_6_6_19_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_6_20" id="__nav_6_6_20_label" tabindex="0">
             
   
   
@@ -14062,8 +14146,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_6_19_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6_19">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_6_20_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6_20">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -14072,6 +14156,34 @@
 
           </label>
           <ul class="md-nav__list">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/staff-users/service-desk/ai-assistant-log-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reviewing AI Assistant chat sessions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -15250,14 +15362,14 @@
     end
 
     subgraph "2. Signal Handling"
-        TR_SaveResource -- emits `post_save` signal --&gt; SH_ResourceHandler(`process_billing_on_resource_save`)
-        TR_SaveUsage -- emits `post_save` signal --&gt; SH_UsageHandler(`BillingUsageProcessor.update_invoice_when_usage_is_reported`)
+        TR_SaveResource --&gt;|emits post_save signal| SH_ResourceHandler(`process_billing_on_resource_save`)
+        TR_SaveUsage --&gt;|emits post_save signal| SH_UsageHandler(`BillingUsageProcessor.update_invoice_when_usage_is_reported`)
     end
 
     subgraph "3. Billing Orchestration &amp; Logic"
         MBS[MarketplaceBillingService]
 
-        SH_ResourceHandler -- calls appropriate method based on change --&gt; MBS
+        SH_ResourceHandler --&gt;|calls appropriate method based on change| MBS
 
         MBS --&gt;|_process_resource loops through plan components| Decision_BillingType{What is component.billing_type?}
 
@@ -15274,22 +15386,22 @@
     end
 
     Logic_Simple --&gt; Action_CreateItem(Create New `InvoiceItem`)
-    Logic_Limit -- process_creation/process_update --&gt; Action_CreateOrUpdateItem(Create or Update `InvoiceItem`)
-    Logic_Usage -- _create_or_update_usage_invoice_item --&gt; Action_CreateOrUpdateItem
+    Logic_Limit --&gt;|process_creation/process_update| Action_CreateOrUpdateItem(Create or Update `InvoiceItem`)
+    Logic_Usage --&gt;|_create_or_update_usage_invoice_item| Action_CreateOrUpdateItem
 
     Action_CreateItem --&gt; InvoiceItem
     Action_CreateOrUpdateItem --&gt; InvoiceItem
 
     %% Styling
-    classDef trigger fill:#e6f3ff,stroke:#0066cc,stroke-width:2px;
-    classDef handler fill:#fff2e6,stroke:#ff8c1a,stroke-width:2px;
-    classDef service fill:#e6fffa,stroke:#00997a,stroke-width:2px;
-    classDef outcome fill:#f0f0f0,stroke:#666,stroke-width:2px;
+    classDef trigger fill:#e6f3ff,stroke:#0066cc,stroke-width:2px
+    classDef handler fill:#fff2e6,stroke:#ff8c1a,stroke-width:2px
+    classDef service fill:#e6fffa,stroke:#00997a,stroke-width:2px
+    classDef outcome fill:#f0f0f0,stroke:#666,stroke-width:2px
 
-    class TR_Action,TR_Usage,TR_SaveResource,TR_SaveUsage trigger;
-    class SH_ResourceHandler,SH_UsageHandler handler;
-    class MBS,Decision_BillingType,Logic_Simple,Logic_Limit,Logic_Usage service;
-    class Invoice,InvoiceItem,Action_CreateItem,Action_CreateOrUpdateItem outcome;</code></pre>
+    class TR_Action,TR_Usage,TR_SaveResource,TR_SaveUsage trigger
+    class SH_ResourceHandler,SH_UsageHandler handler
+    class MBS,Decision_BillingType,Logic_Simple,Logic_Limit,Logic_Usage service
+    class Invoice,InvoiceItem,Action_CreateItem,Action_CreateOrUpdateItem outcome</code></pre>
 <hr>
 <h3 id="explanation-of-the-flow">Explanation of the Flow</h3>
 <p>This diagram illustrates how billing events are triggered and processed within the Waldur marketplace. The flow is divided into two main, parallel paths: one for resource lifecycle events and another for usage reporting.</p>

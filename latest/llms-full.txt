@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-16T14:09:33.384480Z
+Generated: 2026-07-21T07:15:53.341264Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6598,6 +6598,24 @@ Create or update price estimates based on invoices.
 
 Remove Django event log records with stale content types.
 
+## resource_access_subnets
+
+Dumps per-resource access subnets for consumption by external firewalls, merging adjacent or overlapping networks. Only resources of offerings that opt in via the enable_resource_access_subnets plugin option have subnets.
+
+```bash
+
+usage: waldur resource_access_subnets [-r OFFERING] [-o OUTPUT]
+
+options:
+  -r, --offering OFFERING
+                        Limit the dump to resources of the offering with the
+                        given UUID.
+  -o, --output OUTPUT   Specifies file to which the merged subnets will be
+                        written. The output will be printed to stdout by
+                        default.
+
+```
+
 ## scim_pull_user
 
 Pull user attributes from a remote SCIM 2.0 directory.
@@ -9891,6 +9909,18 @@ Enable the Identity Bridge API for push-based ISD user attribute synchronization
 **Default value:** ['first_name', 'last_name', 'email', 'organization', 'affiliations']
 
 User attributes settable via Identity Bridge.
+
+#### FEDERATED_IDENTITY_AUTHORITATIVE_ISD
+
+**Type:** str
+
+ISD source identifier that is authoritative for FEDERATED_IDENTITY_LOCKED_FIELDS (e.g. 'isd:efp'). When set and present in a user's active ISDs, other identity sources (eduTEAMS, OIDC logins, ...) cannot overwrite the locked fields on sync. Empty disables the protection.
+
+#### FEDERATED_IDENTITY_LOCKED_FIELDS
+
+**Type:** multiple_choice_field
+
+User attributes that only FEDERATED_IDENTITY_AUTHORITATIVE_ISD may set. Other identity sources cannot overwrite these once the authoritative ISD has asserted the user (e.g. first_name, last_name). Empty disables the protection.
 
 #### FEDERATED_IDENTITY_DEACTIVATION_POLICY
 
@@ -14640,6 +14670,7 @@ td:nth-child(4) {
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
 | `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Heal marketplace state for every tenant that has orphan OpenStack<br>instances or volumes.<br><br>Previously this task called create_marketplace_resource_for_imported_resources<br>directly, which silently no-ops when the per-tenant Instance/Volume offering<br>is missing. That left orphan VMs invisible in the marketplace UI even after<br>the periodic task ran. Routing through self_heal_tenant_marketplace_model<br>recreates archived/missing per-tenant offerings first, then backfills the<br>orphan resources — so tenants no longer need a manual "Synchronise" click<br>after the offering-side state drifts. |
 | `marketplace-openstack.refresh-instance-backend-metadata` | `waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata` | 1 day | Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information. |
+| `marketplace-openstack.terminate-child-resources-of-terminated-tenants` | `waldur_mastermind.marketplace_openstack.terminate_child_resources_of_terminated_tenants` | 1 day | Reconcile Instance/Volume marketplace resources orphaned under a terminated tenant.<br><br>When a tenant's marketplace Resource is force-terminated without the backend<br>teardown completing (e.g. a staff ``force_destroy`` on an unreachable/erred<br>site, ``marketplace/utils.py`` ``process_order``), the per-tenant<br>Instance/Volume child resources are left non-terminated even though their<br>parent tenant is gone. A terminated tenant can never legitimately have live<br>instances or volumes, so this task marks those child resources TERMINATED to<br>keep the marketplace state consistent.<br><br>Mark-only by design: it does NOT delete plugin rows, release quota, or call<br>the OpenStack backend (which may be unreachable). The child offerings are<br>non-billable, so no invoicing is affected.<br><br>Traceability: for each reconciled resource it records a completed TERMINATE<br>``Order`` (created directly in the DONE state, so no processing/executor and<br>no backend call is triggered) carrying a ``reason`` in its attributes, and<br>routes the state change through ``callbacks.resource_deletion_succeeded`` so<br>the standard ``MARKETPLACE_RESOURCE_TERMINATE_SUCCEEDED`` event appears in the<br>resource's audit log. |
 | `marketplace-reset-stuck-updating-resources` | `waldur_mastermind.marketplace.reset_stuck_updating_resources` | 10 minutes | Reset marketplace resources stuck in UPDATING state.<br><br>This task handles two scenarios where a resource remains in UPDATING state:<br><br>1. The resource's UPDATE order has been completed (state=DONE) but the resource<br> state wasn't transitioned to OK due to a race condition.<br><br>2. The resource was set to UPDATING by a backend operation (e.g., sync/pull)<br> without an order, but the operation finished without updating the state.<br> In this case, if no UPDATE order exists or is executing, and the resource<br> has been stuck for more than 1 hour, it is reset to OK.<br><br>For each stuck resource, the task transitions it to OK state. |
 | `notification_about_project_ending` | `waldur_mastermind.marketplace.notification_about_project_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about projects ending in 1 day and 7 days. |
 | `notification_about_resource_ending` | `waldur_mastermind.marketplace.notification_about_resource_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about resources ending in 1 day and 7 days.<br><br>"Ending" is the resource's effective end date — the earliest of its own end<br>date and the project-driven termination date. Resources whose offering<br>disables the grace period terminate on the raw project end date (earlier than<br>the project's effective end date that notification_about_project_ending<br>announces), so they are pulled in by their project's raw end date even without<br>an own end date — but only when the project has an actual grace window,<br>otherwise raw == effective and the project-ending notice already covers them. |
@@ -40003,7 +40034,7 @@ the trick below can be used to disable validation of certificates by SDK, beware
 
 ```python
 client = AuthenticatedClient(
-    base_url="https://internal_api.example.com", 
+    base_url="https://internal_api.example.com",
     token="SuperSecretToken",
     verify_ssl=False,
 )
@@ -40013,7 +40044,7 @@ Sometimes you may need to authenticate to a server (especially an internal serve
 
 ```python
 client = AuthenticatedClient(
-    base_url="https://internal_api.example.com", 
+    base_url="https://internal_api.example.com",
     token="SuperSecretToken",
     verify_ssl="/path/to/certificate_bundle.pem",
 )
@@ -40326,7 +40357,7 @@ x-xss-protection: 1; mode=block
 ## List project permissions
 
 ```bash
-$ http --pretty=format -v https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246" 
+$ http --pretty=format -v https://waldur.com/api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ Authorization:"Token b0dd9a5eb32a158b2739d57d2b359aeb30aef246"
 GET /api/projects/2477fb6fad594922ac2f5ba195807502/list_users/ HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate
@@ -45444,14 +45475,14 @@ graph TD
     end
 
     subgraph "2. Signal Handling"
-        TR_SaveResource -- emits `post_save` signal --> SH_ResourceHandler(`process_billing_on_resource_save`)
-        TR_SaveUsage -- emits `post_save` signal --> SH_UsageHandler(`BillingUsageProcessor.update_invoice_when_usage_is_reported`)
+        TR_SaveResource -->|emits post_save signal| SH_ResourceHandler(`process_billing_on_resource_save`)
+        TR_SaveUsage -->|emits post_save signal| SH_UsageHandler(`BillingUsageProcessor.update_invoice_when_usage_is_reported`)
     end
 
     subgraph "3. Billing Orchestration & Logic"
         MBS[MarketplaceBillingService]
 
-        SH_ResourceHandler -- calls appropriate method based on change --> MBS
+        SH_ResourceHandler -->|calls appropriate method based on change| MBS
 
         MBS -->|_process_resource loops through plan components| Decision_BillingType{What is component.billing_type?}
 
@@ -45468,22 +45499,22 @@ graph TD
     end
 
     Logic_Simple --> Action_CreateItem(Create New `InvoiceItem`)
-    Logic_Limit -- process_creation/process_update --> Action_CreateOrUpdateItem(Create or Update `InvoiceItem`)
-    Logic_Usage -- _create_or_update_usage_invoice_item --> Action_CreateOrUpdateItem
+    Logic_Limit -->|process_creation/process_update| Action_CreateOrUpdateItem(Create or Update `InvoiceItem`)
+    Logic_Usage -->|_create_or_update_usage_invoice_item| Action_CreateOrUpdateItem
 
     Action_CreateItem --> InvoiceItem
     Action_CreateOrUpdateItem --> InvoiceItem
 
     %% Styling
-    classDef trigger fill:#e6f3ff,stroke:#0066cc,stroke-width:2px;
-    classDef handler fill:#fff2e6,stroke:#ff8c1a,stroke-width:2px;
-    classDef service fill:#e6fffa,stroke:#00997a,stroke-width:2px;
-    classDef outcome fill:#f0f0f0,stroke:#666,stroke-width:2px;
+    classDef trigger fill:#e6f3ff,stroke:#0066cc,stroke-width:2px
+    classDef handler fill:#fff2e6,stroke:#ff8c1a,stroke-width:2px
+    classDef service fill:#e6fffa,stroke:#00997a,stroke-width:2px
+    classDef outcome fill:#f0f0f0,stroke:#666,stroke-width:2px
 
-    class TR_Action,TR_Usage,TR_SaveResource,TR_SaveUsage trigger;
-    class SH_ResourceHandler,SH_UsageHandler handler;
-    class MBS,Decision_BillingType,Logic_Simple,Logic_Limit,Logic_Usage service;
-    class Invoice,InvoiceItem,Action_CreateItem,Action_CreateOrUpdateItem outcome;
+    class TR_Action,TR_Usage,TR_SaveResource,TR_SaveUsage trigger
+    class SH_ResourceHandler,SH_UsageHandler handler
+    class MBS,Decision_BillingType,Logic_Simple,Logic_Limit,Logic_Usage service
+    class Invoice,InvoiceItem,Action_CreateItem,Action_CreateOrUpdateItem outcome
 ```
 
 ---
@@ -55388,6 +55419,156 @@ This automated, schema-driven workflow provides immense benefits:
 - **Speed**: Developers get up-to-date SDKs without manual intervention, accelerating the development cycle.
 - **Reliability**: The risk of human error in writing client code or documenting changes is significantly reduced.
 - **Clarity**: Release notes are precise and automatically generated, giving integrators clear instructions on what to expect.
+
+---
+
+### Organization-scoped custom roles
+<!-- Source: docs/developer-guide/guides/organization-roles.md -->
+
+# Organization-scoped custom roles
+
+## Overview
+
+By default every role is deployment-wide: the system roles (`CUSTOMER.OWNER`,
+`PROJECT.MEMBER`, …) are available in every organization. This feature lets
+staff give a single organization its own roles:
+
+- **Clone** a system role into an organization. The clone copies the template's
+  permissions and is usable **only** within that organization and its projects.
+- **Conceal** a system role within an organization, so it can no longer be
+  granted there — typically so an organization-specific clone supersedes it.
+
+Standard system roles remain untouched everywhere they are not concealed. The
+mechanism reuses the existing `RoleAvailability` allow-list (previously used to
+scope roles to offerings) and adds a per-organization deny-list.
+
+## Concepts
+
+### RoleAvailability (allow-list)
+
+A role with **no** `RoleAvailability` records is public — available everywhere
+(system-role behaviour). Records restrict a role to those scopes and their
+descendants. Organization-scoped clones bind availability to a **Customer**:
+
+| Scenario | `RoleAvailability.scope` | Effect |
+|----------|--------------------------|--------|
+| System role | (none) | Available in every organization |
+| Offering role | Offering X | Only for Offering X's resources |
+| Organization role (clone) | Customer C | Only within organization C and its projects |
+
+The customer binding covers the organization's projects for free: granting a
+project-scoped clone on a project walks up to the customer via
+`get_scope_ancestors`.
+
+### CustomerRoleConcealment (deny-list)
+
+`RoleAvailability` cannot *subtract* a public role from a single organization
+(adding an availability record would restrict it everywhere). A
+`CustomerRoleConcealment` record does that: while it exists for a `(role,
+customer)` pair, the role can no longer be granted within that organization and
+is hidden from its role pickers. Existing grants are left untouched.
+
+### Role.template
+
+A clone records the role it was created from in `Role.template` (nullable,
+`SET_NULL`), surfaced on the API as `template_uuid` / `template_name`.
+
+## API endpoints
+
+The mutating endpoints below are **staff-only**. The `GET /api/roles/` reads are
+available to organization members too (see [Visibility](#visibility)): a member
+may list the roles usable within their own organization for pickers, but
+`available_for_customer` scoped to an organization the caller does not belong to
+returns nothing (so concealment metadata cannot be probed).
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/roles/?available_for_customer={uuid}` | Roles usable within an organization: system roles + the org's clones, minus concealed ones. Members may query only their own organizations; staff any |
+| `POST /api/roles/{uuid}/clone_to_customer/` | Clone this (customer/project) role into an organization |
+| `GET /api/customer-role-concealments/` | List concealments (filter: `role_uuid`, `scope_uuid`) |
+| `POST /api/customer-role-concealments/` | Conceal a role for an organization |
+| `DELETE /api/customer-role-concealments/{uuid}/` | Reveal (remove a concealment) |
+
+### Cloning a role into an organization
+
+```http
+POST /api/roles/{template_uuid}/clone_to_customer/
+{
+    "customer": "9e1132b8...",
+    "conceal_template": true
+}
+```
+
+The clone keeps the template's `content_type` and permission set (including its
+translated descriptions), is named `{SCOPE}.{customer_slug}.{suffix}` (e.g.
+`PROJECT.acme.MEMBER`), and gets a `RoleAvailability` bound to the customer.
+With `conceal_template` (default `true`) the source system role is also concealed
+for the organization so the clone supersedes it — avoiding two identically
+labelled entries in the pickers.
+
+The organization slug is embedded (rather than an opaque UUID) so the name stays
+human-readable. Because a slug can change and is not database-unique, a
+`Customer` `post_save` handler re-syncs the clone names when the slug changes,
+and a numeric collision suffix (`…-2`) guards global uniqueness if another
+organization has taken the same slug.
+
+Only `customer`- and `project`-scoped roles can be cloned. Cloning the same
+template into the same organization twice is rejected.
+
+### Concealing / revealing a role
+
+```http
+POST /api/customer-role-concealments/
+{
+    "role": "3f0a…",
+    "customer": "9e1132b8…"
+}
+```
+
+Reveal by deleting the concealment record (`DELETE
+/api/customer-role-concealments/{concealment_uuid}/`).
+
+## Enforcement
+
+Availability and concealment are enforced in the low-level `add_user` write
+primitive, not only in `validate_role_grant`. This matters because several grant
+paths (onboarding, SCIM group sync, autoprovisioning, team-restore) call
+`add_user` directly. The rules, both resolved by walking the scope's ancestors:
+
+- **Availability**: if the role has availability records, the scope (or an
+  ancestor) must match one, else the grant is refused.
+- **Concealment**: if an ancestor organization conceals the role, the grant is
+  refused (`"Role is concealed for this organization."`).
+
+Notes:
+
+- **`force=`** — `add_user(..., force=True)` bypasses the policy for the few
+  internal grants that must always succeed (e.g. onboarding's initial owner
+  grant).
+- **Uniform for staff** — the check does not depend on the actor, so it applies
+  to staff-initiated grants too; the escape hatch is to reveal the role first.
+- **Grandfathering** — concealing (or removing an availability record) blocks new
+  grants only; existing `UserRole` rows stay active.
+- **Lockout guard** — a concealment is refused if it would remove the last
+  grantable role that can add members at that scope (e.g. the last
+  owner-capable customer role), so an organization cannot be made ungovernable.
+
+## Visibility
+
+`GET /api/roles/` hides other organizations' private roles from non-staff users:
+a customer-scoped role is visible only to members of that organization (directly
+or through one of its projects). Public/system and offering-scoped roles stay
+visible to everyone, including anonymous requests. Staff and support see all
+roles.
+
+## Permissions required
+
+| Action | Requirement |
+|--------|-------------|
+| Clone a role into an organization | Staff |
+| Conceal / reveal a role | Staff |
+| List an organization's concealments | Staff |
+| Grant a cloned role | The clone must be available for the scope and not concealed; caller needs the scope's create-permission |
 
 ---
 
@@ -65707,7 +65888,7 @@ This guide walks you through the entire lifecycle of call management in Waldur, 
 
 ## Detailed process guide
 
-## Step 1: Organization setup  
+## Step 1: Organization setup
 
 **Performed by:** Organization owner
 
@@ -65741,7 +65922,7 @@ This guide walks you through the entire lifecycle of call management in Waldur, 
       - Submission guidelines
       - Assign call manager to the call
 
-## Step 3: Configure call rounds  
+## Step 3: Configure call rounds
 
 **Performed by:** Call manager
 
@@ -65787,7 +65968,7 @@ Assign personnel for the call:
 
 - **Add reviewers**: Select users who will evaluate submitted proposals
 - **Add managers**: Additional managers for proposal oversight
-  
+
   *Note: The primary Call manager is added by the Call Organiser during call creation*
 
 #### 3. Offerings configuration
@@ -65823,7 +66004,7 @@ Once all configurations are complete:
 
 [Image: Screenshot: Call Configuration Interface]
 
-## Step 5: Submit proposal  
+## Step 5: Submit proposal
 
 **Performed by:** Call member (Applicant)
 
@@ -65841,7 +66022,7 @@ Applicants follow these steps to request resources through an active call:
 
 [Image: Screenshot: Proposal Submission Form]
 
-## Step 6: Review assignment and process  
+## Step 6: Review assignment and process
 
 **Review Assignment:** Call manager or Automatic system
 
@@ -65894,7 +66075,7 @@ Reviewers evaluate proposals using a structured assessment process:
 [Image: Screenshot: Review Form Interface]
 [Image: Screenshot: Review Form Interface]
 
-## Step 7: Decision and allocation  
+## Step 7: Decision and allocation
 
 **Performed by:** Call manager (if configured) or Automatic system
 
@@ -65909,7 +66090,7 @@ The final decision process determines which proposals receive resource allocatio
 
 [Image: Screenshot: Decision Interface]
 
-## Step 8: Monitoring and reporting  
+## Step 8: Monitoring and reporting
 
 Effective monitoring ensures the call process runs smoothly and provides valuable insights:
 
@@ -65946,25 +66127,25 @@ Solutions for common issues encountered during the call management process:
 
 ## FAQ
 
-**Q: What's the difference between a Call Organiser and a Call Manager?**  
+**Q: What's the difference between a Call Organiser and a Call Manager?**
 A: A Call Organiser is appointed by the Organization Owner to create calls and assign Call Managers. The Call Manager is responsible for the detailed configuration of calls assigned to them including setting up rounds, assigning reviewers, and managing the review process.
 
-**Q: Can a call have multiple rounds running simultaneously?**  
+**Q: Can a call have multiple rounds running simultaneously?**
 A: No, Waldur supports multiple rounds within a single call, allowing for different resource types or applicant categories to be handled separately, but they cannot be active at the same time.
 
-**Q: What happens if insufficient reviewers complete their evaluations?**  
+**Q: What happens if insufficient reviewers complete their evaluations?**
 A: If the minimum number of reviews is not met by the deadline, the Call manager receives a notification and can either extend the review period or reduce the minimum requirement.
 
-**Q: Can applicants edit their proposals after submission?**  
+**Q: Can applicants edit their proposals after submission?**
 A: By default, proposals cannot be edited after submission. However, if a reviewer or Call manager rejects a proposal with a request for revisions, the applicant can make the requested changes and resubmit.
 
-**Q: Is it possible to transfer allocated resources between approved projects?**  
+**Q: Is it possible to transfer allocated resources between approved projects?**
 A: Resource transfer between projects requires administrative approval. Contact your Call manager to request a resource transfer.
 
-**Q: How are applicants notified about proposal decisions?**  
+**Q: How are applicants notified about proposal decisions?**
 A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is made.
 
-**Q: Can a Call manager override reviewer scores?**  
+**Q: Can a Call manager override reviewer scores?**
 A: When configured for Call manager decisions, the manager can approve or reject proposals regardless of review scores, though all reviewer feedback remains visible and documented.
 
 ---
@@ -67461,6 +67642,157 @@ for the per-role permission matrix.
 6. User now will get invitation email with the acceptance link.
 
 [Image: type:video]
+
+---
+
+### Resource access subnets
+<!-- Source: docs/user-guide/customer-organization/resource-access-subnets.md -->
+
+# Resource access subnets
+
+Some offerings let you attach a list of **allowed access subnets** to each
+resource — the IP addresses that should be allowed to reach the backend entity
+the resource represents (for example the object storage bucket, database, or
+virtual machine behind the resource). Consumers add single hosts (`/32`), and
+the service provider can additionally publish wider **default** ranges on the
+offering (see below).
+
+Waldur itself does not block traffic based on this list. The subnets are
+**advisory data**: they are published through the API so that an external
+firewall (or the service provider's automation) can build an allow-list and
+enforce it on the actual backend. Think of it as a curated allow-list that
+travels with the resource.
+
+## Enabling the feature (service provider)
+
+Access subnets are available only for resources whose offering opts in. The
+service provider enables it on their offering.
+
+1. Open the offering and go to **Edit → Integration → Operations**.
+2. Select the **Resource lifecycle** tab.
+3. Turn on **Enable resource access subnets**.
+
+[Image: Enabling resource access subnets on an offering]
+
+Once enabled, every resource created from that offering shows an **Access
+subnets** tab, and the offering's **Manage** view gains an **Access subnets**
+tab. That view is a single table with two sub-tabs — **Default allowed subnets**
+(the provider's own ranges, editable here) and **Access subnets by resource**
+(a read-only roll-up of every resource's subnets) — plus a **Firewall
+allow-list** button that shows the merged, collapsed list ready to copy or
+download.
+
+!!! note
+    Editing this setting requires permission to manage the offering (the
+    offering's service manager or the provider organization owner).
+
+### Concealing restricted resources (optional)
+
+By default the subnets are advisory only — Waldur stores and publishes them but
+does not act on them. The **Resource lifecycle** tab has a second toggle,
+**Conceal subnet-restricted resources**, that opts the offering into enforcement:
+
+When it is on, a resource of this offering that has one or more access subnets is
+**hidden from the consumer API** unless the caller's IP address is in that
+resource's allow-list. The resource disappears from resource lists and returns
+*not found* on direct access.
+
+!!! warning
+    This is the one place the feature changes Waldur's own behaviour. It applies
+    to the **consumer** side only — service providers and the site-agent keep
+    full visibility — and **staff and support are exempt**. Resources that have
+    no access subnets are never concealed. Turn it on only if consumers are
+    expected to reach the portal from the same networks listed in the allow-list,
+    or you may lock them out of their own resources.
+
+### Provider default subnets (optional)
+
+Beside the per-resource entries curated by consumers, the service provider can
+publish **default allowed subnets** on the offering — broader CIDR ranges
+(`/24`, `/16`, …), not just single hosts. Manage them on the offering's
+**Manage → Access subnets** view, under the **Default allowed subnets** tab
+(use **Add default subnet**, or the row menu to edit or remove one).
+
+[Image: Provider default subnets on the offering Manage view]
+
+These defaults:
+
+- are shown **read-only to consumers** on each resource's **Access subnets** tab,
+  above their own entries, so users see which networks are already allowed;
+- **widen the concealment allow-list** — when concealment is on, a caller whose IP
+  falls in a default range can reach the resource even without a matching
+  per-resource `/32`;
+- are **included in the exported firewall allow-list** (both the packed list and
+  the command-line dump), merged with the per-resource subnets.
+
+!!! note
+    Provider defaults may be any CIDR width; consumer per-resource entries remain
+    single hosts (`/32`). Only the provider can edit the defaults.
+
+## Managing access subnets (organization owners and project teams)
+
+Open a resource of an opted-in offering and select the **Access subnets** tab.
+The tab lists the currently allowed subnets with their CIDR and a description.
+
+[Image: Access subnets tab on a resource]
+
+To add an entry:
+
+1. Click **Add access subnet**.
+2. Enter the IP address as a `/32` CIDR (for example `192.168.1.5/32`) and an
+   optional description such as the host or office it belongs to.
+3. Click **Create**.
+
+[Image: Adding an access subnet]
+
+Use the three-dots menu on a row to edit or remove an entry. Changes are
+recorded in the resource's history log.
+
+!!! tip
+    Only single IP addresses (`/32`) are accepted. A bare address such as
+    `192.168.1.5` is treated as `192.168.1.5/32`.
+
+Managing the list requires resource management permission — organization
+owners, project managers, and project administrators can edit it. Other users
+see the list read-only.
+
+## Getting the allow-list
+
+The allow-list — the per-resource subnets and the offering defaults, merged and
+collapsed into the minimal set of CIDRs — is available three ways, all producing
+the same result:
+
+- **From the UI** — on the offering's **Manage → Access subnets** view, click
+  **Firewall allow-list**. The dialog shows the merged CIDRs with **Copy** and
+  **Download** actions.
+
+    [Image: Firewall allow-list dialog]
+- **From the API** — `GET /api/marketplace-provider-offerings/{uuid}/access_subnets/`
+  returns `expanded` (every subnet with its resource, project and organization),
+  `packed` (the merged allow-list), and `defaults` (the provider ranges). The
+  raw per-resource entries are also available at
+  `/api/marketplace-resource-access-subnets/` (filterable by `offering_uuid`),
+  each carrying the resource's backend identifier so a firewall can map an entry
+  to the backend it guards.
+- **From the command line** — run the `resource_access_subnets` management
+  command to dump the merged list, for one offering or all:
+
+    ```bash
+    # merged allow-list for a single offering
+    waldur resource_access_subnets --offering <offering-uuid>
+
+    # all offerings, written to a file
+    waldur resource_access_subnets --output allow-list.txt
+    ```
+
+An external firewall typically pulls the API endpoint's `packed` list, or runs
+the command on a schedule (e.g. via cron) and reloads the resulting file.
+
+!!! warning
+    Getting the allow-list does not change access on its own. Unless the offering
+    enables **concealment** (above), Waldur only stores and publishes the
+    subnets — the external firewall or provider automation that consumes the list
+    is responsible for enforcing it on the backend.
 
 ---
 
@@ -70525,6 +70857,98 @@ Provides organization removal functionality:
 
 ---
 
+### Organization-scoped roles
+<!-- Source: docs/user-guide/staff-users/organization-roles.md -->
+
+# Organization-scoped roles
+
+## Overview
+
+In addition to the deployment-wide [roles](../../about/terminology/roles_and_permissions.md),
+staff can give a single organization its own roles:
+
+- **Clone** a system role into an organization. The copy keeps the original's
+  permissions but can only be used within that organization and its projects.
+- **Conceal** a system role within an organization so it can no longer be
+  granted there — usually so a cloned, organization-specific role replaces it.
+
+Standard roles are unaffected in every organization where they are not concealed.
+
+## Accessing organization roles
+
+1. Open the organization (**Organizations** → select one).
+2. Go to **Manage** (the organization edit page) and select the **Roles** tab,
+   next to **Access control**.
+
+!!! note
+    The **Roles** tab and all actions on this page are visible to staff users
+    only.
+
+The page lists the roles that can be managed for this organization — the
+organization- and project-scoped system roles plus the organization's own
+clones. Roles for other scopes (offering, service provider, call) are not shown
+here: they cannot be concealed or cloned into an organization and are managed in
+the global role administration instead. *Organization role* and *System role*
+badges distinguish clones from system roles.
+
+Use the **Filters** to narrow the list by **Scope**, by **Type** (system or
+organization role), or to enable **Show concealed roles** so the roles concealed
+for this organization are listed too. The search box matches role names and
+descriptions, and the columns sort by name, scope, and origin. Expanding a role
+row shows the users currently assigned that role.
+
+## Cloning a role into an organization
+
+1. Click **Clone role**.
+2. Select a **Template role** — a system organization or project role to copy.
+3. Leave **Conceal the original role in this organization** checked (default) so
+   the clone replaces the system role in this organization's pickers, or uncheck
+   it to keep both.
+4. Click **Clone**.
+
+The new role appears marked *Organization role*, with its origin shown as
+*Cloned from …*. Selecting a template in the dialog shows the permissions that
+will be copied. To adjust a clone's permissions afterwards, use **Edit** on its
+row (this reuses the same editor as the global
+[User roles](user_role_management.md) screen).
+
+!!! tip
+    Keeping the conceal option checked avoids two identically named entries
+    (for example two "Project member" options) appearing in the role pickers.
+
+!!! note
+    A cloned role's internal name includes the organization slug (for example
+    `CUSTOMER.acme.OWNER`). If you later change the organization's slug, its
+    custom roles are renamed automatically to match — the slug field warns you
+    when the organization has custom roles.
+
+## Concealing and revealing roles
+
+- To hide a system role in this organization, use **Conceal** on its row. It can
+  no longer be granted here (existing assignments are kept) and is marked with a
+  *Concealed* badge.
+- To restore it, enable **Show concealed roles** in the filters, then use
+  **Reveal** on the concealed role's row.
+
+!!! warning
+    A role cannot be concealed if it is the last one able to grant access at its
+    scope (for example the last owner-capable role), so an organization cannot be
+    left ungovernable.
+
+## Deleting an organization role
+
+Use **Delete** on an organization role's row to remove it. A role that is still
+assigned to users cannot be deleted — remove those assignments first.
+
+## What members see
+
+Members of the organization see its available roles wherever roles are chosen
+(team management, invitations). A concealed system role is no longer offered
+there; its organization clone appears in its place. Members of other
+organizations never see this organization's private roles.
+
+---
+
 ### Organization onboarding
 <!-- Source: docs/user-guide/staff-users/organization_onboarding.md -->
 
@@ -70542,14 +70966,14 @@ Before setting up onboarding checklists, configure the global onboarding setting
 
 ### Required configuration
 
-- **Onboarding validation methods**  
-    - Select the automatic validation methods enabled for your portal (for example: `ariregister`, `wirtschaftscompass`, `bolagsverket`).  
+- **Onboarding validation methods**
+    - Select the automatic validation methods enabled for your portal (for example: `ariregister`, `wirtschaftscompass`, `bolagsverket`).
     - These values must match the backend validation method names.
 
-- **Onboarding verification expiry hours**  
+- **Onboarding verification expiry hours**
     - Define how long (in hours) an onboarding verification remains valid.
 
-- **Registry API configuration**  
+- **Registry API configuration**
      - Configure base URLs, credentials, tokens, and timeouts for each supported business registry.
 
 After providing all required values, click **Save**.
@@ -70570,8 +70994,8 @@ Organization onboarding uses checklists to collect data from users. Two checklis
 [Image: type:image]
 
 2. The set up should be performed for both checklists:
-   - **Customer data** – for organization details.  
-   - **Intent data** – for intent and purpose questions.  
+   - **Customer data** – for organization details.
+   - **Intent data** – for intent and purpose questions.
 
 [Image: type:image]
 
@@ -70579,17 +71003,17 @@ Organization onboarding uses checklists to collect data from users. Two checklis
 
 ## Step 3: Configure onboarding questions
 
-For each checklist, add or edit the questions presented to users. 
+For each checklist, add or edit the questions presented to users.
 
 ### Question configuration
 
 For every question:
 
-1. Enter the **question text**.  
-2. Select the **question type** (text, number, single select, multi‑select, etc.).  
-3. Set the **question order**.  
-4. Mark the question as **required**, if needed.  
-5. Configure **visibility rules**, if applicable.  
+1. Enter the **question text**.
+2. Select the **question type** (text, number, single select, multi‑select, etc.).
+3. Set the **question order**.
+4. Mark the question as **required**, if needed.
+5. Configure **visibility rules**, if applicable.
 
 [Image: type:image]
 
@@ -70601,9 +71025,9 @@ Each question must be mapped to the correct backend field, especially for the Cu
 
 **Example**
 
-- **Question:** What is your purpose for registering an organization?  
-- **Checklist type:** Onboarding intent data  
-- **Field mapping:** `purpose`  
+- **Question:** What is your purpose for registering an organization?
+- **Checklist type:** Onboarding intent data
+- **Field mapping:** `purpose`
 
 Correct field mapping ensures submitted data is stored and displayed correctly during review.
 
@@ -70617,9 +71041,9 @@ Organization onboarding attempts are reviewed by staff users.
 
 The **Verifications** tab shows:
 
-- All onboarding attempts  
-- Automatically verified organizations  
-- Validation status and method  
+- All onboarding attempts
+- Automatically verified organizations
+- Validation status and method
 
 This view provides a high-level overview of all organization onboarding activity.
 
@@ -70627,11 +71051,11 @@ This view provides a high-level overview of all organization onboarding activity
 
 The **Justifications** tab shows manual onboarding attempts. Staff users can:
 
-- Review submitted organization data  
-- Review answers to onboarding questions  
-- Download supporting documents  
-- Add staff notes  
-- Approve or reject applications  
+- Review submitted organization data
+- Review answers to onboarding questions
+- Download supporting documents
+- Add staff notes
+- Approve or reject applications
 
 Approving a justification allows the organization to be created in the system.
 
@@ -70639,8 +71063,8 @@ Approving a justification allows the organization to be created in the system.
 
 ## Step 5: Outcome
 
-- **Approved applications** result in organization creation.  
-- **Rejected applications** remain visible with decision history for the next 30 days.  
+- **Approved applications** result in organization creation.
+- **Rejected applications** remain visible with decision history for the next 30 days.
 
 All actions are auditable via onboarding records.
 
@@ -70815,6 +71239,92 @@ Even after seeding domains, the end-user picker stays hidden until the `project.
 3. Save and reload.
 
 Once enabled, the picker appears in the project create dialog and on the project's metadata page (see the [customer guide](../customer-organization/project-management.md#science-domain) for the end-user view).
+
+---
+
+### Reviewing AI Assistant chat sessions
+<!-- Source: docs/user-guide/staff-users/service-desk/ai-assistant-log-review.md -->
+
+# Reviewing AI Assistant chat sessions
+
+This guide helps helpdesk staff review the conversations users have had with the
+Waldur AI Assistant — to follow up on a support request, audit flagged content,
+or understand how the assistant is being used.
+
+!!! note
+    The review pages are available to **staff** and **support** users when the
+    AI Assistant is enabled. For turning the assistant on and configuring it, see
+    [AI Assistant configuration](../../../admin-guide/ai-assistant.md).
+
+## Accessing the chat session logs
+
+1. Select **Support** from the left-hand menu.
+2. Click **Logs** from the top menu.
+3. Open the **AI assistant logs** tab.
+
+A table opens listing every chat session (thread). Each row shows:
+
+* The **user** and their organization.
+* The **thread name** (auto-generated from the conversation).
+* The number of **messages** and the **token** usage of the session.
+* Whether the session is **flagged**, its **max severity**, and whether the user
+  left **feedback**.
+* When the session was **created** and last **modified**.
+
+## Finding a specific session
+
+The table can be narrowed down in two ways.
+
+### Search by keyword or phrase
+
+Use the **search box** above the table to find sessions by their content. The
+search covers:
+
+* The **conversation itself** — both the user's questions and the assistant's
+  replies.
+* The **thread name**.
+* The **user** — username, name, or email address.
+
+The search understands natural phrasing, so you can type a few keywords
+(`resize openstack volume`) or wrap an exact phrase in quotes
+(`"quota exceeded"`) to match it as a whole.
+
+!!! tip
+    Content search matches word stems, so `resizing` also finds sessions that
+    mention `resize`. If a search returns too many results, add another keyword
+    or switch to an exact quoted phrase.
+
+### Filter by attribute
+
+Use the column filters to focus on a subset of sessions:
+
+* **User** — sessions belonging to a specific person.
+* **Flagged** — sessions where the input guards flagged a message.
+* **Feedback** — sessions where the user rated a reply.
+* **Max severity** — the highest severity detected in the session
+  (`Critical`, `High`, `Medium`, `Low`, or `None`).
+
+Filters and the search box combine, so you can, for example, search for a
+keyword *and* restrict the results to flagged sessions.
+
+## Reviewing a conversation
+
+Expand a row to read the full transcript of the session. For each turn you can
+see the user's message, the assistant's response, and any warning raised by the
+input guards (for example, redacted personal data or a detected prompt-injection
+attempt).
+
+!!! warning
+    Chat sessions may contain personal data. Access is restricted to staff and
+    support users and every review is auditable — only open sessions you have a
+    legitimate support reason to review.
+
+## Related
+
+* [AI Assistant configuration](../../../admin-guide/ai-assistant.md) — enabling
+  the assistant, access roles, token limits, and session retention.
+* [Service desk interactions](service-desk-interactions.md) — managing support
+  tickets raised by users.
 
 ---
 
@@ -72148,17 +72658,17 @@ flowchart TD
     classDef provider fill:#f1f8e9,stroke:#558b2f,stroke-width:2px,color:#000
     classDef system fill:#f5f5f5,stroke:#616161,stroke-width:2px,color:#000
     classDef decision fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#000
-    
+
     %% Row 1: Stakeholders (Horizontal)
     subgraph stakeholders["👥 Key Stakeholders"]
         direction LR
-        R1["👤 Organization Owner<br/> Organization setup & Role assignment"] --> R2["📋 Call organiser<br/>Create & Oversee calls"] 
+        R1["👤 Organization Owner<br/> Organization setup & Role assignment"] --> R2["📋 Call organiser<br/>Create & Oversee calls"]
         R2 --> R3["⚙️ Call manager<br/>Configure & Manage"]
         R3 --> R4["🔍 Reviewer<br/>Evaluate proposals"]
         R4 --> R5["📝 Applicant<br/>Submit proposals"]
         R5 --> R6["✅ Service provider<br/>Approve resources"]
     end
-    
+
     %% Row 2: Setup to Submission (Horizontal)
     subgraph setup["🏗️ Setup & Submission phase"]
         direction LR
@@ -72169,7 +72679,7 @@ flowchart TD
         E --> F[🚀 Activate<br/>Call]
         F --> G[📝 Applicants<br/>Submit Proposals]
     end
-    
+
     %% Row 3: Review to Completion (Horizontal)
     subgraph review["🔍 Review & Allocation Phase"]
         direction LR
@@ -72187,11 +72697,11 @@ flowchart TD
         P --> S[📊 Monitor &<br/>Report]
         Q --> S
     end
-    
+
     %% Connections between rows
     stakeholders -.-> A
     G --> H
-    
+
     %% Apply styles
     class R1,A orgOwner
     class R2,B callOrg
@@ -73696,7 +74206,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker ps | grep waldur-mastermind-api
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl get pods -n waldur -l app=waldur-mastermind-api
    ```
@@ -73713,7 +74223,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api cat /etc/waldur/override.conf.py
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur get configmap api-override-config -o yaml
    ```
@@ -73725,7 +74235,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-worker celery -A waldur_core.server inspect active
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-worker -o name | head -1) -- celery -A waldur_core.server inspect active
    ```
@@ -73735,7 +74245,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-worker celery -A waldur_core.server inspect ping
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-worker -o name | head -1) -- celery -A waldur_core.server inspect ping
    ```
@@ -73747,7 +74257,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose - if you have direct access
    docker exec -it waldur-mastermind-api waldur shell -c "from django.db import connection; connection.ensure_connection(); print('Connected')"
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-api -o name | head -1) -- waldur shell -c "from django.db import connection; connection.ensure_connection(); print('Connected')"
    ```
@@ -73756,8 +74266,8 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
 
    ```sql
    -- For PostgreSQL 9.6+
-   SELECT pid, now() - pg_stat_activity.query_start AS duration, query 
-   FROM pg_stat_activity 
+   SELECT pid, now() - pg_stat_activity.query_start AS duration, query
+   FROM pg_stat_activity
    WHERE state = 'active' AND now() - pg_stat_activity.query_start > interval '5 seconds'
    ORDER BY duration DESC;
    ```
@@ -73769,7 +74279,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Set token in environment variable first
    export WALDUR_TOKEN="your_token_here"
-   
+
    # Then use it safely
    curl -v -H "Authorization: Token $WALDUR_TOKEN" https://your-waldur-instance/api/customers/
    ```
@@ -73789,7 +74299,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api waldur shell -c "from rest_framework.authtoken.models import Token; print(Token.objects.filter(key='your_token_here').exists())"
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-api -o name | head -1) -- waldur shell -c "from rest_framework.authtoken.models import Token; print(Token.objects.filter(key='your_token_here').exists())"
    ```
@@ -73808,7 +74318,7 @@ kubectl logs -n waldur -l app=waldur-mastermind-api --tail=1000 | grep "user@exa
    ```bash
    # Docker Compose
    docker exec -it waldur-mastermind-api waldur shell -c "from waldur_mastermind.marketplace import models; print(models.Resource.objects.filter(uuid='RESOURCE_UUID').values('state', 'error_message'))"
-   
+
    # Kubernetes (replace namespace if needed)
    kubectl -n waldur exec -it $(kubectl -n waldur get pods -l app=waldur-mastermind-api -o name | head -1) -- waldur shell -c "from waldur_mastermind.marketplace import models; print(models.Resource.objects.filter(uuid='RESOURCE_UUID').values('state', 'error_message'))"
    ```
@@ -80362,6 +80872,12 @@ def available_checklists(self, request):
 - access_subnet_creation_succeeded
 - access_subnet_deletion_succeeded
 - access_subnet_update_succeeded
+- offering_access_subnet_creation_succeeded
+- offering_access_subnet_deletion_succeeded
+- offering_access_subnet_update_succeeded
+- resource_access_subnet_creation_succeeded
+- resource_access_subnet_deletion_succeeded
+- resource_access_subnet_update_succeeded
 
 ## Auth
 
@@ -80575,6 +81091,14 @@ def available_checklists(self, request):
 
 ## Providers
 
+- maintenance_announcement_cancelled
+- maintenance_announcement_completed
+- maintenance_announcement_created
+- maintenance_announcement_deleted
+- maintenance_announcement_scheduled
+- maintenance_announcement_started
+- maintenance_announcement_unscheduled
+- maintenance_announcement_updated
 - marketplace_resource_create_canceled
 - marketplace_resource_create_failed
 - marketplace_resource_create_requested
@@ -81254,6 +81778,7 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_vmware.Disk` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_firecrest.Job` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `marketplace.Order` | Recalculate count quota when an instance is created or deleted. |
+| `rename_clones_on_customer_slug_change` | `Django Signal (post_save)` | `structure.Customer` | Keep an organization's cloned role names in sync with its slug. |
 | `revoke_roles_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | When project is deleted, capture user role snapshots before revoking them. |
 | `revoke_user_pats_on_deactivation` | `Django Signal (pre_save)` | `core.User` | Revoke all active PATs when a user is deactivated. |
 | `revoke_user_roles_on_availability_removal` | `Django Signal (post_delete)` | `permissions.RoleAvailability` | Schedule async revocation when a RoleAvailability row is removed. |
@@ -81264,6 +81789,7 @@ td:nth-child(4) {
 | `schedule_user_sync` | `Custom Signal (role_granted)` | `—` | No description |
 | `schedule_user_sync` | `Custom Signal (role_revoked)` | `—` | No description |
 | `set_default_token_lifetime` | `Django Signal (post_save)` | `core.User` | Set the default token lifetime for a new user. |
+| `stash_customer_slug` | `Django Signal (pre_save)` | `structure.Customer` | Remember the persisted slug before save so the change can be detected. |
 | `update_customer_users_count` | `Custom Signal (recalculate_quotas)` | `—` | Update the user count for all customers. |
 | `update_resource_start_time` | `Django Signal (post_save)` | `waldur_aws.Instance` | Update the start time of a resource when its runtime state changes. |
 | `update_resource_start_time` | `Django Signal (post_save)` | `waldur_azure.VirtualMachine` | Update the start time of a resource when its runtime state changes. |
@@ -81452,12 +81978,18 @@ td:nth-child(4) {
 | `log_invoice_state_transition` | `Django Signal (post_save)` | `invoices.Invoice` | No description |
 | `log_issue_delete` | `Django Signal (post_delete)` | `support.Issue` | No description |
 | `log_issue_save` | `Django Signal (post_save)` | `support.Issue` | No description |
+| `log_maintenance_announcement_deleted` | `Django Signal (pre_delete)` | `marketplace.MaintenanceAnnouncement` | Log audit event when a MaintenanceAnnouncement is deleted. |
+| `log_maintenance_announcement_events` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncement` | Log audit events for MaintenanceAnnouncement CRUD and state transitions. |
+| `log_offering_access_subnet_deletion` | `Django Signal (post_delete)` | `marketplace.OfferingAccessSubnet` | Log successful offering default access subnet deletion. |
+| `log_offering_access_subnet_save` | `Django Signal (post_save)` | `marketplace.OfferingAccessSubnet` | Log offering default access subnet creation and updates. |
 | `log_offering_user_created` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Log offering user creation. |
 | `log_offering_user_deleted` | `Django Signal (post_delete)` | `marketplace.OfferingUser` | Log offering user deletion. |
 | `log_offering_user_username_updated` | `Django Signal (post_save)` | `marketplace.OfferingUser` | No description |
 | `log_order_events` | `Django Signal (post_save)` | `marketplace.Order` | Log order creation and state transition events. |
 | `log_project_credit` | `Django Signal (post_save)` | `invoices.ProjectCredit` | No description |
 | `log_request_events` | `Django Signal (post_save)` | `marketplace_remote.ProjectUpdateRequest` | No description |
+| `log_resource_access_subnet_deletion` | `Django Signal (post_delete)` | `marketplace.ResourceAccessSubnet` | Log successful resource access subnet deletion. |
+| `log_resource_access_subnet_save` | `Django Signal (post_save)` | `marketplace.ResourceAccessSubnet` | Log resource access subnet creation and updates. |
 | `log_resource_events` | `Django Signal (post_save)` | `marketplace.Resource` | Log resource creation request events. |
 | `log_resource_limit_change_request_events` | `Django Signal (post_save)` | `marketplace.ResourceLimitChangeRequest` | Log events when resource limit change request is created or reviewed. |
 | `log_resource_robot_account_created_or_updated` | `Django Signal (post_save)` | `marketplace.RobotAccount` | Log resource robot account creation and updates. |
@@ -81704,14 +82236,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 801
+Total unique handlers found: 809
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 412 handlers
+- **waldur_core**: 414 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 331 handlers
+- **waldur_mastermind**: 337 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -82812,6 +83344,26 @@ CANCELLED   IN_PROGRESS → COMPLETED
 - **COMPLETED**: Maintenance has finished successfully
 - **CANCELLED**: Maintenance was cancelled before completion
 
+### Audit Events
+
+CRUD and lifecycle changes emit standard Waldur audit events (scoped to the
+maintenance announcement and the service provider customer). Actor details
+(`user_uuid`, etc.) are included in the event context for API-driven actions.
+
+| Action | Event type |
+|--------|------------|
+| Create | `maintenance_announcement_created` |
+| Update | `maintenance_announcement_updated` |
+| Delete | `maintenance_announcement_deleted` |
+| Schedule | `maintenance_announcement_scheduled` |
+| Unschedule | `maintenance_announcement_unscheduled` |
+| Start | `maintenance_announcement_started` |
+| Complete | `maintenance_announcement_completed` |
+| Cancel | `maintenance_announcement_cancelled` |
+
+These appear under the `providers` event group and can be queried via
+`/api/events/?scope=.../maintenance-announcements/{uuid}/`.
+
 ## REST API Operations
 
 ### Standard CRUD Operations
@@ -83295,11 +83847,13 @@ GET /api/maintenance-announcements/{uuid}/
 
 ### Authorization Model
 
-MaintenanceAnnouncement uses Waldur's standard permission system:
+Maintenance announcements use Waldur's permission system:
 
-- **Service Provider Path**: `service_provider__customer`
-- **Automatic Filtering**: `GenericRoleFilter` handles visibility
-- **Role-Based Access**: Permissions tied to service provider ownership
+- **Permission**: `SERVICE_PROVIDER.MANAGE_MAINTENANCE_ANNOUNCEMENT`
+- **Default roles**: Organization Owner (`CUSTOMER.OWNER`) and Service Provider Manager (`CUSTOMER.MANAGER`)
+- **Service Provider Path**: `service_provider__customer` (and the service provider itself for managers)
+- **List/retrieve**: any user connected to the service provider's customer (via `GenericRoleFilter`)
+- **Create/update/delete/state transitions**: require `MANAGE_MAINTENANCE_ANNOUNCEMENT`
 
 ### User Permissions
 
@@ -83309,16 +83863,26 @@ MaintenanceAnnouncement uses Waldur's standard permission system:
 - Can perform all state transitions
 - Can create/update/delete any announcement
 
-**Service Provider Owners:**
+**Service Provider Owners / Managers (with manage permission):**
 
-- Full access to their service provider's maintenance announcements
+- Full write access to their service provider's maintenance announcements
 - Can perform all state transitions on their announcements
 - Can create/update/delete their announcements
 
-**Other Users:**
+**Other users connected to the SP customer (without manage permission):**
 
-- No access to maintenance announcements (404 Not Found)
-- Cannot view or modify any maintenance data
+- Can list and retrieve announcements for that service provider
+- Cannot create, update, delete, or change state
+
+**Unrelated Users:**
+
+- No access to private maintenance announcement endpoints (empty list / 404)
+- Public scheduled announcements remain available via the public endpoint
+
+**Personal Access Tokens:**
+
+- A PAT can restrict API access to `SERVICE_PROVIDER.MANAGE_MAINTENANCE_ANNOUNCEMENT` only,
+  so automation can manage announcements without broader Owner permissions.
 
 ## Key Points
 
@@ -92814,67 +93378,21 @@ When a customer has a project metadata checklist configured:
 
 # Release Orchestration
 
-This document describes the automated release orchestration system that coordinates releases across the entire Waldur ecosystem from the `waldur-docs` repository.
+This document describes the automated, decentralized CI/CD release orchestration system that coordinates releases across the entire Waldur ecosystem from the `waldur-docs` repository.
 
 ## Overview
 
-The `waldur-docs` repository serves as the central orchestration hub for Waldur releases. When a version tag (e.g., `8.0.6`) is pushed to this repository, it triggers a GitLab CI pipeline that:
+The `waldur-docs` repository serves as the central orchestration hub for Waldur releases. To avoid monolithic bottlenecks, Waldur relies on **GitLab CI/CD Multi-Project Triggers** and **Directed Acyclic Graphs (DAG)**.
 
-1. **Tests deployment configurations** against downstream repos
-2. **Generates and commits a changelog** with cross-repository diff links
-3. **Updates `publiccode.yml`** with the new version and date
-4. **Tags all downstream repositories** with the same version
-5. **Updates version references** in Helm charts and Docker Compose configs
-6. **Generates an OpenAPI schema** from waldur-mastermind
-7. **Releases SDKs** (Python, JS/TS, Go) with updated version numbers
-8. **Deploys versioned documentation** to GitHub Pages
+When a version tag (e.g., `8.0.6`) is pushed to `waldur-docs`, it acts merely as an **orchestrator/router**. It delegates the release authority to the downstream repositories themselves by triggering their native pipelines and passing the target `$RELEASE_VERSION`.
 
-## Release flow diagram
+This ensures:
 
-```mermaid
-flowchart TD
-  A[Run scripts/release.sh VERSION<br/>or push tag manually] --> B{GitLab CI pipeline<br/>triggered on tag}
+1. **Parallel Execution:** Releases happen concurrently across the ecosystem.
+2. **Resilience:** A failure in one downstream pipeline does not halt independent components.
+3. **Separation of Concerns:** Repositories own their specific deployment mechanics.
 
-  B --> C[Test stage]
-  C --> C1[Test Docker Compose<br/>deployment<br/><i>triggers waldur-docker-compose</i>]
-  C --> C2[Test Helm<br/>deployment<br/><i>triggers waldur-helm</i>]
-
-  C1 --> D{All tests pass?}
-  C2 --> D
-
-  D -->|No| E[Pipeline fails]
-  D -->|Yes| F[Deploy stage]
-
-  F --> F1["<b>Tag all repositories</b> job<br/>(single job, sequential steps)"]
-  F --> F2[Release Python SDK<br/><i>py-client</i>]
-  F --> F3[Release JS/TS SDK<br/><i>js-client</i>]
-  F --> F4[Release Go SDK<br/><i>go-client</i>]
-
-  F1 --> F1a[Generate changelog<br/>+ update publiccode.yml]
-  F1a --> F1b[Tag waldur-mastermind<br/>+ generate OpenAPI schema]
-  F1b --> F1c[Tag waldur-homeport]
-  F1c --> F1d[Update + tag waldur-helm<br/><i>Chart.yaml, values.yaml</i>]
-  F1d --> F1e[Update + tag waldur-docker-compose<br/><i>.env.example</i>]
-  F1e --> F1f[Tag waldur-prometheus-exporter]
-
-  F1f --> G[Release complete]
-  F2 --> G
-  F3 --> G
-  F4 --> G
-
-  G --> H[Post-deploy stage]
-  H --> H1[Deploy tagged docs<br/>to GitHub Pages<br/><i>mike deploy VERSION</i>]
-
-  style A fill:#e1f5fe
-  style G fill:#c8e6c9
-  style E fill:#ffcdd2
-  style F fill:#fff3e0
-```
-
-!!! note
-    `Build latest pages` (deploying the `latest` docs alias) runs on every push to `master`, not as part of the tag pipeline.
-
-## Coordinated repositories
+## Coordinated Repositories
 
 ### Core components
 
@@ -92889,11 +93407,19 @@ flowchart TD
 
 ### SDKs & client libraries
 
-- **py-client** — Python SDK (hosted on GitHub)
-- **js-client** — TypeScript/JavaScript SDK (hosted on GitHub)
-- **go-client** — Go SDK (hosted on GitHub)
+- **py-client** — Python SDK
+- **js-client** — TypeScript/JavaScript SDK
+- **go-client** — Go SDK
+- **rs-client** — Rust SDK
+- **terraform-provider-waldur-generator** — Terraform Provider
+- **ansible-waldur-generator** — Ansible Collection
+- **waldur-cli-generator** — scriptable CLI (generates
+  [waldur-cli](https://code.opennodecloud.com/waldur/waldur-cli) by parsing rs-client's
+  generated methods, not the OpenAPI schema directly). A second-layer consumer, not a
+  first-layer SDK: it needs rs-client's *published* output, so it's triggered from the
+  `infrastructure` stage (same reasoning as Homeport/Prometheus-exporter below), not `sdks`.
 
-## Release process
+## Release Process
 
 ### For maintainers
 
@@ -92921,70 +93447,122 @@ git tag -a 8.0.6 -m "Release 8.0.6"
 git push origin 8.0.6
 ```
 
-### CI pipeline stages
+## Pipeline Stages & Execution Flow
 
-#### Test stage
+The release orchestration pipeline inside `waldur-docs` strictly utilizes sequential pipeline stages to natively enforce the logical flow of a release and its dependency chain.
 
-Deployment tests are triggered in downstream repositories:
+```mermaid
+graph TD
+    subgraph 1. Test Stage
+        T[Linting, Regex Tests, Code Scans]
+    end
 
-```yaml
-Test Docker Compose deployment before tagging:
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
-  trigger: waldur/waldur-docker-compose
+    subgraph 2. Release Stage
+        C1(Release Mastermind)
+    end
 
-Test Helm deployment before tagging:
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
-  trigger: waldur/waldur-helm
+    subgraph 3. Schema Stage
+        O[Generate OpenAPI Schema]
+    end
+
+    subgraph 4. SDKs Stage
+        S1(Generate and release API Docs)
+        S2(Generate and release Python SDK)
+        S3(Generate and release TypeScript SDK)
+        S4(Generate and release Go SDK)
+        S5(Generate and release Rust SDK)
+        S6(Generate and release Terraform Provider)
+        S7(Generate and release Ansible Collection)
+    end
+
+    subgraph 5. Infrastructure Stage
+        D1(Release Homeport)
+        D2(Release Prometheus Exporter)
+        D3(Release Helm)
+        D4(Release Docker Compose)
+        D5(Generate and release Waldur CLI)
+    end
+
+    subgraph 6. Finalize Stage
+        CH[Generate Consolidated Changelog]
+        MK[Build Tagged MkDocs Pages]
+        SL[Announce on Slack]
+    end
+
+    T --> C1
+    C1 --> O
+    O --> S1 & S2 & S3 & S4 & S5 & S6 & S7
+    S1 & S2 & S3 & S4 & S5 & S6 & S7 --> D1 & D2 & D3 & D4 & D5
+    D1 & D2 & D3 & D4 & D5 --> CH
+    CH --> MK
+    CH --> SL
 ```
 
-#### Deploy stage — `Tag all repositories` job
+### Stage 1: `test`
 
-This single job performs all tagging, config updates, and schema generation sequentially:
+Performs static analysis, linting, and checks on the orchestration logic itself.
 
-**1. `publiccode.yml` update** (in `before_script`)
+### Stage 2: `release` (Core Component)
 
-- Sets `softwareVersion` and `releaseDate`
-- Commits and pushes to master
+The orchestrator fires a multi-project trigger to `waldur-mastermind`. This ensures the core API is tagged and published first.
 
-**2. Tag waldur-mastermind** + generate OpenAPI schema
+### Stage 3: `schema` (Schema Generation)
 
-- Clones waldur-mastermind, creates the version tag
-- Installs mastermind dependencies and runs `waldur spectacular` to generate `waldur-openapi-schema-{version}.yaml`
-- Commits the schema file to waldur-docs
+The pipeline fetches the `waldur-openapi-schema.yaml` (and, where needed, `waldur-typescript-schema.yaml`) generated in the preceding `release` stage by `waldur-mastermind`'s pipeline, using the shared `.fetch-openapi-schema` CI template (see [Shared schema-fetch template](#shared-schema-fetch-template) below). It then commits the versioned schema file back to `waldur-docs`.
 
-**3. Tag waldur-homeport** — clone, tag, push
+### Stage 4: `sdks` (First-Layer Consumers)
 
-**4. Update and tag waldur-helm** — updates `version` and `appVersion` in `waldur/Chart.yaml`, `imageTag` in `waldur/values.yaml`, commits, then tags
+With the OpenAPI schema generated, the pipeline triggers the first-layer consumers of that schema: SDKs (Python, TypeScript, Go, Rust), Terraform, Ansible, and API Docs. These pipelines ingest the schema (each via the same `.fetch-openapi-schema` template) to generate their codebases and publish to package registries (NPM, PyPI, etc.) where applicable. The Rust SDK does not yet publish to crates.io — it only commits generated code to `rs-client`'s `main` branch (and a tag on stable releases), same as `go-client`.
 
-**5. Update and tag waldur-docker-compose** — updates `WALDUR_MASTERMIND_IMAGE_TAG` and `WALDUR_HOMEPORT_IMAGE_TAG` in `.env.example`, commits, then tags
+### Triggering an individual SDK build
 
-**6. Tag waldur-prometheus-exporter** — clone, tag, push
+Two ways to exercise SDK generation without doing a full release:
 
-#### Post-deploy stage — SDK releases and code generation (parallel)
+- **Orchestrated, all SDKs at once**: on `waldur-docs`, use GitLab's **Run pipeline** with the CI/CD variable `BUILD_SDK=true` on the `master` branch. This satisfies the `.rules-sdk-release` rule shared by every `Generate and release *` job, so it fans out to Python, TypeScript, Go, Rust, Terraform, and Ansible simultaneously — there is no per-SDK toggle.
+- **Standalone, a single SDK**: go directly to that SDK's own repository and use **Run pipeline** there. This currently only works for `rs-client`, whose `Build Rust SDK` / `Release Rust SDK` jobs accept `CI_PIPELINE_SOURCE == "web"` in addition to `"pipeline"`/`"trigger"`. No variables are needed; since `RELEASE_VERSION` is empty on a manual run, it takes the nightly-commit path (no tag). `go-client`, `py-client`, and `js-client` do not have this enabled — their build jobs only run when triggered as a child of `waldur-docs`' pipeline (`"pipeline"`/`"trigger"` sources), so running their pipeline directly from their own project does nothing beyond the always-on schema fetch.
 
-These jobs run in parallel once the deploy stage completes and the OpenAPI schema is published:
+### Shared schema-fetch template
 
-- **Python SDK** — clones `py-client` from GitHub, bumps version in `pyproject.toml`, commits, tags, pushes
-- **JS/TS SDK** — clones `js-client`, bumps version in `package.json` and `package-lock.json`, commits, tags, pushes
-- **Go SDK** — clones `go-client`, creates tag, pushes (Go modules use git tags for versioning)
-- **Terraform provider generation** — triggers `terraform-provider-waldur-generator` pipeline to regenerate the provider from the new OpenAPI schema
-- **Ansible collection generation** — triggers `ansible-waldur-generator` pipeline to regenerate the collection
+Every downstream repository that needs the OpenAPI schema (`waldur-docs`, `rs-client`, `go-client`, `py-client`, `js-client`, `api-docs`, `ansible-waldur-generator`, `terraform-provider-waldur-generator`) fetches it the same way, via `extends: .fetch-openapi-schema` (defined in `waldur-pipelines/templates/utils/release-utils.yml`). Consumers just declare a `Fetch OpenAPI schema` job and depend on its artifacts:
 
-#### Post-deploy stage — `Generate consolidated changelog` job
+```yaml
+Fetch OpenAPI schema:
+  extends: .fetch-openapi-schema
 
-Runs after all SDK releases and code generation jobs complete (using DAG `needs` with `optional: true`):
+Build My SDK:
+  needs:
+    - job: Fetch OpenAPI schema
+      artifacts: true
+```
 
-- Detects the previous version from `CHANGELOG.md`
-- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), auto-generates one using `generate_enhanced_changelog_multi_repo.py`
-- Now includes Terraform breaking changes and Ansible collection notes since those repos have been updated
-- Rotates old entries (keeps last 20)
-- Commits and pushes the consolidated changelog to master
+The template is a self-contained Python script with no bash/curl/jq dependency. It:
 
-#### Post-deploy stage — Announce release on Slack
+1. **For pipeline/trigger/release runs**, looks up a successful `Generate OpenAPI schema` job in `waldur-mastermind`'s pipelines via the GitLab API, downloading and extracting its artifacts. Requests try `CI_JOB_TOKEN` first and fall back to the `GITLAB_TOKEN` CI/CD variable on an auth failure, since a job token's cross-project access is scoped per project and isn't always allow-listed.
+2. **Otherwise (or as a fallback)**, resolves the latest published schema version from the **public GitHub mirror** of `waldur-docs` (`api.github.com` + `raw.githubusercontent.com`) and downloads it from there — deliberately not the internal GitLab API, which 404s for repos whose job tokens aren't cross-project allow-listed (GitLab returns 404 rather than 403 on scope violations, to avoid leaking project existence).
+3. **Validates** that whatever was downloaded is actually an OpenAPI document before declaring success, rejecting HTML sign-in/error pages that GitLab can return with an HTTP 200.
 
-- **Build tagged pages** — deploys versioned documentation to GitHub Pages using `mike deploy $CI_COMMIT_TAG`
+Set `DOWNLOAD_TYPESCRIPT_SCHEMA: "true"` in the job's `variables` to also produce `waldur-typescript-schema.yaml` as an artifact (used by `js-client`).
+
+### Stage 5: `infrastructure` (Second-Layer Consumers & Infrastructure)
+
+This stage triggers components that rely on the artifacts published in earlier stages:
+
+- **Homeport:** Dynamically updates its `yarn.lock` to install the newly published JS SDK, performs a compilation test, and tags itself.
+- **Prometheus Exporter:** Dynamically updates its dependency to point to the newly published Python SDK package.
+- **Helm & Docker Compose:** Update their image tags to match the newly released Mastermind and Homeport versions.
+
+### Stage 6: `finalize` (Finalization)
+
+The `Generate consolidated changelog` job acts as the final synchronization barrier. It explicitly waits for all triggers across the `release`, `sdks`, and `infrastructure` stages to finish.
+
+When the entire Waldur ecosystem has successfully released, this job:
+
+- Detects the previous version from `CHANGELOG.md`.
+- If a changelog entry for this version doesn't already exist (i.e., not created by the local release script), it auto-generates one using `generate_enhanced_changelog_multi_repo.py`.
+- Includes Terraform breaking changes and Ansible collection notes since those downstream repos have been updated.
+- Rotates old entries (keeps the last 20).
+- Updates `publiccode.yml`.
+- Commits and pushes the final documentation commit to master.
 
 ### Validation
 
@@ -92997,6 +93575,14 @@ The release is complete when:
 - [ ] Documentation is deployed with the new version
 - [ ] Changelog is updated with cross-repository diff links
 - [ ] OpenAPI schema is committed
+
+## Shared Release Templates
+
+To avoid duplicating boilerplate git commands across the downstream repositories, we utilize a shared CI template hosted in `waldur-pipelines/templates/release/tag-release.yml`.
+
+Downstream repositories consume this template using `extends: .release-tag-base`.
+
+For repositories that require file modifications prior to tagging (e.g., injecting the new version into Helm charts), they extend the template and leverage the custom `!reference [.release-tag-base, tag_script]` block. This allows them to execute their specific `sed` substitutions and `git commit` commands, then seamlessly hand execution back to the shared template to create and push the git tag.
 
 ## Changelog
 
@@ -93029,7 +93615,7 @@ Each release also includes a versioned OpenAPI schema file at `docs/API/waldur-o
 
 ## RC (Release Candidate) releases
 
-RC releases allow testing a full deployment stack before committing to a stable release. An RC tag triggers the same tagging and version-update workflow across downstream repos, but skips artifacts that should only be produced for stable releases.
+RC releases allow testing a full deployment stack before committing to a stable release. An RC tag triggers the tagging and version-update workflow across downstream repos, but skips artifacts that should only be produced for stable releases (like SDKs).
 
 ### Tag format
 
@@ -93060,9 +93646,8 @@ git push origin 8.0.6-rc.1
 | Test Docker Compose deployment | Yes | Yes |
 | Test Helm deployment | Yes | Yes |
 | Generate changelog | Yes | **Yes** (replaced by stable) |
-| Update `publiccode.yml` | Yes | **Skipped** |
 | Generate OpenAPI schema | Yes | **Skipped** |
-| Release SDKs (Python, JS, Go) | Yes | **Skipped** |
+| Release SDKs & Terraform/Ansible | Yes | **Skipped** |
 | Deploy versioned documentation | Yes | **Skipped** |
 
 ### Promoting RC to stable
@@ -96497,7 +97082,7 @@ In order to get a proper order, SP owner can use `marketplace_orders_list` metho
 ```python
 from waldur_api_client.api.marketplace_orders import (
     marketplace_orders_approve_by_provider,
-    marketplace_orders_reject_by_provider, 
+    marketplace_orders_reject_by_provider,
     marketplace_orders_list,
     MarketplaceOrdersListStateItem
 )
@@ -96734,7 +97319,7 @@ from waldur_api_client.api.marketplace_public_offerings import marketplace_publi
 from waldur_api_client.api.marketplace_plan_components import marketplace_plan_components_list
 from waldur_api_client.api.marketplace_component_usages import marketplace_component_usages_set_usage
 from waldur_api_client.api.marketplace_resources import marketplace_resources_plan_periods_list
-from waldur_api_client.models import ComponentUsageCreateRequest, ComponentUsageItemRequest 
+from waldur_api_client.models import ComponentUsageCreateRequest, ComponentUsageItemRequest
 
 # Get offering details
 offering = marketplace_public_offerings_retrieve.sync(
@@ -96914,7 +97499,7 @@ result = marketplace_service_providers_list.sync(
 # 'description': '<description>'
 # 'image': '<image_url>'
 # 'offering_count': 5
-# 'organization_groups': []  
+# 'organization_groups': []
 # 'url': '<service_provider_url>'
 # 'uuid': '<service_provider_uuid>'
 ```
@@ -99396,7 +99981,7 @@ with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
             client=client,
             customer_uuid=customer.uuid
         )
-            
+
         for tenant in tenants:
             if not tenant.marketplace_resource_uuid:
                 continue
@@ -100069,7 +100654,7 @@ resource "waldur_openstack_instance" "instance" {
   ssh_public_key     = waldur_core_ssh_public_key.ssh_key.url
   system_volume_size = 1024
   data_volume_size   = 1024
-  
+
   ports = [
     {
       subnet = waldur_openstack_subnet.subnet.url
