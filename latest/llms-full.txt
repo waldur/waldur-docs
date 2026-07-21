@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-21T07:22:04.974431Z
+Generated: 2026-07-21T16:11:08.862122Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -67487,6 +67487,9 @@ Project creation is allowed for organization owners in their organizations and s
 4. If you need to edit project details later, open your project and select the **Edit** tab.
 
 !!! note
+    Your Waldur administrator may enforce a project name convention (for example, a maximum length). If the name you enter does not meet the requirement, the form shows an error and the project is not created. See [Project name restrictions](../staff-users/project-name-restrictions.md).
+
+!!! note
     1. If a resource has a termination date that comes after the project's end date, the project's end date will automatically become that resource's termination date.
     2. If a resource has a termination date that comes before the project's end date, we'll use the resource's original termination date.
     3. Important: Setting any end date (either the project's or a resource's) only creates a termination request. The resource remains active in the project until the termination process is fully completed.
@@ -71067,6 +71070,56 @@ Approving a justification allows the organization to be created in the system.
 - **Rejected applications** remain visible with decision history for the next 30 days.
 
 All actions are auditable via onboarding records.
+
+---
+
+### Project name restrictions
+<!-- Source: docs/user-guide/staff-users/project-name-restrictions.md -->
+
+# Project name restrictions
+
+Waldur can restrict the names users may give to projects, so that project names follow a naming convention — for example, a maximum length or a limited set of characters. The restriction is defined as a regular expression and applies across all organizations in the deployment.
+
+The rule is checked whenever a user sets a project name: when creating a project, renaming it, entering a custom project name while accepting an invitation, or naming a proposal that becomes a project on approval. Automatically generated project names — for example those created by provisioning integrations or data imports — are not affected.
+
+## Configuring the restriction
+
+**Performed by:** Staff (instance administrator)
+
+### Step 1: Open Administration settings
+
+Navigate to **Administration** and select **Settings**.
+
+### Step 2: Configure the Project settings
+
+1. Open the **Project** section.
+2. Set **Project name regex** to a regular expression that the whole project name must match. Leave it empty to allow any name.
+3. Optionally, set **Project name regex error message** to a plain-language message shown to users when a name is rejected. If left empty, a default message is used.
+
+[Image: Project name restriction settings]
+
+## Examples
+
+| Regular expression | Effect |
+|---|---|
+| `^.{1,32}$` | Name may be 1–32 characters long |
+| `^[A-Za-z0-9 _-]{1,32}$` | 1–32 characters, limited to letters, digits, spaces, underscores and hyphens |
+| `^[A-Za-z].{0,31}$` | Must start with a letter; up to 32 characters |
+
+## How it works
+
+- The whole name must match the pattern. An empty pattern disables the check, so any name is allowed.
+- The rule is enforced only when the name is set or changed. Existing projects whose names predate the rule keep working, and editing their other fields is not blocked.
+- When a restriction is set, the project create form shows it as a tooltip next to the **Project name** field, so users see the requirement before they submit.
+
+[Image: Project name restriction tooltip]
+
+- When a name is rejected, the user sees the **Project name regex error message** if one is configured, otherwise a default message.
+
+[Image: Project name validation error]
+
+!!! note
+    If the configured regular expression is invalid, the check is skipped rather than blocking project creation. Test your pattern before relying on it.
 
 ---
 
