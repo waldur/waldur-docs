@@ -7605,6 +7605,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#integration-recipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration recipes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12179,6 +12190,92 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11">
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Waldur cli
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Waldur cli
+  
+
+          </label>
+          <ul class="md-nav__list">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../integrator-guide/waldur-cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -14602,6 +14699,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#integration-recipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration recipes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -15249,6 +15357,80 @@ platform-wide: the user-centric events (<code>user_profile</code>, <code>user_ss
 are staff/support. Profile events only carry the attributes the platform
 currently exposes via <code>ENABLED_USER_PROFILE_ATTRIBUTES</code>, so a field an operator
 disabled is never broadcast.</p>
+<p><strong>User-centric events only, globally (the IdM/IGA case).</strong> Combine an empty
+scope set with an <code>object_types</code> allow-list — the type filter applies to global
+consumers too, so marketplace events are dropped:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST</span><span class="w"> </span><span class="err">/api/eve</span><span class="kc">nt</span><span class="mi">-</span><span class="err">co</span><span class="kc">nsu</span><span class="err">mers/regis</span><span class="kc">ter</span><span class="err">/</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">    </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"user_profile"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_ssh_key"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_lifecycle"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_role"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>This one queue then receives every user's profile, SSH-key, lifecycle and
+role-change events platform-wide, and nothing else. (Still staff/support only —
+the empty scope set is what makes it global, and that is the PII boundary.)</p>
+<h3 id="integration-recipes">Integration recipes</h3>
+<p>Concrete <code>POST /api/event-consumers/register/</code> bodies for the common
+integrations. In every case the response is <code>{rmq_username, queue_name, vhost,
+observable_object_types}</code>; connect over STOMP as in <a href="#stomp-connection">STOMP Connection</a>.
+The rule of thumb: <strong><code>object_types</code> picks <em>what kinds</em>, <code>scopes</code> picks <em>whose</em>.</strong></p>
+<p><strong>IdM / IGA identity sync</strong> — mirror all users' identity state to an external
+directory. Global, user-centric only (staff/support):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w"> </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"user_profile"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_ssh_key"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_lifecycle"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_role"</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Keycloak / access-management operator</strong> — react to role grants/revokes and
+account activation/deactivation platform-wide (staff/support):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w"> </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"user_role"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_lifecycle"</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>SSH-key provisioning</strong> — push public keys to a bastion/HPC login node as they
+change (staff/support; SSH keys are user-centric so only a global queue carries
+them):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w"> </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"user_ssh_key"</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Per-customer reporting / monitoring</strong> — one tenant's order and resource
+activity. Non-staff: you must hold a role on the customer (or an ancestor):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"customer"</span><span class="p">,</span><span class="w"> </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;customer-uuid&gt;"</span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"order"</span><span class="p">,</span><span class="w"> </span><span class="s2">"resource"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>External provisioning processor for specific projects</strong> — drive an external
+system from orders and offering-user changes in a fixed set of projects:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"project"</span><span class="p">,</span><span class="w"> </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;project-a-uuid&gt;"</span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"project"</span><span class="p">,</span><span class="w"> </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;project-b-uuid&gt;"</span><span class="p">}</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"order"</span><span class="p">,</span><span class="w"> </span><span class="s2">"resource"</span><span class="p">,</span><span class="w"> </span><span class="s2">"offering_user"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Single-offering integration</strong> — everything happening on one offering (its
+whole scope chain), e.g. a billing or usage exporter for one service:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offering"</span><span class="p">,</span><span class="w"> </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;offering-uuid&gt;"</span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"order"</span><span class="p">,</span><span class="w"> </span><span class="s2">"resource"</span><span class="p">,</span><span class="w"> </span><span class="s2">"service_account"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Omit <code>object_types</code> (or send <code>[]</code>) in any of these to receive <strong>all</strong> event
+kinds for the chosen scope. Delivery stays dynamic: if the integration's owner
+later loses their role on a bound scope, delivery for that scope stops on the
+next event — no re-registration needed.</p>
 <h2 id="migration-from-legacy-to-unified">Migration from Legacy to Unified</h2>
 <p>This section is a practical runbook for moving an existing site agent off the legacy multi-queue path onto the unified <code>consumer_{uuid}</code> queue. The two paths coexist at the server, so migration is one agent at a time — no cross-agent coordination required.</p>
 <h3 id="architectural-facts-that-make-migration-painless">Architectural facts that make migration painless</h3>
