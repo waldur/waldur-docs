@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-21T16:11:08.862122Z
+Generated: 2026-07-22T02:03:37.260196Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -42954,6 +42954,22 @@ processor = marketplace_site_agent_services_register_processor.sync(
 - **Processor Tracking**: Monitor individual processors and their backend versions
 - **Configuration Management**: Store and version configuration files
 - **Statistics**: Collect and report agent performance metrics
+- **Unified Queue**: Single queue per agent via `register_queue` with enriched payloads
+
+**Unified Queue Registration:**
+
+A site agent can register a unified queue where one RabbitMQ queue receives all event types. This is the recommended approach for new agents. The queue's state lives on a generic `EventConsumer` (in `waldur_core.logging`) that the `AgentIdentity` links to, bound to the agent's offering:
+
+```python
+# Register a unified queue (one call replaces multiple create_queue calls)
+result = marketplace_site_agent_identities_register_queue.sync(
+    uuid=agent_identity.uuid.hex,
+    client=waldur_rest_client
+)
+# result contains: rmq_username, queue_name, vhost, observable_object_types
+```
+
+For the complete guide on unified queues, see [Unified Agent Queue](../guides/agent-pubsub.md).
 
 ### Message Processing (Consumer Side)
 
@@ -43027,7 +43043,8 @@ The event notification system provides REST API endpoints for managing event-bas
 - **PATCH /api/marketplace-site-agent-identities/{uuid}/** - Update agent identity
 - **DELETE /api/marketplace-site-agent-identities/{uuid}/** - Delete agent identity
 - **POST /api/marketplace-site-agent-identities/{uuid}/register_service/** - Register service within agent
-- **POST /api/marketplace-site-agent-identities/{uuid}/register_event_subscription/** - Register event subscription for agent
+- **POST /api/marketplace-site-agent-identities/{uuid}/register_event_subscription/** - Register event subscription for agent (legacy)
+- **POST /api/marketplace-site-agent-identities/{uuid}/register_queue/** - Register unified agent queue (recommended)
 
 #### Agent Identity Permissions
 
@@ -43082,12 +43099,17 @@ Staff, customer owners, and offering managers are not restricted by `created_by`
 1. **WebSocket Transport**: The system uses STOMP over WebSockets for communication
 2. **TLS Security**: Connections can be secured with TLS
 3. **User Authentication**: Each subscription has its own credentials and permissions in RabbitMQ
-4. **Queue Structure**: Queue names follow the pattern `/queue/subscription_{subscription_uuid}_offering_{offering_uuid}_{observable_object_type}`
+4. **Queue Structure**: Two queue naming patterns are supported:
 
-   Example queue names:
-   - `/queue/subscription_abc123_offering_def456_order`
-   - `/queue/subscription_abc123_offering_def456_user_role`
-   - `/queue/subscription_abc123_offering_def456_resource_periodic_limits`
+   **Legacy (per-offering, per-object-type):**
+   - Pattern: `/queue/subscription_{subscription_uuid}_offering_{offering_uuid}_{object_type}`
+   - Example: `/queue/subscription_abc123_offering_def456_order`
+
+   **Unified (single queue per consumer):**
+   - Pattern: `/queue/consumer_{consumer_uuid}`
+   - Example: `/queue/consumer_a1b2c3d4e5f67890...`
+   - All event types delivered to one queue; agent routes by `object_type` in payload
+   - See [Unified Agent Queue guide](../guides/agent-pubsub.md) for details
 
 ## Error Handling and Resilience
 
@@ -50975,6 +50997,509 @@ Executors construct and manage task chains, providing a higher-level interface f
 
 ## Development Guides
 
+### Unified Agent Queue (Pubsub)
+<!-- Source: docs/developer-guide/guides/agent-pubsub.md -->
+
+# Unified Agent Queue (Pubsub)
+
+## Overview
+
+The unified agent queue simplifies how site agents receive STOMP messages from Waldur. Instead of creating separate RabbitMQ queues for each combination of offering and object type (the legacy approach), agents register a single queue that receives all event types. Routing is done by the agent based on `object_type` in the payload.
+
+## Architecture Comparison
+
+```mermaid
+graph TD
+    subgraph Legacy Path
+        W1[Waldur] -->|order| Q1[subscription_X_offering_Y_order]
+        W1 -->|user_role| Q2[subscription_X_offering_Y_user_role]
+        W1 -->|resource| Q3[subscription_X_offering_Y_resource]
+        Q1 --> A1[Agent]
+        Q2 --> A1
+        Q3 --> A1
+    end
+
+    subgraph Unified Path
+        W2[Waldur] -->|all events| Q4["consumer_&#123;consumer_uuid&#125;"]
+        Q4 --> A2[Agent]
+        A2 -->|routes by object_type| A2
+    end
+```
+
+| Aspect | Legacy | Unified |
+|--------|--------|---------|
+| Queues per agent | N (one per offering x object_type) | 1 |
+| DB models | `EventSubscription` + `EventSubscriptionQueue` | `EventConsumer` (in `waldur_core.logging`) |
+| Queue naming | `subscription_{sub}_offering_{off}_{type}` | `consumer_{consumer_uuid}` |
+| Routing | RabbitMQ (separate queues) | Agent (reads `object_type` from payload) |
+| Payload enrichment | No | Yes (order, resource, user_role) |
+| Cleanup on delete | CASCADE through `EventSubscription` | `pre_delete` on `AgentIdentity` + stale/dangling sweeps on `EventConsumer` |
+
+The unified-queue state lives on a generic `EventConsumer` model, not on the
+site-agent `AgentIdentity` (which links to its consumer via a nullable
+`event_consumer` OneToOne). A consumer is bound to a *list* of entities — an
+offering, several projects, a customer — so any external integration, not only
+site agents, can own one. Both paths coexist: an offering can have legacy
+subscriptions and unified consumer queues simultaneously.
+
+## Registration Flow
+
+```mermaid
+sequenceDiagram
+    participant Agent as Site Agent
+    participant API as Waldur API
+    participant RMQ as RabbitMQ
+    participant DB as PostgreSQL
+
+    Agent->>API: POST /api/marketplace-site-agent-identities/{uuid}/register_queue/
+    API->>RMQ: Create vhost (user UUID hex)
+    API->>RMQ: Create RMQ user (random UUID hex)
+    API->>RMQ: Assign vhost permissions
+    API->>DB: Create EventConsumer + offering binding, link agent.event_consumer
+    API->>RMQ: Create queue consumer_{consumer_uuid}
+    API->>DB: Store rmq_username, queue_created on the EventConsumer
+    API-->>Agent: 201 Created (rmq_username, queue_name, vhost, object_types)
+
+    Agent->>RMQ: STOMP CONNECT (login=rmq_username, passcode=PAT or auth_token)
+    Agent->>RMQ: SUBSCRIBE /queue/consumer_{consumer_uuid}
+```
+
+## Message Delivery
+
+```mermaid
+sequenceDiagram
+    participant Event as Django Signal
+    participant Prep as "prepare_messages()"
+    participant Enrich as Payload Enricher
+    participant Celery as publish_messages task
+    participant RMQ as RabbitMQ
+    participant Agent as Site Agent
+
+    Event->>Prep: offering, payload, object_type
+    Prep->>Prep: Resolve event scope-keys (offering + project chains)
+    Prep->>Prep: Match consumer bindings, re-check owner roles (batched)
+    Prep->>Enrich: Enrich payload (order/resource/user_role)
+    Prep->>Celery: Messages with vhost + topic + payload
+    Celery->>RMQ: Publish to consumer_{consumer_uuid}
+    RMQ->>Agent: Deliver message
+    Agent->>Agent: Route by payload.object_type
+```
+
+## API Reference
+
+### Register Queue
+
+```http
+POST /api/marketplace-site-agent-identities/{uuid}/register_queue/
+```
+
+**Request body (optional):**
+
+```json
+{
+    "object_types": ["order", "resource"]
+}
+```
+
+`object_types` filters which event types this queue receives. Pass an explicit `[]` to receive every type; **omitting the field leaves an existing queue's filter unchanged** (so a restarting agent that stops sending it cannot silently widen itself back to the full firehose). Authoritative schema: `AgentQueueRegistrationRequest` in the OpenAPI spec.
+
+**Response (201 Created):**
+
+```json
+{
+    "rmq_username": "a1b2c3d4e5f6...",
+    "queue_name": "consumer_abcdef0123456789...",
+    "vhost": "user_uuid_hex",
+    "observable_object_types": [
+        "order",
+        "user_role",
+        "resource",
+        "offering_user",
+        "importable_resources",
+        "service_account",
+        "course_account",
+        "resource_periodic_limits"
+    ]
+}
+```
+
+**Response (200 OK):** Same format, returned when the queue already exists and RMQ state is valid. The endpoint also refreshes the agent's RMQ password to match the caller's current auth token, and persists any change to `object_types`.
+
+**Response (409 Conflict):** Returned when the identity is already registered by a different user. The current owner must deregister (delete the identity, or call a future `deregister_queue` action) before a new owner can take over.
+
+**Idempotent behavior:** If the agent identity already has a valid queue, returns 200. If the RMQ state is stale (user deleted, permissions missing, password upsert failed), the endpoint cleans up and recreates.
+
+**Permissions:** Allowed for staff, customer owners and service-provider managers (`CREATE_OFFERING` on the customer), offering managers (`UPDATE_OFFERING` on the offering), and identity managers (`is_identity_manager` + overlapping `managed_isds`) for offerings in non-archived/non-draft states. Identity managers can only manage agent identities they created.
+
+### STOMP Connection
+
+After registration, connect using:
+
+- **Login:** `rmq_username` from the response
+- **Passcode:** The credential presented at registration — a Personal Access
+  Token if you registered with one (recommended: a PAT survives a browser logout
+  and session-token rotation), otherwise the user's DRF auth token
+- **Vhost:** `vhost` from the response
+- **Destination:** `/queue/{queue_name}` from the response
+
+## Enriched Payloads
+
+The unified path enriches payloads server-side to reduce the number of API lookups agents need to make.
+
+### Order Messages
+
+Enricher: `_enrich_order_payload` adds resource, project, and plan context.
+
+```json
+{
+    "order_uuid": "abc123...",
+    "order_state": "pending provider",
+    "offering_uuid": "def456...",
+    "object_type": "order",
+    "order_type": "Create",
+    "resource_uuid": "res789...",
+    "resource_backend_id": "slurm_account_1",
+    "resource_name": "My Allocation",
+    "project_uuid": "proj012...",
+    "project_name": "Research Project",
+    "attributes": {"name": "item_name"},
+    "limits": {"cpu": 100},
+    "plan_uuid": "plan345..."
+}
+```
+
+### Resource Messages
+
+Enricher: `_enrich_resource_payload` adds resource state and project context.
+
+```json
+{
+    "resource_uuid": "res789...",
+    "offering_uuid": "def456...",
+    "object_type": "resource",
+    "resource_name": "My Allocation",
+    "resource_state": "OK",
+    "project_uuid": "proj012...",
+    "project_name": "Research Project",
+    "limits": {"cpu": 100}
+}
+```
+
+### User Role Messages
+
+Enricher: `_enrich_user_role_payload` adds user profile details.
+
+```json
+{
+    "user_uuid": "usr678...",
+    "user_username": "john",
+    "project_uuid": "proj012...",
+    "project_name": "Research Project",
+    "role_name": "PROJECT.ADMIN",
+    "granted": true,
+    "offering_uuid": "def456...",
+    "object_type": "user_role",
+    "user_email": "john@example.com",
+    "user_full_name": "John Doe"
+}
+```
+
+### Other Message Types
+
+`offering_user`, `service_account`, `course_account`, `importable_resources`, and `resource_periodic_limits` messages are delivered without enrichment. They include only the original handler payload plus `offering_uuid` and `object_type`.
+
+## Cleanup Mechanisms
+
+### Signal-Based Cleanup (Real-Time)
+
+When an `AgentIdentity` is deleted, the `cleanup_agent_identity_queue` signal handler in `marketplace_site_agent/handlers.py` reads the linked `event_consumer` and:
+
+1. Deletes the RabbitMQ queue `consumer_{consumer_uuid}` from the vhost
+2. Deletes the RabbitMQ user identified by the consumer's `rmq_username`
+3. Logs warnings on failure but does not block deletion
+
+### Orphan Queue Cleanup (Periodic)
+
+The `cleanup_orphan_subscription_queues` task (every 6 hours) handles both queue types:
+
+- **`subscription_*` queues:** Checks against `EventSubscriptionQueue` records
+- **`consumer_*` queues:** Parses the consumer UUID, checks if a matching `EventConsumer` with `queue_created=True` exists, deletes orphans
+
+### Consumer Queue Lifecycle (Periodic)
+
+Two tasks pair the unified path with the same GC story the legacy path has (both now operate over `EventConsumer` rows):
+
+- **`cleanup_stale_agent_queues` (every 24h):** Mirrors `delete_stale_event_subscriptions`. For any `EventConsumer` whose owning user no longer holds a live credential — neither an active DRF token **nor** a live Personal Access Token — deletes the RMQ queue + user and resets `queue_created`/`rmq_username`. The PAT arm matters: a PAT-backed agent typically has no DRF token, so a PAT-only check would otherwise reap it.
+- **`cleanup_dangling_agent_queues` (every 1h):** Mirrors `delete_dangling_event_subscriptions`. For any `EventConsumer` whose backing RMQ user has been removed out of band, flips `queue_created=False` and clears `rmq_username` so the DB matches reality.
+
+### Offline recovery for long-down agents
+
+An important property: `cleanup_stale_agent_queues` only considers a queue stale when the owning user's auth token is **already expired** in the DB. The threshold it uses (`get_active_tokens()`) is the same threshold `authenticate_credentials` uses to reject the token. So by the time cleanup is willing to tear down RMQ state, the agent can no longer make REST calls anyway — cleanup does not create a new failure mode, it just reclaims an unreachable user's resources.
+
+There are two regimes:
+
+1. **`user.token_lifetime IS NULL`** (long-lived service account — the **recommended setup for production site agents**). The token never expires; `get_active_tokens()` always returns it; cleanup never fires; the queue persists indefinitely. An agent that comes back online after an arbitrarily long outage just calls `register_queue` again — the 200-OK fast path refreshes the RMQ password and the agent reconnects to its existing queue. Messages older than the 1-hour queue TTL are dropped by RMQ, but the queue itself survives.
+
+2. **`user.token_lifetime` is finite**. The token's `created` timestamp is updated on every API call (debounced every `token_lifetime / 2`). If the agent is offline longer than `token_lifetime`, the token expires; the agent's stored token can no longer authenticate; cleanup will eventually run and tear down RMQ state. The agent needs a fresh auth token to recover — this is a pre-existing property of token auth, not a consequence of these cleanup tasks.
+
+If your site-agent users are configured with a finite `token_lifetime` and you want them to survive multi-hour outages, either lift `token_lifetime` to `NULL` or have the agent issue a lightweight authenticated heartbeat call (for example a periodic `register_processor` or `set_statistics` update) inside the `token_lifetime / 2` window. Once `token.created` is refreshed, the identity is no longer stale and cleanup keeps its hands off.
+
+Race-condition note: if cleanup runs while the agent is reconnecting with a still-valid token, the agent may briefly see its `register_queue` fast path succeed and then find the queue gone moments later. Calling `register_queue` once more falls through to the recreate path and produces fresh credentials. One extra round trip, no data loss beyond the queue's 1-hour TTL.
+
+### Queue Arguments
+
+Both paths use the same queue arguments:
+
+```python
+SUBSCRIPTION_QUEUE_ARGUMENTS = {
+    "x-message-ttl": 60 * 60 * 1000,       # 1 hour
+    "x-max-length": 10000,
+    "x-overflow": "reject-publish-dlx",
+    "x-dead-letter-exchange": "",
+    "x-dead-letter-routing-key": "waldur.dlq.messages",
+}
+```
+
+## Data Model
+
+The unified path stores its state on a generic `EventConsumer` model in
+`waldur_core.logging`, not on `AgentIdentity`. A site agent links to its consumer
+via a nullable `AgentIdentity.event_consumer` OneToOne; a consumer can also exist
+standalone (owned by any external integration).
+
+| Field (`EventConsumer`) | Type | Description |
+|-------|------|-------------|
+| `user` | FK to User | Owner/registrant; the RMQ vhost is `user.uuid.hex` |
+| `rmq_username` | CharField(32) | RMQ login (UUID hex), blank when no queue |
+| `queue_created` | BooleanField | Whether a queue exists in RMQ |
+| `object_types` | JSONField | Allow-list of event types (empty = all) |
+| `scopes` | reverse FK | The consumer's entity bindings — see below |
+
+The queue name is `consumer_{consumer_uuid}` (property `EventConsumer.queue_name`).
+
+### Scope bindings
+
+A consumer is bound to a **list** of entities via `EventConsumerScope(consumer,
+content_type, object_id)`. An event is delivered when its **scope-keys**
+intersect those bindings.
+
+| Bindings | Meaning |
+|----------|---------|
+| one offering | the classic site-agent case |
+| a project, a customer, several projects | subscribe to a slice you have access to |
+| **empty** | **GLOBAL — everything platform-wide: user-centric events (all-user PII) AND marketplace events. Staff/support only.** |
+
+An event's scope-keys are the offering's own chain (offering, its project, that
+project's customer, the offering's customer) plus the consumer-side project
+chain derived from the order/resource. So a consumer bound anywhere in that
+chain matches — binding to a *customer* picks up its projects' events.
+
+**Authorization is checked twice, and stays dynamic:**
+
+1. *At registration* — you may only bind to an entity you hold an active role
+   on (or an ancestor of it). Staff/support may bind to anything, and are the
+   only ones who may request the empty (global) binding set.
+2. *At delivery* — the same rule is re-checked for every matched consumer, in
+   one batched query. **Revoking someone's role stops their delivery
+   immediately**; registration is not a permanent grant.
+
+Because the predicate mirrors `Offering.objects.filter_for_user`, the unified
+path is never narrower than the legacy path it replaces — a plain project member
+can subscribe to their project's events.
+
+Sources: `src/waldur_core/logging/models.py` (`EventConsumer`,
+`EventConsumerScope`), `src/waldur_core/permissions/utils.py`
+(`holds_any_role_on_scope_or_ancestor`, `users_with_role_on_any_scope_key`),
+`src/waldur_mastermind/marketplace_site_agent/models.py`
+(`AgentIdentity.event_consumer`).
+
+### Registering a non-agent consumer
+
+Site agents use `register_queue` on their `AgentIdentity` (above). Any other
+integration — an IdM/IGA sync, the keycloak operator, a reporting script —
+registers directly:
+
+```http
+POST /api/event-consumers/register/
+```
+
+```json
+{
+    "object_types": ["user_role", "resource"],
+    "scopes": [
+        {"type": "project", "uuid": "<project-uuid>"},
+        {"type": "customer", "uuid": "<customer-uuid>"}
+    ]
+}
+```
+
+`scopes` uses the same `{type, uuid}` vocabulary as Personal Access Token
+bindings (`TYPE_MAP`: customer, project, offering, resource, call, …). The
+response matches `register_queue`: `rmq_username`, `queue_name`, `vhost`,
+`observable_object_types`. Registration is idempotent per binding set.
+
+**Omitting `scopes` (or passing `[]`) requests a GLOBAL queue** — *everything*
+platform-wide: the user-centric events (`user_profile`, `user_ssh_key`,
+`user_lifecycle`, and `user_role` on any scope) plus the marketplace events
+(`order`, `resource`, `offering_user`, …). It is rejected with 403 unless you
+are staff/support. Profile events only carry the attributes the platform
+currently exposes via `ENABLED_USER_PROFILE_ATTRIBUTES`, so a field an operator
+disabled is never broadcast.
+
+## Migration from Legacy to Unified
+
+This section is a practical runbook for moving an existing site agent off the legacy multi-queue path onto the unified `consumer_{uuid}` queue. The two paths coexist at the server, so migration is one agent at a time — no cross-agent coordination required.
+
+### Architectural facts that make migration painless
+
+- **Same vhost in both paths.** Legacy and unified queues both live in the RabbitMQ vhost named after the user's UUID hex. The STOMP connection's vhost does not change.
+- **Different STOMP login.** Legacy uses `subscription.uuid.hex` as login (one per object type); unified uses a fresh `rmq_username` returned by `register_queue`. They authenticate against the same vhost, so an agent can hold two STOMP connections to the same vhost during the cut-over without any RMQ reconfiguration.
+- **Payload shape is a strict superset.** Unified messages start with the legacy payload, then add `offering_uuid`, `object_type`, and (for `order`/`resource`/`user_role`) enrichment fields. An old payload parser that ignores unknown keys keeps working.
+- **AgentIdentity identifier is the same.** The agent already has one `AgentIdentity` per running agent; the migration mutates that row, it does not create a new one.
+
+### Agent-side code changes
+
+1. Replace `register_event_subscription(identity, type)` calls (one per object type) with a single `register_queue(identity, object_types=[...])`.
+2. Open one STOMP subscription to `/queue/{queue_name}` from the response.
+3. Route incoming frames by `payload["object_type"]` instead of by destination queue name.
+4. Stop calling follow-up REST GETs for the resource / order / user enrichment fields that are now in the payload (see *Enriched Payloads* above).
+
+The before/after code shape is unchanged from earlier in this guide.
+
+### Cut-over runbook
+
+Pick a strategy based on whether duplicate event delivery is acceptable during the window.
+
+#### Strategy A — Sequential (brief delivery gap, safest)
+
+Use when the agent cannot afford double-processing and a few seconds of dropped events between steps 2 and 4 is acceptable.
+
+1. Upgrade and restart the agent on a version that supports the unified path.
+2. Stop consuming from all legacy `subscription_*` queues (close STOMP subscriptions). Buffered messages in those queues either stay until consumed later or are dropped at the message TTL (1h by default).
+3. `DELETE /api/event-subscriptions/{uuid}/` for each of the agent's legacy `EventSubscription` rows. This deletes the RMQ user and (if it was the user's last subscription) the vhost; the unified path will recreate the vhost in step 4 if needed.
+4. `POST /api/marketplace-site-agent-identities/{uuid}/register_queue/` with the desired `object_types`. Store the returned `rmq_username`, `queue_name`, `vhost`.
+5. Open a STOMP connection (login=`rmq_username`, passcode=current auth token, vhost=`vhost`) and subscribe to `/queue/{queue_name}`.
+
+#### Strategy B — Overlap (zero delivery gap, requires dedup)
+
+Use when the agent can deduplicate by event identity (order UUID + state, resource UUID + last_sync, etc.) and any event must be processed at least once.
+
+1. Upgrade and restart the agent.
+2. Call `register_queue` first. Open a STOMP subscription to the unified queue and start processing.
+3. Keep the legacy queues subscribed too. During the overlap window the agent will receive each event twice; the dedup layer drops the second copy.
+4. After confirming the unified queue is delivering correctly (compare `messages_in` counters in `agent_connection_stats`), `DELETE` each legacy `EventSubscription` and close its STOMP subscription.
+
+#### Strategy C — Operator-managed (no agent code change yet)
+
+If you cannot ship a new agent build, an operator can still flip the agent identity to the unified path:
+
+1. As staff, `POST .../register_queue/` on behalf of the agent — but note that the consumer's owner (`EventConsumer.user`) becomes the calling user, and ownership is one-user-at-a-time (a second user will get 409 Conflict). For this reason this is rarely the right move; prefer Strategy A or B.
+
+### What to do with the legacy `EventSubscription` rows
+
+Two ways to retire them:
+
+- **Explicit:** `DELETE /api/event-subscriptions/{uuid}/` deletes the RMQ user and (if last subscription for that user) the vhost. Queues are emptied at the next `cleanup_orphan_subscription_queues` run (every 6h).
+- **Implicit:** Stop refreshing the agent's auth token. The periodic `delete_stale_event_subscriptions` task (every 24h) drops `EventSubscription` rows whose user has no active token. This is a slower garbage path, useful when the agent host is decommissioned outright.
+
+Either way: do not leave a legacy `EventSubscription` and a unified queue both subscribed by the same agent process unless the agent is actively deduping (Strategy B).
+
+Deleting the legacy rows is safe for the hourly safety-net tasks: the
+stale-resource force-resync (`sync_resources`) and the pending-order reminder
+(`send_messages_about_pending_orders`) recognise an offering as covered when it
+has **either** a legacy `EventSubscription` **or** a unified `EventConsumer`
+bound to it, so a fully migrated offering keeps its coverage after the legacy
+rows are gone.
+
+### Validating a successful migration
+
+Run as staff:
+
+```bash
+# Confirm the agent's EventConsumer holds unified-path state
+GET /api/marketplace-site-agent-identities/{uuid}/register_queue/
+# Expect the response: queue_created state, rmq_username non-empty,
+# owner = the registering user, object_types as requested
+
+# Confirm RMQ queue exists and has a consumer
+curl -u guest:guest http://<rmq-host>:15672/api/queues/{vhost_uuid_hex}/consumer_{consumer_uuid}
+# Expect: consumers >= 1, messages_unacknowledged small
+
+# Confirm legacy state is gone
+GET /api/event-subscriptions/?user_uuid={user_uuid}
+# Expect: an empty list, or only subscriptions that genuinely belong to other agents
+```
+
+The `agent_connection_stats` endpoint (staff/support) reports both queue types side-by-side per identity for a fleet-wide view.
+
+### Rolling back
+
+If the unified path misbehaves in production:
+
+1. Re-create the legacy subscriptions (`register_event_subscription` once per object type, then `create_queue` per offering + type).
+2. `DELETE /api/marketplace-site-agent-identities/{uuid}/` — the `cleanup_agent_identity_queue` `pre_delete` signal tears down the unified RMQ queue + user.
+3. *Or* leave the unified record in place and stop the agent from connecting to it; the new `cleanup_dangling_agent_queues` task will reconcile state on the next 1h tick if the RMQ side disappears.
+
+### Things that will trip you up
+
+- **Cross-user takeover blocked.** Once an identity is registered by user A, only A can re-register or refresh. A second user gets HTTP 409 Conflict; ask the original owner to deregister (delete the identity, or call `register_queue` on a fresh identity).
+- **Token rotation drops the password.** The `register_queue` 200-OK path upserts the RMQ password to the caller's current auth token. An agent that hits STOMP `AUTH_FAILED` after a token refresh should call `register_queue` again — it returns 200 and silently rotates the password.
+- **Payload shape varies between paths.** During Strategy B's overlap the same event arrives twice with different shapes. The handler must tolerate both (the legacy shape is a subset of the unified shape, so dispatching on `payload.get("object_type")` to pick a route works without branching on which queue delivered it).
+- **`object_types` is sticky on `register_queue`.** Re-registering with a different `object_types` value updates the field, but does **not** retroactively drop already-queued events. Until the agent drains the queue, it may still see filtered-out types from before the change. Omitting the field keeps the current filter; only an explicit `[]` widens the queue to all types.
+- **Agent-owned consumers are managed only through the site-agent endpoints.** They are hidden from `/api/event-consumers/`, so the generic register/list/delete routes cannot retune or tear down a running agent's queue. Delete the `AgentIdentity` to release it — that also deletes its `EventConsumer` and its RabbitMQ state.
+
+### Coexistence
+
+Both paths can run simultaneously per offering. Migrate agents one at a time without disrupting unmigrated peers. Server-side cleanup is automatic: legacy garbage is handled by `delete_stale_event_subscriptions` (24h) + `delete_dangling_event_subscriptions` (1h); unified garbage by `cleanup_stale_agent_queues` (24h) + `cleanup_dangling_agent_queues` (1h). Orphan queues on either path are pruned by `cleanup_orphan_subscription_queues` (6h).
+
+## Troubleshooting
+
+### Queue Registration Fails
+
+**Symptom:** 400/500 on `register_queue`
+
+**Check:**
+
+1. RabbitMQ Management API is accessible
+2. User has `CREATE_OFFERING` permission on the offering's customer
+3. Agent identity exists and is associated with a valid offering
+
+### Messages Not Delivered
+
+**Symptom:** Events fire but agent receives nothing
+
+**Check:**
+
+1. The agent's `EventConsumer.queue_created` is True and `rmq_username` is not empty
+2. The consumer's owner (`EventConsumer.user`) has access to the offering (via `filter_for_user`)
+3. Queue exists in RabbitMQ: `curl -u guest:guest http://localhost:15672/api/queues/{vhost}/consumer_{consumer_uuid}`
+
+### Stale RMQ State
+
+**Symptom:** `register_queue` returns 200 but agent cannot connect
+
+**Cause:** RMQ user or permissions were deleted outside Waldur
+
+**Fix:** Call `register_queue` again. The endpoint detects stale state, cleans up, and recreates.
+
+### Orphan Queues
+
+**Symptom:** `agent_*` queues in RMQ with no consumers
+
+**Fix:**
+
+```python
+from waldur_core.logging.tasks import cleanup_orphan_subscription_queues
+cleanup_orphan_subscription_queues()
+```
+
+## Related Documentation
+
+- [Event Subscription Queues (Legacy)](event-subscription-queues.md)
+- [Event-Based Order Processing](../core-concepts/event-based-order-processing.md)
+
+---
+
 ### AI Assistant
 <!-- Source: docs/developer-guide/guides/ai-assistant.md -->
 
@@ -52191,10 +52716,24 @@ The main CI file implements a two-job pattern for the dynamic pipeline:
 
 ---
 
-### Event Subscription Queues
+### Event Subscription Queues (Legacy — DEPRECATED)
 <!-- Source: docs/developer-guide/guides/event-subscription-queues.md -->
 
-# Event Subscription Queues
+# Event Subscription Queues (Legacy — DEPRECATED)
+
+> **DEPRECATED.** This documents the legacy per-offering, per-object-type queue
+> approach. Its API endpoints are marked `deprecated` in the OpenAPI schema (and
+> therefore in the generated SDKs). It still runs unchanged, so existing
+> consumers keep working, but **no new integration should use it**.
+>
+> Use the [Unified Agent Queue](agent-pubsub.md) instead: one queue per consumer,
+> bound to the entities you have access to, with enriched payloads.
+>
+> Removal is tracked in **WAL-10111** and gated on drain telemetry (zero legacy
+> queues, sustained) rather than a date — see "The legacy path" in
+> `docs/design/pubsub-architecture.md`. A consumer that already owns a unified
+> queue is automatically suppressed from this path, so the two never
+> double-deliver.
 
 This guide explains the `EventSubscriptionQueue` system for managing RabbitMQ queues
 used by event subscriptions, including queue lifecycle management and cleanup mechanisms.
@@ -52575,6 +53114,8 @@ SUBSCRIPTION_QUEUE_ARGUMENTS = {
 
 ## Related Documentation
 
+- [Unified Agent Queue](agent-pubsub.md) - The recommended approach for new agents
+- [Event-Based Order Processing](../core-concepts/event-based-order-processing.md)
 - [Waldur Architecture](waldur-architecture.md)
 
 ---
@@ -80915,6 +81456,281 @@ def available_checklists(self, request):
 
 ---
 
+### Event pub/sub architecture
+<!-- Source: docs/developer-guide/design/pubsub-architecture.md -->
+
+# Event pub/sub architecture
+
+How Waldur delivers events to external consumers: one RabbitMQ queue per
+consumer, scoped by entity bindings, with authorization re-checked at publish
+time.
+
+This describes the system **as it is built**. Runtime mechanics for site agents
+(registration calls, STOMP connection, payload examples, migration runbook) live
+in [the unified agent queue guide](../guides/agent-pubsub.md).
+
+## Overview
+
+```mermaid
+flowchart TD
+    subgraph sources["Event sources (signals)"]
+        ev_market["Marketplace: orders, resources, offering users"]
+        ev_user["Core: user profile, SSH keys, lifecycle, roles"]
+    end
+
+    ev_market --> disp_keys
+    ev_user --> disp_global
+
+    subgraph dispatch["Dispatch"]
+        direction TB
+        disp_keys["1. Resolve the event scope-keys<br/>offering chain plus project chain"]
+        disp_keys --> disp_match["2. Match consumer bindings<br/>set intersection on an indexed table"]
+        disp_match --> disp_auth["3. Re-authorize each matched owner<br/>ONE batched role query"]
+        disp_global["Global consumers<br/>no bindings, staff or support only"] --> disp_auth
+        disp_auth --> disp_emit["4. Enrich once, emit one message per consumer"]
+    end
+
+    disp_emit --> publish["publish_messages then STOMP<br/>circuit breaker · rate limit · dedup · DLQ"]
+    publish --> q1[(consumer_uuid1)]
+    publish --> q2[(consumer_uuid2)]
+    q1 --> c1["Consumer 1"]
+    q2 --> c2["Consumer 2"]
+
+    subgraph legacy["Legacy path — deprecated"]
+        legacy_queue["EventSubscription plus EventSubscriptionQueue<br/>one queue per offering and object_type"]
+    end
+    disp_match -.->|suppressed for users already on a unified queue| legacy
+    style legacy stroke-dasharray: 5 5
+```
+
+A signal fires once. The dispatcher resolves which **scope-keys** the event
+belongs to, matches consumers whose **bindings** intersect those keys,
+re-authorizes each matched owner, enriches the payload once, and emits one
+message per consumer. Each consumer drains exactly one queue and demultiplexes
+on the envelope's `object_type`.
+
+## The consumer model
+
+`waldur_core.logging.EventConsumer` owns all unified-queue state:
+
+| Field | Meaning |
+|-------|---------|
+| `user` | Owner/registrant; the RabbitMQ vhost is `user.uuid.hex` |
+| `rmq_username` | RMQ login (random UUID hex), blank until provisioned |
+| `queue_created` | Whether the queue exists in RMQ |
+| `object_types` | Allow-list of event types (empty = all) |
+| `scopes` | Entity bindings — see below |
+
+The queue is `consumer_{uuid}`. A consumer is **generic**: a site agent, an
+IdM/IGA sync, the keycloak operator, or a reporting script can each own one.
+Site agents link theirs from `AgentIdentity.event_consumer` (a nullable
+OneToOne); `AgentIdentity` itself is purely site-agent registration and
+telemetry — `AgentService`, `AgentProcessor` and `SiteAgentLog` keep their names
+and their home in the `marketplace_site_agent` plugin.
+
+## Scope bindings
+
+`EventConsumerScope(consumer, content_type, object_id)` binds a consumer to a
+**list** of entities — an offering, several projects, a customer — using
+GenericForeignKeys, which is what keeps `waldur_core` free of marketplace
+imports.
+
+| Bindings | Meaning |
+|----------|---------|
+| one offering | the classic site-agent case |
+| projects, a customer, or a mix | a slice the owner has access to |
+| **empty** | **global: everything platform-wide — user-centric events (all-user PII) AND marketplace events. Staff/support only.** |
+
+Bindings use the same vocabulary as Personal Access Tokens (`TYPE_MAP`,
+`AllowedScopeInputSerializer`), so `{"type": "project", "uuid": "..."}` means the
+same thing in both features.
+
+> **An empty binding set means global.** A consumer left without bindings by a
+> partial write would therefore fail *open* as an all-user PII firehose. Both
+> registration paths create the consumer and its bindings in one transaction.
+
+## Dispatch and delivery authorization
+
+An event's **scope-keys** are the `(content_type, object_id)` pairs it belongs
+to: the offering's own chain (offering, its project, that project's customer,
+the offering's customer) plus the consumer-side project chain derived from the
+order or resource. Matching is a set intersection against the indexed
+`EventConsumerScope` table, so a consumer bound anywhere in that chain matches —
+binding to a *customer* picks up its projects' events.
+
+Authorization is enforced **twice**, and stays dynamic:
+
+1. **At registration** — you may only bind to an entity you hold an active role
+   on, or on one of its ancestors (`holds_any_role_on_scope_or_ancestor`).
+   Staff/support may bind to anything, and are the only ones allowed to request
+   the empty (global) binding set.
+2. **At delivery** — the same rule is re-checked for every matched consumer, in
+   **one batched query for the whole fan-out**
+   (`users_with_role_on_any_scope_key`). Global consumers are re-checked for
+   staff/support.
+
+Registration is therefore not a permanent grant: **revoking someone's role stops
+their delivery immediately.**
+
+Two properties make this work:
+
+- `get_scope_ancestors(offering)` yields exactly what
+  `OfferingQuerySet.filter_for_user` ORs over, so the binding predicate is the
+  *same* rule the rest of the platform uses for offering visibility. The unified
+  path is therefore never narrower than the legacy path it replaces — a plain
+  project member can subscribe to their project's events.
+- Because it is one batched query rather than a permission query per recipient,
+  the dynamic check is also *cheaper* than the per-recipient `filter_for_user`
+  it replaced.
+
+Client-side filtering (`object_types`) is a convenience knob, never a security
+boundary.
+
+### A deliberate divergence from the legacy rule
+
+The legacy consumer-access check only resolved a customer when the project still
+had a non-terminated resource on the offering. Scope-keys are derived straight
+from the order or resource, so that narrowing is gone: a project-bound consumer
+now also receives the event for its *last* resource being terminated, which the
+legacy path dropped. Treated as a bug fix; see `_resolve_event_project`.
+
+## Event types and payloads
+
+| Coverage | Trigger | `object_type` |
+|----------|---------|---------------|
+| Orders, resources, offering users, service and course accounts, importable resources, periodic limits | marketplace signals | `order`, `resource`, `offering_user`, … |
+| Role changes on **any** scope | `role_granted` / `role_revoked` | `user_role` |
+| Profile fields | `User` post_save diff | `user_profile` |
+| SSH keys | `SshPublicKey` post_save / post_delete | `user_ssh_key` |
+| Account lifecycle | user create, activate, deactivate, delete | `user_lifecycle` |
+
+The user-centric events originate in `waldur_core` (User, SSH keys, roles), so
+they are dispatched from `waldur_core.logging.event_dispatch` and delivered to
+**global consumers**. A global (empty-scope) consumer means "everything": it
+also receives the marketplace events (orders, resources, offering users, …)
+through the marketplace dispatcher, which opts globals in via
+`build_messages(include_global=True)`. The single care point is `user_role`,
+which BOTH dispatchers can emit — the core path on the `role_granted`/`role_revoked`
+signal, the marketplace path on a manual project re-sync. To avoid delivering it
+to a global twice, the core path owns `user_role` for globals and the
+marketplace path passes `include_global=False` for `user_role` only; every other
+object type is emitted by exactly one path, so a global receives it once.
+Suppression of a user's legacy subscription is keyed on messages actually
+delivered, so a global that genuinely receives a marketplace event correctly
+supersedes its own legacy queue for it. Payloads are built lazily — construction
+runs only when a consumer actually exists — and every emitter is guarded by
+`get_skip_side_effects()` so imports, migrations and bulk loads stay silent.
+
+**Profile events are data-minimized.** The broadcast field set is derived from
+`ENABLED_USER_PROFILE_ATTRIBUTES` (plus always-on core fields such as email and
+name), so an attribute an operator disabled never leaves the platform, and
+newly-enabled ones are picked up automatically. `is_active` is deliberately
+excluded — it belongs to the lifecycle event. Auth and security columns are
+never eligible.
+
+### Envelope
+
+Messages carry `object_type` so one queue can serve many event kinds, plus
+`schema_version`. The core dispatcher additionally stamps `event_type`.
+Marketplace events carry `object_type`, `offering_uuid` and `schema_version`,
+but not `event_type` (only the core dispatcher stamps it) — see
+[Known gaps](#known-gaps).
+
+## Credentials and queue lifecycle
+
+The RMQ password is the credential the consumer presents: if it registered with
+a **Personal Access Token**, that PAT is the password, so the queue survives a
+browser logout or session-token rotation (the raw secret is read from the
+request header — only its hash is stored). A caller still using a plain session
+token keeps the DRF token as the password.
+
+Queues are provisioned with the hardened arguments the legacy path uses —
+`x-message-ttl` (1h), `x-max-length` (10 000), `reject-publish-dlx` overflow and
+a DLQ — and registration is idempotent, reconciling stale RMQ state.
+
+Housekeeping tasks operate on `EventConsumer` regardless of binding:
+
+- `cleanup_stale_agent_queues` (24h) — tears down consumers whose owner holds
+  neither a live DRF token nor a live PAT.
+- `cleanup_dangling_agent_queues` (1h) — clears `queue_created` when the backing
+  RMQ user vanished out of band.
+- `cleanup_orphan_subscription_queues` (6h) — deletes `consumer_*` queues with
+  no matching row.
+- `pre_delete` handlers tear down RMQ state for both agent-linked and standalone
+  consumers.
+
+## Registration
+
+- **Site agents** — `POST /api/marketplace-site-agent-identities/{uuid}/register_queue/`
+  creates the consumer bound to the agent's offering. Permissions are unchanged
+  (`_can_manage_offering_agent`), and ownership is one-user-at-a-time (409 on
+  takeover).
+- **Everything else** — `POST /api/event-consumers/register/` takes
+  `object_types` and `scopes`. Any authenticated user may register a *bound*
+  consumer; an empty `scopes` list requires staff/support. Idempotent per
+  binding set.
+
+## The legacy path
+
+`EventSubscription` plus `EventSubscriptionQueue` — one queue per
+*(subscription × offering × object_type)* — still runs, unchanged, so existing
+consumers keep working. Its endpoints are marked `deprecated` in the OpenAPI
+schema, and therefore in the generated SDKs.
+
+The two paths never double-deliver: a user who owns a unified queue is
+suppressed from the legacy loop, so every consumer is on exactly one path.
+
+Retirement — the migration command, drain telemetry, and the removal itself — is
+tracked in **WAL-10111**, gated on drain-to-zero rather than a date, because
+removal is a breaking change for anyone still on the legacy endpoints.
+Site-agent adoption of the unified queue is tracked in **WAL-10011**.
+
+## Why it is built this way
+
+**App-side fan-out, not broker-native routing.** A topic exchange with routing
+keys was considered and rejected: routing keys are static, but Waldur's
+authorization is dynamic and revocable, so the broker cannot answer "may this
+consumer see this event *now*". Recipient resolution therefore happens
+server-side at publish time. The cost of that choice is CPU and queries per
+event, which is why matching is a set intersection and the re-auth is batched.
+
+**Bindings normalized, not JSON.** `PersonalAccessToken` stores `allowed_scopes`
+as JSON because enforcement checks *one* token per request. Pub/sub is the
+inverse problem — one event matched against *many* consumers — so bindings live
+in an indexed table the dispatcher can intersect against.
+
+**No new permissions.** "What you may subscribe to" is already defined by "what
+you have access to", so binding validation reuses existing roles rather than
+introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
+
+## Known gaps
+
+- **Envelope** — marketplace events do not carry `event_type` (only the core
+  dispatcher stamps it); they do carry `object_type`, `offering_uuid` and
+  `schema_version`.
+- **Bindings inherited from a PAT** — a consumer registered with a PAT could
+  default its bindings to that token's `allowed_scopes`, making API access and
+  event delivery share one definition. Unblocked now that bindings exist; not
+  built.
+- **`call` bindings** work by construction (any `TYPE_MAP` entity is bindable)
+  but are untested.
+- **`AgentIdentity` retirement** — the site-agent model still exists alongside
+  its consumer; collapsing it is only worthwhile once the legacy path is gone.
+
+## References
+
+- Azure Architecture Center — [Messaging in multitenant solutions](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/approaches/messaging)
+  (shared vs sharded vs dedicated; noisy-neighbour handling).
+- Permit.io — [Multi-tenant authorization best practices](https://www.permit.io/blog/best-practices-for-multi-tenant-authorization)
+  (auth global, authz tenant-scoped, evaluated dynamically).
+- CS Virginia — [Content-based publish/subscribe survey](https://www.cs.virginia.edu/~hs6ms/publishedPaper/bookChapter/2009/sub-pub-Shen.pdf)
+  and [Confidentiality-preserving pub/sub survey](https://arxiv.org/pdf/1705.09404)
+  (content-based filtering is more expressive — matches dynamic-authz fan-out).
+- Solace — [Designing and naming topics for EDA](https://solace.com/blog/designing-and-naming-topics-for-event-driven-architecture-with-pubsub/)
+  (hierarchical, versioned envelopes).
+
+---
+
 ### Events
 <!-- Source: docs/developer-guide/events.md -->
 
@@ -93426,6 +94242,412 @@ When a customer has a project metadata checklist configured:
 
 ---
 
+### Provider Helpdesk System
+<!-- Source: docs/developer-guide/provider-helpdesk.md -->
+
+# Provider Helpdesk System
+
+The provider helpdesk extends Waldur's single-tenant support module into a multi-tenant system. Service providers register their own helpdesk backends, tickets are automatically routed to the correct provider, and bidirectional communication flows between operator and provider via parent/child issue pairs.
+
+For the base support module, see [Support Module Documentation](support.md).
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Operator Layer"
+        API[Support API]
+        Issue[Parent Issue]
+        Operator[Operator Staff]
+    end
+
+    subgraph "Routing Layer"
+        Router[Issue Router]
+        Signal[post_save Signal]
+    end
+
+    subgraph "Provider A"
+        HDA[ProviderHelpdesk A]
+        ChildA[Child Issue A]
+        TeamA[Support Team A]
+    end
+
+    subgraph "Provider B"
+        HDB[ProviderHelpdesk B]
+        ChildB[Child Issue B]
+        TeamB[Support Team B]
+    end
+
+    Operator --> API
+    API --> Issue
+    Issue --> Signal
+    Signal --> Router
+
+    Router --> HDA
+    HDA --> ChildA
+    ChildA --> TeamA
+
+    Router --> HDB
+    HDB --> ChildB
+    ChildB --> TeamB
+
+    ChildA -.->|comment forwarding| Issue
+    ChildB -.->|comment forwarding| Issue
+    Issue -.->|comment forwarding| ChildA
+    Issue -.->|comment forwarding| ChildB
+```
+
+## Models
+
+### ProviderHelpdesk
+
+Links a marketplace `ServiceProvider` to a helpdesk backend. Each provider can have one helpdesk.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `service_provider` | OneToOne FK | Link to `marketplace.ServiceProvider` |
+| `backend_type` | CharField | `basic`, `email`, `atlassian`, `zammad`, or `smax` |
+| `settings` | JSONField | Backend-specific configuration |
+| `is_active` | BooleanField | Whether routing is enabled (default: `True`) |
+| `webhook_secret` | CharField | Secret for webhook validation |
+| `notification_email` | EmailField | Primary notification email |
+| `notify_on_new_ticket` | BooleanField | Notify on new routed tickets (default: `True`) |
+| `notify_on_comment` | BooleanField | Notify on customer comments (default: `True`) |
+| `notify_on_escalation` | BooleanField | Notify on escalations (default: `True`) |
+| `notify_on_sla_warning` | BooleanField | Notify on SLA warnings (default: `True`) |
+| `last_health_check` | DateTimeField | Timestamp of last connectivity check |
+| `last_health_status` | CharField | Result of last health check |
+| `failed_routing_count` | PositiveIntegerField | Counter for failed routing attempts |
+
+### ProviderSupportUser
+
+Team members who handle tickets for a provider helpdesk.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `provider_helpdesk` | FK | Link to `ProviderHelpdesk` |
+| `user` | FK | Link to Waldur `User` |
+| `role` | CharField | `agent` or `manager` |
+| `is_active` | BooleanField | Default: `True` |
+| `skills` | JSONField | List of skill tags for routing |
+| `max_open_tickets` | PositiveIntegerField | Capacity limit (default: 20) |
+
+Unique constraint on `(provider_helpdesk, user)`. Provides `open_ticket_count` and `has_capacity` properties.
+
+### ProviderCannedResponse
+
+Template responses scoped to a provider helpdesk. Supports Django template syntax via `render(context_dict)`.
+
+### IssueStatusTransition
+
+Defines allowed status transitions for issues. When the table is empty, all transitions are allowed (backwards compatibility). When populated, only listed transitions are permitted.
+
+### IssueTag
+
+Simple name/color tag model for issue categorization. Color stored as hex (e.g., `#FF0000`).
+
+### IssueLink
+
+Links between issues with typed relationships: `related`, `blocked_by`, or `duplicates`. Unique constraint on `(source, target)`.
+
+### SavedFilter
+
+User-scoped saved filter configurations. Stores filter parameters as JSON. Can be shared with all staff/support users via `is_shared` flag.
+
+### CannedResponse (operator-level)
+
+Template responses available to operator staff. Same template rendering as `ProviderCannedResponse` but not scoped to a provider.
+
+### New fields on Issue
+
+| Field | Purpose |
+|-------|---------|
+| `parent_issue` | Self FK linking child issues to their parent |
+| `provider_helpdesk` | FK to the `ProviderHelpdesk` handling this issue |
+| `provider_assignee` | FK to `ProviderSupportUser` assigned to the issue |
+| `is_escalated` | Whether the issue has been escalated |
+| `escalated_at` | Timestamp of escalation |
+| `escalation_reason` | Text reason for escalation |
+| `first_response_deadline` | SLA deadline for first response |
+| `resolution_deadline` | SLA deadline for resolution |
+| `first_response_at` | Timestamp of first support response |
+| `sla_breached` | Whether SLA has been breached |
+| `tags` | M2M to `IssueTag` |
+
+### New field on Comment
+
+| Field | Purpose |
+|-------|---------|
+| `is_forwarded` | Marks comments copied between parent/child issues |
+
+## Ticket Routing
+
+### Flow
+
+When an issue is created and routing is enabled, the system resolves the provider chain and creates a child issue.
+
+```mermaid
+sequenceDiagram
+    participant Issue as Parent Issue
+    participant Signal as post_save Signal
+    participant Task as route_issue_to_provider
+    participant Backend as Provider Backend
+
+    Issue->>Signal: Issue created with backend_id
+    Signal->>Signal: Check PROVIDER_ROUTING_ENABLED
+    Signal->>Task: Dispatch Celery task
+
+    Task->>Task: Issue → Resource → Offering
+    Task->>Task: Offering → ServiceProvider → ProviderHelpdesk
+    Task->>Task: Build enriched description with context
+    Task->>Task: Create child Issue linked to parent
+
+    Task->>Backend: get_backend_for_provider(helpdesk)
+    Task->>Backend: create_issue(child_issue)
+    Backend-->>Task: Child issue created
+
+    Task->>Issue: Log routing in processing_log
+```
+
+### Resolution chain
+
+1. `dispatch_routing_on_issue_create` signal handler fires on `Issue` post_save
+2. Checks `WALDUR_SUPPORT_PROVIDER_ROUTING_ENABLED` is `True`
+3. Skips child issues (already routed) and issues without `backend_id`
+4. `route_issue_to_provider` Celery task resolves: Issue -> resource -> `Offering` -> `ServiceProvider` -> `ProviderHelpdesk`
+5. Creates a child issue with enriched description (customer, project, resource context)
+6. Calls `create_issue()` on the provider backend
+7. Retries up to 3 times on failure, increments `failed_routing_count`
+
+## Comment Forwarding
+
+Bidirectional comment forwarding maintains communication between operator and provider.
+
+```mermaid
+sequenceDiagram
+    participant Parent as Parent Issue
+    participant Handler as Signal Handler
+    participant Task as Celery Task
+    participant Child as Child Issue
+
+    Note over Parent,Child: Parent → Child direction
+    Parent->>Handler: New public comment
+    Handler->>Handler: Skip if is_forwarded=True
+    Handler->>Task: forward_comment_to_child
+    Task->>Child: Create comment (is_forwarded=True)
+
+    Note over Parent,Child: Child → Parent direction
+    Child->>Handler: New public comment
+    Handler->>Handler: Skip if is_forwarded=True
+    Handler->>Task: propagate_comment_to_parent
+    Task->>Parent: Create comment (is_forwarded=True)
+```
+
+The `is_forwarded` flag prevents infinite loops: forwarded comments are skipped by all signal handlers.
+
+## Escalation
+
+1. User calls `POST /api/support-issues/{uuid}/escalate/` with `reason`
+2. Issue fields updated: `is_escalated=True`, `escalated_at`, `escalation_reason`
+3. Escalation comment `[ESCALATED] {reason}` created on the issue
+4. Comment forwarding propagates to child issues automatically
+5. `notify_provider_escalation` task sends email to provider
+
+**Permissions:** Issue caller (the person who created the ticket), staff, or support users.
+
+## SLA Management
+
+### Configuration
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `WALDUR_SUPPORT_SLA_RESPONSE_HOURS` | 4 | Hours until first response deadline |
+| `WALDUR_SUPPORT_SLA_RESOLUTION_HOURS` | 24 | Hours until resolution deadline |
+
+### Behavior
+
+The `BasicBackend` sets SLA deadlines on issue creation based on `created + configured hours`. When a support user adds the first comment to an issue, `first_response_at` is recorded.
+
+### Monitoring
+
+Two periodic Celery tasks monitor SLA compliance:
+
+- **`check_sla_breaches`** (every 15 min): Marks issues as `sla_breached=True` when response or resolution deadlines pass without the corresponding action
+- **`check_sla_warnings`** (every 30 min): Logs warnings and notifies providers for issues within 1 hour of deadline
+
+## Auto-Assignment
+
+### Configuration
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `WALDUR_SUPPORT_AUTO_ASSIGN` | `False` | Enable automatic ticket assignment |
+| `WALDUR_SUPPORT_AUTO_ASSIGN_STRATEGY` | `least_loaded` | Assignment algorithm |
+
+### Strategies
+
+- **`least_loaded`**: Assigns to the active `ProviderSupportUser` with fewest open tickets who still has capacity (`open_ticket_count < max_open_tickets`)
+- **`round_robin`**: Cycles through active users using a cache-based counter
+
+## Per-Provider Backend Configuration
+
+Each `ProviderHelpdesk` stores backend-specific settings in its `settings` JSON field. The factory function `get_backend_for_provider()` creates a backend instance configured from these settings.
+
+```python
+# Example: Atlassian backend settings for a provider
+provider_helpdesk.settings = {
+    "server": "https://provider-jira.example.com",
+    "username": "provider-bot",
+    "password": "secret",
+    "project_key": "PROV",
+    "verify_ssl": True,
+}
+```
+
+Each backend implements `from_settings(settings_dict)` classmethod and `_get_config(key, default)` that falls back to global Constance settings when a per-provider key is missing. This means a provider with no custom settings uses the operator's global backend configuration.
+
+## API Endpoints
+
+### Provider Helpdesk Management
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/provider-helpdesks/` | GET | List provider helpdesks |
+| `/api/provider-helpdesks/` | POST | Register helpdesk for a service provider |
+| `/api/provider-helpdesks/{uuid}/` | GET/PATCH/DELETE | Manage helpdesk |
+| `/api/provider-helpdesks/{uuid}/validate/` | POST | Test backend connectivity |
+
+### Provider Ticket Portal
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/provider-tickets/` | GET | List tickets routed to provider |
+| `/api/provider-tickets/{uuid}/` | GET | Retrieve ticket details |
+| `/api/provider-tickets/{uuid}/comment/` | POST | Add comment to ticket |
+| `/api/provider-tickets/{uuid}/resolve/` | POST | Resolve ticket |
+| `/api/provider-tickets/{uuid}/assign/` | POST | Assign to team member |
+| `/api/provider-tickets/{uuid}/claim/` | POST | Claim ticket for self |
+| `/api/provider-tickets/{uuid}/customer_context/` | GET | Get caller/resource context |
+| `/api/provider-tickets/{uuid}/stats/` | GET | Provider-scoped statistics |
+
+### Provider Team Management
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/provider-support-users/` | GET/POST | List/create team members |
+| `/api/provider-support-users/{uuid}/` | GET/PATCH/DELETE | Manage team member |
+| `/api/provider-support-users/{uuid}/team_workload/` | GET | View team workload |
+
+### Provider Canned Responses
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/provider-canned-responses/` | GET/POST | List/create |
+| `/api/provider-canned-responses/{uuid}/` | GET/PATCH/DELETE | Manage |
+| `/api/provider-canned-responses/{uuid}/render/` | POST | Render template with context |
+
+### Operator Productivity
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/support-issue-tags/` | GET/POST | Manage issue tags |
+| `/api/support-issue-links/` | GET/POST | Manage issue links |
+| `/api/support-saved-filters/` | GET/POST | Saved filter management |
+| `/api/support-canned-responses/` | GET/POST | Operator canned responses |
+| `/api/support-canned-responses/{uuid}/render/` | POST | Render template |
+
+### Issue Enhancements
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/support-issues/{uuid}/escalate/` | POST | Escalate issue to provider |
+| `/api/support-issues/bulk_update/` | POST | Bulk update issues |
+
+### Dashboard and Health
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/helpdesk-stats/` | GET | Helpdesk statistics |
+| `/api/helpdesk-health/` | GET | Provider connectivity status |
+
+### Provider Webhook
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/support-provider-webhook/{uuid}/{backend_type}/` | POST | Unauthenticated webhook, validated via `X-Webhook-Secret` header |
+
+## Permissions
+
+| Resource | Who can access |
+|----------|---------------|
+| Provider Helpdesk CRUD | Customer owners of the provider's customer, staff |
+| Provider Tickets | `ProviderSupportUser` members of the helpdesk, customer owners, staff |
+| Provider Team | Customer owners of the provider, staff |
+| Issue Tags, Links, Canned Responses, Saved Filters | Staff and support users |
+| Escalation | Issue caller, staff, support users |
+| Helpdesk Stats/Health | Staff and support users |
+
+## Celery Tasks
+
+### Scheduled
+
+| Task | Schedule | Description |
+|------|----------|-------------|
+| `check_sla_breaches` | Every 15 min | Mark breached SLA deadlines |
+| `check_sla_warnings` | Every 30 min | Log warnings for approaching deadlines |
+
+### On-demand
+
+| Task | Trigger | Description |
+|------|---------|-------------|
+| `route_issue_to_provider` | Issue creation | Route issue to provider helpdesk |
+| `forward_comment_to_child` | Comment on parent | Forward comment to child issues |
+| `propagate_comment_to_parent` | Comment on child | Propagate comment to parent issue |
+| `notify_provider_new_ticket` | Routing complete | Email provider about new ticket |
+| `notify_provider_customer_comment` | Customer comment | Email provider about comment |
+| `notify_provider_sla_warning` | SLA check | Email provider about SLA warning |
+| `notify_provider_escalation` | Escalation | Email provider about escalation |
+
+## Management Commands
+
+| Command | Description |
+|---------|-------------|
+| `check_provider_helpdesks` | Test connectivity of all active provider helpdesks |
+| `retry_failed_routing` | Retry routing for issues that failed (supports `--dry-run`) |
+| `helpdesk_stats` | Display helpdesk statistics summary |
+
+## Constance Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `WALDUR_SUPPORT_PROVIDER_ROUTING_ENABLED` | bool | `False` | Enable automatic ticket routing to providers |
+| `WALDUR_SUPPORT_AUTO_ASSIGN` | bool | `False` | Enable auto-assignment of tickets |
+| `WALDUR_SUPPORT_AUTO_ASSIGN_STRATEGY` | str | `least_loaded` | Assignment strategy |
+| `WALDUR_SUPPORT_SLA_RESPONSE_HOURS` | int | `4` | Hours until first response SLA deadline |
+| `WALDUR_SUPPORT_SLA_RESOLUTION_HOURS` | int | `24` | Hours until resolution SLA deadline |
+
+## Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `support/models.py` | New models and new fields on Issue/Comment |
+| `support/views.py` | ViewSets for all new endpoints |
+| `support/serializers.py` | Serializers for all new endpoints |
+| `support/filters.py` | Filters for new models |
+| `support/urls.py` | URL routing |
+| `support/tasks.py` | Celery tasks for routing, forwarding, SLA, notifications |
+| `support/handlers.py` | Signal handlers for routing and forwarding |
+| `support/utils.py` | Helper functions (stats, context building) |
+| `support/backend/__init__.py` | `get_backend_for_provider()` factory |
+| `support/backend/basic.py` | Enhanced BasicBackend with SLA and auto-assign |
+| `support/backend/email_backend.py` | Email-based provider backend |
+| `support/management/commands/` | `check_provider_helpdesks`, `retry_failed_routing`, `helpdesk_stats` |
+| `support/templates/support/` | Email notification templates |
+
+All paths are relative to `src/waldur_mastermind/`.
+
+---
+
 ### Release Orchestration
 <!-- Source: docs/developer-guide/release-orchestration.md -->
 
@@ -94952,6 +96174,21 @@ The support module provides several extension points:
 3. **Notification Handlers**: Custom email/notification logic
 4. **Webhook Processors**: Custom webhook payload processing
 5. **Feedback Collectors**: Alternative feedback mechanisms
+
+## Multi-Tenant Provider Helpdesk
+
+The support module includes a multi-tenant provider helpdesk system that enables service providers to register their own helpdesk backends. Tickets are automatically routed to the correct provider, with bidirectional comment forwarding between operator and provider via parent/child issue pairs.
+
+Key capabilities:
+
+- Per-provider helpdesk backends (Atlassian, Zammad, SMAX, Basic, Email)
+- Automatic ticket routing based on resource/offering/provider chain
+- SLA management with configurable deadlines and breach detection
+- Auto-assignment with least-loaded and round-robin strategies
+- Escalation workflow with provider notifications
+- Provider team management and canned responses
+
+See [Provider Helpdesk Documentation](provider-helpdesk.md) for details.
 
 ## Appendix
 

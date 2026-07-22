@@ -7831,6 +7831,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/agent-pubsub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent pubsub
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/ai-assistant/" class="md-nav__link">
         
   
@@ -10279,6 +10307,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../provider-helpdesk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider helpdesk
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../release-orchestration/" class="md-nav__link">
         
   
@@ -10542,10 +10598,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_39">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_40">
         
           
-          <label class="md-nav__link" for="__nav_3_39" id="__nav_3_39_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_40" id="__nav_3_40_label" tabindex="0">
             
   
   
@@ -10563,8 +10619,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_39_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_39">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_40_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_40">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -10628,10 +10684,96 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_40">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_41">
         
           
-          <label class="md-nav__link" for="__nav_3_40" id="__nav_3_40_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_41" id="__nav_3_41_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_41_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_41">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/pubsub-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pubsub architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_42">
+        
+          
+          <label class="md-nav__link" for="__nav_3_42" id="__nav_3_42_label" tabindex="0">
             
   
   
@@ -10649,8 +10791,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_40_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_40">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_42_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_42">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -15074,7 +15216,23 @@ changed fields are included.</p>
 <li><strong>Processor Tracking</strong>: Monitor individual processors and their backend versions</li>
 <li><strong>Configuration Management</strong>: Store and version configuration files</li>
 <li><strong>Statistics</strong>: Collect and report agent performance metrics</li>
+<li><strong>Unified Queue</strong>: Single queue per agent via <code>register_queue</code> with enriched payloads</li>
 </ul>
+<p><strong>Unified Queue Registration:</strong></p>
+<p>A site agent can register a unified queue where one RabbitMQ queue receives all event types. This is the recommended approach for new agents. The queue's state lives on a generic <code>EventConsumer</code> (in <code>waldur_core.logging</code>) that the <code>AgentIdentity</code> links to, bound to the agent's offering:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Register a unified queue (one call replaces multiple create_queue calls)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_site_agent_identities_register_queue</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="n">agent_identity</span><span class="o">.</span><span class="n">uuid</span><span class="o">.</span><span class="n">hex</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">waldur_rest_client</span>
+<span class="p">)</span>
+<span class="c1"># result contains: rmq_username, queue_name, vhost, observable_object_types</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>For the complete guide on unified queues, see <a href="../../guides/agent-pubsub/">Unified Agent Queue</a>.</p>
 <h3 id="message-processing-consumer-side">Message Processing (Consumer Side)</h3>
 <p>When a message arrives, it should be routed to appropriate handlers based on the event type and action. The message structure includes:</p>
 <ul>
@@ -15176,7 +15334,8 @@ changed fields are included.</p>
 <li><strong>PATCH /api/marketplace-site-agent-identities/{uuid}/</strong> - Update agent identity</li>
 <li><strong>DELETE /api/marketplace-site-agent-identities/{uuid}/</strong> - Delete agent identity</li>
 <li><strong>POST /api/marketplace-site-agent-identities/{uuid}/register_service/</strong> - Register service within agent</li>
-<li><strong>POST /api/marketplace-site-agent-identities/{uuid}/register_event_subscription/</strong> - Register event subscription for agent</li>
+<li><strong>POST /api/marketplace-site-agent-identities/{uuid}/register_event_subscription/</strong> - Register event subscription for agent (legacy)</li>
+<li><strong>POST /api/marketplace-site-agent-identities/{uuid}/register_queue/</strong> - Register unified agent queue (recommended)</li>
 </ul>
 <h4 id="agent-identity-permissions">Agent Identity Permissions</h4>
 <p>Agent identity management uses a four-tier permission model checked by <code>_can_manage_offering_agent()</code>:</p>
@@ -15250,12 +15409,16 @@ changed fields are included.</p>
 <li><strong>WebSocket Transport</strong>: The system uses STOMP over WebSockets for communication</li>
 <li><strong>TLS Security</strong>: Connections can be secured with TLS</li>
 <li><strong>User Authentication</strong>: Each subscription has its own credentials and permissions in RabbitMQ</li>
-<li><strong>Queue Structure</strong>: Queue names follow the pattern <code>/queue/subscription_{subscription_uuid}_offering_{offering_uuid}_{observable_object_type}</code></li>
+<li><strong>Queue Structure</strong>: Two queue naming patterns are supported:</li>
 </ol>
-<p>Example queue names:
-   - <code>/queue/subscription_abc123_offering_def456_order</code>
-   - <code>/queue/subscription_abc123_offering_def456_user_role</code>
-   - <code>/queue/subscription_abc123_offering_def456_resource_periodic_limits</code></p>
+<p><strong>Legacy (per-offering, per-object-type):</strong>
+   - Pattern: <code>/queue/subscription_{subscription_uuid}_offering_{offering_uuid}_{object_type}</code>
+   - Example: <code>/queue/subscription_abc123_offering_def456_order</code></p>
+<p><strong>Unified (single queue per consumer):</strong>
+   - Pattern: <code>/queue/consumer_{consumer_uuid}</code>
+   - Example: <code>/queue/consumer_a1b2c3d4e5f67890...</code>
+   - All event types delivered to one queue; agent routes by <code>object_type</code> in payload
+   - See <a href="../../guides/agent-pubsub/">Unified Agent Queue guide</a> for details</p>
 <h2 id="error-handling-and-resilience">Error Handling and Resilience</h2>
 <p>The system includes:</p>
 <ul>
