@@ -1,5 +1,50 @@
 # Changelog
 
+## 8.1.0-rc.17 - 2026-07-22
+
+### Highlights
+
+This release adds a multi-tenant provider helpdesk, letting service providers route and manage support tickets across multiple backends from within Waldur. Operators gain finer control over project naming through configurable validation rules, and a new scope-aware event pub/sub system enables cheaper, more targeted event delivery to agents and integrations. Several reliability fixes — around token rotation, remote offering sync, and billing visibility — plus security dependency updates round out the release.
+
+### What's New
+
+- **Multi-tenant provider helpdesk**: Service providers can now operate their own helpdesk with support for multiple ticketing backends (Atlassian, Zammad, SMAX, email, and basic), including ticket routing, escalation, SLA warnings, and customer comment notifications.
+- **Scope-aware event pub/sub**: A new event consumer system delivers events based on entity bindings and user-centric scoping, allowing site agents and integrations to subscribe to just the events they need with efficient fan-out.
+- **Configurable project name validation**: Administrators can define a project name validation pattern; the project creation form now surfaces and enforces the configured restriction, and resource/allocation names may start with a digit.
+- **Maintenance announcement permission**: A dedicated permission now governs who can create and manage maintenance announcements, and admin announcements support a scheduled maintenance window.
+- **Expanded user audit log**: User audit logs can be filtered by related user, with the corresponding filter exposed in the user dashboard events view.
+
+### Improvements
+
+- Call organizers and call managers can now view the call team, and managers appear in the team list.
+- Project users can see invoice items when the customer chooses to display billing information in projects.
+- Offering user lists can be filtered by first and last name.
+- Remote offering synchronization now handles transport errors gracefully and refreshes stale credentials automatically.
+- INFO-level authentication logs no longer leak sensitive information.
+- Matrix and LiveKit network policies in the Helm chart can now be configured independently of the chart-wide network policy toggle.
+- Caddy now compresses proxied responses, scoped to compressible content types, in the Docker Compose deployment.
+
+### Bug Fixes
+
+- Fixed a token refresh race that caused an IntegrityError during concurrent token rotation.
+- Fixed the "Add resource" popup that capped the offerings list at the first page.
+- Fixed `Instance.external_address` to exclude floating IPs that have no address set.
+- Corrected the OpenAPI schema type for project metadata answers and allowed null values in permission request fields.
+- Fixed provider attribution on maintenance admin announcements.
+
+### Security
+
+- Updated `pyasn1` to 0.6.4 to address two high-severity CVEs, and bumped vulnerable JavaScript dependencies (including `brace-expansion`) flagged by scanners.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [20 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.16...8.1.0-rc.17) - Provider helpdesk, scope-aware pub/sub, project name validation, and multiple billing and permission fixes.
+- **Waldur Homeport**: [11 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.16...8.1.0-rc.17) - Project name restriction UI, expanded audit log filter, offerings popup fix, and dependency updates.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.16...8.1.0-rc.17) - Decoupled Matrix/LiveKit network policies from the chart-wide gate.
+- **Waldur Docker Compose**: [5 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.0-rc.16...8.1.0-rc.17) - Enabled and scoped Caddy response compression.
+
+---
+
 ## 8.1.0-rc.16 - 2026-07-19
 
 ### Highlights
