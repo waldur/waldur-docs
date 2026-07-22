@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-22T02:03:37.260196Z
+Generated: 2026-07-22T17:04:36.890761Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -5542,6 +5542,10 @@ options:
 
 ```
 
+## check_provider_helpdesks
+
+Check connectivity of all active provider helpdesks.
+
 ## clean_celery_results
 
 Clean up old Celery task results from the database to prevent bloat.
@@ -5985,6 +5989,10 @@ options:
   --disable-fields      Don't show fields, only model names and relationships.
 
 ```
+
+## helpdesk_stats
+
+Display helpdesk statistics summary.
 
 ## import_ami_catalog
 
@@ -6613,6 +6621,20 @@ options:
   -o, --output OUTPUT   Specifies file to which the merged subnets will be
                         written. The output will be printed to stdout by
                         default.
+
+```
+
+## retry_failed_routing
+
+Retry routing for issues that failed to be routed to a provider.
+
+```bash
+
+usage: waldur retry_failed_routing [--dry-run]
+
+options:
+  --dry-run  Only list issues that would be retried, without actually
+             retrying.
 
 ```
 
@@ -8166,6 +8188,18 @@ If true, project end date field becomes mandatory when creating or updating proj
 
 If true, the affiliation field is required when creating or updating projects.
 
+#### PROJECT_NAME_REGEX
+
+**Type:** str
+
+Regular expression that a project name must fully match when creating or renaming a project. The whole name has to match the pattern. Leave empty to disable the check. Examples: '^.{1,32}$' limits the name to at most 32 characters; '^[A-Za-z0-9 _-]{1,32}$' also restricts it to letters, digits, spaces, underscores and hyphens; '^[A-Za-z].{0,31}$' additionally requires it to start with a letter.
+
+#### PROJECT_NAME_REGEX_ERROR_MESSAGE
+
+**Type:** str
+
+Custom validation error shown when a project name does not match PROJECT_NAME_REGEX. Leave empty to use the default message.
+
 ### Telemetry
 
 #### TELEMETRY_URL
@@ -8498,7 +8532,7 @@ Toggler for support plugin.
 
 **Default value:** atlassian
 
-Type of support backend.
+Type of support backend. Possible values: basic, atlassian, zammad, smax.
 
 #### WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE
 
@@ -8507,6 +8541,48 @@ Type of support backend.
 **Default value:** True
 
 Toggler for request type displaying
+
+#### WALDUR_SUPPORT_PROVIDER_ROUTING_ENABLED
+
+**Type:** bool
+
+Enable automatic routing of tickets to provider helpdesks.
+
+#### WALDUR_SUPPORT_AUTO_ASSIGN
+
+**Type:** bool
+
+Enable automatic assignment of tickets to support users.
+
+#### WALDUR_SUPPORT_AUTO_ASSIGN_STRATEGY
+
+**Type:** str
+
+**Default value:** least_loaded
+
+Strategy for auto-assignment. Possible values: least_loaded, round_robin.
+
+#### WALDUR_SUPPORT_SLA_ENABLED
+
+**Type:** bool
+
+Enable SLA deadline tracking for the basic support backend.
+
+#### WALDUR_SUPPORT_SLA_RESPONSE_HOURS
+
+**Type:** <class 'int'>
+
+**Default value:** 4
+
+SLA deadline for first response in hours.
+
+#### WALDUR_SUPPORT_SLA_RESOLUTION_HOURS
+
+**Type:** <class 'int'>
+
+**Default value:** 24
+
+SLA deadline for issue resolution in hours.
 
 ### Atlassian settings
 
@@ -14641,16 +14717,20 @@ td:nth-child(4) {
 | `check-arrow-validated-billing` | `waldur_mastermind.waldur_arrow.check_validated_billing` | 12 hours | Scheduled task to check for newly validated billing in Arrow.<br><br>Checks synced but not yet validated billing syncs and updates their state.<br>If auto-reconciliation is enabled, triggers reconciliation. |
 | `check-expired-permissions` | `waldur_core.permissions.check_expired_permissions` | 1 day | No description available |
 | `check-polices` | `waldur_mastermind.policy.check_polices` | Cron: `0 */4 * * * (m/h/dM/MY/d)` | Evaluate all policies across all policy types in the system. |
+| `check-sla-breaches` | `waldur_mastermind.support.check_sla_breaches` | 15 minutes | Mark issues as SLA-breached if deadlines have passed. |
+| `check-sla-warnings` | `waldur_mastermind.support.check_sla_warnings` | 30 minutes | Log warnings for issues approaching SLA deadlines. |
 | `check-table-growth-alerts` | `waldur_core.check_table_growth_alerts` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Check for tables that have grown abnormally fast and send alerts.<br>Compares current sizes against 7-day and 30-day historical data. |
+| `cleanup-dangling-agent-queues` | `waldur_mastermind.marketplace_site_agent.cleanup_dangling_agent_queues` | 1 hour | Sync queue_created with RMQ reality when the RMQ user has vanished.<br><br>Mirrors `waldur_core.logging.delete_dangling_event_subscriptions`: if<br>the RMQ user backing an EventConsumer has been removed out of band, the<br>queue is already gone — flip `queue_created` so the pre_delete handler<br>and re-registrations behave correctly. |
 | `cleanup-dangling-user-actions` | `waldur_core.user_actions.cleanup_dangling_user_actions` | Cron: `30 3 * * * (m/h/dM/MY/d)` | Clean up user actions pointing to non-existent objects (fallback periodic cleanup) |
 | `cleanup-expired-pats` | `waldur_core.core.cleanup_expired_personal_access_tokens` | 6 hours | Deactivate expired PATs. |
 | `cleanup-expired-silenced-actions` | `waldur_core.user_actions.cleanup_expired_silenced_actions` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Remove or unsilence actions with expired temporary silence |
 | `cleanup-old-action-executions` | `waldur_core.user_actions.cleanup_old_action_executions` | Cron: `0 1 * * 0 (m/h/dM/MY/d)` | Clean up old action execution records |
-| `cleanup-orphan-subscription-queues` | `waldur_core.logging.cleanup_orphan_subscription_queues` | 6 hours | Delete RabbitMQ subscription queues that have no matching DB record.<br><br>This handles cases where:<br>- The pre_delete signal failed to clean up a queue<br>- DB records were deleted manually without triggering signals<br>- Data corruption left orphaned queues in RabbitMQ |
+| `cleanup-orphan-subscription-queues` | `waldur_core.logging.cleanup_orphan_subscription_queues` | 6 hours | Delete RabbitMQ subscription queues that have no matching DB record.<br><br>This handles cases where:<br>- The pre_delete signal failed to clean up a queue<br>- DB records were deleted manually without triggering signals<br>- Data corruption left orphaned queues in RabbitMQ<br><br>Handles both subscription_ and consumer_ prefixed queues. |
 | `cleanup-orphaned-answers` | `waldur_core.checklist.cleanup_orphaned_answers` | 1 day | Clean up Answer objects that have null completion field.<br><br>This should not happen in normal operation as domain apps are expected<br>to always set the completion field, but this task provides a safety net<br>to clean up any orphaned answers that might exist. |
 | `cleanup-site-agent-logs` | `waldur_mastermind.marketplace_site_agent.cleanup_site_agent_logs` | 15 minutes | Enforce row count limit per agent identity.<br><br>Keeps newest logs, deletes oldest when count exceeds the configured limit.<br>Runs periodically to maintain log volume within limits. |
 | `cleanup-slurm-evaluation-logs` | `waldur_mastermind.policy.cleanup_slurm_evaluation_logs` | Cron: `0 3 * * * (m/h/dM/MY/d)` | Delete SLURM policy evaluation log entries older than the configured retention period. |
 | `cleanup-software-catalogs` | `marketplace.cleanup_old_software_catalogs` | Cron: `0 4 * * * (m/h/dM/MY/d)` | Periodic task to clean up old and duplicate software catalog data.<br><br>This task performs two cleanup operations:<br>1. Removes duplicate catalogs, keeping only the newest one per (name, catalog_type)<br>2. Removes catalogs that haven't been updated within the retention period<br><br>This task respects the SOFTWARE_CATALOG_CLEANUP_ENABLED setting. |
+| `cleanup-stale-agent-queues` | `waldur_mastermind.marketplace_site_agent.cleanup_stale_agent_queues` | 1 day | Tear down unified-queue RMQ state for consumers whose owner is inactive.<br><br>Mirrors `waldur_core.logging.delete_stale_event_subscriptions` for the<br>EventConsumer-backed path: when the owner's credential is no longer active<br>(or the user is gone), drop the RMQ queue and user and flip the consumer<br>back to an unregistered state.<br><br>An owner counts as active if they hold a live DRF token OR a live Personal<br>Access Token. The PAT arm is essential: a PAT-backed agent typically<br>has no DRF token at all, so keying off DRF tokens alone would reap every<br>PAT-backed agent on the next run. |
 | `cleanup-stale-token-exchange-codes` | `waldur_core.core.cleanup_stale_token_exchange_codes` | 1 minute | Delete TokenExchangeCode rows that were never redeemed. |
 | `cleanup-system-logs` | `waldur_core.logging.cleanup_system_logs` | 15 minutes | Enforce row count limit per source (across all instances).<br><br>Keeps newest logs, deletes oldest when count exceeds the configured limit.<br>Runs periodically to maintain log volume within limits. |
 | `cleanup_stale_offering_users` | `waldur_mastermind.marketplace.cleanup_stale_offering_users` | 1 day | Periodic task to clean up offering users who no longer have project access. |
@@ -19823,6 +19903,50 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 
 ```
 
+### provider_email_new_ticket_message.html (waldur_mastermind.support)
+
+```html
+
+<p>A new support ticket has been routed to your helpdesk.</p>
+<p><strong>Ticket:</strong> {{ issue.key }}<br>
+<strong>Summary:</strong> {{ issue.summary }}<br>
+<strong>Type:</strong> {{ issue.type }}<br>
+<strong>Priority:</strong> {{ issue.priority }}</p>
+<p><strong>Description:</strong></p>
+<p>{{ issue.description }}</p>
+
+```
+
+### provider_escalation_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] ESCALATED: {{ issue.summary }}
+
+```
+
+### provider_sla_warning_message.html (waldur_mastermind.support)
+
+```html
+
+<p>Ticket <strong>{{ issue.key }}</strong> is approaching its SLA deadline.</p>
+<p><strong>Summary:</strong> {{ issue.summary }}<br>
+<strong>Priority:</strong> {{ issue.priority }}</p>
+<p>Please take action to avoid an SLA breach.</p>
+
+```
+
+### provider_email_comment_message.txt (waldur_mastermind.support)
+
+```txt
+
+A new comment has been added to ticket {{ issue.key }}.
+
+Comment by {{ comment.author.name }}:
+{{ comment.description }}
+
+```
+
 ### description.txt (waldur_mastermind.support)
 
 ```txt
@@ -19846,6 +19970,25 @@ Additional Info:
 
 ```
 
+### provider_customer_comment_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] Customer comment: {{ issue.summary }}
+
+```
+
+### provider_customer_comment_message.txt (waldur_mastermind.support)
+
+```txt
+
+A customer has added a comment to ticket {{ issue.key }}.
+
+Comment:
+{{ comment.description }}
+
+```
+
 ### notification_comment_added_message.txt (waldur_mastermind.support)
 
 ```txt
@@ -19853,6 +19996,24 @@ Additional Info:
 Hello!
 
 The issue you have created has a new comment. Please go to {{issue_url}} to see it.
+
+```
+
+### provider_email_comment_message.html (waldur_mastermind.support)
+
+```html
+
+<p>A new comment has been added to ticket <strong>{{ issue.key }}</strong>.</p>
+<p><strong>Comment by {{ comment.author.name }}:</strong></p>
+<p>{{ comment.description }}</p>
+
+```
+
+### provider_new_ticket_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] New ticket: {{ issue.summary }}
 
 ```
 
@@ -19881,6 +20042,14 @@ The issue you have created has a new comment. Please go to {{issue_url}} to see 
 </div>
 </body>
 </html>
+
+```
+
+### provider_email_new_ticket_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] New support ticket: {{ issue.summary }}
 
 ```
 
@@ -19917,6 +20086,27 @@ Please go to {{issue_url}} to see it.
 
 ```
 
+### provider_sla_warning_message.txt (waldur_mastermind.support)
+
+```txt
+
+Ticket {{ issue.key }} is approaching its SLA deadline.
+
+Summary: {{ issue.summary }}
+Priority: {{ issue.priority }}
+
+Please take action to avoid an SLA breach.
+
+```
+
+### provider_email_comment_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] New comment on ticket: {{ issue.summary }}
+
+```
+
 ### notification_comment_added_subject.txt (waldur_mastermind.support)
 
 ```txt
@@ -19943,6 +20133,14 @@ The comment has been updated. Please go to {{issue_url}} to see it.
 
 ```
 
+### provider_sla_warning_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] SLA Warning: {{ issue.summary }}
+
+```
+
 ### notification_issue_updated_subject.txt (waldur_mastermind.support)
 
 ```txt
@@ -19951,11 +20149,80 @@ Updated issue: {{issue.key}} {{issue.summary}}
 
 ```
 
+### provider_new_ticket_message.html (waldur_mastermind.support)
+
+```html
+
+<p>A new support ticket has been assigned to your helpdesk.</p>
+<p><strong>Ticket:</strong> {{ issue.key }}<br>
+<strong>Summary:</strong> {{ issue.summary }}<br>
+<strong>Type:</strong> {{ issue.type }}<br>
+<strong>Priority:</strong> {{ issue.priority }}</p>
+<p><strong>Description:</strong></p>
+<p>{{ issue.description }}</p>
+
+```
+
+### provider_customer_comment_message.html (waldur_mastermind.support)
+
+```html
+
+<p>A customer has added a comment to ticket <strong>{{ issue.key }}</strong>.</p>
+<p><strong>Comment:</strong></p>
+<p>{{ comment.description }}</p>
+
+```
+
+### provider_escalation_message.txt (waldur_mastermind.support)
+
+```txt
+
+Ticket {{ issue.key }} has been escalated.
+
+Reason: {{ reason }}
+
+Summary: {{ issue.summary }}
+Priority: {{ issue.priority }}
+
+```
+
+### provider_email_new_ticket_message.txt (waldur_mastermind.support)
+
+```txt
+
+A new support ticket has been routed to your helpdesk.
+
+Ticket: {{ issue.key }}
+Summary: {{ issue.summary }}
+Type: {{ issue.type }}
+Priority: {{ issue.priority }}
+
+Description:
+{{ issue.description }}
+
+```
+
 ### notification_issue_feedback_subject.txt (waldur_mastermind.support)
 
 ```txt
 
 Please share your feedback: {{issue.key}} {{issue.summary}}
+
+```
+
+### provider_new_ticket_message.txt (waldur_mastermind.support)
+
+```txt
+
+A new support ticket has been assigned to your helpdesk.
+
+Ticket: {{ issue.key }}
+Summary: {{ issue.summary }}
+Type: {{ issue.type }}
+Priority: {{ issue.priority }}
+
+Description:
+{{ issue.description }}
 
 ```
 
@@ -19972,6 +20239,17 @@ Click on the evaluations below to provide the feedback.
 {% for link in feedback_links%}
     {{link.label}}: {{link.link}}
 {% endfor %}
+
+```
+
+### provider_escalation_message.html (waldur_mastermind.support)
+
+```html
+
+<p>Ticket <strong>{{ issue.key }}</strong> has been escalated.</p>
+<p><strong>Reason:</strong> {{ reason }}</p>
+<p><strong>Summary:</strong> {{ issue.summary }}<br>
+<strong>Priority:</strong> {{ issue.priority }}</p>
 
 ```
 
@@ -82256,6 +82534,7 @@ td:nth-child(4) {
 | `change_email_has_been_requested` | `Django Signal (post_save)` | `core.ChangeEmailRequest` | Send a notification when a user requests to change their email. |
 | `change_users_quota` | `Custom Signal (role_granted)` | `—` | Update the user count quota for a customer when a user's role is changed. |
 | `change_users_quota` | `Custom Signal (role_revoked)` | `—` | Update the user count quota for a customer when a user's role is changed. |
+| `cleanup_event_consumer_queue` | `Django Signal (pre_delete)` | `logging.EventConsumer` | Tear down the RabbitMQ queue + user when an EventConsumer is deleted. |
 | `cleanup_rabbitmq_queue_on_delete` | `Django Signal (pre_delete)` | `logging.EventSubscriptionQueue` | Delete the corresponding RabbitMQ queue when an EventSubscriptionQueue record is deleted. |
 | `constance_updated` | `Custom Signal (config_updated)` | `—` | Clear the API configuration cache when a Constance setting is updated. |
 | `create_auth_token` | `Django Signal (post_save)` | `core.User` | Create a token for a new user. |
@@ -82374,6 +82653,11 @@ td:nth-child(4) {
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_vmware.Disk` | If VM that contains service settings were deleted - all settings |
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_firecrest.Job` | If VM that contains service settings were deleted - all settings |
 | `delete_stale_event_subscriptions` | `Django Signal (post_delete)` | `authtoken.Token` | Delete stale event subscriptions for a user when their token is deleted. |
+| `emit_user_lifecycle` | `Django Signal (post_save)` | `core.User` | No description |
+| `emit_user_lifecycle_delete` | `Django Signal (pre_delete)` | `core.User` | No description |
+| `emit_user_profile` | `Django Signal (post_save)` | `core.User` | No description |
+| `emit_user_ssh_key_delete` | `Django Signal (post_delete)` | `core.SshPublicKey` | No description |
+| `emit_user_ssh_key_save` | `Django Signal (post_save)` | `core.SshPublicKey` | No description |
 | `handle_aggregated_quotas` | `Django Signal (post_save)` | `quotas.QuotaUsage` | Call aggregated quotas fields update methods |
 | `handle_aggregated_quotas` | `Django Signal (pre_delete)` | `quotas.QuotaUsage` | Call aggregated quotas fields update methods |
 | `log_access_subnet_deletion_succeeded` | `Django Signal (post_delete)` | `structure.AccessSubnet` | Log successful access subnet deletion. |
@@ -82556,6 +82840,8 @@ td:nth-child(4) {
 | `log_user_delete` | `Django Signal (post_delete)` | `core.User` | Log user deletion events. |
 | `log_user_save` | `Django Signal (post_save)` | `core.User` | Log user creation, update, and activation/deactivation events. |
 | `log_verification_deleted` | `Django Signal (pre_delete)` | `onboarding.OnboardingVerification` | Log when an onboarding verification is deleted. |
+| `on_role_granted` | `Custom Signal (role_granted)` | `—` | No description |
+| `on_role_revoked` | `Custom Signal (role_revoked)` | `—` | No description |
 | `permissions_request_approved` | `Custom Signal (permissions_request_approved)` | `users.PermissionRequest` | Send a notification when a permission request has been approved. |
 | `preserve_fields_before_update` | `Django Signal (pre_save)` | `core.User` | Preserve fields of a user instance before it is updated. |
 | `process_hook` | `Unknown Signal` | `—` | Process a hook for a given event. |
@@ -82769,6 +83055,7 @@ td:nth-child(4) {
 | `change_order_state` | `Django Signal (post_save)` | `waldur_slurm.Allocation` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_vmware.VirtualMachine` | Change the state of an order based on resource state changes. |
 | `cleanup_admin_announcement_on_maintenance_deletion` | `Django Signal (pre_delete)` | `marketplace.MaintenanceAnnouncement` | Ensure AdminAnnouncement is cleaned up when MaintenanceAnnouncement is deleted. |
+| `cleanup_agent_identity_queue` | `Django Signal (pre_delete)` | `marketplace_site_agent.AgentIdentity` | Delete the linked EventConsumer when an AgentIdentity is deleted. |
 | `close_course_accounts_after_project_removal` | `Django Signal (pre_delete)` | `structure.Project` | No description |
 | `close_customer_service_accounts_on_customer_deletion` | `Django Signal (pre_delete)` | `structure.Customer` | Close service accounts associated with a customer when the customer is deleted. |
 | `close_resource_plan_period_when_resource_is_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Handle case when resource has been terminated by service provider. |
@@ -82816,6 +83103,7 @@ td:nth-child(4) {
 | `delete_stale_price_estimate` | `Django Signal (pre_delete)` | `structure.Customer` | Delete price estimates when customer or project is deleted. |
 | `disable_archived_service_settings_without_existing_resource` | `Django Signal (post_save)` | `marketplace.Resource` | Disable archived service settings if there are no existing resources. |
 | `disable_service_settings_without_existing_resource_when_archived` | `Django Signal (post_save)` | `marketplace.Offering` | Disable service settings without existing resources when an offering is archived. |
+| `dispatch_routing_on_issue_create` | `Django Signal (post_save)` | `support.Issue` | Dispatch routing task when an issue is created or a resource is attached. |
 | `drop_offering_user_for_openportal_remote_user` | `Custom Signal (openportal_remote_association_deleted)` | `waldur_openportal.RemoteAllocation` | No description |
 | `drop_offering_user_for_openportal_user` | `Custom Signal (openportal_association_deleted)` | `waldur_openportal.Allocation` | No description |
 | `drop_offering_user_for_rancher_user` | `Django Signal (pre_delete)` | `waldur_rancher.RancherUser` | No description |
@@ -82826,6 +83114,7 @@ td:nth-child(4) {
 | `evaluate_usage_limit_on_component_change` | `Django Signal (post_save)` | `marketplace.OfferingComponent` | Re-evaluate an offering's resources when a component's limit_amount changes. |
 | `evaluate_usage_limit_on_resource_limit_change` | `Django Signal (post_save)` | `marketplace.Resource` | Re-evaluate a resource's usage-limit restriction when its limits change. |
 | `evaluate_usage_limit_on_usage_report` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Pause or downscale a resource when reported usage reaches a component limit. |
+| `forward_comment_to_children` | `Django Signal (post_save)` | `support.Comment` | Forward new public comments from parent issues to child issues. |
 | `handle_openstack_tenant_order_creation` | `Django Signal (post_save)` | `marketplace.Order` | No description |
 | `handle_openstack_tenant_order_termination` | `Django Signal (post_save)` | `marketplace.Order` | No description |
 | `handle_user_role_revoked` | `Custom Signal (role_revoked)` | `—` | Handle user role revocation by removing users from robot accounts |
@@ -82882,8 +83171,6 @@ td:nth-child(4) {
 | `offering_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Offering` | Log offering creation and updates. |
 | `on_order_state_changed` | `Django Signal (post_save)` | `marketplace.Order` | Notify the project's Matrix room when an order is approved, completed, or rejected. |
 | `on_project_pre_delete` | `Django Signal (pre_delete)` | `structure.Project` | When a project is about to be deleted, disable room (kick members, export, archive). |
-| `on_role_granted` | `Custom Signal (role_granted)` | `—` | When a role is granted, invite the user to the project's Matrix room. |
-| `on_role_revoked` | `Custom Signal (role_revoked)` | `—` | When a role is revoked, kick the user from the project's Matrix room if they have no remaining roles. |
 | `plan_component_has_been_updated` | `Django Signal (post_save)` | `marketplace.PlanComponent` | Log plan component updates. |
 | `plan_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Plan` | Log plan creation, update, and archiving events. |
 | `populate_volume_metadata_on_resource_creation` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
@@ -82893,6 +83180,7 @@ td:nth-child(4) {
 | `process_invoice_item` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Process invoice item changes and update related price estimates. |
 | `project_credit_changed_handler` | `Django Signal (post_save)` | `invoices.ProjectCredit` | No description |
 | `project_estimated_cost_policy_trigger_handler` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Evaluate project cost policies when invoice items are updated. |
+| `propagate_comment_to_parent` | `Django Signal (post_save)` | `support.Comment` | Propagate new public comments from child issues back to parent issues. |
 | `purge_offering_role_groups_on_scope_delete` | `Django Signal (post_delete)` | `marketplace.Resource` | Drop OfferingRoleGroup rows that pointed at a now-deleted scope. |
 | `purge_offering_role_groups_on_scope_delete` | `Django Signal (post_delete)` | `marketplace.ResourceProject` | Drop OfferingRoleGroup rows that pointed at a now-deleted scope. |
 | `reconcile_offering_profile_on_offering_changed` | `Django Signal (post_save)` | `marketplace.Offering` | When an Offering is saved, schedule a reconciliation task. Cheap |
@@ -83105,14 +83393,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 809
+Total unique handlers found: 819
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 414 handlers
+- **waldur_core**: 422 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 337 handlers
+- **waldur_mastermind**: 339 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
