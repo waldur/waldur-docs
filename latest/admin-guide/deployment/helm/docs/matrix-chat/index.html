@@ -14408,8 +14408,12 @@ LiveKit media SFU, and lk-jwt-service (required for voice/video calls).</p>
 <span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">networkPolicy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># ships the livekit/lk-jwt/homeserver NetworkPolicies; independent of the chart-wide networkPolicy.enabled</span>
 <span class="w">  </span><span class="nt">homeserver</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">    </span><span class="nt">serverName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matrix.example.org</span><span class="w">   </span><span class="c1"># immutable; baked into every user/room ID</span>
@@ -14531,12 +14535,16 @@ exposed — relayed media always rides TLS.</p>
   <code>https://&lt;serverName&gt;</code> (chat media/images). Without this the browser would block
   the chat client and calls. No action needed — it follows <code>homeserver.serverName</code>
   and is a no-op when matrix is disabled.</li>
-<li><strong>NetworkPolicies.</strong> When <code>networkPolicy.enabled</code> is <code>true</code>, the chart adds a
-  policy per pod. The livekit policy accepts media from <strong>anywhere</strong> (external
-  WebRTC). The homeserver and lk-jwt policies accept HTTP only from <strong>in-namespace</strong>
-  pods (i.e. the ingress controller, same assumption as the homeport/API
-  policies). Egress is left open on all three — federation, OpenID verification,
-  and <code>/twirp</code> room creation all need outbound reach to <code>serverName</code>.</li>
+<li><strong>NetworkPolicies.</strong> When <code>matrixChat.networkPolicy.enabled</code> is <code>true</code>, the chart
+  adds a policy per pod. This gate is independent of the chart-wide
+  <code>networkPolicy.enabled</code> (which only covers the homeport/mastermind-api
+  policies) — set it to ship the matrix/livekit policies without opting the
+  rest of the stack into NetworkPolicy. The livekit policy accepts media from
+  <strong>anywhere</strong> (external WebRTC). The homeserver and lk-jwt policies accept
+  HTTP only from <strong>in-namespace</strong> pods (i.e. the ingress controller, same
+  assumption as the homeport/API policies). Egress is left open on all three —
+  federation, OpenID verification, and <code>/twirp</code> room creation all need
+  outbound reach to <code>serverName</code>.</li>
 </ul>
 <h2 id="using-an-external-livekit">Using an external LiveKit</h2>
 <p>You can run the Matrix calling stack against an <strong>operator-managed LiveKit SFU</strong>
