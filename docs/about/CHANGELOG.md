@@ -1,5 +1,38 @@
 # Changelog
 
+## 8.1.0-rc.18 - 2026-07-23
+
+### Highlights
+
+This release expands automated company verification for onboarding across the Nordics, giving operators in Denmark, Finland, Norway, and Sweden a Dun & Bradstreet-backed registry check out of the box. Project owners gain a richer view of their credit health, with a new lifecycle breakdown in the spending watch dashboard. Support and helpdesk workflows become more capable with staff-facing support user management and a manual route-to-provider action, while several reliability fixes smooth out order state transitions and OpenStack port provisioning.
+
+### What's New
+
+- Onboarding can now verify company registrations through Dun & Bradstreet (D&B) as a registry backend for Nordic countries (Denmark, Finland, Norway, and Sweden), giving operators a trusted automated verification path during sign-up.
+- Project dashboards now include a credit lifecycle breakdown in the spending watch view, showing how credits are consumed over time with pacing indicators and per-period breakdowns so teams can spot overspend earlier.
+- Staff can manage support users through a dedicated API, including a merge action to consolidate duplicate support user records.
+- Support agents can manually route a ticket to a service provider, and customers now carry a helpdesk-configured flag with notifications when a provider ticket is withdrawn.
+- A cookie settings menu is now available from the footer, alongside legal and privacy links, so end users can review consent preferences.
+
+### Improvements
+
+- Lifecycle subnet and resource-provider limit-policy plugin options are now persisted for offering integrations, so these settings survive across updates.
+- Blank usage limit restrictions are now correctly represented in the OpenAPI schema, improving generated client accuracy.
+- Matrix chat network policy behaviour is now documented, clarifying the decoupled `matrixChat.networkPolicy` gate for deployments.
+
+### Bug Fixes
+
+- Fixed a spurious Creating → Terminated → Erred double state transition that could occur when a resource failed to create.
+- OpenStack instance ports are now created via an admin session in `push_instance_ports`, avoiding permission-related failures.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [9 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.17...8.1.0-rc.18) - D&B onboarding backend, support user management and provider routing, plus order-state and OpenStack port fixes.
+- **Waldur Homeport**: [3 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.17...8.1.0-rc.18) - credit lifecycle breakdown in spending watch and a cookie settings footer menu.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.17...8.1.0-rc.18) - documentation for the decoupled Matrix chat network policy gate.
+
+---
+
 ## 8.1.0-rc.17 - 2026-07-22
 
 ### Highlights
