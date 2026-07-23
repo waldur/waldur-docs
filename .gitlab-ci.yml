@@ -67,6 +67,7 @@ stages:
 Run linters:
   image: ghcr.io/astral-sh/uv:python3.13-bookworm
   stage: test
+  interruptible: true
   rules:
     - if: '$BUILD_SDK == "true"'
       when: never
@@ -77,6 +78,7 @@ Run linters:
 
 Scan Python dependencies:
   extends: .Vulnerability scan template
+  interruptible: true
   variables:
     LOCKFILE_PATH: "uv.lock"
   rules:
@@ -103,6 +105,7 @@ Scan Python dependencies:
 Test mkdocs:
   image: registry.hpc.ut.ee/mirror/library/python:3.13
   stage: test
+  interruptible: true
   # Also gate master pushes (e.g. release changelog commits), not just MRs —
   # otherwise a broken relative link lands on master and fails every open MR.
   rules:
