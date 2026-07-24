@@ -14960,9 +14960,7 @@
 <li><strong>waldur-cli-generator</strong> — scriptable CLI (generates
   <a href="https://code.opennodecloud.com/waldur/waldur-cli">waldur-cli</a> by parsing the OpenAPI
   schema directly -- the same as the SDKs, and with no dependency on rs-client or any other
-  generated client, including for request-body validation). Still triggered from the
-  <code>infrastructure</code> stage rather than <code>sdks</code> in <code>.gitlab-ci.yml</code> ("Generate and release
-  Waldur CLI" extends <code>.rules-rc-release</code>, not <code>.sdk-trigger-base</code> like the SDKs below).</li>
+  generated client, including for request-body validation).</li>
 </ul>
 <h2 id="release-process">Release Process</h2>
 <h3 id="for-maintainers">For maintainers</h3>
@@ -15007,6 +15005,7 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
         S5(Generate and release Rust SDK)
         S6(Generate and release Terraform Provider)
         S7(Generate and release Ansible Collection)
+        S8(Generate and release Waldur CLI)
     end
 
     subgraph 5. Infrastructure Stage
@@ -15014,7 +15013,6 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
         D2(Release Prometheus Exporter)
         D3(Release Helm)
         D4(Release Docker Compose)
-        D5(Generate and release Waldur CLI)
     end
 
     subgraph 6. Finalize Stage
@@ -15025,9 +15023,9 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
 
     T --&gt; C1
     C1 --&gt; O
-    O --&gt; S1 &amp; S2 &amp; S3 &amp; S4 &amp; S5 &amp; S6 &amp; S7
-    S1 &amp; S2 &amp; S3 &amp; S4 &amp; S5 &amp; S6 &amp; S7 --&gt; D1 &amp; D2 &amp; D3 &amp; D4 &amp; D5
-    D1 &amp; D2 &amp; D3 &amp; D4 &amp; D5 --&gt; CH
+    O --&gt; S1 &amp; S2 &amp; S3 &amp; S4 &amp; S5 &amp; S6 &amp; S7 &amp; S8
+    S1 &amp; S2 &amp; S3 &amp; S4 &amp; S5 &amp; S6 &amp; S7 &amp; S8 --&gt; D1 &amp; D2 &amp; D3 &amp; D4
+    D1 &amp; D2 &amp; D3 &amp; D4 --&gt; CH
     CH --&gt; MK
     CH --&gt; SL</code></pre>
 <h3 id="stage-1-test">Stage 1: <code>test</code></h3>
@@ -15037,11 +15035,11 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
 <h3 id="stage-3-schema-schema-generation">Stage 3: <code>schema</code> (Schema Generation)</h3>
 <p>The pipeline fetches the <code>waldur-openapi-schema.yaml</code> (and, where needed, <code>waldur-typescript-schema.yaml</code>) generated in the preceding <code>release</code> stage by <code>waldur-mastermind</code>'s pipeline, using the shared <code>.fetch-openapi-schema</code> CI template (see <a href="#shared-schema-fetch-template">Shared schema-fetch template</a> below). It then commits the versioned schema file back to <code>waldur-docs</code>.</p>
 <h3 id="stage-4-sdks-first-layer-consumers">Stage 4: <code>sdks</code> (First-Layer Consumers)</h3>
-<p>With the OpenAPI schema generated, the pipeline triggers the first-layer consumers of that schema: SDKs (Python, TypeScript, Go, Rust), Terraform, Ansible, and API Docs. These pipelines ingest the schema (each via the same <code>.fetch-openapi-schema</code> template) to generate their codebases and publish to package registries (NPM, PyPI, etc.) where applicable. The Rust SDK does not yet publish to crates.io — it only commits generated code to <code>rs-client</code>'s <code>main</code> branch (and a tag on stable releases), same as <code>go-client</code>.</p>
+<p>With the OpenAPI schema generated, the pipeline triggers the first-layer consumers of that schema: SDKs (Python, TypeScript, Go, Rust), Terraform, Ansible, API Docs, and the Waldur CLI. These pipelines ingest the schema (each via the same <code>.fetch-openapi-schema</code> template) to generate their codebases and publish to package registries (NPM, PyPI, etc.) where applicable. The Rust SDK does not yet publish to crates.io — it only commits generated code to <code>rs-client</code>'s <code>main</code> branch (and a tag on stable releases), same as <code>go-client</code>. The Waldur CLI doesn't publish to a package registry either — its generator commits the regenerated command surface to <code>waldur-cli</code>'s <code>main</code> branch; a separate, manual version tag on <code>waldur-cli</code> itself is what actually cuts a release and publishes GitHub Release binaries (see <a href="https://code.opennodecloud.com/waldur/waldur-cli-generator">waldur-cli-generator's README</a>).</p>
 <h3 id="triggering-an-individual-sdk-build">Triggering an individual SDK build</h3>
 <p>Two ways to exercise SDK generation without doing a full release:</p>
 <ul>
-<li><strong>Orchestrated, all SDKs at once</strong>: on <code>waldur-docs</code>, use GitLab's <strong>Run pipeline</strong> with the CI/CD variable <code>BUILD_SDK=true</code> on the <code>master</code> branch. This satisfies the <code>.rules-sdk-release</code> rule shared by every <code>Generate and release *</code> job, so it fans out to Python, TypeScript, Go, Rust, Terraform, and Ansible simultaneously — there is no per-SDK toggle.</li>
+<li><strong>Orchestrated, all SDKs at once</strong>: on <code>waldur-docs</code>, use GitLab's <strong>Run pipeline</strong> with the CI/CD variable <code>BUILD_SDK=true</code> on the <code>master</code> branch. This satisfies the <code>.rules-sdk-release</code> rule shared by every <code>Generate and release *</code> job, so it fans out to Python, TypeScript, Go, Rust, Terraform, Ansible, and the Waldur CLI simultaneously — there is no per-SDK toggle.</li>
 <li><strong>Standalone, a single SDK</strong>: go directly to that SDK's own repository and use <strong>Run pipeline</strong>
   there. Every downstream repository's build/release (and, for <code>py-client</code>/<code>js-client</code>, publish)
   jobs accept <code>CI_PIPELINE_SOURCE == "web"</code> in addition to <code>"pipeline"</code>/<code>"trigger"</code>, so this works
@@ -15200,7 +15198,7 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
 <td style="text-align: center;"><strong>Skipped</strong></td>
 </tr>
 <tr>
-<td>Release SDKs &amp; Terraform/Ansible</td>
+<td>Release SDKs, Terraform/Ansible &amp; Waldur CLI</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;"><strong>Skipped</strong></td>
 </tr>

@@ -14437,11 +14437,20 @@ waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span
    completions</li>
 </ol>
 <h2 id="development">Development</h2>
-<p><code>src/commands/</code> and <code>src/cli.rs</code> are generated from Waldur's OpenAPI schema by
-<a href="https://code.opennodecloud.com/waldur/waldur-cli-generator">waldur-cli-generator</a> — don't
-edit them by hand; see that repo for how to regenerate. The rest of <code>src/</code> (<code>main.rs</code>,
+<p><code>src/commands/</code>, <code>src/cli.rs</code>, and <code>src/schema.rs</code> are generated from Waldur's OpenAPI schema by
+<a href="https://code.opennodecloud.com/waldur/waldur-cli-generator">waldur-cli-generator</a> — don't edit
+them by hand; see that repo for how to regenerate. The rest of <code>src/</code> (<code>lib.rs</code>, <code>main.rs</code>,
 <code>config.rs</code>, <code>output.rs</code>, <code>pagination.rs</code>, <code>http.rs</code>, <code>request.rs</code>, <code>filter.rs</code>, <code>query.rs</code>,
-<code>order.rs</code>) is hand-written and permanent.</p>
+<code>order.rs</code>, <code>progress.rs</code>) is hand-written and permanent.</p>
+<p>The crate is split into a library (everything except the <code>Cli</code>/<code>main()</code> entry point in
+<code>main.rs</code>) and a thin binary, so <code>tests/</code> can exercise the actual logic directly:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>cargo<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--locked
+cargo<span class="w"> </span>clippy<span class="w"> </span>--all-targets
+</code></pre></div></td></tr></tbody></table></div>
+<p>Networked code (<code>pagination</code>, <code>http</code>, <code>order</code>) is tested against an in-process HTTP mock
+(<a href="https://docs.rs/wiremock"><code>wiremock</code></a>) rather than a live Waldur instance — see <code>tests/*.rs</code>
+for examples. CI runs both <code>cargo test</code> and <code>cargo clippy</code> on every merge request.</p>
 <h2 id="license">License</h2>
 <p>MIT.</p>
 
