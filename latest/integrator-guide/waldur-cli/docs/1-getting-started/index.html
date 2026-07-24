@@ -11930,6 +11930,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#working-in-a-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working in a project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#output-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14368,6 +14379,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#working-in-a-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working in a project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#output-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14501,6 +14523,44 @@ waldur-cli<span class="w"> </span><span class="nb">logout</span><span class="w">
 <p class="admonition-title">Tip</p>
 <p>Set <code>WALDUR_PROFILE</code> in a terminal's shell rc (or per-tab) to pin an environment for a
 whole session, so you can't accidentally run a command against the wrong instance.</p>
+</div>
+<h2 id="working-in-a-project">Working in a project</h2>
+<p>Most of Waldur is organized under <strong>projects</strong> — nearly every OpenStack resource, and
+provisioning, is project-scoped. Rather than pass <code>--filter project_uuid=&lt;uuid&gt;</code> on every
+<code>list</code> and paste a project URL into every order, you can set an ambient <strong>current project</strong>
+(a project's UUID, like a <code>kubectl</code> namespace or <code>gcloud config set project</code>). It's resolved,
+first match wins, from:</p>
+<ol>
+<li>the <code>--project &lt;uuid&gt;</code> flag</li>
+<li>the <code>WALDUR_PROJECT</code> environment variable</li>
+<li>the profile's saved default (<code>set-project</code>)</li>
+</ol>
+<p>Save a per-profile default once and forget it:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>team<span class="w"> </span>project<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span><span class="nv">name_exact</span><span class="o">=</span><span class="s2">"My Project"</span><span class="w">   </span><span class="c1"># find the UUID</span>
+waldur-cli<span class="w"> </span>set-project<span class="w"> </span>&lt;uuid&gt;<span class="w">                                    </span><span class="c1"># save it on the active profile</span>
+
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>list<span class="w">          </span><span class="c1"># automatically scoped to that project</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>provision<span class="w"> </span>--request-file<span class="w"> </span>vpc.yaml<span class="w">    </span><span class="c1"># project filled in for you</span>
+
+waldur-cli<span class="w"> </span>unset-project<span class="w">                     </span><span class="c1"># clear it</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>When a project scope is active, it's applied <strong>only</strong> where it's meaningful — as a
+<code>project_uuid</code> filter on resources whose <code>list</code> supports it, and as the <code>project</code> on
+<code>provision</code> orders. Resources that aren't project-scoped (like <code>team customer</code> or <code>team
+role</code>) ignore it. An <strong>explicit value always wins</strong>: <code>--filter project_uuid=&lt;other&gt;</code> on a
+list, or a <code>project</code> field in a <code>provision</code>/order body, overrides the ambient scope.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>--profile</code> and <code>--project</code> are different axes: <code>--profile</code> selects <em>which deployment +
+token</em>; <code>--project</code> selects <em>which project within it</em>. <code>whoami</code> prints the active project
+scope (to stderr, so it never pollutes <code>--format json</code> output) — a cheap way to confirm
+it before a scoped command.</p>
 </div>
 <h2 id="output-formats">Output formats</h2>
 <p><code>--format</code> controls how results are rendered. It's available on every command; the default

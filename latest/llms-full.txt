@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-24T02:03:41.227913Z
+Generated: 2026-07-24T07:50:47.682265Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -9544,6 +9544,42 @@ Sweden Business Register API client secret
 
 Norway Business Register API server URL
 
+#### ONBOARDING_DNB_API_URL
+
+**Type:** url_field
+
+**Default value:** <https://sandbox-api.bisnode.com/credit-data-companies/v2>
+
+Dun & Bradstreet (Bisnode) Credit Data API base URL
+
+#### ONBOARDING_DNB_RTS_API_URL
+
+**Type:** url_field
+
+**Default value:** <https://sandbox-api.bisnode.com/nordic-rts/v1>
+
+Dun & Bradstreet (Bisnode) Nordic Right to Sign API base URL
+
+#### ONBOARDING_DNB_TOKEN_URL
+
+**Type:** url_field
+
+**Default value:** <https://login.bisnode.com/as/token.oauth2>
+
+Dun & Bradstreet OAuth2 token endpoint URL
+
+#### ONBOARDING_DNB_CLIENT_ID
+
+**Type:** str
+
+Dun & Bradstreet API client identifier
+
+#### ONBOARDING_DNB_CLIENT_SECRET
+
+**Type:** secret_field
+
+Dun & Bradstreet API client secret
+
 ### AI assistant settings
 
 #### AI_ASSISTANT_NAME
@@ -13351,6 +13387,205 @@ Notification about an update in the issue. The recipient is issue caller.
     </p>
     </body>
     </html>
+
+```
+
+### support.provider_email_comment
+
+Email a provider a customer comment via the email support backend.
+
+#### Templates
+
+=== "support/provider_email_comment_subject.txt"
+
+```txt
+
+    [{{ issue.key }}] New comment on ticket: {{ issue.summary }}
+
+```
+
+=== "support/provider_email_comment_message.txt"
+
+```txt
+
+    A new comment has been added to ticket {{ issue.key }}.
+
+    Comment by {{ comment.author.name }}:
+    {{ comment.description }}
+
+```
+
+=== "support/provider_email_comment_message.html"
+
+```txt
+
+    <p>A new comment has been added to ticket <strong>{{ issue.key }}</strong>.</p>
+    <p><strong>Comment by {{ comment.author.name }}:</strong></p>
+    <p>{{ comment.description }}</p>
+
+```
+
+### support.provider_email_new_ticket
+
+Email a provider a new ticket via the email support backend.
+
+#### Templates
+
+=== "support/provider_email_new_ticket_subject.txt"
+
+```txt
+
+    [{{ issue.key }}] New support ticket: {{ issue.summary }}
+
+```
+
+=== "support/provider_email_new_ticket_message.txt"
+
+```txt
+
+    A new support ticket has been routed to your helpdesk.
+
+    Ticket: {{ issue.key }}
+    Summary: {{ issue.summary }}
+    Type: {{ issue.type }}
+    Priority: {{ issue.priority }}
+
+    Description:
+    {{ issue.description }}
+
+```
+
+=== "support/provider_email_new_ticket_message.html"
+
+```txt
+
+    <p>A new support ticket has been routed to your helpdesk.</p>
+    <p><strong>Ticket:</strong> {{ issue.key }}<br>
+    <strong>Summary:</strong> {{ issue.summary }}<br>
+    <strong>Type:</strong> {{ issue.type }}<br>
+    <strong>Priority:</strong> {{ issue.priority }}</p>
+    <p><strong>Description:</strong></p>
+    <p>{{ issue.description }}</p>
+
+```
+
+### support.provider_escalation
+
+Notify a provider helpdesk that a routed ticket has been escalated.
+
+#### Templates
+
+=== "support/provider_escalation_subject.txt"
+
+```txt
+
+    [{{ issue.key }}] ESCALATED: {{ issue.summary }}
+
+```
+
+=== "support/provider_escalation_message.txt"
+
+```txt
+
+    Ticket {{ issue.key }} has been escalated.
+
+    Reason: {{ reason }}
+
+    Summary: {{ issue.summary }}
+    Priority: {{ issue.priority }}
+
+```
+
+=== "support/provider_escalation_message.html"
+
+```txt
+
+    <p>Ticket <strong>{{ issue.key }}</strong> has been escalated.</p>
+    <p><strong>Reason:</strong> {{ reason }}</p>
+    <p><strong>Summary:</strong> {{ issue.summary }}<br>
+    <strong>Priority:</strong> {{ issue.priority }}</p>
+
+```
+
+### support.provider_new_ticket
+
+Notify a provider helpdesk about a new ticket routed to them.
+
+#### Templates
+
+=== "support/provider_new_ticket_subject.txt"
+
+```txt
+
+    [{{ issue.key }}] New ticket: {{ issue.summary }}
+
+```
+
+=== "support/provider_new_ticket_message.txt"
+
+```txt
+
+    A new support ticket has been assigned to your helpdesk.
+
+    Ticket: {{ issue.key }}
+    Summary: {{ issue.summary }}
+    Type: {{ issue.type }}
+    Priority: {{ issue.priority }}
+
+    Description:
+    {{ issue.description }}
+
+```
+
+=== "support/provider_new_ticket_message.html"
+
+```txt
+
+    <p>A new support ticket has been assigned to your helpdesk.</p>
+    <p><strong>Ticket:</strong> {{ issue.key }}<br>
+    <strong>Summary:</strong> {{ issue.summary }}<br>
+    <strong>Type:</strong> {{ issue.type }}<br>
+    <strong>Priority:</strong> {{ issue.priority }}</p>
+    <p><strong>Description:</strong></p>
+    <p>{{ issue.description }}</p>
+
+```
+
+### support.provider_ticket_withdrawn
+
+Notify a provider helpdesk that a ticket previously routed to them was rerouted away.
+
+#### Templates
+
+=== "support/provider_ticket_withdrawn_subject.txt"
+
+```txt
+
+    [{{ issue.key }}] Ticket withdrawn: {{ issue.summary }}
+
+```
+
+=== "support/provider_ticket_withdrawn_message.txt"
+
+```txt
+
+    A support ticket previously routed to your helpdesk has been withdrawn and reassigned to a different provider.
+
+    Ticket: {{ issue.key }}
+    Summary: {{ issue.summary }}
+
+    No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.
+
+```
+
+=== "support/provider_ticket_withdrawn_message.html"
+
+```txt
+
+    <p>A support ticket previously routed to your helpdesk has been withdrawn and reassigned to a different provider.</p>
+    <p><strong>Ticket:</strong> {{ issue.key }}<br>
+    <strong>Summary:</strong> {{ issue.summary }}</p>
+    <p>No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.</p>
 
 ```
 
@@ -19995,6 +20230,17 @@ Comment:
 
 ```
 
+### provider_ticket_withdrawn_message.html (waldur_mastermind.support)
+
+```html
+
+<p>A support ticket previously routed to your helpdesk has been withdrawn and reassigned to a different provider.</p>
+<p><strong>Ticket:</strong> {{ issue.key }}<br>
+<strong>Summary:</strong> {{ issue.summary }}</p>
+<p>No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.</p>
+
+```
+
 ### notification_comment_added_message.txt (waldur_mastermind.support)
 
 ```txt
@@ -20056,6 +20302,27 @@ The issue you have created has a new comment. Please go to {{issue_url}} to see 
 ```txt
 
 [{{ issue.key }}] New support ticket: {{ issue.summary }}
+
+```
+
+### provider_ticket_withdrawn_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] Ticket withdrawn: {{ issue.summary }}
+
+```
+
+### provider_ticket_withdrawn_message.txt (waldur_mastermind.support)
+
+```txt
+
+A support ticket previously routed to your helpdesk has been withdrawn and reassigned to a different provider.
+
+Ticket: {{ issue.key }}
+Summary: {{ issue.summary }}
+
+No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.
 
 ```
 
@@ -83076,6 +83343,7 @@ td:nth-child(4) {
 | `add_google_calendar_info` | `Custom Signal (pre_serializer_fields)` | `PublicOfferingDetailsSerializer` | Add a Google Calendar info field to the serializer. |
 | `add_google_calendar_link` | `Custom Signal (pre_serializer_fields)` | `ProviderOfferingDetailsSerializer` | Add a Google Calendar link field to the serializer. |
 | `add_google_calendar_link` | `Custom Signal (pre_serializer_fields)` | `PublicOfferingDetailsSerializer` | Add a Google Calendar link field to the serializer. |
+| `add_has_active_helpdesk` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a flag telling whether the customer's provider has an active helpdesk. |
 | `add_has_affiliate_links` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a flag telling whether the organization is an affiliate on any link. |
 | `add_integration_status` | `Custom Signal (pre_serializer_fields)` | `ProviderOfferingDetailsSerializer` | Add an integration status field to the serializer. |
 | `add_issue` | `Custom Signal (pre_serializer_fields)` | `OrderDetailsSerializer` | Add an issue field to the serializer. |
@@ -83484,14 +83752,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 819
+Total unique handlers found: 820
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 422 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 339 handlers
+- **waldur_mastermind**: 340 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -102505,6 +102773,42 @@ Omitting `--profile`/`WALDUR_PROFILE` uses the profile named `default`. Each pro
     Set `WALDUR_PROFILE` in a terminal's shell rc (or per-tab) to pin an environment for a
     whole session, so you can't accidentally run a command against the wrong instance.
 
+## Working in a project
+
+Most of Waldur is organized under **projects** — nearly every OpenStack resource, and
+provisioning, is project-scoped. Rather than pass `--filter project_uuid=<uuid>` on every
+`list` and paste a project URL into every order, you can set an ambient **current project**
+(a project's UUID, like a `kubectl` namespace or `gcloud config set project`). It's resolved,
+first match wins, from:
+
+1. the `--project <uuid>` flag
+2. the `WALDUR_PROJECT` environment variable
+3. the profile's saved default (`set-project`)
+
+Save a per-profile default once and forget it:
+
+```bash
+waldur-cli team project list --filter name_exact="My Project"   # find the UUID
+waldur-cli set-project <uuid>                                    # save it on the active profile
+
+waldur-cli openstack instance list          # automatically scoped to that project
+waldur-cli openstack tenant provision --request-file vpc.yaml    # project filled in for you
+
+waldur-cli unset-project                     # clear it
+```
+
+When a project scope is active, it's applied **only** where it's meaningful — as a
+`project_uuid` filter on resources whose `list` supports it, and as the `project` on
+`provision` orders. Resources that aren't project-scoped (like `team customer` or `team
+role`) ignore it. An **explicit value always wins**: `--filter project_uuid=<other>` on a
+list, or a `project` field in a `provision`/order body, overrides the ambient scope.
+
+!!! note
+    `--profile` and `--project` are different axes: `--profile` selects *which deployment +
+    token*; `--project` selects *which project within it*. `whoami` prints the active project
+    scope (to stderr, so it never pollutes `--format json` output) — a cheap way to confirm
+    it before a scoped command.
+
 ## Output formats
 
 `--format` controls how results are rendered. It's available on every command; the default
@@ -102603,6 +102907,11 @@ Repeat a key to pass multiple values for a list-valued filter (they're OR'd serv
 ```bash
 waldur-cli marketplace offering list --filter type=OpenStack.Instance --filter type=OpenStack.Volume
 ```
+
+!!! tip "Ambient project scope"
+    If you've set a [current project](1-getting-started.md#working-in-a-project), it's
+    applied automatically as `project_uuid` to every list that supports it — no `--filter
+    project_uuid=` needed. An explicit `--filter project_uuid=<other>` still overrides it.
 
 !!! tip "Full-text search"
     Many resources have a `query` field for full-text search. It's reached through
@@ -102840,6 +103149,11 @@ waldur-cli openstack instance provision --generate-skeleton yaml > vm.yaml
 Fill in `offering`, `project`, and the attributes you want. As with `create`, any field left
 `null` — including nested `attributes` fields — is omitted, so you only fill what you need.
 `accepting_terms_of_service` defaults to `true` in the skeleton.
+
+!!! tip "Ambient project scope"
+    If you've set a [current project](1-getting-started.md#working-in-a-project), you
+    can leave `project` out of the order body entirely — it's filled in from the scope. An
+    explicit `project` in the body still overrides it.
 
 A tenant (VPC) order, for example:
 
