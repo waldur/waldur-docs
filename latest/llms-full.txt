@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-24T08:07:17.661337Z
+Generated: 2026-07-24T08:20:09.361949Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -103013,7 +103013,7 @@ waldur-cli openstack instance get <uuid> --format json | jq '{name, state}'
 `create`, `update`, and `delete` cover the resources Waldur exposes as direct REST
 operations (mostly under `team`, plus `update` on some OpenStack resources). Creating and
 deleting OpenStack tenants/instances/volumes goes through a different, asynchronous path —
-see [Provisioning OpenStack](4-provisioning-openstack.md).
+see [Provisioning](4-provisioning-openstack.md).
 
 ## The request body
 
@@ -103140,18 +103140,27 @@ result either way.
 
 ---
 
-### Provisioning OpenStack
+### Provisioning
 <!-- Source: docs/integrator-guide/waldur-cli/docs/4-provisioning-openstack.md -->
 
-# Provisioning OpenStack
+# Provisioning
 
-OpenStack tenants, instances, and volumes aren't created or deleted through a direct REST
-endpoint. Their lifecycle runs through Waldur's **marketplace order** flow: you submit an
-*order* against an *offering*, Waldur processes it asynchronously, and a resource appears when
-it completes. The CLI exposes this as two verbs — `provision` and `terminate` — on those
-resources.
+Some resources aren't created or deleted through a direct REST endpoint. Their lifecycle runs
+through Waldur's **marketplace order** flow: you submit an *order* against an *offering*, Waldur
+processes it asynchronously, and a resource appears when it completes. The CLI exposes this as
+`provision` and `terminate` verbs.
 
-The flow is: **find an offering → submit an order → wait for it → get the resource.**
+There are two ways in:
+
+- **Typed OpenStack commands** — `openstack tenant`, `openstack instance`, `openstack volume`
+  get `provision`/`terminate` with a *typed* `--generate-skeleton` (flavor, image, ports, …),
+  covered below.
+- **Generic `marketplace resource`** — provisions **any** offering type (SLURM, VMware, Azure,
+  custom, …), with a free-form attributes body. See [Provisioning other
+  offerings](#provisioning-other-offerings).
+
+The flow is the same either way: **find an offering → submit an order → wait for it → get the
+resource.**
 
 ## 1. Find an offering
 
@@ -103254,6 +103263,46 @@ waldur-cli openstack instance terminate <marketplace_resource_uuid> \
 
 Like `provision`, `terminate` waits for the termination order to finish by default;
 `--no-wait` and `--timeout N` apply the same way.
+
+## Provisioning other offerings
+
+`marketplace resource` provisions **any** offering type — SLURM allocations, VMware or Azure
+VMs, or a provider's custom offering — using the same order flow, just with a **free-form**
+attributes body instead of a typed one (the accepted attributes are offering-specific and not
+all modeled in the schema):
+
+```bash
+# find the offering
+waldur-cli marketplace offering list --filter type=Marketplace.Slurm
+
+# provision (offering + project + whatever attributes/limits that offering wants)
+waldur-cli marketplace resource provision --request '{
+  "offering": "https://waldur.example.com/api/marketplace-public-offerings/<uuid>/",
+  "project":  "https://waldur.example.com/api/projects/<uuid>/",
+  "plan":     "https://waldur.example.com/api/marketplace-public-offerings/<uuid>/plans/<uuid>/",
+  "attributes": {"name": "my-allocation"},
+  "limits":     {"cpu": 100, "ram": 200, "gpu": 4}
+}'
+```
+
+`marketplace resource provision --generate-skeleton` gives the order envelope with a generic
+`{name, description}` attributes stub — fill in the offering-specific fields yourself (from the
+offering in the Waldur portal). Everything the typed commands support applies here too:
+`--no-wait`/`--timeout`, `--dry-run`, and the ambient
+[`--project`](1-getting-started.md#working-in-a-project) (leave `project` out of the body and
+it's filled in).
+
+`marketplace resource list`/`get` browse provisioned resources (handy for finding the
+`marketplace_resource_uuid` to terminate), and `marketplace resource terminate <uuid>` tears
+any of them down:
+
+```bash
+waldur-cli marketplace resource list --filter offering_uuid=<uuid>
+waldur-cli marketplace resource terminate <marketplace_resource_uuid>
+```
+
+The typed `openstack ... provision` commands are just a convenience for the three OpenStack
+types — anything they can do, `marketplace resource` can do generically.
 
 ## The bigger picture
 
@@ -103564,8 +103613,8 @@ The full guide lives in [`docs/`](docs/):
    selection, and JMESPath
 3. [Managing resources](docs/3-managing-resources.md) — `create`/`update`/`delete` and
    request-body skeletons
-4. [Provisioning OpenStack](docs/4-provisioning-openstack.md) — the marketplace order flow
-   (`provision`/`terminate`)
+4. [Provisioning](docs/4-provisioning-openstack.md) — the marketplace order flow
+   (`provision`/`terminate`), for OpenStack and any other offering type
 5. [Recipes & tips](docs/5-recipes-and-tips.md) — real-world workflows and things worth
    knowing
 6. [Troubleshooting](docs/6-troubleshooting.md) — errors, `--debug`, exit codes, and shell

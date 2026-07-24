@@ -107,7 +107,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#provisioning-openstack" class="md-skip">
+        <a href="#provisioning" class="md-skip">
           Skip to content
         </a>
       
@@ -11986,6 +11986,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#provisioning-other-offerings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provisioning other offerings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-bigger-picture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14295,6 +14306,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#provisioning-other-offerings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provisioning other offerings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-bigger-picture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14320,13 +14342,22 @@
                 
                   
 
-<h1 id="provisioning-openstack">Provisioning OpenStack</h1>
-<p>OpenStack tenants, instances, and volumes aren't created or deleted through a direct REST
-endpoint. Their lifecycle runs through Waldur's <strong>marketplace order</strong> flow: you submit an
-<em>order</em> against an <em>offering</em>, Waldur processes it asynchronously, and a resource appears when
-it completes. The CLI exposes this as two verbs — <code>provision</code> and <code>terminate</code> — on those
-resources.</p>
-<p>The flow is: <strong>find an offering → submit an order → wait for it → get the resource.</strong></p>
+<h1 id="provisioning">Provisioning</h1>
+<p>Some resources aren't created or deleted through a direct REST endpoint. Their lifecycle runs
+through Waldur's <strong>marketplace order</strong> flow: you submit an <em>order</em> against an <em>offering</em>, Waldur
+processes it asynchronously, and a resource appears when it completes. The CLI exposes this as
+<code>provision</code> and <code>terminate</code> verbs.</p>
+<p>There are two ways in:</p>
+<ul>
+<li><strong>Typed OpenStack commands</strong> — <code>openstack tenant</code>, <code>openstack instance</code>, <code>openstack volume</code>
+  get <code>provision</code>/<code>terminate</code> with a <em>typed</em> <code>--generate-skeleton</code> (flavor, image, ports, …),
+  covered below.</li>
+<li><strong>Generic <code>marketplace resource</code></strong> — provisions <strong>any</strong> offering type (SLURM, VMware, Azure,
+  custom, …), with a free-form attributes body. See <a href="#provisioning-other-offerings">Provisioning other
+  offerings</a>.</li>
+</ul>
+<p>The flow is the same either way: <strong>find an offering → submit an order → wait for it → get the
+resource.</strong></p>
 <h2 id="1-find-an-offering">1. Find an offering</h2>
 <p>Provisioning is always <em>against an offering</em> (a specific provider's OpenStack service). Browse
 them under <code>marketplace offering</code>, filtering by type:</p>
@@ -14418,6 +14449,48 @@ or via <code>get</code>/<code>list</code>:</p>
 </code></pre></div></td></tr></tbody></table></div>
 <p>Like <code>provision</code>, <code>terminate</code> waits for the termination order to finish by default;
 <code>--no-wait</code> and <code>--timeout N</code> apply the same way.</p>
+<h2 id="provisioning-other-offerings">Provisioning other offerings</h2>
+<p><code>marketplace resource</code> provisions <strong>any</strong> offering type — SLURM allocations, VMware or Azure
+VMs, or a provider's custom offering — using the same order flow, just with a <strong>free-form</strong>
+attributes body instead of a typed one (the accepted attributes are offering-specific and not
+all modeled in the schema):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># find the offering</span>
+waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>offering<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span><span class="nv">type</span><span class="o">=</span>Marketplace.Slurm
+
+<span class="c1"># provision (offering + project + whatever attributes/limits that offering wants)</span>
+waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>resource<span class="w"> </span>provision<span class="w"> </span>--request<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">  "offering": "https://waldur.example.com/api/marketplace-public-offerings/&lt;uuid&gt;/",</span>
+<span class="s1">  "project":  "https://waldur.example.com/api/projects/&lt;uuid&gt;/",</span>
+<span class="s1">  "plan":     "https://waldur.example.com/api/marketplace-public-offerings/&lt;uuid&gt;/plans/&lt;uuid&gt;/",</span>
+<span class="s1">  "attributes": {"name": "my-allocation"},</span>
+<span class="s1">  "limits":     {"cpu": 100, "ram": 200, "gpu": 4}</span>
+<span class="s1">}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>marketplace resource provision --generate-skeleton</code> gives the order envelope with a generic
+<code>{name, description}</code> attributes stub — fill in the offering-specific fields yourself (from the
+offering in the Waldur portal). Everything the typed commands support applies here too:
+<code>--no-wait</code>/<code>--timeout</code>, <code>--dry-run</code>, and the ambient
+<a href="../1-getting-started/#working-in-a-project"><code>--project</code></a> (leave <code>project</code> out of the body and
+it's filled in).</p>
+<p><code>marketplace resource list</code>/<code>get</code> browse provisioned resources (handy for finding the
+<code>marketplace_resource_uuid</code> to terminate), and <code>marketplace resource terminate &lt;uuid&gt;</code> tears
+any of them down:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>resource<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span><span class="nv">offering_uuid</span><span class="o">=</span>&lt;uuid&gt;
+waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>resource<span class="w"> </span>terminate<span class="w"> </span>&lt;marketplace_resource_uuid&gt;
+</code></pre></div></td></tr></tbody></table></div>
+<p>The typed <code>openstack ... provision</code> commands are just a convenience for the three OpenStack
+types — anything they can do, <code>marketplace resource</code> can do generically.</p>
 <h2 id="the-bigger-picture">The bigger picture</h2>
 <p>An instance needs a tenant (and usually a network/subnet) to exist first, and its flavor and
 image are looked up <strong>within that tenant</strong> — so a from-scratch VM is a chain: provision a
