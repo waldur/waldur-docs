@@ -36,10 +36,11 @@ This ensures:
 - **terraform-provider-waldur-generator** — Terraform Provider
 - **ansible-waldur-generator** — Ansible Collection
 - **waldur-cli-generator** — scriptable CLI (generates
-  [waldur-cli](https://code.opennodecloud.com/waldur/waldur-cli) by parsing rs-client's
-  generated methods, not the OpenAPI schema directly). A second-layer consumer, not a
-  first-layer SDK: it needs rs-client's *published* output, so it's triggered from the
-  `infrastructure` stage (same reasoning as Homeport/Prometheus-exporter below), not `sdks`.
+  [waldur-cli](https://code.opennodecloud.com/waldur/waldur-cli) by parsing the OpenAPI
+  schema directly -- the same as the SDKs, and with no dependency on rs-client or any other
+  generated client, including for request-body validation). Still triggered from the
+  `infrastructure` stage rather than `sdks` in `.gitlab-ci.yml` ("Generate and release
+  Waldur CLI" extends `.rules-rc-release`, not `.sdk-trigger-base` like the SDKs below).
 
 ## Release Process
 
