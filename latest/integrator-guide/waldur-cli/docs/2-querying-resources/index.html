@@ -11897,6 +11897,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#streaming-large-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streaming large lists
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#-filter-keyvalue-narrow-server-side" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14273,6 +14284,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#streaming-large-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streaming large lists
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#-filter-keyvalue-narrow-server-side" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14360,6 +14382,33 @@ waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span
 <p>If a page fails partway through a long fetch, the command <strong>errors</strong> — it never returns a
 partial list as if it were complete — and reports how far it got, e.g. <code>fetched 300 of 1200
 item(s) before this failed</code>.</p>
+<h2 id="streaming-large-lists">Streaming large lists</h2>
+<p><code>--format ndjson</code> prints one compact JSON object per line, and for <code>list</code> prints each page as
+it arrives instead of fetching the complete result set first. For a large collection, the
+first line appears after the first page (up to 300 items) rather than after the whole thing --
+lower memory, and a consumer processing output line-by-line (an agent, <code>jq</code>, a shell loop)
+can start before the fetch finishes:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>team<span class="w"> </span>customer<span class="w"> </span>list<span class="w"> </span>--format<span class="w"> </span>ndjson
+<span class="c1"># {"uuid":"...","name":"Acme","state":"active"}</span>
+<span class="c1"># {"uuid":"...","name":"Beta","state":"active"}</span>
+<span class="c1"># ...</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>list<span class="w"> </span>--format<span class="w"> </span>ndjson<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-c<span class="w"> </span><span class="s1">'select(.state == "OK")'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>It composes with everything above: <code>--filter</code>/<code>--fields</code> still narrow what's fetched, and
+<code>--limit</code> still stops early (mid-page, if needed) without fetching further pages.</p>
+<p>The one exception is <code>--jmespath</code>: since a JMESPath expression can reshape or aggregate across
+the <em>entire</em> array (sort, slice, count, ...), <code>--format ndjson --jmespath ...</code> falls back to
+fetching the complete result first -- same as <code>json</code>/<code>toon</code> -- then prints the (possibly
+already-reshaped) result one object per line. Everything still comes out as valid NDJSON; it
+just isn't streamed in that combination.</p>
+<p>Piping into something that stops reading early (<code>| head</code>) is safe -- the command notices and
+stops fetching further pages, rather than continuing to pull data nobody will read.</p>
+<p><code>get</code>/<code>create</code>/<code>update</code>/<code>delete</code> under <code>--format ndjson</code> print their single result object as
+one compact line, same shape as <code>json</code> without the pretty-printing.</p>
 <h2 id="-filter-keyvalue-narrow-server-side"><code>--filter KEY=VALUE</code> — narrow server-side</h2>
 <p><code>--filter</code> (repeatable) filters on the server, so only matching rows come back over the wire.
 It replaces having a dedicated flag per field — some resources have 20+ filterable fields —

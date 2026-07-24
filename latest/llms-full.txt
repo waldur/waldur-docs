@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-24T16:40:07.535637Z
+Generated: 2026-07-24T16:44:42.237556Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -95442,7 +95442,15 @@ With the OpenAPI schema generated, the pipeline triggers the first-layer consume
 Two ways to exercise SDK generation without doing a full release:
 
 - **Orchestrated, all SDKs at once**: on `waldur-docs`, use GitLab's **Run pipeline** with the CI/CD variable `BUILD_SDK=true` on the `master` branch. This satisfies the `.rules-sdk-release` rule shared by every `Generate and release *` job, so it fans out to Python, TypeScript, Go, Rust, Terraform, and Ansible simultaneously — there is no per-SDK toggle.
-- **Standalone, a single SDK**: go directly to that SDK's own repository and use **Run pipeline** there. This currently only works for `rs-client`, whose `Build Rust SDK` / `Release Rust SDK` jobs accept `CI_PIPELINE_SOURCE == "web"` in addition to `"pipeline"`/`"trigger"`. No variables are needed; since `RELEASE_VERSION` is empty on a manual run, it takes the nightly-commit path (no tag). `go-client`, `py-client`, and `js-client` do not have this enabled — their build jobs only run when triggered as a child of `waldur-docs`' pipeline (`"pipeline"`/`"trigger"` sources), so running their pipeline directly from their own project does nothing beyond the always-on schema fetch.
+- **Standalone, a single SDK**: go directly to that SDK's own repository and use **Run pipeline**
+  there. Every downstream repository's build/release (and, for `py-client`/`js-client`, publish)
+  jobs accept `CI_PIPELINE_SOURCE == "web"` in addition to `"pipeline"`/`"trigger"`, so this works
+  uniformly across `rs-client`, `go-client`, `py-client`, `js-client`, and
+  `waldur-cli-generator`. No variables are needed for a nightly build: `RELEASE_VERSION` is empty
+  on a plain manual run, which takes the nightly-commit (or, for `py-client`/`js-client`,
+  publish-to-dev-registry) path rather than tagging a release. Setting `RELEASE_VERSION` to a
+  semver string on that same manual run takes the tagged-release path instead, exactly as a
+  `pipeline`/`trigger`-sourced run would.
 
 ### Shared schema-fetch template
 
@@ -102815,18 +102823,20 @@ list, or a `project` field in a `provision`/order body, overrides the ambient sc
 `--format` controls how results are rendered. It's available on every command; the default
 is `table`.
 
-| Format  | Best for                        | Notes                                                      |
-| ------- | ------------------------------- | ---------------------------------------------------------- |
-| `table` | reading at a terminal (default) | curated columns per resource                               |
-| `json`  | scripts, `jq`, agents           | pretty-printed, the complete object                        |
-| `tsv`   | shell loops, `cut`/`awk`        | tab-separated, one row per line, no header, curated columns |
-| `toon`  | feeding results to an LLM       | lossless like json, far fewer tokens                       |
+| Format   | Best for                        | Notes                                                        |
+| -------- | -------------------------------- | ------------------------------------------------------------ |
+| `table`  | reading at a terminal (default)  | curated columns per resource                                  |
+| `json`   | scripts, `jq`, agents            | pretty-printed, the complete object                          |
+| `tsv`    | shell loops, `cut`/`awk`         | tab-separated, one row per line, no header, curated columns  |
+| `toon`   | feeding results to an LLM        | lossless like json, far fewer tokens                          |
+| `ndjson` | large `list`s, streaming pipes   | one compact object per line, printed as pages arrive          |
 
 ```bash
 waldur-cli team customer list                    # table
 waldur-cli team customer list --format json      # complete objects, pretty JSON
 waldur-cli team customer list --format tsv        # tab-separated rows
 waldur-cli team customer list --format toon       # token-efficient, for LLM context
+waldur-cli team customer list --format ndjson     # streamed, one object per line
 ```
 
 `table` and `tsv` show each resource's **curated columns** (a useful default subset). `json`
@@ -102848,6 +102858,13 @@ waldur-cli team customer list --format toon
 #   true,Beta LLC,"22222222-2222-2222-2222-222222222222"
 #   false,Gamma Inc,"33333333-3333-3333-3333-333333333333"
 ```
+
+### NDJSON, for large or streamed lists
+
+`--format ndjson` prints one compact JSON object per line instead of one pretty-printed array —
+and, for `list`, prints each page as it arrives rather than fetching the complete result set
+first. See [Querying resources](2-querying-resources.md#streaming-large-lists) for the streaming
+details and its one caveat (`--jmespath`).
 
 ---
 
@@ -102878,6 +102895,37 @@ waldur-cli openstack instance list --format json
 If a page fails partway through a long fetch, the command **errors** — it never returns a
 partial list as if it were complete — and reports how far it got, e.g. `fetched 300 of 1200
 item(s) before this failed`.
+
+## Streaming large lists
+
+`--format ndjson` prints one compact JSON object per line, and for `list` prints each page as
+it arrives instead of fetching the complete result set first. For a large collection, the
+first line appears after the first page (up to 300 items) rather than after the whole thing --
+lower memory, and a consumer processing output line-by-line (an agent, `jq`, a shell loop)
+can start before the fetch finishes:
+
+```bash
+waldur-cli team customer list --format ndjson
+# {"uuid":"...","name":"Acme","state":"active"}
+# {"uuid":"...","name":"Beta","state":"active"}
+# ...
+waldur-cli openstack instance list --format ndjson | jq -c 'select(.state == "OK")'
+```
+
+It composes with everything above: `--filter`/`--fields` still narrow what's fetched, and
+`--limit` still stops early (mid-page, if needed) without fetching further pages.
+
+The one exception is `--jmespath`: since a JMESPath expression can reshape or aggregate across
+the *entire* array (sort, slice, count, ...), `--format ndjson --jmespath ...` falls back to
+fetching the complete result first -- same as `json`/`toon` -- then prints the (possibly
+already-reshaped) result one object per line. Everything still comes out as valid NDJSON; it
+just isn't streamed in that combination.
+
+Piping into something that stops reading early (`| head`) is safe -- the command notices and
+stops fetching further pages, rather than continuing to pull data nobody will read.
+
+`get`/`create`/`update`/`delete` under `--format ndjson` print their single result object as
+one compact line, same shape as `json` without the pretty-printing.
 
 ## `--filter KEY=VALUE` — narrow server-side
 
@@ -103420,9 +103468,20 @@ waldur-cli openstack instance list \
 - **`--fields` speeds up big lists.** For a resource with large objects, `--fields uuid,name`
   can dramatically cut transfer time — the server sends only what you ask for.
 
+- **`--format ndjson` for big lists.** It streams -- printing each page as it arrives -- so a
+  large `list` starts producing output immediately instead of going quiet until every page is
+  fetched. Pipes straight into `jq -c`, a shell `while read` loop, or an agent processing
+  results incrementally.
+
 - **`--filter query=<text>` is full-text search.** On resources that support it (customers,
   projects, users, …), the `query` filter searches across fields, unlike the exact-match
   field filters.
+
+- **`schema` emits an OpenAPI-for-the-CLI.** If you're building an LLM agent that drives
+  `waldur-cli`, parsing `--help` text is fragile. `waldur-cli schema` outputs a complete JSON
+  description of the command surface — paths, parameters, typed filter keys, and request
+  skeletons — that frameworks can directly ingest as a tool specification. Use `--compact` if
+  you have a tight context budget and only need paths and descriptions.
 
 - **`whoami` before anything destructive.** One command confirms which instance and identity
   your credentials currently resolve to — cheap insurance before a `delete`/`terminate`.
@@ -103444,6 +103503,9 @@ waldur-cli openstack instance list \
 - **Install shell completions.** Tab-completion for groups, resources, verbs, and flags makes
   the three-level command tree far quicker to navigate — see
   [Troubleshooting](6-troubleshooting.md#shell-completions).
+
+- **Update easily.** Run `waldur-cli update` to seamlessly download and install the latest
+  release from GitHub, avoiding manual un-tarring or re-running installer scripts.
 
 - **`--no-wait` for fire-and-forget provisioning.** Submitting many orders? `--no-wait`
   returns each order immediately; poll or reconcile them yourself instead of blocking one at a
@@ -103583,6 +103645,14 @@ powershell -ExecutionPolicy Bypass -File waldur-cli-installer.ps1
 
 Or build from source with a Rust toolchain: `cargo build --release`.
 
+### Updating
+
+Once installed, you can update `waldur-cli` to the latest release directly from the terminal:
+
+```bash
+waldur-cli update
+```
+
 ## Quickstart
 
 ```bash
@@ -103592,6 +103662,7 @@ export WALDUR_ACCESS_TOKEN=your-token
 waldur-cli whoami                              # confirm who/where you're authenticated as
 waldur-cli team customer list                  # a human-readable table
 waldur-cli team project list --format json     # machine-readable, for scripts/agents
+waldur-cli schema --compact                    # emit a JSON tool specification for LLM agents
 waldur-cli openstack instance get 00000000000000000000000000000000
 ```
 
@@ -103611,7 +103682,7 @@ The full guide lives in [`docs/`](docs/):
 1. [Getting started](docs/1-getting-started.md) — authentication, profiles, command
    structure, and output formats
 2. [Querying resources](docs/2-querying-resources.md) — `list`/`get`, filtering, field
-   selection, and JMESPath
+   selection, JMESPath, and streaming large lists with `--format ndjson`
 3. [Managing resources](docs/3-managing-resources.md) — `create`/`update`/`delete` and
    request-body skeletons
 4. [Provisioning](docs/4-provisioning-openstack.md) — the marketplace order flow
