@@ -142,7 +142,15 @@ With the OpenAPI schema generated, the pipeline triggers the first-layer consume
 Two ways to exercise SDK generation without doing a full release:
 
 - **Orchestrated, all SDKs at once**: on `waldur-docs`, use GitLab's **Run pipeline** with the CI/CD variable `BUILD_SDK=true` on the `master` branch. This satisfies the `.rules-sdk-release` rule shared by every `Generate and release *` job, so it fans out to Python, TypeScript, Go, Rust, Terraform, and Ansible simultaneously — there is no per-SDK toggle.
-- **Standalone, a single SDK**: go directly to that SDK's own repository and use **Run pipeline** there. This currently only works for `rs-client`, whose `Build Rust SDK` / `Release Rust SDK` jobs accept `CI_PIPELINE_SOURCE == "web"` in addition to `"pipeline"`/`"trigger"`. No variables are needed; since `RELEASE_VERSION` is empty on a manual run, it takes the nightly-commit path (no tag). `go-client`, `py-client`, and `js-client` do not have this enabled — their build jobs only run when triggered as a child of `waldur-docs`' pipeline (`"pipeline"`/`"trigger"` sources), so running their pipeline directly from their own project does nothing beyond the always-on schema fetch.
+- **Standalone, a single SDK**: go directly to that SDK's own repository and use **Run pipeline**
+  there. Every downstream repository's build/release (and, for `py-client`/`js-client`, publish)
+  jobs accept `CI_PIPELINE_SOURCE == "web"` in addition to `"pipeline"`/`"trigger"`, so this works
+  uniformly across `rs-client`, `go-client`, `py-client`, `js-client`, and
+  `waldur-cli-generator`. No variables are needed for a nightly build: `RELEASE_VERSION` is empty
+  on a plain manual run, which takes the nightly-commit (or, for `py-client`/`js-client`,
+  publish-to-dev-registry) path rather than tagging a release. Setting `RELEASE_VERSION` to a
+  semver string on that same manual run takes the tagged-release path instead, exactly as a
+  `pipeline`/`trigger`-sourced run would.
 
 ### Shared schema-fetch template
 
