@@ -11953,6 +11953,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#previewing-with-dry-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Previewing with dry-run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#deleting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14285,6 +14296,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#previewing-with-dry-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Previewing with dry-run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#deleting" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14383,6 +14405,34 @@ This matters because Waldur rejects an explicit <code>null</code> for a non-null
 ("This field may not be null") but happily accepts the field being absent. So a <code>null</code> in the
 template reads as "I'm not setting this" — fill in the handful of fields you care about, leave
 the rest, and it just works. (This applies at every depth, including nested objects.)</p>
+<h2 id="previewing-with-dry-run">Previewing with dry-run</h2>
+<p>Every mutating command — <code>create</code>, <code>update</code>, <code>delete</code>, and <code>provision</code>/<code>terminate</code> — accepts
+a global <code>--dry-run</code> flag. It validates the request and prints exactly what <em>would</em> be sent,
+then exits <strong>without making it</strong>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>team<span class="w"> </span>customer<span class="w"> </span>create<span class="w"> </span>--dry-run<span class="w"> </span>--request<span class="w"> </span><span class="s1">'{"name": "Acme"}'</span>
+<span class="c1"># DRY RUN -- would send: POST /api/customers/</span>
+<span class="c1"># {</span>
+<span class="c1">#   "name": "Acme"</span>
+<span class="c1"># }</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Two things make it more than a formatting exercise:</p>
+<ul>
+<li><strong>It still validates.</strong> A malformed body or a wrong field type fails under <code>--dry-run</code> just
+  as it would for real — so a dry run catches the mistake, it doesn't just echo it back.</li>
+<li><strong>It shows the <em>resolved</em> request.</strong> Anything the CLI would fill in for you is already
+  applied in the preview — e.g. a <a href="../1-getting-started/#working-in-a-project">project</a> injected
+  into a <code>provision</code> order body appears in the printed body.</li>
+</ul>
+<p>Under <code>--format json</code>/<code>toon</code> the preview is a structured <code>{dry_run, method, path, body}</code>
+object, so a script or agent can inspect a planned change programmatically:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>provision<span class="w"> </span>--dry-run<span class="w"> </span>--request-file<span class="w"> </span>vpc.yaml<span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>--dry-run</code> has no effect on read-only commands (<code>list</code>/<code>get</code>) — they're already
+non-destructive.</p>
 <h2 id="deleting">Deleting</h2>
 <p><code>delete</code> takes the resource's <code>&lt;uuid&gt;</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>

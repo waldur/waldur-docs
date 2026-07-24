@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-24T07:50:47.682265Z
+Generated: 2026-07-24T08:07:17.661337Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -103087,6 +103087,38 @@ This matters because Waldur rejects an explicit `null` for a non-nullable option
 template reads as "I'm not setting this" — fill in the handful of fields you care about, leave
 the rest, and it just works. (This applies at every depth, including nested objects.)
 
+## Previewing with dry-run
+
+Every mutating command — `create`, `update`, `delete`, and `provision`/`terminate` — accepts
+a global `--dry-run` flag. It validates the request and prints exactly what *would* be sent,
+then exits **without making it**:
+
+```bash
+waldur-cli team customer create --dry-run --request '{"name": "Acme"}'
+# DRY RUN -- would send: POST /api/customers/
+# {
+#   "name": "Acme"
+# }
+```
+
+Two things make it more than a formatting exercise:
+
+- **It still validates.** A malformed body or a wrong field type fails under `--dry-run` just
+  as it would for real — so a dry run catches the mistake, it doesn't just echo it back.
+- **It shows the *resolved* request.** Anything the CLI would fill in for you is already
+  applied in the preview — e.g. a [project](1-getting-started.md#working-in-a-project) injected
+  into a `provision` order body appears in the printed body.
+
+Under `--format json`/`toon` the preview is a structured `{dry_run, method, path, body}`
+object, so a script or agent can inspect a planned change programmatically:
+
+```bash
+waldur-cli openstack tenant provision --dry-run --request-file vpc.yaml --format json
+```
+
+`--dry-run` has no effect on read-only commands (`list`/`get`) — they're already
+non-destructive.
+
 ## Deleting
 
 `delete` takes the resource's `<uuid>`:
@@ -103196,6 +103228,11 @@ waldur-cli openstack instance provision --request-file vm.yaml --no-wait
 The provisioned resource object includes both `resource_uuid` (the OpenStack tenant/instance/
 volume itself) and `uuid` — its **marketplace resource UUID**, which is what you'll need to
 terminate it.
+
+!!! tip "Preview first"
+    Add `--dry-run` to print the exact order that would be submitted (with the project and
+    any defaults already filled in) without actually creating anything — see
+    [`--dry-run`](3-managing-resources.md#previewing-with-dry-run).
 
 ## Terminating
 
@@ -103339,6 +103376,12 @@ waldur-cli openstack instance list \
 
 - **`whoami` before anything destructive.** One command confirms which instance and identity
   your credentials currently resolve to — cheap insurance before a `delete`/`terminate`.
+
+- **`--dry-run` before a mutation you're unsure of.** It validates and prints the exact
+  request (with any defaults filled in) without sending it — see
+  [Managing resources](3-managing-resources.md#previewing-with-dry-run). Great for building up
+  a `create`/`provision` body iteratively, or confirming a scripted `delete` targets what you
+  think it does.
 
 - **`--debug` shows the actual requests.** One line per HTTP call (method, URL, status,
   timing) on stderr, regardless of `--format` — invaluable for understanding what a command
