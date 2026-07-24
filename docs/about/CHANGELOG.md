@@ -1,5 +1,27 @@
 # Changelog
 
+## 8.1.0-rc.19 - 2026-07-24
+
+### Highlights
+
+This release gives support and helpdesk teams a dedicated way to manage support users directly from the administration area, with improved search and the ability to merge duplicate accounts. Operators also gain a staff-only tool to find and clean up duplicate per-tenant OpenStack offerings, reducing marketplace clutter. Together these changes make day-to-day administration of support and OpenStack resources more reliable.
+
+### What's New
+
+- **Support users management page** — Staff can now view, create, edit, enable/disable, delete, and merge support users from a new administration page, with user search and a helpdesk filter to quickly find the right account (WAL-10159).
+- **Resolve duplicate per-tenant offerings** — A new staff API (with a companion management command) lets operators detect and deduplicate per-tenant OpenStack offerings that were created more than once (WAL-10163).
+
+### Improvements
+
+- **More resilient support user data** — Support user records now tolerate empty linked-user fields, avoiding errors when an account has no associated Waldur user.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [3 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.18...8.1.0-rc.19) - staff API for deduplicating per-tenant offerings, support user search and helpdesk filtering.
+- **Waldur Homeport**: [2 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.18...8.1.0-rc.19) - new support users management page in the administration area.
+
+---
+
 ## 8.1.0-rc.18 - 2026-07-23
 
 ### Highlights
