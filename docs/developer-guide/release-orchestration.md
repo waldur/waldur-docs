@@ -38,9 +38,7 @@ This ensures:
 - **waldur-cli-generator** — scriptable CLI (generates
   [waldur-cli](https://code.opennodecloud.com/waldur/waldur-cli) by parsing the OpenAPI
   schema directly -- the same as the SDKs, and with no dependency on rs-client or any other
-  generated client, including for request-body validation). Still triggered from the
-  `infrastructure` stage rather than `sdks` in `.gitlab-ci.yml` ("Generate and release
-  Waldur CLI" extends `.rules-rc-release`, not `.sdk-trigger-base` like the SDKs below).
+  generated client, including for request-body validation).
 
 ## Release Process
 
@@ -96,6 +94,7 @@ graph TD
         S5(Generate and release Rust SDK)
         S6(Generate and release Terraform Provider)
         S7(Generate and release Ansible Collection)
+        S8(Generate and release Waldur CLI)
     end
 
     subgraph 5. Infrastructure Stage
@@ -103,7 +102,6 @@ graph TD
         D2(Release Prometheus Exporter)
         D3(Release Helm)
         D4(Release Docker Compose)
-        D5(Generate and release Waldur CLI)
     end
 
     subgraph 6. Finalize Stage
@@ -114,9 +112,9 @@ graph TD
 
     T --> C1
     C1 --> O
-    O --> S1 & S2 & S3 & S4 & S5 & S6 & S7
-    S1 & S2 & S3 & S4 & S5 & S6 & S7 --> D1 & D2 & D3 & D4 & D5
-    D1 & D2 & D3 & D4 & D5 --> CH
+    O --> S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8
+    S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 --> D1 & D2 & D3 & D4
+    D1 & D2 & D3 & D4 --> CH
     CH --> MK
     CH --> SL
 ```
@@ -135,13 +133,13 @@ The pipeline fetches the `waldur-openapi-schema.yaml` (and, where needed, `waldu
 
 ### Stage 4: `sdks` (First-Layer Consumers)
 
-With the OpenAPI schema generated, the pipeline triggers the first-layer consumers of that schema: SDKs (Python, TypeScript, Go, Rust), Terraform, Ansible, and API Docs. These pipelines ingest the schema (each via the same `.fetch-openapi-schema` template) to generate their codebases and publish to package registries (NPM, PyPI, etc.) where applicable. The Rust SDK does not yet publish to crates.io — it only commits generated code to `rs-client`'s `main` branch (and a tag on stable releases), same as `go-client`.
+With the OpenAPI schema generated, the pipeline triggers the first-layer consumers of that schema: SDKs (Python, TypeScript, Go, Rust), Terraform, Ansible, API Docs, and the Waldur CLI. These pipelines ingest the schema (each via the same `.fetch-openapi-schema` template) to generate their codebases and publish to package registries (NPM, PyPI, etc.) where applicable. The Rust SDK does not yet publish to crates.io — it only commits generated code to `rs-client`'s `main` branch (and a tag on stable releases), same as `go-client`. The Waldur CLI doesn't publish to a package registry either — its generator commits the regenerated command surface to `waldur-cli`'s `main` branch; a separate, manual version tag on `waldur-cli` itself is what actually cuts a release and publishes GitHub Release binaries (see [waldur-cli-generator's README](https://code.opennodecloud.com/waldur/waldur-cli-generator)).
 
 ### Triggering an individual SDK build
 
 Two ways to exercise SDK generation without doing a full release:
 
-- **Orchestrated, all SDKs at once**: on `waldur-docs`, use GitLab's **Run pipeline** with the CI/CD variable `BUILD_SDK=true` on the `master` branch. This satisfies the `.rules-sdk-release` rule shared by every `Generate and release *` job, so it fans out to Python, TypeScript, Go, Rust, Terraform, and Ansible simultaneously — there is no per-SDK toggle.
+- **Orchestrated, all SDKs at once**: on `waldur-docs`, use GitLab's **Run pipeline** with the CI/CD variable `BUILD_SDK=true` on the `master` branch. This satisfies the `.rules-sdk-release` rule shared by every `Generate and release *` job, so it fans out to Python, TypeScript, Go, Rust, Terraform, Ansible, and the Waldur CLI simultaneously — there is no per-SDK toggle.
 - **Standalone, a single SDK**: go directly to that SDK's own repository and use **Run pipeline**
   there. Every downstream repository's build/release (and, for `py-client`/`js-client`, publish)
   jobs accept `CI_PIPELINE_SOURCE == "web"` in addition to `"pipeline"`/`"trigger"`, so this works
@@ -278,7 +276,7 @@ git push origin 8.0.6-rc.1
 | Test Helm deployment | Yes | Yes |
 | Generate changelog | Yes | **Yes** (replaced by stable) |
 | Generate OpenAPI schema | Yes | **Skipped** |
-| Release SDKs & Terraform/Ansible | Yes | **Skipped** |
+| Release SDKs, Terraform/Ansible & Waldur CLI | Yes | **Skipped** |
 | Deploy versioned documentation | Yes | **Skipped** |
 
 ### Promoting RC to stable
