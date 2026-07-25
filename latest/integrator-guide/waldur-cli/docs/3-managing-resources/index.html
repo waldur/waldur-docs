@@ -11974,6 +11974,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#action-verbs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Action verbs
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -14317,6 +14328,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#action-verbs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Action verbs
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -14449,6 +14471,30 @@ result either way.</p>
 true</code>). And OpenStack tenants/instances/volumes are <strong>not</strong> deleted with <code>delete</code> at all
 — use <a href="../4-provisioning-openstack/#terminating"><code>terminate</code></a>.</p>
 </div>
+<h2 id="action-verbs">Action verbs</h2>
+<p>Some resources have state-changing operations beyond plain <code>create</code>/<code>update</code>/<code>delete</code> — start
+a VM, detach a volume, approve a pending order. Where Waldur exposes these, the CLI generates
+a matching subcommand automatically, taking the resource's <code>&lt;uuid&gt;</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>start<span class="w"> </span>&lt;uuid&gt;
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>stop<span class="w"> </span>&lt;uuid&gt;
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>restart<span class="w"> </span>&lt;uuid&gt;
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>volume<span class="w"> </span>detach<span class="w"> </span>&lt;uuid&gt;
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>floating-ip<span class="w"> </span>detach-from-port<span class="w"> </span>&lt;uuid&gt;
+waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>order<span class="w"> </span>approve-by-consumer<span class="w"> </span>&lt;uuid&gt;
+waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>order<span class="w"> </span>cancel<span class="w"> </span>&lt;uuid&gt;
+waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>resource<span class="w"> </span>unlink<span class="w"> </span>&lt;uuid&gt;
+</code></pre></div></td></tr></tbody></table></div>
+<p>Run <code>waldur-cli &lt;group&gt; &lt;resource&gt; --help</code> to see which action verbs a given resource has —
+the set varies by resource and isn't exhaustive: only bodyless POST actions are currently
+exposed (no read-only/GET actions, and none that take a request body). If an action you need
+is missing, it may still exist in Waldur's API but just isn't wired up yet.</p>
 
 
 

@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-25T02:03:42.599685Z
+Generated: 2026-07-25T20:16:35.330044Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -103185,6 +103185,28 @@ result either way.
     true`). And OpenStack tenants/instances/volumes are **not** deleted with `delete` at all
     — use [`terminate`](4-provisioning-openstack.md#terminating).
 
+## Action verbs
+
+Some resources have state-changing operations beyond plain `create`/`update`/`delete` — start
+a VM, detach a volume, approve a pending order. Where Waldur exposes these, the CLI generates
+a matching subcommand automatically, taking the resource's `<uuid>`:
+
+```bash
+waldur-cli openstack instance start <uuid>
+waldur-cli openstack instance stop <uuid>
+waldur-cli openstack instance restart <uuid>
+waldur-cli openstack volume detach <uuid>
+waldur-cli openstack floating-ip detach-from-port <uuid>
+waldur-cli marketplace order approve-by-consumer <uuid>
+waldur-cli marketplace order cancel <uuid>
+waldur-cli marketplace resource unlink <uuid>
+```
+
+Run `waldur-cli <group> <resource> --help` to see which action verbs a given resource has —
+the set varies by resource and isn't exhaustive: only bodyless POST actions are currently
+exposed (no read-only/GET actions, and none that take a request body). If an action you need
+is missing, it may still exist in Waldur's API but just isn't wired up yet.
+
 ---
 
 ### Provisioning
@@ -103275,10 +103297,14 @@ non-zero exit.
   that track orders themselves.
 - `--timeout N` — how long to wait for a terminal state before giving up, in seconds
   (default 600). Timing out doesn't cancel the order; it just stops waiting.
+- `--interval N` — how often to poll, in seconds (default 3). Raise it for an order you expect
+  to take a while, to cut down on request volume; lower it if you want faster feedback on a
+  quick one.
 
 ```bash
 waldur-cli openstack tenant provision --request-file vpc.yaml --timeout 300
 waldur-cli openstack instance provision --request-file vm.yaml --no-wait
+waldur-cli openstack tenant provision --request-file vpc.yaml --interval 10
 ```
 
 The provisioned resource object includes both `resource_uuid` (the OpenStack tenant/instance/
@@ -103309,7 +103335,7 @@ waldur-cli openstack instance terminate <marketplace_resource_uuid> \
 ```
 
 Like `provision`, `terminate` waits for the termination order to finish by default;
-`--no-wait` and `--timeout N` apply the same way.
+`--no-wait`, `--timeout N`, and `--interval N` apply the same way.
 
 ## Provisioning other offerings
 
@@ -103335,7 +103361,7 @@ waldur-cli marketplace resource provision --request '{
 `marketplace resource provision --generate-skeleton` gives the order envelope with a generic
 `{name, description}` attributes stub — fill in the offering-specific fields yourself (from the
 offering in the Waldur portal). Everything the typed commands support applies here too:
-`--no-wait`/`--timeout`, `--dry-run`, and the ambient
+`--no-wait`/`--timeout`/`--interval`, `--dry-run`, and the ambient
 [`--project`](1-getting-started.md#working-in-a-project) (leave `project` out of the body and
 it's filled in).
 
@@ -103722,8 +103748,8 @@ The full guide lives in [`docs/`](docs/):
    structure, and output formats
 2. [Querying resources](docs/2-querying-resources.md) — `list`/`get`, filtering, field
    selection, JMESPath, and streaming large lists with `--format ndjson`
-3. [Managing resources](docs/3-managing-resources.md) — `create`/`update`/`delete` and
-   request-body skeletons
+3. [Managing resources](docs/3-managing-resources.md) — `create`/`update`/`delete`,
+   request-body skeletons, and per-resource action verbs (start/stop/detach/approve/...)
 4. [Provisioning](docs/4-provisioning-openstack.md) — the marketplace order flow
    (`provision`/`terminate`), for OpenStack and any other offering type, plus the generic
    `wait` verb every resource gets

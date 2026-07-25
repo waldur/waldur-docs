@@ -14443,10 +14443,15 @@ non-zero exit.</p>
   that track orders themselves.</li>
 <li><code>--timeout N</code> — how long to wait for a terminal state before giving up, in seconds
   (default 600). Timing out doesn't cancel the order; it just stops waiting.</li>
+<li><code>--interval N</code> — how often to poll, in seconds (default 3). Raise it for an order you expect
+  to take a while, to cut down on request volume; lower it if you want faster feedback on a
+  quick one.</li>
 </ul>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>provision<span class="w"> </span>--request-file<span class="w"> </span>vpc.yaml<span class="w"> </span>--timeout<span class="w"> </span><span class="m">300</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>provision<span class="w"> </span>--request-file<span class="w"> </span>vpc.yaml<span class="w"> </span>--timeout<span class="w"> </span><span class="m">300</span>
 waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>provision<span class="w"> </span>--request-file<span class="w"> </span>vm.yaml<span class="w"> </span>--no-wait
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>provision<span class="w"> </span>--request-file<span class="w"> </span>vpc.yaml<span class="w"> </span>--interval<span class="w"> </span><span class="m">10</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>The provisioned resource object includes both <code>resource_uuid</code> (the OpenStack tenant/instance/
 volume itself) and <code>uuid</code> — its <strong>marketplace resource UUID</strong>, which is what you'll need to
@@ -14470,7 +14475,7 @@ or via <code>get</code>/<code>list</code>:</p>
 <span class="w">  </span>--request<span class="w"> </span><span class="s1">'{"delete_volumes": true, "release_floating_ips": true}'</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>Like <code>provision</code>, <code>terminate</code> waits for the termination order to finish by default;
-<code>--no-wait</code> and <code>--timeout N</code> apply the same way.</p>
+<code>--no-wait</code>, <code>--timeout N</code>, and <code>--interval N</code> apply the same way.</p>
 <h2 id="provisioning-other-offerings">Provisioning other offerings</h2>
 <p><code>marketplace resource</code> provisions <strong>any</strong> offering type — SLURM allocations, VMware or Azure
 VMs, or a provider's custom offering — using the same order flow, just with a <strong>free-form</strong>
@@ -14501,7 +14506,7 @@ waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>resource<sp
 <p><code>marketplace resource provision --generate-skeleton</code> gives the order envelope with a generic
 <code>{name, description}</code> attributes stub — fill in the offering-specific fields yourself (from the
 offering in the Waldur portal). Everything the typed commands support applies here too:
-<code>--no-wait</code>/<code>--timeout</code>, <code>--dry-run</code>, and the ambient
+<code>--no-wait</code>/<code>--timeout</code>/<code>--interval</code>, <code>--dry-run</code>, and the ambient
 <a href="../1-getting-started/#working-in-a-project"><code>--project</code></a> (leave <code>project</code> out of the body and
 it's filled in).</p>
 <p><code>marketplace resource list</code>/<code>get</code> browse provisioned resources (handy for finding the
