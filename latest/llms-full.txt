@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-24T18:42:37.960954Z
+Generated: 2026-07-25T02:03:42.599685Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -103351,6 +103351,45 @@ waldur-cli marketplace resource terminate <marketplace_resource_uuid>
 The typed `openstack ... provision` commands are just a convenience for the three OpenStack
 types — anything they can do, `marketplace resource` can do generically.
 
+## Waiting on anything, not just orders
+
+Every command with a `get` also gets a `wait` — polling on an interval until a `--jmespath`
+condition against the fetched object is met, or timing out. Waldur's API has no server-side
+push/watch mechanism, so this is a client-side poll, not an instant notification -- but it
+saves you from writing your own poll loop.
+
+The condition can be a boolean comparison:
+
+```bash
+waldur-cli openstack instance wait <uuid> --jmespath "state=='OK'"
+```
+
+or a plain presence check -- anything the expression returns other than `false`/`null` counts
+as met:
+
+```bash
+waldur-cli marketplace order wait <order-uuid> --jmespath "resource_uuid"
+```
+
+`--timeout N` (default 600s) and `--interval N` (default 3s) control how long to wait and how
+often to poll.
+
+This is what makes `--no-wait` genuinely useful for fire-and-forget provisioning: submit
+without blocking, keep the printed order `uuid`, and wait on it later — from the same script,
+a different process, or a different machine entirely:
+
+```bash
+ORDER=$(waldur-cli openstack tenant provision --request-file vpc.yaml --no-wait \
+  --format json --jmespath 'uuid')
+# ... do other things ...
+waldur-cli marketplace order wait "$ORDER" --jmespath "state=='done'" --format json
+```
+
+`marketplace order get <uuid>` is the one-shot version — no polling, just the current state
+(the same object `provision`'s own polling already checks internally, exposed standalone for
+when you submitted with `--no-wait` and only have the order UUID, before any resource exists
+to check instead).
+
 ## The bigger picture
 
 An instance needs a tenant (and usually a network/subnet) to exist first, and its flavor and
@@ -103506,8 +103545,10 @@ waldur-cli openstack instance list \
   release from GitHub, avoiding manual un-tarring or re-running installer scripts.
 
 - **`--no-wait` for fire-and-forget provisioning.** Submitting many orders? `--no-wait`
-  returns each order immediately; poll or reconcile them yourself instead of blocking one at a
-  time.
+  returns each order immediately; `marketplace order wait <uuid> --jmespath "state=='done'"`
+  (or any resource's own `wait`) picks up the polling later, from the same script or a
+  different one entirely -- see
+  [Waiting on anything, not just orders](4-provisioning-openstack.md#waiting-on-anything-not-just-orders).
 
 ---
 
@@ -103684,7 +103725,8 @@ The full guide lives in [`docs/`](docs/):
 3. [Managing resources](docs/3-managing-resources.md) — `create`/`update`/`delete` and
    request-body skeletons
 4. [Provisioning](docs/4-provisioning-openstack.md) — the marketplace order flow
-   (`provision`/`terminate`), for OpenStack and any other offering type
+   (`provision`/`terminate`), for OpenStack and any other offering type, plus the generic
+   `wait` verb every resource gets
 5. [Recipes & tips](docs/5-recipes-and-tips.md) — real-world workflows and things worth
    knowing
 6. [Troubleshooting](docs/6-troubleshooting.md) — errors, `--debug`, exit codes, and shell

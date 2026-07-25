@@ -11997,6 +11997,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#waiting-on-anything-not-just-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiting on anything, not just orders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-bigger-picture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14317,6 +14328,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#waiting-on-anything-not-just-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waiting on anything, not just orders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-bigger-picture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14491,6 +14513,35 @@ waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>resource<sp
 </code></pre></div></td></tr></tbody></table></div>
 <p>The typed <code>openstack ... provision</code> commands are just a convenience for the three OpenStack
 types — anything they can do, <code>marketplace resource</code> can do generically.</p>
+<h2 id="waiting-on-anything-not-just-orders">Waiting on anything, not just orders</h2>
+<p>Every command with a <code>get</code> also gets a <code>wait</code> — polling on an interval until a <code>--jmespath</code>
+condition against the fetched object is met, or timing out. Waldur's API has no server-side
+push/watch mechanism, so this is a client-side poll, not an instant notification -- but it
+saves you from writing your own poll loop.</p>
+<p>The condition can be a boolean comparison:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span><span class="nb">wait</span><span class="w"> </span>&lt;uuid&gt;<span class="w"> </span>--jmespath<span class="w"> </span><span class="s2">"state=='OK'"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>or a plain presence check -- anything the expression returns other than <code>false</code>/<code>null</code> counts
+as met:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>order<span class="w"> </span><span class="nb">wait</span><span class="w"> </span>&lt;order-uuid&gt;<span class="w"> </span>--jmespath<span class="w"> </span><span class="s2">"resource_uuid"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>--timeout N</code> (default 600s) and <code>--interval N</code> (default 3s) control how long to wait and how
+often to poll.</p>
+<p>This is what makes <code>--no-wait</code> genuinely useful for fire-and-forget provisioning: submit
+without blocking, keep the printed order <code>uuid</code>, and wait on it later — from the same script,
+a different process, or a different machine entirely:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">ORDER</span><span class="o">=</span><span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>provision<span class="w"> </span>--request-file<span class="w"> </span>vpc.yaml<span class="w"> </span>--no-wait<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>json<span class="w"> </span>--jmespath<span class="w"> </span><span class="s1">'uuid'</span><span class="k">)</span>
+<span class="c1"># ... do other things ...</span>
+waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>order<span class="w"> </span><span class="nb">wait</span><span class="w"> </span><span class="s2">"</span><span class="nv">$ORDER</span><span class="s2">"</span><span class="w"> </span>--jmespath<span class="w"> </span><span class="s2">"state=='done'"</span><span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>marketplace order get &lt;uuid&gt;</code> is the one-shot version — no polling, just the current state
+(the same object <code>provision</code>'s own polling already checks internally, exposed standalone for
+when you submitted with <code>--no-wait</code> and only have the order UUID, before any resource exists
+to check instead).</p>
 <h2 id="the-bigger-picture">The bigger picture</h2>
 <p>An instance needs a tenant (and usually a network/subnet) to exist first, and its flavor and
 image are looked up <strong>within that tenant</strong> — so a from-scratch VM is a chain: provision a
