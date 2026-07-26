@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-25T20:16:35.330044Z
+Generated: 2026-07-26T02:03:44.713598Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -102689,7 +102689,7 @@ Every command has the same three-level shape:
 waldur-cli <group> <resource> <verb> [arguments] [options]
 ```
 
-- **group** — a broad area: `openstack`, `team`, or `marketplace`
+- **group** — a broad area: `openstack`, `team`, `marketplace`, or `auth`
 - **resource** — what you're acting on: `instance`, `customer`, `offering`, …
 - **verb** — what to do: `list`, `get`, `create`, `update`, `delete`, `provision`,
   `terminate`
@@ -102746,6 +102746,36 @@ waldur-cli logout               # removes them
 The credentials file lives in your platform config directory (e.g.
 `~/.config/waldur-cli/credentials.toml` on Linux) with owner-only permissions (`0600` on
 Unix).
+
+### Token types
+
+Any of the above accepts either kind of Waldur token, detected automatically from its shape:
+
+- A classic API token (from Waldur's UI, or your own `Token` model) -- used as-is.
+- A **Personal Access Token** (`w_<timestamp>_<random>`, e.g. `w_1735689599_Abc123...`) --
+  named, scoped to a subset of your permissions, and time-limited, which makes it a better fit
+  than a classic token for CI/agent use where a long-lived, unscoped credential is more risk
+  than you need.
+
+You don't need to tell the CLI which kind you're using -- the `w_` prefix is self-identifying.
+
+Manage your own PATs and SSH public keys under the `auth` group -- your own credentials,
+distinct from `team`, which manages *other* users/customers/projects:
+
+```bash
+waldur-cli auth personal-access-token list
+waldur-cli auth personal-access-token create --request '{
+  "name": "CI pipeline",
+  "scopes": ["LIST_ORDERS", "LIST_RESOURCES"],
+  "expires_at": "2026-12-31T23:59:59Z"
+}'
+# the response's "token" field is shown once -- save it, e.g. into WALDUR_ACCESS_TOKEN
+waldur-cli auth personal-access-token rotate <uuid>   # atomically revoke + reissue
+waldur-cli auth personal-access-token delete <uuid>   # revoke
+
+waldur-cli auth ssh-key create --request '{"name": "laptop", "public_key": "'"$(cat ~/.ssh/id_ed25519.pub)"'"}'
+waldur-cli auth ssh-key list
+```
 
 ### whoami
 
@@ -102987,6 +103017,26 @@ field names rather than rejecting them — an all-invalid `--fields` list would 
 back to the complete object — so a typo fails loudly here instead of silently doing the wrong
 thing.
 
+## `--order FIELD` — sort server-side
+
+Not every resource supports server-side ordering (`--help` shows `--order` only where it
+does), but where it's there, it sorts the *complete* result set before pagination -- unlike
+`--jmespath`, which only reorders whatever page(s) already got fetched:
+
+```bash
+waldur-cli openstack flavor list --order cores            # ascending
+waldur-cli openstack flavor list --order -cores            # descending (- prefix)
+waldur-cli openstack flavor list --order -cores,ram         # multiple fields, mixed direction
+```
+
+Where the resource's `--order` is validated against a known set of fields (most are), an
+unrecognized one is rejected locally with the valid list, the same as `--filter`/`--fields`.
+
+`--order` used to only be reachable as `--filter o=cores` -- that's gone now in favor of this
+dedicated flag, since it's easy to miss that ordering was ever a `--filter` key at all, and
+`-`-prefixed values need `allow_hyphen_values` to parse correctly as a value rather than an
+unrecognized short flag (which a raw `--filter` string never got).
+
 ## `--limit N` — fetch fewer objects
 
 `--limit` caps the number of items, for when a resource has far more results than you need:
@@ -103049,6 +103099,31 @@ use `list` with a `uuid` filter and `--jmespath`:
 ```bash
 waldur-cli openstack instance get <uuid> --format json | jq '{name, state}'
 ```
+
+## Opening a resource in the browser: `get --web`
+
+Resources with a page in Waldur's web UI (HomePort) get a `--web` flag on `get` -- prints and
+opens the resource's HomePort URL instead of the object itself, in the style of `gh pr view
+--web`/`glab issue view --web`:
+
+```bash
+waldur-cli team project get <uuid> --web
+waldur-cli openstack instance get <uuid> --web
+```
+
+Not every resource has a HomePort route, so `--web` only appears on `get --help` where it
+does -- currently `team project`/`team customer`, `marketplace resource`/`marketplace order`,
+and `openstack tenant`/`instance`/`volume` (the latter three go through the generic
+marketplace resource-details page, since OpenStack resources have no dedicated route of their
+own).
+
+HomePort's base URL is discovered automatically from Waldur's `/api/configuration/` endpoint,
+falling back to the API URL itself if that deployment doesn't set it (HomePort and the API are
+conventionally served from the same origin). If that's wrong for your deployment, override it
+with `--homeport-url` or the `WALDUR_HOMEPORT_URL` env var.
+
+Opening a browser is best-effort: over SSH or in any headless environment there's nothing to
+open, so the URL is always printed first regardless of whether a browser actually launches.
 
 ---
 
@@ -103502,11 +103577,54 @@ waldur-cli openstack tenant terminate <marketplace_resource_uuid>
 
 !!! note "Instances need a few things a VPC doesn't"
     An instance order references a `flavor`, an `image`, and a subnet, which live *inside* a
-    tenant. The CLI can provision the instance and list/get the tenant's networks, subnets,
-    and security groups — but it doesn't expose flavor/image browsing or network *creation*,
-    so those URLs come from the API or the Waldur UI. Provision a tenant **without** the
+    tenant. Look the first two up with `openstack flavor list` / `openstack image list` (see
+    below); the CLI can also list/get the tenant's networks, subnets, and security groups, but
+    it doesn't expose network *creation* — provision a tenant **without** the
     `skip_creation_of_default_*` attributes to get a default network + subnet you can point an
     instance at.
+
+### Pick a flavor and image for an instance
+
+Flavors and images are read-only catalog data scoped to a tenant. The flavor filters accept
+range comparisons, so "smallest flavor that meets my requirements" is one call — no
+client-side filtering needed:
+
+```bash
+# smallest flavor with at least 4 cores and 8 GB RAM, in this tenant
+waldur-cli openstack flavor list \
+  --filter tenant_uuid=<tenant-uuid> \
+  --filter cores__gte=4 --filter ram__gte=8192 \
+  --order cores --limit 1
+
+waldur-cli openstack image list --filter tenant_uuid=<tenant-uuid>
+```
+
+`ram`/`disk` are in MB. Each also takes `__lte` (and an exact `cores=`/`ram=`/`disk=`), so you
+can bracket a range from both ends. Feed the chosen rows' `url` fields straight into an
+instance `provision` body:
+
+```bash
+FLAVOR=$(waldur-cli openstack flavor list --filter name_exact=m1.medium \
+  --format json --jmespath '[0].url')
+IMAGE=$(waldur-cli openstack image list --filter name_exact="Ubuntu 24.04" \
+  --format json --jmespath '[0].url')
+```
+
+### SSH into an instance
+
+There's no dedicated `ssh` command — Waldur doesn't broker a tunnel or manage private keys
+(it only stores the public key's name/fingerprint), so there's nothing for a wrapper to add
+over the system `ssh` binary beyond looking up the address. That's one `--jmespath` away:
+
+```bash
+ssh ubuntu@$(waldur-cli openstack instance get <uuid> --jmespath 'external_ips[0]')
+```
+
+Swap the username for whatever the instance's image actually uses (`ubuntu`, `centos`,
+`cloud-user`, ...) — the API doesn't expose it. If the instance has no floating IP (no public
+address, or you're not on the same network as its `internal_ips`), there's no way in via
+SSH at all; `waldur-cli openstack instance get <uuid> --web` opens its HomePort page, which
+may offer a browser-based console instead.
 
 ### Feed live inventory to an LLM
 
@@ -103616,6 +103734,31 @@ handle success and failure through one JSON parser without a separate error path
 | `marketplace order ... erred: <message>` | the async order failed server-side | read the surfaced `error_message`; check the order in the Waldur UI |
 | `timed out after Ns waiting for marketplace order ...` | the order didn't reach a terminal state in time | it may still complete — check later, or retry with a larger `--timeout` |
 | `API error 401` | missing/invalid/expired token | re-check `--token`/`WALDUR_ACCESS_TOKEN`, or `login` again |
+| `... request failed` after a pause | the request timed out, or exhausted its retries | raise `--http-timeout`/`--max-retries`; see below |
+
+## Timeouts and retries
+
+Every request has a 60-second cap and transient failures are retried automatically — a
+connection error, a request timeout, a `5xx`, or a `429` rate limit, up to 3 times with
+exponential backoff. Both are tunable, globally or per command:
+
+```bash
+waldur-cli team customer list --http-timeout 15 --max-retries 5
+export WALDUR_HTTP_TIMEOUT=15 WALDUR_MAX_RETRIES=5   # or via the environment
+waldur-cli team customer list --max-retries 0        # 0 disables retrying
+```
+
+Two things worth knowing:
+
+- **Only replayable requests are retried.** `list`/`get`/`delete` are; `create`, `update`, and
+  `provision` are **not**. A `POST` that times out may still have been applied server-side, so
+  replaying it could duplicate the effect — for `provision` that means a second marketplace
+  order to pay for. Those fail fast instead, and you decide whether to re-run.
+- **Client errors are never retried.** A `4xx` (other than `429`) will fail identically every
+  time, so retrying it would only delay the message.
+
+`--http-timeout` is per HTTP request, and is unrelated to `provision`/`terminate`/`wait`'s own
+`--timeout`, which bounds a whole poll-until-done operation made of many requests.
 
 ## Debugging (`--debug`)
 
@@ -103665,6 +103808,4256 @@ waldur-cli openstack instance provision --help
 
 ---
 
+### Development
+<!-- Source: docs/integrator-guide/waldur-cli/docs/development.md -->
+
+# Development
+
+This page is for contributors to `waldur-cli` itself, not for using the CLI -- see the
+[Manual](../index.md#manual) for that.
+
+## Two-repo architecture
+
+`waldur-cli`'s command surface isn't hand-written. It's generated from Waldur's OpenAPI
+schema by a separate repo,
+[waldur-cli-generator](https://code.opennodecloud.com/waldur/waldur-cli-generator), which
+parses the schema directly (paths, params, request/response shapes, validation rules) and
+emits this repo's `src/commands/`, `src/cli.rs`, and `src/schema.rs` wholesale. The schema is
+the single source of truth end to end -- a field nobody reads drifting out of date, or a
+stale request-body type, can't silently break a command, because there's no intermediate
+hand-maintained layer for it to drift against.
+
+**Generated, don't edit by hand:**
+
+- `src/commands/` -- every resource's `Args` structs, `Command` enum, and `run()` dispatch
+- `src/cli.rs` -- the top-level `openstack`/`team`/`marketplace`/`auth` group wiring
+- `src/schema.rs` -- the CLI's command surface as JSON, embedded for `waldur-cli schema`
+  (a machine-readable tool spec for LLM agents)
+- `docs/reference/` -- one markdown page per `<group> <resource> <verb>` command, plus a
+  README index per group. Unlike `src/commands/`, nothing hand-written is ever expected here,
+  so the whole directory is deleted and rewritten on every run rather than merged with
+  existing content -- a resource/verb that goes away can't leave a stale page behind
+
+**Hand-written and permanent** -- everything else in `src/`: `lib.rs`, `main.rs`, `config.rs`,
+`output.rs`, `pagination.rs`, `http.rs`, `web.rs`, `request.rs`, `filter.rs`, `query.rs`,
+`order.rs`, `wait.rs`, `progress.rs`.
+
+What ends up in the generated surface (which resources, which verbs, which custom actions,
+which HomePort routes) is controlled by
+[`commands.toml`](https://code.opennodecloud.com/waldur/waldur-cli-generator/-/blob/main/commands.toml)
+in the generator repo -- see that repo's README for the manifest format and how to add a
+resource or verb.
+
+## HTTP transport
+
+`http.rs` owns the two shared clients (`pagination.rs` borrows one for its page loop):
+
+- `build_client()` -- retries transient failures (connection errors, timeouts, `5xx`, `429`)
+  with exponential backoff.
+- `build_client_no_retry()` -- same timeout, no retrying.
+
+`call_one` picks between them with `Method::is_idempotent()`, which is the whole point of the
+split: replaying a `POST`/`PATCH` that timed out *after* the server applied it would duplicate
+the effect, and for `provision` that's a duplicate marketplace order. GET/PUT/DELETE are safe
+to replay; POST/PATCH are not, so they fail fast instead.
+
+Both clients set an explicit request timeout, because reqwest's default is **no** timeout at
+all — an unattended run would otherwise hang forever on a stalled connection.
+
+### The HTTP stack moves as a unit
+
+`reqwest`, `reqwest-middleware`, `reqwest-retry`, and `reqwest-tracing` are version-locked to
+each other — `reqwest-retry` 0.9 requires `reqwest-middleware` 0.5, which requires `reqwest`
+0.13. Bumping any one of them in isolation produces two incompatible copies of
+`reqwest-middleware` in the tree and a type error at `ClientBuilder::new`, so they're upgraded
+together or not at all.
+
+Keeping `reqwest` on 0.13 specifically also matters: `self_update` depends on 0.13, so any
+older version here means **two** reqwest crates compiled in, and two rustls crypto providers
+(`ring` for 0.12's `rustls-tls`, `aws-lc-rs` for 0.13's `rustls`). Unifying on 0.13 dropped
+`ring` entirely and took ~0.76 MiB off the shipped binary.
+
+Two renames to know if you touch this: 0.12's `rustls-tls` feature is `rustls` in 0.13, and
+`query` became an opt-in feature of `reqwest-middleware` 0.5 (`pagination.rs` needs it).
+
+Nothing in `tests/` exercises TLS — wiremock serves plain HTTP — so after any change here,
+smoke-test a real HTTPS handshake by hand:
+
+```bash
+cargo run -- --api-url https://api.github.com --token dummy team customer list
+```
+
+Any HTTP status coming back (a 403 from GitHub is fine) proves the handshake succeeded; a
+crypto-provider or TLS misconfiguration fails before that with a connection error instead.
+
+## Building and testing
+
+```bash
+cargo build --locked
+cargo test --locked
+cargo clippy --all-targets
+```
+
+The crate is split into a library (everything except the `Cli`/`main()` entry point in
+`main.rs`) and a thin binary, so `tests/*.rs` can exercise the actual logic directly instead
+of only being able to shell out to the compiled binary. Networked code (`pagination`, `http`,
+`order`, `wait`, `web`, retry/timeout) is tested against an in-process HTTP mock
+([`wiremock`](https://docs.rs/wiremock)) rather than a live Waldur instance -- see `tests/*.rs`
+for examples. `config.rs` tests use [`serial_test`](https://docs.rs/serial_test) plus a
+per-test `tempfile::TempDir`/`XDG_CONFIG_HOME` override, since env vars and the config file
+path are process-global state that would otherwise race across parallel tests.
+
+### Live end-to-end tests
+
+The tests in this repo are all mock-backed and never touch a real Waldur instance. Live E2E
+coverage -- shelling out to the actual compiled `waldur-cli` binary and verifying results
+against a live API with direct `requests` calls -- lives in a separate repo,
+[waldur-integration-testing](https://code.opennodecloud.com/waldur/waldur-integration-testing)
+(`tests/test_cli.py`, `cli` pytest marker). It covers a full create/get/update/delete lifecycle
+against team management (customer, then a project under it -- the CLI's one area with full
+CRUD) plus a read-only smoke check of the OpenStack command surface and the auth/JSON pipeline
+end-to-end. It runs against a published release binary (the `INSTALL_CLI=true` Docker build
+arg pins a specific `github.com/waldur/waldur-cli` release tag -- bump it there after cutting a
+release meant to be covered), not a local build from source, so it also exercises the actual
+release artifact rather than only this repo's own `cargo test`.
+
+GitLab CI (`.gitlab-ci.yml`) runs all three of the commands above on every merge request and
+on `main`.
+
+## Regenerating the command surface locally
+
+From a checkout of `waldur-cli-generator`, sitting as a sibling directory to this repo:
+
+```bash
+cargo run -- waldur-openapi-schema.yaml ../waldur-cli
+```
+
+This overwrites `src/commands/`, `src/cli.rs`, and `src/schema.rs` in place, and deletes +
+rewrites `docs/reference/` wholesale. Review the diff, then `cargo build --locked && cargo
+test --locked && cargo clippy --all-targets` here as usual before committing -- regeneration
+itself doesn't run those checks.
+
+In CI, this happens automatically: `waldur-cli-generator`'s pipeline fetches the latest schema
+from `waldur-mastermind`, regenerates, and pushes the result to this repo's `main` directly
+(a "chore: regenerate CLI command surface from OpenAPI schema" commit) whenever the schema
+changes -- see that repo's `.gitlab-ci.yml` (`Generate CLI` job).
+
+## Cutting a release
+
+Three files change together (`chore: release vX.Y.Z`):
+
+1. `Cargo.toml` -- bump `version`
+2. `Cargo.lock` -- run a plain `cargo build` (not `--locked`) to pick up the new version
+3. `src/schema.rs` -- its embedded `"version"` field. Easiest way: regenerate via
+   `waldur-cli-generator` again (it reads the version straight out of this repo's
+   `Cargo.toml`) -- the diff should be exactly that one field if nothing else changed.
+
+Then tag and push both the commit and the tag to **both** remotes:
+
+```bash
+git tag vX.Y.Z
+git push origin main && git push origin vX.Y.Z
+git push github main && git push github vX.Y.Z
+```
+
+### Why two remotes
+
+- `origin` (`code.opennodecloud.com`) -- the internal GitLab, used for MR checks and as the
+  push target for `waldur-cli-generator`'s automated regeneration commits.
+- `github` (`github.com/waldur/waldur-cli`) -- public, and the only remote that matters for
+  releases: pushing a `vX.Y.Z` tag there triggers `.github/workflows/release.yml`
+  ([cargo-dist](https://github.com/axodotdev/cargo-dist)-generated), which builds binaries for
+  every target in `dist-workspace.toml` and publishes them as a GitHub Release. `origin` has
+  no equivalent release pipeline -- pushing the tag there alone does nothing.
+
+`dist-workspace.toml` pins `ci = "github"` and `hosting = "github"`; migrating release
+distribution to GitLab isn't a small config flip, it's picking a different release tool
+entirely, so this dual-remote setup is intentional rather than a migration in progress.
+
+## `waldur-cli update`
+
+The `update` command (`src/main.rs`'s `run_update`) uses the
+[`self_update`](https://docs.rs/self_update) crate against GitHub Releases. One non-obvious
+config: `self_update`'s `bin_name()` alone assumes the binary sits at the archive root, but
+cargo-dist's tarballs nest it under a `waldur-cli-{target}/` directory -- so
+`bin_path_in_archive("waldur-cli-{{ target }}/{{ bin }}")` is required, or extraction fails
+with `Could not find the required path in the archive` on every platform, silently (the
+command only fails when a user actually runs `update`, not at build or test time). If you
+touch `run_update`, verify against a real published release tarball rather than trusting a
+mock -- that's what caught this bug in the first place.
+
+---
+
+### waldur-cli command reference
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/README.md -->
+
+# waldur-cli command reference
+
+One page per command. Generated from the same schema data the CLI itself is built from -- see [Development](../development.md) for how.
+
+- [auth](./auth/)
+- [marketplace](./marketplace/)
+- [openstack](./openstack/)
+- [team](./team/)
+
+---
+
+### `waldur-cli auth`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/README.md -->
+
+# `waldur-cli auth`
+
+## personal-access-token
+
+- [list](./personal-access-token-list.md)
+- [get](./personal-access-token-get.md)
+- [create](./personal-access-token-create.md)
+- [delete](./personal-access-token-delete.md)
+- [wait](./personal-access-token-wait.md)
+- [rotate](./personal-access-token-rotate.md)
+
+## ssh-key
+
+- [list](./ssh-key-list.md)
+- [get](./ssh-key-get.md)
+- [create](./ssh-key-create.md)
+- [delete](./ssh-key-delete.md)
+- [wait](./ssh-key-wait.md)
+
+---
+
+### `waldur-cli auth personal-access-token create`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/personal-access-token-create.md -->
+
+# `waldur-cli auth personal-access-token create`
+
+Create personal access tokens (named, scoped, time-limited api credentials).
+
+## Usage
+
+```bash
+waldur-cli auth personal-access-token create (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli auth personal-access-token create --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli auth personal-access-token create --request '{"allowed_scopes":null,"expires_at":"","name":"","scopes":[""]}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth personal-access-token delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/personal-access-token-delete.md -->
+
+# `waldur-cli auth personal-access-token delete`
+
+Delete personal access tokens (named, scoped, time-limited api credentials).
+
+## Usage
+
+```bash
+waldur-cli auth personal-access-token delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli auth personal-access-token delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli auth personal-access-token delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth personal-access-token get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/personal-access-token-get.md -->
+
+# `waldur-cli auth personal-access-token get`
+
+Get personal access tokens (named, scoped, time-limited api credentials).
+
+## Usage
+
+```bash
+waldur-cli auth personal-access-token get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli auth personal-access-token get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth personal-access-token list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/personal-access-token-list.md -->
+
+# `waldur-cli auth personal-access-token list`
+
+List personal access tokens (named, scoped, time-limited api credentials).
+
+## Usage
+
+```bash
+waldur-cli auth personal-access-token list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli auth personal-access-token list --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli auth personal-access-token list --jmespath '[].[uuid, name]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth personal-access-token rotate`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/personal-access-token-rotate.md -->
+
+# `waldur-cli auth personal-access-token rotate`
+
+Rotate personal access tokens (named, scoped, time-limited api credentials).
+
+## Usage
+
+```bash
+waldur-cli auth personal-access-token rotate <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli auth personal-access-token rotate <uuid>
+```
+
+(sends a bodyless POST to `/api/personal-access-tokens/{uuid}/rotate/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth personal-access-token wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/personal-access-token-wait.md -->
+
+# `waldur-cli auth personal-access-token wait`
+
+Poll personal access tokens (named, scoped, time-limited api credentials) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli auth personal-access-token wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli auth personal-access-token wait <uuid> --jmespath "name=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth ssh-key create`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/ssh-key-create.md -->
+
+# `waldur-cli auth ssh-key create`
+
+Create ssh public keys.
+
+## Usage
+
+```bash
+waldur-cli auth ssh-key create (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli auth ssh-key create --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli auth ssh-key create --request '{"name":null,"public_key":""}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth ssh-key delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/ssh-key-delete.md -->
+
+# `waldur-cli auth ssh-key delete`
+
+Delete ssh public keys.
+
+## Usage
+
+```bash
+waldur-cli auth ssh-key delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli auth ssh-key delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli auth ssh-key delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth ssh-key get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/ssh-key-get.md -->
+
+# `waldur-cli auth ssh-key get`
+
+Get ssh public keys.
+
+## Usage
+
+```bash
+waldur-cli auth ssh-key get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli auth ssh-key get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth ssh-key list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/ssh-key-list.md -->
+
+# `waldur-cli auth ssh-key list`
+
+List ssh public keys.
+
+## Usage
+
+```bash
+waldur-cli auth ssh-key list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `created` (string), `created_before` (string), `fingerprint_md5` (string), `fingerprint_sha256` (string), `fingerprint_sha512` (string), `is_shared` (boolean), `modified` (string), `modified_before` (string), `name` (string), `name_exact` (string), `user_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: fingerprint_md5, fingerprint_sha256, fingerprint_sha512, is_shared, name, public_key, type, url, user_uuid, uuid. |
+| `--order FIELDS` | string | Sort server-side (comma-separated, `-` prefix for descending). Valid: -name, name. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli auth ssh-key list --filter name_exact=example --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli auth ssh-key list --jmespath '[].[uuid, name]'
+```
+
+Smallest/first result matching a filter, sorted server-side:
+
+```bash
+waldur-cli auth ssh-key list --order name --limit 1
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli auth ssh-key wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/ssh-key-wait.md -->
+
+# `waldur-cli auth ssh-key wait`
+
+Poll ssh public keys until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli auth ssh-key wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli auth ssh-key wait <uuid> --jmespath "name=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/README.md -->
+
+# `waldur-cli marketplace`
+
+## offering
+
+- [list](./offering-list.md)
+- [get](./offering-get.md)
+- [wait](./offering-wait.md)
+
+## order
+
+- [get](./order-get.md)
+- [wait](./order-wait.md)
+- [approve-by-consumer](./order-approve-by-consumer.md)
+- [cancel](./order-cancel.md)
+- [delete-attachment](./order-delete-attachment.md)
+- [retry](./order-retry.md)
+- [set-state-done](./order-set-state-done.md)
+- [set-state-executing](./order-set-state-executing.md)
+- [unlink](./order-unlink.md)
+
+## resource
+
+- [list](./resource-list.md)
+- [get](./resource-get.md)
+- [provision](./resource-provision.md)
+- [terminate](./resource-terminate.md)
+- [wait](./resource-wait.md)
+- [unlink](./resource-unlink.md)
+
+---
+
+### `waldur-cli marketplace offering get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/offering-get.md -->
+
+# `waldur-cli marketplace offering get`
+
+Get marketplace offerings (public).
+
+## Usage
+
+```bash
+waldur-cli marketplace offering get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli marketplace offering get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace offering list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/offering-list.md -->
+
+# `waldur-cli marketplace offering list`
+
+List marketplace offerings (public).
+
+## Usage
+
+```bash
+waldur-cli marketplace offering list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `accessible_via_calls` (boolean), `allowed_customer_uuid` (string), `attributes` (string), `billable` (boolean), `can_create_offering_user` (boolean), `category_group_uuid` (string), `category_uuid` (string), `created` (string), `created_before` (string), `customer` (string), `customer_uuid` (string), `description` (string), `has_active_terms_of_service` (boolean), `has_terms_of_service` (boolean), `keyword` (string), `modified` (string), `modified_before` (string), `name` (string), `name_exact` (string), `offering_group_uuid` (string), `organization_group_uuid` (string), `parent_uuid` (string), `project_uuid` (string), `query` (string), `resource_customer_uuid` (string), `resource_project_uuid` (string), `scope_uuid` (string), `service_manager_uuid` (string), `shared` (boolean), `slug` (string), `state` (string), `tag` (string), `tag_name` (string), `tag_names_and` (string), `tags_and` (string), `type` (string), `user_has_consent` (boolean), `user_has_offering_user` (boolean), `uuid_list` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: access_url, attributes, backend_id, backend_metadata, billable, billing_type_classification, category, category_title, category_uuid, citation_count, compliance_checklist, components, config_drive_default, country, created, customer, customer_name, customer_uuid, datacite_doi, description, documentation_url, effective_available_limits, endpoints, files, full_description, getting_started, google_calendar_is_public, google_calendar_link, has_compliance_requirements, helpdesk_url, image, integration_guide, is_accessible, latitude, longitude, name, offering_group, offering_group_title, offering_group_uuid, options, order_count, organization_groups, parent_description, parent_name, parent_uuid, partitions, paused_reason, plans, plugin_options, privacy_policy_link, profile_name, profile_uuid, project, project_name, project_uuid, promotion_campaigns, quotas, resource_options, scope, scope_error_message, scope_name, scope_state, scope_uuid, screenshots, secret_options, service_attributes, shared, slug, software_catalogs, state, tags, thumbnail, total_cost, total_cost_estimated, total_customers, type, url, user_has_consent, uuid, vendor_details. |
+| `--order FIELDS` | string | Sort server-side (comma-separated, `-` prefix for descending). Valid: -created, -name, -state, -total_cost, -total_cost_estimated, -total_customers, -type, created, name, state, total_cost, total_cost_estimated, total_customers, type. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli marketplace offering list --filter state=OK --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli marketplace offering list --jmespath '[].[uuid, name]'
+```
+
+Smallest/first result matching a filter, sorted server-side:
+
+```bash
+waldur-cli marketplace offering list --order created --limit 1
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace offering wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/offering-wait.md -->
+
+# `waldur-cli marketplace offering wait`
+
+Poll marketplace offerings (public) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli marketplace offering wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli marketplace offering wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order approve-by-consumer`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-approve-by-consumer.md -->
+
+# `waldur-cli marketplace order approve-by-consumer`
+
+Approve by consumer marketplace orders (check status of a submitted provision/terminate).
+
+## Usage
+
+```bash
+waldur-cli marketplace order approve-by-consumer <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli marketplace order approve-by-consumer <uuid>
+```
+
+(sends a bodyless POST to `/api/marketplace-orders/{uuid}/approve_by_consumer/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order cancel`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-cancel.md -->
+
+# `waldur-cli marketplace order cancel`
+
+Cancel marketplace orders (check status of a submitted provision/terminate).
+
+## Usage
+
+```bash
+waldur-cli marketplace order cancel <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli marketplace order cancel <uuid>
+```
+
+(sends a bodyless POST to `/api/marketplace-orders/{uuid}/cancel/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order delete-attachment`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-delete-attachment.md -->
+
+# `waldur-cli marketplace order delete-attachment`
+
+Delete attachment marketplace orders (check status of a submitted provision/terminate).
+
+## Usage
+
+```bash
+waldur-cli marketplace order delete-attachment <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli marketplace order delete-attachment <uuid>
+```
+
+(sends a bodyless POST to `/api/marketplace-orders/{uuid}/delete_attachment/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-get.md -->
+
+# `waldur-cli marketplace order get`
+
+Get marketplace orders (check status of a submitted provision/terminate).
+
+## Usage
+
+```bash
+waldur-cli marketplace order get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--web` | flag | Open this resource's page in Waldur's web UI (HomePort) instead of printing it. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli marketplace order get <uuid> --format json
+```
+
+Open it in the browser instead:
+
+```bash
+waldur-cli marketplace order get <uuid> --web
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order retry`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-retry.md -->
+
+# `waldur-cli marketplace order retry`
+
+Retry marketplace orders (check status of a submitted provision/terminate).
+
+## Usage
+
+```bash
+waldur-cli marketplace order retry <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli marketplace order retry <uuid>
+```
+
+(sends a bodyless POST to `/api/marketplace-orders/{uuid}/retry/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order set-state-done`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-set-state-done.md -->
+
+# `waldur-cli marketplace order set-state-done`
+
+Set state done marketplace orders (check status of a submitted provision/terminate).
+
+## Usage
+
+```bash
+waldur-cli marketplace order set-state-done <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli marketplace order set-state-done <uuid>
+```
+
+(sends a bodyless POST to `/api/marketplace-orders/{uuid}/set_state_done/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order set-state-executing`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-set-state-executing.md -->
+
+# `waldur-cli marketplace order set-state-executing`
+
+Set state executing marketplace orders (check status of a submitted provision/terminate).
+
+## Usage
+
+```bash
+waldur-cli marketplace order set-state-executing <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli marketplace order set-state-executing <uuid>
+```
+
+(sends a bodyless POST to `/api/marketplace-orders/{uuid}/set_state_executing/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order unlink`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-unlink.md -->
+
+# `waldur-cli marketplace order unlink`
+
+Unlink marketplace orders (check status of a submitted provision/terminate).
+
+## Usage
+
+```bash
+waldur-cli marketplace order unlink <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli marketplace order unlink <uuid>
+```
+
+(sends a bodyless POST to `/api/marketplace-orders/{uuid}/unlink/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace order wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/order-wait.md -->
+
+# `waldur-cli marketplace order wait`
+
+Poll marketplace orders (check status of a submitted provision/terminate) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli marketplace order wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli marketplace order wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace resource get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/resource-get.md -->
+
+# `waldur-cli marketplace resource get`
+
+Get marketplace resources (provision/terminate any offering).
+
+## Usage
+
+```bash
+waldur-cli marketplace resource get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--web` | flag | Open this resource's page in Waldur's web UI (HomePort) instead of printing it. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli marketplace resource get <uuid> --format json
+```
+
+Open it in the browser instead:
+
+```bash
+waldur-cli marketplace resource get <uuid> --web
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace resource list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/resource-list.md -->
+
+# `waldur-cli marketplace resource list`
+
+List marketplace resources (provision/terminate any offering).
+
+## Usage
+
+```bash
+waldur-cli marketplace resource list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `backend_id` (string), `category_uuid` (string), `created` (string), `created_before` (string), `customer` (string), `customer_uuid` (string), `downscaled` (boolean), `flavor_name` (string), `has_terminate_date` (boolean), `image_name` (string), `is_attached` (boolean), `lexis_links_supported` (boolean), `limit_based` (boolean), `modified` (string), `modified_before` (string), `name` (string), `name_exact` (string), `offering` (string), `offering_billable` (boolean), `offering_shared` (boolean), `offering_slug` (string), `offering_type` (string), `offering_uuid` (string), `only_limit_based` (boolean), `only_usage_based` (boolean), `order_state` (string), `parent_offering_uuid` (string), `paused` (boolean), `plan_uuid` (string), `project_name` (string), `project_uuid` (string), `provider_uuid` (string), `query` (string), `resource_attributes` (string), `restrict_member_access` (boolean), `runtime_state` (string), `scope` (string), `service_manager_uuid` (string), `slug` (string), `state` (string), `usage_based` (boolean), `visible_to_providers` (boolean), `visible_to_username` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: attributes, available_actions, backend_id, backend_metadata, can_terminate, category_icon, category_title, category_uuid, created, creation_order, current_usages, customer_name, customer_slug, customer_uuid, description, downscaled, effective_id, end_date, end_date_requested_by, end_date_updated_at, endpoints, error_message, error_traceback, is_limit_based, is_usage_based, last_sync, limit_usage, limits, modified, name, offering, offering_backend_id, offering_billable, offering_components, offering_description, offering_image, offering_name, offering_plugin_options, offering_shared, offering_slug, offering_state, offering_thumbnail, offering_type, offering_uuid, options, order_in_progress, parent_name, parent_offering_name, parent_offering_slug, parent_offering_uuid, parent_uuid, paused, plan, plan_description, plan_name, plan_unit, plan_uuid, project, project_description, project_effective_end_date, project_end_date, project_end_date_requested_by, project_is_in_grace_period, project_name, project_slug, project_uuid, provider_description, provider_name, provider_slug, provider_uuid, renewal_date, report, resource_type, resource_uuid, restrict_member_access, scope, service_settings_uuid, slug, state, url, user_requires_reconsent, username, uuid. |
+| `--order FIELDS` | string | Sort server-side (comma-separated, `-` prefix for descending). Valid: -created, -end_date, -name, -project_name, -state, created, end_date, name, project_name, state. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli marketplace resource list --filter state=OK --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli marketplace resource list --jmespath '[].[uuid, name]'
+```
+
+Smallest/first result matching a filter, sorted server-side:
+
+```bash
+waldur-cli marketplace resource list --order created --limit 1
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace resource provision`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/resource-provision.md -->
+
+# `waldur-cli marketplace resource provision`
+
+Provision marketplace resources (provision/terminate any offering) via a marketplace order.
+
+## Usage
+
+```bash
+waldur-cli marketplace resource provision (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | The order body as inline JSON. |
+| `--request-file PATH` | path | Read the order body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable order template and exit. |
+| `--no-wait` | flag | Submit and return immediately, without polling the order to completion. |
+| `--timeout N` | integer | Seconds to wait for the order to complete before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli marketplace resource provision --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli marketplace resource provision --request '{"accepting_terms_of_service":true,"attributes":{"description":null,"name":null},"callback_url":null,"limits":null,"offering":"","plan":null,"project":"","request_comment":null,"slug":null,"start_date":null,"type":null}'
+```
+
+Fire-and-forget, checking on it later from the printed order UUID:
+
+```bash
+waldur-cli marketplace resource provision --request-file order.yaml --no-wait --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace resource terminate`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/resource-terminate.md -->
+
+# `waldur-cli marketplace resource terminate`
+
+Terminate marketplace resources (provision/terminate any offering) via a marketplace order.
+
+## Usage
+
+```bash
+waldur-cli marketplace resource terminate <MARKETPLACE_RESOURCE_UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<MARKETPLACE_RESOURCE_UUID>` | positional, required | The resource's `marketplace_resource_uuid` field (from get/list) -- not its own uuid. |
+| `--request JSON` | string | Optional termination attributes as inline JSON. |
+| `--no-wait` | flag | Submit and return immediately, without polling the order to completion. |
+| `--timeout N` | integer | Seconds to wait for termination before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli marketplace resource terminate <marketplace-resource-uuid>
+```
+
+With termination attributes:
+
+```bash
+waldur-cli marketplace resource terminate <marketplace-resource-uuid> --request '{"delete_volumes": true}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace resource unlink`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/resource-unlink.md -->
+
+# `waldur-cli marketplace resource unlink`
+
+Unlink marketplace resources (provision/terminate any offering).
+
+## Usage
+
+```bash
+waldur-cli marketplace resource unlink <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli marketplace resource unlink <uuid>
+```
+
+(sends a bodyless POST to `/api/marketplace-resources/{uuid}/unlink/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli marketplace resource wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/resource-wait.md -->
+
+# `waldur-cli marketplace resource wait`
+
+Poll marketplace resources (provision/terminate any offering) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli marketplace resource wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli marketplace resource wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/README.md -->
+
+# `waldur-cli openstack`
+
+## flavor
+
+- [list](./flavor-list.md)
+- [get](./flavor-get.md)
+- [wait](./flavor-wait.md)
+
+## floating-ip
+
+- [list](./floating-ip-list.md)
+- [get](./floating-ip-get.md)
+- [delete](./floating-ip-delete.md)
+- [wait](./floating-ip-wait.md)
+- [detach-from-port](./floating-ip-detach-from-port.md)
+- [set-ok](./floating-ip-set-ok.md)
+- [unlink](./floating-ip-unlink.md)
+
+## image
+
+- [list](./image-list.md)
+- [get](./image-get.md)
+- [wait](./image-wait.md)
+
+## instance
+
+- [list](./instance-list.md)
+- [get](./instance-get.md)
+- [update](./instance-update.md)
+- [provision](./instance-provision.md)
+- [terminate](./instance-terminate.md)
+- [wait](./instance-wait.md)
+- [restart](./instance-restart.md)
+- [set-ok](./instance-set-ok.md)
+- [start](./instance-start.md)
+- [stop](./instance-stop.md)
+- [unlink](./instance-unlink.md)
+- [unrescue](./instance-unrescue.md)
+
+## network
+
+- [list](./network-list.md)
+- [get](./network-get.md)
+- [update](./network-update.md)
+- [delete](./network-delete.md)
+- [wait](./network-wait.md)
+
+## security-group
+
+- [list](./security-group-list.md)
+- [get](./security-group-get.md)
+- [update](./security-group-update.md)
+- [delete](./security-group-delete.md)
+- [wait](./security-group-wait.md)
+
+## subnet
+
+- [list](./subnet-list.md)
+- [get](./subnet-get.md)
+- [update](./subnet-update.md)
+- [delete](./subnet-delete.md)
+- [wait](./subnet-wait.md)
+
+## tenant
+
+- [list](./tenant-list.md)
+- [get](./tenant-get.md)
+- [update](./tenant-update.md)
+- [provision](./tenant-provision.md)
+- [terminate](./tenant-terminate.md)
+- [wait](./tenant-wait.md)
+
+## volume
+
+- [list](./volume-list.md)
+- [get](./volume-get.md)
+- [update](./volume-update.md)
+- [provision](./volume-provision.md)
+- [terminate](./volume-terminate.md)
+- [wait](./volume-wait.md)
+- [detach](./volume-detach.md)
+- [set-ok](./volume-set-ok.md)
+- [unlink](./volume-unlink.md)
+
+---
+
+### `waldur-cli openstack flavor get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/flavor-get.md -->
+
+# `waldur-cli openstack flavor get`
+
+Get openstack flavors (vm sizes).
+
+## Usage
+
+```bash
+waldur-cli openstack flavor get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack flavor get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack flavor list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/flavor-list.md -->
+
+# `waldur-cli openstack flavor list`
+
+List openstack flavors (vm sizes).
+
+## Usage
+
+```bash
+waldur-cli openstack flavor list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `cores` (integer), `cores__gte` (integer), `cores__lte` (integer), `disk` (integer), `disk__gte` (integer), `disk__lte` (integer), `name` (string), `name_exact` (string), `name_iregex` (string), `offering_uuid` (string), `ram` (integer), `ram__gte` (integer), `ram__lte` (integer), `settings` (string), `settings_uuid` (string), `tenant` (string), `tenant_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: backend_id, cores, disk, display_name, name, ram, settings, url, uuid. |
+| `--order FIELDS` | string | Sort server-side (comma-separated, `-` prefix for descending). Valid: -cores, -disk, -ram, cores, disk, ram. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack flavor list --filter name_exact=example --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack flavor list --jmespath '[].[uuid, name]'
+```
+
+Smallest/first result matching a filter, sorted server-side:
+
+```bash
+waldur-cli openstack flavor list --order cores --limit 1
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack flavor wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/flavor-wait.md -->
+
+# `waldur-cli openstack flavor wait`
+
+Poll openstack flavors (vm sizes) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack flavor wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack flavor wait <uuid> --jmespath "name=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack floating-ip delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/floating-ip-delete.md -->
+
+# `waldur-cli openstack floating-ip delete`
+
+Delete openstack floating ips.
+
+## Usage
+
+```bash
+waldur-cli openstack floating-ip delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack floating-ip delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli openstack floating-ip delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack floating-ip detach-from-port`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/floating-ip-detach-from-port.md -->
+
+# `waldur-cli openstack floating-ip detach-from-port`
+
+Detach from port openstack floating ips.
+
+## Usage
+
+```bash
+waldur-cli openstack floating-ip detach-from-port <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack floating-ip detach-from-port <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-floating-ips/{uuid}/detach_from_port/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack floating-ip get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/floating-ip-get.md -->
+
+# `waldur-cli openstack floating-ip get`
+
+Get openstack floating ips.
+
+## Usage
+
+```bash
+waldur-cli openstack floating-ip get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack floating-ip get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack floating-ip list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/floating-ip-list.md -->
+
+# `waldur-cli openstack floating-ip list`
+
+List openstack floating ips.
+
+## Usage
+
+```bash
+waldur-cli openstack floating-ip list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `address` (string), `backend_id` (string), `can_manage` (boolean), `customer` (string), `customer_abbreviation` (string), `customer_name` (string), `customer_native_name` (string), `customer_uuid` (string), `description` (string), `external_ip` (string), `free` (boolean), `name` (string), `name_exact` (string), `project` (string), `project_name` (string), `project_uuid` (string), `runtime_state` (string), `service_settings_name` (string), `service_settings_uuid` (string), `state` (string), `tenant` (string), `tenant_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: access_url, address, backend_id, backend_network_id, created, customer, customer_abbreviation, customer_name, customer_native_name, customer_uuid, description, error_message, error_traceback, external_address, instance_name, instance_url, instance_uuid, is_limit_based, is_usage_based, marketplace_category_name, marketplace_category_uuid, marketplace_offering_name, marketplace_offering_plugin_options, marketplace_offering_type, marketplace_offering_uuid, marketplace_plan_uuid, marketplace_resource_state, marketplace_resource_uuid, modified, name, port, port_fixed_ips, project, project_name, project_uuid, resource_type, router, runtime_state, service_name, service_settings, service_settings_error_message, service_settings_state, service_settings_uuid, state, tenant, tenant_name, tenant_uuid, url, uuid. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack floating-ip list --filter state=OK --fields uuid,address --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack floating-ip list --jmespath '[].[uuid, address]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack floating-ip set-ok`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/floating-ip-set-ok.md -->
+
+# `waldur-cli openstack floating-ip set-ok`
+
+Set ok openstack floating ips.
+
+## Usage
+
+```bash
+waldur-cli openstack floating-ip set-ok <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack floating-ip set-ok <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-floating-ips/{uuid}/set_ok/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack floating-ip unlink`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/floating-ip-unlink.md -->
+
+# `waldur-cli openstack floating-ip unlink`
+
+Unlink openstack floating ips.
+
+## Usage
+
+```bash
+waldur-cli openstack floating-ip unlink <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack floating-ip unlink <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-floating-ips/{uuid}/unlink/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack floating-ip wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/floating-ip-wait.md -->
+
+# `waldur-cli openstack floating-ip wait`
+
+Poll openstack floating ips until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack floating-ip wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack floating-ip wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack image get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/image-get.md -->
+
+# `waldur-cli openstack image get`
+
+Get openstack images.
+
+## Usage
+
+```bash
+waldur-cli openstack image get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack image get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack image list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/image-list.md -->
+
+# `waldur-cli openstack image list`
+
+List openstack images.
+
+## Usage
+
+```bash
+waldur-cli openstack image list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `is_rescue_image` (boolean), `name` (string), `name_exact` (string), `offering_uuid` (string), `settings` (string), `settings_uuid` (string), `show_duplicate_names` (boolean), `tenant` (string), `tenant_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack image list --filter name_exact=example --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack image list --jmespath '[].[uuid, name]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack image wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/image-wait.md -->
+
+# `waldur-cli openstack image wait`
+
+Poll openstack images until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack image wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack image wait <uuid> --jmespath "name=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-get.md -->
+
+# `waldur-cli openstack instance get`
+
+Get openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--web` | flag | Open this resource's page in Waldur's web UI (HomePort) instead of printing it. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack instance get <uuid> --format json
+```
+
+Open it in the browser instead:
+
+```bash
+waldur-cli openstack instance get <uuid> --web
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-list.md -->
+
+# `waldur-cli openstack instance list`
+
+List openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `attach_volume_uuid` (string), `availability_zone_name` (string), `backend_id` (string), `can_manage` (boolean), `customer` (string), `customer_abbreviation` (string), `customer_name` (string), `customer_native_name` (string), `customer_uuid` (string), `description` (string), `external_ip` (string), `name` (string), `name_exact` (string), `project` (string), `project_name` (string), `project_uuid` (string), `query` (string), `runtime_state` (string), `service_settings_name` (string), `service_settings_uuid` (string), `state` (string), `tenant` (string), `tenant_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: access_url, action, action_details, availability_zone, availability_zone_name, backend_id, config_drive, connect_directly_to_external_network, cores, created, customer, customer_abbreviation, customer_name, customer_native_name, customer_uuid, description, disk, error_message, error_traceback, external_address, external_ips, flavor_disk, flavor_name, floating_ips, hypervisor_hostname, image_name, internal_ips, is_limit_based, is_usage_based, key_fingerprint, key_name, latitude, longitude, marketplace_category_name, marketplace_category_uuid, marketplace_offering_name, marketplace_offering_plugin_options, marketplace_offering_type, marketplace_offering_uuid, marketplace_plan_uuid, marketplace_resource_state, marketplace_resource_uuid, min_disk, min_ram, modified, name, ports, project, project_name, project_uuid, ram, rancher_cluster, resource_type, runtime_state, security_groups, server_group, service_name, service_settings, service_settings_error_message, service_settings_state, service_settings_uuid, ssh_public_key, start_time, state, tenant, tenant_uuid, url, user_data, uuid, volumes. |
+| `--order FIELDS` | string | Sort server-side (comma-separated, `-` prefix for descending). |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack instance list --filter state=OK --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack instance list --jmespath '[].[uuid, name]'
+```
+
+Smallest/first result matching a filter, sorted server-side:
+
+```bash
+waldur-cli openstack instance list --order uuid --limit 1
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance provision`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-provision.md -->
+
+# `waldur-cli openstack instance provision`
+
+Provision openstack instances (vms) via a marketplace order.
+
+## Usage
+
+```bash
+waldur-cli openstack instance provision (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | The order body as inline JSON. |
+| `--request-file PATH` | path | Read the order body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable order template and exit. |
+| `--no-wait` | flag | Submit and return immediately, without polling the order to completion. |
+| `--timeout N` | integer | Seconds to wait for the order to complete before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack instance provision --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli openstack instance provision --request '{"accepting_terms_of_service":true,"attributes":{"availability_zone":null,"config_drive":null,"connect_directly_to_external_network":null,"data_volume_size":null,"data_volume_type":null,"data_volumes":null,"description":null,"flavor":"","floating_ips":null,"image":"","name":"","ports":[{"fixed_ips":null,"port":null,"port_security_enabled":null,"subnet":null}],"security_groups":null,"server_group":null,"ssh_public_key":null,"system_volume_size":0,"system_volume_type":null,"user_data":null},"callback_url":null,"limits":null,"offering":"","plan":null,"project":"","request_comment":null,"slug":null,"start_date":null,"type":null}'
+```
+
+Fire-and-forget, checking on it later from the printed order UUID:
+
+```bash
+waldur-cli openstack instance provision --request-file order.yaml --no-wait --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance restart`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-restart.md -->
+
+# `waldur-cli openstack instance restart`
+
+Restart openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance restart <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack instance restart <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-instances/{uuid}/restart/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance set-ok`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-set-ok.md -->
+
+# `waldur-cli openstack instance set-ok`
+
+Set ok openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance set-ok <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack instance set-ok <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-instances/{uuid}/set_ok/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance start`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-start.md -->
+
+# `waldur-cli openstack instance start`
+
+Start openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance start <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack instance start <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-instances/{uuid}/start/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance stop`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-stop.md -->
+
+# `waldur-cli openstack instance stop`
+
+Stop openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance stop <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack instance stop <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-instances/{uuid}/stop/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance terminate`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-terminate.md -->
+
+# `waldur-cli openstack instance terminate`
+
+Terminate openstack instances (vms) via a marketplace order.
+
+## Usage
+
+```bash
+waldur-cli openstack instance terminate <MARKETPLACE_RESOURCE_UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<MARKETPLACE_RESOURCE_UUID>` | positional, required | The resource's `marketplace_resource_uuid` field (from get/list) -- not its own uuid. |
+| `--request JSON` | string | Optional termination attributes as inline JSON. |
+| `--no-wait` | flag | Submit and return immediately, without polling the order to completion. |
+| `--timeout N` | integer | Seconds to wait for termination before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack instance terminate <marketplace-resource-uuid>
+```
+
+With termination attributes:
+
+```bash
+waldur-cli openstack instance terminate <marketplace-resource-uuid> --request '{"delete_volumes": true}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance unlink`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-unlink.md -->
+
+# `waldur-cli openstack instance unlink`
+
+Unlink openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance unlink <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack instance unlink <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-instances/{uuid}/unlink/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance unrescue`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-unrescue.md -->
+
+# `waldur-cli openstack instance unrescue`
+
+Unrescue openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance unrescue <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack instance unrescue <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-instances/{uuid}/unrescue/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-update.md -->
+
+# `waldur-cli openstack instance update`
+
+Update openstack instances (vms).
+
+## Usage
+
+```bash
+waldur-cli openstack instance update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack instance update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli openstack instance update <uuid> --request '{"description":null,"name":""}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack instance wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/instance-wait.md -->
+
+# `waldur-cli openstack instance wait`
+
+Poll openstack instances (vms) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack instance wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack instance wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack network delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/network-delete.md -->
+
+# `waldur-cli openstack network delete`
+
+Delete openstack networks.
+
+## Usage
+
+```bash
+waldur-cli openstack network delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack network delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli openstack network delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack network get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/network-get.md -->
+
+# `waldur-cli openstack network get`
+
+Get openstack networks.
+
+## Usage
+
+```bash
+waldur-cli openstack network get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack network get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack network list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/network-list.md -->
+
+# `waldur-cli openstack network list`
+
+List openstack networks.
+
+## Usage
+
+```bash
+waldur-cli openstack network list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `backend_id` (string), `can_manage` (boolean), `customer` (string), `customer_abbreviation` (string), `customer_name` (string), `customer_native_name` (string), `customer_uuid` (string), `description` (string), `direct_only` (boolean), `external_ip` (string), `is_external` (boolean), `name` (string), `name_exact` (string), `project` (string), `project_name` (string), `project_uuid` (string), `rbac_only` (boolean), `service_settings_name` (string), `service_settings_uuid` (string), `state` (string), `tenant` (string), `tenant_uuid` (string), `type` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: access_url, backend_id, created, customer, customer_abbreviation, customer_name, customer_native_name, customer_uuid, description, error_message, error_traceback, is_external, is_limit_based, is_usage_based, marketplace_category_name, marketplace_category_uuid, marketplace_offering_name, marketplace_offering_plugin_options, marketplace_offering_type, marketplace_offering_uuid, marketplace_plan_uuid, marketplace_resource_state, marketplace_resource_uuid, modified, mtu, name, port_security_enabled, project, project_name, project_uuid, rbac_policies, resource_type, segmentation_id, service_name, service_settings, service_settings_error_message, service_settings_state, service_settings_uuid, state, subnets, tenant, tenant_name, tenant_uuid, type, url, uuid. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack network list --filter state=OK --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack network list --jmespath '[].[uuid, name]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack network update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/network-update.md -->
+
+# `waldur-cli openstack network update`
+
+Update openstack networks.
+
+## Usage
+
+```bash
+waldur-cli openstack network update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack network update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli openstack network update <uuid> --request '{"description":null,"name":""}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack network wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/network-wait.md -->
+
+# `waldur-cli openstack network wait`
+
+Poll openstack networks until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack network wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack network wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack security-group delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/security-group-delete.md -->
+
+# `waldur-cli openstack security-group delete`
+
+Delete openstack security groups.
+
+## Usage
+
+```bash
+waldur-cli openstack security-group delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack security-group delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli openstack security-group delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack security-group get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/security-group-get.md -->
+
+# `waldur-cli openstack security-group get`
+
+Get openstack security groups.
+
+## Usage
+
+```bash
+waldur-cli openstack security-group get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack security-group get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack security-group list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/security-group-list.md -->
+
+# `waldur-cli openstack security-group list`
+
+List openstack security groups.
+
+## Usage
+
+```bash
+waldur-cli openstack security-group list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `backend_id` (string), `can_manage` (boolean), `customer` (string), `customer_abbreviation` (string), `customer_name` (string), `customer_native_name` (string), `customer_uuid` (string), `description` (string), `external_ip` (string), `name` (string), `name_exact` (string), `project` (string), `project_name` (string), `project_uuid` (string), `query` (string), `service_settings_name` (string), `service_settings_uuid` (string), `state` (string), `tenant` (string), `tenant_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: access_url, backend_id, created, customer, customer_abbreviation, customer_name, customer_native_name, customer_uuid, description, error_message, error_traceback, is_limit_based, is_usage_based, marketplace_category_name, marketplace_category_uuid, marketplace_offering_name, marketplace_offering_plugin_options, marketplace_offering_type, marketplace_offering_uuid, marketplace_plan_uuid, marketplace_resource_state, marketplace_resource_uuid, modified, name, project, project_name, project_uuid, resource_type, rules, service_name, service_settings, service_settings_error_message, service_settings_state, service_settings_uuid, state, tenant, tenant_name, tenant_uuid, url, uuid. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack security-group list --filter state=OK --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack security-group list --jmespath '[].[uuid, name]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack security-group update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/security-group-update.md -->
+
+# `waldur-cli openstack security-group update`
+
+Update openstack security groups.
+
+## Usage
+
+```bash
+waldur-cli openstack security-group update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack security-group update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli openstack security-group update <uuid> --request '{"description":null,"name":""}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack security-group wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/security-group-wait.md -->
+
+# `waldur-cli openstack security-group wait`
+
+Poll openstack security groups until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack security-group wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack security-group wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack subnet delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/subnet-delete.md -->
+
+# `waldur-cli openstack subnet delete`
+
+Delete openstack subnets.
+
+## Usage
+
+```bash
+waldur-cli openstack subnet delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack subnet delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli openstack subnet delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack subnet get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/subnet-get.md -->
+
+# `waldur-cli openstack subnet get`
+
+Get openstack subnets.
+
+## Usage
+
+```bash
+waldur-cli openstack subnet get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack subnet get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack subnet list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/subnet-list.md -->
+
+# `waldur-cli openstack subnet list`
+
+List openstack subnets.
+
+## Usage
+
+```bash
+waldur-cli openstack subnet list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `backend_id` (string), `can_manage` (boolean), `customer` (string), `customer_abbreviation` (string), `customer_name` (string), `customer_native_name` (string), `customer_uuid` (string), `description` (string), `direct_only` (boolean), `enable_dhcp` (boolean), `external_ip` (string), `ip_version` (integer), `name` (string), `name_exact` (string), `network` (string), `network_uuid` (string), `project` (string), `project_name` (string), `project_uuid` (string), `rbac_only` (boolean), `service_settings_name` (string), `service_settings_uuid` (string), `state` (string), `tenant` (string), `tenant_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: access_url, allocation_pools, backend_id, cidr, created, customer, customer_abbreviation, customer_name, customer_native_name, customer_uuid, description, disable_gateway, dns_nameservers, enable_dhcp, error_message, error_traceback, gateway_ip, host_routes, ip_version, is_connected, is_limit_based, is_usage_based, marketplace_category_name, marketplace_category_uuid, marketplace_offering_name, marketplace_offering_plugin_options, marketplace_offering_type, marketplace_offering_uuid, marketplace_plan_uuid, marketplace_resource_state, marketplace_resource_uuid, modified, name, network, network_name, port_security_enabled, project, project_name, project_uuid, resource_type, service_name, service_settings, service_settings_error_message, service_settings_state, service_settings_uuid, state, tenant, tenant_name, url, uuid. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack subnet list --filter state=OK --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack subnet list --jmespath '[].[uuid, name]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack subnet update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/subnet-update.md -->
+
+# `waldur-cli openstack subnet update`
+
+Update openstack subnets.
+
+## Usage
+
+```bash
+waldur-cli openstack subnet update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack subnet update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli openstack subnet update <uuid> --request '{"allocation_pools":null,"cidr":null,"description":null,"disable_gateway":null,"dns_nameservers":null,"gateway_ip":null,"host_routes":null,"name":""}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack subnet wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/subnet-wait.md -->
+
+# `waldur-cli openstack subnet wait`
+
+Poll openstack subnets until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack subnet wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack subnet wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack tenant get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/tenant-get.md -->
+
+# `waldur-cli openstack tenant get`
+
+Get openstack tenants.
+
+## Usage
+
+```bash
+waldur-cli openstack tenant get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--web` | flag | Open this resource's page in Waldur's web UI (HomePort) instead of printing it. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack tenant get <uuid> --format json
+```
+
+Open it in the browser instead:
+
+```bash
+waldur-cli openstack tenant get <uuid> --web
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack tenant list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/tenant-list.md -->
+
+# `waldur-cli openstack tenant list`
+
+List openstack tenants.
+
+## Usage
+
+```bash
+waldur-cli openstack tenant list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `backend_id` (string), `can_manage` (boolean), `customer` (string), `customer_abbreviation` (string), `customer_name` (string), `customer_native_name` (string), `customer_uuid` (string), `description` (string), `external_ip` (string), `name` (string), `name_exact` (string), `project` (string), `project_name` (string), `project_uuid` (string), `service_settings_name` (string), `service_settings_uuid` (string), `state` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: availability_zone, backend_id, created, customer, customer_abbreviation, customer_name, customer_native_name, customer_uuid, default_volume_type_name, description, error_message, error_traceback, external_network_id, external_network_ref_name, external_network_ref_uuid, internal_network_id, is_limit_based, is_usage_based, marketplace_category_name, marketplace_category_uuid, marketplace_offering_name, marketplace_offering_plugin_options, marketplace_offering_type, marketplace_offering_uuid, marketplace_plan_uuid, marketplace_resource_state, marketplace_resource_uuid, modified, name, project, project_name, project_uuid, quotas, resource_type, security_groups, service_name, service_settings, service_settings_error_message, service_settings_state, service_settings_uuid, skip_creation_of_default_router, skip_creation_of_default_subnet, state, subnet_cidr, url, uuid. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack tenant list --filter state=OK --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack tenant list --jmespath '[].[uuid, name]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack tenant provision`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/tenant-provision.md -->
+
+# `waldur-cli openstack tenant provision`
+
+Provision openstack tenants via a marketplace order.
+
+## Usage
+
+```bash
+waldur-cli openstack tenant provision (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | The order body as inline JSON. |
+| `--request-file PATH` | path | Read the order body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable order template and exit. |
+| `--no-wait` | flag | Submit and return immediately, without polling the order to completion. |
+| `--timeout N` | integer | Seconds to wait for the order to complete before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack tenant provision --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli openstack tenant provision --request '{"accepting_terms_of_service":true,"attributes":{"availability_zone":null,"description":null,"name":"","security_groups":null,"skip_connection_extnet":null,"skip_creation_of_default_router":null,"skip_creation_of_default_subnet":null,"subnet_cidr":null},"callback_url":null,"limits":null,"offering":"","plan":null,"project":"","request_comment":null,"slug":null,"start_date":null,"type":null}'
+```
+
+Fire-and-forget, checking on it later from the printed order UUID:
+
+```bash
+waldur-cli openstack tenant provision --request-file order.yaml --no-wait --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack tenant terminate`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/tenant-terminate.md -->
+
+# `waldur-cli openstack tenant terminate`
+
+Terminate openstack tenants via a marketplace order.
+
+## Usage
+
+```bash
+waldur-cli openstack tenant terminate <MARKETPLACE_RESOURCE_UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<MARKETPLACE_RESOURCE_UUID>` | positional, required | The resource's `marketplace_resource_uuid` field (from get/list) -- not its own uuid. |
+| `--request JSON` | string | Optional termination attributes as inline JSON. |
+| `--no-wait` | flag | Submit and return immediately, without polling the order to completion. |
+| `--timeout N` | integer | Seconds to wait for termination before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack tenant terminate <marketplace-resource-uuid>
+```
+
+With termination attributes:
+
+```bash
+waldur-cli openstack tenant terminate <marketplace-resource-uuid> --request '{"delete_volumes": true}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack tenant update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/tenant-update.md -->
+
+# `waldur-cli openstack tenant update`
+
+Update openstack tenants.
+
+## Usage
+
+```bash
+waldur-cli openstack tenant update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack tenant update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli openstack tenant update <uuid> --request '{"availability_zone":null,"default_volume_type_name":null,"description":null,"name":"","security_groups":null,"skip_creation_of_default_router":null,"skip_creation_of_default_subnet":null}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack tenant wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/tenant-wait.md -->
+
+# `waldur-cli openstack tenant wait`
+
+Poll openstack tenants until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack tenant wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack tenant wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume detach`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-detach.md -->
+
+# `waldur-cli openstack volume detach`
+
+Detach openstack volumes.
+
+## Usage
+
+```bash
+waldur-cli openstack volume detach <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack volume detach <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-volumes/{uuid}/detach/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-get.md -->
+
+# `waldur-cli openstack volume get`
+
+Get openstack volumes.
+
+## Usage
+
+```bash
+waldur-cli openstack volume get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--web` | flag | Open this resource's page in Waldur's web UI (HomePort) instead of printing it. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack volume get <uuid> --format json
+```
+
+Open it in the browser instead:
+
+```bash
+waldur-cli openstack volume get <uuid> --web
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-list.md -->
+
+# `waldur-cli openstack volume list`
+
+List openstack volumes.
+
+## Usage
+
+```bash
+waldur-cli openstack volume list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `attach_instance_uuid` (string), `availability_zone_name` (string), `backend_id` (string), `can_manage` (boolean), `customer` (string), `customer_abbreviation` (string), `customer_name` (string), `customer_native_name` (string), `customer_uuid` (string), `description` (string), `external_ip` (string), `instance` (string), `instance_uuid` (string), `name` (string), `name_exact` (string), `project` (string), `project_name` (string), `project_uuid` (string), `runtime_state` (string), `service_settings_name` (string), `service_settings_uuid` (string), `snapshot` (string), `snapshot_uuid` (string), `state` (string), `tenant` (string), `tenant_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: access_url, action, action_details, availability_zone, availability_zone_name, backend_id, bootable, created, customer, customer_abbreviation, customer_name, customer_native_name, customer_uuid, description, device, error_message, error_traceback, extend_enabled, image, image_metadata, image_name, instance, instance_marketplace_uuid, instance_name, is_limit_based, is_usage_based, marketplace_category_name, marketplace_category_uuid, marketplace_offering_name, marketplace_offering_plugin_options, marketplace_offering_type, marketplace_offering_uuid, marketplace_plan_uuid, marketplace_resource_state, marketplace_resource_uuid, metadata, modified, name, project, project_name, project_uuid, resource_type, runtime_state, service_name, service_settings, service_settings_error_message, service_settings_state, service_settings_uuid, size, source_snapshot, state, tenant, tenant_uuid, type, type_name, url, uuid. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli openstack volume list --filter state=OK --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli openstack volume list --jmespath '[].[uuid, name]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume provision`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-provision.md -->
+
+# `waldur-cli openstack volume provision`
+
+Provision openstack volumes via a marketplace order.
+
+## Usage
+
+```bash
+waldur-cli openstack volume provision (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | The order body as inline JSON. |
+| `--request-file PATH` | path | Read the order body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable order template and exit. |
+| `--no-wait` | flag | Submit and return immediately, without polling the order to completion. |
+| `--timeout N` | integer | Seconds to wait for the order to complete before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack volume provision --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli openstack volume provision --request '{"accepting_terms_of_service":true,"attributes":{"availability_zone":null,"description":null,"image":null,"name":"","size":null,"type":null},"callback_url":null,"limits":null,"offering":"","plan":null,"project":"","request_comment":null,"slug":null,"start_date":null,"type":null}'
+```
+
+Fire-and-forget, checking on it later from the printed order UUID:
+
+```bash
+waldur-cli openstack volume provision --request-file order.yaml --no-wait --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume set-ok`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-set-ok.md -->
+
+# `waldur-cli openstack volume set-ok`
+
+Set ok openstack volumes.
+
+## Usage
+
+```bash
+waldur-cli openstack volume set-ok <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack volume set-ok <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-volumes/{uuid}/set_ok/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume terminate`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-terminate.md -->
+
+# `waldur-cli openstack volume terminate`
+
+Terminate openstack volumes via a marketplace order.
+
+## Usage
+
+```bash
+waldur-cli openstack volume terminate <MARKETPLACE_RESOURCE_UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<MARKETPLACE_RESOURCE_UUID>` | positional, required | The resource's `marketplace_resource_uuid` field (from get/list) -- not its own uuid. |
+| `--request JSON` | string | Optional termination attributes as inline JSON. |
+| `--no-wait` | flag | Submit and return immediately, without polling the order to completion. |
+| `--timeout N` | integer | Seconds to wait for termination before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack volume terminate <marketplace-resource-uuid>
+```
+
+With termination attributes:
+
+```bash
+waldur-cli openstack volume terminate <marketplace-resource-uuid> --request '{"delete_volumes": true}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume unlink`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-unlink.md -->
+
+# `waldur-cli openstack volume unlink`
+
+Unlink openstack volumes.
+
+## Usage
+
+```bash
+waldur-cli openstack volume unlink <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli openstack volume unlink <uuid>
+```
+
+(sends a bodyless POST to `/api/openstack-volumes/{uuid}/unlink/`)
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-update.md -->
+
+# `waldur-cli openstack volume update`
+
+Update openstack volumes.
+
+## Usage
+
+```bash
+waldur-cli openstack volume update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli openstack volume update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli openstack volume update <uuid> --request '{"bootable":null,"description":null,"name":""}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli openstack volume wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/volume-wait.md -->
+
+# `waldur-cli openstack volume wait`
+
+Poll openstack volumes until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli openstack volume wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli openstack volume wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/README.md -->
+
+# `waldur-cli team`
+
+## customer
+
+- [list](./customer-list.md)
+- [get](./customer-get.md)
+- [create](./customer-create.md)
+- [update](./customer-update.md)
+- [delete](./customer-delete.md)
+- [wait](./customer-wait.md)
+
+## project
+
+- [list](./project-list.md)
+- [get](./project-get.md)
+- [create](./project-create.md)
+- [update](./project-update.md)
+- [delete](./project-delete.md)
+- [wait](./project-wait.md)
+
+## role
+
+- [list](./role-list.md)
+- [get](./role-get.md)
+- [create](./role-create.md)
+- [update](./role-update.md)
+- [delete](./role-delete.md)
+- [wait](./role-wait.md)
+
+## user
+
+- [list](./user-list.md)
+- [get](./user-get.md)
+- [create](./user-create.md)
+- [update](./user-update.md)
+- [delete](./user-delete.md)
+- [wait](./user-wait.md)
+
+---
+
+### `waldur-cli team customer create`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/customer-create.md -->
+
+# `waldur-cli team customer create`
+
+Create customers (organizations).
+
+## Usage
+
+```bash
+waldur-cli team customer create (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli team customer create --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli team customer create --request '{"abbreviation":null,"access_subnets":null,"accounting_start_date":null,"address":null,"agreement_number":null,"apartment_nr":null,"archived":null,"backend_id":null,"bank_account":null,"bank_name":null,"blocked":null,"city":null,"contact_details":null,"country":null,"default_tax_percent":null,"description":null,"display_billing_info_in_projects":null,"domain":null,"email":null,"grace_period_days":null,"homepage":null,"house_nr":null,"household":null,"image":null,"latitude":null,"longitude":null,"max_service_accounts":null,"name":"","native_name":null,"notification_emails":null,"parish":null,"phone_number":null,"postal":null,"project_metadata_checklist":null,"project_slug_template":null,"registration_code":null,"slug":null,"sponsor_number":null,"state":null,"street":null,"user_affiliations":null,"user_email_patterns":null,"user_identity_sources":null,"vat_code":null}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team customer delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/customer-delete.md -->
+
+# `waldur-cli team customer delete`
+
+Delete customers (organizations).
+
+## Usage
+
+```bash
+waldur-cli team customer delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli team customer delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli team customer delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team customer get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/customer-get.md -->
+
+# `waldur-cli team customer get`
+
+Get customers (organizations).
+
+## Usage
+
+```bash
+waldur-cli team customer get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--web` | flag | Open this resource's page in Waldur's web UI (HomePort) instead of printing it. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli team customer get <uuid> --format json
+```
+
+Open it in the browser instead:
+
+```bash
+waldur-cli team customer get <uuid> --web
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team customer list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/customer-list.md -->
+
+# `waldur-cli team customer list`
+
+List customers (organizations).
+
+## Usage
+
+```bash
+waldur-cli team customer list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `abbreviation` (string), `accounting_is_running` (boolean), `agreement_number` (string), `archived` (boolean), `backend_id` (string), `contact_details` (string), `current_user_has_project_create_permission` (boolean), `has_resources` (string), `is_call_managing_organization` (boolean), `is_service_provider` (boolean), `name` (string), `name_exact` (string), `native_name` (string), `organization_group_name` (string), `organization_group_uuid` (string), `owned_by_current_user` (boolean), `query` (string), `registration_code` (string), `service_provider_uuid` (string), `slug` (string), `user_uuid` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: abbreviation, access_subnets, accounting_start_date, address, agreement_number, apartment_nr, archived, backend_id, bank_account, bank_name, billing_price_estimate, blocked, call_managing_organization_uuid, city, contact_details, country, country_name, created, customer_credit, customer_unallocated_credit, default_affiliations, default_tax_percent, description, display_billing_info_in_projects, display_name, domain, email, grace_period_days, homepage, house_nr, household, image, is_service_provider, latitude, longitude, max_service_accounts, name, native_name, notification_emails, organization_groups, parish, payment_profiles, phone_number, postal, project_metadata_checklist, project_slug_template, projects_count, registration_code, service_provider, service_provider_uuid, slug, sponsor_number, state, street, url, user_affiliations, user_email_patterns, user_identity_sources, users_count, uuid, vat_code. |
+| `--order FIELDS` | string | Sort server-side (comma-separated, `-` prefix for descending). |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli team customer list --filter name_exact=example --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli team customer list --jmespath '[].[uuid, name]'
+```
+
+Smallest/first result matching a filter, sorted server-side:
+
+```bash
+waldur-cli team customer list --order uuid --limit 1
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team customer update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/customer-update.md -->
+
+# `waldur-cli team customer update`
+
+Update customers (organizations).
+
+## Usage
+
+```bash
+waldur-cli team customer update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli team customer update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli team customer update <uuid> --request '{"abbreviation":null,"access_subnets":null,"accounting_start_date":null,"address":null,"agreement_number":null,"apartment_nr":null,"archived":null,"backend_id":null,"bank_account":null,"bank_name":null,"blocked":null,"city":null,"contact_details":null,"country":null,"default_tax_percent":null,"description":null,"display_billing_info_in_projects":null,"domain":null,"email":null,"grace_period_days":null,"homepage":null,"house_nr":null,"household":null,"image":null,"latitude":null,"longitude":null,"max_service_accounts":null,"name":"","native_name":null,"notification_emails":null,"parish":null,"phone_number":null,"postal":null,"project_metadata_checklist":null,"project_slug_template":null,"registration_code":null,"slug":null,"sponsor_number":null,"state":null,"street":null,"user_affiliations":null,"user_email_patterns":null,"user_identity_sources":null,"vat_code":null}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team customer wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/customer-wait.md -->
+
+# `waldur-cli team customer wait`
+
+Poll customers (organizations) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli team customer wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli team customer wait <uuid> --jmespath "state=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team project create`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/project-create.md -->
+
+# `waldur-cli team project create`
+
+Create projects.
+
+## Usage
+
+```bash
+waldur-cli team project create (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli team project create --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli team project create --request '{"affiliation_uuid":null,"backend_id":null,"customer":"","description":null,"end_date":null,"grace_period_days":null,"image":null,"is_industry":null,"kind":null,"name":"","oecd_fos_2007_code":null,"science_sub_domain":null,"slug":null,"staff_notes":null,"start_date":null,"type":null,"user_affiliations":null,"user_email_patterns":null,"user_identity_sources":null}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team project delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/project-delete.md -->
+
+# `waldur-cli team project delete`
+
+Delete projects.
+
+## Usage
+
+```bash
+waldur-cli team project delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli team project delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli team project delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team project get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/project-get.md -->
+
+# `waldur-cli team project get`
+
+Get projects.
+
+## Usage
+
+```bash
+waldur-cli team project get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--web` | flag | Open this resource's page in Waldur's web UI (HomePort) instead of printing it. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli team project get <uuid> --format json
+```
+
+Open it in the browser instead:
+
+```bash
+waldur-cli team project get <uuid> --web
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team project list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/project-list.md -->
+
+# `waldur-cli team project list`
+
+List projects.
+
+## Usage
+
+```bash
+waldur-cli team project list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `accounting_is_running` (boolean), `affiliation_name` (string), `affiliation_uuid` (string), `backend_id` (string), `can_admin` (boolean), `can_manage` (boolean), `conceal_finished_projects` (boolean), `created` (string), `created_before` (string), `customer` (string), `customer_abbreviation` (string), `customer_name` (string), `customer_native_name` (string), `description` (string), `has_affiliation` (boolean), `include_terminated` (boolean), `is_removed` (boolean), `modified` (string), `modified_before` (string), `name` (string), `name_exact` (string), `query` (string), `science_domain_uuid` (string), `science_sub_domain_uuid` (string), `slug` (string), `user_uuid` (string), `user_uuid_with_active_role` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: affiliation, affiliation_code, affiliation_name, affiliation_uuid, backend_id, billing_price_estimate, created, customer, customer_abbreviation, customer_display_billing_info_in_projects, customer_grace_period_days, customer_name, customer_native_name, customer_slug, customer_uuid, description, effective_end_date, end_date, end_date_requested_by, end_date_updated_at, grace_period_days, image, is_in_grace_period, is_industry, is_removed, kind, marketplace_resource_count, max_service_accounts, name, oecd_fos_2007_code, oecd_fos_2007_label, project_credit, project_metadata, resources_count, science_domain_code, science_domain_name, science_domain_uuid, science_sub_domain, science_sub_domain_code, science_sub_domain_name, slug, staff_notes, start_date, termination_metadata, type, type_name, type_uuid, url, user_affiliations, user_email_patterns, user_identity_sources, uuid. |
+| `--order FIELDS` | string | Sort server-side (comma-separated, `-` prefix for descending). Valid: -created, -customer_abbreviation, -customer_name, -customer_native_name, -end_date, -estimated_cost, -name, -start_date, created, customer_abbreviation, customer_name, customer_native_name, end_date, estimated_cost, name, start_date. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli team project list --filter name_exact=example --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli team project list --jmespath '[].[uuid, name]'
+```
+
+Smallest/first result matching a filter, sorted server-side:
+
+```bash
+waldur-cli team project list --order created --limit 1
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team project update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/project-update.md -->
+
+# `waldur-cli team project update`
+
+Update projects.
+
+## Usage
+
+```bash
+waldur-cli team project update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli team project update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli team project update <uuid> --request '{"affiliation_uuid":null,"backend_id":null,"customer":"","description":null,"end_date":null,"grace_period_days":null,"image":null,"is_industry":null,"kind":null,"name":"","oecd_fos_2007_code":null,"science_sub_domain":null,"slug":null,"staff_notes":null,"start_date":null,"type":null,"user_affiliations":null,"user_email_patterns":null,"user_identity_sources":null}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team project wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/project-wait.md -->
+
+# `waldur-cli team project wait`
+
+Poll projects until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli team project wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli team project wait <uuid> --jmespath "name=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team role create`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/role-create.md -->
+
+# `waldur-cli team role create`
+
+Create roles.
+
+## Usage
+
+```bash
+waldur-cli team role create (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli team role create --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli team role create --request '{"content_type":"","description":null,"description_ar":null,"description_cs":null,"description_da":null,"description_de":null,"description_en":null,"description_es":null,"description_et":null,"description_fr":null,"description_it":null,"description_lt":null,"description_lv":null,"description_nb":null,"description_ru":null,"description_sv":null,"is_active":null,"name":"","permissions":{}}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team role delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/role-delete.md -->
+
+# `waldur-cli team role delete`
+
+Delete roles.
+
+## Usage
+
+```bash
+waldur-cli team role delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli team role delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli team role delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team role get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/role-get.md -->
+
+# `waldur-cli team role get`
+
+Get roles.
+
+## Usage
+
+```bash
+waldur-cli team role get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli team role get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team role list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/role-list.md -->
+
+# `waldur-cli team role list`
+
+List roles.
+
+## Usage
+
+```bash
+waldur-cli team role list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `description` (string), `is_active` (boolean), `name` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: content_type, description, description_ar, description_cs, description_da, description_de, description_en, description_es, description_et, description_fr, description_it, description_lt, description_lv, description_nb, description_ru, description_sv, is_active, is_system_role, name, permissions, users_count, uuid. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli team role list --filter is_active=true --fields uuid,name --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli team role list --jmespath '[].[uuid, name]'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team role update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/role-update.md -->
+
+# `waldur-cli team role update`
+
+Update roles.
+
+## Usage
+
+```bash
+waldur-cli team role update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli team role update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli team role update <uuid> --request '{"content_type":"","description":null,"description_ar":null,"description_cs":null,"description_da":null,"description_de":null,"description_en":null,"description_es":null,"description_et":null,"description_fr":null,"description_it":null,"description_lt":null,"description_lv":null,"description_nb":null,"description_ru":null,"description_sv":null,"is_active":null,"name":"","permissions":{}}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team role wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/role-wait.md -->
+
+# `waldur-cli team role wait`
+
+Poll roles until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli team role wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli team role wait <uuid> --jmespath "name=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team user create`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/user-create.md -->
+
+# `waldur-cli team user create`
+
+Create users.
+
+## Usage
+
+```bash
+waldur-cli team user create (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli team user create --generate-skeleton
+```
+
+Then fill it in and submit:
+
+```bash
+waldur-cli team user create --request '{"active_isds":null,"address":null,"affiliations":null,"agree_with_policy":null,"birth_date":null,"can_use_personal_access_tokens":null,"country_of_residence":null,"deactivation_reason":null,"description":null,"eduperson_assurance":null,"email":"","first_name":null,"gender":null,"image":null,"is_active":null,"is_identity_manager":null,"is_staff":null,"is_support":null,"job_title":null,"last_name":null,"managed_isds":null,"nationalities":null,"nationality":null,"native_name":null,"notifications_enabled":null,"organization":null,"organization_country":null,"organization_registry_code":null,"organization_type":null,"personal_title":null,"phone_number":null,"place_of_birth":null,"preferred_language":null,"slug":null,"token_lifetime":null,"username":""}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team user delete`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/user-delete.md -->
+
+# `waldur-cli team user delete`
+
+Delete users.
+
+## Usage
+
+```bash
+waldur-cli team user delete <UUID>
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+
+## Examples
+
+```bash
+waldur-cli team user delete <uuid>
+```
+
+Preview without deleting:
+
+```bash
+waldur-cli team user delete <uuid> --dry-run
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team user get`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/user-get.md -->
+
+# `waldur-cli team user get`
+
+Get users.
+
+## Usage
+
+```bash
+waldur-cli team user get <UUID> [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli team user get <uuid> --format json
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team user list`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/user-list.md -->
+
+# `waldur-cli team user list`
+
+List users.
+
+## Usage
+
+```bash
+waldur-cli team user list [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--filter KEY=VALUE` | repeatable | Server-side filter. Valid keys: `agreement_date` (string), `civil_number` (string), `customer_uuid` (string), `date_joined` (string), `description` (string), `email` (string), `full_name` (string), `is_active` (boolean), `is_staff` (boolean), `is_support` (boolean), `job_title` (string), `modified` (string), `native_name` (string), `organization` (string), `organization_roles` (string), `phone_number` (string), `project_roles` (string), `project_uuid` (string), `query` (string), `registration_method` (string), `user_keyword` (string), `username` (string), `username_list` (string). |
+| `--fields FIELDS` | string | Fetch only these fields from the server (comma-separated). Valid: active_isds, address, affiliations, agree_with_policy, agreement_date, attribute_sources, birth_date, can_use_personal_access_tokens, civil_number, country_of_residence, date_joined, deactivation_reason, description, eduperson_assurance, email, first_name, full_name, gender, has_active_session, has_usable_password, identity_provider_fields, identity_provider_label, identity_provider_management_url, identity_provider_name, identity_source, image, ip_address, is_active, is_admin_deactivated, is_identity_manager, is_staff, is_support, job_title, last_name, managed_isds, nationalities, nationality, native_name, notifications_enabled, organization, organization_country, organization_registry_code, organization_type, permissions, personal_title, phone_number, place_of_birth, preferred_language, registration_method, requested_email, should_protect_user_details, slug, token, token_expires_at, token_lifetime, url, username, uuid. |
+| `--order FIELDS` | string | Sort server-side (comma-separated, `-` prefix for descending). Valid: -description, -email, -full_name, -is_active, -is_staff, -is_support, -job_title, -native_name, -organization, -phone_number, -registration_method, -username, description, email, full_name, is_active, is_staff, is_support, job_title, native_name, organization, phone_number, registration_method, username. |
+| `--jmespath EXPR` | string | Reshape the already-fetched result client-side (https://jmespath.org). |
+| `--limit N` | integer | Stop after this many items. |
+| `--format FORMAT` | string | table, json, tsv, toon, or ndjson. |
+
+## Examples
+
+```bash
+waldur-cli team user list --filter is_active=true --fields uuid,username --format json
+```
+
+Project just the columns you need, client-side:
+
+```bash
+waldur-cli team user list --jmespath '[].[uuid, username]'
+```
+
+Smallest/first result matching a filter, sorted server-side:
+
+```bash
+waldur-cli team user list --order description --limit 1
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team user update`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/user-update.md -->
+
+# `waldur-cli team user update`
+
+Update users.
+
+## Usage
+
+```bash
+waldur-cli team user update <UUID> (--request JSON | --request-file PATH | --generate-skeleton)
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional | Required unless --generate-skeleton (the template doesn't need a specific resource). |
+| `--request JSON` | string | Request body as inline JSON. |
+| `--request-file PATH` | path | Read the request body from a JSON or YAML file. |
+| `--generate-skeleton [FORMAT]` | json|yaml | Print a fillable template and exit, instead of sending a request. |
+
+## Examples
+
+See the fillable template first:
+
+```bash
+waldur-cli team user update --generate-skeleton
+```
+
+Then fill it in and submit (only the fields you're changing need a value -- `null` fields in the template are omitted, not sent literally):
+
+```bash
+waldur-cli team user update <uuid> --request '{"active_isds":null,"address":null,"affiliations":null,"agree_with_policy":null,"birth_date":null,"can_use_personal_access_tokens":null,"country_of_residence":null,"deactivation_reason":null,"description":null,"eduperson_assurance":null,"email":"","first_name":null,"gender":null,"image":null,"is_active":null,"is_identity_manager":null,"is_staff":null,"is_support":null,"job_title":null,"last_name":null,"managed_isds":null,"nationalities":null,"nationality":null,"native_name":null,"notifications_enabled":null,"organization":null,"organization_country":null,"organization_registry_code":null,"organization_type":null,"personal_title":null,"phone_number":null,"place_of_birth":null,"preferred_language":null,"slug":null,"token_lifetime":null,"username":""}'
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
+### `waldur-cli team user wait`
+<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/user-wait.md -->
+
+# `waldur-cli team user wait`
+
+Poll users until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
+
+## Usage
+
+```bash
+waldur-cli team user wait <UUID> --jmespath EXPR [OPTIONS]
+```
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `<UUID>` | positional, required | uuid of the resource. |
+| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
+| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
+| `--interval N` | integer | Seconds between polls (default 3). |
+
+## Examples
+
+```bash
+waldur-cli team user wait <uuid> --jmespath "username=='OK'"
+```
+
+## Global options
+
+Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
+
+---
+
 ### waldur-cli
 <!-- Source: docs/integrator-guide/waldur-cli/index.md -->
 
@@ -103678,11 +108071,11 @@ consuming machine-readable output.
 It covers a curated slice of the API:
 
 - **OpenStack** — tenants, instances, volumes, networks, subnets, security groups, floating
-  IPs
-- **Team management** — customers, projects, users, roles, invitations, organization groups,
-  permission reviews
+  IPs, plus the flavor/image catalog
+- **Team management** — customers, projects, users, roles
 - **Marketplace** — browse offerings, and provision/terminate OpenStack tenants, instances,
   and volumes through Waldur's order flow
+- **Auth** — manage your own personal access tokens and SSH keys
 
 Every command follows the same shape — `waldur-cli <group> <resource> <verb>` — and the same
 verbs (`list`, `get`, `create`, `update`, `delete`, plus `provision`/`terminate` for
@@ -103747,7 +108140,8 @@ The full guide lives in [`docs/`](docs/):
 1. [Getting started](docs/1-getting-started.md) — authentication, profiles, command
    structure, and output formats
 2. [Querying resources](docs/2-querying-resources.md) — `list`/`get`, filtering, field
-   selection, JMESPath, and streaming large lists with `--format ndjson`
+   selection, server-side ordering, JMESPath, streaming large lists with `--format ndjson`,
+   and opening a resource in the browser with `get --web`
 3. [Managing resources](docs/3-managing-resources.md) — `create`/`update`/`delete`,
    request-body skeletons, and per-resource action verbs (start/stop/detach/approve/...)
 4. [Provisioning](docs/4-provisioning-openstack.md) — the marketplace order flow
@@ -103758,25 +108152,14 @@ The full guide lives in [`docs/`](docs/):
 6. [Troubleshooting](docs/6-troubleshooting.md) — errors, `--debug`, exit codes, and shell
    completions
 
-## Development
+Looking for a specific command? [`docs/reference/`](docs/reference/) has one page per
+`waldur-cli <group> <resource> <verb>`, each with its flags and a real example — generated
+from the same schema data the CLI itself is built from, so it never drifts from what's
+actually there.
 
-`src/commands/`, `src/cli.rs`, and `src/schema.rs` are generated from Waldur's OpenAPI schema by
-[waldur-cli-generator](https://code.opennodecloud.com/waldur/waldur-cli-generator) — don't edit
-them by hand; see that repo for how to regenerate. The rest of `src/` (`lib.rs`, `main.rs`,
-`config.rs`, `output.rs`, `pagination.rs`, `http.rs`, `request.rs`, `filter.rs`, `query.rs`,
-`order.rs`, `progress.rs`) is hand-written and permanent.
-
-The crate is split into a library (everything except the `Cli`/`main()` entry point in
-`main.rs`) and a thin binary, so `tests/` can exercise the actual logic directly:
-
-```bash
-cargo test --locked
-cargo clippy --all-targets
-```
-
-Networked code (`pagination`, `http`, `order`) is tested against an in-process HTTP mock
-([`wiremock`](https://docs.rs/wiremock)) rather than a live Waldur instance — see `tests/*.rs`
-for examples. CI runs both `cargo test` and `cargo clippy` on every merge request.
+Contributing to `waldur-cli` itself (not just using it)? See
+[docs/development.md](docs/development.md) — the generator/target repo split, building and
+testing, regenerating the command surface, and cutting a release.
 
 ## License
 
