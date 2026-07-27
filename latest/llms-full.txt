@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-26T02:03:44.713598Z
+Generated: 2026-07-27T02:03:38.054068Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -103452,12 +103452,16 @@ waldur-cli marketplace resource terminate <marketplace_resource_uuid>
 The typed `openstack ... provision` commands are just a convenience for the three OpenStack
 types — anything they can do, `marketplace resource` can do generically.
 
-## Waiting on anything, not just orders
+## Waiting on anything with real async state, not just orders
 
-Every command with a `get` also gets a `wait` — polling on an interval until a `--jmespath`
-condition against the fetched object is met, or timing out. Waldur's API has no server-side
-push/watch mechanism, so this is a client-side poll, not an instant notification -- but it
-saves you from writing your own poll loop.
+Resources with genuine async, server-side state to reach — an OpenStack tenant/instance/
+volume, a generic marketplace resource, and the order itself — get a `wait` command: polling
+on an interval until a `--jmespath` condition against the fetched object is met, or timing
+out. Waldur's API has no server-side push/watch mechanism, so this is a client-side poll, not
+an instant notification -- but it saves you from writing your own poll loop. Plain CRUD
+resources (a customer, a role, a catalog entry like a flavor) reach their final state
+synchronously on `create`/`update`, so there's nothing to wait *for* and no `wait` command --
+check `--help` on a given resource to see whether it has one.
 
 The condition can be a boolean comparison:
 
@@ -104013,7 +104017,6 @@ One page per command. Generated from the same schema data the CLI itself is buil
 - [get](./personal-access-token-get.md)
 - [create](./personal-access-token-create.md)
 - [delete](./personal-access-token-delete.md)
-- [wait](./personal-access-token-wait.md)
 - [rotate](./personal-access-token-rotate.md)
 
 ## ssh-key
@@ -104022,7 +104025,6 @@ One page per command. Generated from the same schema data the CLI itself is buil
 - [get](./ssh-key-get.md)
 - [create](./ssh-key-create.md)
 - [delete](./ssh-key-delete.md)
-- [wait](./ssh-key-wait.md)
 
 ---
 
@@ -104199,38 +104201,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 ---
 
-### `waldur-cli auth personal-access-token wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/personal-access-token-wait.md -->
-
-# `waldur-cli auth personal-access-token wait`
-
-Poll personal access tokens (named, scoped, time-limited api credentials) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli auth personal-access-token wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli auth personal-access-token wait <uuid> --jmespath "name=='OK'"
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
 ### `waldur-cli auth ssh-key create`
 <!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/ssh-key-create.md -->
 
@@ -104381,38 +104351,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 ---
 
-### `waldur-cli auth ssh-key wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/auth/ssh-key-wait.md -->
-
-# `waldur-cli auth ssh-key wait`
-
-Poll ssh public keys until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli auth ssh-key wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli auth ssh-key wait <uuid> --jmespath "name=='OK'"
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
 ### `waldur-cli marketplace`
 <!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/README.md -->
 
@@ -104422,7 +104360,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 - [list](./offering-list.md)
 - [get](./offering-get.md)
-- [wait](./offering-wait.md)
 
 ## order
 
@@ -104515,38 +104452,6 @@ Smallest/first result matching a filter, sorted server-side:
 
 ```bash
 waldur-cli marketplace offering list --order created --limit 1
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
-### `waldur-cli marketplace offering wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/marketplace/offering-wait.md -->
-
-# `waldur-cli marketplace offering wait`
-
-Poll marketplace offerings (public) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli marketplace offering wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli marketplace offering wait <uuid> --jmespath "state=='OK'"
 ```
 
 ## Global options
@@ -105083,14 +104988,12 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 - [list](./flavor-list.md)
 - [get](./flavor-get.md)
-- [wait](./flavor-wait.md)
 
 ## floating-ip
 
 - [list](./floating-ip-list.md)
 - [get](./floating-ip-get.md)
 - [delete](./floating-ip-delete.md)
-- [wait](./floating-ip-wait.md)
 - [detach-from-port](./floating-ip-detach-from-port.md)
 - [set-ok](./floating-ip-set-ok.md)
 - [unlink](./floating-ip-unlink.md)
@@ -105099,7 +105002,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 - [list](./image-list.md)
 - [get](./image-get.md)
-- [wait](./image-wait.md)
 
 ## instance
 
@@ -105122,7 +105024,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 - [get](./network-get.md)
 - [update](./network-update.md)
 - [delete](./network-delete.md)
-- [wait](./network-wait.md)
 
 ## security-group
 
@@ -105130,7 +105031,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 - [get](./security-group-get.md)
 - [update](./security-group-update.md)
 - [delete](./security-group-delete.md)
-- [wait](./security-group-wait.md)
 
 ## subnet
 
@@ -105138,7 +105038,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 - [get](./subnet-get.md)
 - [update](./subnet-update.md)
 - [delete](./subnet-delete.md)
-- [wait](./subnet-wait.md)
 
 ## tenant
 
@@ -105231,38 +105130,6 @@ Smallest/first result matching a filter, sorted server-side:
 
 ```bash
 waldur-cli openstack flavor list --order cores --limit 1
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
-### `waldur-cli openstack flavor wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/flavor-wait.md -->
-
-# `waldur-cli openstack flavor wait`
-
-Poll openstack flavors (vm sizes) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli openstack flavor wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli openstack flavor wait <uuid> --jmespath "name=='OK'"
 ```
 
 ## Global options
@@ -105468,38 +105335,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 ---
 
-### `waldur-cli openstack floating-ip wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/floating-ip-wait.md -->
-
-# `waldur-cli openstack floating-ip wait`
-
-Poll openstack floating ips until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli openstack floating-ip wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli openstack floating-ip wait <uuid> --jmespath "state=='OK'"
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
 ### `waldur-cli openstack image get`
 <!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/image-get.md -->
 
@@ -105561,38 +105396,6 @@ Project just the columns you need, client-side:
 
 ```bash
 waldur-cli openstack image list --jmespath '[].[uuid, name]'
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
-### `waldur-cli openstack image wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/image-wait.md -->
-
-# `waldur-cli openstack image wait`
-
-Poll openstack images until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli openstack image wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli openstack image wait <uuid> --jmespath "name=='OK'"
 ```
 
 ## Global options
@@ -106173,38 +105976,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 ---
 
-### `waldur-cli openstack network wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/network-wait.md -->
-
-# `waldur-cli openstack network wait`
-
-Poll openstack networks until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli openstack network wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli openstack network wait <uuid> --jmespath "state=='OK'"
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
 ### `waldur-cli openstack security-group delete`
 <!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/security-group-delete.md -->
 
@@ -106349,38 +106120,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 ---
 
-### `waldur-cli openstack security-group wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/security-group-wait.md -->
-
-# `waldur-cli openstack security-group wait`
-
-Poll openstack security groups until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli openstack security-group wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli openstack security-group wait <uuid> --jmespath "state=='OK'"
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
 ### `waldur-cli openstack subnet delete`
 <!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/subnet-delete.md -->
 
@@ -106517,38 +106256,6 @@ Then fill it in and submit (only the fields you're changing need a value -- `nul
 
 ```bash
 waldur-cli openstack subnet update <uuid> --request '{"allocation_pools":null,"cidr":null,"description":null,"disable_gateway":null,"dns_nameservers":null,"gateway_ip":null,"host_routes":null,"name":""}'
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
-### `waldur-cli openstack subnet wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/openstack/subnet-wait.md -->
-
-# `waldur-cli openstack subnet wait`
-
-Poll openstack subnets until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli openstack subnet wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli openstack subnet wait <uuid> --jmespath "state=='OK'"
 ```
 
 ## Global options
@@ -107132,7 +106839,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 - [create](./customer-create.md)
 - [update](./customer-update.md)
 - [delete](./customer-delete.md)
-- [wait](./customer-wait.md)
 
 ## project
 
@@ -107141,7 +106847,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 - [create](./project-create.md)
 - [update](./project-update.md)
 - [delete](./project-delete.md)
-- [wait](./project-wait.md)
 
 ## role
 
@@ -107150,7 +106855,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 - [create](./role-create.md)
 - [update](./role-update.md)
 - [delete](./role-delete.md)
-- [wait](./role-wait.md)
 
 ## user
 
@@ -107159,7 +106863,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 - [create](./user-create.md)
 - [update](./user-update.md)
 - [delete](./user-delete.md)
-- [wait](./user-wait.md)
 
 ---
 
@@ -107352,38 +107055,6 @@ Then fill it in and submit (only the fields you're changing need a value -- `nul
 
 ```bash
 waldur-cli team customer update <uuid> --request '{"abbreviation":null,"access_subnets":null,"accounting_start_date":null,"address":null,"agreement_number":null,"apartment_nr":null,"archived":null,"backend_id":null,"bank_account":null,"bank_name":null,"blocked":null,"city":null,"contact_details":null,"country":null,"default_tax_percent":null,"description":null,"display_billing_info_in_projects":null,"domain":null,"email":null,"grace_period_days":null,"homepage":null,"house_nr":null,"household":null,"image":null,"latitude":null,"longitude":null,"max_service_accounts":null,"name":"","native_name":null,"notification_emails":null,"parish":null,"phone_number":null,"postal":null,"project_metadata_checklist":null,"project_slug_template":null,"registration_code":null,"slug":null,"sponsor_number":null,"state":null,"street":null,"user_affiliations":null,"user_email_patterns":null,"user_identity_sources":null,"vat_code":null}'
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
-### `waldur-cli team customer wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/customer-wait.md -->
-
-# `waldur-cli team customer wait`
-
-Poll customers (organizations) until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli team customer wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli team customer wait <uuid> --jmespath "state=='OK'"
 ```
 
 ## Global options
@@ -107589,38 +107260,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 ---
 
-### `waldur-cli team project wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/project-wait.md -->
-
-# `waldur-cli team project wait`
-
-Poll projects until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli team project wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli team project wait <uuid> --jmespath "name=='OK'"
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
 ### `waldur-cli team role create`
 <!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/role-create.md -->
 
@@ -107796,38 +107435,6 @@ Then fill it in and submit (only the fields you're changing need a value -- `nul
 
 ```bash
 waldur-cli team role update <uuid> --request '{"content_type":"","description":null,"description_ar":null,"description_cs":null,"description_da":null,"description_de":null,"description_en":null,"description_es":null,"description_et":null,"description_fr":null,"description_it":null,"description_lt":null,"description_lv":null,"description_nb":null,"description_ru":null,"description_sv":null,"is_active":null,"name":"","permissions":{}}'
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
-### `waldur-cli team role wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/role-wait.md -->
-
-# `waldur-cli team role wait`
-
-Poll roles until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli team role wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli team role wait <uuid> --jmespath "name=='OK'"
 ```
 
 ## Global options
@@ -108026,38 +107633,6 @@ Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and 
 
 ---
 
-### `waldur-cli team user wait`
-<!-- Source: docs/integrator-guide/waldur-cli/docs/reference/team/user-wait.md -->
-
-# `waldur-cli team user wait`
-
-Poll users until a `--jmespath` condition against it stops evaluating to `false`/`null`, or error on timeout. Client-side polling -- Waldur's API has no server-side watch/push mechanism.
-
-## Usage
-
-```bash
-waldur-cli team user wait <UUID> --jmespath EXPR [OPTIONS]
-```
-
-| Flag | Type | Description |
-| --- | --- | --- |
-| `<UUID>` | positional, required | uuid of the resource. |
-| `--jmespath EXPR` | string, required | Condition to poll for, evaluated against the fetched object on every poll. |
-| `--timeout N` | integer | Seconds to wait for the condition before giving up (default 600). |
-| `--interval N` | integer | Seconds between polls (default 3). |
-
-## Examples
-
-```bash
-waldur-cli team user wait <uuid> --jmespath "username=='OK'"
-```
-
-## Global options
-
-Every command also accepts `--api-url`, `--token`, `--profile`, `--format`, and `--debug`; mutating commands additionally accept `--dry-run`. See [Getting started](../../1-getting-started.md) for what each does.
-
----
-
 ### waldur-cli
 <!-- Source: docs/integrator-guide/waldur-cli/index.md -->
 
@@ -108145,8 +107720,8 @@ The full guide lives in [`docs/`](docs/):
 3. [Managing resources](docs/3-managing-resources.md) — `create`/`update`/`delete`,
    request-body skeletons, and per-resource action verbs (start/stop/detach/approve/...)
 4. [Provisioning](docs/4-provisioning-openstack.md) — the marketplace order flow
-   (`provision`/`terminate`), for OpenStack and any other offering type, plus the generic
-   `wait` verb every resource gets
+   (`provision`/`terminate`), for OpenStack and any other offering type, plus `wait`, for
+   polling resources with real async server-side state to completion
 5. [Recipes & tips](docs/5-recipes-and-tips.md) — real-world workflows and things worth
    knowing
 6. [Troubleshooting](docs/6-troubleshooting.md) — errors, `--debug`, exit codes, and shell
