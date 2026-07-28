@@ -9821,6 +9821,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../developer-guide/resource-api-keys/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resource api keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../developer-guide/service-accounts/" class="md-nav__link">
         
   
@@ -10056,10 +10084,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_40">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_41">
         
           
-          <label class="md-nav__link" for="__nav_3_40" id="__nav_3_40_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_41" id="__nav_3_41_label" tabindex="0">
             
   
   
@@ -10077,8 +10105,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_40_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_40">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_41_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_41">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -10142,10 +10170,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_41">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_42">
         
           
-          <label class="md-nav__link" for="__nav_3_41" id="__nav_3_41_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_42" id="__nav_3_42_label" tabindex="0">
             
   
   
@@ -10163,8 +10191,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_41_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_41">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_42_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_42">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -10228,10 +10256,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_42">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_43">
         
           
-          <label class="md-nav__link" for="__nav_3_42" id="__nav_3_42_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_43" id="__nav_3_43_label" tabindex="0">
             
   
   
@@ -10249,8 +10277,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_42_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_42">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_43_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_43">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -11979,6 +12007,17 @@
     <span class="md-ellipsis">
       
         Action verbs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#batch-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch operations
       
     </span>
   </a>
@@ -17457,6 +17496,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#batch-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch operations
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -17613,6 +17663,28 @@ waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>resource<sp
 the set varies by resource and isn't exhaustive: only bodyless POST actions are currently
 exposed (no read-only/GET actions, and none that take a request body). If an action you need
 is missing, it may still exist in Waldur's API but just isn't wired up yet.</p>
+<h2 id="batch-operations">Batch operations</h2>
+<p><code>delete</code> and every bodyless action verb (<code>start</code>/<code>stop</code>/<code>restart</code>/<code>detach</code>/<code>cancel</code>/...,
+anything above with no <code>--request</code> flag) accept more than one UUID, or none at all —
+omitting them reads UUIDs from stdin instead, one per line. Each line can be a bare UUID or
+a JSON object with a <code>uuid</code> field, so <code>list --format ndjson</code>'s own output pipes straight in
+without an intermediate <code>jq -r .uuid</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>stop<span class="w"> </span>&lt;uuid-1&gt;<span class="w"> </span>&lt;uuid-2&gt;<span class="w"> </span>&lt;uuid-3&gt;
+
+waldur-cli<span class="w"> </span>team<span class="w"> </span>project<span class="w"> </span>list<span class="w"> </span>--format<span class="w"> </span>ndjson<span class="w"> </span>--filter<span class="w"> </span><span class="nv">is_active</span><span class="o">=</span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>waldur-cli<span class="w"> </span>team<span class="w"> </span>project<span class="w"> </span>delete
+</code></pre></div></td></tr></tbody></table></div>
+<p>One bad UUID doesn't abort the rest of the batch: each item is attempted independently, a
+failure is printed to stderr as <code>error: &lt;uuid&gt;: &lt;message&gt;</code> without stopping the loop, and the
+command exits non-zero afterward only if at least one item failed — so you always find out
+which one, and everything else still went through. <code>--dry-run</code> previews every item in the
+batch, not just the first.</p>
+<p>Body-having actions (a <code>--request</code>/<code>--request-file</code>/<code>--generate-skeleton</code> flag present) are
+not batchable — one request body can't sensibly apply to several different resources — so
+those still take exactly one <code>&lt;uuid&gt;</code>.</p>
 
 
 

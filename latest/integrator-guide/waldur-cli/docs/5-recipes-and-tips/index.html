@@ -9821,6 +9821,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../developer-guide/resource-api-keys/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resource api keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../developer-guide/service-accounts/" class="md-nav__link">
         
   
@@ -10056,10 +10084,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_40">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_41">
         
           
-          <label class="md-nav__link" for="__nav_3_40" id="__nav_3_40_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_41" id="__nav_3_41_label" tabindex="0">
             
   
   
@@ -10077,8 +10105,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_40_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_40">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_41_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_41">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -10142,10 +10170,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_41">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_42">
         
           
-          <label class="md-nav__link" for="__nav_3_41" id="__nav_3_41_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_42" id="__nav_3_42_label" tabindex="0">
             
   
   
@@ -10163,8 +10191,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_41_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_41">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_42_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_42">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -10228,10 +10256,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_42">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_43">
         
           
-          <label class="md-nav__link" for="__nav_3_42" id="__nav_3_42_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_43" id="__nav_3_43_label" tabindex="0">
             
   
   
@@ -10249,8 +10277,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_42_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_42">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_43_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_43">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -12030,6 +12058,17 @@
     <span class="md-ellipsis">
       
         SSH into an instance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clean-up-in-bulk-from-a-filtered-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clean up in bulk from a filtered list
       
     </span>
   </a>
@@ -17475,6 +17514,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#clean-up-in-bulk-from-a-filtered-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clean up in bulk from a filtered list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#feed-live-inventory-to-an-llm" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -17650,6 +17700,28 @@ over the system <code>ssh</code> binary beyond looking up the address. That's on
 address, or you're not on the same network as its <code>internal_ips</code>), there's no way in via
 SSH at all; <code>waldur-cli openstack instance get &lt;uuid&gt; --web</code> opens its HomePort page, which
 may offer a browser-based console instead.</p>
+<h3 id="clean-up-in-bulk-from-a-filtered-list">Clean up in bulk from a filtered list</h3>
+<p><code>delete</code> and every bodyless action verb read UUIDs from stdin when none are given as
+arguments, and <code>list --format ndjson</code> emits one JSON object per line -- so filtering and
+acting compose directly, no <code>jq -r .uuid</code> in between:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Delete every errored volume</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>volume<span class="w"> </span>list<span class="w"> </span>--format<span class="w"> </span>ndjson<span class="w"> </span>--filter<span class="w"> </span><span class="nv">state</span><span class="o">=</span>ERRED<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>volume<span class="w"> </span>delete
+
+<span class="c1"># Stop every running instance in a project</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>list<span class="w"> </span>--format<span class="w"> </span>ndjson<span class="w"> </span>--filter<span class="w"> </span><span class="nv">state</span><span class="o">=</span>OK<span class="w"> </span>--project<span class="w"> </span>&lt;uuid&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>stop
+</code></pre></div></td></tr></tbody></table></div>
+<p>Each UUID is attempted independently -- one failure is reported to stderr and the rest of
+the batch still runs, with the command only exiting non-zero afterward if something failed.
+Sanity-check first with <code>--dry-run</code> (add it to the second command in the pipeline) or by
+piping through <code>--jmespath</code> for a quick count before committing to the real thing.</p>
 <h3 id="feed-live-inventory-to-an-llm">Feed live inventory to an LLM</h3>
 <p>Minimise tokens: fetch only the fields that matter, and render as TOON.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -17692,6 +17764,25 @@ may offer a browser-based console instead.</p>
   skeletons — that frameworks can directly ingest as a tool specification. Use <code>--compact</code> if
   you have a tight context budget and only need paths and descriptions.</p>
 </li>
+<li>
+<p><strong><code>api</code> is the escape hatch for anything not wired up as a typed command yet.</strong>
+  <code>waldur-cli api &lt;METHOD&gt; &lt;PATH&gt;</code> calls any endpoint directly, using the same
+  <code>--api-url</code>/<code>--token</code>/<code>--profile</code> credentials as everything else — same transport (retries,
+  <code>--http-timeout</code>, <code>--debug</code> tracing), no schema validation:</p>
+</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>api<span class="w"> </span>GET<span class="w"> </span>/api/customers/<span class="w"> </span>--jmespath<span class="w"> </span><span class="s1">'[].uuid'</span>
+waldur-cli<span class="w"> </span>api<span class="w"> </span>POST<span class="w"> </span>/api/some-endpoint/<span class="w"> </span>--request<span class="w"> </span><span class="s1">'{"key": "value"}'</span>
+waldur-cli<span class="w"> </span>api<span class="w"> </span>DELETE<span class="w"> </span>/api/customers/&lt;uuid&gt;/<span class="w"> </span>--dry-run
+</code></pre></div></td></tr></tbody></table></div>
+<p>Useful for a Waldur endpoint the CLI hasn't generated a command for yet, or quick
+  one-off debugging — a malformed <code>--request</code> only fails server-side, the same as <code>curl</code>
+  would. For anything the CLI <em>does</em> have a typed command for, prefer that instead: it
+  validates the request locally and gets <code>--fields</code>/<code>--filter</code>/<code>--order</code>/table output for
+  free.</p>
+<ul>
 <li>
 <p><strong><code>whoami</code> before anything destructive.</strong> One command confirms which instance and identity
   your credentials currently resolve to — cheap insurance before a <code>delete</code>/<code>terminate</code>.</p>
