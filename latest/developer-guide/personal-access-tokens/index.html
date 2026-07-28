@@ -7714,6 +7714,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../guides/membership-sync-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Membership sync status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../guides/openapi/" class="md-nav__link">
         
   
@@ -10022,6 +10050,45 @@
     <span class="md-ellipsis">
       
         Revoke a PAT
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network-acls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network ACLs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Network ACLs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deployment-requirement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment requirement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit attribution
       
     </span>
   </a>
@@ -17925,6 +17992,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#network-acls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network ACLs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Network ACLs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deployment-requirement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment requirement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit attribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18016,6 +18122,11 @@
 <td>POST</td>
 <td><code>/api/personal-access-tokens/{uuid}/rotate/</code></td>
 <td>Atomic rotation: creates new token, revokes old</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/personal-access-tokens/{uuid}/set_network_acl/</code></td>
+<td>Replace the token's source-network allowlist</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -18203,9 +18314,17 @@
 <td><code>pat_used_from_new_ip</code></td>
 <td>Token used from a different IP than <code>last_used_ip</code></td>
 </tr>
+<tr>
+<td><code>pat_access_denied_from_ip</code></td>
+<td>Request rejected because the source address is outside the token's network ACL</td>
+</tr>
+<tr>
+<td><code>pat_network_acl_updated</code></td>
+<td>Token's network ACL replaced via <code>set_network_acl</code></td>
+</tr>
 </tbody>
 </table>
-<p>All events are scoped to the token's user and registered under <code>USER_MANAGEMENT_EVENTS</code> in <code>waldur_core.logging.enums</code>.</p>
+<p>All events are scoped to the token's user and grouped under <code>EventGroup.AUTH</code> (via <code>EVENT_GROUP_MAPPING</code>) in <code>waldur_core.logging.enums</code>.</p>
 <h2 id="celery-tasks">Celery Tasks</h2>
 <p>The <code>cleanup_expired_personal_access_tokens</code> task runs every 6 hours. It deactivates all PATs where <code>expires_at &lt;= now()</code> and <code>is_active=True</code>, emitting a <code>pat_expired</code> event for each.</p>
 <h2 id="examples">Examples</h2>
@@ -18241,6 +18360,41 @@
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>https://waldur.example.com/api/personal-access-tokens/<span class="o">{</span>uuid<span class="o">}</span>/<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token YOUR_SESSION_TOKEN"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h2 id="network-acls">Network ACLs</h2>
+<p>A token can be restricted to a set of source networks. <code>allowed_networks</code> takes a list of CIDR strings; bare addresses are widened to <code>/32</code> or <code>/128</code>. An empty list (the default) means the token is unrestricted. The number of entries is capped by the <code>PAT_MAX_ACL_ENTRIES</code> Constance setting.</p>
+<p>Set the ACL at creation time:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CI/CD Pipeline"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"LIST_ORDERS"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"expires_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-12-31T23:59:59Z"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"allowed_networks"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"203.0.113.0/24"</span><span class="p">,</span><span class="w"> </span><span class="s2">"2001:db8::/32"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>To change the ACL of an existing token, use the <code>set_network_acl</code> action:</p>
+<p><strong>POST</strong> <code>/api/personal-access-tokens/{uuid}/set_network_acl/</code></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="nt">"allowed_networks"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"203.0.113.0/24"</span><span class="p">]}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>A dedicated action is used rather than PATCH because PUT and PATCH stay disabled on the viewset, and the change is recorded as its own <code>pat_network_acl_updated</code> audit event.</p>
+<p>The action takes the same row lock as <code>rotate</code>, so a concurrent rotation cannot copy a stale ACL onto the new token. Setting the ACL of an inactive token returns 400.</p>
+<p>A request from outside the ACL is rejected with the same generic <code>Invalid token.</code> error as any other authentication failure -- the response never confirms that the token itself is valid. The rejection is recorded as a <code>pat_access_denied_from_ip</code> audit event with the source address (debounced per token and source IP).</p>
+<p>Enforcement <strong>fails closed</strong>: if the source address cannot be determined, a token with a non-empty ACL is rejected.</p>
+<p>A known token presented after it should no longer work -- revoked, or with a deactivated owner, or an owner no longer permitted personal access tokens -- is rejected with the same generic error and recorded as a <code>pat_authentication_rejected</code> audit event carrying a <code>reason</code> (<code>revoked</code>, <code>user_inactive</code>, <code>permission_revoked</code>), debounced per token, reason and source IP. An expired token is rejected without an individual audit event (expiry is an expected lifecycle end, already surfaced by the <code>pat_expired</code> event the cleanup task emits, not a replay signal). An unknown token is never audited, so a forged bearer token cannot flood the event log.</p>
+<p>Audit volume is additionally capped per token: <code>PAT_MAX_AUDIT_EVENTS_PER_HOUR</code> (default 50) limits how many events one token may generate per hour, counted separately for source-address changes and for rejections. Beyond the ceiling the events and the <code>last_used_at</code> / <code>last_used_ip</code> / <code>use_count</code> write are suppressed for the rest of the window and a warning is logged; the requests themselves are unaffected. The per-address debounce alone cannot bound this -- a caller with an IPv6 /64 has effectively unlimited source addresses.</p>
+<h3 id="deployment-requirement">Deployment requirement</h3>
+<p>Waldur resolves the client address from the <strong>first</strong> <code>X-Forwarded-For</code> entry, falling back to <code>REMOTE_ADDR</code>. This is the same resolver used across the platform (audit logging, <code>AccessSubnet</code>, marketplace filters) and matches the ingress <code>whitelistSourceRange</code>.</p>
+<p>The network ACL is a <strong>security boundary, and it is only as strong as the trust boundary that populates <code>X-Forwarded-For</code>.</strong> Because the resolver takes the first entry, that entry must be written by a proxy you control, not by the caller:</p>
+<ul>
+<li><strong>Safe (required):</strong> the edge proxy / ingress <strong>overwrites</strong> <code>X-Forwarded-For</code> with the real client address on each request. The default <code>nginx</code> ingress does exactly this out of the box (<code>use-forwarded-headers: false</code>), so the first entry is always the address that actually connected to the load balancer.</li>
+<li><strong>Unsafe — defeats the ACL:</strong> any proxy in front that is configured to <strong>trust and append</strong> to an incoming <code>X-Forwarded-For</code> (for nginx ingress, <code>use-forwarded-headers: true</code>) without restricting that trust to known upstream proxies. In that mode a caller can send <code>X-Forwarded-For: &lt;an-allowed-ip&gt;</code> and the spoofed value becomes the first entry, bypassing the ACL entirely (<code>curl -H "X-Forwarded-For: 203.0.113.5" ...</code>).</li>
+</ul>
+<p>Do <strong>not</strong> enable forwarded-header trust/append mode unless the proxy accepting it is itself reachable only through a trusted, IP-restricted upstream that overwrites the header. The same caveat applies to <code>AccessSubnet</code> and marketplace IP filters, which share this resolver. Enforcement fails closed on an unresolvable address (a token with a non-empty ACL is rejected), but it cannot distinguish a spoofed first entry from a genuine one — that distinction is the proxy's job.</p>
+<h3 id="audit-attribution">Audit attribution</h3>
+<p>Every audit event carries <code>auth_method</code> in its context -- <code>session</code>, <code>pat</code>, <code>token</code>, or <code>oidc</code>. PAT-authenticated requests additionally carry <code>pat_uuid</code> and <code>pat_name</code>, so an action can be traced to the specific token. Filter with <code>/api/events/?auth_method=pat</code> or <code>/api/events/?pat_uuid=&lt;uuid&gt;</code>.</p>
 <h2 id="see-also">See Also</h2>
 <ul>
 <li><a href="../service-accounts/">Service Accounts</a> -- programmatic access at organizational/project scope</li>
