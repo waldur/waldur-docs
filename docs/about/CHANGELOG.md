@@ -1,5 +1,48 @@
 # Changelog
 
+## 8.1.0-rc.20 - 2026-07-28
+
+### Highlights
+
+This release strengthens access control and credential security: personal access tokens can now be restricted to specific networks, and resources gain rotatable API keys stored encrypted at rest, with deployment tooling updated to wire in the encryption key. Operators also get better visibility into per-member role synchronization on resources, and SLURM offerings can now expose per-partition QoS allow-lists. Several validation and OpenStack synchronization bugs were fixed along the way.
+
+### What's New
+
+- Personal access tokens can now be restricted with network ACLs, limiting where a token may be used from. The UI includes a dialog for managing allowed networks and renders the related audit events, and PAT audit logging was improved overall.
+- Resources gain API keys with rotation support, encrypted storage, and controlled reveal. Helm and Docker Compose deployments now pass the new `FIELD_ENCRYPTION_KEY` setting to backend services to enable this.
+- SLURM offerings can define QoS levels with per-partition allow-lists, giving service providers finer control over which QoS options are available in each partition.
+- Resources can report per-member synchronization status (opt-in), and administrators can trigger a resync of resource roles — useful for troubleshooting agent-based user provisioning.
+- Dun & Bradstreet was added as a company registry backend for organization onboarding in Nordic countries.
+- Administrators can resolve duplicate OpenStack offerings directly from the admin UI.
+- Access subnets can now be aggregated across multiple offerings, optionally including organization-level subnets.
+- AI assistant usage gains KPI aggregates over conversation logs, including anonymous conversation endpoints with token accounting.
+
+### Improvements
+
+- Users signing in via OIDC are now matched to pre-existing accounts, with an audit trail that allows reverting the adoption.
+- Customer owners can now view the `api/version` endpoint.
+- Backend startup no longer loads optional heavy integrations (SAML, Atlassian, Matrix, OpenAI, SDK) eagerly, reducing memory usage by roughly 112 MB per process.
+- Nested tables in the UI gained a filter and settings toolbar plus bulk actions for projects and resources.
+- Conflict-of-interest configuration now prevents assigning the same conflict type to multiple rules.
+
+### Bug Fixes
+
+- Resource termination date validation (backend and date picker) now respects the order start date and project end date.
+- Fixed a crash when filtering conflict-of-interest reviewers by full name.
+- OpenStack synchronization now sets the tenant project on admin-created instance ports and no longer detaches tenant-linked images during the global image pull.
+- Requesting offerings for sub-resources of a resource without a backend scope now returns an empty list instead of failing.
+- Stale marketplace scope references to removed models are cleaned up by a data migration.
+- The resource creation button now handles offerings with a missing type gracefully.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [20 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.19...8.1.0-rc.20) - PAT network ACLs, resource API keys, SLURM partition QoS, member sync status, and OpenStack fixes
+- **Waldur Homeport**: [11 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.19...8.1.0-rc.20) - PAT network ACL UI, D&B onboarding registry, table bulk actions, and termination date picker fix
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.19...8.1.0-rc.20) - wire field encryption key into mastermind pods
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.0-rc.19...8.1.0-rc.20) - pass field encryption key to mastermind services
+
+---
+
 ## 8.1.0-rc.19 - 2026-07-24
 
 ### Highlights
