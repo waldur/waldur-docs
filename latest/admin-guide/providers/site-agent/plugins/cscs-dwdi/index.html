@@ -5115,6 +5115,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#correcting-misreported-months" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correcting Misreported Months
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -18256,6 +18267,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#correcting-misreported-months" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correcting Misreported Months
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -18836,6 +18858,18 @@ waldur_site_load_historical_usage<span class="w"> </span><span class="se">\</spa
 <td><code>--skip-user-usage</code></td>
 <td>Only submit resource-level totals, skip per-user breakdown</td>
 </tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Log intended submissions without sending anything to Waldur</td>
+</tr>
+<tr>
+<td><code>--reconcile-stale</code></td>
+<td>Zero out usage records absent from backend data (see below)</td>
+</tr>
+<tr>
+<td><code>--resource-backend-id</code></td>
+<td>Process only the resource with this backend ID; repeatable</td>
+</tr>
 </tbody>
 </table>
 <h3 id="notes">Notes</h3>
@@ -18846,6 +18880,71 @@ waldur_site_load_historical_usage<span class="w"> </span><span class="se">\</spa
   per-user usage submission, which can significantly speed up large loads</li>
 <li>Resources must already exist in Waldur with valid <code>backend_id</code> values matching DWDI accounts</li>
 <li>Maximum date range is 5 years</li>
+<li>Backfilling <code>usage</code>-billing-type components into past billing periods is only permitted
+  for <strong>staff</strong> tokens; with a service provider token the Waldur API rejects such
+  submissions with an HTTP 400 mentioning "backfilling past billing periods"</li>
+</ul>
+<h3 id="correcting-misreported-months">Correcting Misreported Months</h3>
+<p>If a past month holds wrong values (for example usage misattributed across a month
+boundary), the loader can rewrite that month from the authoritative backend data.
+A staff token is required, since usage-based components are being backfilled.</p>
+<p>Two flags exist specifically for corrections:</p>
+<ul>
+<li><code>--reconcile-stale</code> also <em>zeroes</em> records that the backend does not report:
+  resource totals for accounts with no backend data in that month, and per-user
+  usage rows for users missing from the backend report. Without it, phantom values
+  in Waldur survive whenever the backend has nothing to overwrite them with.</li>
+<li><code>--dry-run</code> prints every intended submission so the correction can be reviewed
+  before anything is written.</li>
+</ul>
+<p>Recommended sequence:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># 1. Review the correction for a single affected account first</span>
+waldur_site_load_historical_usage<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--config<span class="w"> </span>/etc/waldur/cscs-dwdi-config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--offering-uuid<span class="w"> </span>&lt;offering-uuid&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--user-token<span class="w"> </span>&lt;staff-token&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--start-date<span class="w"> </span><span class="m">2026</span>-01-01<span class="w"> </span>--end-date<span class="w"> </span><span class="m">2026</span>-01-31<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--resource-backend-id<span class="w"> </span>&lt;account&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--reconcile-stale<span class="w"> </span>--dry-run
+
+<span class="c1"># 2. Apply it for that account</span>
+waldur_site_load_historical_usage<span class="w"> </span>...<span class="w"> </span>--resource-backend-id<span class="w"> </span>&lt;account&gt;<span class="w"> </span>--reconcile-stale
+
+<span class="c1"># 3. Sweep the whole offering for the affected months (dry-run first, then apply)</span>
+waldur_site_load_historical_usage<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--config<span class="w"> </span>/etc/waldur/cscs-dwdi-config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--offering-uuid<span class="w"> </span>&lt;offering-uuid&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--user-token<span class="w"> </span>&lt;staff-token&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--start-date<span class="w"> </span><span class="m">2026</span>-01-01<span class="w"> </span>--end-date<span class="w"> </span><span class="m">2026</span>-01-31<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--reconcile-stale
+</code></pre></div></td></tr></tbody></table></div>
+<p>Caveats:</p>
+<ul>
+<li>Rewriting a past-period usage re-triggers marketplace billing for that record, but
+  the invoice item is only updated while the month's invoice is still mutable;
+  otherwise Waldur logs a warning and leaves the invoice untouched. Align with the
+  billing owner on which behaviour is expected before applying corrections.</li>
+<li>Newly created past-month usage records are stored without a plan period, so they
+  do not generate retroactive invoice items — the correction is display/reporting
+  oriented by design.</li>
 </ul>
 <h2 id="example-configurations">Example Configurations</h2>
 <p>See the <code>examples/</code> directory for complete configuration examples:</p>
