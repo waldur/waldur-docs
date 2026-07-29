@@ -124,12 +124,29 @@ the same result:
   `/api/marketplace-resource-access-subnets/` (filterable by `offering_uuid`),
   each carrying the resource's backend identifier so a firewall can map an entry
   to the backend it guards.
+
+    To build one allow-list spanning **several offerings**, use
+    `GET /api/marketplace-provider-offerings/aggregated_access_subnets/` with a
+    repeated `offering_uuid` query parameter
+    (`?offering_uuid=<uuid>&offering_uuid=<uuid>`). It returns the same
+    `expanded`, `packed` and `defaults` fields across all requested offerings,
+    plus `organization_subnets` — the organization-level access subnets of
+    customers owning non-terminated resources of the offerings, populated when
+    `include_organization_subnets=true` is passed and merged into `packed`. The
+    caller must have provider-side access to every requested offering.
 - **From the command line** — run the `resource_access_subnets` management
-  command to dump the merged list, for one offering or all:
+  command to dump the merged list, for one offering, several, or all:
 
     ```bash
     # merged allow-list for a single offering
     waldur resource_access_subnets --offering <offering-uuid>
+
+    # several offerings at once (repeat the flag)
+    waldur resource_access_subnets --offering <uuid-1> --offering <uuid-2>
+
+    # also merge in the organization-level subnets of customers
+    # owning non-terminated resources of the selected offerings
+    waldur resource_access_subnets --offering <offering-uuid> --include-organization-subnets
 
     # all offerings, written to a file
     waldur resource_access_subnets --output allow-list.txt
