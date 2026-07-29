@@ -17614,15 +17614,38 @@ the same result:</p>
   raw per-resource entries are also available at
   <code>/api/marketplace-resource-access-subnets/</code> (filterable by <code>offering_uuid</code>),
   each carrying the resource's backend identifier so a firewall can map an entry
-  to the backend it guards.
+  to the backend it guards.</p>
+<p>To build one allow-list spanning <strong>several offerings</strong>, use
+<code>GET /api/marketplace-provider-offerings/aggregated_access_subnets/</code> with a
+repeated <code>offering_uuid</code> query parameter
+(<code>?offering_uuid=&lt;uuid&gt;&amp;offering_uuid=&lt;uuid&gt;</code>). It returns the same
+<code>expanded</code>, <code>packed</code> and <code>defaults</code> fields across all requested offerings,
+plus <code>organization_subnets</code> — the organization-level access subnets of
+customers owning non-terminated resources of the offerings, populated when
+<code>include_organization_subnets=true</code> is passed and merged into <code>packed</code>. The
+caller must have provider-side access to every requested offering.
 - <strong>From the command line</strong> — run the <code>resource_access_subnets</code> management
-  command to dump the merged list, for one offering or all:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># merged allow-list for a single offering</span>
+  command to dump the merged list, for one offering, several, or all:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># merged allow-list for a single offering</span>
 waldur<span class="w"> </span>resource_access_subnets<span class="w"> </span>--offering<span class="w"> </span>&lt;offering-uuid&gt;
+
+<span class="c1"># several offerings at once (repeat the flag)</span>
+waldur<span class="w"> </span>resource_access_subnets<span class="w"> </span>--offering<span class="w"> </span>&lt;uuid-1&gt;<span class="w"> </span>--offering<span class="w"> </span>&lt;uuid-2&gt;
+
+<span class="c1"># also merge in the organization-level subnets of customers</span>
+<span class="c1"># owning non-terminated resources of the selected offerings</span>
+waldur<span class="w"> </span>resource_access_subnets<span class="w"> </span>--offering<span class="w"> </span>&lt;offering-uuid&gt;<span class="w"> </span>--include-organization-subnets
 
 <span class="c1"># all offerings, written to a file</span>
 waldur<span class="w"> </span>resource_access_subnets<span class="w"> </span>--output<span class="w"> </span>allow-list.txt
