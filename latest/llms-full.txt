@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-30T16:19:21.220180Z
+Generated: 2026-07-30T16:57:04.486589Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6642,9 +6642,63 @@ options:
 
 ```
 
+## rebill_historical_usage
+
+Re-bill ComponentUsage records whose invoice item is missing or stale because their invoice was already finalized when the usage was reported or corrected (e.g. via waldur_site_load_historical_usage in waldur-site-agent). Staff-only, one-off correction tool. Never run automatically or on a schedule. Pass -v 2 (or -v 3) for debug-level logging of every decision this command makes.
+
+```bash
+
+usage: waldur rebill_historical_usage [--execute] [--offering OFFERING_UUID]
+                                      [--resource RESOURCE_UUID]
+                                      [--start-date START_DATE]
+                                      [--end-date END_DATE]
+                                      [--allow-aggregated-discount-recompute]
+
+options:
+  --execute             Actually apply the correction. Without this flag the
+                        command always runs as a dry run -- it computes and
+                        prints the exact same plan (inside a transaction
+                        that's deliberately rolled back at the end) but writes
+                        nothing to the database. This default is deliberate:
+                        review the printed plan first, then re-run with
+                        --execute once it looks right.
+  --offering OFFERING_UUID
+                        Only process resources belonging to the offering with
+                        this UUID.
+  --resource RESOURCE_UUID
+                        Only process the resource with this UUID.
+  --start-date START_DATE
+                        Only billing periods on or after this date (format:
+                        YYYY-MM-DD).
+  --end-date END_DATE   Only billing periods on or before this date (format:
+                        YYYY-MM-DD).
+  --allow-aggregated-discount-recompute
+                        Allow recomputing volume discounts for offering
+                        components that use the aggregated (non-per-resource)
+                        discount scope. This also rewrites discount amounts
+                        for OTHER resources sharing that offering component on
+                        the same invoice. Review the printed sibling-impact
+                        report (from a plain dry-run invocation) before using
+                        this.
+
+```
+
 ## rebuild_billing
 
 Create or update price estimates based on invoices.
+
+## reencrypt_fields
+
+Re-encrypt stored secrets under the current FIELD_ENCRYPTION_KEY. Run this after promoting a new key (with the previous one in FIELD_ENCRYPTION_KEY_FALLBACKS) so the old key can then be retired; rows are otherwise only re-encrypted when they happen to be rewritten. Use --dry-run to audit which rows the configured keys can still decrypt.
+
+```bash
+
+usage: waldur reencrypt_fields [--dry-run]
+
+options:
+  --dry-run  Report what would be re-encrypted without writing anything
+
+```
 
 ## removestalect
 
@@ -29914,6 +29968,7 @@ you push.
 | [croit-s3](plugins/croit-s3/README.md) | Croit S3 storage plugin |
 | [cscs-dwdi](plugins/cscs-dwdi/README.md) | CSCS-DWDI reporting plugin |
 | [digitalocean](plugins/digitalocean/README.md) | DigitalOcean plugin |
+| [envoy-ai-gateway](plugins/envoy-ai-gateway/README.md) | Envoy AI Gateway plugin |
 | [harbor](plugins/harbor/README.md) | Harbor container registry plugin |
 | [k8s-ut-namespace](plugins/k8s-ut-namespace/README.md) | Kubernetes UT ManagedNamespace plugin |
 | keycloak-client | Shared Keycloak client for Waldur Site Agent plugins |
@@ -30458,13 +30513,13 @@ Use standard Python logging configuration or waldur-site-agent logging settings 
 
 # CSCS-DWDI Plugin for Waldur Site Agent
 
-This plugin provides integration with the CSCS Data Warehouse Data Intelligence (DWDI) system to report both
-computational and storage usage data to Waldur. The plugin supports secure OIDC authentication and optional
-SOCKS proxy connectivity for accessing DWDI API endpoints from restricted networks.
+This plugin provides integration with the CSCS Data Warehouse Data Intelligence (DWDI) system to report
+compute, storage, and LLM inference usage data to Waldur. The plugin supports secure OIDC authentication and
+optional SOCKS proxy connectivity for accessing DWDI API endpoints from restricted networks.
 
 ## Features
 
-- **Dual Backend Support**: Separate backends for compute and storage resource usage reporting
+- **Multiple Backend Support**: Separate backends for compute, storage, and inference usage reporting
 - **OIDC Authentication**: Secure client credentials flow with automatic token refresh
 - **Proxy Support**: SOCKS and HTTP proxy support for network-restricted environments
 - **Flexible Configuration**: Configurable unit conversions and component mappings
@@ -30472,10 +30527,11 @@ SOCKS proxy connectivity for accessing DWDI API endpoints from restricted networ
 
 ## Overview
 
-The plugin implements two separate backends to handle different types of accounting data:
+The plugin implements three separate backends to handle different types of accounting data:
 
 - **Compute Backend** (`cscs-dwdi-compute`): Reports CPU and node hour usage from HPC clusters
 - **Storage Backend** (`cscs-dwdi-storage`): Reports storage space and inode usage from filesystems
+- **Inference Backend** (`cscs-dwdi-inference`): Reports LLM inference cost per resource
 
 ## Backend Types
 
@@ -30504,6 +30560,21 @@ The storage backend queries the DWDI API for storage resource usage and reports:
 
 - `/api/v1/storage/usage-month/filesystem_name/data_type` - Monthly storage usage
 - `/api/v1/storage/usage-day/filesystem_name/data_type` - Daily storage usage
+
+### Inference Backend
+
+The inference backend queries the DWDI API for LLM inference cost and reports:
+
+- Inference cost per resource, already priced by the warehouse (a `totalCost` value)
+- Cost mapped onto a single `token_cost` component, keyed by Waldur resource UUID
+
+Unlike the compute and storage backends — which report raw usage that Waldur then prices — the
+inference backend reports a **pre-computed cost**: the DWDI warehouse owns the pricing and Waldur
+records the amount as-is.
+
+**API Endpoints Used:**
+
+- `/inference/resource/cost` - Monthly inference cost per resource
 
 ## Configuration
 
@@ -30567,6 +30638,31 @@ backend_components:
     accounting_type: "usage"
     label: "File Count"
 ```
+
+### Inference Backend Configuration
+
+```yaml
+backend_type: "cscs-dwdi-inference"
+
+backend_settings:
+  cscs_dwdi_api_url: "https://dwdi.cscs.ch"
+  cscs_dwdi_client_id: "your_oidc_client_id"
+  cscs_dwdi_client_secret: "your_oidc_client_secret"
+  cscs_dwdi_oidc_token_url: "https://auth.cscs.ch/realms/cscs/protocol/openid-connect/token"
+  cscs_dwdi_oidc_scope: "openid"  # Optional
+
+backend_components:
+  token_cost:
+    measured_unit: "EUR"
+    unit_factor: 1
+    accounting_type: "usage"
+    label: "Inference cost"
+```
+
+The warehouse returns a per-resource `totalCost`; the backend divides it by the `token_cost`
+component's `unit_factor` (or `unit_factor_reporting`) and reports the result. Because the amount is
+already priced by DWDI, set the offering plan's `token_cost` price to 1 so Waldur records the cost
+as-is.
 
 ## Authentication
 
@@ -30853,6 +30949,10 @@ This plugin is compatible with DWDI API version 1 (`/api/v1/`). It requires the 
 - `/api/v1/storage/usage-month/filesystem_name/data_type`
 - `/api/v1/storage/usage-day/filesystem_name/data_type`
 
+**Inference API:**
+
+- `/inference/resource/cost`
+
 ## Troubleshooting
 
 ### Authentication Issues
@@ -30951,6 +31051,7 @@ plugins/cscs-dwdi/
 
 - **`CSCSDWDIComputeBackend`**: Compute usage reporting backend
 - **`CSCSDWDIStorageBackend`**: Storage usage reporting backend
+- **`CSCSDWDIInferenceBackend`**: Inference cost reporting backend
 - **`CSCSDWDIClient`**: HTTP client for CSCS-DWDI API communication with OIDC authentication
 
 ### Key Features
@@ -31062,6 +31163,283 @@ backend_settings:
 
 When limits match an entry in `size_mapping`, the droplet will be resized to
 the corresponding `size_slug`.
+
+---
+
+### Envoy AI Gateway Plugin for Waldur Site Agent
+<!-- Source: docs/admin-guide/providers/site-agent/plugins/envoy-ai-gateway/README.md -->
+
+# Envoy AI Gateway Plugin for Waldur Site Agent
+
+This plugin integrates [Envoy AI Gateway](https://aigateway.envoyproxy.io/) with Waldur so that
+LLM inference access can be sold, provisioned, metered, and billed through the Waldur marketplace.
+It provisions per-customer API keys from marketplace orders and reports usage back to Waldur for
+metering and billing. Token/cost budgets are enforced by Waldur (report usage -> mastermind pauses
+the resource when a limit is reached -> the agent blocks the key), not by the gateway.
+
+The plugin is Kubernetes-native: API keys live in Kubernetes Secrets that the Envoy Gateway
+`SecurityPolicy` reads.
+
+## Features
+
+- **API key lifecycle**: provision, pause, restore, and terminate gateway API keys directly from
+  Waldur marketplace orders
+- **Two-secret pause model**: suspend access at the authentication layer by moving a key between
+  an *active* and a *blocked* Secret — no key regeneration on restore
+- **Usage reporting**: report per-key token usage from a pluggable usage warehouse back to Waldur
+  for metering and billing
+- **In-cluster or external**: run inside the cluster (in-cluster config) or against a kubeconfig
+  context for local development
+
+## Overview
+
+The plugin exposes two backends that are normally paired on a single composed offering:
+
+- **Management backend** (`envoy`): the `order_processing_backend`. Owns the API key lifecycle
+  (provision, pause, restore, terminate).
+- **Usage reporting backend** (`envoy-usage`): the `reporting_backend`. Reads per-key token usage
+  from a usage warehouse and submits it to Waldur.
+
+Token pricing itself lives in Waldur: the reporting backend submits raw token counts, and the
+offering plan prices them (e.g. €/token). Keys and usage are keyed off a single
+`client_id` (the resource's `backend_id`) — provision it once and everything else follows.
+
+For deployments that price usage upstream instead (per-model rates, discounts), the sibling
+`cscs-dwdi-inference` reporting backend is the cost-model alternative: it reports a pre-priced
+`token_cost` component that Waldur records as-is rather than raw token counts. Pair it in place of
+`envoy-usage` when the warehouse — not Waldur — owns pricing.
+
+## Backend Types
+
+### Management Backend (`envoy`)
+
+Envoy Gateway's `SecurityPolicy` authenticates requests against API keys stored as `clientID: key`
+entries in a Kubernetes Secret. This backend manages those entries.
+
+**Key lifecycle** — to support pause/restore using only the `client_id`, two Secrets are kept and
+entries move between them:
+
+- **create (order)**: generate a `client_id` + random key, add `client_id: key` to the **active**
+  Secret, and return `client_id` as the `backend_id` (surfacing the key + endpoint on the
+  resource).
+- **pause**: move the entry **active → blocked** — authentication now fails with 401.
+- **restore**: move the entry **blocked → active**.
+- **terminate**: remove the entry from both Secrets.
+
+**Kubernetes objects touched:** Secrets (`get`/`patch`) in the configured namespace.
+
+**Limit enforcement** — the gateway does not cap usage. The reporting backend submits usage to
+Waldur; when a `LIMIT` component's reported usage reaches its limit and the offering sets
+`plugin_options.action_on_usage_limit: pause`, mastermind pauses the resource and the agent blocks
+the key (active -> blocked Secret). When usage drops back below the limit, the resource is unpaused
+and the key is restored.
+
+### Usage Reporting Backend (`envoy-usage`)
+
+A read-only backend that reports per-key token usage from a usage warehouse — any HTTP service
+that exposes the endpoints below (for example a small collector that aggregates the gateway's
+per-request usage metrics).
+
+**API endpoints used:**
+
+- `GET /usage-month?from=YYYY-MM&to=YYYY-MM&client_id=...` — per-`client_id` usage rows for a
+  month range; response shape `{"usage": [{"client_id": "...", "input_tokens": N, "output_tokens": N}]}`
+- `GET /health` — liveness check used by `ping()`
+
+The backend maps the warehouse's token fields onto the offering's components, reporting only the
+components the offering defines. It implements `get_usage_report_for_period()`, so historical
+usage can be bulk-loaded with the core `waldur_site_load_historical_usage` command.
+
+## Configuration
+
+The two backends are typically combined on one composed offering and share a single
+`backend_settings` block. The keys for each backend are listed separately below, followed by a
+combined example.
+
+### Management backend settings (`envoy`)
+
+| Setting | Required | Default | Description |
+|---------|----------|---------|-------------|
+| `namespace` | yes | — | Namespace holding the api-key Secrets |
+| `gateway_url` | yes | — | Public base URL of the gateway, used for the resource endpoint |
+| `apikey_secret` | no | `envoy-ai-gateway-apikeys` | Secret the `SecurityPolicy` reads keys from |
+| `blocked_secret` | no | `<apikey_secret>-blocked` | Secret holding paused keys |
+| `kubeconfig_path` | no | in-cluster | Path to a kubeconfig; omit to use in-cluster config |
+| `kube_context` | no | current | kubeconfig context to target (local/dev) |
+
+### Usage reporting backend settings (`envoy-usage`)
+
+| Setting | Required | Default | Description |
+|---------|----------|---------|-------------|
+| `api_url` | yes | — | Usage warehouse base URL |
+| `api_token` | no | — | Bearer token for the warehouse API |
+
+### Composed offering (both backends)
+
+```yaml
+offerings:
+  - name: "LLM Inference"
+    order_processing_backend: "envoy"
+    membership_sync_backend: "envoy"     # required for pause/restore (key blocking)
+    reporting_backend: "envoy-usage"
+
+    backend_settings:
+      # --- management backend (envoy) ---
+      namespace: "ai-gateway"
+      gateway_url: "https://ai-gateway.example.com"
+      apikey_secret: "envoy-ai-gateway-apikeys"   # optional, this is the default
+      blocked_secret: null                         # optional, defaults to <apikey_secret>-blocked
+      kubeconfig_path: null                        # omit to use in-cluster config
+      # --- usage reporting backend (envoy-usage) ---
+      api_url: "http://usage-warehouse:9000"
+      api_token: null
+
+    backend_components:
+      input_tokens:
+        measured_unit: "tokens"
+        accounting_type: "usage"
+        label: "Input tokens"
+      output_tokens:
+        measured_unit: "tokens"
+        accounting_type: "usage"
+        label: "Output tokens"
+```
+
+The `input_tokens` / `output_tokens` components are the usage meters the reporting backend fills
+in; `accounting_type: usage` here is the agent-side metering type. Enforcement is configured on the
+Waldur **offering**, not in this file: for a resource to auto-pause, the matching offering
+component must be `billing_type: LIMIT` and the offering must set
+`plugin_options.action_on_usage_limit: pause` — only `LIMIT` components are checked against their
+limit. When reported usage reaches the limit, Waldur pauses the resource and the agent blocks the
+key. Blocking runs in the membership-sync loop, so `membership_sync_backend: envoy` must be set
+(as above) — without it the agent never blocks the key and the limit is not enforced.
+
+## Prerequisites
+
+- **Both Secrets must pre-exist.** Create empty `apikey_secret` and `<apikey_secret>-blocked`
+  Secrets in `namespace` as part of the deployment; the plugin patches entries into them but does
+  not create the Secrets themselves.
+- **RBAC.** The agent's ServiceAccount needs the permissions below.
+
+### Kubernetes RBAC
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: waldur-site-agent
+  namespace: ai-gateway
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "patch"]
+```
+
+## Usage Reporting
+
+The `envoy-usage` backend is read-only. It implements usage reporting and resource pull, but does
+not create, pause, restore, or otherwise manage resources (those belong to the `envoy` backend).
+Usage is reported for the current month via `_get_usage_report()` and for arbitrary past months
+via `get_usage_report_for_period()`, which the historical loader uses.
+
+## Installation
+
+The plugin is discovered automatically once `waldur-site-agent-envoy-ai-gateway` is installed
+alongside `waldur-site-agent`.
+
+### UV Workspace Installation
+
+```bash
+# Install all workspace packages including this plugin
+uv sync --all-packages
+```
+
+### Manual Installation
+
+```bash
+# From source
+pip install -e plugins/envoy-ai-gateway/
+```
+
+## Testing
+
+```bash
+# Run all plugin tests
+uv run pytest plugins/envoy-ai-gateway/tests/
+
+# Run with coverage
+uv run pytest plugins/envoy-ai-gateway/tests/ --cov=waldur_site_agent_envoy_ai_gateway
+```
+
+The suite covers key lifecycle (provision/pause/restore/terminate), the usage warehouse client, and
+usage report mapping — all with the Kubernetes and HTTP clients mocked, so no live cluster or
+warehouse is required.
+
+## Troubleshooting
+
+### Keys are provisioned but requests are rejected
+
+- Confirm the `SecurityPolicy` reads the Secret named by `apikey_secret`.
+- Check the key landed in the **active** Secret, not the blocked one (`kubectl get secret ...`).
+- Verify the request sends the API key the order surfaced.
+
+### Usage reports are empty or zero
+
+- Check the warehouse is reachable: the backend's `ping()` hits `GET /health`.
+- Confirm the warehouse returns rows keyed by the same `client_id` the gateway authenticates with
+  (the resource `backend_id`).
+- Confirm the offering's `backend_components` are named to match the warehouse fields
+  (`input_tokens`, `output_tokens`).
+
+### RBAC errors on Secrets
+
+- Grant `get`/`patch` on Secrets in `namespace` (see
+  [Kubernetes RBAC](#kubernetes-rbac)).
+
+## Development
+
+### Project Structure
+
+```text
+plugins/envoy-ai-gateway/
+├── pyproject.toml
+├── README.md
+├── waldur_site_agent_envoy_ai_gateway/
+│   ├── __init__.py
+│   ├── backend.py          # EnvoyAIGatewayBackend — key lifecycle (management)
+│   ├── client.py           # EnvoyAIGatewayClient — K8s Secrets
+│   ├── reporting.py        # EnvoyUsageReportingBackend — token usage reporting
+│   ├── usage_client.py     # EnvoyUsageClient — usage warehouse HTTP client
+│   └── schemas.py          # Pydantic configuration schemas
+└── tests/
+    ├── test_envoy_backend.py
+    ├── test_envoy_client.py
+    ├── test_envoy_usage_backend.py
+    └── test_envoy_usage_client.py
+```
+
+### Key Classes
+
+- **`EnvoyAIGatewayBackend`** (`envoy`): management backend — provisions and blocks/unblocks keys
+- **`EnvoyAIGatewayClient`**: Kubernetes client for api-key Secrets
+- **`EnvoyUsageReportingBackend`** (`envoy-usage`): reports token usage to Waldur
+- **`EnvoyUsageClient`**: HTTP client for the usage warehouse
+
+### Registered Entry Points
+
+Each backend registers under the same name across three groups (`waldur_site_agent.backends`,
+`waldur_site_agent.component_schemas`, `waldur_site_agent.backend_settings_schemas`):
+
+- `envoy` — management backend + its schemas
+- `envoy-usage` — reporting backend + its schemas
+
+### Extension Points
+
+- **Different usage warehouse**: implement the two HTTP endpoints, or subclass `EnvoyUsageClient`
+  to match another warehouse's API.
+- **Cost-based reporting**: report a priced `token_cost` component instead of raw token counts if
+  pricing should live outside Waldur — the sibling `cscs-dwdi-inference` backend implements exactly
+  this model and can be used as the `reporting_backend` in place of `envoy-usage`.
 
 ---
 
@@ -70114,6 +70492,7 @@ for deployment-specific documentation.
 ## Practical guides for the service provider organization
 
 * [Marketplace and offering creation](service-provider-organization/adding-an-offering.md)
+* [Membership sync status](service-provider-organization/membership-sync-status.md)
 
 ## Practical guides for the call managing organization
 
@@ -71086,6 +71465,122 @@ it came from. Because each offering runs its own directory and pool, the same
 project can appear under several offerings with different GIDs.
 
 [Image: Consolidated POSIX identities of a user]
+
+---
+
+### Membership sync status
+<!-- Source: docs/user-guide/service-provider-organization/membership-sync-status.md -->
+
+# Membership sync status
+
+For offerings whose access control is applied by a site agent on the
+provider's backend (for example a Rancher cluster with Keycloak groups), a
+role granted in Waldur becomes effective only after the agent's next
+synchronization cycle succeeds on the backend. Membership sync status makes
+that propagation visible per member: team views show whether each role grant
+has actually landed, and providers can request an immediate re-sync.
+
+## Enabling
+
+**Performed by:** Service provider (offering owner)
+
+The feature is opt-in per offering via the **Membership sync status** plugin
+option (`enable_membership_sync_status`) on the offering's Integration page.
+It builds on resource sub-projects (`enable_resource_projects`).
+
+When the option is off, team views render exactly as before and no sync
+information is collected.
+
+!!! note
+    The reporting side requires a site agent version that supports
+    membership sync reports. Older agents keep working — grants simply show
+    no status indicator.
+
+## Reading the status indicators
+
+Each role badge on the resource **Team** tab (and on the expanded
+per-sub-project rows) carries an indicator reported by the agent:
+
+[Image: Per-member sync status indicators on the resource team]
+
+| Indicator | State | Meaning |
+|---|---|---|
+| Green check | **Synced** | Access is active on the provider side. |
+| Clock | **Pending** | The backend has not applied this role yet — typically the agent has not completed a cycle since the grant. |
+| Warning triangle | **Missing in identity provider** | The user is not known to the identity provider yet. Access activates automatically after their first login, when their account appears. |
+| Cross | **Error** | Provider-side synchronization failed; the tooltip carries the reported message. |
+| No indicator | Not reported | The agent has not reported on this grant (older agent, or the first report has not arrived yet). |
+
+Hover an indicator for the detailed message and the time of the last agent
+report.
+
+## Inviting external users
+
+**Performed by:** Service provider or staff
+
+An offering role can be granted to someone who does not have a Waldur account
+yet: use **Add** → **Invite** on the resource **Team** tab, enter their email
+and pick the role. The role picker shows each offering role by its
+description, so the person choosing sees a readable label rather than a raw
+name.
+
+[Image: Inviting an external user to an offering role]
+
+Waldur emails the person an acceptance link. Until they accept **and** sign in
+to the provider's identity provider for the first time, their grant shows
+**Missing in identity provider** (see the indicator table above); the agent
+flips it to **Synced** automatically once their account appears on the backend
+after that first login.
+
+Once accepted, the invited user sees only what the grant allows: their
+assigned role is listed on their user dashboard with its scope and
+description, and the resource page shows a reduced set of tabs (no team
+management).
+
+[Image: What an invited user sees on their dashboard]
+
+## Requesting a re-sync
+
+**Performed by:** Service provider or staff
+
+The **Re-sync memberships** action on the resource Team tab asks the
+offering's agent to re-apply the resource's role grants on the backend.
+
+- Requests are throttled to one per resource per 30 seconds.
+- Delivery uses the offering's event subscriptions. Agents running in
+  polling-only mode apply the change on their next cycle regardless — the
+  request always succeeds, and the indicators refresh after the agent
+  reports back.
+
+## Explaining roles to users
+
+Offering roles are provider-defined labels whose effect lives on the
+provider's backend, so their names alone (for example `ingress_manage`) say
+little to the person assigning or receiving them. Fill in the **description**
+of each role in the offering's **Edit** → **Roles** catalog: it is shown in
+the assign-user dialog and used as the role's display name in team views and
+on user dashboards.
+
+[Image: Role descriptions shown in the assign dialog]
+
+## Auditing sub-project changes
+
+Creation, removal and recovery of resource sub-projects are recorded with
+the acting user, alongside role changes. Open **Actions** → **History log**
+on the resource Team tab to see the combined trail:
+
+[Image: Resource history log with sub-project lifecycle events]
+
+The sub-project rows themselves also record who created them
+(`created_by`), and who removed them when soft-deleted.
+
+## Checking that the agent is alive
+
+Sync indicators are only as fresh as the last agent report. The offering's
+**Manage** → **Status** page shows the connected agent's identity, version,
+registered services and the last run of each processor — if the last run
+stops advancing, the agent is down or misconfigured and the indicators go
+stale.
 
 ---
 
@@ -96131,8 +96626,8 @@ If only some repositories were tagged successfully:
 
 # Resource API Keys
 
-How a site-agent resource's API keys are generated, applied, revealed, rotated
-and revoked. The motivating case is inference resources (Envoy AI Gateway keys),
+How a site-agent resource's API keys are generated, applied, revealed and
+rotated. The motivating case is inference resources (Envoy AI Gateway keys),
 but nothing here is Envoy-specific: the croit-s3 plugin uses the same lifecycle
 for S3 access/secret pairs, which is what surfaced the mutable-`client_id` case
 below. The agent-side mechanics build on the
@@ -96141,10 +96636,10 @@ below. The agent-side mechanics build on the
 
 ## Overview
 
-- A resource owns **multiple** API keys, each independently revealed, rotated
-  and revoked from the portal.
-- **Zero-downtime rotation**: rotating or revoking one key never disturbs the
-  others, so consumers on a different key keep working.
+- A resource owns **multiple** API keys, each independently revealed and
+  rotated from the portal. The count is fixed at provisioning.
+- **Zero-downtime rotation**: rotating one key never disturbs the others, so
+  consumers on a different key keep working.
 - **The stored key is always a working key.** Waldur never hands a member a key
   the gateway would reject.
 - **Safe visibility**: members read the keys on demand, but they are never
@@ -96171,7 +96666,8 @@ source.
 default — two independent keys are what make rotation zero-downtime, and they
 model the operator reality of primary/standby credentials. Per-user keys were
 rejected: they multiply the provisioning surface for a credential that is
-inherently shared, and revocation is solved by rotating/revoking the shared keys.
+inherently shared, and cutting a departed member's access is solved by rotating
+the shared keys.
 
 ## Model
 
@@ -96211,11 +96707,16 @@ the standard `StateIndicator` (`@/core/StateIndicator`) — no bespoke badge:
 | `Creating` | agent is generating + applying the initial key | spinner |
 | `OK` | applied and live at the gateway | green |
 | `Updating` | rotation in flight (agent applying a new value) | spinner |
-| `Terminating` | revoke in flight (agent removing the Secret entry) | spinner |
 | `Erred` | the agent could not apply the change | red |
 
-`Creating`/`Updating`/`Terminating` are the transitional (spinner) states, matching
-how `ResourceStateField` treats a resource. A confirmed revoke deletes the row.
+`Creating` and `Updating` are the transitional (spinner) states, matching how
+`ResourceStateField` treats a resource.
+
+There is deliberately **no `Terminating`**. It existed for a consumer-facing revoke
+that no longer ships, so nothing could enter it; a state a model can describe but
+never reach only invites code that guards against it. Termination cleanup does not
+need it — it deletes the rows directly (`callbacks.py`). Migration 0256 drops the
+choice and moves any key left mid-revoke to `Erred`, where rotation can repair it.
 
 ```mermaid
 stateDiagram-v2
@@ -96223,18 +96724,15 @@ stateDiagram-v2
     Creating --> OK: report_created
     OK --> Updating: rotate
     Updating --> OK: set_key
-    OK --> Terminating: revoke
-    Terminating --> [*]: destroy (row deleted)
     Creating --> Erred: set_erred
     Updating --> Erred: set_erred
-    Terminating --> Erred: set_erred
     Erred --> Updating: rotate (retry)
-    Erred --> Terminating: revoke (retry)
     Erred --> OK: set_key
+    OK --> [*]: resource terminated (rows deleted)
 ```
 
-Erred is always recoverable (rotate/revoke retries from the portal, or the agent
-finally applying via `set_key`), and `set_erred` is deliberately not allowed from
+Erred is always recoverable (a rotate retry from the portal, or the agent finally
+applying via `set_key`), and `set_erred` is deliberately not allowed from
 `OK` — a stale failure report must not flip a key that has since been applied.
 
 ## Flows
@@ -96265,12 +96763,11 @@ sequenceDiagram
     W-->>M: {api_key}  (decrypted)
 ```
 
-**Revoke** mirrors rotate: portal → `Terminating` → slim event → agent deletes
-that `client_id` from the Secret → confirms with `DELETE` → Waldur deletes the
-row. The other keys are never touched, so revoking or rotating one key is always
-zero-downtime.
+Rotation never touches the other keys, so a consumer authenticating with a
+sibling key keeps working throughout — that is what makes it zero-downtime, and
+why two keys are provisioned.
 
-The rotation/revoke event (observable type `resource_api_key_rotation`) carries a
+The rotation event (observable type `resource_api_key_rotation`) carries a
 **slim** payload — resource/key identifiers, `client_id`, and the action, never
 key material. The key only ever travels agent → Waldur, in the `report_created` /
 `set_key` request body (TLS), and is encrypted on receipt. When a resource is
@@ -96295,32 +96792,45 @@ Consumer side:
   `OK` key is revealed — a transitional key's stored value may not match the
   gateway. **Audited** — each reveal emits the `marketplace_resource_api_key_revealed`
   event identifying the key.
-- `POST /{uuid}/rotate/` and `POST /{uuid}/revoke/` — mark `Updating` /
-  `Terminating` and emit the agent event. Gated on `RESOURCE.MANAGE_USERS`
-  (project or customer scope); rejected unless the key is `OK` (or `Erred`, for
-  retries) and the resource is live (not terminating/terminated). Rotation emits
-  the `marketplace_resource_api_key_rotated` audit event.
+- `POST /{uuid}/rotate/` — mark `Updating` and emit the agent event. Gated on
+  `RESOURCE.MANAGE_USERS` (project or customer scope); rejected unless the key is
+  `OK` (or `Erred`, for retries) and the resource is live (not
+  terminating/terminated). Emits the `marketplace_resource_api_key_rotated` audit
+  event.
 
-The initial keys are provisioned at resource creation (the Envoy plugin makes
-two). Adding further keys on demand is intentionally **not** exposed: the
-sensible maximum is backend-specific, so a generic mastermind cap would be
-premature — it belongs with the site-agent plugin when a concrete need appears.
+The keys are provisioned at resource creation (both supporting plugins make two)
+and **rotation is the only operation on them**: it replaces a key's value in
+place, so the count never changes after provisioning.
+
+Neither adding nor revoking is exposed, and the two omissions hold each other up.
+Without an add, a revoke would be a one-way door — keys are minted only at
+provisioning, and the portal mounts its tab from `has_api_keys`, so revoking the
+last key would strand the resource with neither credentials nor the surface to
+manage them. Without a revoke, the count cannot fall, so "this resource has the
+keys it was provisioned with" holds by construction rather than by a guard. The
+sensible maximum is in any case backend-specific, so a generic mastermind cap
+would be premature — it belongs with the site-agent plugin if a concrete need for
+on-demand keys appears.
+
+The provider `destroy` endpoint went with revoke: deleting a key row was only ever
+a revoke confirmation, and an ungated delete could drop a row whose key still serves
+at the backend. `destroy` is in `disabled_actions`, and termination cleanup deletes
+the rows directly (see [States](#states)).
 
 Provider side (used by the site agent), gated on `RESOURCE.MANAGE_API_KEY` on
 the offering customer:
 
 - `POST /report_created/` — the agent pushes a freshly-applied key value after
   provisioning; Waldur encrypts, stores, and the row lands `OK`. Idempotent per
-  `(resource, client_id)` — but rejected while a revoke is in flight for that
-  key (`Terminating`) and once the resource itself is terminating/terminated,
-  so a stale duplicate can never resurrect a revoked key.
+  `(resource, client_id)` — but rejected once the resource itself is
+  terminating/terminated, so a stale duplicate can never resurrect a key of a
+  resource on its way out.
 - `POST /{uuid}/set_key/` — the agent pushes a rotated value; Waldur encrypts,
   stores, transitions to `OK`. Takes an optional `client_id` for backends whose
   public identifier rotates with the secret (see the model above); a value
   already held by a sibling key of the same resource is rejected.
 - `POST /{uuid}/set_erred/` — the agent reports an apply failure → `Erred`.
-- `DELETE /{uuid}/` — the agent confirms Secret removal → row deleted (only
-  legal while `Terminating`).
+(There is no `DELETE`: see above.)
 
 ## Encryption at rest {#encryption-at-rest}
 
@@ -96339,9 +96849,16 @@ every fallback. To rotate:
 1. Generate a new Fernet key, set it as `FIELD_ENCRYPTION_KEY`, and move the
    previous key into `FIELD_ENCRYPTION_KEY_FALLBACKS`. Existing rows still
    decrypt (via the fallback); new writes use the new primary.
-2. Re-save the encrypted rows over time (rotation naturally re-encrypts each key
-   under the new primary).
-3. Once no row references the old key, drop it from `FIELD_ENCRYPTION_KEY_FALLBACKS`.
+2. Run `waldur reencrypt_fields`, which rewrites every stored token under the new
+   primary. Waiting for rows to be re-saved on their own does not work here: a key
+   is only rewritten when it happens to be rotated, so there is no point at which
+   you could tell the old key had become unnecessary.
+3. Drop the old key from `FIELD_ENCRYPTION_KEY_FALLBACKS`.
+
+`waldur reencrypt_fields --dry-run` reports the same counts without writing, and in
+particular how many rows **no** configured key can decrypt. That is worth checking
+on its own: such rows are invisible until someone calls `reveal` and gets a 409, and
+the only fix is to restore the key that wrote them.
 
 When no dedicated key is configured, the key is derived from `SECRET_KEY` (with
 a startup warning). That derived key always remains an **implicit last-resort
@@ -96362,20 +96879,14 @@ Defense-in-depth against at-rest exposure, not a secrets manager.
 
 ## Usage and billing
 
-Usage is attributed **per resource**, not per key. The gateway forwards
-`x-client-id` per key (`<resource_backend_id>-<n>`), and the rollup happens at
-the **usage-shipper** (a Vector pipeline): its `remap` transform strips the
-`-<n>` suffix, so usage is recorded under the resource's `backend_id`:
+A resource owns several keys, but usage is attributed **per resource** — otherwise
+rotating a key would split a tenant's bill in two. No backend meters per key.
 
-```coffee
-# usage-shipper (Vector) remap transform
-cid = replace(cid, r'-\d+$', "")
-```
-
-The `envoy-usage` reporting backend then queries the warehouse by
-`resource_backend_id` unchanged — it stays per-resource with no key enumeration.
-(Pause / restore / terminate, which act on the gateway Secret rather than usage,
-still fan out to **every** client-id the resource owns.)
+How each backend gets there is plugin-specific and documented with the plugin.
+The Envoy AI Gateway tags requests with a per-key `x-client-id` and strips the key
+suffix during the usage rollup; croit-s3 meters the S3 user directly, so keys never
+enter usage at all. Either way Waldur sees one usage stream per resource, and
+adding or rotating a key does not change it.
 
 ---
 
