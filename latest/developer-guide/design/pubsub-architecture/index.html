@@ -17794,6 +17794,10 @@ imports.</p>
 <td>a slice the owner has access to</td>
 </tr>
 <tr>
+<td>your own user (<code>{"type": "user", "uuid": &lt;own&gt;}</code>)</td>
+<td>your own identity events — profile, SSH keys, lifecycle, role changes. Authorized by identity, not by role; binding <em>another</em> user is staff/support only.</td>
+</tr>
+<tr>
 <td><strong>empty</strong></td>
 <td><strong>global: everything platform-wide — user-centric events (all-user PII) AND marketplace events. Staff/support only.</strong></td>
 </tr>
@@ -17801,7 +17805,10 @@ imports.</p>
 </table>
 <p>Bindings use the same vocabulary as Personal Access Tokens (<code>TYPE_MAP</code>,
 <code>AllowedScopeInputSerializer</code>), so <code>{"type": "project", "uuid": "..."}</code> means the
-same thing in both features.</p>
+same thing in both features. The one exception is <code>user</code>: it exists <strong>only</strong> for
+event-consumer bindings (<code>EVENT_CONSUMER_TYPE_MAP</code>), deliberately kept out of
+<code>TYPE_MAP</code> so PAT scopes, invitation targets, role content types, and the
+<code>RoleType</code> schema enum are unaffected.</p>
 <blockquote>
 <p><strong>An empty binding set means global.</strong> A consumer left without bindings by a
 partial write would therefore fail <em>open</em> as an all-user PII firehose. Both
@@ -17885,7 +17892,13 @@ legacy path dropped. Treated as a bug fix; see <code>_resolve_event_project</cod
 </table>
 <p>The user-centric events originate in <code>waldur_core</code> (User, SSH keys, roles), so
 they are dispatched from <code>waldur_core.logging.event_dispatch</code> and delivered to
-<strong>global consumers</strong>. A global (empty-scope) consumer means "everything": it
+<strong>global consumers</strong> and to the affected user's <strong>self-bound consumers</strong>
+(<code>dispatch_user_event</code> passes the affected user's <code>(content_type, id)</code> as the
+scope-key; delivery to a self-bound consumer is authorized by identity —
+<code>consumer.user == affected user</code> — rather than by role). A user-scoped
+<code>user_role</code> event on the core path cannot double-deliver with the marketplace
+path below: the marketplace path matches only offering/project/customer keys,
+never a user key. A global (empty-scope) consumer means "everything": it
 also receives the marketplace events (orders, resources, offering users, …)
 through the marketplace dispatcher, which opts globals in via
 <code>build_messages(include_global=True)</code>. The single care point is <code>user_role</code>,

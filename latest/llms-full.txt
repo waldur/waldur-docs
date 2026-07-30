@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-07-30T02:03:41.492105Z
+Generated: 2026-07-30T16:19:21.220180Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -51958,6 +51958,7 @@ intersect those bindings.
 |----------|---------|
 | one offering | the classic site-agent case |
 | a project, a customer, several projects | subscribe to a slice you have access to |
+| your own user (`{"type": "user", "uuid": <own>}`) | your own identity events (`user_profile`, `user_ssh_key`, `user_lifecycle`, `user_role`). Any authenticated user may self-bind; binding another user is staff/support only. |
 | **empty** | **GLOBAL — everything platform-wide: user-centric events (all-user PII) AND marketplace events. Staff/support only.** |
 
 An event's scope-keys are the offering's own chain (offering, its project, that
@@ -52060,6 +52061,32 @@ them):
 
 ```json
 { "scopes": [], "object_types": ["user_ssh_key"] }
+```
+
+**My own identity events (the browser / self-service case)** — a user's own
+profile, SSH-key and role changes, without any staff privilege. Any
+authenticated user, own UUID only:
+
+```json
+{
+    "scopes": [{"type": "user", "uuid": "<own-user-uuid>"}],
+    "object_types": ["user_profile", "user_ssh_key", "user_role"]
+}
+```
+
+**Targeted user monitoring (staff/support)** — identity events for a specific
+set of users, without the global all-user firehose (data minimization: an
+IdM investigation or an admin tool watching three accounts should not receive
+everyone's PII). Staff/support only — non-staff may bind only to themselves:
+
+```json
+{
+    "scopes": [
+        {"type": "user", "uuid": "<user-a-uuid>"},
+        {"type": "user", "uuid": "<user-b-uuid>"}
+    ],
+    "object_types": ["user_profile", "user_ssh_key", "user_lifecycle", "user_role"]
+}
 ```
 
 **Per-customer reporting / monitoring** — one tenant's order and resource
@@ -82550,11 +82577,15 @@ imports.
 |----------|---------|
 | one offering | the classic site-agent case |
 | projects, a customer, or a mix | a slice the owner has access to |
+| your own user (`{"type": "user", "uuid": <own>}`) | your own identity events — profile, SSH keys, lifecycle, role changes. Authorized by identity, not by role; binding *another* user is staff/support only. |
 | **empty** | **global: everything platform-wide — user-centric events (all-user PII) AND marketplace events. Staff/support only.** |
 
 Bindings use the same vocabulary as Personal Access Tokens (`TYPE_MAP`,
 `AllowedScopeInputSerializer`), so `{"type": "project", "uuid": "..."}` means the
-same thing in both features.
+same thing in both features. The one exception is `user`: it exists **only** for
+event-consumer bindings (`EVENT_CONSUMER_TYPE_MAP`), deliberately kept out of
+`TYPE_MAP` so PAT scopes, invitation targets, role content types, and the
+`RoleType` schema enum are unaffected.
 
 > **An empty binding set means global.** A consumer left without bindings by a
 > partial write would therefore fail *open* as an all-user PII firehose. Both
@@ -82617,7 +82648,13 @@ legacy path dropped. Treated as a bug fix; see `_resolve_event_project`.
 
 The user-centric events originate in `waldur_core` (User, SSH keys, roles), so
 they are dispatched from `waldur_core.logging.event_dispatch` and delivered to
-**global consumers**. A global (empty-scope) consumer means "everything": it
+**global consumers** and to the affected user's **self-bound consumers**
+(`dispatch_user_event` passes the affected user's `(content_type, id)` as the
+scope-key; delivery to a self-bound consumer is authorized by identity —
+`consumer.user == affected user` — rather than by role). A user-scoped
+`user_role` event on the core path cannot double-deliver with the marketplace
+path below: the marketplace path matches only offering/project/customer keys,
+never a user key. A global (empty-scope) consumer means "everything": it
 also receives the marketplace events (orders, resources, offering users, …)
 through the marketplace dispatcher, which opts globals in via
 `build_messages(include_global=True)`. The single care point is `user_role`,

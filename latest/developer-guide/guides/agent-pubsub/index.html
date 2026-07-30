@@ -18702,6 +18702,10 @@ intersect those bindings.</p>
 <td>subscribe to a slice you have access to</td>
 </tr>
 <tr>
+<td>your own user (<code>{"type": "user", "uuid": &lt;own&gt;}</code>)</td>
+<td>your own identity events (<code>user_profile</code>, <code>user_ssh_key</code>, <code>user_lifecycle</code>, <code>user_role</code>). Any authenticated user may self-bind; binding another user is staff/support only.</td>
+</tr>
+<tr>
 <td><strong>empty</strong></td>
 <td><strong>GLOBAL — everything platform-wide: user-centric events (all-user PII) AND marketplace events. Staff/support only.</strong></td>
 </tr>
@@ -18792,6 +18796,35 @@ account activation/deactivation platform-wide (staff/support):</p>
 change (staff/support; SSH keys are user-centric so only a global queue carries
 them):</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w"> </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"user_ssh_key"</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>My own identity events (the browser / self-service case)</strong> — a user's own
+profile, SSH-key and role changes, without any staff privilege. Any
+authenticated user, own UUID only:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user"</span><span class="p">,</span><span class="w"> </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;own-user-uuid&gt;"</span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"user_profile"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_ssh_key"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_role"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Targeted user monitoring (staff/support)</strong> — identity events for a specific
+set of users, without the global all-user firehose (data minimization: an
+IdM investigation or an admin tool watching three accounts should not receive
+everyone's PII). Staff/support only — non-staff may bind only to themselves:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user"</span><span class="p">,</span><span class="w"> </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;user-a-uuid&gt;"</span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user"</span><span class="p">,</span><span class="w"> </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;user-b-uuid&gt;"</span><span class="p">}</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"user_profile"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_ssh_key"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_lifecycle"</span><span class="p">,</span><span class="w"> </span><span class="s2">"user_role"</span><span class="p">]</span>
+<span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p><strong>Per-customer reporting / monitoring</strong> — one tenant's order and resource
 activity. Non-staff: you must hold a role on the customer (or an ancestor):</p>
