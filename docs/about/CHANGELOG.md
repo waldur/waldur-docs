@@ -1,5 +1,54 @@
 # Changelog
 
+## 8.1.0-rc.21 - 2026-07-30
+
+### Highlights
+
+This release brings SLURM quality-of-service management to the marketplace end to end, so providers can publish QoS levels, restrict them per partition, and let users pick one when ordering. Resource API keys move to a rotate-only model with encrypted storage and a controlled reveal flow, and personal access tokens gain network allow-lists — a meaningful step up in credential hygiene. Billing accuracy improves across volume discounts, credit compensation attribution, and usage corrected after an invoice has been finalized. Support ticketing can now route issues to the offering provider's own helpdesk, automatically or on demand.
+
+### What's New
+
+- SLURM offerings support quality-of-service levels: providers define a QoS catalog, allow specific QoS per partition, and customers select a QoS during ordering.
+- Resource API keys can be rotated with encrypted at-rest storage and an explicit reveal action in the UI; rotation is now the only supported key operation. Deployments need the new `FIELD_ENCRYPTION_KEY`, wired through the Helm chart.
+- Personal access tokens can be restricted to specific networks, with improved audit logging of token-attributed actions.
+- Support issues can be routed to the helpdesk of the offering's provider, either automatically or through a manual route-to-provider action, with notifications when a ticket is withdrawn.
+- Per-member resource access sync status is available as an opt-in feature, with per-grant state shown in the UI and a provider-side re-sync action.
+- Dun & Bradstreet is available as a company registry backend for onboarding organizations in Denmark, Finland, Norway, and Sweden.
+- New operator tooling: a command to re-bill usage corrected after invoice finalization, a staff API to resolve duplicate per-tenant OpenStack offerings, and a staff support-user management API with a merge action.
+- AI assistant usage reporting adds KPI aggregates and endpoints for anonymous conversations.
+- An experimental realtime module keeps the web UI in sync via push-driven query invalidation, backed by order and resource state-transition events now emitted for all offering types.
+
+### Improvements
+
+- Provider offering resource tables gain filtering and sorting, including offering-scoped runtime states.
+- Project cost reporting exposes incurred cost, and credit compensation is now attributed to the originating project; dashboard credit panels use clearer wording and distinguish compensation from incurred spend in chart colours.
+- Access-subnet allow-lists can aggregate across multiple offerings and optionally include organization-level subnets.
+- Conflict-of-interest configuration prevents reusing the same conflict type across rules, and COI review dialogs were polished.
+- Group invitations return the scope type, so accepting a project-scoped invitation now lands on the project dashboard.
+- Organization owners can read the API version endpoint.
+- Backend startup no longer loads optional SAML, Jira, Matrix, OpenAI and SDK dependencies eagerly, cutting roughly 112 MB of memory at boot.
+- The metrics exporter now uses dedicated healthz endpoints for its probes.
+
+### Bug Fixes
+
+- Volume discounts are resolved per plan component, evaluated on raw volume, refreshed when limits change mid-period, and correctly include TOTAL limit increments.
+- The credit consumption chart plotted net price instead of compensation; it now shows the right series.
+- Usage-based components can be backfilled during the invoice finalization grace period instead of being rejected.
+- Failed resource creation no longer produces a spurious Creating → Terminated → Erred transition.
+- Resource termination date validation now respects the order start date and project end date.
+- OpenStack fixes: tenant-linked images survive a global image pull, and admin-created instance ports get the correct tenant project.
+- Invitation reminders are no longer sent for removed projects, and the project details dialog no longer reappears after submission.
+- Reporting charts inherit theme tokens for gridlines and tabs, and quota usage bar chart labels show correct totals on selection.
+- Pre-existing accounts are safely adopted on OIDC login with a reversion audit trail.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [53 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.20...8.1.0-rc.21) - SLURM QoS, API key rotation with encryption, PAT network ACLs, provider helpdesk routing, volume discount and credit billing fixes
+- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.20...8.1.0-rc.21) - QoS management UI, API key rotation and reveal, membership sync indicators, experimental realtime updates, chart and invitation fixes
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.20...8.1.0-rc.21) - field encryption key wiring and healthz-based metrics exporter probes
+
+---
+
 ## 8.1.0-rc.20 - 2026-07-28
 
 ### Highlights
