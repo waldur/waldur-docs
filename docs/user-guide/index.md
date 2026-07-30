@@ -16,6 +16,7 @@ for deployment-specific documentation.
 ## Practical guides for the service provider organization
 
 * [Marketplace and offering creation](service-provider-organization/adding-an-offering.md)
+* [Membership sync status](service-provider-organization/membership-sync-status.md)
 
 ## Practical guides for the call managing organization
 
