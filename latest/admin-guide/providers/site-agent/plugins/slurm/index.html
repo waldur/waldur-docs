@@ -6120,6 +6120,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#qos-enforcement-multi-qos-offerings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QoS enforcement (multi-QoS offerings)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#storage-quotas" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18377,6 +18388,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#qos-enforcement-multi-qos-offerings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QoS enforcement (multi-QoS offerings)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#storage-quotas" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19187,6 +19209,47 @@ setting; when <code>parent_account</code> is set, <code>root_account</code> is n
 <code>paused</code> / <code>downscaled</code> set by Waldur Mastermind and applied by the agent
 through the top-level <code>qos_default</code> / <code>qos_downscaled</code> / <code>qos_paused</code>
 backend settings — the same path used by manual pause/downscale.</p>
+<h3 id="qos-enforcement-multi-qos-offerings">QoS enforcement (multi-QoS offerings)</h3>
+<p>When an offering exposes multiple QoS profiles per partition, the plugin can
+switch from the QoS-swap model above to a <strong>per-association QoS grant</strong>: in this
+mode <code>add_user</code> reads the QoS (and optional partition) the consumer selected at
+order time and grants it on the user→account association (<code>QosLevel</code> /
+<code>DefaultQOS</code>), rather than mutating the account-level QoS.</p>
+<p>Enforcement is <strong>opt-in on the agent</strong>. It stays off — regardless of any
+offering's <code>plugin_options.enforce_qos</code> — until the operator enables the
+<code>qos_enforcement_enabled</code> gate, so a remote flag can never make the agent mutate
+SLURM QoS without consent:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">qos_enforcement_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">     </span><span class="c1"># opt-in gate (default false)</span>
+<span class="w">  </span><span class="c1"># Once opted in, scope enforcement:</span>
+<span class="w">  </span><span class="c1">#   enforce_offering_qos: null    # (default) respect each offering's flag</span>
+<span class="w">  </span><span class="c1">#   enforce_offering_qos: true    # force enforcement for every offering</span>
+<span class="w">  </span><span class="c1">#   enforce_offering_qos: false   # force informational mode</span>
+<span class="w">  </span><span class="c1"># Optional per-offering partition scoping still applies (see above):</span>
+<span class="w">  </span><span class="c1"># offering_partitions + enforce_offering_partitions.</span>
+</code></pre></div></td></tr></tbody></table></div>
+<ul>
+<li><strong>Partition scope.</strong> The grant is scoped to the consumer's selected
+  partition; if none was selected it spans the enforced <code>offering_partitions</code>,
+  else the <code>default_partition</code>. QoS composes with partitions — SLURM stores one
+  association row per partition, each carrying the grant.</li>
+<li><strong>Pause / downscale.</strong> Because the association QoS is a grant (not the
+  operational lever), pause/downscale block new submissions with
+  <code>GrpSubmitJobs=0</code> and restore clears it (<code>GrpSubmitJobs=-1</code>), leaving the QoS
+  grant untouched. The <code>qos_paused</code> / <code>qos_downscaled</code> settings are <strong>not</strong> used
+  in this mode (and forcing enforcement together with them is rejected at config
+  validation).</li>
+<li><strong>Execution modes.</strong> Both <code>cli</code> and <code>rest</code> execution modes implement the QoS
+  grant and the <code>GrpSubmitJobs</code> lever. In REST mode the grant is a single
+  <code>users_association</code> POST whose <code>association</code> template carries the QoS.</li>
+</ul>
 <h3 id="storage-quotas">Storage Quotas</h3>
 <p>The SLURM plugin supports two independent filesystem-quota subsystems:</p>
 <ul>
