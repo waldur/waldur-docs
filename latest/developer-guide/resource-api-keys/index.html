@@ -17706,9 +17706,9 @@ below. The agent-side mechanics build on the
 backend-specific format, e.g. the <code>sk-</code> prefix) lives in the site-agent plugin.
 Waldur is a management layer, not the source of provider secrets. Crucially, the
 agent <strong>applies the key to the gateway first, then reports it to Waldur</strong> — so
-Waldur only ever stores a key that is already live. Waldur-side minting was
-rejected because it creates phantom keys: generate → store → the apply fails →
-Waldur holds a key the gateway never accepted.</p>
+Waldur only ever stores a key that is already live. Minting in Waldur instead
+produces phantom keys: generate → store → the apply fails → Waldur holds a key
+the gateway never accepted.</p>
 <p><strong>Waldur stores the key, encrypted, for reveal.</strong> For multiple members to read a
 key later, something durable and member-reachable must hold it. The agent has no
 inbound server (it dials out only), so a live per-reveal round-trip to the agent
@@ -17717,10 +17717,10 @@ would be slow and fail whenever the agent is offline. Waldur holding an
 source.</p>
 <p><strong>Multiple keys per resource, not per user.</strong> Two keys are provisioned by
 default — two independent keys are what make rotation zero-downtime, and they
-model the operator reality of primary/standby credentials. Per-user keys were
-rejected: they multiply the provisioning surface for a credential that is
-inherently shared, and cutting a departed member's access is solved by rotating
-the shared keys.</p>
+model the operator reality of primary/standby credentials. Keys are not per user:
+that multiplies the provisioning surface for a credential that is inherently
+shared, and cutting a departed member's access is solved by rotating the shared
+keys.</p>
 <h2 id="model">Model</h2>
 <p><code>ResourceApiKey</code> (<code>marketplace/models.py</code>) — many per resource:</p>
 <table>
@@ -17744,16 +17744,16 @@ the shared keys.</p>
 <td>the agent-generated value, Fernet-encrypted (<a href="#encryption-at-rest">field encryption</a>)</td>
 </tr>
 <tr>
-<td><code>fingerprint</code></td>
-<td><code>sk-AbCd...WxYz</code> — recognizable without revealing</td>
-</tr>
-<tr>
 <td><code>state</code></td>
 <td>FSM, aligned to resource states (below)</td>
 </tr>
 <tr>
 <td><code>error_message</code></td>
 <td>agent-reported failure detail when <code>Erred</code></td>
+</tr>
+<tr>
+<td><code>modified</code></td>
+<td><code>TimeStampedModel</code>; rotation rewrites the row in place, so this is the age of the secret currently in use — the portal shows it as <em>Issued</em></td>
 </tr>
 </tbody>
 </table>
@@ -17806,11 +17806,9 @@ the standard <code>StateIndicator</code> (<code>@/core/StateIndicator</code>) �
 </table>
 <p><code>Creating</code> and <code>Updating</code> are the transitional (spinner) states, matching how
 <code>ResourceStateField</code> treats a resource.</p>
-<p>There is deliberately <strong>no <code>Terminating</code></strong>. It existed for a consumer-facing revoke
-that no longer ships, so nothing could enter it; a state a model can describe but
-never reach only invites code that guards against it. Termination cleanup does not
-need it — it deletes the rows directly (<code>callbacks.py</code>). Migration 0256 drops the
-choice and moves any key left mid-revoke to <code>Erred</code>, where rotation can repair it.</p>
+<p>There is deliberately <strong>no <code>Terminating</code></strong>: nothing removes a single key, and
+termination cleanup deletes the rows outright (<code>callbacks.py</code>) rather than walking
+them through a state.</p>
 <pre class="mermaid"><code>stateDiagram-v2
     [*] --&gt; Creating: agent generates + applies
     Creating --&gt; OK: report_created
@@ -17862,8 +17860,8 @@ terminated, its remaining key rows are deleted by the termination callback.</p>
 resource with <code>?resource_uuid=</code>.</p>
 <p>Consumer side:</p>
 <ul>
-<li><code>GET /</code> and <code>GET /{uuid}/</code> — list/retrieve status (fingerprint, <code>client_id</code>,
-  state, error message — no secret). Visible to resource project/customer
+<li><code>GET /</code> and <code>GET /{uuid}/</code> — list/retrieve status (<code>client_id</code>, state,
+  <code>modified</code>, error message — no secret). Visible to resource project/customer
   members and the provider organization.</li>
 <li><code>GET /{uuid}/reveal/</code> — return the decrypted value (in the body, never the
   URL, with <code>Cache-Control: no-store</code>). Restricted to <strong>consumer-side</strong> access —
@@ -17881,20 +17879,14 @@ resource with <code>?resource_uuid=</code>.</p>
 </ul>
 <p>The keys are provisioned at resource creation (both supporting plugins make two)
 and <strong>rotation is the only operation on them</strong>: it replaces a key's value in
-place, so the count never changes after provisioning.</p>
-<p>Neither adding nor revoking is exposed, and the two omissions hold each other up.
-Without an add, a revoke would be a one-way door — keys are minted only at
-provisioning, and the portal mounts its tab from <code>has_api_keys</code>, so revoking the
-last key would strand the resource with neither credentials nor the surface to
-manage them. Without a revoke, the count cannot fall, so "this resource has the
-keys it was provisioned with" holds by construction rather than by a guard. The
-sensible maximum is in any case backend-specific, so a generic mastermind cap
-would be premature — it belongs with the site-agent plugin if a concrete need for
-on-demand keys appears.</p>
-<p>The provider <code>destroy</code> endpoint went with revoke: deleting a key row was only ever
-a revoke confirmation, and an ungated delete could drop a row whose key still serves
-at the backend. <code>destroy</code> is in <code>disabled_actions</code>, and termination cleanup deletes
-the rows directly (see <a href="#states">States</a>).</p>
+place, so the count never changes after provisioning. Neither adding nor removing
+a key is exposed, which is what makes "this resource has the keys it was
+provisioned with" true by construction. A per-backend maximum, if one is ever
+needed, belongs with the site-agent plugin — the sensible number is
+backend-specific.</p>
+<p><code>destroy</code> is in <code>disabled_actions</code>: an ungated delete could drop a row whose key
+still serves at the backend. Termination cleanup deletes the rows directly (see
+<a href="#states">States</a>).</p>
 <p>Provider side (used by the site agent), gated on <code>RESOURCE.MANAGE_API_KEY</code> on
 the offering customer:</p>
 <ul>
