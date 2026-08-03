@@ -1,5 +1,40 @@
 # Changelog
 
+## 8.1.0-rc.23 - 2026-08-03
+
+### Highlights
+
+This release tightens OpenStack tenant isolation so private networks and floating IPs can no longer be reached across tenant boundaries, and cleans up several places where large pages were slow to load. Marketplace order failures now explain why they failed instead of leaving operators guessing, and background usage, billing and SLURM sync jobs do considerably less redundant database work. Operators also get more precise Sentry alerting, with per-deployment cron monitors and better event grouping.
+
+### What's New
+
+- Offering user records now indicate whether a compliance checklist applies, so administrators can see at a glance which users still need to complete one.
+- Order records now expose the reason an order failed, making it easier to diagnose failed provisioning without digging through logs.
+
+### Improvements
+
+- Pending project invitations are now automatically cancelled when the project they belong to is removed, so users no longer receive invites to projects that no longer exist.
+- Sentry monitoring is more actionable: each deployment gets its own cron monitors and tolerances, and structured log events are grouped by message rather than by their raw dictionary representation.
+- User lists, public offering plan pages, remote usage import, component usage billing and site-agent status updates all issue far fewer database queries, noticeably speeding up large pages and background jobs.
+- SLURM usage synchronisation now runs once per pull instead of once per allocation, cutting the time a full pull takes on sites with many allocations.
+- Restore orders are now handled correctly when a linked helpdesk issue changes status.
+- The resource API key fingerprint field has been removed as it was no longer used; existing keys are unaffected.
+
+### Bug Fixes
+
+- Fixed service property filtering for tenant-scoped offerings, so flavor and image choices are correct when changing a VM's flavor.
+- Pinning a floating IP to a network now requires ownership of that network, preventing a tenant from attaching an IP to another tenant's network.
+- RBAC-based network sharing is now scoped to the specific shared network rather than granting broader access than intended.
+- Proposal deadlines that have already been settled are no longer flagged as errors in the UI.
+- Removed an incorrect breadcrumb from the reporting overview tab.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [19 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.22...8.1.0-rc.23) - OpenStack tenant isolation fixes, query-count reductions across marketplace and background tasks, Sentry monitoring improvements, and order failure reason reporting.
+- **Waldur Homeport**: [3 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.22...8.1.0-rc.23) - UI fixes for proposal deadline validation and reporting breadcrumbs.
+
+---
+
 ## 8.1.0-rc.22 - 2026-07-31
 
 ### Release Summary
