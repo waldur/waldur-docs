@@ -3699,6 +3699,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Award metadata (AwardDetails)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#membership-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -3706,6 +3723,34 @@
     <span class="md-ellipsis">
       
         Usage reporting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#award-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Award lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Award lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#managing-an-award" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing an award
       
     </span>
   </a>
@@ -3745,6 +3790,17 @@
     <span class="md-ellipsis">
       
         Helm configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membership-sync-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership sync mode
       
     </span>
   </a>
@@ -17763,6 +17819,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Award metadata (AwardDetails)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#membership-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -17770,6 +17843,34 @@
     <span class="md-ellipsis">
       
         Usage reporting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#award-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Award lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Award lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#managing-an-award" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing an award
       
     </span>
   </a>
@@ -17809,6 +17910,17 @@
     <span class="md-ellipsis">
       
         Helm configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#membership-sync-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Membership sync mode
       
     </span>
   </a>
@@ -18056,7 +18168,38 @@
 <li><strong>renewal</strong>: Link to renewal/extension request page</li>
 <li><strong>notes</strong>: Append-only timestamped messages between portals</li>
 <li><strong>membership_control</strong>: Policy for membership changes (<code>open</code>, <code>members_only</code>, <code>roles_only</code>, <code>locked</code>)</li>
+<li><strong>allowed_domains</strong>: Email domain glob patterns permitted to join the project on the remote portal, e.g. <code>['*.ac.uk']</code>. An empty list allows no domains; omitting the field places no restriction</li>
+<li><strong>earliest_approve</strong>: Earliest UTC time the remote portal may approve the award, giving the sender a window to make corrections before provisioning begins</li>
 </ul>
+<h4 id="membership-control">Membership control</h4>
+<p><code>membership_control</code> decides which side is authoritative when the two portals
+disagree about who belongs to a project:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>open</code></td>
+<td>The receiving portal manages membership freely</td>
+</tr>
+<tr>
+<td><code>members_only</code></td>
+<td>Roles are authoritative; membership is not</td>
+</tr>
+<tr>
+<td><code>roles_only</code></td>
+<td>Membership is authoritative; roles are not</td>
+</tr>
+<tr>
+<td><code>locked</code></td>
+<td>Both membership and roles are authoritative</td>
+</tr>
+</tbody>
+</table>
 <h3 id="usage-reporting">Usage reporting</h3>
 <p>The integration supports pulling compute and storage usage:</p>
 <ul>
@@ -18065,6 +18208,100 @@
 <li><strong>Date range filtering</strong>: Query specific time periods</li>
 <li><strong>Report remapping</strong>: Translate component names between systems</li>
 </ul>
+<h2 id="award-lifecycle">Award lifecycle</h2>
+<p>Each award Waldur sends to a remote portal is tracked locally as a remote
+project record, so that an operator can see what was sent, what the remote
+portal confirmed, and what is still outstanding.</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pending</strong></td>
+<td>Award details have been sent but not yet confirmed. The remote portal may be awaiting human review</td>
+</tr>
+<tr>
+<td><strong>Active</strong></td>
+<td>The award was approved, the project exists on the remote portal, and confirmation was received</td>
+</tr>
+<tr>
+<td><strong>Stale</strong></td>
+<td>Nothing has been heard from the remote portal for an unexpectedly long time, so the local view may be out of date</td>
+</tr>
+<tr>
+<td><strong>Error</strong></td>
+<td>The request was rejected, or the connection to the remote portal is definitively broken</td>
+</tr>
+<tr>
+<td><strong>Deleted</strong></td>
+<td>The local resource was deleted. The record is kept for history and can be revived if a future resource is reconnected</td>
+</tr>
+</tbody>
+</table>
+<p>A record moves to <strong>Stale</strong> automatically once nothing has been heard about it
+for 12 hours. This is a warning that the local view may be wrong, not that
+anything has failed — it usually points at a connectivity problem somewhere in
+the agent chain rather than at the award itself.</p>
+<p>Every award keeps an audit trail of what was sent, what came back, and who
+changed what locally, alongside the last set of details sent and the last set
+the remote portal confirmed. When those two disagree, the difference is what is
+still in flight.</p>
+<h3 id="managing-an-award">Managing an award</h3>
+<p>Organisation owners, support and staff can act on an award directly. Ordinary
+project members can see awards for projects they have access to but cannot
+change them.</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Add note</strong></td>
+<td>Appends a timestamped message that travels to the remote portal with the next update</td>
+</tr>
+<tr>
+<td><strong>Set allowed domains</strong></td>
+<td>Changes which email domains may join the project remotely</td>
+</tr>
+<tr>
+<td><strong>Set membership control</strong></td>
+<td>Changes which side is authoritative for membership and roles</td>
+</tr>
+<tr>
+<td><strong>Set earliest approve</strong></td>
+<td>Sets the embargo time before which the remote portal may not approve</td>
+</tr>
+<tr>
+<td><strong>Approve now</strong></td>
+<td>Removes the embargo so the remote portal may approve immediately</td>
+</tr>
+<tr>
+<td><strong>Hold indefinitely</strong></td>
+<td>Pushes the embargo far into the future, parking the award until released with <em>Approve now</em></td>
+</tr>
+<tr>
+<td><strong>Reset to pending</strong></td>
+<td>Clears a rejection locally and returns the award to Pending so changes or a resend can proceed. Sends nothing to the remote portal</td>
+</tr>
+<tr>
+<td><strong>Resend request</strong></td>
+<td>Sends the current award details to the remote portal again</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><em>Reset to pending</em> only changes local state. If the remote portal rejected
+the award for a reason that still applies, resending it will be rejected
+again — fix the underlying cause first.</p>
+</div>
 <h2 id="configuration">Configuration</h2>
 <h3 id="prerequisites">Prerequisites</h3>
 <ol>
@@ -18084,6 +18321,44 @@
 <span class="w">    </span><span class="nt">bridge_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://bridge.example.com"</span>
 <span class="w">    </span><span class="nt">bridge_token</span><span class="p">:</span><span class="w"> </span><span class="s">"your-bridge-api-token"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="membership-sync-mode">Membership sync mode</h3>
+<p>When an incoming award lists someone as a member, Waldur can either invite them
+or add them straight away. Which is right depends on the site's own onboarding
+process, so it is a deployment setting,
+<code>OPENPORTAL_MEMBERSHIP_SYNC_MODE</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>invitation</code> (default)</td>
+<td>Create a pending invitation. The user accepts, agrees to the terms and is provisioned locally before gaining access</td>
+</tr>
+<tr>
+<td><code>direct</code></td>
+<td>Create the account if needed and grant the role immediately</td>
+</tr>
+</tbody>
+</table>
+<p>Choose <code>invitation</code> where users must authenticate, accept an invitation and
+agree to terms and privacy policies before local accounts are provisioned.
+Choose <code>direct</code> where accounts are provisioned automatically and quickly, and a
+second invitation at the receiving site would only confuse someone who has
+already been invited by the awarding portal.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The default is <code>invitation</code>. A site that relies on members being added
+directly must set this explicitly, otherwise members from incoming awards
+will sit as pending invitations instead of gaining access.</p>
+</div>
+<p>Either way the award converges immediately: a pending invitation is reported
+back to the awarding portal as membership, so it stops resending the update
+rather than waiting for the person to accept. Re-running the sync does not
+create a second invitation.</p>
 <h3 id="creating-a-remote-allocation-offering">Creating a remote allocation offering</h3>
 <ol>
 <li>Navigate to <strong>Service Provider</strong> settings</li>
@@ -18125,6 +18400,7 @@ curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authoriz
 <li><strong>Usage sync</strong> → Periodic task → <code>get_usage_report()</code> from bridge → <code>ComponentUsage</code> update</li>
 </ol>
 <h2 id="version-compatibility">Version compatibility</h2>
+<p>Waldur requires OpenPortal 0.91.0 or later.</p>
 <table>
 <thead>
 <tr>
@@ -18135,22 +18411,35 @@ curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authoriz
 </thead>
 <tbody>
 <tr>
-<td>0.27.x</td>
+<td>0.91.x</td>
 <td>Current</td>
+<td>Award lifecycle tracking with audit history, allowed domains, approval embargo</td>
+</tr>
+<tr>
+<td>0.27.x</td>
+<td>Superseded</td>
 <td>AwardDetails with links, notes, membership control</td>
 </tr>
 <tr>
 <td>0.26.x</td>
-<td>Supported</td>
+<td>Superseded</td>
 <td>Date range filtering on reports</td>
 </tr>
 <tr>
 <td>0.25.x</td>
-<td>Supported</td>
+<td>Superseded</td>
 <td>Report remapping</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Upgrade every agent in the chain together — bridge, portal, provider,
+clusters, cluster and the leaf agents. A chain running mixed versions is
+not a supported configuration, and the resulting failures usually surface
+as authentication or protocol errors far from the agent that is actually
+out of date.</p>
+</div>
 
 
 
