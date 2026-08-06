@@ -15954,7 +15954,7 @@
   <span class="md-ellipsis">
     
   
-    Resource access subnets
+    Access subnets
   
 
     
@@ -18247,6 +18247,18 @@ td:nth-child(4) {
 <td>Periodically export history for all active rooms.</td>
 </tr>
 <tr>
+<td><code>waldur-openportal-mark-stale-remote-projects</code></td>
+<td><code>waldur_openportal.mark_stale_remote_projects</code></td>
+<td>1 hour</td>
+<td>Mark RemoteProjects as STALE when we have not received any contact<br>from the remote portal for more than STALE_THRESHOLD_HOURS hours.<br><br>This covers two cases:<br> - last_contact_time is set but is older than the threshold<br> - last_contact_time is null and the project was created more than<br> the threshold ago (i.e. we never heard back after creation)<br><br>A STALE project transitions back to ACTIVE automatically when<br>touch_last_contact() is called (e.g. on a successful usage or<br>storage report fetch).</td>
+</tr>
+<tr>
+<td><code>waldur-openportal-refresh-remote-projects</code></td>
+<td><code>waldur_openportal.refresh_remote_projects</code></td>
+<td>6 hours</td>
+<td>Refresh the details of all RemoteProjects from the remote portal.<br>This is called periodically in case we miss the updates that<br>come from push notifications</td>
+</tr>
+<tr>
 <td><code>waldur-openportal-send-notifications</code></td>
 <td><code>waldur_openportal.send_notifications</code></td>
 <td>47 minutes</td>
@@ -18274,7 +18286,7 @@ td:nth-child(4) {
 <td><code>waldur-openportal-sync-remote</code></td>
 <td><code>waldur_openportal.sync_remote</code></td>
 <td>29 minutes</td>
-<td>This is a full OpenPortal remote sync - this will go through all remote projects<br>and make sure that they have been created and any updates applied</td>
+<td>Dispatcher: fans out one sync_remote_for_destination subtask per active destination<br>so that destinations are synced in parallel and a down destination cannot block others.</td>
 </tr>
 <tr>
 <td><code>waldur-openportal-sync-remote-storage</code></td>
@@ -18286,13 +18298,13 @@ td:nth-child(4) {
 <td><code>waldur-openportal-sync-remote-usage</code></td>
 <td><code>waldur_openportal.sync_remote_usage</code></td>
 <td>9 minutes</td>
-<td>This task is called to synchronise the usage for all remote allocations</td>
+<td>Dispatcher: fans out one sync_remote_usage_for_destination subtask per active<br>destination so that a down destination cannot block usage syncs for others.</td>
 </tr>
 <tr>
 <td><code>waldur-openportal-sync-remote-users</code></td>
 <td><code>waldur_openportal.sync_remote_users</code></td>
 <td>23 minutes</td>
-<td>This task runs through all of the remote allocations and makes sure that all<br>users associated with those allocations are properly synced (e.g.<br>added or removed)</td>
+<td>Dispatcher: fans out one sync_remote_users_for_destination subtask per active<br>destination so that a down destination cannot block user syncs for others.</td>
 </tr>
 <tr>
 <td><code>waldur-openportal-sync-storage</code></td>
@@ -18465,13 +18477,13 @@ td:nth-child(4) {
 <tr>
 <td><code>waldur_openportal.clean_stale_jobs</code></td>
 <td><code>waldur_openportal.clean_stale_jobs</code></td>
-<td>1 day</td>
-<td>This task deletes all OpenPortal jobs that were created more than<br>2 days ago - this is to prevent the database from filling up with<br>old jobs that are no longer relevant.</td>
+<td>1 day, 1 hour</td>
+<td>This task deletes all OpenPortal jobs that were created more than<br>{days} days ago - this is to prevent the database from filling up with<br>old jobs that are no longer relevant.</td>
 </tr>
 <tr>
 <td><code>waldur_openportal.fix_total_allocation</code></td>
 <td><code>waldur_openportal.fix_total_allocation</code></td>
-<td>1 day</td>
+<td>23 hours</td>
 <td>This task goes through all OpenPortal remote allocations and makes sure<br>that the project balance is correct, given the total awarded from<br>the remote allocation, and the total consumption for the project<br>over its lifetime. We have seen that these can drift apart<br>over time, as Waldur does some strange accounting at the start<br>of each month. This should be run daily</td>
 </tr>
 </tbody>

@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-06T02:03:40.207245Z
+Generated: 2026-08-06T21:49:50.307740Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -8304,6 +8304,14 @@ Regular expression that a project name must fully match when creating or renamin
 
 Custom validation error shown when a project name does not match PROJECT_NAME_REGEX. Leave empty to use the default message.
 
+#### OPENPORTAL_MEMBERSHIP_SYNC_MODE
+
+**Type:** choice_field
+
+**Default value:** invitation
+
+How to add a user to a project when an OpenPortal award lists them as a member. 'invitation': create a pending invitation, so the user accepts, agrees to the terms and is provisioned locally before gaining access. 'direct': create the account if it does not exist and grant the role immediately. A pending invitation is reported back to the allocating portal as a member either way, so the award reaches a consistent state without waiting for the user to act.
+
 ### Telemetry
 
 #### TELEMETRY_URL
@@ -15193,14 +15201,16 @@ td:nth-child(4) {
 | `waldur-mastermind-send-notifications-about-upcoming-bookings` | `waldur_mastermind.booking.send_notifications_about_upcoming_bookings` | Cron: `0 9 * * * (m/h/dM/MY/d)` | Send email notifications to users about their upcoming bookings. |
 | `waldur-matrix-chat-cleanup-appservice-transactions` | `waldur_mastermind.matrix_chat.cleanup_old_appservice_transactions` | Cron: `15 3 * * * (m/h/dM/MY/d)` | Prune MatrixAppserviceTransaction rows older than the retention window. |
 | `waldur-matrix-chat-periodic-history-export` | `waldur_mastermind.matrix_chat.periodic_history_export` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Periodically export history for all active rooms. |
+| `waldur-openportal-mark-stale-remote-projects` | `waldur_openportal.mark_stale_remote_projects` | 1 hour | Mark RemoteProjects as STALE when we have not received any contact<br>from the remote portal for more than STALE_THRESHOLD_HOURS hours.<br><br>This covers two cases:<br> - last_contact_time is set but is older than the threshold<br> - last_contact_time is null and the project was created more than<br> the threshold ago (i.e. we never heard back after creation)<br><br>A STALE project transitions back to ACTIVE automatically when<br>touch_last_contact() is called (e.g. on a successful usage or<br>storage report fetch). |
+| `waldur-openportal-refresh-remote-projects` | `waldur_openportal.refresh_remote_projects` | 6 hours | Refresh the details of all RemoteProjects from the remote portal.<br>This is called periodically in case we miss the updates that<br>come from push notifications |
 | `waldur-openportal-send-notifications` | `waldur_openportal.send_notifications` | 47 minutes | This task is called to send notifications to all users associated<br>with any OpenPortal allocations. |
 | `waldur-openportal-sync-allocation-limits` | `waldur_openportal.sync_allocation_limits` | 17 minutes | This task updates the resource limits for all allocations based on project credits<br>and current usage. This should be run after sync_usage to ensure all usage data is current. |
 | `waldur-openportal-sync-local-users` | `waldur_openportal.sync_local_users` | 19 minutes | This task runs through all of the allocations and makes sure that all<br>users associated with those allocations are properly synced (e.g.<br>added or removed) |
 | `waldur-openportal-sync-offering-agents` | `waldur_openportal.sync_offering_agents` | 19 minutes | This task is called to sync the agents for all offerings<br>that are associated with remote OpenPortal backends. |
-| `waldur-openportal-sync-remote` | `waldur_openportal.sync_remote` | 29 minutes | This is a full OpenPortal remote sync - this will go through all remote projects<br>and make sure that they have been created and any updates applied |
+| `waldur-openportal-sync-remote` | `waldur_openportal.sync_remote` | 29 minutes | Dispatcher: fans out one sync_remote_for_destination subtask per active destination<br>so that destinations are synced in parallel and a down destination cannot block others. |
 | `waldur-openportal-sync-remote-storage` | `waldur_openportal.sync_remote_storage` | 8 hours | Fetch and store accumulated storage reports from remote portals for all<br>active RemoteAllocations. |
-| `waldur-openportal-sync-remote-usage` | `waldur_openportal.sync_remote_usage` | 9 minutes | This task is called to synchronise the usage for all remote allocations |
-| `waldur-openportal-sync-remote-users` | `waldur_openportal.sync_remote_users` | 23 minutes | This task runs through all of the remote allocations and makes sure that all<br>users associated with those allocations are properly synced (e.g.<br>added or removed) |
+| `waldur-openportal-sync-remote-usage` | `waldur_openportal.sync_remote_usage` | 9 minutes | Dispatcher: fans out one sync_remote_usage_for_destination subtask per active<br>destination so that a down destination cannot block usage syncs for others. |
+| `waldur-openportal-sync-remote-users` | `waldur_openportal.sync_remote_users` | 23 minutes | Dispatcher: fans out one sync_remote_users_for_destination subtask per active<br>destination so that a down destination cannot block user syncs for others. |
 | `waldur-openportal-sync-storage` | `waldur_openportal.sync_storage` | 8 hours | Fetch and accumulate storage snapshots for all active allocations.<br>Runs every 8 hours so each project gets at least one storage report per day<br>without hammering the filesystems. |
 | `waldur-openportal-sync-usage` | `waldur_openportal.sync_usage` | 7 minutes | This task is called to synchronise the usage for all allocations.<br>It processes allocations by customer in parallel, but serially within each customer.<br><br>Note: This task schedules parallel subtasks and returns immediately.<br>The sync_allocation_limits task should be scheduled separately (e.g., via cron)<br>to run after this task typically completes to update resource limits. |
 | `waldur-pid-update-all-referrables` | `waldur_pid.update_all_referrables` | 1 day | Update DataCite DOI information for all referrable objects with existing DOIs. |
@@ -15229,8 +15239,8 @@ td:nth-child(4) {
 | `waldur-sync-daily-quotas` | `analytics.sync_daily_quotas` | 1 day | No description available |
 | `waldur-update-all-pid` | `waldur_pid.update_all_pid` | 1 day | Update all PID (Persistent Identifier) information for referrable objects with DataCite DOIs. |
 | `waldur_mastermind.marketplace_rancher.report_rancher_usage` | `waldur_mastermind.marketplace_rancher.report_rancher_usage` | 1 hour | No description available |
-| `waldur_openportal.clean_stale_jobs` | `waldur_openportal.clean_stale_jobs` | 1 day | This task deletes all OpenPortal jobs that were created more than<br>2 days ago - this is to prevent the database from filling up with<br>old jobs that are no longer relevant. |
-| `waldur_openportal.fix_total_allocation` | `waldur_openportal.fix_total_allocation` | 1 day | This task goes through all OpenPortal remote allocations and makes sure<br>that the project balance is correct, given the total awarded from<br>the remote allocation, and the total consumption for the project<br>over its lifetime. We have seen that these can drift apart<br>over time, as Waldur does some strange accounting at the start<br>of each month. This should be run daily |
+| `waldur_openportal.clean_stale_jobs` | `waldur_openportal.clean_stale_jobs` | 1 day, 1 hour | This task deletes all OpenPortal jobs that were created more than<br>{days} days ago - this is to prevent the database from filling up with<br>old jobs that are no longer relevant. |
+| `waldur_openportal.fix_total_allocation` | `waldur_openportal.fix_total_allocation` | 23 hours | This task goes through all OpenPortal remote allocations and makes sure<br>that the project balance is correct, given the total awarded from<br>the remote allocation, and the total consumption for the project<br>over its lifetime. We have seen that these can drift apart<br>over time, as Waldur does some strange accounting at the start<br>of each month. This should be run daily |
 
 ---
 
@@ -70109,28 +70119,119 @@ for the per-role permission matrix.
 
 ---
 
-### Resource access subnets
+### Access subnets
 <!-- Source: docs/user-guide/customer-organization/resource-access-subnets.md -->
 
-# Resource access subnets
+# Access subnets
 
-Some offerings let you attach a list of **allowed access subnets** to each
-resource — the IP addresses that should be allowed to reach the backend entity
-the resource represents (for example the object storage bucket, database, or
-virtual machine behind the resource). Consumers add single hosts (`/32`), and
-the service provider can additionally publish wider **default** ranges on the
-offering (see below).
+An organization keeps one list of **trusted networks**. Each entry is an IP
+address or range, and says what it is trusted *for*:
 
-Waldur itself does not block traffic based on this list. The subnets are
-**advisory data**: they are published through the API so that an external
-firewall (or the service provider's automation) can build an allow-list and
-enforce it on the actual backend. Think of it as a curated allow-list that
-travels with the resource.
+- **signing in to the portal** on behalf of the organization, and/or
+- **reaching the resources** the organization holds of a particular offering —
+  the backend entity behind each resource, such as an object storage bucket, a
+  database, or a compute allocation.
+
+An address is therefore described once ("office egress") rather than maintained
+in two separate places.
+
+!!! warning
+    The two scopes do very different things. Portal sign-in is enforced by
+    Waldur itself. Offering scopes are, by default, **advisory data** — they are
+    published through the API so that an external firewall (or the provider's
+    automation) can build an allow-list and enforce it on the actual backend.
+    Waldur only blocks traffic on them if the offering enables
+    [concealment](#concealing-restricted-resources-optional).
+
+## Managing the list
+
+Open **Organization → Manage → Access control** and select the **Access
+subnets** tab. The table has one row per address and one column per thing it
+can be trusted for: your Waldur site, then each offering your organization
+consumes that supports access subnets.
+
+[Image: The Access subnets tab]
+
+To add an address, use **Actions → Add access subnet**. Enter the CIDR, an
+optional description, and tick what it should apply to. Leaving **Applies to**
+empty is fine — the entry is then trusted for nothing until you tick a column
+in the table.
+
+[Image: Adding an access subnet]
+
+Ticking or unticking a cell asks for confirmation and names the change, so it
+is clear what is about to happen before anything is saved.
+
+[Image: Confirming that an address applies to portal sign-in]
+
+!!! danger "Enabling the sign-in column"
+    As soon as **any** address is trusted for portal sign-in, only listed
+    addresses can sign in on behalf of the organization. Everyone signing in
+    from elsewhere loses access to it.
+
+    This is why the sign-in column is off by default, and why adding an address
+    to reach a bucket never restricts sign-in as a side effect.
+
+### What you may enter
+
+| Who | Allowed |
+|-----|---------|
+| Organization owners | a single IP address — `/32`, or `/128` for IPv6 |
+| Staff | any width except `/0` |
+
+A bare address such as `192.168.1.5` is treated as `192.168.1.5/32`.
+
+A network with host bits set (for example `203.0.113.5/24`) is rejected rather
+than silently widened to `203.0.113.0/24` — that would grant a whole range
+where a single host was written.
+
+!!! note "Entries added by staff"
+    An entry created by staff is marked with a lock and cannot be changed or
+    removed by anyone else, whatever its width. It stays visible so you can see
+    why an address is allowed. If staff later widens an entry you created, it
+    becomes staff-managed for the same reason.
+
+### Offerings you no longer use
+
+If your organization terminates its last resource of an offering, entries
+trusted for it are **kept** — reprovisioning then restores your protection
+without reconfiguring anything.
+
+Such a column is marked as no longer in use. You can untick it to remove the
+entry's scope, but you cannot add it back until the organization holds a
+resource of that offering again. While dormant, the addresses are not published
+to the firewall allow-list.
+
+### Addresses published by the provider
+
+Below the table, **Also allowed by the service provider** lists ranges the
+provider publishes on its own offerings. They widen what may reach your
+resources, they are included in the exported allow-list, and they cannot be
+changed here — only the provider can edit them.
+
+## Checking what it means for your resources
+
+**Actions → Show resource impact** lists every resource your organization
+holds, the addresses that can reach each, and whether the list is actually
+enforced. The row menu on an address answers the reverse question — which
+resources that one address reaches.
+
+[Image: Resource impact across the organization's resources]
+
+Only resources of offerings that support access subnets are listed. The rest
+have no allow-list that could apply to them, so including them would bury the
+resources whose exposure is actually in question.
+
+The view calls out two things the table cannot show:
+
+- resources that are **reachable from anywhere**, because their offering
+  supports access subnets but nothing is listed for them;
+- resources whose list is **advisory only**, published for an external firewall
+  but not enforced by Waldur.
 
 ## Enabling the feature (service provider)
 
-Access subnets are available only for resources whose offering opts in. The
-service provider enables it on their offering.
+Offering scopes are available only for offerings that opt in.
 
 1. Open the offering and go to **Edit → Integration → Operations**.
 2. Select the **Resource lifecycle** tab.
@@ -70138,118 +70239,84 @@ service provider enables it on their offering.
 
 [Image: Enabling resource access subnets on an offering]
 
-Once enabled, every resource created from that offering shows an **Access
-subnets** tab, and the offering's **Manage** view gains an **Access subnets**
-tab. That view is a single table with two sub-tabs — **Default allowed subnets**
-(the provider's own ranges, editable here) and **Access subnets by resource**
-(a read-only roll-up of every resource's subnets) — plus a **Firewall
-allow-list** button that shows the merged, collapsed list ready to copy or
-download.
+Once enabled, consumers can trust addresses for that offering, each of its
+resources shows a read-only **Access subnets** tab, and the offering's
+**Manage** view gains an **Access subnets** tab with two sub-tabs — **Default
+allowed subnets** (the provider's own ranges, editable here) and **Access
+subnets by organization** (a read-only roll-up of what consumers have listed)
+— plus a **Firewall allow-list** button showing the merged list ready to copy
+or download.
 
 !!! note
-    Editing this setting requires permission to manage the offering (the
-    offering's service manager or the provider organization owner).
+    Editing this setting requires permission to manage the offering — the
+    offering's service manager or the provider organization owner.
 
 ### Concealing restricted resources (optional)
 
-By default the subnets are advisory only — Waldur stores and publishes them but
-does not act on them. The **Resource lifecycle** tab has a second toggle,
-**Conceal subnet-restricted resources**, that opts the offering into enforcement:
+The **Resource lifecycle** tab has a second toggle, **Conceal
+subnet-restricted resources**, which opts the offering into enforcement by
+Waldur itself.
 
-When it is on, a resource of this offering that has one or more access subnets is
-**hidden from the consumer API** unless the caller's IP address is in that
-resource's allow-list. The resource disappears from resource lists and returns
-*not found* on direct access.
+When it is on, a resource of this offering is **hidden from the consumer API**
+unless the caller's IP address is trusted for it. The resource disappears from
+resource lists and returns *not found* on direct access.
 
 !!! warning
-    This is the one place the feature changes Waldur's own behaviour. It applies
-    to the **consumer** side only — service providers and the site-agent keep
-    full visibility — and **staff and support are exempt**. Resources that have
-    no access subnets are never concealed. Turn it on only if consumers are
-    expected to reach the portal from the same networks listed in the allow-list,
-    or you may lock them out of their own resources.
+    This is the one place the feature changes Waldur's own behaviour. It
+    applies to the **consumer** side only — service providers and the
+    site-agent keep full visibility — and **staff and support are exempt**.
+
+    An organization that has listed nothing for the offering is not restricted,
+    so enabling this does not lock anyone out on its own. Turn it on only if
+    consumers are expected to reach the portal from the same networks they
+    list, or you may lock them out of their own resources.
 
 ### Provider default subnets (optional)
 
-Beside the per-resource entries curated by consumers, the service provider can
-publish **default allowed subnets** on the offering — broader CIDR ranges
-(`/24`, `/16`, …), not just single hosts. Manage them on the offering's
-**Manage → Access subnets** view, under the **Default allowed subnets** tab
-(use **Add default subnet**, or the row menu to edit or remove one).
-
-[Image: Provider default subnets on the offering Manage view]
+Besides what consumers list, the provider can publish **default allowed
+subnets** on the offering — broader ranges (`/24`, `/16`, …), not just single
+hosts. Manage them on the offering's **Manage → Access subnets** view, under
+**Default allowed subnets**.
 
 These defaults:
 
-- are shown **read-only to consumers** on each resource's **Access subnets** tab,
-  above their own entries, so users see which networks are already allowed;
-- **widen the concealment allow-list** — when concealment is on, a caller whose IP
-  falls in a default range can reach the resource even without a matching
-  per-resource `/32`;
-- are **included in the exported firewall allow-list** (both the packed list and
-  the command-line dump), merged with the per-resource subnets.
-
-!!! note
-    Provider defaults may be any CIDR width; consumer per-resource entries remain
-    single hosts (`/32`). Only the provider can edit the defaults.
-
-## Managing access subnets (organization owners and project teams)
-
-Open a resource of an opted-in offering and select the **Access subnets** tab.
-The tab lists the currently allowed subnets with their CIDR and a description.
-
-[Image: Access subnets tab on a resource]
-
-To add an entry:
-
-1. Click **Add access subnet**.
-2. Enter the IP address as a `/32` CIDR (for example `192.168.1.5/32`) and an
-   optional description such as the host or office it belongs to.
-3. Click **Create**.
-
-[Image: Adding an access subnet]
-
-Use the three-dots menu on a row to edit or remove an entry. Changes are
-recorded in the resource's history log.
-
-!!! tip
-    Only single IP addresses (`/32`) are accepted. A bare address such as
-    `192.168.1.5` is treated as `192.168.1.5/32`.
-
-Managing the list requires resource management permission — organization
-owners, project managers, and project administrators can edit it. Other users
-see the list read-only.
+- are shown **read-only to consumers**, so they can see which networks are
+  already allowed;
+- **widen the concealment allow-list** — a caller within a default range can
+  reach the resource even without a matching consumer entry;
+- are **included in the exported firewall allow-list**, merged with consumer
+  entries.
 
 ## Getting the allow-list
 
-The allow-list — the per-resource subnets and the offering defaults, merged and
-collapsed into the minimal set of CIDRs — is available three ways, all producing
-the same result:
+The allow-list — consumer entries and provider defaults, merged and collapsed
+into the minimal set of CIDRs — is available three ways, all producing the same
+result:
 
 - **From the UI** — on the offering's **Manage → Access subnets** view, click
   **Firewall allow-list**. The dialog shows the merged CIDRs with **Copy** and
   **Download** actions.
 
     [Image: Firewall allow-list dialog]
+
 - **From the API** — `GET /api/marketplace-provider-offerings/{uuid}/access_subnets/`
-  returns `expanded` (every subnet with its resource, project and organization),
-  `packed` (the merged allow-list), and `defaults` (the provider ranges). The
-  raw per-resource entries are also available at
-  `/api/marketplace-resource-access-subnets/` (filterable by `offering_uuid`),
-  each carrying the resource's backend identifier so a firewall can map an entry
-  to the backend it guards.
+  returns `expanded` (every address with its organization and offering),
+  `packed` (the merged allow-list) and `defaults` (the provider ranges). An
+  organization's own entries are at `/api/access-subnets/`, filterable by
+  `customer_uuid` and `offering_uuid`.
 
     To build one allow-list spanning **several offerings**, use
     `GET /api/marketplace-provider-offerings/aggregated_access_subnets/` with a
     repeated `offering_uuid` query parameter
     (`?offering_uuid=<uuid>&offering_uuid=<uuid>`). It returns the same
     `expanded`, `packed` and `defaults` fields across all requested offerings,
-    plus `organization_subnets` — the organization-level access subnets of
-    customers owning non-terminated resources of the offerings, populated when
+    plus `organization_subnets` — the sign-in addresses of organizations owning
+    non-terminated resources of those offerings, populated when
     `include_organization_subnets=true` is passed and merged into `packed`. The
     caller must have provider-side access to every requested offering.
-- **From the command line** — run the `resource_access_subnets` management
-  command to dump the merged list, for one offering, several, or all:
+
+- **From the command line** — `resource_access_subnets` dumps the merged list
+  for one offering, several, or all:
 
     ```bash
     # merged allow-list for a single offering
@@ -70258,8 +70325,8 @@ the same result:
     # several offerings at once (repeat the flag)
     waldur resource_access_subnets --offering <uuid-1> --offering <uuid-2>
 
-    # also merge in the organization-level subnets of customers
-    # owning non-terminated resources of the selected offerings
+    # also merge in the sign-in addresses of organizations
+    # holding non-terminated resources of the selected offerings
     waldur resource_access_subnets --offering <offering-uuid> --include-organization-subnets
 
     # all offerings, written to a file
@@ -70267,13 +70334,18 @@ the same result:
     ```
 
 An external firewall typically pulls the API endpoint's `packed` list, or runs
-the command on a schedule (e.g. via cron) and reloads the resulting file.
+the command on a schedule and reloads the resulting file.
+
+!!! note "Sign-in addresses are exported separately"
+    `organization_access_subnets` dumps only the addresses trusted for **portal
+    sign-in**. Addresses trusted only for reaching resources are not included —
+    those belong to `resource_access_subnets` above.
 
 !!! warning
-    Getting the allow-list does not change access on its own. Unless the offering
-    enables **concealment** (above), Waldur only stores and publishes the
-    subnets — the external firewall or provider automation that consumes the list
-    is responsible for enforcing it on the backend.
+    Getting the allow-list does not change access on its own. Unless the
+    offering enables **concealment**, Waldur only stores and publishes the
+    addresses — the external firewall or provider automation that consumes the
+    list is responsible for enforcing it on the backend.
 
 ---
 
