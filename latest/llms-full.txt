@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-06T21:49:50.307740Z
+Generated: 2026-08-07T02:03:45.973097Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6403,7 +6403,7 @@ options:
 
 ## organization_access_subnets
 
-Dumps information about organization access subnets, merging adjacent or overlapping networks.
+Dumps the addresses allowed to sign in to the portal on behalf of an organization, merging adjacent or overlapping networks. Entries that apply only to resources of an offering are excluded — those are exported by resource_access_subnets.
 
 ```bash
 
@@ -6706,7 +6706,7 @@ Remove Django event log records with stale content types.
 
 ## resource_access_subnets
 
-Dumps per-resource access subnets for consumption by external firewalls, merging adjacent or overlapping networks. Only resources of offerings that opt in via the enable_resource_access_subnets plugin option have subnets.
+Dumps consumer access subnets for consumption by external firewalls, merging adjacent or overlapping networks. Subnets are defined per (customer, offering) pair and apply to all of that customer's resources of the offering. Only offerings that opt in via the enable_resource_access_subnets plugin option have subnets.
 
 ```bash
 
@@ -8167,6 +8167,14 @@ Allow anonymous users to see plans
 **Default value:** show_all
 
 Controls offering visibility for regular users. 'show_all': Show all shared offerings (current behavior). 'show_restricted_disabled': Show all but mark inaccessible as disabled. 'hide_inaccessible': Hide offerings user cannot access. 'require_membership': Hide all unless user belongs to an organization/project.
+
+#### SERVICE_ACCESS_MODE
+
+**Type:** choice_field
+
+**Default value:** both
+
+How users reach services. 'calls': only through calls for proposals, no marketplace navigation. 'marketplace': the marketplace is the single entry point; calls are reached through an offering and proposals are tracked in the user profile. 'both': marketplace and calls are browsable independently. Navigation only — the API serves the same data in every mode.
 
 #### SHOW_OFFERING_COVER_IMAGE
 
@@ -83882,9 +83890,6 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - offering_access_subnet_creation_succeeded
 - offering_access_subnet_deletion_succeeded
 - offering_access_subnet_update_succeeded
-- resource_access_subnet_creation_succeeded
-- resource_access_subnet_deletion_succeeded
-- resource_access_subnet_update_succeeded
 
 ## Auth
 
@@ -85000,6 +85005,8 @@ td:nth-child(4) {
 | `init_resource_parent` | `Django Signal (post_save)` | `marketplace.Resource` | Initialize the parent resource for a newly created resource. |
 | `limit_update_failed` | `Custom Signal (resource_limit_update_failed)` | `marketplace.Resource` | Handle failed limit updates. |
 | `limit_update_succeeded` | `Custom Signal (resource_limit_update_succeeded)` | `marketplace.Resource` | Handle successful limit updates. |
+| `log_access_subnet_offering_scope_deletion` | `Django Signal (post_delete)` | `marketplace.AccessSubnetOfferingScope` | Log an access subnet losing an offering scope. |
+| `log_access_subnet_offering_scope_save` | `Django Signal (post_save)` | `marketplace.AccessSubnetOfferingScope` | Log an access subnet gaining an offering scope. |
 | `log_affiliate` | `Django Signal (post_save)` | `invoices.CustomerAffiliate` | Audit staff changes of affiliate terms. Scoped to the affiliate |
 | `log_attachment_delete` | `Django Signal (post_delete)` | `support.Attachment` | No description |
 | `log_attachment_save` | `Django Signal (post_save)` | `support.Attachment` | No description |
@@ -85019,8 +85026,6 @@ td:nth-child(4) {
 | `log_order_events` | `Django Signal (post_save)` | `marketplace.Order` | Log order creation and state transition events. |
 | `log_project_credit` | `Django Signal (post_save)` | `invoices.ProjectCredit` | No description |
 | `log_request_events` | `Django Signal (post_save)` | `marketplace_remote.ProjectUpdateRequest` | No description |
-| `log_resource_access_subnet_deletion` | `Django Signal (post_delete)` | `marketplace.ResourceAccessSubnet` | Log successful resource access subnet deletion. |
-| `log_resource_access_subnet_save` | `Django Signal (post_save)` | `marketplace.ResourceAccessSubnet` | Log resource access subnet creation and updates. |
 | `log_resource_events` | `Django Signal (post_save)` | `marketplace.Resource` | Log resource creation request events. |
 | `log_resource_limit_change_request_events` | `Django Signal (post_save)` | `marketplace.ResourceLimitChangeRequest` | Log events when resource limit change request is created or reviewed. |
 | `log_resource_robot_account_created_or_updated` | `Django Signal (post_save)` | `marketplace.RobotAccount` | Log resource robot account creation and updates. |
@@ -86991,6 +86996,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`UuidMixin`](#uuidmixin) | `waldur_core.core.models` | Mixin to identify models by UUID |
 | [`LookupMixin`](#lookupmixin) | `waldur_core.core.nested_routers` | Deprecated |
 | [`NestedMixin`](#nestedmixin) | `waldur_core.core.nested_routers` | Mixin for creating nested routers that handle hierarchical URL structures |
+| [`AccessSubnetMixin`](#accesssubnetmixin) | `waldur_core.core.serializers` | Shared mask and provenance rules for the access-subnet serializers |
 | [`AugmentedSerializerMixin`](#augmentedserializermixin) | `waldur_core.core.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
 | [`NetworkAclValidationMixin`](#networkaclvalidationmixin) | `waldur_core.core.serializers` | Validate + canonicalise ``allowed_networks`` and enforce the entry cap |
 | [`RestrictedSerializerMixin`](#restrictedserializermixin) | `waldur_core.core.serializers` | This mixin allows to specify list of fields to be rendered by serializer |
@@ -87547,6 +87553,28 @@ No method override is needed since Django Rest Framework 2.4.
 **Description:**
 
 Mixin for creating nested routers that handle hierarchical URL structures.
+
+### AccessSubnetMixin
+
+**Module:** `waldur_core.core.serializers`
+
+**Description:**
+
+Shared mask and provenance rules for the access-subnet serializers.
+
+Two rules, both of which need to know who is acting and therefore cannot
+live on the model field:
+
+- mask width — non-staff may only enter single hosts, staff any width but
+  ``/0`` (see ``core_utils.validate_access_subnet_for_user``);
+- provenance — an entry staff created is flagged ``is_staff_managed`` and
+
+  becomes read-only for everyone else whatever its width, so a consumer
+  cannot quietly remove a range an operator pinned. Deletion is guarded
+  separately in the viewset, which the serializer never sees.
+
+``is_staff_managed`` is derived from the acting user on create and is never
+writable through the API.
 
 ### AugmentedSerializerMixin
 

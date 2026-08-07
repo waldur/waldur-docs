@@ -10155,6 +10155,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#accesssubnetmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AccessSubnetMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#augmentedserializermixin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19330,6 +19341,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#accesssubnetmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AccessSubnetMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#augmentedserializermixin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20457,6 +20479,11 @@
 <td>Mixin for creating nested routers that handle hierarchical URL structures</td>
 </tr>
 <tr>
+<td><a href="#accesssubnetmixin"><code>AccessSubnetMixin</code></a></td>
+<td><code>waldur_core.core.serializers</code></td>
+<td>Shared mask and provenance rules for the access-subnet serializers</td>
+</tr>
+<tr>
 <td><a href="#augmentedserializermixin"><code>AugmentedSerializerMixin</code></a></td>
 <td><code>waldur_core.core.serializers</code></td>
 <td>This mixin provides several extensions to stock Serializer class:  1</td>
@@ -21130,6 +21157,22 @@ The UUID is automatically generated and used as a primary identifier.</p>
 <p><strong>Module:</strong> <code>waldur_core.core.nested_routers</code></p>
 <p><strong>Description:</strong></p>
 <p>Mixin for creating nested routers that handle hierarchical URL structures.</p>
+<h3 id="accesssubnetmixin">AccessSubnetMixin</h3>
+<p><strong>Module:</strong> <code>waldur_core.core.serializers</code></p>
+<p><strong>Description:</strong></p>
+<p>Shared mask and provenance rules for the access-subnet serializers.</p>
+<p>Two rules, both of which need to know who is acting and therefore cannot
+live on the model field:</p>
+<ul>
+<li>mask width — non-staff may only enter single hosts, staff any width but
+  <code>/0</code> (see <code>core_utils.validate_access_subnet_for_user</code>);</li>
+<li>provenance — an entry staff created is flagged <code>is_staff_managed</code> and</li>
+</ul>
+<p>becomes read-only for everyone else whatever its width, so a consumer
+  cannot quietly remove a range an operator pinned. Deletion is guarded
+  separately in the viewset, which the serializer never sees.</p>
+<p><code>is_staff_managed</code> is derived from the acting user on create and is never
+writable through the API.</p>
 <h3 id="augmentedserializermixin">AugmentedSerializerMixin</h3>
 <p><strong>Module:</strong> <code>waldur_core.core.serializers</code></p>
 <p><strong>Description:</strong></p>
