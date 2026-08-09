@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-08T02:03:44.806668Z
+Generated: 2026-08-09T02:03:40.585327Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -10020,6 +10020,24 @@ Number of days to retain table size history data.
 
 Minimum table size in bytes (default 1MB) to monitor. Smaller tables are ignored.
 
+### User Revision History
+
+#### USER_REVISION_RETENTION_DAYS
+
+**Type:** int
+
+**Default value:** 730
+
+Delete user profile revision history older than this many days. Set to 0 to keep it forever.
+
+#### USER_REVISION_KEEP_MINIMUM
+
+**Type:** int
+
+**Default value:** 20
+
+Always keep at least this many most recent revisions per user, however old they are. Must be above 0, otherwise pruning can erase a user's history entirely.
+
 ### User Actions
 
 #### USER_ACTIONS_ENABLED
@@ -15116,6 +15134,7 @@ td:nth-child(4) {
 | `delete-dangling-event-subscriptions` | `waldur_core.logging.delete_dangling_event_subscriptions` | 1 hour | No description available |
 | `delete-old-verifications` | `waldur_core.onboarding.delete_old_verifications` | 1 day | This task runs daily to delete verifications that are in FAILED or EXPIRED<br>status and were last modified more than 30 days ago. |
 | `delete-stale-event-subscriptions` | `waldur_core.logging.delete_stale_event_subscriptions` | 1 day | No description available |
+| `delete-stale-user-revisions` | `waldur_core.delete_stale_user_revisions` | Cron: `0 3 * * * (m/h/dM/MY/d)` | Prune reversion history for users.<br><br>Every audited change to a user opens a revision, and federated deployments<br>sync users on every login, so core.User is the fastest-growing versioned<br>table. USER_REVISION_KEEP_MINIMUM guarantees each user keeps a usable trail<br>however old it is: without it, a quiet account would eventually lose its<br>history entirely.<br><br>Note that a revision is deleted whole, taking every version it holds with<br>it. Revisions written by the per-user signal handler hold exactly one user,<br>but an admin bulk action writes one revision covering all users it touched -<br>those are pruned together, which is fine as they share an age. |
 | `expire-stale-verifications` | `waldur_core.onboarding.expire_stale_verifications` | 1 hour | This task runs hourly to check for verifications that have passed their<br>expiration date while still in PENDING or ESCALATED status. |
 | `expired-reviews-should-be-cancelled` | `waldur_mastermind.proposal.expired_reviews_should_be_cancelled` | 1 hour | Cancel reviews that have expired. |
 | `mark-expired-assignment-batches` | `waldur_mastermind.proposal.mark_expired_assignment_batches` | 15 minutes | Mark assignment batches as EXPIRED when their deadline passes. |
@@ -83906,6 +83925,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - pat_used_from_new_ip
 - token_created
 - token_lifetime_updated
+- user_blocked
 
 ## Call
 
@@ -84426,6 +84446,7 @@ td:nth-child(4) {
 | `create_notification_about_permission_request_has_been_rejected` | `Django Signal (post_save)` | `users.PermissionRequest` | Notify the requester when their permission request has been rejected. |
 | `create_notification_about_permission_request_has_been_submitted` | `Django Signal (post_save)` | `users.PermissionRequest` | Send a notification when a permission request has been submitted. |
 | `create_project_metadata_completion` | `Django Signal (post_save)` | `structure.Project` | Create ChecklistCompletion for project metadata when a project is created. |
+| `create_revision_on_update` | `Django Signal (post_save)` | `core.User` | Snapshot a user whenever an audited field actually changes. See |
 | `deactivate_user_if_no_roles` | `Custom Signal (role_revoked)` | `—` | Deactivate a user if they no longer have any active roles. |
 | `delete_error_message` | `Custom Signal (post_transition)` | `structure.ServiceSettings` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `structure.SharedServiceSettings` | Delete error message if instance state changed from erred |
@@ -84715,6 +84736,7 @@ td:nth-child(4) {
 | `log_ssh_key_save` | `Django Signal (post_save)` | `core.SshPublicKey` | Log SSH key creation events. |
 | `log_token_create` | `Django Signal (post_save)` | `authtoken.Token` | Log token creation events. |
 | `log_user_delete` | `Django Signal (post_delete)` | `core.User` | Log user deletion events. |
+| `log_user_locked_out` | `Custom Signal (user_locked_out)` | `—` | Emit a user_blocked event when django-axes locks out a username/IP. |
 | `log_user_save` | `Django Signal (post_save)` | `core.User` | Log user creation, update, and activation/deactivation events. |
 | `log_verification_deleted` | `Django Signal (pre_delete)` | `onboarding.OnboardingVerification` | Log when an onboarding verification is deleted. |
 | `on_role_granted` | `Custom Signal (role_granted)` | `—` | No description |
@@ -85271,11 +85293,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 821
+Total unique handlers found: 823
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 423 handlers
+- **waldur_core**: 425 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 340 handlers
