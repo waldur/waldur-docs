@@ -1,5 +1,50 @@
 # Changelog
 
+## 8.1.0-rc.24 - 2026-08-10
+
+### Highlights
+
+Resource owners can now request an end date change and have it reviewed by the provider instead of editing the date silently, and providers can auto-approve those requests per offering. Access subnets are consolidated into a single scoped list per organization, so network restrictions for the organization, its offerings and its resources are managed from one matrix instead of three separate places. Proposal calls gain a full path for requesting Marketplace offerings — including purchase order handling and cost previews — while credit visibility now extends to project roles, letting project members see the credit funding their own project.
+
+### What's New
+
+- Request and approve resource end date changes: users can submit an end date change request, providers review it from the resource page, and offerings can be configured to auto-approve. Requests are filterable by offering, and the end date is applied correctly when an asynchronous renewal completes.
+- Access subnets are unified into one scoped list per organization, managed through a single matrix covering organization, offering and resource scopes, with impact reporting shown only for offerings that actually support access subnets.
+- Marketplace offerings can be requested through proposal calls, with resource request templates, requested limits, purchase order fields, cost totals and discount previews in the application flow.
+- Project members with a project role can now see the credit funding their project; the customer-level credit envelope and sibling projects remain hidden.
+- OpenPortal 0.90 features from the Isambard fork are available, including remote project management, audit logs, allocation pulls and limit management.
+- Table columns can be pinned, and marketplace category cards show how many offerings each category holds.
+- A `user_blocked` event is now recorded when an account is locked out, and user profile changes are tracked in revision history.
+- Public offering pages carry a "Contact support" button for reaching the provider directly.
+
+### Improvements
+
+- Call management and reviewer screens were reworked for legibility, and applying to a call is only offered while a round is open — enforced on both the server and the UI.
+- Termination orders no longer require a purchase order, so resources can be shut down without extra paperwork.
+- Provider–consumer order messaging now records message timestamps and presents them in a clearer banner.
+- API key handling exposes the key ID, issue date and order failure reason, with rotation as the single supported operation.
+- Price estimates refresh when credit compensations change, with fewer database queries per refresh.
+- Sentry error reports now include user context and API breadcrumbs, making support investigations faster.
+- Accessible names were added to header and table icon buttons, disabled controls explain why they are unavailable, and dates are shown consistently as day, month name, year.
+- Roles now display their technical code separately from their human-readable label.
+- Dependencies were updated to address known vulnerabilities in aiohttp, cryptography, h2 and nanoid.
+
+### Bug Fixes
+
+- Fixed a crash when removing a remote eduTEAMS user whose details were being cleared.
+- Version history no longer exposes fields that the corresponding serializers withhold.
+- Project end date changes are validated consistently across all entry points.
+- SCIM entitlements are retained until resource termination actually completes.
+- OpenStack router gateways without an allocated external IP no longer break synchronization.
+- Growth charts render correctly with integer axes and a corrected resource metric label; marketplace page bar tabs render on first mount; order form fields are preselected only when the choice is unambiguous; relative dates round instead of truncate.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [33 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.23...8.1.0-rc.24) - end date change requests, unified access subnets, proposal-based offering requests, credit visibility and security updates
+- **Waldur Homeport**: [36 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.23...8.1.0-rc.24) - end date change UI, access subnet matrix, call management rework, OpenPortal screens, accessibility and table improvements
+
+---
+
 ## 8.1.0-rc.23 - 2026-08-03
 
 ### Highlights
