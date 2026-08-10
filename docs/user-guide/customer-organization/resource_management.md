@@ -138,6 +138,11 @@ If it turns out that initial limits for the resource are too low or higher than 
 
 ![type:video](../img/allocation_update.mp4)
 
+## Resource end date update
+
+The termination date can be changed the same way on offerings that enable it —
+see [Changing a resource end date](resource-end-date-changes.md).
+
 ## Volume discounts
 
 Some offerings have volume discounts configured on their components by the
