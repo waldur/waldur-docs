@@ -1,5 +1,42 @@
 # Changelog
 
+## 8.1.0-rc.25 - 2026-08-11
+
+### Highlights
+
+Support teams get a dedicated AI assistant logs dashboard that scopes conversations by time period and attributes token usage per model, making it practical to audit and cost-account assistant activity. Marketplace offering forms now prefill internal names automatically, and Kubernetes deployment options no longer block or discard the other options on the same order form. OpenStack instance provisioning is more resilient: ports are recorded before attachment so leaked ports can be reclaimed after a failure.
+
+### What's New
+
+- Added an AI assistant logs dashboard for support staff, with conversation transcripts, date-range filtering and per-model token attribution across both anonymous and authenticated chats.
+- Internal names in offering component and option forms are now generated automatically from the display name, so operators no longer have to invent them by hand.
+- Kubernetes demo presets now include an OpenStack tenant offering, giving the government cloud, HPC/AI platform and research institution presets a complete stack out of the box.
+
+### Improvements
+
+- Project credit health now shows how much of the credit can actually be drawn, rather than only the nominal amount.
+- Project cost policies can be filtered by the resource they are scoped to.
+- Resource end date change request labels are now translated into Lithuanian, Estonian and German.
+- The user profile roles panel shows a proper first-use empty state instead of a blank list.
+- List-valued JSON fields are now typed as arrays in the OpenAPI schema, so generated clients handle them correctly.
+- Broadcast email delivery isolates per-recipient failures, so one bad address no longer stops the rest of a broadcast.
+- Bumped DOMPurify to address GHSA-55q2-fjhq-7xh7.
+- The experimental policy watch timeline view has been removed in favour of the health view.
+
+### Bug Fixes
+
+- Fixed Kubernetes configuration options blocking and swallowing sibling options in marketplace order and mass-edit forms.
+- OpenStack instance ports are recorded before attachment, so ports leaked by a failed attach are reclaimed instead of lingering.
+- Orders waiting for a project to start no longer display a misleading progress timeline.
+- Reppu usage import skips resources whose offering lacks the matching usage component instead of failing.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.24...8.1.0-rc.25) - AI assistant log scoping and token attribution, OpenStack port reclamation, cost policy filtering and OpenAPI schema typing.
+- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.24...8.1.0-rc.25) - AI assistant logs dashboard, marketplace form fixes, additional translations, and extraction of auth, API client, i18n, telemetry and lint rules into shared internal packages.
+
+---
+
 ## 8.1.0-rc.24 - 2026-08-10
 
 ### Highlights
