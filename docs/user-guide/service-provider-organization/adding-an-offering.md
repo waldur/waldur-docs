@@ -325,6 +325,19 @@ To add an image:
 !!! warning
     Images are uploaded to the platform's media storage as soon as you add them, before you save the offering. Keep image sizes reasonable to stay within the configured upload limit.
 
+## Description length limit
+
+Short **description** fields are limited to **4,096 characters**. The limit applies to the offering description, plan descriptions, project descriptions and call descriptions. It is a fixed limit built into Waldur — it is not a deployment setting, and cannot be raised by configuration.
+
+Long-form fields are not affected: the offering's **Full description** and **Vendor details** have no length limit, so a description that has outgrown 4,096 characters usually belongs in Full description instead. Both fields sit next to each other on the offering's **Edit → Public information → Basic info** panel:
+
+![Description and Full description on the offering edit page](../img/offering-description-fields.png)
+
+!!! note "HTML escaping counts toward the limit"
+    Descriptions are sanitised before they are stored, which escapes the characters `&`, `<` and `>` into their HTML entities (`&` becomes `&amp;`, five characters instead of one). The **escaped** text is what has to fit within 4,096 characters.
+
+    Text containing many such characters therefore reaches the limit sooner than its visible length suggests — a bibliography full of `&` can be rejected at around 4,000 characters. When this happens, Waldur says the value is too long after sanitisation, so the message can be told apart from an ordinary over-length description.
+
 ## Configuring Getting Started Templates
 
 When setting up an offering, you can configure a "Getting Started" guide that will be shown to users after they provision a resource. This guide supports dynamic variables that are automatically replaced with actual resource values.
@@ -378,8 +391,8 @@ The General Information section defines the core attributes of an offering, incl
 #### Required fields
 
 - **Name** – The title of the offering, displayed across the platform
-- **Description** – A concise summary outlining the offering's purpose
-- **Full description** – A detailed explanation, including technical aspects and potential use cases
+- **Description** – A concise summary outlining the offering's purpose (limited to 4,096 characters — see [Description length limit](#description-length-limit))
+- **Full description** – A detailed explanation, including technical aspects and potential use cases (no length limit)
 - **Terms of service** – Any contractual obligations or usage restrictions
 - **Privacy policy link** – URL linking to the privacy policy
 - **Terms of service link** – URL linking to the terms of service
