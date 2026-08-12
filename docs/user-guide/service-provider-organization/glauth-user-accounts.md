@@ -150,6 +150,44 @@ actions menu and choose **Edit POSIX attributes**.
     value already in use by another account is rejected — the database enforces
     that no two accounts share a UID and no two groups share a GID.
 
+### Setting overrides through the API
+
+**Edit POSIX attributes** is not UI-only. The same overrides can be applied
+programmatically, which is the practical route when onboarding many accounts at
+once:
+
+```http
+POST /api/marketplace-offering-users/<offering-user-uuid>/set_posix_attributes/
+```
+
+| Field | Notes |
+|-------|-------|
+| `login_shell` | Absolute path, for example `/bin/bash`. |
+| `home_directory` | Absolute path. |
+| `uidnumber` | The account's UID. |
+| `primarygroup` | The account's primary GID. |
+
+All four are optional, but at least one must be supplied. The response echoes
+the stored `uidnumber` and `primarygroup` together with a `warnings` list:
+
+```json
+{"uidnumber": 100050, "primarygroup": 100050, "warnings": []}
+```
+
+`warnings` carries **non-fatal advisories only** — a value that is one of the
+reserved POSIX ids (`65534`, `65535`) or is above 2<sup>31</sup>, which some
+software using signed 32-bit ids cannot handle. It is never used to report a
+rejected value.
+
+Values that violate the constraints above are rejected outright with **HTTP
+400**: a UID or GID outside the offering's resolved pool range, a value already
+held by another active account, or an offering for which no pool resolves at
+all. The action is all-or-nothing — if the primary GID is rejected, the UID
+change submitted in the same call is rolled back with it.
+
+Calling this endpoint requires permission to update offering users on the
+offering's organization.
+
 ## Group memberships
 
 Expanding an offering user shows the **project group GIDs** they belong to —
