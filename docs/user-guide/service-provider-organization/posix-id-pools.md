@@ -111,6 +111,37 @@ lowest released value before the high-water mark advances further. Released
 records are kept as an audit trail and are visible in a pool's **identities**
 view.
 
+## Where an identifier came from
+
+Expanding an offering user shows a **POSIX identifiers** table listing each of
+that account's identifiers together with the **pool scope** it was allocated
+from. Some rows show a dash instead of a scope. That is not an error: it means
+the value is not tracked by any pool.
+
+A value ends up untracked in one of three ways:
+
+- **It is sourced from a user attribute.** When the offering's `uid_source` or
+  `gid_source` is set to `user_attribute`, the identifier is taken from the
+  Waldur user's own `uid_number` / `primary_gid` — typically populated from an
+  identity-provider claim — rather than allocated. No pool is involved, so a
+  dash is the expected display. See
+  [sourcing UID and GID](glauth-user-accounts.md#sourcing-uid-and-gid).
+- **It predates POSIX ID pools** and was not picked up when the deployment was
+  upgraded.
+- **It was seeded directly**, for example by a structure import or straight into
+  the database.
+
+!!! warning "Untracked values are not reserved"
+    An identifier the allocator does not know about is outside its bookkeeping,
+    so nothing prevents the same number later being handed to another account
+    from a pool whose range covers it. Where that matters, bring the value under
+    a pool — see [legacy identifiers](#legacy-identifiers-outside-a-pool) below.
+
+Upgrading an existing deployment does not, by itself, leave values untracked.
+The migration that introduces pools synthesises one pool per offering with its
+bounds **widened to cover every identifier already in use**, and records each of
+those identifiers, so values that existed at upgrade time end up inside a pool.
+
 ## Pinning specific UIDs/GIDs
 
 Sometimes an account must keep a **specific** UID or GID — for example to match
@@ -127,3 +158,51 @@ never collides with an automatically assigned one.
     provider default — for instance a block reserved for manually pinned
     identities — give that offering its own **offering-override pool** rather
     than pinning outside the provider pool's range.
+
+A pinned value must be **inside** the pool that applies to the offering. Waldur
+rejects a value outside that range, and rejects one already held by another
+active account, rather than accepting it and letting two accounts collide later.
+So "pin an arbitrary number" is not available by design — if the number you need
+falls outside every configured range, widen or add a pool first, as described
+next.
+
+## Legacy identifiers outside a pool
+
+Sites migrating onto Waldur often arrive with UIDs and GIDs already in use on
+the backend, in bands that no configured pool covers. There are two supported
+ways to accommodate them; which one fits depends on whether the identifier
+belongs to the **site** or to the **identity**.
+
+### The identifiers belong to this site
+
+Give the offering its own **offering-override pool** whose range covers the
+legacy band, then pin the individual values inside it (see
+[Pinning specific UIDs/GIDs](#pinning-specific-uidsgids)).
+
+This keeps every legacy value under the allocator's bookkeeping, so it is
+reserved and can never be reissued. Remember that pools of one provider must not
+overlap within a namespace, so the override band has to be disjoint from the
+provider default — for example a provider default of `100000–199999` alongside a
+legacy offering on `5000–9999`.
+
+### The identifiers belong to the user's identity
+
+If a user's UID is a property of who they are rather than of this site — the
+same on every site in a federation, delivered as an OIDC or SAML `uidNumber`
+claim — do not try to reproduce it from a pool. Set the offering's `uid_source`
+to `user_attribute` and pair it with a **GID-only pool**, as described under
+[sourcing UID and GID](glauth-user-accounts.md#sourcing-uid-and-gid). Waldur then
+never allocates a UID at all for that offering, so it cannot collide with the
+one the identity provider supplies, while project and role GIDs continue to come
+from the pool.
+
+Both sources are set on the offering, under **Edit → Integration → User
+management**:
+
+![UID source and Primary GID source on the User management panel](../img/posix-uid-gid-source.png)
+
+The trade-off between the two: an override pool keeps everything visible in one
+place and reserved against reuse, but the numbers are this site's to manage. User
+attributes keep a user's UID stable across sites, at the cost of those UIDs not
+appearing in any pool's utilisation figures — they will show a dash for pool
+scope, as described in [where an identifier came from](#where-an-identifier-came-from).

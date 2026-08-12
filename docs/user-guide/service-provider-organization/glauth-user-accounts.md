@@ -101,6 +101,14 @@ still letting each provider allocate project and role **GIDs** locally.
     attribute that is missing, Waldur leaves that identifier unset and logs a
     warning rather than falling back to the pool.
 
+This pairing is also one of the two supported answers when a site arrives with
+**legacy UIDs that fall outside every configured pool** — see
+[legacy identifiers outside a pool](posix-id-pools.md#legacy-identifiers-outside-a-pool).
+Note that identifiers sourced this way are not tracked by a pool, so they show no
+pool scope in the offering user's POSIX identifiers table; that is expected, and
+is explained under
+[where an identifier came from](posix-id-pools.md#where-an-identifier-came-from).
+
 ### Exposing the POSIX identity attributes
 
 The user's `uid_number` and `primary_gid` are only visible to a provider if the
