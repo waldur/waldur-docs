@@ -61,6 +61,65 @@ Per-offering settings control how tenants behave:
 - `max_instances`, `max_volumes`, `max_security_groups` — upper bounds enforced within a tenant.
 - `default_internal_network_mtu` — MTU applied to networks created in the tenant (68–9000).
 
+### Default marketplace categories
+
+Each of the three offering types is associated with a marketplace category. Waldur publishes the
+UUIDs of those categories to the frontend as `TENANT_CATEGORY_UUID`, `INSTANCE_CATEGORY_UUID` and
+`VOLUME_CATEGORY_UUID`, under `WALDUR_MARKETPLACE_OPENSTACK` in the `/api/configuration/`
+response.
+
+!!! warning "These are not configuration options"
+    Despite appearing alongside settings in `/api/configuration/`, these three values cannot be
+    set through an environment variable, a settings file or a rebuilt image. They are **derived
+    from the database on every request**: each one resolves to the UUID of whichever marketplace
+    category currently carries the matching default flag, and is `null` when no category carries
+    it. Forking the image changes nothing.
+
+The mapping is:
+
+| Published value | Category flag |
+|---|---|
+| `INSTANCE_CATEGORY_UUID` | `default_vm_category` |
+| `VOLUME_CATEGORY_UUID` | `default_volume_category` |
+| `TENANT_CATEGORY_UUID` | `default_tenant_category` |
+
+At most one category may carry each flag; Waldur rejects an attempt to set a flag that another
+category already holds.
+
+#### Setting a default category
+
+In Homeport, go to **Administration → Marketplace → Categories**, open the row's actions menu and
+choose **Edit**. The three flags are at the bottom of the dialog, each noting that only one category
+may carry it:
+
+![Default category flags in the category edit dialog](img/openstack-default-category-flags.png)
+
+Turn on **Default tenant category** for the category that should hold OpenStack tenant offerings,
+and likewise for VM and volume, then click **Edit** to save.
+
+The same flags are settable through the API as a staff user:
+
+```bash
+curl -X PATCH \
+  -H "Authorization: Token $WALDUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"default_tenant_category": true}' \
+  https://waldur.example.com/api/marketplace-categories/<category-uuid>/
+```
+
+They are also editable on the category in the Django admin site.
+
+#### Why the values are often `null`
+
+The VM and Volume categories are created automatically, with their flags set, the first time an
+OpenStack environment is imported — so on a deployment that has never run an import, all three
+values are `null`.
+
+**The tenant category is never created automatically.** Nothing in Waldur sets
+`default_tenant_category`, so `TENANT_CATEGORY_UUID` stays `null` until an administrator flags a
+category by hand. If tenant offerings are not being categorised as expected, this is the first
+thing to check.
+
 ## Supported resources
 
 The plugin discovers and manages the full set of OpenStack resources:
