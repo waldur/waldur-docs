@@ -16585,6 +16585,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Per-user overrides">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setting-overrides-through-the-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting overrides through the API
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -17734,6 +17751,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Per-user overrides">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setting-overrides-through-the-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting overrides through the API
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -18005,6 +18039,53 @@ actions menu and choose <strong>Edit POSIX attributes</strong>.</p>
 value already in use by another account is rejected — the database enforces
 that no two accounts share a UID and no two groups share a GID.</p>
 </div>
+<h3 id="setting-overrides-through-the-api">Setting overrides through the API</h3>
+<p><strong>Edit POSIX attributes</strong> is not UI-only. The same overrides can be applied
+programmatically, which is the practical route when onboarding many accounts at
+once:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/&lt;offering-user-uuid&gt;/set_posix_attributes/</span>
+</code></pre></div></td></tr></tbody></table></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>login_shell</code></td>
+<td>Absolute path, for example <code>/bin/bash</code>.</td>
+</tr>
+<tr>
+<td><code>home_directory</code></td>
+<td>Absolute path.</td>
+</tr>
+<tr>
+<td><code>uidnumber</code></td>
+<td>The account's UID.</td>
+</tr>
+<tr>
+<td><code>primarygroup</code></td>
+<td>The account's primary GID.</td>
+</tr>
+</tbody>
+</table>
+<p>All four are optional, but at least one must be supplied. The response echoes
+the stored <code>uidnumber</code> and <code>primarygroup</code> together with a <code>warnings</code> list:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="nt">"uidnumber"</span><span class="p">:</span><span class="w"> </span><span class="mi">100050</span><span class="p">,</span><span class="w"> </span><span class="nt">"primarygroup"</span><span class="p">:</span><span class="w"> </span><span class="mi">100050</span><span class="p">,</span><span class="w"> </span><span class="nt">"warnings"</span><span class="p">:</span><span class="w"> </span><span class="p">[]}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>warnings</code> carries <strong>non-fatal advisories only</strong> — a value that is one of the
+reserved POSIX ids (<code>65534</code>, <code>65535</code>) or is above 2<sup>31</sup>, which some
+software using signed 32-bit ids cannot handle. It is never used to report a
+rejected value.</p>
+<p>Values that violate the constraints above are rejected outright with <strong>HTTP
+400</strong>: a UID or GID outside the offering's resolved pool range, a value already
+held by another active account, or an offering for which no pool resolves at
+all. The action is all-or-nothing — if the primary GID is rejected, the UID
+change submitted in the same call is rolled back with it.</p>
+<p>Calling this endpoint requires permission to update offering users on the
+offering's organization.</p>
 <h2 id="group-memberships">Group memberships</h2>
 <p>Expanding an offering user shows the <strong>project group GIDs</strong> they belong to —
 the shared GIDs emitted in their GLAuth <code>otherGroups</code> — each with its owning
