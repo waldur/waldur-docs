@@ -4409,10 +4409,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#croit-s3-plugin-waldur-site-agent-croit-s3" class="md-nav__link">
+  <a href="#ceph-s3-plugin-waldur-site-agent-ceph-s3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Croit S3 Plugin (waldur-site-agent-croit-s3)
+        Ceph S3 Plugin (waldur-site-agent-ceph-s3)
       
     </span>
   </a>
@@ -5435,7 +5435,7 @@
   <span class="md-ellipsis">
     
   
-    Croit s3
+    Ceph s3
   
 
     
@@ -5451,7 +5451,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Croit s3
+    Ceph s3
   
 
           </label>
@@ -5464,7 +5464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../plugins/croit-s3/" class="md-nav__link">
+      <a href="../../plugins/ceph-s3/" class="md-nav__link">
         
   
   
@@ -18648,10 +18648,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#croit-s3-plugin-waldur-site-agent-croit-s3" class="md-nav__link">
+  <a href="#ceph-s3-plugin-waldur-site-agent-ceph-s3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Croit S3 Plugin (waldur-site-agent-croit-s3)
+        Ceph S3 Plugin (waldur-site-agent-ceph-s3)
       
     </span>
   </a>
@@ -19251,7 +19251,7 @@ waldur_site_agent<span class="w"> </span>--help
 <li><strong>waldur-site-agent-mup</strong>: MUP portal integration</li>
 <li><strong>waldur-site-agent-okd</strong>: OpenShift/OKD container platform management</li>
 <li><strong>waldur-site-agent-harbor</strong>: Harbor container registry management</li>
-<li><strong>waldur-site-agent-croit-s3</strong>: Croit S3 storage management</li>
+<li><strong>waldur-site-agent-ceph-s3</strong>: Ceph S3 storage management (croit and RadosGW)</li>
 <li><strong>waldur-site-agent-cscs-dwdi</strong>: CSCS DWDI integration</li>
 <li><strong>waldur-site-agent-basic-username-management</strong>: Username management</li>
 </ul>
@@ -19297,8 +19297,8 @@ python3.13<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> 
 <span class="c1"># Install Harbor plugin</span>
 python3.13<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>waldur-site-agent-harbor
 
-<span class="c1"># Install Croit S3 plugin</span>
-python3.13<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>waldur-site-agent-croit-s3
+<span class="c1"># Install Ceph S3 plugin</span>
+python3.13<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>waldur-site-agent-ceph-s3
 
 <span class="c1"># Install CSCS DWDI plugin</span>
 python3.13<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>waldur-site-agent-cscs-dwdi
@@ -19324,7 +19324,7 @@ uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </
 uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>waldur-site-agent-mup
 uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>waldur-site-agent-okd
 uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>waldur-site-agent-harbor
-uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>waldur-site-agent-croit-s3
+uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>waldur-site-agent-ceph-s3
 uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>waldur-site-agent-cscs-dwdi
 uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>waldur-site-agent-basic-username-management
 </code></pre></div></td></tr></tbody></table></div>
@@ -19412,10 +19412,23 @@ oc<span class="w"> </span>version
 <p><strong>Required for</strong>: Harbor container registry management</p>
 <p><strong>No additional system requirements</strong> - uses Harbor API calls only.</p>
 <p><strong>Configuration</strong>: Set <code>order_processing_backend: "harbor"</code> in your config file.</p>
-<h4 id="croit-s3-plugin-waldur-site-agent-croit-s3">Croit S3 Plugin (waldur-site-agent-croit-s3)</h4>
-<p><strong>Required for</strong>: Croit S3 storage management</p>
-<p><strong>No additional system requirements</strong> - uses S3-compatible API calls only.</p>
-<p><strong>Configuration</strong>: Set <code>order_processing_backend: "croit-s3"</code> in your config file.</p>
+<h4 id="ceph-s3-plugin-waldur-site-agent-ceph-s3">Ceph S3 Plugin (waldur-site-agent-ceph-s3)</h4>
+<p><strong>Required for</strong>: Ceph object storage, either croit-managed or a stock cluster
+reached through RadosGW Admin Ops.</p>
+<p><strong>No additional system requirements</strong> - uses HTTP API calls only.</p>
+<p><strong>Configuration</strong>: a croit-managed cluster, which is the flavour that can meter:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"ceph_s3"</span>
+<span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"ceph_s3"</span>
+<span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"ceph_s3"</span>
+<span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"croit_usage"</span><span class="w">  </span><span class="c1"># GB-day metering; a separate backend, croit only</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Note the underscore: backend names are entry-point names and are matched exactly,
+so a hyphenated value resolves to no backend at all. A stock RadosGW cluster runs
+the same <code>ceph_s3</code> backend under <code>flavour: "radosgw"</code> with no <code>reporting_backend</code>
+— it exposes no equivalent series and cannot be metered.</p>
 <h4 id="cscs-dwdi-plugin-waldur-site-agent-cscs-dwdi">CSCS DWDI Plugin (waldur-site-agent-cscs-dwdi)</h4>
 <p><strong>Required for</strong>: CSCS DWDI integration</p>
 <p><strong>No additional system requirements</strong> - uses API calls only.</p>

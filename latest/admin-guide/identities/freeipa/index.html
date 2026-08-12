@@ -2872,6 +2872,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FreeIPA
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -2888,6 +2906,64 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc">
+      
+        <li class="md-nav__item">
+  <a href="#how-waldur-maps-its-structure-to-freeipa-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Waldur maps its structure to FreeIPA groups
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How Waldur maps its structure to FreeIPA groups">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-prefix-is-an-ownership-marker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The prefix is an ownership marker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-pre-existing-gids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using pre-existing GIDs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -4628,7 +4704,7 @@
   <span class="md-ellipsis">
     
   
-    Croit s3
+    Ceph s3
   
 
     
@@ -4644,7 +4720,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Croit s3
+    Ceph s3
   
 
           </label>
@@ -4657,7 +4733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../providers/site-agent/plugins/croit-s3/" class="md-nav__link">
+      <a href="../../providers/site-agent/plugins/ceph-s3/" class="md-nav__link">
         
   
   
@@ -17494,6 +17570,53 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc">
+      
+        <li class="md-nav__item">
+  <a href="#how-waldur-maps-its-structure-to-freeipa-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Waldur maps its structure to FreeIPA groups
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How Waldur maps its structure to FreeIPA groups">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-prefix-is-an-ownership-marker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The prefix is an ownership marker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-pre-existing-gids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using pre-existing GIDs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -17519,6 +17642,76 @@ deployments, you might want to map users from Waldur (e.g. created through eduGA
 <a href="../../mastermind-configuration/configuration-guide/">Waldur configuration guide</a> for the list of supported FreeIPA
 settings.</p>
 <p>At the moment at most one deployment of FreeIPA per Waldur is supported.</p>
+<h2 id="how-waldur-maps-its-structure-to-freeipa-groups">How Waldur maps its structure to FreeIPA groups</h2>
+<p>Waldur models each organization and each project as a FreeIPA group, and keeps
+memberships in step with Waldur roles. Group names are built from the
+organization or project UUID, behind a configurable prefix:</p>
+<table>
+<thead>
+<tr>
+<th>Waldur object</th>
+<th>FreeIPA group name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Organization</td>
+<td><code>&lt;prefix&gt;org_&lt;uuid&gt;</code></td>
+</tr>
+<tr>
+<td>Project</td>
+<td><code>&lt;prefix&gt;project_&lt;uuid&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>Only the prefix is configurable — the rest of the name is derived from the UUID.
+The project group is made a member of its organization's group, and the
+organization or project name is stored as the group description.</p>
+<p>Synchronisation runs periodically, and reconciles in both directions: groups
+that exist in Waldur but not in FreeIPA are created, and groups carrying the
+prefix that no longer correspond to anything in Waldur are deleted.</p>
+<h3 id="the-prefix-is-an-ownership-marker">The prefix is an ownership marker</h3>
+<p><code>FREEIPA_GROUPNAME_PREFIX</code> and <code>FREEIPA_USERNAME_PREFIX</code> (both <code>waldur_</code> by
+default) are not cosmetic. They are how Waldur tells its own groups and users
+apart from everything else in the directory: an object carrying the prefix is
+treated as Waldur-managed and therefore subject to deletion once Waldur no
+longer has a counterpart for it.</p>
+<p>Both are edited in Homeport under <strong>Administration → Configuration → Identity
+providers → Providers</strong>, on the <strong>FreeIPA</strong> card's <strong>Edit</strong> action:</p>
+<p><a href="../img/freeipa-settings-prefix.png"><img alt="FreeIPA settings with the username and groupname prefixes" src="../img/freeipa-settings-prefix.png"></a></p>
+<div class="admonition danger">
+<p class="admonition-title">Never set a prefix to an empty value</p>
+<p>With an empty prefix, <em>every</em> group in the directory matches — including
+FreeIPA's own built-ins such as <code>admins</code> and <code>ipausers</code> — and the next
+synchronisation run would treat them all as stale and delete them. Waldur
+rejects an empty prefix, and refuses to synchronise if one is already
+stored, but do not attempt to work around this.</p>
+</div>
+<p>Changing the prefix on a running deployment is a <strong>migration, not a toggle</strong>.
+The existing groups no longer match the new prefix, so Waldur stops recognising
+them and recreates the whole set under the new name, leaving the old groups
+orphaned in the directory. Plan the rename and clean up the old groups
+deliberately.</p>
+<h3 id="using-pre-existing-gids">Using pre-existing GIDs</h3>
+<p>Waldur never assigns a <code>gidnumber</code> itself — it creates groups without one and
+lets FreeIPA's own allocator choose, and it never reads or modifies the GID
+afterwards. Once a group exists, synchronisation only updates its description
+and membership.</p>
+<p>That gives a straightforward way to pin a group to a <strong>GID you already use</strong>:
+create the group in FreeIPA yourself, before Waldur first synchronises, using
+the exact name from the table above and the <code>gidnumber</code> you want.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>ipa<span class="w"> </span>group-add<span class="w"> </span>waldur_project_&lt;project-uuid&gt;<span class="w"> </span>--gid<span class="o">=</span><span class="m">8501</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Waldur will adopt the existing group and keep its GID indefinitely. The same
+applies to users — Waldur creates accounts without a <code>uidnumber</code>, so an account
+pre-created with the desired UID keeps it.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>To manage groups entirely yourself, turn off <strong>Freeipa group synchronization
+enabled</strong> in the same panel (<code>FREEIPA_GROUP_SYNCHRONIZATION_ENABLED</code>). Waldur
+then stops creating and deleting groups altogether, while still managing user
+profiles.</p>
+</div>
 
 
 

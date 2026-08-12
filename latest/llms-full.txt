@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-12T19:26:08.046436Z
+Generated: 2026-08-12T19:31:50.306161Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -21136,6 +21136,76 @@ settings.
 
 At the moment at most one deployment of FreeIPA per Waldur is supported.
 
+## How Waldur maps its structure to FreeIPA groups
+
+Waldur models each organization and each project as a FreeIPA group, and keeps
+memberships in step with Waldur roles. Group names are built from the
+organization or project UUID, behind a configurable prefix:
+
+| Waldur object | FreeIPA group name |
+|---|---|
+| Organization | `<prefix>org_<uuid>` |
+| Project | `<prefix>project_<uuid>` |
+
+Only the prefix is configurable — the rest of the name is derived from the UUID.
+The project group is made a member of its organization's group, and the
+organization or project name is stored as the group description.
+
+Synchronisation runs periodically, and reconciles in both directions: groups
+that exist in Waldur but not in FreeIPA are created, and groups carrying the
+prefix that no longer correspond to anything in Waldur are deleted.
+
+### The prefix is an ownership marker
+
+`FREEIPA_GROUPNAME_PREFIX` and `FREEIPA_USERNAME_PREFIX` (both `waldur_` by
+default) are not cosmetic. They are how Waldur tells its own groups and users
+apart from everything else in the directory: an object carrying the prefix is
+treated as Waldur-managed and therefore subject to deletion once Waldur no
+longer has a counterpart for it.
+
+Both are edited in Homeport under **Administration → Configuration → Identity
+providers → Providers**, on the **FreeIPA** card's **Edit** action:
+
+[[Image: FreeIPA settings with the username and groupname prefixes]](img/freeipa-settings-prefix.png)
+
+!!! danger "Never set a prefix to an empty value"
+    With an empty prefix, *every* group in the directory matches — including
+    FreeIPA's own built-ins such as `admins` and `ipausers` — and the next
+    synchronisation run would treat them all as stale and delete them. Waldur
+    rejects an empty prefix, and refuses to synchronise if one is already
+    stored, but do not attempt to work around this.
+
+Changing the prefix on a running deployment is a **migration, not a toggle**.
+The existing groups no longer match the new prefix, so Waldur stops recognising
+them and recreates the whole set under the new name, leaving the old groups
+orphaned in the directory. Plan the rename and clean up the old groups
+deliberately.
+
+### Using pre-existing GIDs
+
+Waldur never assigns a `gidnumber` itself — it creates groups without one and
+lets FreeIPA's own allocator choose, and it never reads or modifies the GID
+afterwards. Once a group exists, synchronisation only updates its description
+and membership.
+
+That gives a straightforward way to pin a group to a **GID you already use**:
+create the group in FreeIPA yourself, before Waldur first synchronises, using
+the exact name from the table above and the `gidnumber` you want.
+
+```bash
+ipa group-add waldur_project_<project-uuid> --gid=8501
+```
+
+Waldur will adopt the existing group and keep its GID indefinitely. The same
+applies to users — Waldur creates accounts without a `uidnumber`, so an account
+pre-created with the desired UID keeps it.
+
+!!! tip
+    To manage groups entirely yourself, turn off **Freeipa group synchronization
+    enabled** in the same panel (`FREEIPA_GROUP_SYNCHRONIZATION_ENABLED`). Waldur
+    then stops creating and deleting groups altogether, while still managing user
+    profiles.
+
 ---
 
 ### Keycloak
@@ -24278,7 +24348,7 @@ Waldur Site Agent uses a modular plugin architecture. Install plugins based on y
 - **waldur-site-agent-mup**: MUP portal integration
 - **waldur-site-agent-okd**: OpenShift/OKD container platform management
 - **waldur-site-agent-harbor**: Harbor container registry management
-- **waldur-site-agent-croit-s3**: Croit S3 storage management
+- **waldur-site-agent-ceph-s3**: Ceph S3 storage management (croit and RadosGW)
 - **waldur-site-agent-cscs-dwdi**: CSCS DWDI integration
 - **waldur-site-agent-basic-username-management**: Username management
 
@@ -24302,8 +24372,8 @@ python3.13 -m pip install --user waldur-site-agent-okd
 # Install Harbor plugin
 python3.13 -m pip install --user waldur-site-agent-harbor
 
-# Install Croit S3 plugin
-python3.13 -m pip install --user waldur-site-agent-croit-s3
+# Install Ceph S3 plugin
+python3.13 -m pip install --user waldur-site-agent-ceph-s3
 
 # Install CSCS DWDI plugin
 python3.13 -m pip install --user waldur-site-agent-cscs-dwdi
@@ -24324,7 +24394,7 @@ uv tool install waldur-site-agent-moab
 uv tool install waldur-site-agent-mup
 uv tool install waldur-site-agent-okd
 uv tool install waldur-site-agent-harbor
-uv tool install waldur-site-agent-croit-s3
+uv tool install waldur-site-agent-ceph-s3
 uv tool install waldur-site-agent-cscs-dwdi
 uv tool install waldur-site-agent-basic-username-management
 ```
@@ -24416,13 +24486,26 @@ oc version
 
 **Configuration**: Set `order_processing_backend: "harbor"` in your config file.
 
-#### Croit S3 Plugin (waldur-site-agent-croit-s3)
+#### Ceph S3 Plugin (waldur-site-agent-ceph-s3)
 
-**Required for**: Croit S3 storage management
+**Required for**: Ceph object storage, either croit-managed or a stock cluster
+reached through RadosGW Admin Ops.
 
-**No additional system requirements** - uses S3-compatible API calls only.
+**No additional system requirements** - uses HTTP API calls only.
 
-**Configuration**: Set `order_processing_backend: "croit-s3"` in your config file.
+**Configuration**: a croit-managed cluster, which is the flavour that can meter:
+
+```yaml
+backend_type: "ceph_s3"
+order_processing_backend: "ceph_s3"
+membership_sync_backend: "ceph_s3"
+reporting_backend: "croit_usage"  # GB-day metering; a separate backend, croit only
+```
+
+Note the underscore: backend names are entry-point names and are matched exactly,
+so a hyphenated value resolves to no backend at all. A stock RadosGW cluster runs
+the same `ceph_s3` backend under `flavour: "radosgw"` with no `reporting_backend`
+— it exposes no equivalent series and cannot be metered.
 
 #### CSCS DWDI Plugin (waldur-site-agent-cscs-dwdi)
 
@@ -25008,7 +25091,7 @@ Waldur Site Agent uses a modular plugin architecture. Install plugins based on y
 - **waldur-site-agent-mup**: MUP portal integration
 - **waldur-site-agent-okd**: OpenShift/OKD container platform management
 - **waldur-site-agent-harbor**: Harbor container registry management
-- **waldur-site-agent-croit-s3**: Croit S3 storage management
+- **waldur-site-agent-ceph-s3**: Ceph S3 storage management (croit and RadosGW)
 - **waldur-site-agent-cscs-dwdi**: CSCS DWDI integration
 - **waldur-site-agent-basic-username-management**: Username management
 
@@ -25032,8 +25115,8 @@ uv tool install waldur-site-agent-okd
 # Install Harbor plugin
 uv tool install waldur-site-agent-harbor
 
-# Install Croit S3 plugin
-uv tool install waldur-site-agent-croit-s3
+# Install Ceph S3 plugin
+uv tool install waldur-site-agent-ceph-s3
 
 # Install CSCS DWDI plugin
 uv tool install waldur-site-agent-cscs-dwdi
@@ -25066,7 +25149,7 @@ python -c "import waldur_site_agent_slurm; print('SLURM plugin installed')"
 # sudo apt install python3-waldur-site-agent-mup
 # sudo apt install python3-waldur-site-agent-okd
 # sudo apt install python3-waldur-site-agent-harbor
-# sudo apt install python3-waldur-site-agent-croit-s3
+# sudo apt install python3-waldur-site-agent-ceph-s3
 # sudo apt install python3-waldur-site-agent-cscs-dwdi
 # sudo apt install python3-waldur-site-agent-basic-username-management
 ```
@@ -25158,13 +25241,26 @@ oc version
 
 **Configuration**: Set `order_processing_backend: "harbor"` in your config file.
 
-#### Croit S3 Plugin (waldur-site-agent-croit-s3)
+#### Ceph S3 Plugin (waldur-site-agent-ceph-s3)
 
-**Required for**: Croit S3 storage management
+**Required for**: Ceph object storage, either croit-managed or a stock cluster
+reached through RadosGW Admin Ops.
 
-**No additional system requirements** - uses S3-compatible API calls only.
+**No additional system requirements** - uses HTTP API calls only.
 
-**Configuration**: Set `order_processing_backend: "croit-s3"` in your config file.
+**Configuration**: a croit-managed cluster, which is the flavour that can meter:
+
+```yaml
+backend_type: "ceph_s3"
+order_processing_backend: "ceph_s3"
+membership_sync_backend: "ceph_s3"
+reporting_backend: "croit_usage"  # GB-day metering; a separate backend, croit only
+```
+
+Note the underscore: backend names are entry-point names and are matched exactly,
+so a hyphenated value resolves to no backend at all. A stock RadosGW cluster runs
+the same `ceph_s3` backend under `flavour: "radosgw"` with no `reporting_backend`
+— it exposes no equivalent series and cannot be metered.
 
 #### CSCS DWDI Plugin (waldur-site-agent-cscs-dwdi)
 
@@ -30159,10 +30255,10 @@ you push.
 | Plugin | Description |
 | ------ | ----------- |
 | [basic_username_management](plugins/basic_username_management/README.md) | Basic username management plugin |
-| [croit-s3](plugins/croit-s3/README.md) | Croit S3 storage plugin |
+| [ceph-s3](plugins/ceph-s3/README.md) | Ceph S3 storage plugin (croit and RadosGW flavours) |
 | [cscs-dwdi](plugins/cscs-dwdi/README.md) | CSCS-DWDI reporting plugin |
 | [digitalocean](plugins/digitalocean/README.md) | DigitalOcean plugin |
-| [envoy-ai-gateway](plugins/envoy-ai-gateway/README.md) | Envoy AI Gateway plugin |
+| [envoy-ai-gateway](plugins/envoy-ai-gateway/README.md) | Envoy AI Gateway (API keys + usage reporting) plugin |
 | [harbor](plugins/harbor/README.md) | Harbor container registry plugin |
 | [k8s-ut-namespace](plugins/k8s-ut-namespace/README.md) | Kubernetes UT ManagedNamespace plugin |
 | keycloak-client | Shared Keycloak client for Waldur Site Agent plugins |
@@ -30195,21 +30291,37 @@ See the main [Installation Guide](../../docs/installation.md) for platform-speci
 
 ---
 
-### Croit S3 Storage Plugin for Waldur Site Agent
-<!-- Source: docs/admin-guide/providers/site-agent/plugins/croit-s3/README.md -->
+### Ceph S3 Storage Plugin for Waldur Site Agent
+<!-- Source: docs/admin-guide/providers/site-agent/plugins/ceph-s3/README.md -->
 
-# Croit S3 Storage Plugin for Waldur Site Agent
+# Ceph S3 Storage Plugin for Waldur Site Agent
 
-This plugin provides integration between Waldur Mastermind and Croit S3 storage systems via RadosGW API.
-Each marketplace resource automatically creates one S3 user with configurable safety limits.
+Integrates Waldur Mastermind with Ceph object storage. Each marketplace resource
+creates one RGW user, with its access keys managed as Waldur resource API keys
+and its ordered ceiling applied as an RGW quota.
+
+Two **flavours** reach the same RGW concepts by different routes:
+
+| | `croit` (default) | `radosgw` |
+|---|---|---|
+| Talks to | croit's management API | RadosGW Admin Ops on the gateway |
+| Authenticates with | bearer token or basic auth | SigV4, as an RGW user with caps |
+| Users, keys, quotas | yes | yes |
+| GB-day metering | yes | **no** — see [Usage Reporting](#usage-reporting) |
+
+The flavours differ only inside the client. Everything above it — key lifecycle,
+quota mapping, metadata, Waldur plumbing — is shared.
 
 ## Features
 
 - **Automatic S3 User Creation**: One S3 user per marketplace resource with slug-based naming
-- **Usage-Based Billing**: Track actual storage and object consumption
-- **Safety Quota Enforcement**: Optional bucket quotas based on user-specified limits
-- **Usage Reporting**: Real-time storage and object count metrics
-- **Credential Management**: S3 access keys exposed via resource metadata
+- **Usage-Based Billing**: storage billed in GB-days, integrated from croit's
+  metrics over the billing period. Object counts are not billed
+- **Safety Quota Enforcement**: an ordered ceiling is applied as both a RadosGW
+  user quota (the tenant total) and a bucket quota (per bucket)
+- **Credential Management**: two S3 access keys per resource, encrypted in Waldur and
+  managed from the portal (reveal / rotate). The count is fixed at provisioning —
+  rotation replaces a key's value in place, so there is no add or revoke
 - **Bearer Token Authentication**: Secure API access with configurable SSL verification
 
 ## Installation
@@ -30218,7 +30330,7 @@ Add the plugin to your UV workspace:
 
 ```bash
 cd /path/to/waldur-site-agent
-uv add ./plugins/croit-s3
+uv add ./plugins/ceph-s3
 ```
 
 ## Configuration
@@ -30227,7 +30339,7 @@ uv add ./plugins/croit-s3
 
 ```yaml
 offerings:
-  - name: "Croit S3 Object Storage"
+  - name: "Ceph S3 Object Storage"
     waldur_api_url: "https://waldur.example.com/api/"
     waldur_api_token: "your_waldur_api_token"
     waldur_offering_uuid: "713c299671a14f5db9723a793291bc78"
@@ -30236,134 +30348,310 @@ offerings:
     stomp_enabled: true
     websocket_use_tls: false
 
-    # Backend type
-    backend_type: "croit_s3"
+    # Backend roles. Metering is a separate backend because only croit can do
+    # it; see Usage Reporting.
+    backend_type: "ceph_s3"
+    order_processing_backend: "ceph_s3"
+    membership_sync_backend: "ceph_s3"
+    reporting_backend: "croit_usage"
 
-    # Croit S3-specific backend settings
+    # Backend settings for the croit flavour
     backend_settings:
-      api_url: "https://192.168.240.34"
+      flavour: "croit"                         # or "radosgw"; croit is the default
+      api_url: "https://192.168.240.34"        # management API
+      s3_endpoint: "https://s3.example.com"    # what tenants connect to
+      s3_region: "default"                     # RadosGW zonegroup api_name
       token: "your-bearer-token"
       verify_ssl: false
-      user_prefix: "waldur_"
-      slug_separator: "_"
-      max_username_length: 64
       default_tenant: ""
 
-    # Component mapping
+    # Component mapping. label and measured_unit are required by the config
+    # validator for every component — the agent refuses to start without them.
+    # This plugin additionally requires unit_factor on the storage component;
+    # see below for why a missing one cannot be defaulted.
     backend_components:
       s3_storage:
         accounting_type: "usage"
         backend_name: "storage"
-        unit_factor: 1073741824  # Convert GB to bytes
-        enforce_limits: true
-      s3_objects:
-        accounting_type: "usage"
-        backend_name: "objects"
-        enforce_limits: true
+        label: "Storage"
+        measured_unit: "GB-day"  # the billed quantity is GB x days, not GB
+        unit_factor: 1000000000  # decimal GB (1000 GB = 1 TB), not GiB
 ```
+
+### The radosgw flavour
+
+Talks Admin Ops directly to the gateway, for a Ceph cluster croit does not manage.
+
+```yaml
+    backend_type: "ceph_s3"
+    order_processing_backend: "ceph_s3"
+    membership_sync_backend: "ceph_s3"
+    # No reporting_backend: this flavour cannot meter. See Usage Reporting.
+
+    backend_settings:
+      flavour: "radosgw"
+      s3_endpoint: "https://s3.example.com"    # Admin Ops hangs off this host
+      admin_access_key: "ADMINACCESSKEY000000"
+      admin_secret_key: "..."
+      s3_region: "us-east-1"                   # must match what clients sign with
+      admin_path: "admin"                      # only if rgw_admin_entry was renamed
+      verify_ssl: true
+```
+
+`api_url`, `token`, `username` and `password` belong to the croit flavour and are
+**rejected** here rather than ignored — an offering carrying both sets is a
+half-finished migration, and silently picking one would authenticate somewhere the
+operator did not intend.
+
+#### Two behaviours that differ from croit
+
+- **No GB-day metering.** Admin Ops exposes no per-user stored-bytes series:
+  `/admin/usage` is bandwidth and operation counts, and bucket stats are a
+  point-in-time size. There is nothing to integrate, so leave `reporting_backend`
+  unset and bill this offering on a fixed component.
+- **Quota enforcement overshoots.** RGW syncs bucket statistics into the
+  user-quota check periodically rather than on every write. Measured on squid: a
+  6 MiB ceiling against 5 MiB already stored accepted a further 7 MiB before
+  answering `QuotaExceeded`. The ceiling bounds the invoice approximately, not
+  exactly.
 
 ### Configuration Options
 
 #### Backend Settings
 
-- **`api_url`** (required): Croit API base URL (will be appended with /api)
-- **`token`** (optional): Bearer token for API authentication
-- **`username`** (optional): API username (alternative to token)
-- **`password`** (optional): API password (alternative to token)
+- **`flavour`** (optional, default: `"croit"`): `croit` or `radosgw`
+- **`api_url`** (croit only, required): croit **management** API base URL (/api is appended)
+- **`s3_endpoint`** (required): the S3 data endpoint tenants connect to. This is a
+  *different host* from `api_url` — RadosGW runs on the storage nodes while the
+  management API runs on the croit VM, and croit exposes no VIP or DNS name to derive
+  it from. Point it at a load balancer or DNS name in front of the RGW nodes
+- **`s3_region`** (optional, default: `"default"`): the region S3 clients sign with.
+  Maps to the RadosGW zonegroup's `api_name`; croit exposes no endpoint to read it back,
+  and `"default"` is Ceph's out-of-the-box zonegroup name. Set it if yours was named
+- **`token`** (croit only): bearer token for API authentication
+- **`username`** (croit only): API username (alternative to token)
+- **`password`** (croit only): API password (alternative to token)
+- **`admin_access_key`** (radosgw only, required): access key of the RGW user
+  holding `users=*;buckets=read`
+- **`admin_secret_key`** (radosgw only, required): its secret
+- **`admin_path`** (radosgw only, default: `"admin"`): the value of
+  `rgw_admin_entry`, if the operator renamed it
 - **`verify_ssl`** (optional, default: `true`): Enable/disable SSL certificate verification
 - **`timeout`** (optional, default: `30`): Request timeout in seconds
-- **`user_prefix`** (optional, default: `"waldur_"`): Prefix for generated usernames
-- **`slug_separator`** (optional, default: `"_"`): Separator for slug components
-- **`max_username_length`** (optional, default: `64`): Maximum username length
-- **`default_tenant`** (optional): Default RadosGW tenant
-- **`default_placement`** (optional): Default placement rule
-- **`default_storage_class`** (optional): Default storage class
+- **`allocation_prefix`** (optional, default: `"waldur-"`): namespace every uid this
+  agent creates is built under — the only setting that changes a provisioned uid. A
+  core setting, but the core defaults it to `""`, which this plugin overrides: an
+  empty namespace puts a consumer-chosen resource name straight into the cluster's
+  global one. See Username Generation
+- **`default_tenant`** (croit only, optional): Default RadosGW tenant. Rejected on
+  the radosgw flavour: a tenanted uid is `tenant$uid`, and the client's path
+  validator refuses `$`
+- **`default_placement`** (optional): Default placement rule. Honoured by both
+  flavours
+- **`default_storage_class`** (croit only, optional): Default storage class.
+  Rejected on the radosgw flavour: Admin Ops user-create takes a placement but no
+  storage class
+
+The billing period boundary for GB-day reporting follows the **agent's global**
+`timezone`, which the reporting processor injects into the backend — the same value
+it uses to file the usage, so the two cannot drift. The configuration validator
+rejects a timezone that does not parse: the backend used to fall back to UTC while
+the processor fell back to naive system local time, so near a month boundary a typo
+filed a whole period's usage against the wrong month.
+
+**Set it to whatever Mastermind computes billing periods in.** The agent derives both
+the integration bounds and the `billing_period` it files against from its own clock,
+so an agent on `Europe/Tallinn` reporting to a UTC Mastermind integrates the first
+hours of each month into the period Mastermind has already closed. A fixed component
+would not notice; GB-days move storage-hours onto the wrong invoice.
 
 #### Component Types
 
 ##### Usage-Based Storage (`s3_storage`)
 
-Tracks actual storage consumption with optional safety quota enforcement:
+The only billed component. Reports GB-days — storage integrated over the billing
+period — with optional safety quota enforcement:
 
 ```yaml
 s3_storage:
   accounting_type: "usage"
   backend_name: "storage"
-  unit_factor: 1073741824  # Bytes to GB conversion
-  enforce_limits: true     # Apply safety limits from resource options as bucket quotas
+  label: "Storage"
+  measured_unit: "GB-day"  # GB x days; see Usage Reporting
+  unit_factor: 1000000000  # decimal GB (1000 GB = 1 TB), not GiB
 ```
 
-##### Usage-Based Objects (`s3_objects`)
+**`unit_factor` is mandatory here and must be above 1.** The core config model
+defaults it to `1.0` and normalises every component through that default, so an
+omitted value arrives at the plugin as a real one — nothing downstream can tell
+"not configured" from "configured as 1". At 1 both directions break silently: the
+quota path sends an ordered 5 GB ceiling as **5 bytes**, capping the tenant at
+nothing, and the metering path divides by 1, reporting byte-days against a GB-day
+price. The backend therefore refuses to construct rather than start and misbill,
+so a missing `unit_factor` fails at agent startup with the component named.
 
-Tracks object count with optional safety quota enforcement:
-
-```yaml
-s3_objects:
-  accounting_type: "usage"
-  backend_name: "objects"
-  enforce_limits: true     # Apply safety limits from resource options as object quotas
-```
-
-**Note**: The plugin automatically creates one S3 user per marketplace resource. No separate user component is needed.
+Setting `limit_amount`/`limit_period` on this component is harmless but noisy.
+`validate_amount()` only *raises* for non-usage components; for a usage component
+it logs a warning and the report lands anyway. Two things make that warning fire
+early: a GB-denominated threshold is compared against a GB-day amount, and the
+running total includes the row about to be overwritten, so cumulative reporting
+roughly double-counts. Leave it unset unless you want the log noise.
 
 ## Username Generation
 
-Usernames are automatically generated from Waldur resource metadata:
+**Provisioned resources are named by the order processor, not by this plugin.**
+`_get_resource_backend_id()` in the core produces
+`f"{allocation_prefix}{resource_slug}".lower()`, and Waldur caps every slug at 10
+characters (`SLUG_NAME_LIMIT`), appending `-2`, `-3`, … on collision. So a resource
+named `cust-0-proj-0-ceph-s3-of` becomes the uid `cust-0-pro`.
 
-**Format**: `{prefix}{org_slug}_{project_slug}_{resource_uuid_short}`
+**Format**: `{allocation_prefix}{resource_slug}` — **Example**: `cust-0-pro`
 
-**Example**: `waldur_myorg_myproject_12345678`
-
-### Slug Cleaning Rules
-
-- Convert to lowercase
-- Replace non-alphanumeric characters with underscores
-- Remove consecutive underscores
-- Truncate if exceeds maximum length
-- Preserve prefix and resource UUID
+This is the only naming scheme the plugin has. A second one — `user_prefix`,
+`slug_separator`, `max_username_length` and a `create_resource()` that read them —
+existed alongside it and was never reached, since the order processor calls
+`create_resource_with_id()`. It has been removed; an offering still carrying those
+three keys is unaffected, they are simply ignored.
 
 ## Usage Reporting
 
-The plugin collects usage metrics for all user buckets:
+**Croit flavour only, and it needs its own backend.** Set
 
-### Storage Usage
+```yaml
+    reporting_backend: "croit_usage"
+```
 
-- Sums `usageSum.size` across all user buckets
-- Converts bytes to configured units (e.g., GB)
-- Reports actual storage consumption
+Metering reads croit's statistics subsystem, which has no RadosGW equivalent, so
+it lives in a separate backend class rather than as a method that works on one
+flavour and fails on the other. `croit_usage` refuses to start on a
+radosgw-flavoured offering.
 
-### Object Usage
+Leaving `reporting_backend` at `ceph_s3` reports **nothing** — deliberately, not
+zeros. A zero is a legitimate usage value and would overwrite the period's
+accrued total; silence leaves the last good figure in place.
 
-- Sums `usageSum.numObjects` across all user buckets
-- Reports total object count
+Storage is billed in **GB-days** — the area under the storage curve over the
+billing period, not a reading taken at report time. Object counts are not billed.
+
+Usage is metered **per resource**, not per key: the series is the S3 user's, so
+the resource's two access keys never enter the calculation and rotating one
+cannot change a bill.
+
+### Where the number comes from
+
+`GET /api/stats?graph=s3-user-data&template-s3-user-name=<uid>` returns croit's
+per-user storage series as `{"t": unix seconds, "v": bytes}` datapoints at 180 s
+native resolution. Each pass asks for the period so far and integrates:
+
+```text
+GB-days = Σ  (bytes_i / unit_factor) × (t_i+1 − t_i) / 86400
+```
+
+Each datapoint is one rectangle — the reading, held until the next sample. A null
+`v` is missing telemetry, so the previous reading is carried across it; dropping
+the interval would bill it at zero and turn a metrics outage into a silent
+discount.
+
+Recomputed from the period start every time rather than accumulated, so the value
+is absolute: reporting is idempotent, and an agent that was down for two days
+returns the correct figure on its next pass with no catch-up logic. It also only
+rises within a period, so Waldur's anomaly detection stays useful and
+`supports_decreasing_usage` stays at the default `False`.
+
+### Why GB-days rather than GB
+
+Waldur bills a usage component as a flat `unit_price × quantity` — the `PER_DAY`
+proration in invoicing applies only to *fixed* components. So for a price list
+denominated per GB per day, the days have to be inside the quantity. Reporting
+plain GB against a per-day price under-bills by roughly the number of days in the
+month.
+
+### Precision
+
+The integral is computed in `Decimal` and rounded half-up to two places, which is
+what the reporter's `"%.2f"` wire format preserves. The report leaves the backend
+as plain floats, like every other plugin.
 
 ### Report Format
 
+The reporter reads `TOTAL_ACCOUNT_USAGE` and skips any resource whose report
+lacks it. There is exactly one S3 user per resource, so the account total *is*
+that user's usage; per-user entries would key on Waldur offering users, which
+this backend does not manage.
+
+A resource whose series cannot be read is **absent** from the report rather than
+present with a zero — zero is a valid usage value and would overwrite the
+period's accrued total.
+
 ```json
 {
-  "waldur_org_proj_12345678": {
-    "s3_storage": {"usage": 150},
-    "s3_objects": {"usage": 5000}
+  "cust-0-pro": {
+    "TOTAL_ACCOUNT_USAGE": {
+      "s3_storage": 3100.0
+    }
   }
 }
 ```
+
+Values are plain numbers already in Waldur units, with `unit_factor` applied —
+not `{"usage": n}` wrappers.
 
 ## Resource Metadata
 
 Each S3 user resource exposes comprehensive metadata:
 
-### S3 Credentials
+### S3 Connection
+
+Credentials are **not** in resource metadata. Each resource owns two S3 access keys, stored
+encrypted in Waldur and revealed or rotated per key from the portal (see
+`waldur-mastermind/docs/resource-api-keys.md`). Metadata carries only the non-secret
+connection info, and the S3 endpoint is also published as a resource access endpoint:
 
 ```json
 {
-  "s3_credentials": {
-    "access_key": "AKIAIOSFODNN7EXAMPLE",
-    "secret_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-    "endpoint": "https://192.168.240.34",
-    "region": "default"
-  }
+  "s3_endpoint": "https://s3.example.com",
+  "s3_region": "default",
+  "s3_user": "cust-0-pro"
 }
 ```
+
+These are deliberately **flat** keys. An offering's *Getting started* text is a template
+interpolating `{backend_metadata_<key>}` one level deep, so a nested block would render as
+`[object Object]`. Flat keys let a provider write usable instructions once, for example:
+
+```text
+Configure your S3 client:
+
+```aws --endpoint-url {backend_metadata_s3_endpoint} s3 ls```
+
+Your access key is on the **API keys** tab — click Reveal for the secret.
+```
+
+The agent mints both halves of each pair, applies them to the S3 user, and only then
+reports them to Waldur — so a stored key is always one RadosGW already accepts. Rotation
+replaces the access key as well as the secret, applying the new pair before dropping the
+old one, so the resource's other key keeps working throughout.
+
+**Every credential that works is one Waldur can rotate.** Two things would otherwise
+break that:
+
+- *RadosGW mints its own key when a user is created*, and Waldur never sees its secret.
+  It is deleted right after the user is created, while it is that user's only key and
+  before anyone holds credentials. This happens only on the branch that actually created
+  the user. An existing uid is adopted with its keys left in place at provisioning time,
+  but they are not in Waldur's known set, so the resource's first rotation prunes them.
+- *A rotation whose reply to Waldur is lost* has already replaced the access key at the
+  backend, so re-issuing it rotates from a client_id croit no longer has and would leave
+  the intermediate key live and invisible. Each rotation therefore receives the resource's
+  known client_ids and drops anything outside that set. If Waldur cannot be listed the set
+  is `None` — unknown, so nothing is pruned; treating it as empty would delete every
+  credential the resource has.
+
+**Known limitation:** croit's create-key endpoint takes the secret as a query parameter
+(`PUT /s3/users/{uid}/keys/{accessKey}?secretKey=…`), so it appears in croit's access log.
+The bulk alternative (`PUT /s3/users/{uid}/keys`) keeps the secret in the body but replaces
+the user's entire key set asynchronously, which can drop a sibling key when two rotations
+overlap.
 
 ### Storage Summary
 
@@ -30405,24 +30693,35 @@ Each S3 user resource exposes comprehensive metadata:
 
 ## Safety Quota Enforcement
 
-When `enforce_limits: true` is set for usage-based components, the plugin automatically applies safety limits from
-resource options as RadosGW bucket quotas:
+Ordering a ceiling is the only signal needed — there is no enable switch. The
+plugin applies the ordered limits as RadosGW quotas:
 
-1. **Create Resource**: Apply initial quotas based on user-specified safety limits (storage_limit, object_limit)
-2. **Prevent Overages**: Quotas act as safety nets to prevent unexpected usage charges
-3. **Monitor Usage**: Include quota utilization in usage reports
+1. **Create Resource**: apply the ordered ceilings (`max_storage_limit`,
+   `max_object_limit`) — **on the create path only**; quotas are not re-asserted
+   afterwards, so an existing resource keeps whatever it was given
+2. **Prevent Overages**: the quota is what bounds the tenant, and therefore the
+   invoice — usage billing itself has no ceiling
 
 ### Quota Types
 
-- **Storage Quota**: `maxSize` in bytes (converted from storage_limit in GB)
-- **Object Quota**: `maxObjects` as integer count (from object_limit)
+Both are set from the same ordered ceiling:
+
+- **User quota** (`PUT /s3/users/{uid}/quota`): the aggregate cap across everything
+  the user owns. This is the one that bounds a tenant — croit exposes no way to
+  cap the bucket count, so a per-bucket quota alone bounds nothing
+- **Bucket quota** (`PUT /s3/users/{uid}/bucket-quota`): a per-bucket guard
+- `maxSize` in bytes (`max_storage_limit` × `unit_factor`), `maxObjects` as a count
 
 ### How Safety Limits Work
 
-1. **User Configuration**: Users set `storage_limit` and `object_limit` via Waldur marketplace form
+1. **User Configuration**: Users set `max_storage_limit` and `max_object_limit` via Waldur marketplace form
 2. **Resource Options**: Waldur passes these as resource attributes to the site agent
-3. **Quota Application**: Plugin applies these as bucket quotas during S3 user creation
-4. **Usage Billing**: Actual consumption is tracked and billed separately from quotas
+3. **Quota Application**: applied as user and bucket quotas during S3 user creation.
+   A resource that reaches provisioning with no ceiling is logged as a warning
+   naming the attributes that were present — an unbounded resource is one with no
+   bound on its invoice
+4. **Usage Billing**: actual consumption is measured and billed separately from the
+   quota, which is a cap rather than a billing basis
 
 ## Waldur Marketplace Integration
 
@@ -30451,7 +30750,7 @@ from waldur_core.structure.tests.factories import CustomerFactory
 from waldur_mastermind.marketplace.enums import SITE_AGENT_OFFERING, BillingTypes, OfferingStates
 from waldur_mastermind.marketplace.models import Category, ServiceProvider, Offering, OfferingComponent, Plan, PlanComponent
 
-def create_croit_s3_offering():
+def create_ceph_s3_offering():
     with transaction.atomic():
         # Create category
         category, _ = Category.objects.get_or_create(
@@ -30466,12 +30765,12 @@ def create_croit_s3_offering():
         )
         service_provider, _ = ServiceProvider.objects.get_or_create(
             customer=customer,
-            defaults={'description': 'Croit S3 object storage services'}
+            defaults={'description': 'Ceph S3 object storage services'}
         )
 
         # Create offering
         offering, created = Offering.objects.get_or_create(
-            name='Croit S3 Object Storage',
+            name='Ceph S3 Object Storage',
             defaults={
                 'type': SITE_AGENT_OFFERING,
                 'category': category,
@@ -30481,15 +30780,14 @@ def create_croit_s3_offering():
                 'state': OfferingStates.ACTIVE,
                 'billable': True,
                 'plugin_options': {
-                    'backend_type': 'croit_s3',
-                    'create_orders_on_resource_option_change': True,
+                    'backend_type': 'ceph_s3',
                     'service_provider_can_create_offering_user': False,
                     'auto_create_admin_user': False,
                 },
                 'options': {
-                    'order': ['storage_limit', 'object_limit'],
+                    'order': ['max_storage_limit', 'max_object_limit'],
                     'options': {
-                        'storage_limit': {
+                        'max_storage_limit': {
                             'type': 'integer',
                             'label': 'Storage Limit (GB)',
                             'help_text': 'Maximum storage capacity in gigabytes (safety limit)',
@@ -30498,34 +30796,18 @@ def create_croit_s3_offering():
                             'min': 1,
                             'max': 10000,
                         },
-                        'object_limit': {
+                        'max_object_limit': {
                             'type': 'integer',
                             'label': 'Object Count Limit',
-                            'help_text': 'Maximum number of objects that can be stored (safety limit)',
-                            'required': True,
-                            'default': 10000,
-                            'min': 100,
-                            'max': 10000000,
+                            'help_text': 'Maximum number of objects (optional)',
+                            'required': False,
+                            'min': 0,
                         }
                     }
                 },
-                'resource_options': {
-                    'order': ['storage_limit', 'object_limit'],
-                    'options': {
-                        'storage_limit': {
-                            'type': 'integer',
-                            'label': 'Storage Limit (GB)',
-                            'help_text': 'Storage limit to enforce as bucket quota',
-                            'required': True,
-                        },
-                        'object_limit': {
-                            'type': 'integer',
-                            'label': 'Object Count Limit',
-                            'help_text': 'Object limit to enforce as bucket quota',
-                            'required': True,
-                        }
-                    }
-                }
+                # resource_options is deliberately not set: it would surface an
+                # "update options" action the agent cannot honour, since it does
+                # not act on new_options and applies quotas only at creation.
             }
         )
 
@@ -30535,24 +30817,10 @@ def create_croit_s3_offering():
             type='s3_storage',
             defaults={
                 'name': 'S3 Storage',
-                'description': 'Object storage capacity in GB',
+                'description': 'Object storage, billed per GB per day',
                 'billing_type': BillingTypes.USAGE,
-                'measured_unit': 'GB',
+                'measured_unit': 'GB-day',
                 'article_code': 'CROIT_S3_STORAGE',
-                'default_limit': 100,
-            }
-        )
-
-        objects_component, _ = OfferingComponent.objects.get_or_create(
-            offering=offering,
-            type='s3_objects',
-            defaults={
-                'name': 'S3 Objects',
-                'description': 'Number of stored objects',
-                'billing_type': BillingTypes.USAGE,
-                'measured_unit': 'objects',
-                'article_code': 'CROIT_S3_OBJECTS',
-                'default_limit': 10000,
             }
         )
 
@@ -30571,28 +30839,22 @@ def create_croit_s3_offering():
         PlanComponent.objects.get_or_create(
             plan=plan,
             component=storage_component,
-            defaults={'price': Decimal('0.02'), 'amount': 1}  # €0.02/GB/month
+            defaults={'price': Decimal('0.0010'), 'amount': 1}  # €0.0010 per GB-day
         )
 
-        PlanComponent.objects.get_or_create(
-            plan=plan,
-            component=objects_component,
-            defaults={'price': Decimal('0.0001'), 'amount': 1}  # €0.0001/object/month
-        )
-
-        print(f'✓ Croit S3 offering created: {offering.uuid}')
+        print(f'✓ Ceph S3 offering created: {offering.uuid}')
         print(f'  Add this UUID to your site agent config')
         return offering.uuid
 
-create_croit_s3_offering()
+create_ceph_s3_offering()
 "
 
 ```
 
-**Alternative**: Save the above code as `setup_croit_s3_offering.py` and run:
+**Alternative**: Save the above code as `setup_ceph_s3_offering.py` and run:
 
 ```bash
-DJANGO_SETTINGS_MODULE=waldur_core.server.settings uv run python setup_croit_s3_offering.py
+DJANGO_SETTINGS_MODULE=waldur_core.server.settings uv run python setup_ceph_s3_offering.py
 ```
 
 ### Offering Configuration
@@ -30600,10 +30862,9 @@ DJANGO_SETTINGS_MODULE=waldur_core.server.settings uv run python setup_croit_s3_
 The created Waldur offering will have:
 
 - **Type**: `SITE_AGENT_OFFERING` ("Marketplace.Slurm")
-- **Components**: `s3_storage` and `s3_objects` (both usage-based billing)
-- **Options**: `storage_limit` and `object_limit` for user input (safety limits)
-- **Plugin Options**: `create_orders_on_resource_option_change: true`
-- **Pricing**: €0.02/GB/month for storage, €0.0001/object/month for objects
+- **Components**: `s3_storage` only (usage-based, billed in GB-days)
+- **Options**: `max_storage_limit` and `max_object_limit` for user input (safety limits)
+- **Pricing**: €0.0010 per GB-day for storage; objects are not billed
 
 ### Order Payload Example
 
@@ -30613,8 +30874,8 @@ The created Waldur offering will have:
   "project": "http://localhost:8000/api/projects/{project_uuid}/",
   "plan": "http://localhost:8000/api/marketplace-public-offerings/{offering_uuid}/plans/{plan_uuid}/",
   "attributes": {
-    "storage_limit": 100,
-    "object_limit": 10000
+    "max_storage_limit": 100,
+    "max_object_limit": 10000
   },
   "name": "my-s3-storage",
   "description": "S3 storage for my application",
@@ -30627,7 +30888,7 @@ The created Waldur offering will have:
 Run the test suite:
 
 ```bash
-cd plugins/croit-s3
+cd plugins/ceph-s3
 uv run pytest tests/ -v
 ```
 
@@ -30641,8 +30902,9 @@ uv run pytest tests/ -v
 my_custom_component:
   accounting_type: "usage"
   backend_name: "custom_metric"
+  label: "My custom metric"
+  measured_unit: "units"
   unit_factor: 1
-  enforce_limits: false
 ```
 
 - Add usage collection logic in `_get_usage_report()`
@@ -30656,6 +30918,7 @@ The plugin includes comprehensive error handling:
 - **`CroitS3AuthenticationError`**: API authentication failures
 - **`CroitS3UserNotFoundError`**: User doesn't exist
 - **`CroitS3UserExistsError`**: User already exists
+- **`CroitS3GraphNotFoundError`**: the statistics graph behind usage reporting is missing
 - **`CroitS3APIError`**: General API errors
 - **`CroitS3Error`**: Base exception class
 
@@ -30677,28 +30940,34 @@ backend_settings:
 
 ### Username Length Issues
 
-```yaml
-backend_settings:
-  max_username_length: 32  # Adjust for backend constraints
-  user_prefix: "w_"        # Shorten prefix
-```
+The uid is `{allocation_prefix}{resource_slug}`, and Waldur already caps the slug at
+10 characters — so only `allocation_prefix` is yours to shorten. See Username
+Generation.
 
 ### Debug Logging
 
 Use standard Python logging configuration or waldur-site-agent logging settings to enable debug output for the plugin modules:
 
-- `waldur_site_agent_croit_s3.client` - HTTP API interactions
-- `waldur_site_agent_croit_s3.backend` - Backend operations
+- `waldur_site_agent_ceph_s3.client` - HTTP API interactions
+- `waldur_site_agent_ceph_s3.backend` - Backend operations
 
 ## Resource Lifecycle
 
-1. **Order Creation**: User submits order with `storage_limit` and `object_limit`
-2. **User Creation**: Plugin creates S3 user with slug-based username
-3. **Quota Application**: Safety limits applied as bucket quotas
-4. **Credential Exposure**: Access keys returned via resource metadata
-5. **Usage Tracking**: Real-time storage and object consumption reporting
-6. **Limit Updates**: Users can modify safety limits (creates new orders)
-7. **Resource Deletion**: S3 user and all buckets are removed
+1. **Order Creation**: User submits order with `max_storage_limit` and `max_object_limit`
+2. **User Creation**: Plugin creates the S3 user under the backend id the order processor generated
+3. **Quota Application**: ceilings applied as user and bucket quotas
+4. **Key Provisioning**: Two access keys minted, applied, and reported to Waldur encrypted;
+   RadosGW's auto-generated key is removed
+5. **Usage Tracking**: storage integrated into GB-days per billing period
+6. **Limit Updates**: **not supported.** The ceiling is an order attribute, fixed at
+   creation. Waldur can carry an `update_options` order, but the agent does not act
+   on `new_options`, and quotas are applied only on the create path — so changing a
+   ceiling today means terminating and re-ordering
+7. **Resource Deletion**: the S3 user is removed — but only once it owns no
+   buckets. croit refuses to delete a user that still holds data
+   (`500 Unable to remove user with buckets.`), so termination of a tenant with
+   data fails until the buckets are emptied and removed. The failure reason
+   reaches the portal's order history and resource activity log.
 
 ---
 
@@ -31535,6 +31804,24 @@ The `envoy-usage` backend is read-only. It implements usage reporting and resour
 not create, pause, restore, or otherwise manage resources (those belong to the `envoy` backend).
 Usage is reported for the current month via `_get_usage_report()` and for arbitrary past months
 via `get_usage_report_for_period()`, which the historical loader uses.
+
+### Per-key requests, per-resource billing
+
+A resource owns several API keys, but usage is attributed **per resource** — otherwise
+rotating a key would split a tenant's bill in two.
+
+The gateway forwards `x-client-id` per key (`<resource_backend_id>-<n>`), and the rollup
+happens at the **usage-shipper** (a Vector pipeline): its `remap` transform strips the
+`-<n>` suffix, so usage lands under the resource's `backend_id`:
+
+```coffee
+# usage-shipper (Vector) remap transform
+cid = replace(cid, r'-\d+$', "")
+```
+
+`envoy-usage` then queries the warehouse by `resource_backend_id` unchanged — no key
+enumeration. Pause, restore and terminate are the opposite: they act on the gateway Secret
+rather than on usage, so they fan out to **every** client-id the resource owns.
 
 ## Installation
 
@@ -71683,6 +71970,19 @@ To add an image:
 !!! warning
     Images are uploaded to the platform's media storage as soon as you add them, before you save the offering. Keep image sizes reasonable to stay within the configured upload limit.
 
+## Description length limit
+
+Short **description** fields are limited to **4,096 characters**. The limit applies to the offering description, plan descriptions, project descriptions and call descriptions. It is a fixed limit built into Waldur — it is not a deployment setting, and cannot be raised by configuration.
+
+Long-form fields are not affected: the offering's **Full description** and **Vendor details** have no length limit, so a description that has outgrown 4,096 characters usually belongs in Full description instead. Both fields sit next to each other on the offering's **Edit → Public information → Basic info** panel:
+
+[Image: Description and Full description on the offering edit page]
+
+!!! note "HTML escaping counts toward the limit"
+    Descriptions are sanitised before they are stored, which escapes the characters `&`, `<` and `>` into their HTML entities (`&` becomes `&amp;`, five characters instead of one). The **escaped** text is what has to fit within 4,096 characters.
+
+    Text containing many such characters therefore reaches the limit sooner than its visible length suggests — a bibliography full of `&` can be rejected at around 4,000 characters. When this happens, Waldur says the value is too long after sanitisation, so the message can be told apart from an ordinary over-length description.
+
 ## Configuring Getting Started Templates
 
 When setting up an offering, you can configure a "Getting Started" guide that will be shown to users after they provision a resource. This guide supports dynamic variables that are automatically replaced with actual resource values.
@@ -71736,8 +72036,8 @@ The General Information section defines the core attributes of an offering, incl
 #### Required fields
 
 - **Name** – The title of the offering, displayed across the platform
-- **Description** – A concise summary outlining the offering's purpose
-- **Full description** – A detailed explanation, including technical aspects and potential use cases
+- **Description** – A concise summary outlining the offering's purpose (limited to 4,096 characters — see [Description length limit](#description-length-limit))
+- **Full description** – A detailed explanation, including technical aspects and potential use cases (no length limit)
 - **Terms of service** – Any contractual obligations or usage restrictions
 - **Privacy policy link** – URL linking to the privacy policy
 - **Terms of service link** – URL linking to the terms of service
@@ -72162,6 +72462,14 @@ still letting each provider allocate project and role **GIDs** locally.
     the GIDs still come from the pool. When an account is sourced from a user
     attribute that is missing, Waldur leaves that identifier unset and logs a
     warning rather than falling back to the pool.
+
+This pairing is also one of the two supported answers when a site arrives with
+**legacy UIDs that fall outside every configured pool** — see
+[legacy identifiers outside a pool](posix-id-pools.md#legacy-identifiers-outside-a-pool).
+Note that identifiers sourced this way are not tracked by a pool, so they show no
+pool scope in the offering user's POSIX identifiers table; that is expected, and
+is explained under
+[where an identifier came from](posix-id-pools.md#where-an-identifier-came-from).
 
 ### Exposing the POSIX identity attributes
 
@@ -72801,6 +73109,37 @@ lowest released value before the high-water mark advances further. Released
 records are kept as an audit trail and are visible in a pool's **identities**
 view.
 
+## Where an identifier came from
+
+Expanding an offering user shows a **POSIX identifiers** table listing each of
+that account's identifiers together with the **pool scope** it was allocated
+from. Some rows show a dash instead of a scope. That is not an error: it means
+the value is not tracked by any pool.
+
+A value ends up untracked in one of three ways:
+
+- **It is sourced from a user attribute.** When the offering's `uid_source` or
+  `gid_source` is set to `user_attribute`, the identifier is taken from the
+  Waldur user's own `uid_number` / `primary_gid` — typically populated from an
+  identity-provider claim — rather than allocated. No pool is involved, so a
+  dash is the expected display. See
+  [sourcing UID and GID](glauth-user-accounts.md#sourcing-uid-and-gid).
+- **It predates POSIX ID pools** and was not picked up when the deployment was
+  upgraded.
+- **It was seeded directly**, for example by a structure import or straight into
+  the database.
+
+!!! warning "Untracked values are not reserved"
+    An identifier the allocator does not know about is outside its bookkeeping,
+    so nothing prevents the same number later being handed to another account
+    from a pool whose range covers it. Where that matters, bring the value under
+    a pool — see [legacy identifiers](#legacy-identifiers-outside-a-pool) below.
+
+Upgrading an existing deployment does not, by itself, leave values untracked.
+The migration that introduces pools synthesises one pool per offering with its
+bounds **widened to cover every identifier already in use**, and records each of
+those identifiers, so values that existed at upgrade time end up inside a pool.
+
 ## Pinning specific UIDs/GIDs
 
 Sometimes an account must keep a **specific** UID or GID — for example to match
@@ -72817,6 +73156,54 @@ never collides with an automatically assigned one.
     provider default — for instance a block reserved for manually pinned
     identities — give that offering its own **offering-override pool** rather
     than pinning outside the provider pool's range.
+
+A pinned value must be **inside** the pool that applies to the offering. Waldur
+rejects a value outside that range, and rejects one already held by another
+active account, rather than accepting it and letting two accounts collide later.
+So "pin an arbitrary number" is not available by design — if the number you need
+falls outside every configured range, widen or add a pool first, as described
+next.
+
+## Legacy identifiers outside a pool
+
+Sites migrating onto Waldur often arrive with UIDs and GIDs already in use on
+the backend, in bands that no configured pool covers. There are two supported
+ways to accommodate them; which one fits depends on whether the identifier
+belongs to the **site** or to the **identity**.
+
+### The identifiers belong to this site
+
+Give the offering its own **offering-override pool** whose range covers the
+legacy band, then pin the individual values inside it (see
+[Pinning specific UIDs/GIDs](#pinning-specific-uidsgids)).
+
+This keeps every legacy value under the allocator's bookkeeping, so it is
+reserved and can never be reissued. Remember that pools of one provider must not
+overlap within a namespace, so the override band has to be disjoint from the
+provider default — for example a provider default of `100000–199999` alongside a
+legacy offering on `5000–9999`.
+
+### The identifiers belong to the user's identity
+
+If a user's UID is a property of who they are rather than of this site — the
+same on every site in a federation, delivered as an OIDC or SAML `uidNumber`
+claim — do not try to reproduce it from a pool. Set the offering's `uid_source`
+to `user_attribute` and pair it with a **GID-only pool**, as described under
+[sourcing UID and GID](glauth-user-accounts.md#sourcing-uid-and-gid). Waldur then
+never allocates a UID at all for that offering, so it cannot collide with the
+one the identity provider supplies, while project and role GIDs continue to come
+from the pool.
+
+Both sources are set on the offering, under **Edit → Integration → User
+management**:
+
+[Image: UID source and Primary GID source on the User management panel]
+
+The trade-off between the two: an override pool keeps everything visible in one
+place and reserved against reuse, but the numbers are this site's to manage. User
+attributes keep a user's UID stable across sites, at the cost of those UIDs not
+appearing in any pool's utilisation figures — they will show a dash for pool
+scope, as described in [where an identifier came from](#where-an-identifier-came-from).
 
 ---
 

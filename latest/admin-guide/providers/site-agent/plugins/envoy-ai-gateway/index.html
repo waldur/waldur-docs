@@ -4622,7 +4622,7 @@
   <span class="md-ellipsis">
     
   
-    Croit s3
+    Ceph s3
   
 
     
@@ -4638,7 +4638,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Croit s3
+    Ceph s3
   
 
           </label>
@@ -4651,7 +4651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../croit-s3/" class="md-nav__link">
+      <a href="../ceph-s3/" class="md-nav__link">
         
   
   
@@ -5117,6 +5117,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Usage Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-key-requests-per-resource-billing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-key requests, per-resource billing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -18002,6 +18019,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Usage Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-key-requests-per-resource-billing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-key requests, per-resource billing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -18417,6 +18451,19 @@ key. Blocking runs in the membership-sync loop, so <code>membership_sync_backend
 not create, pause, restore, or otherwise manage resources (those belong to the <code>envoy</code> backend).
 Usage is reported for the current month via <code>_get_usage_report()</code> and for arbitrary past months
 via <code>get_usage_report_for_period()</code>, which the historical loader uses.</p>
+<h3 id="per-key-requests-per-resource-billing">Per-key requests, per-resource billing</h3>
+<p>A resource owns several API keys, but usage is attributed <strong>per resource</strong> — otherwise
+rotating a key would split a tenant's bill in two.</p>
+<p>The gateway forwards <code>x-client-id</code> per key (<code>&lt;resource_backend_id&gt;-&lt;n&gt;</code>), and the rollup
+happens at the <strong>usage-shipper</strong> (a Vector pipeline): its <code>remap</code> transform strips the
+<code>-&lt;n&gt;</code> suffix, so usage lands under the resource's <code>backend_id</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># usage-shipper (Vector) remap transform</span>
+<span class="nv">cid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">replace</span><span class="p">(</span><span class="nx">cid</span><span class="p">,</span><span class="w"> </span><span class="nx">r</span><span class="s">'-\d+$'</span><span class="p">,</span><span class="w"> </span><span class="s">""</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>envoy-usage</code> then queries the warehouse by <code>resource_backend_id</code> unchanged — no key
+enumeration. Pause, restore and terminate are the opposite: they act on the gateway Secret
+rather than on usage, so they fan out to <strong>every</strong> client-id the resource owns.</p>
 <h2 id="installation">Installation</h2>
 <p>The plugin is discovered automatically once <code>waldur-site-agent-envoy-ai-gateway</code> is installed
 alongside <code>waldur-site-agent</code>.</p>
