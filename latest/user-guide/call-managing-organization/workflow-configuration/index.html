@@ -10,7 +10,7 @@
         <link rel="canonical" href="https://docs.waldur.com/latest/user-guide/call-managing-organization/workflow-configuration/">
       
       
-        <link rel="prev" href="../reviewer-management/">
+        <link rel="prev" href="../reviewer-workflow/">
       
       
         <link rel="next" href="../../customer-organization/affiliate-earnings/">
@@ -15403,6 +15403,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../applicant-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Applicant guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../call-manager-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Call manager workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../call_management/" class="md-nav__link">
         
   
@@ -15607,6 +15663,34 @@
     
   
     Reviewer management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reviewer-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reviewer workflow
   
 
     
@@ -18047,8 +18131,16 @@
 <ul>
 <li><strong>Administrative check</strong> and <strong>Allocation decision</strong> are enabled</li>
 <li><strong>Technical assessment</strong>, <strong>Expert review</strong> and <strong>Panel review</strong> are seeded disabled</li>
-<li><strong>Award response</strong> is not seeded at all; add it explicitly if the call needs applicant acceptance</li>
+<li><strong>Award response</strong> is not seeded at all</li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Award response</strong> cannot be added as a step directly — the API rejects that.
+It is provisioned by the <strong>Include award response</strong> toggle on the
+<strong>Allocation decision</strong> step: turning it on creates and enables the award
+response step, and turning it off disables it again. For the same reason the
+award response row offers no add, remove or enable/disable action of its own.</p>
+</div>
 <h3 id="step-dependencies">Step dependencies</h3>
 <ul>
 <li><strong>Panel review</strong> requires <strong>Expert review</strong> — you cannot consolidate reviews that do not exist. Enabling Panel review while Expert review is disabled is rejected with a validation error.</li>
@@ -18060,7 +18152,7 @@
 <li>Open the call's <strong>Edit</strong> page</li>
 <li>Select the <strong>Configuration</strong> tab, then the <strong>Steps &amp; settings</strong> sub-tab</li>
 </ol>
-<p>The steps are listed in a table showing <strong>Step</strong>, <strong>Description</strong>, <strong>Duration (days)</strong>, <strong>Responsible role</strong> and <strong>Transition</strong>, with a sequence preview beneath it that shows the resulting order. Each row has an actions menu offering <strong>Configure</strong>, <strong>Enable</strong> or <strong>Disable</strong>, and <strong>Delete</strong>.</p>
+<p>The steps are listed in a table showing <strong>Step</strong>, <strong>Description</strong>, <strong>Duration (days)</strong>, <strong>Responsible role</strong> and <strong>Transition</strong>, with a sequence preview beneath it that shows the resulting order. Each row has an actions menu offering <strong>Configure</strong>, <strong>Enable</strong> or <strong>Disable</strong>, and <strong>Remove</strong>.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_workflow_config.png" data-desc-position="bottom"><img alt="Workflow steps configuration" src="../../img/scenario_workflow_config.png"></a></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -18110,14 +18202,14 @@
 </tr>
 <tr>
 <td><strong>Transition</strong></td>
-<td><strong>Advance immediately</strong> moves to the next step as soon as the step is completed; <strong>Hold for manual advance</strong> parks the proposal so a manager advances it explicitly.</td>
+<td><strong>Advance immediately on completion</strong> moves to the next step as soon as the step is completed; <strong>Hold for manual advance</strong> parks the proposal so a manager advances it explicitly.</td>
 </tr>
 </tbody>
 </table>
 <p>Two further settings appear on the <strong>Allocation decision</strong> step only:</p>
 <ul>
 <li><strong>Allocation time</strong> — <strong>On decision</strong> starts allocation immediately; <strong>Fixed date</strong> defers it to the round's allocation date.</li>
-<li><strong>Include award response</strong> — whether the applicant must respond to the award.</li>
+<li><strong>Include award response</strong> — whether the applicant must respond to the award. This toggle is what creates and enables the <strong>Award response</strong> step; it is the only way to add that step.</li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -18196,15 +18288,15 @@
 <td>Not yet reached in the workflow</td>
 </tr>
 <tr>
-<td><strong>Active</strong></td>
-<td>Current step, work in progress</td>
+<td><strong>In progress</strong></td>
+<td>Current step, work under way</td>
 </tr>
 <tr>
 <td><strong>Completed</strong></td>
 <td>Step finished with a recorded outcome</td>
 </tr>
 <tr>
-<td><strong>Expired</strong></td>
+<td><strong>Overdue</strong></td>
 <td>Deadline passed before the step was completed</td>
 </tr>
 <tr>
@@ -18216,13 +18308,13 @@
 <h3 id="deadline-handling">Deadline handling</h3>
 <p>Deadlines are enforced automatically. An hourly job checks active steps against their deadlines:</p>
 <ul>
-<li>When a step's deadline passes, the step is marked <strong>Expired</strong> with an <strong>Expired</strong> outcome</li>
+<li>When a step's deadline passes, the step is marked <strong>Overdue</strong> and records an <strong>Expired</strong> outcome</li>
 <li>The workflow then <strong>advances to the next enabled step</strong></li>
-<li>If the expired step was the last enabled step, the <strong>proposal is rejected</strong></li>
+<li>If the overdue step was the last enabled step, the <strong>proposal is rejected</strong></li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Expiry is enforced, not advisory. An expired step can no longer be completed — attempting to complete it fails. Set <strong>Duration</strong> only where the deadline should carry that consequence, and leave it unset for steps that should wait indefinitely.</p>
+<p>Expiry is enforced, not advisory. An overdue step can no longer be completed — attempting to complete it fails. Set <strong>Duration</strong> only where the deadline should carry that consequence, and leave it unset for steps that should wait indefinitely.</p>
 </div>
 <h2 id="viewing-workflow-progress">Viewing workflow progress</h2>
 <h3 id="for-applicants">For applicants</h3>
