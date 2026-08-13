@@ -24,7 +24,14 @@ When a call is created, workflow steps are seeded automatically:
 
 - **Administrative check** and **Allocation decision** are enabled
 - **Technical assessment**, **Expert review** and **Panel review** are seeded disabled
-- **Award response** is not seeded at all; add it explicitly if the call needs applicant acceptance
+- **Award response** is not seeded at all
+
+!!! note
+    **Award response** cannot be added as a step directly — the API rejects that.
+    It is provisioned by the **Include award response** toggle on the
+    **Allocation decision** step: turning it on creates and enables the award
+    response step, and turning it off disables it again. For the same reason the
+    award response row offers no add, remove or enable/disable action of its own.
 
 ### Step dependencies
 
@@ -38,7 +45,7 @@ When a call is created, workflow steps are seeded automatically:
 1. Open the call's **Edit** page
 2. Select the **Configuration** tab, then the **Steps & settings** sub-tab
 
-The steps are listed in a table showing **Step**, **Description**, **Duration (days)**, **Responsible role** and **Transition**, with a sequence preview beneath it that shows the resulting order. Each row has an actions menu offering **Configure**, **Enable** or **Disable**, and **Delete**.
+The steps are listed in a table showing **Step**, **Description**, **Duration (days)**, **Responsible role** and **Transition**, with a sequence preview beneath it that shows the resulting order. Each row has an actions menu offering **Configure**, **Enable** or **Disable**, and **Remove**.
 
 ![Workflow steps configuration](../img/scenario_workflow_config.png)
 
@@ -59,12 +66,12 @@ For each enabled step, you can configure:
 | **Minimum reviewers** | Minimum number of reviews required before the step can be completed. |
 | **Minimum score threshold** | Minimum average score required to complete the step. |
 | **Applicant visible** | Whether the applicant sees the step's details or only its status. |
-| **Transition** | **Advance immediately** moves to the next step as soon as the step is completed; **Hold for manual advance** parks the proposal so a manager advances it explicitly. |
+| **Transition** | **Advance immediately on completion** moves to the next step as soon as the step is completed; **Hold for manual advance** parks the proposal so a manager advances it explicitly. |
 
 Two further settings appear on the **Allocation decision** step only:
 
 - **Allocation time** — **On decision** starts allocation immediately; **Fixed date** defers it to the round's allocation date.
-- **Include award response** — whether the applicant must respond to the award.
+- **Include award response** — whether the applicant must respond to the award. This toggle is what creates and enables the **Award response** step; it is the only way to add that step.
 
 !!! note
     **Transition** governs only whether advancing needs a second manual action after a human completes the step. It never decides the outcome from review scores — **Minimum reviewers** and **Minimum score threshold** remain completion gates that a human must clear.
@@ -115,21 +122,21 @@ When the last enabled step completes with a positive outcome, the proposal is **
 | Status | Meaning |
 |---|---|
 | **Pending** | Not yet reached in the workflow |
-| **Active** | Current step, work in progress |
+| **In progress** | Current step, work under way |
 | **Completed** | Step finished with a recorded outcome |
-| **Expired** | Deadline passed before the step was completed |
+| **Overdue** | Deadline passed before the step was completed |
 | **Skipped** | Step was disabled for this call |
 
 ### Deadline handling
 
 Deadlines are enforced automatically. An hourly job checks active steps against their deadlines:
 
-- When a step's deadline passes, the step is marked **Expired** with an **Expired** outcome
+- When a step's deadline passes, the step is marked **Overdue** and records an **Expired** outcome
 - The workflow then **advances to the next enabled step**
-- If the expired step was the last enabled step, the **proposal is rejected**
+- If the overdue step was the last enabled step, the **proposal is rejected**
 
 !!! warning
-    Expiry is enforced, not advisory. An expired step can no longer be completed — attempting to complete it fails. Set **Duration** only where the deadline should carry that consequence, and leave it unset for steps that should wait indefinitely.
+    Expiry is enforced, not advisory. An overdue step can no longer be completed — attempting to complete it fails. Set **Duration** only where the deadline should carry that consequence, and leave it unset for steps that should wait indefinitely.
 
 ## Viewing workflow progress
 
