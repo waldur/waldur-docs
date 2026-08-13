@@ -1,5 +1,51 @@
 # Changelog
 
+## 8.1.0-rc.26 - 2026-08-13
+
+### Highlights
+
+Service providers get a dedicated helpdesk in this release: a full ticketing workspace with team management, canned responses, SLA and capacity indicators, and routing of issues to the provider handling them. Offering administration is consolidated into a single Team tab that brings permissions, offering users and invitations together in one place. Permission checks for order-creating actions are now aligned between the API and the UI, so buttons no longer appear for actions the backend would reject. Proposal-driven allocations also handle purchase orders and subscription periods correctly end to end.
+
+### What's New
+
+- Provider helpdesk: service providers can now run their own ticket queue with team and workload views, canned responses, SLA and capacity indicators, ticket statistics, and the ability to route or reroute issues to the responsible provider.
+- Offering owners now manage people from a single Team tab covering permissions, offering users, and invitations, replacing the separate permissions tab.
+- Khmer is available as an interface language, including translated role and category descriptions.
+- Offerings can opt in to a warning about SSH key loss, shown to users on the OpenStack VM creation form.
+- Resource usage exports can now include robot account usage.
+
+### Improvements
+
+- Order-creating resource actions (change limits, change plan, renew allocation, edit options, and their bulk equivalents) now require the order creation permission, and the UI hides them when the user lacks it.
+- Users with offering-scoped roles can now see the integration status of their offerings.
+- Proposal allocations carry the requested subscription period through to the allocated resource, and the proposal cost estimate is priced for that period.
+- The consumer approval step is auto-approved on orders created from proposal allocations, removing an unnecessary manual step.
+- Call managers can no longer override a provider's purchase order requirement, and the requirement is now visible on a call's offerings.
+- Deleting an organization credit now also removes the project credits it funds, and the deletion dialog names the project allocations that will be affected.
+- Overly long descriptions are now rejected with a clear validation message instead of failing at the database level.
+- Profile and other update dialogs allow clearing a previously set field value.
+- The roles administration list has a search box, and bulk project end-date actions are gated on the permission the API actually enforces.
+- Kubernetes configuration options render without requiring the experimental UI flag, and the credit burn-down chart is reconstructed from credit actually drawn.
+- FreeIPA group synchronisation is guarded against an empty group name prefix.
+- Call workflow help text now correctly states that configuration locks on archive rather than activation.
+- Removed the unused default tenant category flag and OpenStack category UUID settings from both the API and the admin UI.
+- Dependencies (brace-expansion, fast-uri, undici) were bumped to patched versions.
+
+### Bug Fixes
+
+- Offering invitations now link to the correct scope and properly guard against shared offerings.
+- Purchase order handling was corrected across proposal creation and order approval flows.
+- OpenStack sessions no longer emit spurious insecure-request warnings when reused from cache.
+- Ingress controller traffic is admitted by the Matrix network policies, fixing access to Matrix-backed chat in Kubernetes deployments.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [18 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.25...8.1.0-rc.26) - permission tightening for order creation, proposal allocation fixes, credit cleanup, and validation improvements
+- **Waldur Homeport**: [22 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.25...8.1.0-rc.26) - provider helpdesk UI, offering Team tab, permission-aware resource actions, and form clearing fixes
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.25...8.1.0-rc.26) - network policy fix for Matrix ingress
+
+---
+
 ## 8.1.0-rc.25 - 2026-08-11
 
 ### Highlights
