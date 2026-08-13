@@ -63,62 +63,42 @@ Per-offering settings control how tenants behave:
 
 ### Default marketplace categories
 
-Each of the three offering types is associated with a marketplace category. Waldur publishes the
-UUIDs of those categories to the frontend as `TENANT_CATEGORY_UUID`, `INSTANCE_CATEGORY_UUID` and
-`VOLUME_CATEGORY_UUID`, under `WALDUR_MARKETPLACE_OPENSTACK` in the `/api/configuration/`
-response.
+Two of the three OpenStack offering types have a **default category** flag on a marketplace
+category, used when Waldur auto-creates offerings during an OpenStack import:
 
-!!! warning "These are not configuration options"
-    Despite appearing alongside settings in `/api/configuration/`, these three values cannot be
-    set through an environment variable, a settings file or a rebuilt image. They are **derived
-    from the database on every request**: each one resolves to the UUID of whichever marketplace
-    category currently carries the matching default flag, and is `null` when no category carries
-    it. Forking the image changes nothing.
-
-The mapping is:
-
-| Published value | Category flag |
+| Flag | Used for |
 |---|---|
-| `INSTANCE_CATEGORY_UUID` | `default_vm_category` |
-| `VOLUME_CATEGORY_UUID` | `default_volume_category` |
-| `TENANT_CATEGORY_UUID` | `default_tenant_category` |
+| `default_vm_category` | the category new **instance** offerings are placed in |
+| `default_volume_category` | the category new **volume** offerings are placed in |
 
 At most one category may carry each flag; Waldur rejects an attempt to set a flag that another
-category already holds.
+category already holds. Both categories are created automatically, with their flags set, the first
+time an OpenStack environment is imported — so under normal operation there is nothing to configure.
 
-#### Setting a default category
-
-In Homeport, go to **Administration → Marketplace → Categories**, open the row's actions menu and
-choose **Edit**. The three flags are at the bottom of the dialog, each noting that only one category
-may carry it:
+To set one by hand, go to **Administration → Marketplace → Categories** in Homeport, open the row's
+actions menu and choose **Edit**. The flags are at the bottom of the dialog:
 
 ![Default category flags in the category edit dialog](img/openstack-default-category-flags.png)
 
-Turn on **Default tenant category** for the category that should hold OpenStack tenant offerings,
-and likewise for VM and volume, then click **Edit** to save.
-
-The same flags are settable through the API as a staff user:
+They are also settable through the API as a staff user, and on the category in the Django admin site:
 
 ```bash
 curl -X PATCH \
   -H "Authorization: Token $WALDUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"default_tenant_category": true}' \
+  -d '{"default_vm_category": true}' \
   https://waldur.example.com/api/marketplace-categories/<category-uuid>/
 ```
 
-They are also editable on the category in the Django admin site.
+!!! note "`TENANT_CATEGORY_UUID` and friends are not something you need to set"
+    Older releases published `INSTANCE_CATEGORY_UUID`, `VOLUME_CATEGORY_UUID` and
+    `TENANT_CATEGORY_UUID` under `WALDUR_MARKETPLACE_OPENSTACK` in the `/api/configuration/`
+    response. Nothing has consumed them since 2023, and they are no longer published.
 
-#### Why the values are often `null`
-
-The VM and Volume categories are created automatically, with their flags set, the first time an
-OpenStack environment is imported — so on a deployment that has never run an import, all three
-values are `null`.
-
-**The tenant category is never created automatically.** Nothing in Waldur sets
-`default_tenant_category`, so `TENANT_CATEGORY_UUID` stays `null` until an administrator flags a
-category by hand. If tenant offerings are not being categorised as expected, this is the first
-thing to check.
+    If you are on a release that still shows them, seeing `null` is harmless — no behaviour depends
+    on the value. In particular there is **no** `default_tenant_category` equivalent to the two
+    flags above: nothing in Waldur reads that flag, so a null `TENANT_CATEGORY_UUID` is expected
+    rather than a misconfiguration to fix.
 
 ## Supported resources
 
