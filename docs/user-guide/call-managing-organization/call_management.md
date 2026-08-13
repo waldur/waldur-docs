@@ -24,8 +24,6 @@ This guide walks you through the entire lifecycle of call management in Waldur, 
       - Select the **Call organiser** role from the dropdown menu
       - Click **Add** to confirm the assignment
 
-![Screenshot: Organization Setup for Call management](../img/org_setup_call_management.png)
-
 ## Step 2: Call creation
 
 **Performed by:** Call organiser or Organization owner
@@ -54,7 +52,7 @@ This guide walks you through the entire lifecycle of call management in Waldur, 
       - Define the mappings between proposal roles and project roles
 3. Save and activate the round.
 
-![Screenshot: Round Configuration Interface](../img/round_creation.png)
+![Rounds configuration with review strategy and deadlines](../img/scenario_rounds_config.png)
 
 ## Step 4: Call configuration and activation
 
@@ -66,28 +64,21 @@ Before activating a call, the Call manager must configure all necessary settings
 
 #### 1. General configuration
 
-Configure the basic call parameters:
+Under **Configuration → General configuration**, set the basic call parameters:
 
-- **Fixed duration**: Set whether the call has a fixed timeframe
-      -     Set a fixed proposal duration (in days) to apply uniformly across all proposals.
-      -     When enabled, the duration field becomes read-only in the proposal submission form.
-- **Reviewer identity visible to submitters**: Choose if applicants can see who is reviewing their proposals (Yes/No)
-- **Reviews visible to submitters**: Determine if applicants can view the reviews and feedback (Yes/No)
-- **Predefined resource templates**: Create templates defining valid offering/plan combinations, that proposal creators will be limited to selecting only from these templates.
-      -     General information: template name and offering
-      -     Predefined attributes and usage limits
-      -     Description
+- **Fixed duration for granted projects (in days)**: a proposal duration applied uniformly across all proposals. When set, the duration field becomes read-only in the proposal submission form.
+- **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
+- **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
+- **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
 
-#### 2. Team management
+![Call general configuration](../img/call_configuration_general.png)
 
-Assign personnel for the call:
+Two further sub-tabs sit alongside it under **Configuration**:
 
-- **Add reviewers**: Select users who will evaluate submitted proposals
-- **Add managers**: Additional managers for proposal oversight
+- **Applicant data visibility** — which applicant data is exposed during evaluation
+- **Resource templates** — templates defining valid offering/plan combinations, so proposal creators can only select from those templates. Each template carries a name and offering, predefined attributes and usage limits, and a description.
 
-  *Note: The primary Call manager is added by the Call Organiser during call creation*
-
-#### 3. Offerings configuration
+#### 2. Offerings configuration
 
 Define available resources:
 
@@ -95,12 +86,42 @@ Define available resources:
 - Ensure all required offerings have been approved by service providers
 - Offerings that require a purchase order pass that requirement on to the call — see [Purchase orders in calls](purchase-orders.md)
 
-#### 4. Role mapping
+![Offerings configured for the call](../img/call_offerings_list.png)
+
+#### 3. Role mapping
 
 Configure project role assignments:
 
 - **Proposal project role mappings**: Map each proposal role to corresponding project roles
 - Each proposal role must be mapped to a project role to ensure proper access when projects are created
+
+![Role mappings: proposal roles to project roles](../img/scenario_role_mappings.png)
+
+#### 4. Workflow steps
+
+Under **Configuration → Steps & settings**, configure the evaluation pipeline that submitted proposals progress through. See [Workflow configuration](workflow-configuration.md) for details.
+
+![Workflow steps with per-step durations and responsible roles](../img/scenario_workflow_config.png)
+
+#### 5. COI settings
+
+Configure conflict of interest detection parameters. See [Reviewer management](reviewer-management.md#conflict-of-interest-coi-detection) for details.
+
+![COI detection settings](../img/scenario_coi_config.png)
+
+#### 6. Matching settings
+
+Configure the reviewer-proposal matching algorithm. See [Reviewer management](reviewer-management.md#reviewer-proposal-matching) for details.
+
+![Matching algorithm settings](../img/scenario_matching_config.png)
+
+#### 7. Call team
+
+The **Team** tab assigns **call managers** and **panel members** to the call.
+
+  *Note: The primary Call manager is added by the Call organiser during call creation.*
+
+Reviewers are not managed here — they are added to the call's reviewer pool on the call manage page. See [Reviewer management](reviewer-management.md#reviewer-pool-management).
 
 *Important: The round must be created and configured first. Only after round configuration is complete can the call be fully configured and activated.*
 
@@ -119,17 +140,20 @@ Once all configurations are complete:
       - Once activated, the call becomes visible to potential applicants
       - Applicants can now submit proposals during active rounds
 
-![Screenshot: Call Configuration Interface](../img/call_activation.png)
-
-
-## Step 5: Submit proposal
+## Step 5: Submit proposal  
 
 **Performed by:** Call member (Applicant)
 
 Applicants follow these steps to request resources through an active call:
 
-1. Navigate to the **active round** under the relevant call.
-2. Click **"Submit proposal"**.
+1. Navigate to the **active call** in the public calls listing.
+
+    ![Public calls listing with active calls](../img/scenario_public_calls.png)
+
+2. Click **"Apply to round"** on the call detail page.
+
+    ![Call detail with application button](../img/scenario_call_detail.png)
+
 3. Fill in the required fields.
       -     When the call round has a fixed duration set by the Call manager, this duration (in days) is automatically applied to all proposals. The duration field becomes read-only for proposal creators in both creation and editing interfaces.
 4. Select required **offerings and allocations**.
@@ -139,64 +163,84 @@ Applicants follow these steps to request resources through an active call:
       -     When an offering requires a purchase order, supply its reference or document on the resource request. The request can be saved without one, but the proposal cannot be submitted until it is there — see [Purchase orders in calls](purchase-orders.md).
 7. Submit the proposal.
 
-![Screenshot: Proposal Submission Form](../img/proposal_submission_form.png)
+## Step 6: Review assignment and process  
 
-## Step 6: Review assignment and process
-
-**Review Assignment:** Call manager or Automatic system
-
-### Review assignment
-
-**Performed by:** Call manager or Automatic system
-
-After proposals are submitted, reviews must be created and assigned to reviewers. This process depends on the call configuration:
-
-### Automatic review creation
-
-If configured for automatic assignment:
-
-   - System automatically creates reviews
-   - Reviews are assigned to available reviewers based on workload
-   - Reviewers receive immediate notifications
-
-### Manual review creation
-
-If manual assignment is required:
+### Building the reviewer pool
 
 **Performed by:** Call manager
 
-1. Navigate to the **call**
-2. Locate the submitted **proposal** in the proposals list
-3. Click **Actions** next to the proposal
-4. Select **Create review**
-5. Assign the review to specific **reviewers**
-6. Reviewers receive notifications of their assignments
+Before assigning reviews, the call manager builds a pool of qualified reviewers:
 
-![Screenshot: Review Assignment Interface](../img/assign_reviewer.png)
+1. Navigate to the call manage page and select the **Reviewer pool** tab
+2. Add reviewers by profile or email invitation
+3. Review the pool members with their acceptance status
+
+![Reviewer pool with members and statuses](../img/scenario_pool_overview.png)
+
+### Reviewer discovery and matching
+
+Use the **Discovery** tab to find reviewers using algorithmic matching:
+
+1. Click **Generate Suggestions** to run the matching algorithm
+2. Review suggestions with affinity scores
+3. Confirm or reject each suggestion
+
+![Reviewer suggestions with affinity scores](../img/scenario_pool_discovery.png)
+
+### Managing conflicts of interest
+
+The **COI** tab shows detected conflicts between reviewers and proposals:
+
+![COI records with severity and status badges](../img/scenario_coi_severities.png)
+
+Expand a record to see evidence details and management options:
+
+![Expanded COI record with evidence](../img/scenario_coi_evidence.png)
+
+### Creating assignment batches
+
+After matching, create formal assignment batches to assign proposals to reviewers:
+
+1. Go to the **Assignments** tab in the reviewer pool
+2. Create batches grouping proposals per reviewer
+3. Send batches — reviewers receive email notifications
+
+![Assignment batches with mixed statuses](../img/scenario_assignments_expanded.png)
+
+Reviewers can accept or decline each proposal. Expanded batches show individual item responses:
+
+![Batch with accepted and declined items](../img/scenario_assignments_mixed.png)
+
+### Review process
 
 **Performed by:** Reviewer
 
+Reviewers see their assignments on the reviewer dashboard:
+
+![Reviewer dashboard with profile, stats, and reviews](../img/scenario_reviewer_dashboard.png)
+
+The **Assignments** tab shows pending batches with accept/decline actions:
+
+![Reviewer's assignment batch with items](../img/scenario_reviewer_assignment_detail.png)
+
 Reviewers evaluate proposals using a structured assessment process:
 
-1. Reviewer is notified of new assigned proposal.
-2. Reviewer clicks **"View"** to open a preview modal:
-      - Sees brief proposal summary
-      - Can choose to **"Start review"** or **"Reject"** (send back)
-3. On clicking **"Start review"**, reviewer is taken to the full review form.
-4. Provide feedback and scores on:
-      - Project title
-      - Summary and description
-      - Documentation
-      - Resource requests
-      - Team composition
-5. Submit the review.
-
-![Screenshot: Review Form Interface](../img/review_form1.png)
-![Screenshot: Review Form Interface](../img/review_form2.png)
+1. Open a review from the **My reviews** list
+2. Read the proposal summary, team composition, and resource requests
+3. Score each section and provide feedback
+4. Submit the review
 
 ## Step 7: Decision and allocation
 
 **Performed by:** Call manager (if configured) or Automatic system
+
+The call manager monitors all proposals and their review status:
+
+![Proposals with mixed states: submitted, in review, accepted, rejected](../img/scenario_proposals_mixed_states.png)
+
+The reviews list shows every review with its reviewer, round and state:
+
+![Reviews list with reviewers, rounds and states](../img/scenario_reviews_expanded.png)
 
 The final decision process determines which proposals receive resource allocations:
 
@@ -207,22 +251,29 @@ The final decision process determines which proposals receive resource allocatio
       - Requested resources are provisioned.
       - Team members are added to the project.
 
-![Screenshot: Decision Interface](../img/proposal_decision.png)
-
-## Step 8: Monitoring and reporting
-
-Effective monitoring ensures the call process runs smoothly and provides valuable insights:
+## Step 8: Monitoring and reporting  
 
 **Performed by:** Call manager and Call organiser
 
-- Use dashboard to monitor:
-      - Open/closed calls
-      - Round statuses
-      - Proposal statuses
-      - Review progress
-      - Offering request statuses
+The call dashboard provides an overview of the entire call:
 
-![Screenshot: Monitoring Dashboard](../img/call_monitoring_dashboard.png)
+![Call dashboard with stats: rounds, offerings, pool, proposals, reviews](../img/scenario_dashboard_stats.png)
+
+- Use the dashboard to monitor:
+      - Round statuses
+      - Proposal pipeline
+      - Review progress
+      - Reviewer pool capacity
+
+### Admin reviews
+
+Staff users can view all reviews across all calls from the admin reviews page:
+
+![Admin reviews across all calls](../img/scenario_admin_reviews_all.png)
+
+Reviews can be filtered by specific call:
+
+![Admin reviews filtered by call](../img/scenario_admin_reviews_spring_hpc.png)
 
 ## Additional tips
 
@@ -264,5 +315,5 @@ A: Resource transfer between projects requires administrative approval. Contact 
 **Q: How are applicants notified about proposal decisions?**
 A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is made.
 
-**Q: Can a Call manager override reviewer scores?**
+**Q: Can a Call manager override reviewer scores?**  
 A: When configured for Call manager decisions, the manager can approve or reject proposals regardless of review scores, though all reviewer feedback remains visible and documented.
