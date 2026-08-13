@@ -3710,34 +3710,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Default marketplace categories">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#setting-a-default-category" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Setting a default category
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-the-values-are-often-null" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why the values are often null
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
       </ul>
@@ -17853,34 +17825,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Default marketplace categories">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#setting-a-default-category" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Setting a default category
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-the-values-are-often-null" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why the values are often null
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
       </ul>
@@ -17993,51 +17937,33 @@ service clients (Keystone v3, Nova, Cinder, Neutron and Glance).</p>
 <li><code>default_internal_network_mtu</code> — MTU applied to networks created in the tenant (68–9000).</li>
 </ul>
 <h3 id="default-marketplace-categories">Default marketplace categories</h3>
-<p>Each of the three offering types is associated with a marketplace category. Waldur publishes the
-UUIDs of those categories to the frontend as <code>TENANT_CATEGORY_UUID</code>, <code>INSTANCE_CATEGORY_UUID</code> and
-<code>VOLUME_CATEGORY_UUID</code>, under <code>WALDUR_MARKETPLACE_OPENSTACK</code> in the <code>/api/configuration/</code>
-response.</p>
-<div class="admonition warning">
-<p class="admonition-title">These are not configuration options</p>
-<p>Despite appearing alongside settings in <code>/api/configuration/</code>, these three values cannot be
-set through an environment variable, a settings file or a rebuilt image. They are <strong>derived
-from the database on every request</strong>: each one resolves to the UUID of whichever marketplace
-category currently carries the matching default flag, and is <code>null</code> when no category carries
-it. Forking the image changes nothing.</p>
-</div>
-<p>The mapping is:</p>
+<p>Two of the three OpenStack offering types have a <strong>default category</strong> flag on a marketplace
+category, used when Waldur auto-creates offerings during an OpenStack import:</p>
 <table>
 <thead>
 <tr>
-<th>Published value</th>
-<th>Category flag</th>
+<th>Flag</th>
+<th>Used for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>INSTANCE_CATEGORY_UUID</code></td>
 <td><code>default_vm_category</code></td>
+<td>the category new <strong>instance</strong> offerings are placed in</td>
 </tr>
 <tr>
-<td><code>VOLUME_CATEGORY_UUID</code></td>
 <td><code>default_volume_category</code></td>
-</tr>
-<tr>
-<td><code>TENANT_CATEGORY_UUID</code></td>
-<td><code>default_tenant_category</code></td>
+<td>the category new <strong>volume</strong> offerings are placed in</td>
 </tr>
 </tbody>
 </table>
 <p>At most one category may carry each flag; Waldur rejects an attempt to set a flag that another
-category already holds.</p>
-<h4 id="setting-a-default-category">Setting a default category</h4>
-<p>In Homeport, go to <strong>Administration → Marketplace → Categories</strong>, open the row's actions menu and
-choose <strong>Edit</strong>. The three flags are at the bottom of the dialog, each noting that only one category
-may carry it:</p>
+category already holds. Both categories are created automatically, with their flags set, the first
+time an OpenStack environment is imported — so under normal operation there is nothing to configure.</p>
+<p>To set one by hand, go to <strong>Administration → Marketplace → Categories</strong> in Homeport, open the row's
+actions menu and choose <strong>Edit</strong>. The flags are at the bottom of the dialog:</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/openstack-default-category-flags.png" data-desc-position="bottom"><img alt="Default category flags in the category edit dialog" src="../img/openstack-default-category-flags.png"></a></p>
-<p>Turn on <strong>Default tenant category</strong> for the category that should hold OpenStack tenant offerings,
-and likewise for VM and volume, then click <strong>Edit</strong> to save.</p>
-<p>The same flags are settable through the API as a staff user:</p>
+<p>They are also settable through the API as a staff user, and on the category in the Django admin site:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -18045,18 +17971,19 @@ and likewise for VM and volume, then click <strong>Edit</strong> to save.</p>
 <span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token </span><span class="nv">$WALDUR_TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"default_tenant_category": true}'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"default_vm_category": true}'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>https://waldur.example.com/api/marketplace-categories/&lt;category-uuid&gt;/
 </code></pre></div></td></tr></tbody></table></div>
-<p>They are also editable on the category in the Django admin site.</p>
-<h4 id="why-the-values-are-often-null">Why the values are often <code>null</code></h4>
-<p>The VM and Volume categories are created automatically, with their flags set, the first time an
-OpenStack environment is imported — so on a deployment that has never run an import, all three
-values are <code>null</code>.</p>
-<p><strong>The tenant category is never created automatically.</strong> Nothing in Waldur sets
-<code>default_tenant_category</code>, so <code>TENANT_CATEGORY_UUID</code> stays <code>null</code> until an administrator flags a
-category by hand. If tenant offerings are not being categorised as expected, this is the first
-thing to check.</p>
+<div class="admonition note">
+<p class="admonition-title"><code>TENANT_CATEGORY_UUID</code> and friends are not something you need to set</p>
+<p>Older releases published <code>INSTANCE_CATEGORY_UUID</code>, <code>VOLUME_CATEGORY_UUID</code> and
+<code>TENANT_CATEGORY_UUID</code> under <code>WALDUR_MARKETPLACE_OPENSTACK</code> in the <code>/api/configuration/</code>
+response. Nothing has consumed them since 2023, and they are no longer published.</p>
+<p>If you are on a release that still shows them, seeing <code>null</code> is harmless — no behaviour depends
+on the value. In particular there is <strong>no</strong> <code>default_tenant_category</code> equivalent to the two
+flags above: nothing in Waldur reads that flag, so a null <code>TENANT_CATEGORY_UUID</code> is expected
+rather than a misconfiguration to fix.</p>
+</div>
 <h2 id="supported-resources">Supported resources</h2>
 <p>The plugin discovers and manages the full set of OpenStack resources:</p>
 <ul>
