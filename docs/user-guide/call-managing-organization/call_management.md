@@ -93,6 +93,7 @@ Define available resources:
 
 - **Add Offerings**: Select which service provider offerings will be available for this call
 - Ensure all required offerings have been approved by service providers
+- Offerings that require a purchase order pass that requirement on to the call — see [Purchase orders in calls](purchase-orders.md)
 
 #### 4. Role mapping
 
@@ -135,6 +136,7 @@ Applicants follow these steps to request resources through an active call:
       -     When there is predefined resource templates, proposal creators now select resources based on predefined templates configured by the Call manager. These templates include specific offering and plan combinations, predefined attributes and resource limits.
 5. Add **team members** (optional).
 6. Upload required documentation.
+      -     When an offering requires a purchase order, supply its reference or document on the resource request. The request can be saved without one, but the proposal cannot be submitted until it is there — see [Purchase orders in calls](purchase-orders.md).
 7. Submit the proposal.
 
 ![Screenshot: Proposal Submission Form](../img/proposal_submission_form.png)
