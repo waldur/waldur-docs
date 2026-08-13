@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-13T05:33:35.351763Z
+Generated: 2026-08-13T06:10:53.205880Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -9218,7 +9218,7 @@ Comma-separated list of columns for users table.
 
 **Type:** str
 
-**Default value:** en,et,lt,lv,ru,it,de,da,sv,es,fr,nb,ar,cs
+**Default value:** en,et,lt,lv,ru,it,de,da,sv,es,fr,nb,ar,cs,km
 
 List of enabled languages
 
@@ -69410,6 +69410,17 @@ When the proposal is accepted, the project is created and each requested resourc
 
 Because the authorisation was already collected and reviewed as part of the proposal, the consumer approval step on these orders is completed automatically and nobody is asked to upload the document again. Provider approval still applies where the offering requires it.
 
+### The provider's requirement always applies
+
+The offering's **Require purchase order upload** setting governs order approval on its own, whatever the call collected. The two can disagree: a call takes its copy of the setting when the offering is added, so an offering that starts requiring a purchase order later leaves earlier calls collecting nothing.
+
+Where they disagree, the order is not approved automatically. It waits in **pending consumer approval** until somebody uploads the document, exactly as an ordinary order from the marketplace would.
+
+!!! note
+    Only the document satisfies the provider's requirement at this point. A reference on its own is enough to submit the proposal, but an order for an offering that requires the upload still waits for the file.
+
+To avoid this, turn the requirement on before adding the offering to a call, or re-add the offering afterwards so the call picks up the current setting.
+
 ## Troubleshooting
 
 | Symptom | Cause |
@@ -69417,6 +69428,7 @@ Because the authorisation was already collected and reviewed as part of the prop
 | The proposal cannot be submitted and names an offering | A resource request for that offering has neither a reference nor a document. Open the request and supply one. |
 | The purchase order block is not shown on a request | The offering neither enables nor requires purchase orders, or it was added to the call before the setting was turned on. |
 | A request still shows `Required` after a document was attached | The upload did not complete. Reopen the request — an attached document is shown as a download link in the purchase order step. |
+| An allocated order waits for consumer approval although the proposal carried a purchase order | The offering requires the document and only a reference was given, or the offering began requiring one after it was added to the call. Upload the document on the order to approve it. |
 
 ---
 
@@ -82690,6 +82702,7 @@ Waldur implements several custom field types to enhance the configuration experi
 | `color_field` | Hex color code. | Color Picker | No |
 | `image_field` | Image upload. | File Upload | No |
 | `secret_field` | Sensitive data (masked in UI). | Password Input | No |
+| `non_empty_field` | String that may be changed but not blanked out. | Text Input | No |
 
 ## Practical Examples
 
