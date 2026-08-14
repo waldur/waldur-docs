@@ -67,9 +67,29 @@ A single policy can attach multiple actions.
 3. When the threshold is crossed, the configured actions execute. A `has_fired` flag prevents repeated firing in the same period.
 4. At the next period boundary the flag resets.
 
+## Cost Policies and Credit
+
+`ProjectEstimatedCostPolicy` and `CustomerEstimatedCostPolicy` don't compare raw invoice cost to `limit_cost` directly when credit is involved — firing requires two separate checks (gates) to agree:
+
+```mermaid
+graph TD
+    A[New invoice item / credit change] --> B{Gate 1:<br>cost this window<br>net of compensation<br>>= limit_cost?}
+    B -->|No| Z[Policy stays clear]
+    B -->|Yes| C{use_credit configured?}
+    C -->|No| F[Policy fires]
+    C -->|Yes| D{Gate 2:<br>credit balance<br><= limit_cost?}
+    D -->|No, balance healthy| Z
+    D -->|Yes, balance depleted| F
+```
+
+Gate 1 nets cost against a live `MonthlyCompensation` estimate of how much credit would offset it. Gate 2 re-checks the real, persisted credit balance directly, and is only consulted once gate 1 is already open — a `use_credit=False` policy skips it and fires on gross cost alone. The two can disagree, because gate 1's compensation estimate is a projection, not a commitment: it's recomputed fresh each evaluation and depends on whatever else happens to share that credit at the time. Gate 2 is the fact-check against it.
+
+For the full mechanics of that estimate — the cheapest-first allocation algorithm, why it's order-dependent, and a worked example of the two gates disagreeing — see [Cost Policies and the Compensation Projection](../../developer-guide/guides/billing-and-invoicing.md#cost-policies-and-the-compensation-projection).
+
 ## Related concepts
 
 - [Quotas](quotas.md) — up-front bounds; pair with policies for defence in depth.
 - [Marketplace](marketplace.md) — what policies guard.
 - [Billing](billing.md) — invoice items are the primary trigger for cost policies.
+- [Billing and Invoicing: Credits and Compensations](../../developer-guide/guides/billing-and-invoicing.md#credits-and-compensations) — the `MonthlyCompensation` mechanics behind gate 1's estimate.
 - [Lifecycle](lifecycle.md) — the resource state transitions an "immediate" policy can drive.
