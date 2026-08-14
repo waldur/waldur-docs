@@ -18210,7 +18210,7 @@ history's <code>success</code> flag. <code>None</code> means the agent never rep
 <pre class="mermaid"><code>flowchart TD
     Start["Reset missing / late / duplicated"] --&gt; UI{"Row in UI&lt;br/&gt;execution log?"}
     UI -- No --&gt; Sub{"Agent subscription&lt;br/&gt;(resource_periodic_limits)&lt;br/&gt;registered?"}
-    Sub -- No --&gt; FixSub["Agent not connected —&lt;br/&gt;check site-agent logs &amp; queue"]
+    Sub -- No --&gt; FixSub["No event_process agent, or&lt;br/&gt;stomp/periodic_limits disabled —&lt;br/&gt;see Layer 3"]
     Sub -- Yes --&gt; Beat["Check celery beat/worker&lt;br/&gt;ran the */10 task"]
     UI -- Yes --&gt; Time{"executed_at as expected?"}
     Time -- "Late" --&gt; Late["Subscription/agent came up late,&lt;br/&gt;or beat backlog"]
@@ -18260,6 +18260,41 @@ waldur<span class="w"> </span>evaluate_slurm_policy<span class="w"> </span>--pol
 <li>Confirm the agent is connected and that a <code>resource_periodic_limits</code>
   subscription/queue exists for the offering. A missing subscription is the most
   common reason a reset is skipped or late.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>GET /api/event-subscription-queues/?offering_uuid=&lt;uuid&gt;&amp;object_type=resource_periodic_limits
+</code></pre></div></td></tr></tbody></table></div>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code>!!! warning "Only the `event_process` agent registers this queue"
+    The `order_process`, `membership_sync` and `report` agents never create
+    event subscriptions, so restarting them changes nothing here — a
+    deployment running only those modes ("polling-based processing") cannot
+    use periodic policies at all. Check that an agent runs in
+    `event_process` mode for this offering (Helm:
+    `agents.eventProcess.enabled`), that the offering has
+    `stomp_enabled: true` — it defaults to `false` — and that
+    `backend_settings.periodic_limits.enabled` is `true`. Subscriptions are
+    computed once at startup, so restart the **`event_process`** agent after
+    any of those changes. Requires site agent 0.8.0 or newer.
+</code></pre></div></td></tr></tbody></table></div>
+<p>In the <code>event_process</code> agent log, successful registration looks like:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>Periodic limits enabled for offering &lt;name&gt;, subscribing to periodic limits updates
+Creating event subscription queue for &lt;uuid&gt;, object type ...RESOURCE_PERIODIC_LIMITS
+</code></pre></div></td></tr></tbody></table></div>
+<p>If the first line is missing, the agent never saw the setting (wrong mode,
+  wrong config file, or too old a version) — the negative branch logs at DEBUG
+  only. If the second line is followed by <code>Failed to create event subscription
+  queue</code>, the API rejected the registration; the error text names the reason.</p>
+<ul>
 <li>Check the agent logs around the emit time for receipt of the
   <code>apply_periodic_settings</code> message and the resulting <code>sacctmgr</code> call.</li>
 <li>Run the agent's account diagnostics (see the site-agent SLURM plugin docs).</li>

@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-14T11:31:09.152190Z
+Generated: 2026-08-14T14:44:41.624911Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -80829,7 +80829,7 @@ Work top-down. Each layer narrows the cause.
 flowchart TD
     Start["Reset missing / late / duplicated"] --> UI{"Row in UI<br/>execution log?"}
     UI -- No --> Sub{"Agent subscription<br/>(resource_periodic_limits)<br/>registered?"}
-    Sub -- No --> FixSub["Agent not connected —<br/>check site-agent logs & queue"]
+    Sub -- No --> FixSub["No event_process agent, or<br/>stomp/periodic_limits disabled —<br/>see Layer 3"]
     Sub -- Yes --> Beat["Check celery beat/worker<br/>ran the */10 task"]
     UI -- Yes --> Time{"executed_at as expected?"}
     Time -- "Late" --> Late["Subscription/agent came up late,<br/>or beat backlog"]
@@ -80883,6 +80883,35 @@ flowchart TD
 - Confirm the agent is connected and that a `resource_periodic_limits`
   subscription/queue exists for the offering. A missing subscription is the most
   common reason a reset is skipped or late.
+
+  ```text
+  GET /api/event-subscription-queues/?offering_uuid=<uuid>&object_type=resource_periodic_limits
+  ```
+
+    !!! warning "Only the `event_process` agent registers this queue"
+        The `order_process`, `membership_sync` and `report` agents never create
+        event subscriptions, so restarting them changes nothing here — a
+        deployment running only those modes ("polling-based processing") cannot
+        use periodic policies at all. Check that an agent runs in
+        `event_process` mode for this offering (Helm:
+        `agents.eventProcess.enabled`), that the offering has
+        `stomp_enabled: true` — it defaults to `false` — and that
+        `backend_settings.periodic_limits.enabled` is `true`. Subscriptions are
+        computed once at startup, so restart the **`event_process`** agent after
+        any of those changes. Requires site agent 0.8.0 or newer.
+
+  In the `event_process` agent log, successful registration looks like:
+
+  ```text
+  Periodic limits enabled for offering <name>, subscribing to periodic limits updates
+  Creating event subscription queue for <uuid>, object type ...RESOURCE_PERIODIC_LIMITS
+  ```
+
+  If the first line is missing, the agent never saw the setting (wrong mode,
+  wrong config file, or too old a version) — the negative branch logs at DEBUG
+  only. If the second line is followed by `Failed to create event subscription
+  queue`, the API rejected the registration; the error text names the reason.
+
 - Check the agent logs around the emit time for receipt of the
   `apply_periodic_settings` message and the resulting `sacctmgr` call.
 - Run the agent's account diagnostics (see the site-agent SLURM plugin docs).
