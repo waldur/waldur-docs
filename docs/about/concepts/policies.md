@@ -82,9 +82,9 @@ graph TD
     D -->|Yes, balance depleted| F
 ```
 
-Gate 1 nets cost against a live `MonthlyCompensation` estimate of how much credit would offset it. Gate 2 re-checks the real, persisted credit balance directly, and is only consulted once gate 1 is already open — a `use_credit=False` policy skips it and fires on gross cost alone. The two can disagree, because gate 1's compensation estimate is a projection, not a commitment: it's recomputed fresh each evaluation and depends on whatever else happens to share that credit at the time. Gate 2 is the fact-check against it.
+Gate 1 sums the project's or customer's real, persisted invoice items — cost and compensation together — over the policy's rolling window; for an already-finalized month, that's real data, not an estimate. Gate 2 separately re-checks the real, persisted credit balance directly, and is only consulted once gate 1 is already open — a `use_credit=False` policy skips it and fires on gross cost alone. The two can disagree because they read different facts: gate 1 is a net invoiced position over a window, gate 2 is the current remaining reserve — a window can look expensive net of whatever compensation actually landed on it while the account's real balance still has plenty of headroom, or vice versa.
 
-For the full mechanics of that estimate — the cheapest-first allocation algorithm, why it's order-dependent, and a worked example of the two gates disagreeing — see [Cost Policies and the Compensation Projection](../../developer-guide/guides/billing-and-invoicing.md#cost-policies-and-the-compensation-projection).
+For the full mechanics — how compensation actually gets computed and persisted, and a verified worked example of the two gates disagreeing — see [Cost Policies and Compensation](../../developer-guide/guides/billing-and-invoicing.md#cost-policies-and-compensation).
 
 ## Related concepts
 
