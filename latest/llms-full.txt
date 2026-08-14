@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-14T02:03:47.289484Z
+Generated: 2026-08-14T11:28:14.034483Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -9404,19 +9404,19 @@ Validate TLS certificate of FreeIPA web interface / REST API
 
 #### FREEIPA_USERNAME_PREFIX
 
-**Type:** str
+**Type:** non_empty_field
 
 **Default value:** waldur_
 
-Prefix to be appended to all usernames created in FreeIPA by Waldur
+Prefix to be appended to all usernames created in FreeIPA by Waldur. It marks which accounts are managed by Waldur, so it may not be empty.
 
 #### FREEIPA_GROUPNAME_PREFIX
 
-**Type:** str
+**Type:** non_empty_field
 
 **Default value:** waldur_
 
-Prefix to be appended to all group names created in FreeIPA by Waldur
+Prefix to be appended to all group names created in FreeIPA by Waldur. It marks which groups are managed by Waldur, so it may not be empty.
 
 #### FREEIPA_BLACKLISTED_USERNAMES
 
@@ -77522,11 +77522,31 @@ A single policy can attach multiple actions.
 3. When the threshold is crossed, the configured actions execute. A `has_fired` flag prevents repeated firing in the same period.
 4. At the next period boundary the flag resets.
 
+## Cost Policies and Credit
+
+`ProjectEstimatedCostPolicy` and `CustomerEstimatedCostPolicy` don't compare raw invoice cost to `limit_cost` directly when credit is involved — firing requires two separate checks (gates) to agree:
+
+```mermaid
+graph TD
+    A[New invoice item / credit change] --> B{Gate 1:<br>cost this window<br>net of compensation<br>>= limit_cost?}
+    B -->|No| Z[Policy stays clear]
+    B -->|Yes| C{use_credit configured?}
+    C -->|No| F[Policy fires]
+    C -->|Yes| D{Gate 2:<br>credit balance<br><= limit_cost?}
+    D -->|No, balance healthy| Z
+    D -->|Yes, balance depleted| F
+```
+
+Gate 1 nets cost against a live `MonthlyCompensation` estimate of how much credit would offset it. Gate 2 re-checks the real, persisted credit balance directly, and is only consulted once gate 1 is already open — a `use_credit=False` policy skips it and fires on gross cost alone. The two can disagree, because gate 1's compensation estimate is a projection, not a commitment: it's recomputed fresh each evaluation and depends on whatever else happens to share that credit at the time. Gate 2 is the fact-check against it.
+
+For the full mechanics of that estimate — the cheapest-first allocation algorithm, why it's order-dependent, and a worked example of the two gates disagreeing — see [Cost Policies and the Compensation Projection](../../developer-guide/guides/billing-and-invoicing.md#cost-policies-and-the-compensation-projection).
+
 ## Related concepts
 
 - [Quotas](quotas.md) — up-front bounds; pair with policies for defence in depth.
 - [Marketplace](marketplace.md) — what policies guard.
 - [Billing](billing.md) — invoice items are the primary trigger for cost policies.
+- [Billing and Invoicing: Credits and Compensations](../../developer-guide/guides/billing-and-invoicing.md#credits-and-compensations) — the `MonthlyCompensation` mechanics behind gate 1's estimate.
 - [Lifecycle](lifecycle.md) — the resource state transitions an "immediate" policy can drive.
 
 ---
@@ -86756,6 +86776,7 @@ td:nth-child(4) {
 | `delete_expired_project_if_every_resource_has_been_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Delete an expired project if all its resources have been terminated. |
 | `delete_offering_component_for_volume_type` | `Django Signal (post_delete)` | `openstack.VolumeType` | No description |
 | `delete_offering_user_checklist_completions` | `Django Signal (pre_delete)` | `marketplace.OfferingUser` | Delete related checklist completions when OfferingUser is deleted. |
+| `delete_project_credits_with_customer_credit` | `Django Signal (pre_delete)` | `invoices.CustomerCredit` | Remove the project credits funded by an organization credit with it. |
 | `delete_remote_project` | `Django Signal (post_delete)` | `structure.Project` | No description |
 | `delete_service_setting_when_offering_is_deleted` | `Django Signal (post_delete)` | `marketplace.Offering` | Delete service settings when an offering is deleted. |
 | `delete_stale_price_estimate` | `Django Signal (pre_delete)` | `structure.Project` | Delete price estimates when customer or project is deleted. |
@@ -87054,14 +87075,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 825
+Total unique handlers found: 826
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 425 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 342 handlers
+- **waldur_mastermind**: 343 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -88830,6 +88851,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ResourceDetailsMixin`](#resourcedetailsmixin) | `waldur_mastermind.marketplace.models` | Mixin combining resource details with cost estimation |
 | [`SafeAttributesMixin`](#safeattributesmixin) | `waldur_mastermind.marketplace.models` | Mixin for safe attribute handling |
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
+| [`LimitActionPermissionMixin`](#limitactionpermissionmixin) | `waldur_mastermind.marketplace.tests.test_order_creation_permission` | No description available |
 | [`ConnectedOfferingDetailsMixin`](#connectedofferingdetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide offering details action for connected resources |
 | [`ConnectedResourceDetailsMixin`](#connectedresourcedetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide resource details action for connected resources |
 | [`OfferingUsageMixin`](#offeringusagemixin) | `waldur_mastermind.marketplace.views` | Shared logic for customer/project per-offering usage ViewSets |
@@ -90076,6 +90098,12 @@ serializes as null — "the agent has not reported on this grant",
 which is distinct from any real state.
 
 **Base classes:** `Serializer`
+
+### LimitActionPermissionMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_order_creation_permission`
+
+**Description:** No description available.
 
 ### ConnectedOfferingDetailsMixin
 
