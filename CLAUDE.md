@@ -21,9 +21,12 @@ docs/
 ├── user-guide/         # UI workflows (end users)
 ├── integrator-guide/   # API, SDK usage (integrators)
 ├── integrations/       # Third-party integrations
-├── about/              # Project info, changelog
-└── api-reference/      # Auto-generated API docs (270+ files)
+└── about/              # Project info, changelog
 ```
+
+The generated API reference is **not** in this repository. It lives in
+[`waldur/api-docs`](https://code.opennodecloud.com/waldur/api-docs) and is published at
+<https://api-docs.waldur.com/> (moved out in `0ed2b1d7f`, WAL-9565).
 
 **Config files:** `mkdocs.yml`, `external-sources.yml`, `pyproject.toml`
 
@@ -69,7 +72,6 @@ Use `/skill-name` for detailed workflows:
 - `waldur-helm` → `docs/admin-guide/deployment/helm/`
 - `waldur-docker-compose` → `docs/admin-guide/deployment/docker-compose/`
 - `waldur-site-agent` → `docs/admin-guide/providers/site-agent/`
-- `waldur-sdk-docs-generator` → `docs/api-reference/`
 
 Run `python scripts/sync-external-docs.py` to pull updates.
 
