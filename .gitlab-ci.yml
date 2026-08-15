@@ -49,7 +49,20 @@ stages:
 .sdk-trigger-base:
   extends: .rules-sdk-release
   stage: sdks
-  needs: []
+  # Wait for the schema to exist before generating anything from it. With the
+  # previous `needs: []` these triggers fired at pipeline creation — minutes
+  # before waldur-mastermind's tag pipeline had built the schema — so every SDK
+  # hit the `.fetch-openapi-schema` fallback and generated against the PREVIOUS
+  # release's schema without any error. In 8.1.0 that shipped a Go and a Rust
+  # client with the whole release's API surface missing.
+  #
+  # `optional: true` keeps the BUILD_SDK web/schedule pipelines working, where
+  # `Generate OpenAPI schema` is not created (its rules match stable tags only)
+  # and the dependency simply drops away.
+  needs:
+    - job: "Generate OpenAPI schema"
+      optional: true
+      artifacts: false
 
 #Lint MD files:
 #  image: registry.hpc.ut.ee/mirror/library/node:lts-alpine
