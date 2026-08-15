@@ -52,6 +52,10 @@ This release makes the marketplace far more controllable for providers and opera
 - **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.0.9...8.1.0) - field encryption key wiring, API response compression, matrix network policies, memory tuning values
 - **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9...8.1.0) - field encryption key, response compression, memory tuning environment knobs
 
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.1.0.yaml)
+
 ---
 
 
