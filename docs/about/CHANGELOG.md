@@ -1,39 +1,5 @@
 # Changelog
 
-## 8.1.1 - 2026-08-15
-
-### Highlights
-
-This release focuses on deployment configuration and operational tuning for the Helm chart and Docker Compose stacks. Operators can now supply a field encryption key through standard deployment configuration, tune mastermind memory behaviour without rebuilding images, and restrict the country list shown in the marketplace. API responses are now compressed at the ingress layer in both deployment methods, which reduces bandwidth and improves page load times for users on slower connections.
-
-### What's New
-
-- Operators can now configure which countries are offered in the marketplace directly from Helm chart values, instead of relying on the built-in default list.
-- The mastermind field encryption key (`FIELD_ENCRYPTION_KEY`) can now be supplied through both Helm values and Docker Compose environment configuration, so encrypted fields work consistently across deployment methods.
-- Memory tuning knobs for mastermind are now exposed in both Helm and Docker Compose: the gunicorn preload toggle and a per-child Celery memory ceiling that recycles worker processes once they exceed the limit.
-
-### Improvements
-
-- API responses are now compressed on both deployment paths — via a Traefik middleware on the Helm ingress and via Caddy in the Docker Compose setup.
-- Voice messages in chat now work behind the default Content Security Policy, which previously blocked the media source they rely on.
-- Matrix and LiveKit network policies are now controlled by their own gate rather than the chart-wide `networkPolicy` switch, so chat networking can be enabled or left alone independently of the rest of the chart.
-- The Prometheus metrics exporter now uses dedicated health check endpoints for its readiness and liveness probes.
-- Release tagging and version bumping across the Helm chart and Docker Compose repositories are now automated from the release pipeline.
-
-### Bug Fixes
-
-- The ingress controller is now explicitly admitted by the Matrix and LiveKit JWT network policies, so chat traffic reaches the homeserver on clusters where network policies are enforced.
-- Prepared statements are disabled for the psycopg3 database driver, avoiding failures when connecting through a connection pooler.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: no changes in this release.
-- **Waldur Homeport**: no changes in this release.
-- **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.1.0...8.1.1) - configurable country list, field encryption key wiring, API response compression, decoupled Matrix/LiveKit network policies, and memory tuning values.
-- **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.0...8.1.1) - field encryption key support, Caddy response compression, CSP fix for voice messages, and mastermind memory tuning knobs.
-
----
-
 ## 8.1.0 - 2026-08-15
 
 ### Highlights
