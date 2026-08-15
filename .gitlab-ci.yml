@@ -200,6 +200,11 @@ Generate OpenAPI schema:
     - job: "Release Waldur Mastermind"
       artifacts: false
   script:
+    # The needs above only guarantee mastermind has been *tagged*; the job that
+    # builds its schema lives in a separate tag pipeline and takes minutes
+    # longer. Fetching before it finishes is what triggered the stale-schema
+    # fallback in 8.1.0, so wait for it explicitly.
+    - python3 scripts/wait-for-mastermind-schema.py "${CI_COMMIT_TAG}"
     - !reference [.fetch-openapi-schema, script]
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
