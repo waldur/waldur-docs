@@ -194,6 +194,10 @@ Generate OpenAPI schema:
         # Fail loudly if the fetch fell back to the previous release's schema —
         # that fallback exits 0, so it is indistinguishable from success here.
         python3 scripts/verify-openapi-schema.py "${CI_COMMIT_TAG}" waldur-openapi-schema.yaml
+        # `.fetch-openapi-schema` pins python:3.13-alpine, which ships no git,
+        # so install it before the commit-and-push below.
+        apk add --no-cache git
+        git --version
         mkdir -p docs/API
         cp waldur-openapi-schema.yaml docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml
         git config --global user.name "$GITLAB_USER_NAME"
