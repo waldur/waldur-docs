@@ -397,7 +397,13 @@ Deploy MkDocs pages:
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
         echo "Deploying versioned docs for $CI_COMMIT_TAG and updating 'latest' alias"
-        uv run mike deploy $CI_COMMIT_TAG latest -p -r github_waldur -b gh-pages --update-aliases
+        # No `latest` alias here. The master branch below deploys a version
+        # literally named `latest`, so asking mike to make `latest` an alias of
+        # this tag fails with "alias 'latest' already specified as a version"
+        # — which is why no versioned docs have been published since 8.0.8.
+        # Deploy the version alone; docs.waldur.com/latest/ keeps being served
+        # by the master deploy, which is what it has always been.
+        uv run mike deploy $CI_COMMIT_TAG -p -r github_waldur -b gh-pages
       else
         echo "Deploying latest docs from master branch"
         uv run mike deploy latest -p -r github_waldur -b gh-pages
