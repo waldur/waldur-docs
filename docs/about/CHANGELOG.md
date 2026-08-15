@@ -1,218 +1,62 @@
 # Changelog
 
-## 8.1.0-rc.26 - 2026-08-13
+## 8.1.0 - 2026-08-15
 
 ### Highlights
 
-Service providers get a dedicated helpdesk in this release: a full ticketing workspace with team management, canned responses, SLA and capacity indicators, and routing of issues to the provider handling them. Offering administration is consolidated into a single Team tab that brings permissions, offering users and invitations together in one place. Permission checks for order-creating actions are now aligned between the API and the UI, so buttons no longer appear for actions the backend would reject. Proposal-driven allocations also handle purchase orders and subscription periods correctly end to end.
+This release makes the marketplace far more controllable for providers and operators. Offerings can now be restricted to specific roles, gated behind IP allow-lists, and made available through calls for proposals, while a new multi-tenant provider helpdesk lets service providers run their own support desks with SLA tracking and ticket routing. Billing gains volume discounts, an affiliate credit ledger and per-project credit attribution, so organizations can finally see where their credit actually goes. Operators also get POSIX UID/GID pool management, rotatable resource API keys with encrypted storage, network-restricted personal access tokens, and a substantially faster, lighter backend.
 
 ### What's New
 
-- Provider helpdesk: service providers can now run their own ticket queue with team and workload views, canned responses, SLA and capacity indicators, ticket statistics, and the ability to route or reroute issues to the responsible provider.
-- Offering owners now manage people from a single Team tab covering permissions, offering users, and invitations, replacing the separate permissions tab.
-- Khmer is available as an interface language, including translated role and category descriptions.
-- Offerings can opt in to a warning about SSH key loss, shown to users on the OpenStack VM creation form.
-- Resource usage exports can now include robot account usage.
+- Service providers can run their own multi-tenant helpdesk: configure a desk per organization, route or re-route tickets to the offering's provider, track SLA and escalations, manage canned responses and a support team, with a full ticket workspace in the web UI.
+- Offerings can be restricted to specific user roles, hidden from users who cannot order them, and configured to skip consumer approval for chosen roles.
+- Access to resources can be limited by IP subnet: organizations manage one scoped allow-list, providers set defaults per offering, and consumers can add per-resource subnets when the offering opts in.
+- Marketplace offerings can now be requested through calls for proposals, with purchase-order requirements, requested subscription periods and cost previews carried through to the allocated resource.
+- Resource API keys can be rotated and revealed with encrypted storage at rest, including an inference service view and playground for LLM offerings.
+- Personal access tokens support network ACLs, so a token only works from approved subnets, with the changes recorded in the audit log.
+- New billing capabilities: volume-based component discounts, an affiliate program with a credit ledger and fee accrual, and credit compensation attributed per project.
+- POSIX UID/GID pools can be managed centrally and exposed through GLAuth, SCIM and offering user attributes, including per-project POSIX groups.
+- Providers can define SLURM Quality-of-Service levels per offering and allow-list them per partition; users choose a QoS when ordering.
+- Resource end dates can be requested and approved as a reviewable change request rather than edited directly, and terminated resources can be restored where the offering allows it.
+- Resources can be paused or downscaled automatically when reported usage reaches a component limit.
+- An AI assistant is now available to anonymous marketplace visitors, with full-text searchable conversation logs and a KPI dashboard for support staff.
+- New scope-aware event pub/sub lets agents and integrations subscribe to exactly the events they are entitled to, with an experimental realtime UI that refreshes views on push.
+- Organization-scoped custom roles let owners define and manage roles within their own organization.
+- Dun & Bradstreet is available as a company registry backend for onboarding organizations in Nordic countries; Khmer is available as an interface language.
 
 ### Improvements
 
-- Order-creating resource actions (change limits, change plan, renew allocation, edit options, and their bulk equivalents) now require the order creation permission, and the UI hides them when the user lacks it.
-- Users with offering-scoped roles can now see the integration status of their offerings.
-- Proposal allocations carry the requested subscription period through to the allocated resource, and the proposal cost estimate is priced for that period.
-- The consumer approval step is auto-approved on orders created from proposal allocations, removing an unnecessary manual step.
-- Call managers can no longer override a provider's purchase order requirement, and the requirement is now visible on a call's offerings.
-- Deleting an organization credit now also removes the project credits it funds, and the deletion dialog names the project allocations that will be affected.
-- Overly long descriptions are now rejected with a clear validation message instead of failing at the database level.
-- Profile and other update dialogs allow clearing a previously set field value.
-- The roles administration list has a search box, and bulk project end-date actions are gated on the permission the API actually enforces.
-- Kubernetes configuration options render without requiring the experimental UI flag, and the credit burn-down chart is reconstructed from credit actually drawn.
-- FreeIPA group synchronisation is guarded against an empty group name prefix.
-- Call workflow help text now correctly states that configuration locks on archive rather than activation.
-- Removed the unused default tenant category flag and OpenStack category UUID settings from both the API and the admin UI.
-- Dependencies (brace-expansion, fast-uri, undici) were bumped to patched versions.
+- Maintenance announcements can be extended, ended early or cancelled, start and complete automatically on schedule, remain editable while scheduled, and record overrun metrics.
+- Call and proposal management was reworked: checklists per workflow step, technical assessments, conflict-of-interest confirmation, call-manager-driven step completion, and clearer read-only enforcement on archived calls.
+- Usage reporting is more forgiving: prepaid components accept usage, corrections can be re-billed after invoice finalization, and mid-month reports resolve the right plan period instead of being skipped.
+- Substantially reduced backend memory footprint and removed many N+1 queries across usage billing, cost policies, offering plans, user lists and site-agent tasks.
+- Table improvements in the web UI: pinnable columns, filters and sorting on offering resources, filter state scoped per table, and a fix for a multi-second refresh hang.
+- Sentry reporting now carries user context and API breadcrumbs, and events group by message instead of raw dictionaries; each deployment gets its own scheduled-job monitors.
+- API responses are compressed at the ingress in both Helm and Docker Compose deployments, and a field encryption key is wired through both for encrypted API key storage.
+- Numerous dependency upgrades to patch known CVEs across Python and JavaScript dependencies.
 
 ### Bug Fixes
 
-- Offering invitations now link to the correct scope and properly guard against shared offerings.
-- Purchase order handling was corrected across proposal creation and order approval flows.
-- OpenStack sessions no longer emit spurious insecure-request warnings when reused from cache.
-- Ingress controller traffic is admitted by the Matrix network policies, fixing access to Matrix-backed chat in Kubernetes deployments.
+- Credit consumption charts plotted net price rather than actual compensation, and the project credit dashboard was rebuilt around credit actually drawn.
+- OpenStack fixes: leaked instance ports are now reclaimed, tenant-linked images survive a global image pull, admin-created ports get the right tenant project, port security cannot be disabled while address pairs are set, and a tenant creation race with dependent provisioning was resolved.
+- Cost policies deducted credit twice from a policy's cost and reacted slowly when pausing resources; both are fixed, and gate evaluation now reads real invoice data.
+- Project and offering descriptions exceeding the length limit returned a server error instead of a validation message.
+- Concurrent token refresh no longer fails with an integrity error, and pre-existing accounts are adopted on OIDC login with an audit trail.
+- Order forms dropped OpenStack tenant and instance option values on submit, and preselected fields even when the choice was ambiguous.
+- Invitations are cancelled when a project is removed, expired invitations show proper details, and project-scoped invitations land on the project dashboard after joining.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [18 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.25...8.1.0-rc.26) - permission tightening for order creation, proposal allocation fixes, credit cleanup, and validation improvements
-- **Waldur Homeport**: [22 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.25...8.1.0-rc.26) - provider helpdesk UI, offering Team tab, permission-aware resource actions, and form clearing fixes
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.0-rc.25...8.1.0-rc.26) - network policy fix for Matrix ingress
+- **Waldur Mastermind**: [296 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9...8.1.0) - provider helpdesk, access subnets, POSIX ID pools, affiliates and volume discounts, proposal workflow engine, performance and memory work
+- **Waldur Homeport**: [268 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9...8.1.0) - helpdesk and AI assistant UIs, credit dashboards, call management redesign, table enhancements, extraction of shared packages
+- **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.0.9...8.1.0) - field encryption key wiring, API response compression, matrix network policies, memory tuning values
+- **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9...8.1.0) - field encryption key, response compression, memory tuning environment knobs
 
 ---
 
-## 8.1.0-rc.25 - 2026-08-11
 
-### Highlights
 
-Support teams get a dedicated AI assistant logs dashboard that scopes conversations by time period and attributes token usage per model, making it practical to audit and cost-account assistant activity. Marketplace offering forms now prefill internal names automatically, and Kubernetes deployment options no longer block or discard the other options on the same order form. OpenStack instance provisioning is more resilient: ports are recorded before attachment so leaked ports can be reclaimed after a failure.
 
-### What's New
-
-- Added an AI assistant logs dashboard for support staff, with conversation transcripts, date-range filtering and per-model token attribution across both anonymous and authenticated chats.
-- Internal names in offering component and option forms are now generated automatically from the display name, so operators no longer have to invent them by hand.
-- Kubernetes demo presets now include an OpenStack tenant offering, giving the government cloud, HPC/AI platform and research institution presets a complete stack out of the box.
-
-### Improvements
-
-- Project credit health now shows how much of the credit can actually be drawn, rather than only the nominal amount.
-- Project cost policies can be filtered by the resource they are scoped to.
-- Resource end date change request labels are now translated into Lithuanian, Estonian and German.
-- The user profile roles panel shows a proper first-use empty state instead of a blank list.
-- List-valued JSON fields are now typed as arrays in the OpenAPI schema, so generated clients handle them correctly.
-- Broadcast email delivery isolates per-recipient failures, so one bad address no longer stops the rest of a broadcast.
-- Bumped DOMPurify to address GHSA-55q2-fjhq-7xh7.
-- The experimental policy watch timeline view has been removed in favour of the health view.
-
-### Bug Fixes
-
-- Fixed Kubernetes configuration options blocking and swallowing sibling options in marketplace order and mass-edit forms.
-- OpenStack instance ports are recorded before attachment, so ports leaked by a failed attach are reclaimed instead of lingering.
-- Orders waiting for a project to start no longer display a misleading progress timeline.
-- Reppu usage import skips resources whose offering lacks the matching usage component instead of failing.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [8 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.24...8.1.0-rc.25) - AI assistant log scoping and token attribution, OpenStack port reclamation, cost policy filtering and OpenAPI schema typing.
-- **Waldur Homeport**: [17 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.24...8.1.0-rc.25) - AI assistant logs dashboard, marketplace form fixes, additional translations, and extraction of auth, API client, i18n, telemetry and lint rules into shared internal packages.
-
----
-
-## 8.1.0-rc.24 - 2026-08-10
-
-### Highlights
-
-Resource owners can now request an end date change and have it reviewed by the provider instead of editing the date silently, and providers can auto-approve those requests per offering. Access subnets are consolidated into a single scoped list per organization, so network restrictions for the organization, its offerings and its resources are managed from one matrix instead of three separate places. Proposal calls gain a full path for requesting Marketplace offerings — including purchase order handling and cost previews — while credit visibility now extends to project roles, letting project members see the credit funding their own project.
-
-### What's New
-
-- Request and approve resource end date changes: users can submit an end date change request, providers review it from the resource page, and offerings can be configured to auto-approve. Requests are filterable by offering, and the end date is applied correctly when an asynchronous renewal completes.
-- Access subnets are unified into one scoped list per organization, managed through a single matrix covering organization, offering and resource scopes, with impact reporting shown only for offerings that actually support access subnets.
-- Marketplace offerings can be requested through proposal calls, with resource request templates, requested limits, purchase order fields, cost totals and discount previews in the application flow.
-- Project members with a project role can now see the credit funding their project; the customer-level credit envelope and sibling projects remain hidden.
-- OpenPortal 0.90 features from the Isambard fork are available, including remote project management, audit logs, allocation pulls and limit management.
-- Table columns can be pinned, and marketplace category cards show how many offerings each category holds.
-- A `user_blocked` event is now recorded when an account is locked out, and user profile changes are tracked in revision history.
-- Public offering pages carry a "Contact support" button for reaching the provider directly.
-
-### Improvements
-
-- Call management and reviewer screens were reworked for legibility, and applying to a call is only offered while a round is open — enforced on both the server and the UI.
-- Termination orders no longer require a purchase order, so resources can be shut down without extra paperwork.
-- Provider–consumer order messaging now records message timestamps and presents them in a clearer banner.
-- API key handling exposes the key ID, issue date and order failure reason, with rotation as the single supported operation.
-- Price estimates refresh when credit compensations change, with fewer database queries per refresh.
-- Sentry error reports now include user context and API breadcrumbs, making support investigations faster.
-- Accessible names were added to header and table icon buttons, disabled controls explain why they are unavailable, and dates are shown consistently as day, month name, year.
-- Roles now display their technical code separately from their human-readable label.
-- Dependencies were updated to address known vulnerabilities in aiohttp, cryptography, h2 and nanoid.
-
-### Bug Fixes
-
-- Fixed a crash when removing a remote eduTEAMS user whose details were being cleared.
-- Version history no longer exposes fields that the corresponding serializers withhold.
-- Project end date changes are validated consistently across all entry points.
-- SCIM entitlements are retained until resource termination actually completes.
-- OpenStack router gateways without an allocated external IP no longer break synchronization.
-- Growth charts render correctly with integer axes and a corrected resource metric label; marketplace page bar tabs render on first mount; order form fields are preselected only when the choice is unambiguous; relative dates round instead of truncate.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [33 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.23...8.1.0-rc.24) - end date change requests, unified access subnets, proposal-based offering requests, credit visibility and security updates
-- **Waldur Homeport**: [36 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.23...8.1.0-rc.24) - end date change UI, access subnet matrix, call management rework, OpenPortal screens, accessibility and table improvements
-
----
-
-## 8.1.0-rc.23 - 2026-08-03
-
-### Highlights
-
-This release tightens OpenStack tenant isolation so private networks and floating IPs can no longer be reached across tenant boundaries, and cleans up several places where large pages were slow to load. Marketplace order failures now explain why they failed instead of leaving operators guessing, and background usage, billing and SLURM sync jobs do considerably less redundant database work. Operators also get more precise Sentry alerting, with per-deployment cron monitors and better event grouping.
-
-### What's New
-
-- Offering user records now indicate whether a compliance checklist applies, so administrators can see at a glance which users still need to complete one.
-- Order records now expose the reason an order failed, making it easier to diagnose failed provisioning without digging through logs.
-
-### Improvements
-
-- Pending project invitations are now automatically cancelled when the project they belong to is removed, so users no longer receive invites to projects that no longer exist.
-- Sentry monitoring is more actionable: each deployment gets its own cron monitors and tolerances, and structured log events are grouped by message rather than by their raw dictionary representation.
-- User lists, public offering plan pages, remote usage import, component usage billing and site-agent status updates all issue far fewer database queries, noticeably speeding up large pages and background jobs.
-- SLURM usage synchronisation now runs once per pull instead of once per allocation, cutting the time a full pull takes on sites with many allocations.
-- Restore orders are now handled correctly when a linked helpdesk issue changes status.
-- The resource API key fingerprint field has been removed as it was no longer used; existing keys are unaffected.
-
-### Bug Fixes
-
-- Fixed service property filtering for tenant-scoped offerings, so flavor and image choices are correct when changing a VM's flavor.
-- Pinning a floating IP to a network now requires ownership of that network, preventing a tenant from attaching an IP to another tenant's network.
-- RBAC-based network sharing is now scoped to the specific shared network rather than granting broader access than intended.
-- Proposal deadlines that have already been settled are no longer flagged as errors in the UI.
-- Removed an incorrect breadcrumb from the reporting overview tab.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [19 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.0-rc.22...8.1.0-rc.23) - OpenStack tenant isolation fixes, query-count reductions across marketplace and background tasks, Sentry monitoring improvements, and order failure reason reporting.
-- **Waldur Homeport**: [3 commits](https://github.com/waldur/waldur-homeport/compare/8.1.0-rc.22...8.1.0-rc.23) - UI fixes for proposal deadline validation and reporting breadcrumbs.
-
----
-
-## 8.1.0-rc.22 - 2026-07-31
-
-### Release Summary
-
-- **Release Impact:** 320 commits across 5 core repositories
-- **Functional Changes:** 343 files changed with +32967/-4528 lines
-
-!!! note "Statistics Note"
-    Excludes tests, auto-generated files, and SDK client code for accurate development metrics.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [249 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9...8.1.0-rc.22) · 313 files changed (+32400/-4502 lines)
-- **Waldur Homeport**: [5 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9...8.1.0-rc.22)
-- **Waldur Helm**: [32 commits](https://github.com/waldur/waldur-helm/compare/8.0.9...8.1.0-rc.22) · 23 files changed (+409/-21 lines)
-- **Waldur Docker Compose**: [28 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9...8.1.0-rc.22) · 3 files changed (+48/-1 lines)
-- **Waldur Prometheus Exporter**: [6 commits](https://github.com/waldur/waldur-prometheus-exporter/compare/8.0.9...8.1.0-rc.22) · 4 files changed (+110/-4 lines)
-
-### Notable Changes
-
-- **Document why Release tag does not reuse set-version.sh.** ([43e2c77](https://github.com/waldur/waldur-helm/commit/43e2c77) - Waldur Helm)
-- **Fix release tag push from detached HEAD.** ([ebcecad](https://github.com/waldur/waldur-helm/commit/ebcecad) - Waldur Helm)
-- **Set target version to 8.1.0-rc.21.** ([9e57317](https://github.com/waldur/waldur-docker-compose/commit/9e57317) - Waldur Docker Compose)
-- **Fix release tag push from detached HEAD.** ([02daef6](https://github.com/waldur/waldur-docker-compose/commit/02daef6) - Waldur Docker Compose)
-- **Set target version to 8.1.0-rc.22.** ([ff0cc5c](https://github.com/waldur/waldur-helm/commit/ff0cc5c) - Waldur Helm)
-- **Set target version to 8.1.0-rc.22.** ([40aeffe](https://github.com/waldur/waldur-docker-compose/commit/40aeffe) - Waldur Docker Compose)
-
-### Waldur Mastermind Highlights
-
-- Correct documented status code for the OpenPortal fetch_job endpoint.
-- Expose incurred cost on the project costs endpoint [HPCMP-501].
-- Generate demo credit history through the real compensation flow [HPCMP-501].
-
-### Waldur Helm Highlights
-
-- Set target version to 8.1.0-rc.22.
-- Document why Release tag does not reuse set-version.sh.
-- Fix release tag push from detached HEAD.
-
-### Waldur Docker Compose Highlights
-
-- Set target version to 8.1.0-rc.22.
-- Set target version to 8.1.0-rc.21.
-- Fix release tag push from detached HEAD.
-
-### Waldur Prometheus Exporter Highlights
-
-- Add HTTP health and readiness check endpoints.
-- Drop sdk bump.
-- Fix indentation in gitlab-ci release steps.
 
 ## 8.0.9 - 2026-06-21
 
