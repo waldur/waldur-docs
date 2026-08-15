@@ -51,6 +51,11 @@ sync-external-docs-dry-run:
 # Sync job - runs on master branch commits and scheduled pipelines
 sync-external-docs:
   stage: release
+  # Pushes to the default branch. Without a resource group, two pipelines on
+  # master overlap and one loses the push with `non-fast-forward` — which is
+  # exactly what happened during the 8.1.0 release. Shared with the schema
+  # commit job in .gitlab-ci.yml, which pushes the same ref.
+  resource_group: master-push
   image: $PYTHON_IMAGE
   rules:
     - if: '$BUILD_SDK == "true"'

@@ -4,9 +4,23 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+WATCH=false
+ARGS=()
+for arg in "$@"; do
+    case "$arg" in
+        --watch) WATCH=true ;;
+        *) ARGS+=("$arg") ;;
+    esac
+done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
+
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 <VERSION>"
+    echo "Usage: $0 [--watch] <VERSION>"
     echo "Example: $0 8.0.4"
+    echo ""
+    echo "  --watch   after pushing the tag, follow the release pipeline until"
+    echo "            it finishes and report which jobs failed. Off by default;"
+    echo "            without it the script exits as soon as the tag is pushed."
     exit 1
 fi
 
@@ -280,6 +294,64 @@ fi
 echo "  Validating changelog OpenAPI schema links..."
 python3 "$SCRIPT_DIR/check-changelog-api-links.py"
 
+# Guard: a tag pipeline runs the .gitlab-ci.yml from the tagged commit, so a
+# broken pipeline cannot be repaired once the tag exists — during 8.1.0 a job
+# that was missing `git` had to be finished by hand because fixing master had
+# no effect on the running pipeline. Everything checkable is checked here,
+# while the tag is still cheap to not create.
+echo "  Validating .gitlab-ci.yml before the tag freezes it..."
+if command -v glab >/dev/null 2>&1; then
+    LINT=$(python3 - <<'PY'
+import json, os, subprocess, sys
+payload = json.dumps({"content": open(".gitlab-ci.yml").read()})
+proc = subprocess.run(
+    ["glab", "api", "--method", "POST",
+     "projects/waldur%2Fwaldur-docs/ci/lint",
+     "-H", "Content-Type: application/json", "--input", "-"],
+    input=payload, capture_output=True, text=True,
+)
+try:
+    result = json.loads(proc.stdout)
+except Exception:
+    print("SKIP could not reach the CI lint API")
+    sys.exit(0)
+if result.get("valid"):
+    print("OK")
+else:
+    print("INVALID " + "; ".join(result.get("errors") or ["unknown error"]))
+PY
+)
+    case "$LINT" in
+        OK) echo "    CI config is valid." ;;
+        SKIP*) echo "    WARNING: ${LINT#SKIP }" ;;
+        *) echo "ERROR: ${LINT#INVALID }" >&2
+           echo "Fix .gitlab-ci.yml before tagging — the tag would freeze this config." >&2
+           exit 1 ;;
+    esac
+else
+    echo "    WARNING: glab not installed, skipping CI config validation."
+fi
+
+# Guard: never cut a release from a red master. Whatever is broken there will
+# be broken in the tag pipeline too, and by then it is unfixable in place.
+echo "  Checking the latest master pipeline..."
+if command -v glab >/dev/null 2>&1; then
+    MASTER_STATUS=$(glab api "projects/waldur%2Fwaldur-docs/pipelines?ref=master&per_page=1" 2>/dev/null \
+        | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['status'] if d else 'unknown')" 2>/dev/null || echo "unknown")
+    case "$MASTER_STATUS" in
+        success) echo "    master is green." ;;
+        unknown) echo "    WARNING: could not determine master pipeline status." ;;
+        *)
+            echo "    WARNING: the latest master pipeline is '$MASTER_STATUS'."
+            read -p "    Tag anyway? [y/n] " red_master
+            if [[ "$red_master" != "y" && "$red_master" != "Y" ]]; then
+                echo "Aborted. Changelog is committed locally."
+                exit 1
+            fi
+            ;;
+    esac
+fi
+
 git push origin master
 cd "$PROJECT_DIR"
 git tag -a "$VERSION" -m "Release $VERSION"
@@ -298,4 +370,20 @@ if [ "$IS_RC" = "false" ]; then
 else
     echo "  - Generate changelog (if not already committed)"
     echo "  (RC release — SDKs, docs deployment, and publiccode.yml are skipped)"
+fi
+
+# Everything that went wrong in the 8.1.0 release happened after this point,
+# with the operator already looking away. --watch keeps the script attached to
+# the pipeline it just started and reports the outcome.
+if [ "$WATCH" = "true" ]; then
+    echo ""
+    echo "[watch] Following the release pipeline for $VERSION..."
+    if ! command -v glab >/dev/null 2>&1; then
+        echo "  glab is not installed — cannot watch. Follow the pipeline manually."
+        exit 0
+    fi
+    python3 "$SCRIPT_DIR/watch-release-pipeline.py" "$VERSION"
+else
+    echo ""
+    echo "Re-run with --watch to follow the pipeline instead of exiting here."
 fi

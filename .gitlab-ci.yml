@@ -186,6 +186,9 @@ Test changelog generation:
 Generate OpenAPI schema:
   extends: .fetch-openapi-schema
   stage: schema
+  # Commits the schema and changelog link back to master; serialised against
+  # sync-external-docs, which pushes the same ref.
+  resource_group: master-push
   variables:
     DOWNLOAD_TYPESCRIPT_SCHEMA: "true"
   rules:
@@ -346,6 +349,9 @@ Generate consolidated changelog:
 Deploy MkDocs pages:
   image: registry.hpc.ut.ee/mirror/library/python:3.13
   stage: finalize
+  # mike force-pushes gh-pages. Two overlapping master pipelines both deploying
+  # made one fail with `gh-pages (fetch first)` during the 8.1.0 release.
+  resource_group: gh-pages
   variables:
     UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
   cache:
@@ -392,6 +398,30 @@ Deploy MkDocs pages:
         echo "Deploying latest docs from master branch"
         uv run mike deploy latest -p -r github_waldur -b gh-pages
       fi
+
+# Nothing used to assert that a release finished. A failed or skipped job
+# leaves the pipeline red but silent about *what* is missing, and skipped jobs
+# are not failures at all — 8.1.0 shipped with Helm, Docker Compose and the
+# Prometheus exporter unreleased and docs.waldur.com/8.1.0/ at 404, and the
+# gap was found by hand days later. This states the outcome plainly.
+Verify release completed:
+  image: registry.hpc.ut.ee/mirror/library/python:3.13
+  stage: finalize
+  rules:
+    # `when: always` and no `needs` on purpose. A job that needs the finalize
+    # jobs is skipped whenever they are — which is exactly the case this guard
+    # exists to report, since an earlier failure skips every later stage
+    # silently. Running unconditionally at the end of the pipeline means the
+    # release is always judged out loud, pass or fail.
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+      when: always
+  before_script:
+    # The tagged commit predates the schema and changelog-link commit that the
+    # schema job pushes to master, so check master rather than the tag.
+    - git fetch origin master --quiet
+    - git checkout origin/master -- docs/about/CHANGELOG.md docs/API
+  script:
+    - python3 scripts/verify-release-complete.py "$CI_COMMIT_TAG"
 
 Announce release on Slack:
   extends: .rules-rc-release
