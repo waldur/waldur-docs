@@ -29,6 +29,10 @@ This release focuses on deployment configuration and operational tuning for both
 - **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.1.0...8.1.2) - encryption key wiring, configurable country list, memory tuning values, network policy and ingress fixes.
 - **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.0...8.1.2) - encryption key passthrough, memory tuning environment knobs, and Caddy compression and CSP updates.
 
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.1.2.yaml)
+
 ---
 
 
