@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -137,6 +138,18 @@ def main() -> int:
         return 1
 
     version = sys.argv[1]
+
+    # The CI job is gated to stable tags, but the script is also run by hand.
+    # An RC ships no schema, no versioned docs and no downstream tags, so every
+    # check below would fail for reasons that are not defects.
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        print(
+            f"{version!r} is not a stable release. RC releases ship no OpenAPI "
+            "schema, no versioned documentation and no downstream tags, so "
+            "there is nothing to verify."
+        )
+        return 0
+
     print(f"Verifying that release {version} completed...\n")
 
     checks = [

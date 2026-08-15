@@ -255,7 +255,11 @@ text = re.sub(r'\n-{3,}\s*$', '', text).rstrip()
 text += "\n\n---\n"
 open(path, "w").write(text)
 PY
-    echo "  Entry footer normalized (schema link is added by CI alongside the schema file)."
+    if [ "$IS_RC" = "true" ]; then
+        echo "  Entry footer normalized (RC — no OpenAPI schema is built, so no link)."
+    else
+        echo "  Entry footer normalized (schema link is added by CI alongside the schema file)."
+    fi
 
     # Prepend new entry
     {
