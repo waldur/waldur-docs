@@ -870,9 +870,13 @@ class MultiRepoChangelogGenerator:
 
             # Resources — RC releases ship no OpenAPI schema, so omit the link
             # for them (a dangling relative link fails `mkdocs build --strict`).
-            # For stable releases use a relative link into docs/API/, matching
-            # the schema committed by the `Tag all repositories` CI job in the
-            # same run.
+            # For stable releases use a relative link into docs/API/. This
+            # generator is only reached as the fallback path, from
+            # consolidate_changelog.py in the `finalize` stage, by which point
+            # the `Generate OpenAPI schema` job (stage `schema`) has committed
+            # the file — so the link resolves. On the normal path release.sh
+            # writes the entry without the link and that same job adds it, see
+            # scripts/add-changelog-api-link.py.
             if "-rc." not in current_tag:
                 changelog_parts.append("### Resources")
                 changelog_parts.append("")

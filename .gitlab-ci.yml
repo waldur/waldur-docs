@@ -177,11 +177,23 @@ Generate OpenAPI schema:
     DOWNLOAD_TYPESCRIPT_SCHEMA: "true"
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+  # Pinned explicitly, for two reasons. The schema is fetched from
+  # waldur-mastermind's pipeline *for this tag*, which does not exist until the
+  # release stage has tagged mastermind — start earlier and the fetch template
+  # silently falls back to the previous release's schema. And
+  # `.fetch-openapi-schema` carries `needs: []`, which `extends` would otherwise
+  # inherit here, letting this job start immediately at pipeline creation.
+  needs:
+    - job: "Release Waldur Mastermind"
+      artifacts: false
   script:
     - !reference [.fetch-openapi-schema, script]
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
         echo "Generated OpenAPI schema for ${CI_COMMIT_TAG}, committing to waldur-docs"
+        # Fail loudly if the fetch fell back to the previous release's schema —
+        # that fallback exits 0, so it is indistinguishable from success here.
+        python3 scripts/verify-openapi-schema.py "${CI_COMMIT_TAG}" waldur-openapi-schema.yaml
         mkdir -p docs/API
         cp waldur-openapi-schema.yaml docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml
         git config --global user.name "$GITLAB_USER_NAME"
@@ -190,7 +202,12 @@ Generate OpenAPI schema:
         git fetch origin master
         git checkout master
         git pull
-        git add docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml
+        # Add the changelog's schema link in the SAME commit as the schema
+        # file. release.sh deliberately leaves it out: until this job runs
+        # there is nothing to point at, and a dangling relative link aborts
+        # `mkdocs build --strict` on master and in every open MR.
+        python3 scripts/add-changelog-api-link.py "${CI_COMMIT_TAG}"
+        git add docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml docs/about/CHANGELOG.md
         git diff --cached --quiet && echo "OpenAPI schema already committed" || (git commit -m "Add OpenAPI schema for ${CI_COMMIT_TAG}" && git pull --rebase origin master && git push -o ci.skip origin master)
       fi
 

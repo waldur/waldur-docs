@@ -219,29 +219,29 @@ open(sys.argv[1], 'w').writelines(out)
     fi
 
     # Normalize the generated entry's footer deterministically instead of
-    # trusting the LLM: strip any "### Resources" / trailing "---" it emitted,
-    # then re-add the OpenAPI schema link ONLY for stable releases. RC releases
-    # ship no schema, so a relative link would dangle and fail
-    # `mkdocs build --strict`. Idempotent — safe to re-run on a cached entry.
-    python3 - "$CACHE_DIR/changelog-entry.md" "$VERSION" "$IS_RC" <<'PY'
+    # trusting the LLM: strip any "### Resources" / trailing "---" it emitted.
+    #
+    # The OpenAPI schema link is deliberately NOT added here, for either RC or
+    # stable releases. RC releases ship no schema at all. For stable releases
+    # the schema file does not exist yet at this point and cannot: the
+    # `Generate OpenAPI schema` CI job builds it from waldur-mastermind's tag
+    # pipeline, which only comes into being once this tag's `release` stage has
+    # run. Committing the link now would leave a dangling relative link on
+    # master for the whole release, aborting `mkdocs build --strict` there and
+    # in every open MR. That CI job adds the link and the schema file in a
+    # single commit instead — see scripts/add-changelog-api-link.py.
+    #
+    # Idempotent — safe to re-run on a cached entry.
+    python3 - "$CACHE_DIR/changelog-entry.md" <<'PY'
 import re, sys
-path, version, is_rc = sys.argv[1], sys.argv[2], sys.argv[3] == "true"
+path = sys.argv[1]
 text = open(path).read()
 text = re.split(r'\n###\s+Resources\b', text, maxsplit=1)[0].rstrip()
 text = re.sub(r'\n-{3,}\s*$', '', text).rstrip()
-if not is_rc:
-    text += (
-        "\n\n### Resources\n\n"
-        f"- [OpenAPI Schema](../API/waldur-openapi-schema-{version}.yaml)"
-    )
 text += "\n\n---\n"
 open(path, "w").write(text)
 PY
-    if [ "$IS_RC" = "true" ]; then
-        echo "  Entry footer normalized (RC — no OpenAPI schema link)."
-    else
-        echo "  Entry footer normalized (stable — OpenAPI schema link added)."
-    fi
+    echo "  Entry footer normalized (schema link is added by CI alongside the schema file)."
 
     # Prepend new entry
     {
@@ -253,10 +253,17 @@ PY
     } > /tmp/final-changelog.md
     mv /tmp/final-changelog.md "$PROJECT_DIR/docs/about/CHANGELOG.md"
 
+    # Commit only if something actually changed. The skip check above looks at
+    # the last commit subject alone, so a re-run with any commit on top of the
+    # changelog commit lands here and regenerates an identical file — and a
+    # bare `git commit` on an empty diff aborts the whole script under `set -e`.
     git add docs/about/CHANGELOG.md
-    git commit -m "Update changelog for $VERSION"
-
-    echo "  Changelog committed."
+    if git diff --cached --quiet; then
+        echo "  CHANGELOG.md is already up to date for $VERSION — nothing to commit."
+    else
+        git commit -m "Update changelog for $VERSION"
+        echo "  Changelog committed."
+    fi
 fi
 
 # Tag and push
