@@ -225,8 +225,12 @@ Generate OpenAPI schema:
         git config --global user.email "$GITLAB_USER_EMAIL"
         git remote set-url origin "https://gitlab-ci-token:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
         git fetch origin master
-        git checkout master
-        git pull
+        # Point local master at the freshly fetched ref in one step. The job
+        # runs on a detached HEAD at the tag, so `git checkout master` creates
+        # a local branch with no upstream and the bare `git pull` that used to
+        # follow died with "There is no tracking information for the current
+        # branch" — which is exactly how the 8.1.1 release failed.
+        git checkout -B master origin/master
         # Add the changelog's schema link in the SAME commit as the schema
         # file. release.sh deliberately leaves it out: until this job runs
         # there is nothing to point at, and a dangling relative link aborts
