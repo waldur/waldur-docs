@@ -7693,10 +7693,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cost-policies-and-the-compensation-projection" class="md-nav__link">
+  <a href="#cost-policies-and-compensation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cost Policies and the Compensation Projection
+        Cost Policies and Compensation
       
     </span>
   </a>
@@ -18150,10 +18150,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cost-policies-and-the-compensation-projection" class="md-nav__link">
+  <a href="#cost-policies-and-compensation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cost Policies and the Compensation Projection
+        Cost Policies and Compensation
       
     </span>
   </a>
@@ -18638,9 +18638,8 @@ where:
 </tr>
 </tbody>
 </table>
-<h4 id="cost-policies-and-the-compensation-projection">Cost Policies and the Compensation Projection</h4>
-<p><code>waldur_mastermind.policy</code>'s <code>ProjectEstimatedCostPolicy</code> and <code>CustomerEstimatedCostPolicy</code> (<code>src/waldur_mastermind/policy/models.py</code>) call <code>MonthlyCompensation.get_resource_compensation()</code> / <code>get_project_compensation()</code> / <code>total_compensation</code> to net cost against credit in their own <code>is_triggered()</code> check -- reusing the exact algorithm above, but as a <strong>read-only, on-demand simulation</strong>, not the finalization-time <code>save()</code> path. Each call constructs a fresh <code>MonthlyCompensation(customer)</code>, which fetches the customer's live <code>CustomerCredit</code>/<code>ProjectCredit</code> rows and re-runs <code>calculate_current_compensations()</code> against whatever is currently on the customer's open invoice -- without ever calling <code>.save()</code>. The in-memory pool decrements the algorithm performs are discarded once the call returns; nothing about this evaluation touches the persisted <code>value</code> column.</p>
-<p>This makes <code>is_triggered()</code> a two-gate check rather than a single cost comparison:</p>
+<h4 id="cost-policies-and-compensation">Cost Policies and Compensation</h4>
+<p><code>waldur_mastermind.policy</code>'s <code>ProjectEstimatedCostPolicy</code> and <code>CustomerEstimatedCostPolicy</code> (<code>src/waldur_mastermind/policy/models.py</code>) net cost against credit in two independent steps inside <code>is_triggered()</code>, not one combined comparison:</p>
 <pre class="mermaid"><code>graph TD
     A[New invoice item / credit change] --&gt; B{Gate 1:&lt;br&gt;cost this window&lt;br&gt;net of compensation&lt;br&gt;&gt;= limit_cost?}
     B --&gt;|No| Z[Policy stays clear]
@@ -18649,8 +18648,11 @@ where:
     C --&gt;|Yes| D{Gate 2:&lt;br&gt;credit.value&lt;br&gt;&lt;= limit_cost?}
     D --&gt;|No, balance healthy| Z
     D --&gt;|Yes, balance depleted| F</code></pre>
-<p>Gate 1 nets cost against the live compensation simulation described above; gate 2 re-queries <code>CustomerCredit</code>/<code>ProjectCredit</code> directly, and is only consulted once gate 1 is already open (<code>use_credit=False</code> policies skip it and compare gross cost instead). The two can disagree, because gate 1's compensation figure is order-dependent: it depends on which other resources currently share the same invoice and where this resource lands in the cheapest-first walk, not on any commitment the account has actually made yet. A resource can be assigned little or no compensation in one evaluation purely because cheaper siblings exhausted the pool first in that pass, while the real balance behind it is untouched and healthy. Gate 2 exists to catch exactly that: the policy fires only when the projection <em>and</em> the real, persisted balance both agree the account is over budget.</p>
-<p>Example: resource X costs 45,000 against a policy <code>limit_cost</code> of 10,000, sharing a 50,000 customer credit with three cheaper siblings totalling 37,000. The cheapest-first walk drains the pool on the siblings first, leaving X only 13,000 of simulated compensation -- net cost 32,000, gate 1 opens. Gate 2 reads the real balance directly: 50,000, nowhere near <code>limit_cost</code>, so it stays closed and the policy does not fire. Had the real balance actually been down to 3,000 (drawn down by past, already-finalized months), gate 2 would have opened too, and the policy would fire -- same gate 1 outcome, different verdict, because only gate 2 reflects what has actually happened to the account.</p>
+<p><strong>Gate 1</strong> sums every <code>InvoiceItem</code> for the project/customer across the policy's rolling window (1/3/12 months) via <code>EstimatedCostPolicyMixin._is_triggered</code> -- cost items and compensation items together, unfiltered by type, since a compensation item is just a negative-priced row on the same invoice. For a month whose invoice has already been finalized -- including one <code>rebill_historical_usage</code> has just corrected -- this sum is entirely real, persisted data. There's no simulation involved in reading it.</p>
+<p>On top of that sum, <code>is_triggered()</code> additionally subtracts a live <code>MonthlyCompensation.get_resource_compensation()</code> / <code>get_project_compensation()</code> / <code>total_compensation</code> call -- but this only ever represents the customer's <em>current, still-mutable</em> invoice (<code>MonthlyCompensation(customer)</code>, called with no explicit <code>invoice=</code> argument, auto-selects it), re-run fresh in memory on every evaluation without ever calling <code>.save()</code>. It has no bearing on any past month already reflected in the sum above.</p>
+<p><strong>Gate 2</strong> re-queries <code>CustomerCredit</code>/<code>ProjectCredit</code> directly, and is only consulted once gate 1 is already open (<code>use_credit=False</code> policies skip it and compare gross cost instead).</p>
+<p>The two gates read genuinely different facts -- gate 1 is a net invoiced position over a window, gate 2 is the current remaining reserve -- so they can disagree for ordinary reasons. This window's net cost can be high because credit only partially covered it, correctly, if the pool was scarce at finalization time; or because a later correction's compensation update didn't fully rebalance against a sibling sharing the same credit, since <code>rebill_historical_usage</code>'s own correction is a simplified 1:1 update to the one resource being fixed, not a full cheapest-first re-run across every resource sharing that credit (see its <code>sibling_compensations</code> warning). Either way, the real balance behind it can still have plenty of untouched headroom for other resources or future spend. Gate 2 doesn't re-derive gate 1's number; it checks the one fact that's never in question -- the balance, right now. The policy fires only when both independently say the account is over budget.</p>
+<p>Verified example, from <code>scripts/simulate_rebill_historical_usage.py</code>'s scenario B: a resource billed 500 node-hours (1,425), fully compensated at finalization time from a 3,000 project credit (1,575 left over). A correction raises the reported usage to 3,000 node-hours (8,550) -- the credit correction aborts (7,125 needed, only 1,575 available), so the compensation item stays at its old value. Gate 1 for that project: 8,550 − 1,425 = 7,125, against a <code>limit_cost</code> of 3,000 -- opens. Gate 2: the real project credit balance, 1,575, is also below 3,000 -- opens too. Both gates reflect real, persisted numbers throughout; no simulation was involved in either.</p>
 <p>See <code>EstimatedCostPolicyMixin._is_triggered</code> and <code>ProjectEstimatedCostPolicy.is_triggered</code> / <code>CustomerEstimatedCostPolicy.is_triggered</code> in <code>src/waldur_mastermind/policy/models.py</code> for the exact implementation.</p>
 <h3 id="configuration">Configuration</h3>
 <p>The grace period is configured in <code>WALDUR_INVOICES</code> settings:</p>

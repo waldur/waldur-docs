@@ -18229,6 +18229,15 @@ Rancher cluster ID; this plugin does not stand up Rancher clusters.</p>
 <p><strong>Opt-in per offering.</strong> Set
 <code>membership_sync_backend: rancher-kc-crd</code> on the offering's
 site-agent config to route its membership sync through this plugin.</p>
+<p><strong>Membership is per-ResourceProject, not a flat per-Resource team.</strong>
+Unlike SLURM-style backends, there's no single "team" for the whole
+Resource — each ResourceProject has its own <code>UserRole</code> list, and
+that's what drives Keycloak group membership (see
+<a href="#user-identity-matching">User identity matching</a> for exactly which
+field). The site agent's generic team-vs-backend membership diff
+(used by flat-team backends to detect new/stale users) doesn't apply
+here and is skipped for this backend — see <code>skip_resource_team_diff</code>
+in <code>waldur_site_agent_rancher_kc_crd/backend.py</code>.</p>
 <hr>
 <h2 id="architecture">Architecture</h2>
 <pre class="mermaid"><code>flowchart LR
@@ -18641,6 +18650,18 @@ kubectl<span class="w"> </span>logs<span class="w"> </span>deploy/rko-rancher-ke
   preferred because it tolerates UUID divergence and works in more
   topologies.</dd>
 </dl>
+<p><strong>This is not <code>OfferingUser.username</code>.</strong> SLURM-style backends key
+membership off <code>OfferingUser.username</code> — a per-offering, often
+auto-generated identifier (e.g. a POSIX account name like
+<code>test-rancher-00</code>) meant for the <em>target system</em>, not Keycloak. This
+plugin never looks at that field. Its membership unit is each
+ResourceProject's <code>UserRole</code>, and the identity it hands to the
+operator is <code>UserRole.user_username</code> (or <code>user_uuid</code>) — the person's
+actual Waldur account identity. If a user was added to Keycloak under
+a name that doesn't match their real Waldur username, the operator
+logs <code>WARNING User &lt;id&gt; not found in Keycloak</code> and silently skips
+them (see Troubleshooting) even though everything else — CR, group,
+PRTB — looks fully synced.</p>
 <p><strong>The operator never creates users.</strong> A user that doesn't exist in
 Keycloak under the chosen identifier gets logged as
 <code>WARNING User &lt;id&gt; not found in Keycloak</code> and is skipped — the

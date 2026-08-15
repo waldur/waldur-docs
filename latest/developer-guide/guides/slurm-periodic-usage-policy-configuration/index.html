@@ -8255,6 +8255,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Site Agent Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -18557,6 +18585,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Site Agent Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19276,6 +19332,37 @@ the re-run is a no-op and emits no STOMP message.</p>
 <span class="n">policy</span><span class="o">.</span><span class="n">organization_groups</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">research_group</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="site-agent-configuration">Site Agent Configuration</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<p>Periodic settings are delivered to the cluster over STOMP only — there is no
+polling fallback. Mastermind publishes them to queues that the site agent
+registers on startup, so all of the following must hold or the policy silently
+enforces nothing:</p>
+<ul>
+<li><strong>A site agent runs in <code>event_process</code> mode for this offering.</strong> This is the
+  only mode that registers event subscriptions. The polling modes
+  (<code>order_process</code>, <code>membership_sync</code>, <code>report</code>) never do, so a deployment
+  running only those cannot use periodic policies. In the Helm chart this is
+  <code>agents.eventProcess.enabled</code>.</li>
+<li><strong><code>stomp_enabled: true</code> on the offering</strong> in the agent configuration. It
+  defaults to <code>false</code>, and an offering without it is skipped entirely.</li>
+<li><strong><code>backend_settings.periodic_limits.enabled: true</code></strong> on the offering, as shown
+  below.</li>
+<li><strong>Site agent 0.8.0 or newer.</strong> Earlier versions ignore <code>periodic_limits</code>.</li>
+</ul>
+<p>Subscriptions are computed once, at agent startup: after changing any of the
+above, restart the <strong><code>event_process</code></strong> agent specifically.</p>
+<p>To confirm registration succeeded, look for these lines in the <code>event_process</code>
+agent log:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>Periodic limits enabled for offering &lt;name&gt;, subscribing to periodic limits updates
+Creating event subscription queue for &lt;uuid&gt;, object type ...RESOURCE_PERIODIC_LIMITS
+</code></pre></div></td></tr></tbody></table></div>
+<p>Staff can verify the same from the API:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>GET /api/event-subscription-queues/?offering_uuid=&lt;uuid&gt;&amp;object_type=resource_periodic_limits
+</code></pre></div></td></tr></tbody></table></div>
+<p>An empty result is what drives the "No site agent has registered a queue for
+periodic limits updates" warning on the policy.</p>
+<h3 id="configuration">Configuration</h3>
 <p>Configure the site agent to handle QoS changes:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
