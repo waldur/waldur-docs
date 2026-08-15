@@ -27,6 +27,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -48,6 +49,10 @@ TAGGED_REPOS = [
 ]
 
 TIMEOUT = 30
+
+# GitHub Pages needs a moment after the gh-pages push before it serves.
+DOCS_WAIT_SECONDS = 300
+DOCS_POLL_SECONDS = 15
 
 
 def gitlab_get(path: str):
@@ -115,7 +120,16 @@ def check_changelog(version: str) -> str | None:
 
 
 def check_docs_published(version: str) -> str | None:
-    status = http_status(f"{DOCS_URL}/{version}/")
+    # GitHub Pages serves the new version a little after mike pushes gh-pages,
+    # so a single immediate probe can 404 on a release that is fine. Retry
+    # briefly before calling it missing.
+    deadline = time.monotonic() + DOCS_WAIT_SECONDS
+    status = None
+    while True:
+        status = http_status(f"{DOCS_URL}/{version}/")
+        if status == 200 or time.monotonic() >= deadline:
+            break
+        time.sleep(DOCS_POLL_SECONDS)
     if status != 200:
         return (
             f"{DOCS_URL}/{version}/ returned {status} — the versioned "

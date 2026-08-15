@@ -22,6 +22,11 @@ stages:
   - sdks
   - infrastructure
   - finalize
+  # Runs after everything else so the release can be judged on its finished
+  # state. `Verify release completed` used to sit in finalize with no needs, so
+  # it raced Deploy MkDocs pages and reported a 404 for docs that were about to
+  # be published — a false failure on the 8.1.2 release.
+  - verify
 
 # ---------------------------------------------------------------------------
 # Shared CI/CD Rules Templates
@@ -416,7 +421,7 @@ Deploy MkDocs pages:
 # gap was found by hand days later. This states the outcome plainly.
 Verify release completed:
   image: registry.hpc.ut.ee/mirror/library/python:3.13
-  stage: finalize
+  stage: verify
   rules:
     # `when: always` and no `needs` on purpose. A job that needs the finalize
     # jobs is skipped whenever they are — which is exactly the case this guard
