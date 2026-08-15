@@ -1,5 +1,36 @@
 # Changelog
 
+## 8.1.2 - 2026-08-15
+
+### Highlights
+
+This release focuses on deployment configuration and operational tuning for both the Helm chart and Docker Compose distributions. Operators can now supply a field encryption key through standard deployment configuration, tailor the country list shown in the marketplace without rebuilding images, and tune mastermind memory behaviour from values or environment variables. API responses are now compressed at the ingress layer, and the Matrix chat networking and CSP settings have been corrected so voice messages and homeserver traffic work as expected.
+
+### What's New
+
+- Field encryption key (`FIELD_ENCRYPTION_KEY`) can now be configured for mastermind services in both the Helm chart and Docker Compose, so encrypted fields no longer require manual wiring.
+- The list of countries offered in the marketplace can be customised directly from chart values, alongside the other whitelabeling options.
+- New memory tuning knobs for mastermind — the gunicorn preload toggle and the Celery per-child memory ceiling — are exposed as chart values and Compose environment variables, letting operators recycle worker children before they grow too large.
+
+### Improvements
+
+- API and web responses are now compressed at the edge (Traefik middleware for Helm, Caddy for Docker Compose), reducing bandwidth use and improving load times on large payloads.
+- Matrix and LiveKit network policies are now controlled by their own gate instead of the chart-wide `networkPolicy` switch, so chat networking can be managed independently; the behaviour is documented in the Matrix chat guide.
+- The Prometheus metrics exporter now uses dedicated health check endpoints for its readiness and liveness probes.
+- Prepared statements are disabled for psycopg3 connections, avoiding compatibility problems with connection poolers.
+
+### Bug Fixes
+
+- The ingress controller is now explicitly admitted by the Matrix homeserver and LiveKit JWT network policies, fixing blocked inbound traffic to Matrix chat.
+- Voice messages in chat now play correctly — `blob:` media sources are permitted by the content security policy in both deployment methods.
+
+### Core Component Activity
+
+- **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.1.0...8.1.2) - encryption key wiring, configurable country list, memory tuning values, network policy and ingress fixes.
+- **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.0...8.1.2) - encryption key passthrough, memory tuning environment knobs, and Caddy compression and CSP updates.
+
+---
+
 ## 8.1.0 - 2026-08-15
 
 ### Highlights
