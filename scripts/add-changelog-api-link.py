@@ -52,7 +52,7 @@ def main() -> int:
     lines = CHANGELOG.read_text(encoding="utf-8").splitlines(keepends=True)
 
     heading_re = re.compile(r"^## " + re.escape(version) + r"(\s|$)")
-    start = next((i for i, l in enumerate(lines) if heading_re.match(l)), None)
+    start = next((i for i, line in enumerate(lines) if heading_re.match(line)), None)
     if start is None:
         # Fail rather than ship a stable release whose changelog entry has no
         # link to its API contract. scripts/release.sh commits the entry before
@@ -75,7 +75,7 @@ def main() -> int:
         len(lines),
     )
 
-    if any(link in l for l in lines[start:end]):
+    if any(link in line for line in lines[start:end]):
         print(f"OK: '## {version}' already links to its OpenAPI schema.")
         return 0
 

@@ -31,7 +31,9 @@ from pathlib import Path
 HEAD_BYTES = 4096
 
 INFO_RE = re.compile(r"^info:\s*$", re.MULTILINE)
-VERSION_RE = re.compile(r"^[ \t]+version:[ \t]*['\"]?([^'\"\s]+)['\"]?[ \t]*$", re.MULTILINE)
+VERSION_RE = re.compile(
+    r"^[ \t]+version:[ \t]*['\"]?([^'\"\s]+)['\"]?[ \t]*$", re.MULTILINE
+)
 
 
 def schema_version(path: Path) -> str | None:
@@ -56,7 +58,10 @@ def main() -> int:
     version, path = sys.argv[1], Path(sys.argv[2])
 
     if not path.is_file():
-        print(f"ERROR: no schema at {path} — the fetch step produced nothing.", file=sys.stderr)
+        print(
+            f"ERROR: no schema at {path} — the fetch step produced nothing.",
+            file=sys.stderr,
+        )
         return 1
 
     found = schema_version(path)
