@@ -474,15 +474,23 @@ Announce release on Slack:
           ok=0
           attempts=5
           for i in $(seq 1 "$attempts"); do
-            if curl -sf --max-time 10 \
-                 -H "Cache-Control: no-cache" -H "Pragma: no-cache" \
-                 "${URL}?ts=$(date +%s)" | grep -q "id=\"${ANCHOR}\""; then
+            # Record the fetch and the match separately. Piping curl into grep
+            # collapses "could not fetch" and "anchor absent" into one exit
+            # code, so the old log said "not yet live" for both and gave no way
+            # to tell a network problem from a stale page.
+            code=$(curl -s -o /tmp/changelog.html -w '%{http_code}' --max-time 10 \
+                     -H "Cache-Control: no-cache" -H "Pragma: no-cache" \
+                     "${URL}?ts=$(date +%s)") || code="000"
+            if [ "$code" != "200" ]; then
+              echo "attempt $i/${attempts}: could not fetch ${URL} (HTTP ${code}) — network or proxy problem, not the docs"
+            elif grep -q "id=\"${ANCHOR}\"" /tmp/changelog.html; then
               echo "Anchor ${ANCHOR} is live (attempt $i)"
               ok=1
               break
+            else
+              echo "attempt $i/${attempts}: fetched HTTP 200 ($(wc -c < /tmp/changelog.html) bytes) but anchor ${ANCHOR} is absent — stale copy"
             fi
-            echo "Anchor not yet live (attempt $i/${attempts}); sleeping 30s"
-            sleep 30
+            [ "$i" -lt "$attempts" ] && sleep 30
           done
           if [ "$ok" -ne 1 ]; then
             echo "WARNING: could not confirm anchor ${ANCHOR} from this runner." >&2
