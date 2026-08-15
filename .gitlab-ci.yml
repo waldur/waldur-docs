@@ -442,6 +442,11 @@ Announce release on Slack:
   extends: .rules-rc-release
   image: registry.hpc.ut.ee/mirror/library/python:3.13
   stage: finalize
+  # Giving up on the liveness check used to exit 0, so a release that was never
+  # announced reported success — 8.1.2 announced nothing and went green. Fail
+  # instead, but allow it: a missing Slack post should be visible without
+  # holding up a release that is otherwise complete.
+  allow_failure: true
   needs:
     - job: "Generate consolidated changelog"
     - job: "Deploy MkDocs pages"
@@ -480,9 +485,11 @@ Announce release on Slack:
             sleep 30
           done
           if [ "$ok" -ne 1 ]; then
-            echo "Anchor ${ANCHOR} never appeared after 15 minutes; skipping Slack notification."
-            echo "The job can be re-run manually from GitLab once docs.waldur.com/latest is rebuilt."
-            exit 0
+            echo "Anchor ${ANCHOR} never appeared after 15 minutes; no Slack notification sent." >&2
+            echo "docs.waldur.com/latest is published by the master pipeline, not this one," >&2
+            echo "and GitHub Pages can serve a stale copy for a while after the push." >&2
+            echo "Re-run this job once the anchor is live." >&2
+            exit 1
           fi
           ;;
       esac
