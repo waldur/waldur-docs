@@ -13,7 +13,7 @@
         <link rel="prev" href="../rancher/">
       
       
-        <link rel="next" href="../slurm/">
+        <link rel="next" href="manual-testing-guide/">
       
       
         
@@ -6113,6 +6113,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="manual-testing-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual testing guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -18532,7 +18560,14 @@ credential / connectivity issues early.</p>
 <span class="normal">41</span>
 <span class="normal">42</span>
 <span class="normal">43</span>
-<span class="normal">44</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"my-rancher-offering"</span>
 
 <span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur.example.com/api/"</span>
@@ -18543,7 +18578,14 @@ credential / connectivity issues early.</p>
 <span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"rancher-kc-crd"</span>
 
 <span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
-<span class="w">      </span><span class="c1"># SDK client (the plugin builds its own AuthenticatedClient).</span>
+<span class="w">      </span><span class="c1"># Repeats the top-level waldur_api_url/waldur_api_token on purpose.</span>
+<span class="w">      </span><span class="c1"># This plugin fetches ResourceProjects and UserRoles directly from</span>
+<span class="w">      </span><span class="c1"># Waldur inside pull_resource, but backends aren't handed the</span>
+<span class="w">      </span><span class="c1"># framework's own Waldur client -- that's deliberately scoped to</span>
+<span class="w">      </span><span class="c1"># the processor, not backends in general. So the plugin builds its</span>
+<span class="w">      </span><span class="c1"># own AuthenticatedClient from these settings instead. Most other</span>
+<span class="w">      </span><span class="c1"># backends don't need this because they don't talk to the Waldur</span>
+<span class="w">      </span><span class="c1"># API themselves.</span>
 <span class="w">      </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur.example.com/api/"</span>
 <span class="w">      </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"${WALDUR_API_TOKEN}"</span>
 <span class="w">      </span><span class="nt">waldur_verify_ssl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
@@ -18642,6 +18684,9 @@ a member yet. They become a member on the next reconcile after the
 user appears in Keycloak (e.g. their first OIDC login).</p>
 <hr>
 <h2 id="configuration-reference">Configuration reference</h2>
+<p><code>waldur_api_url</code>/<code>waldur_api_token</code> below intentionally repeat the
+offering's top-level fields of the same name — see the setup example
+above for why.</p>
 <table>
 <thead>
 <tr>
