@@ -1,5 +1,27 @@
 # Changelog
 
+## 8.1.3-rc.1 - 2026-08-17
+
+### Highlights
+
+This release candidate focuses on the Waldur Helm chart, making encrypted-field configuration a first-class deployment setting and improving the reliability of metrics monitoring. Operators can now supply the mastermind field-encryption key directly through chart values instead of managing it out of band, and the Prometheus exporter is monitored through dedicated health endpoints so restarts and readiness are reported accurately.
+
+### Improvements
+
+- The mastermind field encryption key (`FIELD_ENCRYPTION_KEY`) can now be configured through Helm chart values and is delivered to mastermind pods via a managed secret, with accompanying documentation and chart tests.
+- The Prometheus metrics exporter now uses dedicated `healthz` endpoints for its liveness and readiness probes, giving more accurate health reporting in Kubernetes.
+- The chart's default target Waldur version was updated.
+
+### Bug Fixes
+
+- Fixed the Helm chart release pipeline so version tags are pushed correctly when the job runs from a detached HEAD.
+
+### Core Component Activity
+
+- **Waldur Helm**: [5 commits](https://github.com/waldur/waldur-helm/compare/8.1.1-rc.1...8.1.3-rc.1) - field encryption key wiring, Prometheus exporter health probes, and release pipeline fixes.
+
+---
+
 ## 8.1.1-rc.1 - 2026-08-17
 
 ### Highlights
