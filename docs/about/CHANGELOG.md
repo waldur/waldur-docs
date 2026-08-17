@@ -1,5 +1,38 @@
 # Changelog
 
+## 8.1.1-rc.1 - 2026-08-17
+
+### Highlights
+
+This release candidate focuses on making OpenStack network port handling and role assignments behave predictably. Pinned IP addresses now actually take effect when ports are updated, failures to reclaim an address come with an explanation instead of an opaque error, and duplicate role assignment requests get a clear conflict response rather than silently proceeding. On the frontend, order approval and review screens are easier to work through, and the first groundwork for the new design system has landed.
+
+### What's New
+
+- Added a credit scenarios demo preset for the project dashboard, so credit history can be showcased with realistic data.
+- Added a full-screen toggle to the confirmation drawer for reviewing pending consumer and provider orders in a larger view.
+
+### Improvements
+
+- Approve and reject dialogs for provider orders now clearly identify which order is being acted on.
+- The Orders table hides low-signal columns by default, making the list easier to scan.
+- Confirmation drawer rows stay on a single line, keeping long lists readable.
+- Groundwork for the upcoming Tailwind/shadcn UI migration: shared design tokens and a first reusable button component, with no visible change to the current interface.
+- Removed leftover configuration for the retired legacy SLURM plugin from the Helm chart.
+
+### Bug Fixes
+
+- A changed pinned IP address is now correctly applied when updating instance ports.
+- Restored validation of the target tenant in OpenStack role assignments, and duplicate assignment requests now return a proper 409 conflict.
+- When a port address cannot be reclaimed, the reason is now reported instead of a generic failure.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [4 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.2...8.1.1-rc.1) - OpenStack port and RBAC fixes, plus a credit scenarios demo preset.
+- **Waldur Homeport**: [4 commits](https://github.com/waldur/waldur-homeport/compare/8.1.2...8.1.1-rc.1) - Order review and approval usability work, and design system foundations.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.2...8.1.1-rc.1) - Dropped configuration for the removed legacy SLURM plugin.
+
+---
+
 ## 8.1.2 - 2026-08-15
 
 ### Highlights
