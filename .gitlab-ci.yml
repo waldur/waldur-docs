@@ -120,6 +120,51 @@ Scan Python dependencies:
   # Generate llms-full.txt for LLM-friendly documentation access
   - python scripts/generate-llms-txt.py
 
+# The OIDC explainer is a Vite app whose build output is deliberately not
+# committed: the bundle is ~1 MB and would churn git history on every content
+# edit. It is built here and handed to the mkdocs jobs as an artifact, so the
+# Python images stay free of a Node toolchain.
+Build OIDC explainer:
+  image: registry.hpc.ut.ee/mirror/library/node:22
+  stage: test
+  interruptible: true
+  rules:
+    - if: '$BUILD_SDK == "true"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+  cache:
+    key:
+      files:
+        - oidc-explainer/package-lock.json
+    paths:
+      - oidc-explainer/node_modules/
+  script:
+    - cd oidc-explainer
+    - npm ci
+    # Fail the pipeline if the explainer cites a symbol that no longer exists in
+    # the product repos. Sparse shallow clones of just the referenced trees keep
+    # this to a few seconds and ~40 MB.
+    #
+    # Cloned from the public GitHub mirrors rather than the internal GitLab for
+    # two reasons: the page's code links point there, so this verifies exactly
+    # what a reader will click, and no token is involved, so the check is strict
+    # on every pipeline including forks instead of quietly degrading.
+    - |
+      BASE="https://github.com/waldur"
+      git clone --depth 1 --filter=blob:none --sparse --branch develop "$BASE/waldur-mastermind.git" /tmp/mm
+      git -C /tmp/mm sparse-checkout set src/waldur_auth_social src/waldur_core/core src/waldur_core/server
+      git clone --depth 1 --filter=blob:none --sparse --branch develop "$BASE/waldur-homeport.git" /tmp/hp
+      git -C /tmp/hp sparse-checkout set src/auth packages/auth-core
+      export WALDUR_MASTERMIND_PATH=/tmp/mm WALDUR_HOMEPORT_PATH=/tmp/hp WALDUR_REFS_STRICT=1
+      npm run check-refs
+    - npm run build
+  artifacts:
+    paths:
+      - docs/developer-guide/oidc-explainer/app
+    expire_in: 1 week
+
 Test mkdocs:
   image: registry.hpc.ut.ee/mirror/library/python:3.13
   stage: test
@@ -131,6 +176,9 @@ Test mkdocs:
       when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "master"'
+  needs:
+    - job: "Build OIDC explainer"
+      artifacts: true
   variables:
     UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
   cache:
@@ -398,6 +446,8 @@ Deploy MkDocs pages:
   needs:
     - job: "Generate consolidated changelog"
       optional: true
+    - job: "Build OIDC explainer"
+      artifacts: true
   script:
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then

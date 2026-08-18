@@ -8,3 +8,6 @@
 | [Keycloak](./keycloak.md) | OIDC | Open-source identity management server |
 | [LDAP](./LDAP.md) | LDAP/S | Support of identity servers over LDAP protocol |
 | [TARA](./TARA.md) | OIDC | Estonian State Autentication service |
+
+For what an OIDC login does step by step, see the interactive
+[OIDC login flow](../../developer-guide/oidc-explainer.md) walkthrough.
