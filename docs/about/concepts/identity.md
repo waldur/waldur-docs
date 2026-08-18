@@ -69,3 +69,4 @@ Per-provider setup lives in [admin-guide / identities](../../admin-guide/identit
 
 - [Platform](platform.md) — what a Waldur user looks like once authenticated.
 - [Roles and permissions](../terminology/roles_and_permissions.md) — what role mapping resolves to.
+- [OIDC login flow, step by step](../../developer-guide/oidc-explainer.md) — an interactive walkthrough of what actually happens on an OIDC login.
