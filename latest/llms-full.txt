@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-19T17:27:35.721924Z
+Generated: 2026-08-19T19:52:34.891747Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -921,6 +921,8 @@ To use external PostgreSQL, set the following variables in `values.yaml`:
 4. `externalDB.database` - custom database name (optional, defaults to "waldur")
 
 5. `externalDB.username` - custom username (optional, defaults to "waldur")
+
+6. `externalDB.disableServerSideCursors` - set to `"true"` when the external Postgres sits behind a connection pooler running in transaction-pooling mode (e.g. the Zalando Postgres Operator's built-in PgBouncer sidecar, `enableConnectionPooler: true`). Named server-side cursors opened by Django's `QuerySet.iterator()` can be routed to a different backend between `DECLARE` and `FETCH`/`CLOSE` under transaction pooling, raising `psycopg.errors.InvalidCursorName`. Defaults to `"false"`. `postgresqlha` (pgpool) always pools connections, so it forces this on regardless of this setting.
 
 ## CloudNativePG Integration Example
 
@@ -11101,6 +11103,77 @@ A notification sent out when a role is granted. The recipient is the user who re
 
 ## WALDUR_CORE.USERS
 
+### users.call_invitation_created
+
+Sent to a user invited to a call for proposals so they can accept the invitation.
+
+#### Templates
+
+=== "users/call_invitation_created_subject.txt"
+
+```txt
+
+    {% if reminder %}
+    REMINDER: Invitation to the call "{{ name }}"
+    {% else %}
+    Invitation to the call "{{ name }}"
+    {% endif %}
+
+```
+
+=== "users/call_invitation_created_message.txt"
+
+```txt
+
+    Hello!
+
+    {{ sender }} has invited you to take part in the call for proposals "{{ name }}"{% if organizer_name %} organised by {{ organizer_name }}{% endif %} as {{ role }}.
+
+    Please visit the link below to sign up and accept your invitation:
+    {{ link }}
+
+    Please note: this invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}!
+    {% if scope_link %}
+    Once you have accepted it, the call is available at:
+    {{ scope_link }}
+    {% endif %}
+    {{ extra_invitation_text }}
+
+```
+
+=== "users/call_invitation_created_message.html"
+
+```txt
+
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Invitation to the call "{{ name }}"</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        {{ sender }} has invited you to take part in the call for proposals
+        "<strong>{{ name }}</strong>"{% if organizer_name %} organised by {{ organizer_name }}{% endif %}
+        as {{ role }}.<br>
+        Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
+        Please note: this invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}!
+    </p>
+    {% if scope_link %}
+    <p>
+        Once you have accepted it, the call is available <a href="{{ scope_link }}">here</a>.
+    </p>
+    {% endif %}
+    <p>
+        {{ extra_invitation_text }}
+    </p>
+    </body>
+    </html>
+
+```
+
 ### users.invitation_approved
 
 Sent to a new user after their invitation is approved and a new account is created for them.
@@ -11550,6 +11623,80 @@ Sent about a submitted permission request to the organization owners and manager
     </p>
     <p>
       Please visit the <a href="{{ requests_link }}">link</a> to approve or reject permission request.
+    </p>
+    </body>
+    </html>
+
+```
+
+### users.proposal_invitation_created
+
+Sent to a user invited to a proposal team so they can accept the invitation.
+
+#### Templates
+
+=== "users/proposal_invitation_created_subject.txt"
+
+```txt
+
+    {% if reminder %}
+    REMINDER: Invitation to the proposal "{{ name }}"
+    {% else %}
+    Invitation to the proposal "{{ name }}"
+    {% endif %}
+
+```
+
+=== "users/proposal_invitation_created_message.txt"
+
+```txt
+
+    Hello!
+
+    {{ sender }} has invited you to join the team of the proposal "{{ name }}"{% if call_name %} submitted to the call for proposals "{{ call_name }}"{% endif %} as {{ role }}.
+    {% if round_cutoff_time %}
+    The submission deadline of the round is {{ round_cutoff_time|date:'d.m.Y H:i' }}.
+    {% endif %}
+    Please visit the link below to sign up and accept your invitation:
+    {{ link }}
+
+    Please note: this invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}!
+    {% if scope_link %}
+    Once you have accepted it, the proposal is available at:
+    {{ scope_link }}
+    {% endif %}
+    {{ extra_invitation_text }}
+
+```
+
+=== "users/proposal_invitation_created_message.html"
+
+```txt
+
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Invitation to the proposal "{{ name }}"</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        {{ sender }} has invited you to join the team of the proposal
+        "<strong>{{ name }}</strong>"{% if call_name %} submitted to the call for proposals
+        "{{ call_name }}"{% endif %} as {{ role }}.<br>
+        {% if round_cutoff_time %}The submission deadline of the round is {{ round_cutoff_time|date:'d.m.Y H:i' }}.<br>{% endif %}
+        Please visit <a href="{{ link }}">this page</a> to sign up and accept your invitation.
+        Please note: this invitation expires at {{ invitation.get_expiration_time|date:'d.m.Y H:i' }}!
+    </p>
+    {% if scope_link %}
+    <p>
+        Once you have accepted it, the proposal is available <a href="{{ scope_link }}">here</a>.
+    </p>
+    {% endif %}
+    <p>
+        {{ extra_invitation_text }}
     </p>
     </body>
     </html>
@@ -71910,7 +72057,12 @@ organization owners can distribute allocated credits to projects. Projects can u
 overused resources are invoiced according to the pricing plan. Organization owners can use credit management together
 with the [cost and usage policies](cost-and-usage-policies.md) to handle overconsumption.
 
-To see current credit management policies, open the organization dashboard and then Accounting -> Credit management from the top menu.
+To see current credit management policies, open the organization dashboard and then
+**Accounting → Credit management**.
+
+!!! note
+    The **Credit management** entry only appears once staff have assigned a credit to the
+    organization. If you do not see it, no credit has been granted yet.
 
 [Image: Customer credit policies]
 
@@ -72994,9 +73146,12 @@ clean `25 instances` boxes — not 100 separate instance nodes.
 
 ## Usage of a resources
 
-To see overall usage information of resources, please select "Reporting" from the left-side menu and then "Usage reports" on the top menu.
+To see overall usage information of resources, open **Reporting → Resources → Usage**.
 
-It is possible to filter te results by organization, project, offering and export results.
+It is possible to filter the results by organization, project and offering, and to export them.
+The **Resources** tab carries a number of sibling views alongside **Usage** — among them **Usage by
+user**, **Usage trends**, **Quotas** and **Usage monitoring**, which flags missing or anomalous
+usage reports.
 
    [Image: Usage reports]
 
@@ -73011,7 +73166,7 @@ To view the usage information within a project:
 2. Select the private cloud resource that usage report you would like to see.
 
 3. Now private cloud resource dashboard provides the overview of limits and used quotas.
-   [Image: Private cloud) usage]
+   [Image: Private cloud usage]
 
 ### HPC
 
@@ -73128,58 +73283,68 @@ The AI Assistant is available as a chat sidebar. Click the assistant icon in the
 
 ---
 
-### Interface Introduction
+### Interface introduction
 <!-- Source: docs/user-guide/end-users/interface.md -->
 
-# Interface Introduction
+# Interface introduction
 
-## Basics
+This page is a tour of the Waldur interface: what each part of the screen is for, and where to
+find the things you will use most often.
 
-### Dashboard
+## The main screen
 
-- It is the first page you see (by default) after logging in to Waldur, which provides you with the initial necessary information of your profile, the Organizations and the Projects.
+After signing in you land on your **user dashboard** — a summary of your profile, the resources
+you can reach and the roles you hold.
 
-### Organization / Project selection
+[Image: User dashboard]
 
-- You can see the information about the organization only If you are at the organization level. It means if you are only at the project level, you can not go to the organization level.
+Three areas make up every page:
 
-### Sidebar menu
+- **Sidebar** (left) — your main working tool. **Organizations** and **Projects** list the ones
+  you belong to, **Resources** filters everything you have access to, and **Reporting**,
+  **Marketplace**, **Support** and **Administration** appear according to your role.
+  **Add resource** at the top starts an order.
+- **Top bar** — search (`⌘K` or `Ctrl+K`), the support drawer, pending tasks, and your user menu.
+- **Workspace** — the page content itself, with its own menu of tabs just underneath the title.
 
-- This is your main working tool in Waldur. Here you can manage your organizations, projects and resources. The next chapter of this guide will provide the details for each menu item.
+## Organization and project workspaces
 
-### Workspace menu (changes depending on sidebar menu)
+Selecting an organization or a project switches the workspace to it. The tabs under the name are
+scoped to that object — for an organization: its dashboard, projects, resources, team, accounting
+and policies.
 
-- Each page in Waldur has a navigation bar at the top of the screen. It enables a quick access to organization/project info and management.
+[Image: Organization workspace]
 
-### Workspace
+!!! note
+    Which tabs you see depends on your role. Organization-level tabs are only available if you
+    hold a role in that organization; a project member sees the project workspace instead.
 
-- Shows organization, project or user dashboards related to the selection.
+## User menu
 
-### User related actions
+Click your name in the top-right corner to open the user menu.
 
-- Contains all necessary action fields a user might need.
+[Image: User menu]
 
-#### Issues
+| Entry | What it is for |
+|-------|----------------|
+| **User dashboard** | Your profile, resources and roles |
+| **Credentials** | Password, SSH keys and personal access tokens |
+| **Resource requests** | Resources you have requested |
+| **My proposals** | Proposals you have submitted to calls |
+| **Permission requests** | Requests to join an organization or project |
+| **Audit logs** | A record of your own actions |
+| **Language**, **Dark theme** | Interface language and colour mode |
+| **API token** | Your token for the REST API, with a copy button |
 
-- Displays the list of user related issues. Here by Creating request you can request support.
+## Getting help
 
-#### Favorite Pages
+The speech-bubble icon in the top bar opens the **Support** drawer: your requests, their status,
+and a **Create** button for raising a new one — without leaving the page you are on.
 
-- The opportunity to gather the most visited pages to make them easily reachable.
+[Image: Support drawer]
 
-#### Pending confirmations
-
-- Contains the list of requests related to user, resources or project management.
-
-#### User Profile
-
-- The main links related to the user actions like User Dashboard, Affiliations, Credentials, Notifications, Language and Color mode of the interface.
-
-### Get help
-
-- By clicking Support you can find User Documentation, or reach us by using support email address and also create support request by going to "Issues" window.
-
-[Image: type:video]
+The bell icon beside it opens **Pending tasks**, listing the confirmations waiting on you — orders
+to approve, invitations to accept, requests to review. It is empty when there is nothing to act on.
 
 ---
 
@@ -75267,7 +75432,7 @@ Currently, there are three types of announcements:
 
 ## Announcement management
 
-1. Navigate to **Administration** → **Settings** → **Announcements**.
+Open **Support → Communication → Announcements**.
 
 [Image: List of announcements]
 
@@ -75472,10 +75637,7 @@ The broadcast functionality allows you to send messages to specific groups of us
 
 ## Management of broadcast messages
 
-To manage broadcast messages, follow these steps:
-
-* Select **Support** from the left-side menu.
-* Click **Broadcast** in the top menu.
+Open **Support → Communication → Broadcast**.
 
 The Broadcast Management page shows both sent messages and drafts. From here, you can view message history and create new broadcasts.
 
@@ -75483,9 +75645,9 @@ The Broadcast Management page shows both sent messages and drafts. From here, yo
 
 You can create broadcast message templates, which is useful for sending certain types of messages frequently (e.g., maintenance announcements).
 
-To create a new template:
+Templates are managed separately from the broadcasts themselves. To create one:
 
-* Navigate to **Support** → **Broadcast templates**.
+* Open **Administration → User interface → Broadcast templates**.
 * Click **Add**.
 
 A popup will appear with the following fields:
@@ -75500,7 +75662,7 @@ A popup will appear with the following fields:
 
 To create a new broadcast message:
 
-* Navigate to **Support** → **Broadcast**.
+* Open **Support → Communication → Broadcast**.
 * Click **Add**.
 
 A popup will appear with the following fields:
@@ -75524,7 +75686,7 @@ In this step, you can define the target users for the broadcast message:
 * Specific organization(s) members
 * All users connected to your Waldur deployment
 
-Once you're ready, click **Send broadcast**.
+Once you're ready, click **Send now** — or **Save as draft** to finish it later.
 
 [Image: New broadcast]
 
@@ -75539,19 +75701,17 @@ This guide explains how to enable and use the Catalogue mode in Waldur. This fea
 
 ## Enabling Catalogue mode
 
-### Step 1: Access Administration settings
+### Step 1: Open the feature settings
 
-Navigate to the Administration section in Waldur.
+Open **Administration → User interface → Features**.
 
 [Image: Administration Navigation]
 
-### Step 2: Configure features
+### Step 2: Enable the feature
 
-1. Select Settings from the menu
-2. Locate the Features selection
-3. Find the "Marketplace offerings and resources" section
-4. Look for "Allow marketplace to function as a catalogue only"
-5. Toggle the switch to enable the feature
+1. Select the **Marketplace offerings and resources** tab.
+2. Find **Allow marketplace to function as a catalogue only**.
+3. Toggle the switch on and click **Save**.
 
 [Image: Catalogue Mode Setting]
 
@@ -75676,7 +75836,7 @@ Waldur provides Impersonation functionality to allow the support team to debug a
 ## Process guide
 
 1. Log in to the Waldur deployment using a staff account.
-2. Navigate to the Administration menu, then go to Accounts → Users from the top menu.
+2. Open **Support → User management → Users**.
 
     [Image: Impersionation]
 
@@ -76594,10 +76754,7 @@ This guide will help you navigate and effectively use the support system to mana
 
 ## Accessing the service desk support tickets
 
-To view service desk support tickets:
-
-1. Select **Support** from the left-hand menu.
-2. Click **Requests** from the top menu.
+Open **Support → Communication → Support requests**.
 
 A page will open displaying all created tickets. You can view:
 
@@ -76628,8 +76785,9 @@ On this page, you can:
 ### New user already has account in current Waldur instance
 
 1. Open the organization in Waldur.
-2. Select "Team" from the menu and click on "Users".
-3. By clicking "Add member" open "Add organization member" window.<br><br>
+2. Select **Team** from the menu. The organization's members are listed under the **Active**
+   tab, alongside **Invitations** and **Group invitations**.
+3. Click **Add** and choose **Member** to open the **Add member** dialog.<br><br>
 
     [Image: Select organization]<br><br>
 
@@ -76637,7 +76795,7 @@ On this page, you can:
 
     [Image: Select organization]<br><br>
 
-5. Finally, click on "Add".
+5. Finally, click **Add role**.
 6. User now will be added to the organization.<br><br>
 
 ---
@@ -76653,9 +76811,7 @@ Staff users can manage user roles through the platform's role management interfa
 
 ## Accessing role management
 
-1. Navigate to **Administration** in the main menu
-2. Select **Settings**
-3. Click on **User roles**
+Open **Administration → Configuration → User roles**.
 
 [Image: User role management]
 
@@ -76684,7 +76840,7 @@ For each role, administrators can:
 
 ## Creating new roles
 
-1. Click **Add new role**
+1. Click **Add**
 2. Complete the required fields:
     - **Name** - Descriptive title for the role
     - **Type** - Select role context
