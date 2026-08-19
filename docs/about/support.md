@@ -4,7 +4,7 @@ Waldur is an open-source project co-developed by [OpenNode](https://opennodeclou
 
 ## Support and sponsored development
 
-OpenNode provides several [options for support](https://waldur.com/pricing/) with varying SLAs.
+OpenNode provides several [options for support](https://waldur.com/services) with varying SLAs.
 
 If you would like to know more, [reach out](mailto:info@opennodecloud.com)!
 

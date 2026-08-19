@@ -5,7 +5,9 @@ Waldur keeps state in 2 components:
 - Database - main persistency layer.
 - Message queue - contains transient data mostly about scheduled jobs and cache.
 
-Of these, only database needs to be backed up.
+Of these, only the database needs to be backed up. Uploaded files — organization logos,
+attachments and the like — are stored in the database too
+(`waldur_core.media.storage.DatabaseStorage`), so a database dump captures them as well.
 
 A typical approach to a backup is:
 
@@ -35,8 +37,10 @@ Using rsync / scp or more specialised tools.
 
 ## 3. Restore the created backup
 
+The dumps above are gzipped, so decompress them on the way in:
+
 ```bash
-cat waldur-backup.sql | docker exec -i waldur-db psql -U waldur
+zcat waldur-20260819T101500.sql.gz | docker exec -i waldur-db psql -U waldur waldur
 ```
 
 We suggest to make sure that backups are running regularly, e.g. using cron.
