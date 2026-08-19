@@ -1,5 +1,42 @@
 # Changelog
 
+## 8.1.3-rc.2 - 2026-08-19
+
+### Highlights
+
+This release hardens how Waldur stores provider credentials: offering secret options and service settings credentials are now encrypted at rest, with a management command to rotate keys and audit-log scrubbing so secrets no longer leak into webhooks or revision history. Project managers gain finer control over what appears on project dashboards, and cost policies now report the evaluated cost directly instead of forcing clients to recompute it. Order handling in the web interface has been reworked around an in-drawer preview, making it faster to review and act on pending orders without leaving the page.
+
+### What's New
+
+- Offering secret options and service settings credentials are now encrypted at rest, with a `reencrypt_fields` management command for key rotation and scrubbing of previously stored plaintext from revision history and webhook logs. Deployment guidance for the encryption key has been corrected in both the Helm chart and Docker Compose setups.
+- Projects can now opt in or out of credit and usage dashboard reports individually, with the toggle available in project settings and the dashboard respecting the flag.
+- Cost policies expose the cost they evaluate as a dedicated field, so dashboards and integrations no longer have to derive it themselves.
+- The historical usage rebilling command now previews the impact of cost policies before changes are applied.
+- Provider resource lists show project and resource end dates in the detail view.
+
+### Improvements
+
+- Pending orders can be previewed directly in the confirmation drawer instead of navigating away to the order page; bulk approve and reject actions were removed from the drawer in favour of per-order review.
+- The orders table now surfaces the provider and customer message exchange, and order pages link back to the provider Orders table.
+- Approve and reject dialogs have a tighter layout, and order details load concurrently for faster page opens.
+- Conflict-of-interest settings prevent the same conflict type from being used in more than one rule.
+- Organization country mapping now uses the `org_reg_country` OIDC claim.
+- The legacy SLURM module has been removed; existing SLURM offerings are archived and their resources terminated during migration.
+- Dependency update: `sqlparse` bumped to 0.6.0 to address two known vulnerabilities.
+
+### Bug Fixes
+
+- Corrected focus-ring colour tokens and a width regression on the new Tailwind-based buttons.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [11 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.1...8.1.3-rc.2) - field encryption for secrets, SLURM module removal, cost policy reporting, per-project report opt-in
+- **Waldur Homeport**: [13 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.1...8.1.3-rc.2) - order review workflow rework, dashboard report gating, button styling fixes
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.1...8.1.3-rc.2) - corrected field encryption key guidance
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.1...8.1.3-rc.2) - corrected field encryption key guidance
+
+---
+
 ## 8.1.3-rc.1 - 2026-08-17
 
 ### Highlights
