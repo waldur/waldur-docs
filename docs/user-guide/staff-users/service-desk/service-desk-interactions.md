@@ -4,10 +4,7 @@ This guide will help you navigate and effectively use the support system to mana
 
 ## Accessing the service desk support tickets
 
-To view service desk support tickets:
-
-1. Select **Support** from the left-hand menu.
-2. Click **Requests** from the top menu.
+Open **Support → Communication → Support requests**.
 
 A page will open displaying all created tickets. You can view:
 

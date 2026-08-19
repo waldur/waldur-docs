@@ -8,10 +8,7 @@ The broadcast functionality allows you to send messages to specific groups of us
 
 ## Management of broadcast messages
 
-To manage broadcast messages, follow these steps:
-
-* Select **Support** from the left-side menu.
-* Click **Broadcast** in the top menu.
+Open **Support → Communication → Broadcast**.
 
 The Broadcast Management page shows both sent messages and drafts. From here, you can view message history and create new broadcasts.
 
@@ -19,9 +16,9 @@ The Broadcast Management page shows both sent messages and drafts. From here, yo
 
 You can create broadcast message templates, which is useful for sending certain types of messages frequently (e.g., maintenance announcements).
 
-To create a new template:
+Templates are managed separately from the broadcasts themselves. To create one:
 
-* Navigate to **Support** → **Broadcast templates**.
+* Open **Administration → User interface → Broadcast templates**.
 * Click **Add**.
 
 A popup will appear with the following fields:
@@ -36,7 +33,7 @@ A popup will appear with the following fields:
 
 To create a new broadcast message:
 
-* Navigate to **Support** → **Broadcast**.
+* Open **Support → Communication → Broadcast**.
 * Click **Add**.
 
 A popup will appear with the following fields:
@@ -60,6 +57,6 @@ In this step, you can define the target users for the broadcast message:
 * Specific organization(s) members
 * All users connected to your Waldur deployment
 
-Once you're ready, click **Send broadcast**.
+Once you're ready, click **Send now** — or **Save as draft** to finish it later.
 
 ![New broadcast](../img/Broadcast_new2.png)

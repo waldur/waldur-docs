@@ -4,19 +4,17 @@ This guide explains how to enable and use the Catalogue mode in Waldur. This fea
 
 ## Enabling Catalogue mode
 
-### Step 1: Access Administration settings
+### Step 1: Open the feature settings
 
-Navigate to the Administration section in Waldur.
+Open **Administration → User interface → Features**.
 
 ![Administration Navigation](../img/catalogue-mode-admin.png)
 
-### Step 2: Configure features
+### Step 2: Enable the feature
 
-1. Select Settings from the menu
-2. Locate the Features selection
-3. Find the "Marketplace offerings and resources" section
-4. Look for "Allow marketplace to function as a catalogue only"
-5. Toggle the switch to enable the feature
+1. Select the **Marketplace offerings and resources** tab.
+2. Find **Allow marketplace to function as a catalogue only**.
+3. Toggle the switch on and click **Save**.
 
 ![Catalogue Mode Setting](../img/catalogue-mode-setting.png)
 

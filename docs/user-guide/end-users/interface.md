@@ -1,49 +1,59 @@
-# Interface Introduction
+# Interface introduction
 
-## Basics
+This page is a tour of the Waldur interface: what each part of the screen is for, and where to
+find the things you will use most often.
 
-### Dashboard
+## The main screen
 
-- It is the first page you see (by default) after logging in to Waldur, which provides you with the initial necessary information of your profile, the Organizations and the Projects.
+After signing in you land on your **user dashboard** — a summary of your profile, the resources
+you can reach and the roles you hold.
 
-### Organization / Project selection
+![User dashboard](../img/interface-user-dashboard.png)
 
-- You can see the information about the organization only If you are at the organization level. It means if you are only at the project level, you can not go to the organization level.
+Three areas make up every page:
 
-### Sidebar menu
+- **Sidebar** (left) — your main working tool. **Organizations** and **Projects** list the ones
+  you belong to, **Resources** filters everything you have access to, and **Reporting**,
+  **Marketplace**, **Support** and **Administration** appear according to your role.
+  **Add resource** at the top starts an order.
+- **Top bar** — search (`⌘K` or `Ctrl+K`), the support drawer, pending tasks, and your user menu.
+- **Workspace** — the page content itself, with its own menu of tabs just underneath the title.
 
-- This is your main working tool in Waldur. Here you can manage your organizations, projects and resources. The next chapter of this guide will provide the details for each menu item.
+## Organization and project workspaces
 
-### Workspace menu (changes depending on sidebar menu)
+Selecting an organization or a project switches the workspace to it. The tabs under the name are
+scoped to that object — for an organization: its dashboard, projects, resources, team, accounting
+and policies.
 
-- Each page in Waldur has a navigation bar at the top of the screen. It enables a quick access to organization/project info and management.
+![Organization workspace](../img/interface-organization-workspace.png)
 
-### Workspace
+!!! note
+    Which tabs you see depends on your role. Organization-level tabs are only available if you
+    hold a role in that organization; a project member sees the project workspace instead.
 
-- Shows organization, project or user dashboards related to the selection.
+## User menu
 
-### User related actions
+Click your name in the top-right corner to open the user menu.
 
-- Contains all necessary action fields a user might need.
+![User menu](../img/interface-user-menu.png)
 
-#### Issues
+| Entry | What it is for |
+|-------|----------------|
+| **User dashboard** | Your profile, resources and roles |
+| **Credentials** | Password, SSH keys and personal access tokens |
+| **Resource requests** | Resources you have requested |
+| **My proposals** | Proposals you have submitted to calls |
+| **Permission requests** | Requests to join an organization or project |
+| **Audit logs** | A record of your own actions |
+| **Language**, **Dark theme** | Interface language and colour mode |
+| **API token** | Your token for the REST API, with a copy button |
 
-- Displays the list of user related issues. Here by Creating request you can request support.
+## Getting help
 
-#### Favorite Pages
+The speech-bubble icon in the top bar opens the **Support** drawer: your requests, their status,
+and a **Create** button for raising a new one — without leaving the page you are on.
 
-- The opportunity to gather the most visited pages to make them easily reachable.
+![Support drawer](../img/interface-support-drawer.png)
 
-#### Pending confirmations
-
-- Contains the list of requests related to user, resources or project management.
-
-#### User Profile
-
-- The main links related to the user actions like User Dashboard, Affiliations, Credentials, Notifications, Language and Color mode of the interface.
-
-### Get help
-
-- By clicking Support you can find User Documentation, or reach us by using support email address and also create support request by going to "Issues" window.
-
-![type:video](../img/interface_basics.mp4)
+The bell icon beside it opens **Pending tasks**, listing the confirmations waiting on you — orders
+to approve, invitations to accept, requests to review. It is empty when there is nothing to act on.

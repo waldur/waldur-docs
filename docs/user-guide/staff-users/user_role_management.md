@@ -6,9 +6,7 @@ Staff users can manage user roles through the platform's role management interfa
 
 ## Accessing role management
 
-1. Navigate to **Administration** in the main menu
-2. Select **Settings**
-3. Click on **User roles**
+Open **Administration → Configuration → User roles**.
 
 ![User role management](../img/user_role_management.png)
 
@@ -37,7 +35,7 @@ For each role, administrators can:
 
 ## Creating new roles
 
-1. Click **Add new role**
+1. Click **Add**
 2. Complete the required fields:
     - **Name** - Descriptive title for the role
     - **Type** - Select role context

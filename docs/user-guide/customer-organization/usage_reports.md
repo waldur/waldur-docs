@@ -2,9 +2,12 @@
 
 ## Usage of a resources
 
-To see overall usage information of resources, please select "Reporting" from the left-side menu and then "Usage reports" on the top menu.
+To see overall usage information of resources, open **Reporting → Resources → Usage**.
 
-It is possible to filter te results by organization, project, offering and export results.
+It is possible to filter the results by organization, project and offering, and to export them.
+The **Resources** tab carries a number of sibling views alongside **Usage** — among them **Usage by
+user**, **Usage trends**, **Quotas** and **Usage monitoring**, which flags missing or anomalous
+usage reports.
 
    ![Usage reports](../img/Usage_filter.png)
 
@@ -19,7 +22,7 @@ To view the usage information within a project:
 2. Select the private cloud resource that usage report you would like to see.
 
 3. Now private cloud resource dashboard provides the overview of limits and used quotas.
-   ![Private cloud) usage](../img/Private_cloud_usage.jpg)
+   ![Private cloud usage](../img/Private_cloud_usage.jpg)
 
 ### HPC
 

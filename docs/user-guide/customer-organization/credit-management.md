@@ -8,7 +8,12 @@ organization owners can distribute allocated credits to projects. Projects can u
 overused resources are invoiced according to the pricing plan. Organization owners can use credit management together
 with the [cost and usage policies](cost-and-usage-policies.md) to handle overconsumption.
 
-To see current credit management policies, open the organization dashboard and then Accounting -> Credit management from the top menu.
+To see current credit management policies, open the organization dashboard and then
+**Accounting → Credit management**.
+
+!!! note
+    The **Credit management** entry only appears once staff have assigned a credit to the
+    organization. If you do not see it, no credit has been granted yet.
 
 ![Customer credit policies](../img/Customer_credit_management_list.png)
 
