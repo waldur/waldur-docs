@@ -4,7 +4,7 @@ Outline:
 
 - [General Configuration](#general-configuration)
   - [Introduction](#introduction)
-  - [Admin dashboard configuration](#admin-dashboard-configuration)
+  - [Quick access links](#quick-access-links)
   - [Custom templates configuration](#custom-templates-configuration)
   - [Local time zone configuration](#local-time-zone-configuration)
 
@@ -12,48 +12,19 @@ Outline:
 
 Waldur is a [Django](https://www.djangoproject.com)-based application, so configuration is done by modifying `settings.py` file.
 
-If you want to configure options related to Django, such as tune caches, database connection, configure custom logging, etc, please refer to [Django documentation](https://docs.djangoproject.com/en/2.2/).
+If you want to configure options related to Django, such as tune caches, database connection, configure custom logging, etc, please refer to [Django documentation](https://docs.djangoproject.com/en/6.0/).
 
 Please consult [configuration guide](configuration-guide.md) to learn more.
 
-## Admin dashboard configuration
+## Quick access links
 
-An admin dashboard supports custom links on Quick access panel. For instance, a panel below was configured with one additional link to **<https://waldur.com>**:
+The **Quick access** panel on the HomePort dashboard can carry custom links to systems outside
+Waldur — a status page, a ticketing system, an institutional wiki.
 
-![admin example](img/admin-example.png)
-
-Configuration of custom links is stored under `FLUENT_DASHBOARD_QUICK_ACCESS_LINKS` settings key and for current example has following structure:
-
-```python
-FLUENT_DASHBOARD_QUICK_ACCESS_LINKS = [
-  {
-   'title': '[Custom] Waldur - Cloud Service',
-   'url': 'https://waldur.com',
-   'external': True, # adds an icon specifying that this link is external,
-   'description': 'Open-source Cloud Brokerage Platform',
-   'attrs': {'target': '_blank'} # add an attribute to generated anchor element which will open link in a new tab.
-  },
-]
-```
-
-Here is a short description of link parameters:
-
-| **Name** | **Type** | **Required** | **Description** |
-| -------- | -------- | ------------ | --------------- |
-| description | string | No | Tool tip on the link |
-| external | boolean | No | Specifies whether additional icon indicating an external URL has to be added |
-|url | URL | Yes | A URL of the link|
-| title | string | Yes | A title of the generated link |
-| attrs | dict | No | A dictionary of anchor attributes to be added to generated element |
-
-It is also possible to omit optional fields and add links by specifying only a title and a URL to the generated link.
-
-```python
-FLUENT_DASHBOARD_QUICK_ACCESS_LINKS = [
-  ['[Custom] Waldur - Cloud Service', 'https://waldur.com'],
-  ['Find us on GitHub', 'https://github.com/opennode/waldur-core'],
-]
-```
+These are managed through the user interface rather than through settings: open
+**Administration → User interface → Navigation shortcuts** and click **Add**. Each shortcut
+takes a name, an optional description, an optional icon and the target URL, and is stored via
+the `/api/external-links/` endpoint.
 
 ## Custom templates configuration
 

@@ -4,9 +4,10 @@
 
 To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
-1. Install [Ansible](https://docs.ansible.com/ansible/2.10/) with version >= 2.10 and ensure python3 is installed.
+1. Install [Ansible](https://docs.ansible.com/ansible/latest/) (2.10 or newer) and ensure python3 is installed.
 
-2. Download this repository
+2. Clone the [waldur/csl-poc](https://github.com/waldur/csl-poc) repository, which carries the
+   `ansible-config/` playbooks and inventory referenced below
 
 3. At least 3 nodes with minimal requirements for Kubernetes nodes
 
@@ -108,14 +109,20 @@ Example of changes in `ansible-config/rke2_vars` file:
 ```yaml
 # Waldur dependency setup
 setup_postgresql: yes # User can skip PostgreSQL setup
-postgresql_version: 11.9.1 # Version of PostgreSQL Helm chart
+postgresql_version: <chart version> # Version of PostgreSQL Helm chart
 
 setup_rabbitmq: no # User can skip RabbitMQ setup
-rabbitmq_version: 10.3.5 # Version of RabbitMQ Helm chart
+rabbitmq_version: <chart version> # Version of RabbitMQ Helm chart
 
-setup_minio: no # User can skip MinIO setup
-minio_version: 11.10.16 # Version of MinIO Helm chart
+setup_minio: no # User can skip MinIO setup (used for PostgreSQL backups)
+minio_version: <chart version> # Version of MinIO Helm chart
 ```
+
+!!! warning
+    Take the chart versions from the `dependencies` block of
+    [`waldur/Chart.yaml`](https://github.com/waldur/waldur-helm/blob/master/waldur/Chart.yaml)
+    in the release you are deploying, rather than pinning them here — a mismatch between the
+    dependency charts and the Waldur chart is a common cause of a failed upgrade.
 
 With this setup, the playbook will update PostgreSQL release only. If the user wants to update RabbitMQ too, they should set `setup_rabbitmq: yes`
 

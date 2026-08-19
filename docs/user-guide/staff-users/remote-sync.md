@@ -43,4 +43,4 @@ To manage existing offering syncs, follow this process:
 
     ![New remote sync](../img/new-remote-sync.png)
 
-4. If remote sync is enable, then local Waldur periodically (once per day) pulls inormation about offerings from the remote instance.
+4. If remote sync is enabled, the local Waldur periodically (once per day) pulls information about offerings from the remote instance.

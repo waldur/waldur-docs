@@ -25,13 +25,15 @@ Instructions below are aimed to provide a basic configuration of Keycloak, pleas
 
 ## Configuring Waldur
 
-1. Make sure `SOCIAL_SIGNUP` is added to the list of available authentication methods:
+Keycloak is configured in the user interface, not in `settings.py`.
 
-    ```python
-    WALDUR_CORE['AUTHENTICATION_METHODS'] = ["LOCAL_SIGNIN", "SOCIAL_SIGNUP"]
-    ```
+1. Open **Administration → Configuration → Identity providers**.
 
- [![Identity providers](img/keycloak-identity-providers.png)](img/keycloak-identity-providers.png)
-3. Open Keycloak identity provider details by clicking on `Edit` menu of Keycloak dropdown menu
- [![HomePort provider details](img/keycloak-homeport.png)](img/keycloak-homeport.png)
-4. Copy `Client ID`, `Client secret` and `Discovery URL`. For extra security, enable SSL, PKCE and post-logout redirect.
+    [![Identity providers](img/keycloak-identity-providers.png)](img/keycloak-identity-providers.png)
+
+2. Open the Keycloak provider details through the `Edit` entry of its dropdown menu.
+
+    [![HomePort provider details](img/keycloak-homeport.png)](img/keycloak-homeport.png)
+
+3. Fill in `Client ID`, `Client secret` and `Discovery URL` from the steps above. For extra
+   security, enable SSL, PKCE and post-logout redirect.

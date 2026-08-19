@@ -6,11 +6,13 @@ As an account, an OfferingUser can have a custom username different from user's 
 
 This feature is available for all offering types.
 
-For Basic, SLURM remote and Custom script offerings, offering-users are created automatically when a user is added to the project with active offering resources or when a new offering resource is created.
+For Basic and Custom script offerings, offering-users are created automatically when a user is added to the project with active offering resources or when a new offering resource is created.
 
 In case of Rancher, offering-users are created when users are imported from a Rancher cluster.
 
-In case of SLURM, offering-users are created when association are imported from a SLURM cluster.
+For SLURM clusters, offering-users are managed by the
+[Waldur site agent](providers/site-agent/index.md), which reconciles them against the
+cluster's own accounts.
 
 ## Defining the OfferingUser management policy
 
