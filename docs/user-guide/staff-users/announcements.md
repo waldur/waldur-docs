@@ -10,7 +10,7 @@ Currently, there are three types of announcements:
 
 ## Announcement management
 
-1. Navigate to **Administration** → **Settings** → **Announcements**.
+Open **Support → Communication → Announcements**.
 
 ![List of announcements](../img/list_of_announcements.png)
 
