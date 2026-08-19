@@ -18143,10 +18143,11 @@
 <p>To install Waldur on top of <a href="https://docs.rke2.io/">RKE2</a> you need to:</p>
 <ol>
 <li>
-<p>Install <a href="https://docs.ansible.com/ansible/2.10/">Ansible</a> with version &gt;= 2.10 and ensure python3 is installed.</p>
+<p>Install <a href="https://docs.ansible.com/ansible/latest/">Ansible</a> (2.10 or newer) and ensure python3 is installed.</p>
 </li>
 <li>
-<p>Download this repository</p>
+<p>Clone the <a href="https://github.com/waldur/csl-poc">waldur/csl-poc</a> repository, which carries the
+   <code>ansible-config/</code> playbooks and inventory referenced below</p>
 </li>
 <li>
 <p>At least 3 nodes with minimal requirements for Kubernetes nodes</p>
@@ -18259,14 +18260,21 @@ ansible-playbook<span class="w"> </span>-D<span class="w"> </span>-i<span class=
 <span class="normal">8</span>
 <span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Waldur dependency setup</span>
 <span class="nt">setup_postgresql</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">yes</span><span class="w"> </span><span class="c1"># User can skip PostgreSQL setup</span>
-<span class="nt">postgresql_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">11.9.1</span><span class="w"> </span><span class="c1"># Version of PostgreSQL Helm chart</span>
+<span class="nt">postgresql_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;chart version&gt;</span><span class="w"> </span><span class="c1"># Version of PostgreSQL Helm chart</span>
 
 <span class="nt">setup_rabbitmq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no</span><span class="w"> </span><span class="c1"># User can skip RabbitMQ setup</span>
-<span class="nt">rabbitmq_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.3.5</span><span class="w"> </span><span class="c1"># Version of RabbitMQ Helm chart</span>
+<span class="nt">rabbitmq_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;chart version&gt;</span><span class="w"> </span><span class="c1"># Version of RabbitMQ Helm chart</span>
 
-<span class="nt">setup_minio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no</span><span class="w"> </span><span class="c1"># User can skip MinIO setup</span>
-<span class="nt">minio_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">11.10.16</span><span class="w"> </span><span class="c1"># Version of MinIO Helm chart</span>
+<span class="nt">setup_minio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no</span><span class="w"> </span><span class="c1"># User can skip MinIO setup (used for PostgreSQL backups)</span>
+<span class="nt">minio_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;chart version&gt;</span><span class="w"> </span><span class="c1"># Version of MinIO Helm chart</span>
 </code></pre></div></td></tr></tbody></table></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Take the chart versions from the <code>dependencies</code> block of
+<a href="https://github.com/waldur/waldur-helm/blob/master/waldur/Chart.yaml"><code>waldur/Chart.yaml</code></a>
+in the release you are deploying, rather than pinning them here — a mismatch between the
+dependency charts and the Waldur chart is a common cause of a failed upgrade.</p>
+</div>
 <p>With this setup, the playbook will update PostgreSQL release only. If the user wants to update RabbitMQ too, they should set <code>setup_rabbitmq: yes</code></p>
 <h2 id="waldur-log-fetching">Waldur log fetching</h2>
 <p>To get logs from Waldur containers, a users needs to connect to one of the RKE2 nodes:</p>

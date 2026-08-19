@@ -17932,7 +17932,9 @@
 <li>Database - main persistency layer.</li>
 <li>Message queue - contains transient data mostly about scheduled jobs and cache.</li>
 </ul>
-<p>Of these, only database needs to be backed up.</p>
+<p>Of these, only the database needs to be backed up. Uploaded files — organization logos,
+attachments and the like — are stored in the database too
+(<code>waldur_core.media.storage.DatabaseStorage</code>), so a database dump captures them as well.</p>
 <p>A typical approach to a backup is:</p>
 <h2 id="1-create-a-db-dump">1. Create a DB dump</h2>
 <ol>
@@ -17953,7 +17955,8 @@
 <h2 id="2-copy-backup-to-a-remote-location">2. Copy backup to a remote location</h2>
 <p>Using rsync / scp or more specialised tools.</p>
 <h2 id="3-restore-the-created-backup">3. Restore the created backup</h2>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>cat<span class="w"> </span>waldur-backup.sql<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>waldur-db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>waldur
+<p>The dumps above are gzipped, so decompress them on the way in:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>zcat<span class="w"> </span>waldur-20260819T101500.sql.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>waldur-db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>waldur<span class="w"> </span>waldur
 </code></pre></div></td></tr></tbody></table></div>
 <p>We suggest to make sure that backups are running regularly, e.g. using cron.</p>
 

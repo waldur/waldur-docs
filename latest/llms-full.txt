@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-19T05:40:22.721707Z
+Generated: 2026-08-19T17:27:35.721924Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -10770,7 +10770,7 @@ Outline:
 
 - [General Configuration](#general-configuration)
   - [Introduction](#introduction)
-  - [Admin dashboard configuration](#admin-dashboard-configuration)
+  - [Quick access links](#quick-access-links)
   - [Custom templates configuration](#custom-templates-configuration)
   - [Local time zone configuration](#local-time-zone-configuration)
 
@@ -10778,48 +10778,19 @@ Outline:
 
 Waldur is a [Django](https://www.djangoproject.com)-based application, so configuration is done by modifying `settings.py` file.
 
-If you want to configure options related to Django, such as tune caches, database connection, configure custom logging, etc, please refer to [Django documentation](https://docs.djangoproject.com/en/2.2/).
+If you want to configure options related to Django, such as tune caches, database connection, configure custom logging, etc, please refer to [Django documentation](https://docs.djangoproject.com/en/6.0/).
 
 Please consult [configuration guide](configuration-guide.md) to learn more.
 
-## Admin dashboard configuration
+## Quick access links
 
-An admin dashboard supports custom links on Quick access panel. For instance, a panel below was configured with one additional link to **<https://waldur.com>**:
+The **Quick access** panel on the HomePort dashboard can carry custom links to systems outside
+Waldur — a status page, a ticketing system, an institutional wiki.
 
-[Image: admin example]
-
-Configuration of custom links is stored under `FLUENT_DASHBOARD_QUICK_ACCESS_LINKS` settings key and for current example has following structure:
-
-```python
-FLUENT_DASHBOARD_QUICK_ACCESS_LINKS = [
-  {
-   'title': '[Custom] Waldur - Cloud Service',
-   'url': 'https://waldur.com',
-   'external': True, # adds an icon specifying that this link is external,
-   'description': 'Open-source Cloud Brokerage Platform',
-   'attrs': {'target': '_blank'} # add an attribute to generated anchor element which will open link in a new tab.
-  },
-]
-```
-
-Here is a short description of link parameters:
-
-| **Name** | **Type** | **Required** | **Description** |
-| -------- | -------- | ------------ | --------------- |
-| description | string | No | Tool tip on the link |
-| external | boolean | No | Specifies whether additional icon indicating an external URL has to be added |
-|url | URL | Yes | A URL of the link|
-| title | string | Yes | A title of the generated link |
-| attrs | dict | No | A dictionary of anchor attributes to be added to generated element |
-
-It is also possible to omit optional fields and add links by specifying only a title and a URL to the generated link.
-
-```python
-FLUENT_DASHBOARD_QUICK_ACCESS_LINKS = [
-  ['[Custom] Waldur - Cloud Service', 'https://waldur.com'],
-  ['Find us on GitHub', 'https://github.com/opennode/waldur-core'],
-]
-```
+These are managed through the user interface rather than through settings: open
+**Administration → User interface → Navigation shortcuts** and click **Add**. Each shortcut
+takes a name, an optional description, an optional icon and the target URL, and is stored via
+the `/api/external-links/` endpoint.
 
 ## Custom templates configuration
 
@@ -21180,7 +21151,7 @@ Discovery is supported: [https://discovery.litnet.lt/simplesaml/module.php/disco
 
 # eduTEAMS
 
-Waldur supports integration with [eduTEAMS](http://keycloak.org/) identity service.
+Waldur supports integration with the [eduTEAMS](https://eduteams.org/) identity service.
 
 To enable it, please [register a new client](https://wiki.geant.org/display/eduTEAMS/Registering+services+on+the+eduTEAMS+Service)
 for Waldur deployment and set configuration settings for eduTEAMS.
@@ -21188,7 +21159,10 @@ Check [configuration guide](../mastermind-configuration/configuration-guide.md) 
 
 ## Fetch user data using CUID of a user
 
-You can use CUID of user in order to fetch user permissions. [This file](../../integrator-guide/APIs/permissions.md) describes how to perform it, you only need to provide CUID as a username.
+A user's CUID is stored as their Waldur username, so you can fetch their permissions by
+filtering on it: `GET /api/user-permissions/?username=<CUID>`. See
+[permissions](../../integrator-guide/APIs/permissions.md) for the response shape and the
+other filters available.
 
 ---
 
@@ -21312,16 +21286,18 @@ Instructions below are aimed to provide a basic configuration of Keycloak, pleas
 
 ## Configuring Waldur
 
-1. Make sure `SOCIAL_SIGNUP` is added to the list of available authentication methods:
+Keycloak is configured in the user interface, not in `settings.py`.
 
-    ```python
-    WALDUR_CORE['AUTHENTICATION_METHODS'] = ["LOCAL_SIGNIN", "SOCIAL_SIGNUP"]
-    ```
+1. Open **Administration → Configuration → Identity providers**.
 
- [[Image: Identity providers]](img/keycloak-identity-providers.png)
-3. Open Keycloak identity provider details by clicking on `Edit` menu of Keycloak dropdown menu
- [[Image: HomePort provider details]](img/keycloak-homeport.png)
-4. Copy `Client ID`, `Client secret` and `Discovery URL`. For extra security, enable SSL, PKCE and post-logout redirect.
+    [[Image: Identity providers]](img/keycloak-identity-providers.png)
+
+2. Open the Keycloak provider details through the `Edit` entry of its dropdown menu.
+
+    [[Image: HomePort provider details]](img/keycloak-homeport.png)
+
+3. Fill in `Client ID`, `Client secret` and `Discovery URL` from the steps above. For extra
+   security, enable SSL, PKCE and post-logout redirect.
 
 ---
 
@@ -41302,115 +41278,111 @@ A page with your API token will open. Click on the eye icon to reveal the token.
 
 # Permissions
 
+A permission in Waldur is a **role granted to a user over a scope**. Roles are named
+`SCOPE.ROLE` — `CUSTOMER.OWNER`, `PROJECT.ADMIN`, `OFFERING.MANAGER` — and every grant,
+whatever its scope, is exposed through a single endpoint: `/api/user-permissions/`.
+
+!!! warning
+    Earlier versions of Waldur exposed one endpoint per scope, `/api/customer-permissions/`
+    and `/api/project-permissions/`, and returned `customer_permissions` / `project_permissions`
+    fields on `/api/users/`. **All of these have been removed.** The endpoints return 404, and
+    requesting the old fields on `/api/users/` still returns 200 with those fields silently
+    absent — so a client written against the old shape fails quietly rather than loudly.
+    Use `/api/user-permissions/` instead.
+
 ## Listing permissions
 
-Entities of Waldur are grouped into *organisational units*. The
-following *organisational units* are supported: customer and project.
-
-Each *organisational unit* has a list of users associated with it.
-Getting a list of users connected to a certain *organisational unit* is
-done through running a GET request against a corresponding endpoint.
-
-- customer: endpoint `/api/customer-permissions/`
-- project: endpoint `/api/project-permissions/`
-
-Filtering by *organisational unit* UUID or URL is supported. Depending
-on the type, filter field is one of:
-
-- `?customer=<UUID>`
-- `?customer_url=<URL>`
-- `?project=<UUID>`
-- `?project_url=<URL>`
-- `?user_url=<URL>`
-
-In addition, filtering by field names is supported. In all cases
-filtering is based on case insensitive partial matching.
-
-- `?username=<username>`
-- `?full_name=<full name>`
-- `?native_name=<native name>`
-
-Ordering can be done by setting an ordering field with
-`?o=<field_name>`. For descending ordering prefix field name with a
-dash (-). Supported field names are:
-
-- `?o=user__username`
-- `?o=user__full_name`
-- `?o=user__native_name`
-
-## Fetch user data from Waldur using username
-
-To fetch user data together with its permissions, you need to perform the following HTTP request.
-It requires `username` filter and valid API token.
-
-```http
-GET /api/users/?username=<USERNAME>&field=uuid&field=customer_permissions&field=project_permissions
+```bash
+GET /api/user-permissions/
 Accept: application/json
 Authorization: Token <API_TOKEN>
-Host: example.com
 ```
 
-Example:
+Each entry describes one grant: who holds it, which role, over which scope, and whether it is
+still active.
+
+| Field | Description |
+|-------|-------------|
+| `uuid` | Identifier of the grant itself |
+| `user_uuid`, `user_username`, `user_name`, `user_email`, `user_slug` | The user holding the role |
+| `role_name`, `role_description`, `role_uuid` | The role granted, e.g. `CUSTOMER.OWNER` |
+| `scope_type` | `customer`, `project`, `offering`, `call`, `proposal`, … |
+| `scope_uuid`, `scope_name` | The object the role applies to |
+| `scope_is_removed` | Whether the scope has since been soft-deleted |
+| `created`, `expiration_time` | When the role was granted, and when it lapses (`null` = no expiry) |
+| `is_active` | `false` once revoked or expired |
+| `revoked_by_username`, `revoked_by_full_name`, `revoke_reason` | Populated when the grant was revoked |
+| `project_uuid`, `resource_uuid` | Set for project- and resource-scoped grants |
+
+## Filtering
+
+| Filter | Matching |
+|--------|----------|
+| `?username=<username>` | Exact |
+| `?user=<UUID>`, `?user_url=<URL>` | Exact |
+| `?full_name=<name>`, `?native_name=<name>`, `?user_slug=<slug>` | Case-insensitive partial |
+| `?scope_type=<type>` | Exact — `customer`, `project`, `offering`, `call`, `proposal` |
+| `?scope_uuid=<UUID>`, `?scope_name=<name>` | Exact / case-insensitive partial |
+| `?role_name=<name>`, `?role_uuid=<UUID>` | Case-insensitive partial / exact |
+| `?customer_uuid=<UUID>` | Every grant within an organization — the organization scope **and** its projects |
+| `?is_active=true` | Excludes revoked and expired grants |
+
+Ordering uses `?o=<field>`, prefixed with `-` for descending. Supported fields are
+`username`, `full_name`, `native_name`, `email`, `expiration_time`, `created` and `role`.
+
+## Fetching a user's permissions
+
+To find everything a given user may do, filter by their username. The same call works with an
+eduTEAMS or MyAccessID CUID, since the CUID is stored as the username for federated accounts.
 
 ```bash
-> http -v --pretty all GET  http://example.com:8000/api/users/ username==admin field==uuid field==customer_permissions field==project_permissions Authorization:"Token 154f2c6984b5992928b62f87950ac529f1f906ca"
+> http -v GET https://waldur.example.com/api/user-permissions/ username==bsc-operator \
+    Authorization:"Token 154f2c6984b5992928b62f87950ac529f1f906ca"
 
-GET /api/users/?username=admin&field=uuid&field=customer_permissions&field=project_permissions HTTP/1.1
+GET /api/user-permissions/?username=bsc-operator HTTP/1.1
 Accept: */*
-Accept-Encoding: gzip, deflate
 Authorization: Token 154f2c6984b5992928b62f87950ac529f1f906ca
-Connection: keep-alive
-Host: example.com:8000
-User-Agent: HTTPie/2.4.0
+Host: waldur.example.com
 
 HTTP/1.1 200 OK
-Allow: GET, POST, HEAD, OPTIONS
-Content-Language: en
-Content-Length: 702
-Content-Type: application/json
-Date: Tue, 15 Feb 2022 13:07:10 GMT
-Link: <http://example.com:8000/api/users/?field=uuid&field=customer_permissions&field=project_permissions&username=admin>; rel="first", <http://example.com:8000/api/users/?field=uuid&field=customer_permissions&field=project_permissions&username=admin>; rel="last"
-Server: WSGIServer/0.2 CPython/3.8.2
-Vary: Accept, Accept-Language, Cookie, Origin
-X-Frame-Options: DENY
+Content-Type: application/json; charset=utf-8
 X-Result-Count: 1
 
 [
     {
-        "customer_permissions": [
-            {
-                "customer_abbreviation": "",
-                "customer_name": "Admin org",
-                "customer_native_name": "",
-                "customer_uuid": "c9c8685ad4b1427aab2b6c9d36504f84",
-                "pk": 8,
-                "role": "owner",
-                "url": "http://example.com:8000/api/customer-permissions/8/"
-            },
-            {
-                "customer_abbreviation": "",
-                "customer_name": "aaaaa",
-                "customer_native_name": "",
-                "customer_uuid": "7dd7481695e347a4bc80744b0f894c00",
-                "pk": 9,
-                "role": "owner",
-                "url": "http://example.com:8000/api/customer-permissions/9/"
-            }
-        ],
-        "project_permissions": [
-            {
-                "customer_name": "aaaaa",
-                "pk": 40,
-                "project_name": "a project",
-                "project_uuid": "17db88c53b894aaca8314a2a0ebfda62",
-                "role": "admin",
-                "url": "http://example.com:8000/api/project-permissions/40/"
-            }
-        ],
-        "uuid": "3c64889f169442d687490addc2a9de30"
+        "uuid": "83000000000000000000000000000001",
+        "user_uuid": "00000000000000000000000000000010",
+        "user_name": "BSC Operator",
+        "user_slug": "bsc-operat",
+        "user_username": "bsc-operator",
+        "user_email": "operator@bsc.demo",
+        "created": "2026-08-19T16:22:56.700721+00:00",
+        "expiration_time": null,
+        "is_active": true,
+        "revoked_by_full_name": null,
+        "revoked_by_username": null,
+        "revoke_reason": "",
+        "role_name": "CUSTOMER.OWNER",
+        "role_description": "Organization owner",
+        "role_uuid": "961e7d86898d4faf9154f12288acfcc5",
+        "scope_type": "customer",
+        "scope_uuid": "a3000000000000000000000000000001",
+        "scope_name": "Barcelona Supercomputing Center",
+        "scope_is_removed": false,
+        "resource_uuid": null,
+        "project_uuid": null
     }
 ]
 ```
+
+The total number of matches is returned in the `X-Result-Count` header, and `Link` carries the
+pagination cursors.
+
+## Listing the available roles
+
+`/api/roles/` enumerates the roles a deployment defines, together with the scope each applies to
+and the permissions it carries. Staff can add custom roles alongside the system ones — see
+[user role management](../../user-guide/staff-users/user_role_management.md).
 
 ---
 
@@ -76262,7 +76234,7 @@ To manage existing offering syncs, follow this process:
 
     [Image: New remote sync]
 
-4. If remote sync is enable, then local Waldur periodically (once per day) pulls inormation about offerings from the remote instance.
+4. If remote sync is enabled, the local Waldur periodically (once per day) pulls information about offerings from the remote instance.
 
 ---
 
@@ -79049,7 +79021,7 @@ Waldur is an open-source project co-developed by [OpenNode](https://opennodeclou
 
 ## Support and sponsored development
 
-OpenNode provides several [options for support](https://waldur.com/pricing/) with varying SLAs.
+OpenNode provides several [options for support](https://waldur.com/services) with varying SLAs.
 
 If you would like to know more, [reach out](mailto:info@opennodecloud.com)!
 
@@ -79318,7 +79290,9 @@ Waldur keeps state in 2 components:
 - Database - main persistency layer.
 - Message queue - contains transient data mostly about scheduled jobs and cache.
 
-Of these, only database needs to be backed up.
+Of these, only the database needs to be backed up. Uploaded files — organization logos,
+attachments and the like — are stored in the database too
+(`waldur_core.media.storage.DatabaseStorage`), so a database dump captures them as well.
 
 A typical approach to a backup is:
 
@@ -79348,8 +79322,10 @@ Using rsync / scp or more specialised tools.
 
 ## 3. Restore the created backup
 
+The dumps above are gzipped, so decompress them on the way in:
+
 ```bash
-cat waldur-backup.sql | docker exec -i waldur-db psql -U waldur
+zcat waldur-20260819T101500.sql.gz | docker exec -i waldur-db psql -U waldur waldur
 ```
 
 We suggest to make sure that backups are running regularly, e.g. using cron.
@@ -80722,38 +80698,95 @@ Prometheus exporter allows to setup export of business metrics and reporting inf
 granularity, for example, every 5 minutes or daily. Collected information can then be visualized in Grafana or
 other visualisation solutions.
 
-Currently, the following metrics are supported:
+The exporter currently publishes the following metric families.
 
-- Total count of users;
-- Total count of organizations;
-- Total count of projects;
-- Total count of users with owner permissions;
-- Total count of support users;
-- Total count of users with local registration method;
-- Total count of users with saml2 registration method;
-- Total count of users with tara registration method;
-- Total count of users with eduteams registration method;
-- Total count of active resources;
-- Count of projects for each organization;
-- Count of resources for every organization;
-- Count of members for every organization;
-- Resources limits by offerings, customer groups, customer countries;
-- Aggregated usages by offerings, customer groups, customer countries;
-- Aggregated usages per month;
-- Count of users visible to service provider;
-- Count of projects visible to service provider;
-- Count of projects visible to service provider and grouped by OECD science code;
-- Total cost of active resources per offering;
-- Projects usages grouped by OECD science code;
-- Projects limits grouped by OECD science code;
-- Projects usages grouped by industry flag;
-- Projects limits grouped by industry flag;
-- Count unique users connected with active resources of a service provider;
-- Count active resources grouped by offering;
-- Count active resources grouped by country;
-- Count active resources grouped by organization group;
-- Count projects with active resources grouped by provider and OECD science code;
-- Count projects with active resources grouped by provider and industry flag.
+### Platform totals
+
+| Metric | Description |
+|--------|-------------|
+| `waldur_users_total` | Total count of users |
+| `waldur_customers_total` | Total count of organizations |
+| `waldur_projects_total` | Total count of projects |
+| `waldur_owners_users_total` | Users with owner permissions |
+| `waldur_support_users_total` | Support users |
+| `waldur_local_users_total` | Users with local registration method |
+| `waldur_marketplace_resources_total` | Total count of active resources |
+
+### User breakdowns
+
+| Metric | Description |
+|--------|-------------|
+| `waldur_user_auth_method_count` | Users by authentication method (local, saml2, tara, eduteams, …) |
+| `waldur_user_identity_source_count` | Users by identity source |
+| `waldur_user_organization_count` | Users by organization |
+| `waldur_user_organization_type_count` | Users by organisation type (SCHAC URN) |
+| `waldur_user_affiliation_count` | Users by affiliation |
+| `waldur_user_registration_count` | Monthly count of new user registrations |
+
+### Per-organization
+
+| Metric | Description |
+|--------|-------------|
+| `organization_project_count` | Projects per organization |
+| `organization_resource_count` | Resources per organization |
+| `organization_members_count` | Members per organization |
+
+### Usage, limits and cost
+
+| Metric | Description |
+|--------|-------------|
+| `resources_limits` | Resource limits by offering, organization group and country |
+| `aggregated_usages` | Aggregated usages by offering, organization group and country |
+| `aggregated_usages_per_month` | Aggregated usages per month |
+| `component_usages_per_project` | Component usages per project |
+| `total_cost_of_active_resources_per_offering` | Total cost of active resources per offering |
+| `resource_usage_by_customer_resources` | Active resources per customer |
+| `resource_usage_by_customer_cost` | Cost of active resources per customer |
+| `resource_usage_by_customer_component` | Absolute component usage per customer and component type |
+| `resource_limit_by_customer_component` | Allocated component limit per customer and component type |
+| `resource_utilization_by_customer_component` | Component utilisation (usage / limit × 100) per customer and component |
+| `resource_usage_by_organization_type` | Component usage by organisation type and component type |
+| `resource_count_by_organization_type` | Active resource count by organisation type and component type |
+| `waldur_platform_usage_trend_resource_count` | Monthly count of resources with recorded usage |
+
+### Service provider view
+
+| Metric | Description |
+|--------|-------------|
+| `count_users_of_service_provider` | Users visible to a service provider |
+| `count_projects_of_service_provider` | Projects visible to a service provider |
+| `count_projects_of_service_provider_grouped_by_oecd` | …grouped by OECD science code |
+| `count_unique_users_connected_with_active_resources_of_service_provider` | Unique users with active resources |
+| `count_active_resources_grouped_by_offering` | Active resources by offering |
+| `count_active_resources_grouped_by_offering_country` | Active resources by country |
+| `count_active_resources_grouped_by_organization_group` | Active resources by organization group |
+| `offerings_counter_stats` | Offerings by service provider and category |
+
+### Science-domain and industry classification
+
+| Metric | Description |
+|--------|-------------|
+| `projects_usages_grouped_by_oecd`, `projects_limits_grouped_by_oecd` | Project usages / limits by OECD science code |
+| `projects_usages_grouped_by_industry_flag`, `projects_limits_grouped_by_industry_flag` | Project usages / limits by industry flag |
+| `count_projects_grouped_by_provider_and_oecd` | Projects with active resources by provider and OECD code |
+| `count_projects_grouped_by_provider_and_industry_flag` | Projects with active resources by provider and industry flag |
+
+### Provisioning health
+
+| Metric | Description |
+|--------|-------------|
+| `provisioning_count` | Finished provisioning attempts (done + erred) |
+| `provisioning_success_count` | Successful provisioning attempts |
+| `provisioning_error_count` | Failed provisioning attempts |
+| `provisioning_in_progress_count` | Provisioning attempts currently in progress |
+| `provisioning_success_rate` | Rate of successful provisioning (0.0–1.0) |
+| `avg_provisioning_duration` | Average seconds from Executing to a terminal state |
+| `avg_pending_duration` | Average seconds from creation to Executing |
+
+!!! note
+    This list tracks the exporter's source. If a metric you need is missing, check
+    [`src/app.py`](https://github.com/waldur/waldur-prometheus-exporter/blob/main/src/app.py)
+    in the exporter repository — it is the authoritative list.
 
 ---
 
@@ -81236,11 +81269,13 @@ As an account, an OfferingUser can have a custom username different from user's 
 
 This feature is available for all offering types.
 
-For Basic, SLURM remote and Custom script offerings, offering-users are created automatically when a user is added to the project with active offering resources or when a new offering resource is created.
+For Basic and Custom script offerings, offering-users are created automatically when a user is added to the project with active offering resources or when a new offering resource is created.
 
 In case of Rancher, offering-users are created when users are imported from a Rancher cluster.
 
-In case of SLURM, offering-users are created when association are imported from a SLURM cluster.
+For SLURM clusters, offering-users are managed by the
+[Waldur site agent](providers/site-agent/index.md), which reconciles them against the
+cluster's own accounts.
 
 ## Defining the OfferingUser management policy
 
@@ -81684,9 +81719,10 @@ The Waldur account name equals the resource's `backend_id`; copy it from the
 
 To install Waldur on top of [RKE2](https://docs.rke2.io/) you need to:
 
-1. Install [Ansible](https://docs.ansible.com/ansible/2.10/) with version >= 2.10 and ensure python3 is installed.
+1. Install [Ansible](https://docs.ansible.com/ansible/latest/) (2.10 or newer) and ensure python3 is installed.
 
-2. Download this repository
+2. Clone the [waldur/csl-poc](https://github.com/waldur/csl-poc) repository, which carries the
+   `ansible-config/` playbooks and inventory referenced below
 
 3. At least 3 nodes with minimal requirements for Kubernetes nodes
 
@@ -81788,14 +81824,20 @@ Example of changes in `ansible-config/rke2_vars` file:
 ```yaml
 # Waldur dependency setup
 setup_postgresql: yes # User can skip PostgreSQL setup
-postgresql_version: 11.9.1 # Version of PostgreSQL Helm chart
+postgresql_version: <chart version> # Version of PostgreSQL Helm chart
 
 setup_rabbitmq: no # User can skip RabbitMQ setup
-rabbitmq_version: 10.3.5 # Version of RabbitMQ Helm chart
+rabbitmq_version: <chart version> # Version of RabbitMQ Helm chart
 
-setup_minio: no # User can skip MinIO setup
-minio_version: 11.10.16 # Version of MinIO Helm chart
+setup_minio: no # User can skip MinIO setup (used for PostgreSQL backups)
+minio_version: <chart version> # Version of MinIO Helm chart
 ```
+
+!!! warning
+    Take the chart versions from the `dependencies` block of
+    [`waldur/Chart.yaml`](https://github.com/waldur/waldur-helm/blob/master/waldur/Chart.yaml)
+    in the release you are deploying, rather than pinning them here — a mismatch between the
+    dependency charts and the Waldur chart is a common cause of a failed upgrade.
 
 With this setup, the playbook will update PostgreSQL release only. If the user wants to update RabbitMQ too, they should set `setup_rabbitmq: yes`
 
@@ -103581,8 +103623,18 @@ The CI pipelines are created for the following modules:
 
 - Waldur Mastermind - REST API backend
 - Waldur Homeport - frontend module
+- Waldur Site Agent - agent syncing Waldur with provider backends
 - Waldur Docker Compose - configuration for single-node deployment via Docker Compose
 - Waldur Helm Chart - package with templates of [Kubernetes](https://kubernetes.io/) manifests for workload resources
+- Waldur Docs - this documentation site
+- Supporting repositories - emulators, exporters and generators
+
+Rather than each repository defining its jobs from scratch, they `include` shared job templates
+from the [`waldur/waldur-pipelines`](https://code.opennodecloud.com/waldur/waldur-pipelines)
+repository — common stage names, merge-compatibility checks, Dockerfile and image linting,
+vulnerability scanning, multi-arch publishing and dev-environment deployment. Changing a template
+affects every consumer at once, and there is no aggregate test: verify by triggering the
+consuming pipelines.
 
 The CD pipelines were created for several Waldur deployments like Waldur development or production.
 
@@ -103598,9 +103650,27 @@ Waldur components are the separate applications of Waldur. The two major ones ar
 
 There are three main stages in the pipeline:
 
-- Test, where the source code lint and unit testing takes place. This stage runs for each commit in a merge request and for the main branch commits;
-- Build, where Docker image is being built. This stage runs for the main branch commits;
-- Release, where Docker image from the last stage is being published in [Docker Hub](https://hub.docker.com/) registry. This stage runs for the main branch commits.
+- Test, where the source code lint and unit testing takes place. This stage runs for each commit in a merge request and for default branch commits;
+- Build, where Docker image is being built. This stage runs for default branch commits;
+- Release, where Docker image from the last stage is being published in [Docker Hub](https://hub.docker.com/) registry. This stage runs for default branch commits.
+
+!!! note
+    The default branch is `develop` for Waldur Mastermind and Waldur Homeport, `master` for
+    Waldur Docs, and `main` for the remaining repositories.
+
+### Beyond the component's own pipeline
+
+Two couplings are worth knowing about, because they make a pipeline red for reasons that have
+nothing to do with the commit under test:
+
+- **Generated clients.** The OpenAPI schema produced by Waldur Mastermind is the single source for
+  several generated SDKs — among them `waldur-js-client` (npm, consumed by Homeport) and
+  `waldur-api-client` (PyPI, consumed by the site agent and the Prometheus exporter). A frontend
+  merge request that uses a brand-new backend endpoint stays red until the backend is merged and a
+  development version of the SDK is published.
+- **Downstream pipelines.** Homeport triggers the integration test suite, and both Mastermind and
+  Homeport trigger a Docker Compose smoke test that brings up the full stack with the freshly built
+  images. A failure there is reported against the upstream pipeline.
 
 ## Pipeline architecture for Waldur Deployment Templates
 
@@ -103610,7 +103680,7 @@ Waldur deployment templates are the configurations for different deployment envi
 
 This pipeline includes two stages:
 
-- Test, where the source code lint and configuration testing takes place. This stage runs for each commit in a merge request and the main branch commits;
+- Test, where the source code lint and configuration testing takes place. This stage runs for each commit in a merge request and for default branch commits;
 - Release, where the configuration is published to [GitHub](https://github.com/). This step is implemented with [GitLab mirroring](https://docs.gitlab.com/ee/user/project/repository/mirror/push.html).
 
 ## Pipeline architecture for Waldur Deployments
@@ -103621,7 +103691,7 @@ In this context, deployments are repositories with values for further insertion 
 
 There are three independent stages:
 
-- Deploy, where Waldur release is installed or updated. This stage runs only for main branch commits. For Docker Compose environment, this stage is triggered automatically. For Kubernetes, it runs automatically only for update operations, while installation requires a manual trigger. Also, the update action runs by a schedule, e.g. at 5 AM;
+- Deploy, where Waldur release is installed or updated. This stage runs only for default branch commits. For Docker Compose environment, this stage is triggered automatically. For Kubernetes, it runs automatically only for update operations, while installation requires a manual trigger. Also, the update action runs by a schedule, e.g. at 5 AM;
 - Test, where the running Waldur instance is tested. For example, it checks availability via HTTP requests sent to public Waldur endpoints;
 - Undeploy, which removes the Waldur instance. This stage can be triggered only manually.
 

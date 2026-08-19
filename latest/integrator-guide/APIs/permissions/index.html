@@ -11531,10 +11531,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fetch-user-data-from-waldur-using-username" class="md-nav__link">
+  <a href="#filtering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fetch user data from Waldur using username
+        Filtering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fetching-a-users-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fetching a user's permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#listing-the-available-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listing the available roles
       
     </span>
   </a>
@@ -17881,10 +17903,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fetch-user-data-from-waldur-using-username" class="md-nav__link">
+  <a href="#filtering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fetch user data from Waldur using username
+        Filtering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fetching-a-users-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fetching a user's permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#listing-the-available-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listing the available roles
       
     </span>
   </a>
@@ -17907,52 +17951,125 @@
                   
 
 <h1 id="permissions">Permissions</h1>
+<p>A permission in Waldur is a <strong>role granted to a user over a scope</strong>. Roles are named
+<code>SCOPE.ROLE</code> — <code>CUSTOMER.OWNER</code>, <code>PROJECT.ADMIN</code>, <code>OFFERING.MANAGER</code> — and every grant,
+whatever its scope, is exposed through a single endpoint: <code>/api/user-permissions/</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Earlier versions of Waldur exposed one endpoint per scope, <code>/api/customer-permissions/</code>
+and <code>/api/project-permissions/</code>, and returned <code>customer_permissions</code> / <code>project_permissions</code>
+fields on <code>/api/users/</code>. <strong>All of these have been removed.</strong> The endpoints return 404, and
+requesting the old fields on <code>/api/users/</code> still returns 200 with those fields silently
+absent — so a client written against the old shape fails quietly rather than loudly.
+Use <code>/api/user-permissions/</code> instead.</p>
+</div>
 <h2 id="listing-permissions">Listing permissions</h2>
-<p>Entities of Waldur are grouped into <em>organisational units</em>. The
-following <em>organisational units</em> are supported: customer and project.</p>
-<p>Each <em>organisational unit</em> has a list of users associated with it.
-Getting a list of users connected to a certain <em>organisational unit</em> is
-done through running a GET request against a corresponding endpoint.</p>
-<ul>
-<li>customer: endpoint <code>/api/customer-permissions/</code></li>
-<li>project: endpoint <code>/api/project-permissions/</code></li>
-</ul>
-<p>Filtering by <em>organisational unit</em> UUID or URL is supported. Depending
-on the type, filter field is one of:</p>
-<ul>
-<li><code>?customer=&lt;UUID&gt;</code></li>
-<li><code>?customer_url=&lt;URL&gt;</code></li>
-<li><code>?project=&lt;UUID&gt;</code></li>
-<li><code>?project_url=&lt;URL&gt;</code></li>
-<li><code>?user_url=&lt;URL&gt;</code></li>
-</ul>
-<p>In addition, filtering by field names is supported. In all cases
-filtering is based on case insensitive partial matching.</p>
-<ul>
-<li><code>?username=&lt;username&gt;</code></li>
-<li><code>?full_name=&lt;full name&gt;</code></li>
-<li><code>?native_name=&lt;native name&gt;</code></li>
-</ul>
-<p>Ordering can be done by setting an ordering field with
-<code>?o=&lt;field_name&gt;</code>. For descending ordering prefix field name with a
-dash (-). Supported field names are:</p>
-<ul>
-<li><code>?o=user__username</code></li>
-<li><code>?o=user__full_name</code></li>
-<li><code>?o=user__native_name</code></li>
-</ul>
-<h2 id="fetch-user-data-from-waldur-using-username">Fetch user data from Waldur using username</h2>
-<p>To fetch user data together with its permissions, you need to perform the following HTTP request.
-It requires <code>username</code> filter and valid API token.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/users/?username=&lt;USERNAME&gt;&amp;field=uuid&amp;field=customer_permissions&amp;field=project_permissions</span>
-<span class="err">Accept: application/json</span>
-<span class="err">Authorization: Token &lt;API_TOKEN&gt;</span>
-<span class="err">Host: example.com</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>GET<span class="w"> </span>/api/user-permissions/
+Accept:<span class="w"> </span>application/json
+Authorization:<span class="w"> </span>Token<span class="w"> </span>&lt;API_TOKEN&gt;
 </code></pre></div></td></tr></tbody></table></div>
-<p>Example:</p>
+<p>Each entry describes one grant: who holds it, which role, over which scope, and whether it is
+still active.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uuid</code></td>
+<td>Identifier of the grant itself</td>
+</tr>
+<tr>
+<td><code>user_uuid</code>, <code>user_username</code>, <code>user_name</code>, <code>user_email</code>, <code>user_slug</code></td>
+<td>The user holding the role</td>
+</tr>
+<tr>
+<td><code>role_name</code>, <code>role_description</code>, <code>role_uuid</code></td>
+<td>The role granted, e.g. <code>CUSTOMER.OWNER</code></td>
+</tr>
+<tr>
+<td><code>scope_type</code></td>
+<td><code>customer</code>, <code>project</code>, <code>offering</code>, <code>call</code>, <code>proposal</code>, …</td>
+</tr>
+<tr>
+<td><code>scope_uuid</code>, <code>scope_name</code></td>
+<td>The object the role applies to</td>
+</tr>
+<tr>
+<td><code>scope_is_removed</code></td>
+<td>Whether the scope has since been soft-deleted</td>
+</tr>
+<tr>
+<td><code>created</code>, <code>expiration_time</code></td>
+<td>When the role was granted, and when it lapses (<code>null</code> = no expiry)</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td><code>false</code> once revoked or expired</td>
+</tr>
+<tr>
+<td><code>revoked_by_username</code>, <code>revoked_by_full_name</code>, <code>revoke_reason</code></td>
+<td>Populated when the grant was revoked</td>
+</tr>
+<tr>
+<td><code>project_uuid</code>, <code>resource_uuid</code></td>
+<td>Set for project- and resource-scoped grants</td>
+</tr>
+</tbody>
+</table>
+<h2 id="filtering">Filtering</h2>
+<table>
+<thead>
+<tr>
+<th>Filter</th>
+<th>Matching</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>?username=&lt;username&gt;</code></td>
+<td>Exact</td>
+</tr>
+<tr>
+<td><code>?user=&lt;UUID&gt;</code>, <code>?user_url=&lt;URL&gt;</code></td>
+<td>Exact</td>
+</tr>
+<tr>
+<td><code>?full_name=&lt;name&gt;</code>, <code>?native_name=&lt;name&gt;</code>, <code>?user_slug=&lt;slug&gt;</code></td>
+<td>Case-insensitive partial</td>
+</tr>
+<tr>
+<td><code>?scope_type=&lt;type&gt;</code></td>
+<td>Exact — <code>customer</code>, <code>project</code>, <code>offering</code>, <code>call</code>, <code>proposal</code></td>
+</tr>
+<tr>
+<td><code>?scope_uuid=&lt;UUID&gt;</code>, <code>?scope_name=&lt;name&gt;</code></td>
+<td>Exact / case-insensitive partial</td>
+</tr>
+<tr>
+<td><code>?role_name=&lt;name&gt;</code>, <code>?role_uuid=&lt;UUID&gt;</code></td>
+<td>Case-insensitive partial / exact</td>
+</tr>
+<tr>
+<td><code>?customer_uuid=&lt;UUID&gt;</code></td>
+<td>Every grant within an organization — the organization scope <strong>and</strong> its projects</td>
+</tr>
+<tr>
+<td><code>?is_active=true</code></td>
+<td>Excludes revoked and expired grants</td>
+</tr>
+</tbody>
+</table>
+<p>Ordering uses <code>?o=&lt;field&gt;</code>, prefixed with <code>-</code> for descending. Supported fields are
+<code>username</code>, <code>full_name</code>, <code>native_name</code>, <code>email</code>, <code>expiration_time</code>, <code>created</code> and <code>role</code>.</p>
+<h2 id="fetching-a-users-permissions">Fetching a user's permissions</h2>
+<p>To find everything a given user may do, filter by their username. The same call works with an
+eduTEAMS or MyAccessID CUID, since the CUID is stored as the username for federated accounts.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -17989,88 +18106,50 @@ It requires <code>username</code> filter and valid API token.</p>
 <span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span></pre></div></td><td class="code"><div><pre><span></span><code>&gt;<span class="w"> </span>http<span class="w"> </span>-v<span class="w"> </span>--pretty<span class="w"> </span>all<span class="w"> </span>GET<span class="w">  </span>http://example.com:8000/api/users/<span class="w"> </span><span class="nv">username</span><span class="o">==</span>admin<span class="w"> </span><span class="nv">field</span><span class="o">==</span>uuid<span class="w"> </span><span class="nv">field</span><span class="o">==</span>customer_permissions<span class="w"> </span><span class="nv">field</span><span class="o">==</span>project_permissions<span class="w"> </span>Authorization:<span class="s2">"Token 154f2c6984b5992928b62f87950ac529f1f906ca"</span>
+<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code>&gt;<span class="w"> </span>http<span class="w"> </span>-v<span class="w"> </span>GET<span class="w"> </span>https://waldur.example.com/api/user-permissions/<span class="w"> </span><span class="nv">username</span><span class="o">==</span>bsc-operator<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>Authorization:<span class="s2">"Token 154f2c6984b5992928b62f87950ac529f1f906ca"</span>
 
-GET<span class="w"> </span>/api/users/?username<span class="o">=</span>admin<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>uuid<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>customer_permissions<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>project_permissions<span class="w"> </span>HTTP/1.1
+GET<span class="w"> </span>/api/user-permissions/?username<span class="o">=</span>bsc-operator<span class="w"> </span>HTTP/1.1
 Accept:<span class="w"> </span>*/*
-Accept-Encoding:<span class="w"> </span>gzip,<span class="w"> </span>deflate
 Authorization:<span class="w"> </span>Token<span class="w"> </span>154f2c6984b5992928b62f87950ac529f1f906ca
-Connection:<span class="w"> </span>keep-alive
-Host:<span class="w"> </span>example.com:8000
-User-Agent:<span class="w"> </span>HTTPie/2.4.0
-
-
+Host:<span class="w"> </span>waldur.example.com
 
 HTTP/1.1<span class="w"> </span><span class="m">200</span><span class="w"> </span>OK
-Allow:<span class="w"> </span>GET,<span class="w"> </span>POST,<span class="w"> </span>HEAD,<span class="w"> </span>OPTIONS
-Content-Language:<span class="w"> </span>en
-Content-Length:<span class="w"> </span><span class="m">702</span>
-Content-Type:<span class="w"> </span>application/json
-Date:<span class="w"> </span>Tue,<span class="w"> </span><span class="m">15</span><span class="w"> </span>Feb<span class="w"> </span><span class="m">2022</span><span class="w"> </span><span class="m">13</span>:07:10<span class="w"> </span>GMT
-Link:<span class="w"> </span>&lt;http://example.com:8000/api/users/?field<span class="o">=</span>uuid<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>customer_permissions<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>project_permissions<span class="p">&amp;</span><span class="nv">username</span><span class="o">=</span>admin&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"first"</span>,<span class="w"> </span>&lt;http://example.com:8000/api/users/?field<span class="o">=</span>uuid<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>customer_permissions<span class="p">&amp;</span><span class="nv">field</span><span class="o">=</span>project_permissions<span class="p">&amp;</span><span class="nv">username</span><span class="o">=</span>admin&gt;<span class="p">;</span><span class="w"> </span><span class="nv">rel</span><span class="o">=</span><span class="s2">"last"</span>
-Server:<span class="w"> </span>WSGIServer/0.2<span class="w"> </span>CPython/3.8.2
-Vary:<span class="w"> </span>Accept,<span class="w"> </span>Accept-Language,<span class="w"> </span>Cookie,<span class="w"> </span>Origin
-X-Frame-Options:<span class="w"> </span>DENY
+Content-Type:<span class="w"> </span>application/json<span class="p">;</span><span class="w"> </span><span class="nv">charset</span><span class="o">=</span>utf-8
 X-Result-Count:<span class="w"> </span><span class="m">1</span>
 
 <span class="o">[</span>
 <span class="w">    </span><span class="o">{</span>
-<span class="w">        </span><span class="s2">"customer_permissions"</span>:<span class="w"> </span><span class="o">[</span>
-<span class="w">            </span><span class="o">{</span>
-<span class="w">                </span><span class="s2">"customer_abbreviation"</span>:<span class="w"> </span><span class="s2">""</span>,
-<span class="w">                </span><span class="s2">"customer_name"</span>:<span class="w"> </span><span class="s2">"Admin org"</span>,
-<span class="w">                </span><span class="s2">"customer_native_name"</span>:<span class="w"> </span><span class="s2">""</span>,
-<span class="w">                </span><span class="s2">"customer_uuid"</span>:<span class="w"> </span><span class="s2">"c9c8685ad4b1427aab2b6c9d36504f84"</span>,
-<span class="w">                </span><span class="s2">"pk"</span>:<span class="w"> </span><span class="m">8</span>,
-<span class="w">                </span><span class="s2">"role"</span>:<span class="w"> </span><span class="s2">"owner"</span>,
-<span class="w">                </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"http://example.com:8000/api/customer-permissions/8/"</span>
-<span class="w">            </span><span class="o">}</span>,
-<span class="w">            </span><span class="o">{</span>
-<span class="w">                </span><span class="s2">"customer_abbreviation"</span>:<span class="w"> </span><span class="s2">""</span>,
-<span class="w">                </span><span class="s2">"customer_name"</span>:<span class="w"> </span><span class="s2">"aaaaa"</span>,
-<span class="w">                </span><span class="s2">"customer_native_name"</span>:<span class="w"> </span><span class="s2">""</span>,
-<span class="w">                </span><span class="s2">"customer_uuid"</span>:<span class="w"> </span><span class="s2">"7dd7481695e347a4bc80744b0f894c00"</span>,
-<span class="w">                </span><span class="s2">"pk"</span>:<span class="w"> </span><span class="m">9</span>,
-<span class="w">                </span><span class="s2">"role"</span>:<span class="w"> </span><span class="s2">"owner"</span>,
-<span class="w">                </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"http://example.com:8000/api/customer-permissions/9/"</span>
-<span class="w">            </span><span class="o">}</span>
-<span class="w">        </span><span class="o">]</span>,
-<span class="w">        </span><span class="s2">"project_permissions"</span>:<span class="w"> </span><span class="o">[</span>
-<span class="w">            </span><span class="o">{</span>
-<span class="w">                </span><span class="s2">"customer_name"</span>:<span class="w"> </span><span class="s2">"aaaaa"</span>,
-<span class="w">                </span><span class="s2">"pk"</span>:<span class="w"> </span><span class="m">40</span>,
-<span class="w">                </span><span class="s2">"project_name"</span>:<span class="w"> </span><span class="s2">"a project"</span>,
-<span class="w">                </span><span class="s2">"project_uuid"</span>:<span class="w"> </span><span class="s2">"17db88c53b894aaca8314a2a0ebfda62"</span>,
-<span class="w">                </span><span class="s2">"role"</span>:<span class="w"> </span><span class="s2">"admin"</span>,
-<span class="w">                </span><span class="s2">"url"</span>:<span class="w"> </span><span class="s2">"http://example.com:8000/api/project-permissions/40/"</span>
-<span class="w">            </span><span class="o">}</span>
-<span class="w">        </span><span class="o">]</span>,
-<span class="w">        </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"3c64889f169442d687490addc2a9de30"</span>
+<span class="w">        </span><span class="s2">"uuid"</span>:<span class="w"> </span><span class="s2">"83000000000000000000000000000001"</span>,
+<span class="w">        </span><span class="s2">"user_uuid"</span>:<span class="w"> </span><span class="s2">"00000000000000000000000000000010"</span>,
+<span class="w">        </span><span class="s2">"user_name"</span>:<span class="w"> </span><span class="s2">"BSC Operator"</span>,
+<span class="w">        </span><span class="s2">"user_slug"</span>:<span class="w"> </span><span class="s2">"bsc-operat"</span>,
+<span class="w">        </span><span class="s2">"user_username"</span>:<span class="w"> </span><span class="s2">"bsc-operator"</span>,
+<span class="w">        </span><span class="s2">"user_email"</span>:<span class="w"> </span><span class="s2">"operator@bsc.demo"</span>,
+<span class="w">        </span><span class="s2">"created"</span>:<span class="w"> </span><span class="s2">"2026-08-19T16:22:56.700721+00:00"</span>,
+<span class="w">        </span><span class="s2">"expiration_time"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"is_active"</span>:<span class="w"> </span>true,
+<span class="w">        </span><span class="s2">"revoked_by_full_name"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"revoked_by_username"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"revoke_reason"</span>:<span class="w"> </span><span class="s2">""</span>,
+<span class="w">        </span><span class="s2">"role_name"</span>:<span class="w"> </span><span class="s2">"CUSTOMER.OWNER"</span>,
+<span class="w">        </span><span class="s2">"role_description"</span>:<span class="w"> </span><span class="s2">"Organization owner"</span>,
+<span class="w">        </span><span class="s2">"role_uuid"</span>:<span class="w"> </span><span class="s2">"961e7d86898d4faf9154f12288acfcc5"</span>,
+<span class="w">        </span><span class="s2">"scope_type"</span>:<span class="w"> </span><span class="s2">"customer"</span>,
+<span class="w">        </span><span class="s2">"scope_uuid"</span>:<span class="w"> </span><span class="s2">"a3000000000000000000000000000001"</span>,
+<span class="w">        </span><span class="s2">"scope_name"</span>:<span class="w"> </span><span class="s2">"Barcelona Supercomputing Center"</span>,
+<span class="w">        </span><span class="s2">"scope_is_removed"</span>:<span class="w"> </span>false,
+<span class="w">        </span><span class="s2">"resource_uuid"</span>:<span class="w"> </span>null,
+<span class="w">        </span><span class="s2">"project_uuid"</span>:<span class="w"> </span>null
 <span class="w">    </span><span class="o">}</span>
 <span class="o">]</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>The total number of matches is returned in the <code>X-Result-Count</code> header, and <code>Link</code> carries the
+pagination cursors.</p>
+<h2 id="listing-the-available-roles">Listing the available roles</h2>
+<p><code>/api/roles/</code> enumerates the roles a deployment defines, together with the scope each applies to
+and the permissions it carries. Staff can add custom roles alongside the system ones — see
+<a href="../../../user-guide/staff-users/user_role_management/">user role management</a>.</p>
 
 
 
