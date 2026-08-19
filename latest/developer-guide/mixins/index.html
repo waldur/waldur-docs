@@ -9978,6 +9978,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#selectiveencryptionmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SelectiveEncryptionMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#generickeymixin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11181,17 +11192,6 @@
     <span class="md-ellipsis">
       
         YamlMixin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#usagemixin_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UsageMixin
       
     </span>
   </a>
@@ -19371,6 +19371,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#selectiveencryptionmixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SelectiveEncryptionMixin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#generickeymixin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20581,17 +20592,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#usagemixin_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UsageMixin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#virtualmachinemixin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20692,6 +20692,11 @@
 <td><a href="#successexecutormixin"><code>SuccessExecutorMixin</code></a></td>
 <td><code>waldur_core.core.executors</code></td>
 <td>Set object as OK on success, cleanup action and its details</td>
+</tr>
+<tr>
+<td><a href="#selectiveencryptionmixin"><code>SelectiveEncryptionMixin</code></a></td>
+<td><code>waldur_core.core.fields</code></td>
+<td>Encrypts the values under sensitive keys of a JSON-valued field</td>
 </tr>
 <tr>
 <td><a href="#generickeymixin"><code>GenericKeyMixin</code></a></td>
@@ -21244,11 +21249,6 @@
 <td>No description available</td>
 </tr>
 <tr>
-<td><a href="#usagemixin"><code>UsageMixin</code></a></td>
-<td><code>waldur_slurm.models</code></td>
-<td>Make subclasses preserve the alters_data attribute on overridden methods</td>
-</tr>
-<tr>
 <td><a href="#virtualmachinemixin"><code>VirtualMachineMixin</code></a></td>
 <td><code>waldur_vmware.models</code></td>
 <td>Make subclasses preserve the alters_data attribute on overridden methods</td>
@@ -21341,6 +21341,26 @@ Please ensure that readonly_fields is specified in derived class.</p>
 <p><strong>Module:</strong> <code>waldur_core.core.executors</code></p>
 <p><strong>Description:</strong></p>
 <p>Set object as OK on success, cleanup action and its details.</p>
+<h3 id="selectiveencryptionmixin">SelectiveEncryptionMixin</h3>
+<p><strong>Module:</strong> <code>waldur_core.core.fields</code></p>
+<p><strong>Description:</strong></p>
+<p>Encrypts the values under sensitive keys of a JSON-valued field.</p>
+<p>Only the values whose key satisfies :meth:<code>_is_sensitive_key</code> are Fernet-encrypted;
+JSON keys and non-sensitive values stay plaintext, so <code>has_key</code> / value lookups
+keep working against the column.</p>
+<p>Encryption and decryption use the <strong>same</strong> key predicate, and encryption is
+unconditional: a token-shaped value under a sensitive key is wrapped rather than
+passed through, and only sensitive keys are decrypted on read. That symmetry is
+what stops the field being used as a decryption oracle (a caller planting a stolen
+ciphertext under a non-sensitive key, or a token-shaped value under a sensitive
+one, cannot read back another row's plaintext).</p>
+<p>Encryption happens in <code>pre_save</code> and never writes ciphertext back to the instance
+attribute — the attribute stays the plaintext dict, so FieldTracker compares
+plaintext on both sides and handlers do not fire on an unchanged save.</p>
+<p>Mixed into a concrete JSON field class, so the same behaviour applies to the
+<code>jsonb</code>-backed :class:<code>EncryptedJSONField</code> and to the legacy text-backed
+:class:<code>EncryptedOptionsField</code> without duplicating the logic. Subclasses must
+implement :meth:<code>_is_sensitive_key</code>.</p>
 <h3 id="generickeymixin">GenericKeyMixin</h3>
 <p><strong>Module:</strong> <code>waldur_core.core.managers</code></p>
 <p><strong>Description:</strong></p>
@@ -22365,11 +22385,6 @@ request id) auto-attached by CaptureEventContextMiddleware.</p>
 <h3 id="yamlmixin">YamlMixin</h3>
 <p><strong>Module:</strong> <code>waldur_rancher.views</code></p>
 <p><strong>Description:</strong> No description available.</p>
-<h3 id="usagemixin_1">UsageMixin</h3>
-<p><strong>Module:</strong> <code>waldur_slurm.models</code></p>
-<p><strong>Description:</strong></p>
-<p>Make subclasses preserve the alters_data attribute on overridden methods.</p>
-<p><strong>Base classes:</strong> <code>Model</code></p>
 <h3 id="virtualmachinemixin">VirtualMachineMixin</h3>
 <p><strong>Module:</strong> <code>waldur_vmware.models</code></p>
 <p><strong>Description:</strong></p>
