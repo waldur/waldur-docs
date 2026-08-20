@@ -108,6 +108,49 @@ The `create_monthly_invoices` task (`src/waldur_mastermind/invoices/tasks.py`) r
 
 When a resource is activated mid-month, `_register` calls `get_or_create_invoice`. If the invoice already exists, it adds items for just that resource with prorated start/end dates.
 
+### Missing usage policy
+
+A provider that reports nothing for a component in a given month leaves no
+`ComponentUsage` row, so nothing is billed and the period reads as unreported
+rather than as zero. Each usage report carries a `missing_usage_policy`
+(`marketplace/enums.py`, `MissingUsagePolicies`) declaring what should happen to
+the *following* period if it passes in silence:
+
+| Policy | Effect on the next billing period |
+|--------|-----------------------------------|
+| `none` (default) | Nothing is recorded; the period stays unreported |
+| `reuse` | The last reported value is repeated |
+| `zero` | An explicit zero is recorded |
+
+The rows are materialized by
+`create_carried_over_usage_if_invoice_has_been_created`
+(`src/waldur_mastermind/invoices/handlers.py`), which fires when the new month's
+invoice is created, reads the previous month's rows and copies the policy onto
+the new row so it survives beyond one month.
+
+Both policies only *fill a gap*: if a row already exists for the new period —
+which happens when the invoice is created late, after the provider has already
+reported — that report wins outright. Its value, its own policy and the plan
+period it was measured against are all left untouched. A usage row is identified
+by `(resource, component, billing_period)`; `plan_period` is a mutable attribute
+and deliberately not part of that identity (see migration `0212`).
+
+New rows are attached to the plan period resolved for the *new* month via
+`get_plan_period_for_billing`, not to the source row's — the latter may have been
+closed by a plan switch at the month boundary, which would price the carried-over
+usage against the old plan.
+
+A materialized zero goes through the normal billing path and therefore produces
+an invoice item with quantity `0` — the same as a zero the provider reports
+explicitly.
+
+Because `get_info_about_missing_usage_reports` (`marketplace/utils.py`) skips
+resources that have any usage row for the current period, both `reuse` and
+`zero` also silence the "missing usage reports" reminder for that resource.
+
+`recurring` remains on the API as a deprecated read/write alias for
+`missing_usage_policy == 'reuse'`.
+
 ### Invoice Finalization
 
 Finalization transitions invoices from mutable to immutable (CREATED) state. The behavior depends on the `INVOICE_FINALIZATION_GRACE_PERIOD_HOURS` setting:
@@ -389,6 +432,7 @@ For TOTAL period components, the system:
 | `src/waldur_mastermind/marketplace/billing_usage.py` | `BillingUsageProcessor` | USAGE billing type logic |
 | `src/waldur_mastermind/marketplace/handlers.py` | `process_billing_on_resource_save` | Signal handler for resource changes |
 | `src/waldur_mastermind/invoices/tasks.py` | `create_monthly_invoices` | Monthly invoice creation task |
+| `src/waldur_mastermind/invoices/handlers.py` | `create_carried_over_usage_if_invoice_has_been_created` | Materializes reused/zero usage for the new period |
 | `src/waldur_mastermind/invoices/tasks.py` | `finalize_previous_invoices` | Deferred invoice finalization (grace period) |
 | `src/waldur_mastermind/invoices/compensations.py` | `MonthlyCompensation` | Credit-based compensation logic |
 | `src/waldur_mastermind/marketplace/enums.py` | `BillingTypes`, `LimitPeriods` | Billing type and period enums |
