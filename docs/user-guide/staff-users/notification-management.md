@@ -26,6 +26,10 @@ Waldur has 40+ notification types organized by module. Each notification has:
 !!! warning
     All notifications are disabled by default. Enable the notifications relevant to your deployment before going live.
 
+    Enabling a notification only decides whether a message is *composed*. Delivery additionally
+    requires a configured SMTP relay — see
+    [Email configuration](../../admin-guide/mastermind-configuration/email.md).
+
 ### Editing email templates
 
 1. Click on a notification to open the template editor
