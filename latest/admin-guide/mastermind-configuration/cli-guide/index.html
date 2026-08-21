@@ -3231,6 +3231,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#backfill_credit_ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        backfill_credit_ledger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#backfill_plan_periods" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4195,6 +4206,34 @@
     
   
     Credit ledger backfill
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../email/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Email configuration
   
 
     
@@ -19093,6 +19132,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#backfill_credit_ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        backfill_credit_ledger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#backfill_plan_periods" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20146,6 +20196,70 @@ options:
 
 positional<span class="w"> </span>arguments:
 <span class="w">  </span>username
+</code></pre></div></td></tr></tbody></table></div>
+<h2 id="backfill_credit_ledger">backfill_credit_ledger</h2>
+<p>Reconstruct credit drawdown that predates the transaction ledger, from compensation invoice items and minimal-consumption audit events. Run with --dry-run first to see how much evidence survives.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code>usage:<span class="w"> </span>waldur<span class="w"> </span>backfill_credit_ledger<span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span><span class="w"> </span><span class="o">[</span>--customer<span class="w"> </span>CUSTOMER_UUID<span class="o">]</span>
+<span class="w">                                     </span><span class="o">[</span>--project<span class="w"> </span>PROJECT_UUID<span class="o">]</span><span class="w"> </span><span class="o">[</span>--since<span class="w"> </span>SINCE<span class="o">]</span>
+<span class="w">                                     </span><span class="o">[</span>--until<span class="w"> </span>UNTIL<span class="o">]</span>
+<span class="w">                                     </span><span class="o">[</span>--infer-period<span class="w"> </span><span class="o">{</span>previous-month,none<span class="o">}]</span>
+<span class="w">                                     </span><span class="o">[</span>--no-opening-balance<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span>
+
+options:
+<span class="w">  </span>--dry-run<span class="w">             </span>Report<span class="w"> </span>what<span class="w"> </span>would<span class="w"> </span>be<span class="w"> </span>written,<span class="w"> </span>and<span class="w"> </span>write<span class="w"> </span>nothing.
+<span class="w">  </span>--customer<span class="w"> </span>CUSTOMER_UUID
+<span class="w">                        </span>Only<span class="w"> </span>the<span class="w"> </span>credits<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>organization<span class="w"> </span>with<span class="w"> </span>this<span class="w"> </span>UUID.
+<span class="w">  </span>--project<span class="w"> </span>PROJECT_UUID
+<span class="w">                        </span>Only<span class="w"> </span>the<span class="w"> </span>allocation<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>project<span class="w"> </span>with<span class="w"> </span>this<span class="w"> </span>UUID.<span class="w"> </span>The
+<span class="w">                        </span>organization<span class="w"> </span>credit<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>separate<span class="w"> </span>balance<span class="w"> </span>and<span class="w"> </span>is<span class="w"> </span>left
+<span class="w">                        </span>alone.
+<span class="w">  </span>--since<span class="w"> </span>SINCE<span class="w">         </span>Ignore<span class="w"> </span>evidence<span class="w"> </span>before<span class="w"> </span>this<span class="w"> </span>billing<span class="w"> </span>month<span class="w"> </span><span class="o">(</span>YYYY-MM<span class="o">)</span>.
+<span class="w">  </span>--until<span class="w"> </span>UNTIL<span class="w">         </span>Ignore<span class="w"> </span>evidence<span class="w"> </span>after<span class="w"> </span>this<span class="w"> </span>billing<span class="w"> </span>month<span class="w"> </span><span class="o">(</span>YYYY-MM<span class="o">)</span>.
+<span class="w">  </span>--infer-period<span class="w"> </span><span class="o">{</span>previous-month,none<span class="o">}</span>
+<span class="w">                        </span>How<span class="w"> </span>to<span class="w"> </span>date<span class="w"> </span>minimal-consumption<span class="w"> </span>draws,<span class="w"> </span>whose<span class="w"> </span>events
+<span class="w">                        </span>carry<span class="w"> </span>no<span class="w"> </span>billing<span class="w"> </span>period.<span class="w"> </span><span class="s1">'previous-month'</span><span class="w"> </span>assumes<span class="w"> </span>the
+<span class="w">                        </span>run<span class="w"> </span>billed<span class="w"> </span>the<span class="w"> </span>month<span class="w"> </span>before<span class="w"> </span>it<span class="w"> </span>was<span class="w"> </span>emitted,<span class="w"> </span>which
+<span class="w">                        </span>holds<span class="w"> </span><span class="k">for</span><span class="w"> </span>scheduled<span class="w"> </span>finalization<span class="p">;</span><span class="w"> </span><span class="s1">'none'</span><span class="w"> </span>leaves<span class="w"> </span>the
+<span class="w">                        </span>period<span class="w"> </span>empty,<span class="w"> </span>so<span class="w"> </span>the<span class="w"> </span>rows<span class="w"> </span>count<span class="w"> </span>towards<span class="w"> </span>the<span class="w"> </span>totals<span class="w"> </span>but
+<span class="w">                        </span>towards<span class="w"> </span>no<span class="w"> </span>month<span class="w"> </span>—<span class="w"> </span>and<span class="w"> </span>are<span class="w"> </span><span class="k">then</span><span class="w"> </span>not<span class="w"> </span>subject<span class="w"> </span>to
+<span class="w">                        </span>--since/--until.
+<span class="w">  </span>--no-opening-balance<span class="w">  </span>Skip<span class="w"> </span>the<span class="w"> </span>balancing<span class="w"> </span>row,<span class="w"> </span>leaving<span class="w"> </span>only<span class="w"> </span>rows<span class="w"> </span>backed<span class="w"> </span>by
+<span class="w">                        </span>evidence.<span class="w"> </span>Totals<span class="w"> </span><span class="k">then</span><span class="w"> </span>no<span class="w"> </span>longer<span class="w"> </span>reconcile<span class="w"> </span>to<span class="w"> </span>the
+<span class="w">                        </span>current<span class="w"> </span>value<span class="w"> </span>of<span class="w"> </span>any<span class="w"> </span>credit<span class="w"> </span>granted<span class="w"> </span>before<span class="w"> </span>the<span class="w"> </span>ledger
+<span class="w">                        </span>existed.
+<span class="w">  </span>--force<span class="w">               </span>Redo<span class="w"> </span>credits<span class="w"> </span>that<span class="w"> </span>already<span class="w"> </span>carry<span class="w"> </span>backfilled<span class="w"> </span>rows:<span class="w"> </span>the
+<span class="w">                        </span>previous<span class="w"> </span>reconstruction<span class="w"> </span>is<span class="w"> </span>deleted<span class="w"> </span>and<span class="w"> </span>written<span class="w"> </span>again.
+<span class="w">                        </span>Only<span class="w"> </span>rows<span class="w"> </span>this<span class="w"> </span><span class="nb">command</span><span class="w"> </span>wrote<span class="w"> </span>are<span class="w"> </span>touched.
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="backfill_plan_periods">backfill_plan_periods</h2>
 <p>Backfill plan_period on ComponentUsage records where it is NULL. This fixes incorrect quarterly/annual/total usage calculations caused by ComponentUsage records created without a plan_period.</p>
