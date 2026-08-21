@@ -10,7 +10,7 @@ This guide provides systematic approaches for troubleshooting Waldur Mastermind 
 
 | Symptom | First Check | Next Steps |
 |---------|-------------|------------|
-| Users not receiving emails | Email logs | SMTP configuration, email templates |
+| Users not receiving emails | Email logs | [Email configuration](mastermind-configuration/email.md): SMTP settings, and whether the notification is enabled at all |
 | API returning errors | API logs | HTTP status codes, request parameters |
 | Resources stuck in provisioning | Worker logs | Backend connectivity, quota issues |
 | Slow performance | Database logs | Query performance, connection pooling |
@@ -19,6 +19,9 @@ This guide provides systematic approaches for troubleshooting Waldur Mastermind 
 ## Accessing and filtering logs
 
 ### Email-related events
+
+For the settings themselves — and for why a correctly configured relay can still send nothing —
+see [Email configuration](mastermind-configuration/email.md).
 
 #### Docker Compose
 

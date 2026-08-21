@@ -5,6 +5,7 @@ Outline:
 - [General Configuration](#general-configuration)
   - [Introduction](#introduction)
   - [Quick access links](#quick-access-links)
+  - [Outgoing email](#outgoing-email)
   - [Custom templates configuration](#custom-templates-configuration)
   - [Local time zone configuration](#local-time-zone-configuration)
 
@@ -25,6 +26,12 @@ These are managed through the user interface rather than through settings: open
 **Administration → User interface → Navigation shortcuts** and click **Add**. Each shortcut
 takes a name, an optional description, an optional icon and the target URL, and is stored via
 the `/api/external-links/` endpoint.
+
+## Outgoing email
+
+SMTP transport, sender addresses and notification enablement are covered separately in
+[Email configuration](email.md). Note that the SMTP settings have no `GLOBAL_*` environment
+variable equivalent — they can only be set in `/etc/waldur/override.conf.py`.
 
 ## Custom templates configuration
 
