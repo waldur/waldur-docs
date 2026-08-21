@@ -3110,6 +3110,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../admin-guide/mastermind-configuration/credit-ledger-backfill/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Credit ledger backfill
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../admin-guide/mastermind-configuration/features/" class="md-nav__link">
         
   
@@ -9807,6 +9835,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../credit-ledger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Credit ledger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../customer-onboarding-complete-guide/" class="md-nav__link">
         
   
@@ -10686,10 +10742,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_43">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_44">
         
           
-          <label class="md-nav__link" for="__nav_3_43" id="__nav_3_43_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_44" id="__nav_3_44_label" tabindex="0">
             
   
   
@@ -10707,8 +10763,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_43_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_43">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_44_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_44">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -10772,10 +10828,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_44">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_45">
         
           
-          <label class="md-nav__link" for="__nav_3_44" id="__nav_3_44_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_45" id="__nav_3_45_label" tabindex="0">
             
   
   
@@ -10793,8 +10849,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_44_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_44">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_45_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_45">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -10858,10 +10914,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_45">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_46">
         
           
-          <label class="md-nav__link" for="__nav_3_45" id="__nav_3_45_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_46" id="__nav_3_46_label" tabindex="0">
             
   
   
@@ -10879,8 +10935,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_45_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_45">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_46_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_46">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -18488,35 +18544,42 @@ credit compensation has run, so the fee is computed on the final net price.</p>
   falls within <code>[start_date, end_date)</code>.</li>
 </ul>
 <h2 id="credit-ledger-and-withdrawable-balance">Credit ledger and withdrawable balance</h2>
-<p>Every change to <code>CustomerCredit.value</code> — from any source — is recorded as a
-<code>CreditTransaction</code> row by a <code>post_save</code> handler. The semantic type of the
-change is declared by the programmatic flow that makes it, via the
-<code>ledger.credit_transaction_type(...)</code> context manager; any untyped change
-(staff UI, REST API, shell) is conservatively recorded as a <strong>staff grant</strong>.</p>
+<p>Every change to a credit balance — from any source, on an organization credit
+or a project allocation — is recorded as a <code>CreditTransaction</code> row by a
+<code>post_save</code> handler, typed by the flow that makes it and recorded as a <strong>staff
+grant</strong> when untyped. See <a href="../credit-ledger/">Credit ledger</a> for the full
+mechanism; what matters here is which of those rows count as <em>earnings</em>.</p>
 <pre class="mermaid"><code>flowchart TB
     subgraph Sources["Value mutations"]
         SG["Staff grant&lt;br/&gt;(untyped default)"]
         AFFEE["Affiliate fee"]
-        COMP["Compensation"]
+        TR["Transfer in / out"]
+        PO["Payout"]
+        DRAW["Compensation /&lt;br/&gt;minimal consumption draw"]
         EXP["Expiry"]
         RB["Rollback / adjustment"]
     end
 
     SG --&gt; LED["CreditTransaction ledger"]
     AFFEE --&gt; LED
-    COMP --&gt; LED
+    TR --&gt; LED
+    PO --&gt; LED
+    DRAW --&gt; LED
     EXP --&gt; LED
     RB --&gt; LED
 
     LED --&gt; WB["withdrawable_balance =&lt;br/&gt;max(0, min(earned, value))"]</code></pre>
 <p>The <strong>withdrawable balance</strong> is the sum of <em>earnings-typed</em> ledger entries
-(<code>affiliate_fee</code>, <code>transfer_in</code>, <code>transfer_out</code>, <code>payout</code>), capped by the current
-credit value. Two consequences fall out of this definition:</p>
+(<code>affiliate_fee</code>, <code>transfer_in</code>, <code>transfer_out</code>, <code>payout</code> and
+<code>withdrawable_adjustment</code>), capped by the current credit value. Two consequences
+fall out of this definition:</p>
 <ul>
 <li>Staff-granted (promotional) credit is <strong>never</strong> withdrawable.</li>
 <li>Credit <strong>expiry wipes earnings too</strong> — when the value is zeroed, the cap drops
   the withdrawable balance to zero.</li>
 </ul>
+<p>Drawdown types — <code>compensation</code> and <code>minimal_draw</code> — are not earnings and never
+raise the withdrawable balance; they lower the cap by lowering the value.</p>
 <p>Example — an affiliate with a 1000 promotional grant earns a 30 fee:</p>
 <table>
 <thead>
@@ -18545,7 +18608,9 @@ credit value. Two consequences fall out of this definition:</p>
 </tbody>
 </table>
 <p>The ledger is <strong>append-only</strong> — it is the source of truth for the withdrawable
-balance, so rows are never edited or deleted; corrections are new rows.</p>
+balance, so rows are never edited or deleted; corrections are new rows. The one
+exception is reconstructing history that predates the ledger, described in
+<a href="../../admin-guide/mastermind-configuration/credit-ledger-backfill/">Backfilling the credit ledger</a>.</p>
 <h2 id="worked-scenarios">Worked scenarios</h2>
 <p>All amounts below are in the invoice currency and use the invoice <strong>net price</strong>
 (pre-tax, post-compensation) as the base. Fees are clamped to be non-negative

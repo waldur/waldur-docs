@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-20T16:47:51.830204Z
+Generated: 2026-08-21T02:04:23.524889Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -10452,6 +10452,90 @@ Maximum number of log rows to keep per agent identity. Oldest rows are deleted w
 
 ---
 
+### Backfilling the credit ledger
+<!-- Source: docs/admin-guide/mastermind-configuration/credit-ledger-backfill.md -->
+
+# Backfilling the credit ledger
+
+The [credit ledger](../../developer-guide/credit-ledger.md) only records movements made after it
+was wired up. `backfill_credit_ledger` reconstructs what came before, from the
+evidence that survives.
+
+Run it once, per deployment, after upgrading to a release that records project
+drawdown. It is not needed for a new installation.
+
+```bash
+waldur backfill_credit_ledger --dry-run
+```
+
+## What can and cannot be recovered
+
+Read this before deciding whether to write anything. The command is precise
+about which parts of history are evidence and which are inference:
+
+| Movement | Recoverable? |
+|----------|--------------|
+| **Usage draws** | Yes. Each wrote a negative invoice item carrying the amount, the project and the billing month. One caveat: when a balance is exhausted mid-month the item is written net of tax while the balance gave up the full value, so the last draw of an exhausted credit is understated by its tax share. |
+| **Minimal-consumption draws** | Amount yes, month no. They never wrote an invoice item; their only trace is an audit event, which carries no billing period. The month is inferred from when the event was emitted. |
+| **The granted amount** | No. Every event that moves a balance in bulk records whole units only, so chaining them accumulates error. |
+
+Whatever the evidence cannot explain is written as a single labelled row, so
+that `granted = used + lost + remaining` holds by construction while the part
+that is a plug rather than a record stays visible. Its sign says which of two
+things it is: a positive remainder is value the credit already held, a negative
+one is drawdown that left no trace at all — and the command warns about the
+latter, because it can also mean drawdown is being attributed to the wrong
+credit.
+
+!!! warning "Coverage shrinks with age"
+    Audit events are subject to retention-based cleanup, so how much history
+    survives varies per deployment and decreases over time. `--dry-run` reports
+    what evidence exists before anything is written.
+
+## Inferred months
+
+A minimal-consumption draw's month is inferred as the month before the audit
+event was emitted. That holds for scheduled invoice finalization, and is wrong
+for a manual re-run or a seeded history.
+
+If your deployment has re-run finalization by hand, prefer:
+
+```bash
+waldur backfill_credit_ledger --infer-period=none
+```
+
+Those rows then count towards the totals but towards no month, which is
+honest — a monthly breakdown that quietly attributes drawdown to the wrong
+month is worse than one that admits it does not know.
+
+## Options
+
+| Option | Effect |
+|--------|--------|
+| `--dry-run` | Report what would be written; write nothing. |
+| `--customer <uuid>` | Only that organization's credits, its projects included. |
+| `--project <uuid>` | Only that project's allocation. The organization credit is a separate balance and is left alone. |
+| `--since` / `--until` | Ignore evidence outside these billing months (`YYYY-MM`). |
+| `--infer-period` | `previous-month` (default) or `none`; see above. |
+| `--no-opening-balance` | Skip the balancing row. Totals then no longer reconcile to the current value of any credit granted before the ledger existed. |
+| `--force` | Redo credits that already carry backfilled rows. |
+
+Months the ledger already records are skipped, so backfilling is not
+all-or-nothing: a credit older than the ledger has months on both sides of the
+line, and only those without a row of their own are reconstructed.
+
+## `--force` deletes rows
+
+This is the one place anything is removed from an otherwise append-only table.
+`--force` deletes the rows the command itself wrote for a credit and writes
+them again; rows recorded by the live ledger are never touched.
+
+Reconstructed rows are identified by their comment, which begins with
+`backfill:`. Do not use that prefix when writing a staff adjustment comment, or
+a later `--force` will delete the adjustment along with the reconstruction.
+
+---
+
 ### Features
 <!-- Source: docs/admin-guide/mastermind-configuration/features.md -->
 
@@ -12802,6 +12886,58 @@ A notification about usages. The recipients are organization owners.
 
     <p>
         You can submit resource usage via API or do it <a href='{{ public_resources_url }}'>manually</a>.
+    </p>
+    </body>
+    </html>
+
+```
+
+### marketplace.notify_about_new_order
+
+Notifies the recipients configured on the offering about every new order for it, regardless of whether the order needs approval.
+
+#### Templates
+
+=== "marketplace/notify_about_new_order_subject.txt"
+
+```txt
+
+    A new {{ order_type }} order for {{ order.offering.name }} has been placed by {{ order.created_by.get_full_name|default:"a user" }}.
+
+```
+
+=== "marketplace/notify_about_new_order_message.txt"
+
+```txt
+
+    Hello!
+
+    {{ order.created_by.get_full_name|default:"A user" }} has placed a new {{ order_type }} order for {{ order.offering.name }}
+    in project {{ order.project.name }} of organization {{ order.project.customer.name }}.
+
+    Please visit {{ order_url }} to find out more details.
+
+```
+
+=== "marketplace/notify_about_new_order_message.html"
+
+```txt
+
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>A new {{ order_type }} order for {{ order.offering.name }} has been placed by {{ order.created_by.get_full_name|default:"a user" }}.</title>
+    </head>
+    <body>
+    <p>
+        Hello!
+    </p>
+    <p>
+        {{ order.created_by.get_full_name|default:"A user" }} has placed a new {{ order_type }} order for {{ order.offering.name }}
+        in project {{ order.project.name }} of organization {{ order.project.customer.name }}.
+    </p>
+    <p>
+        Please visit <a href="{{ order_url }}">{{ site_name }}</a> to find out more details.
     </p>
     </body>
     </html>
@@ -26085,7 +26221,9 @@ waldur_site_load_components -c /etc/waldur/waldur-site-agent-config.yaml
 
 ### Create Home Directories (Optional)
 
-If your backend requires home directory creation:
+If your backend supports and requires home directory creation (any backend
+declaring `supports_user_homedirs`, e.g. SLURM), with
+`enable_user_homedir_account_creation` left enabled for the offering:
 
 ```bash
 waldur_site_create_homedirs -c /etc/waldur/waldur-site-agent-config.yaml
@@ -26660,7 +26798,8 @@ backend needs custom behavior.
 | `sync_resource_project` | No-op | Push project metadata to backends that manage their own projects |
 | `update_user_attributes` | No-op | Forward `OFFERING_USER` attribute updates to the backend |
 | `sync_offering_user_usernames` | Returns `False` | Pull backend-assigned usernames into Waldur (federation) |
-| `create_user_homedirs` | Provided | Override only to customise homedir quota or path logic |
+| `create_user_homedirs` | Provided | Customise homedir quota or path logic (see `supports_user_homedirs`) |
+| `apply_periodic_settings` | Reports failure | Apply periodic usage-policy settings (see `supports_periodic_settings`) |
 
 ### Non-blocking order creation (optional)
 
@@ -26965,7 +27104,7 @@ Calculation: `120000 / 60000 = 2`, `122880 / 61440 = 2`.
 
 ## Capability flags and class attributes
 
-`BaseBackend` exposes three class-level capability flags that change how
+`BaseBackend` exposes class-level capability flags that change how
 the core processor treats your backend.
 
 ### `supports_decreasing_usage: bool = False`
@@ -27003,6 +27142,63 @@ on a remote system and report progress via `pending_order_id`. See the
 class MyAsyncBackend(BaseBackend):
     supports_async_orders = True
 ```
+
+### `supports_user_homedirs: bool = False`
+
+Set to `True` for backends that can create POSIX home directories for
+their users. The standalone `waldur_site_create_homedirs` command iterates
+over every configured offering and calls `create_user_homedirs` on each
+backend that declares support — the gate is the capability, not the
+backend type. The per-offering `enable_user_homedir_account_creation`
+setting can still opt out.
+
+```python
+class MyHpcBackend(BaseBackend):
+    supports_user_homedirs = True
+```
+
+A backend that opts in should also inherit `HomedirSettingsSchema` from
+`waldur_site_agent.common.plugin_schemas` in its settings schema, so
+`enable_user_homedir_account_creation`, `default_homedir_umask`,
+`homedir_base_path` and `homedir_quota` validate identically everywhere:
+
+```python
+from waldur_site_agent.common.plugin_schemas import HomedirSettingsSchema
+
+class MyHpcBackendSettingsSchema(HomedirSettingsSchema):
+    model_config = ConfigDict(extra="allow")
+```
+
+SLURM declares the flag today. Leave it `False` for API-only backends: the
+inherited `create_linux_user_homedir` shells out to the local
+`/sbin/mkhomedir_helper`, which is meaningless where the users have no
+account on the agent's host.
+
+Note that enabling the flag on an existing backend is a behaviour change for
+its deployments — `enable_user_homedir_account_creation` defaults to `True`,
+so operators already running `waldur_site_create_homedirs` will start getting
+home directories with no config change of their own. Land it with a release
+note.
+
+### `supports_periodic_settings: bool = False`
+
+Set to `True` for backends that implement `apply_periodic_settings`, the
+hook Waldur calls with periodic usage-policy settings (fairshare, limits,
+usage resets). Override the method alongside the flag:
+
+```python
+class MyBackend(BaseBackend):
+    supports_periodic_settings = True
+
+    def apply_periodic_settings(self, resource_id, settings, config=None):
+        ...
+        return {"success": True, "commands_executed": [...]}
+```
+
+The return value is relayed to Waldur's report-command-result endpoint, so
+it must carry a `success` key and, on failure, an `error` message. The
+default implementation returns an explicit failure — an unsupported backend
+still reports a verdict rather than leaving the policy without an answer.
 
 ### `handled_resource_states: list = [ResourceState.OK, ResourceState.ERRED]`
 
@@ -54384,49 +54580,6 @@ The `create_monthly_invoices` task (`src/waldur_mastermind/invoices/tasks.py`) r
 
 When a resource is activated mid-month, `_register` calls `get_or_create_invoice`. If the invoice already exists, it adds items for just that resource with prorated start/end dates.
 
-### Missing usage policy
-
-A provider that reports nothing for a component in a given month leaves no
-`ComponentUsage` row, so nothing is billed and the period reads as unreported
-rather than as zero. Each usage report carries a `missing_usage_policy`
-(`marketplace/enums.py`, `MissingUsagePolicies`) declaring what should happen to
-the *following* period if it passes in silence:
-
-| Policy | Effect on the next billing period |
-|--------|-----------------------------------|
-| `none` (default) | Nothing is recorded; the period stays unreported |
-| `reuse` | The last reported value is repeated |
-| `zero` | An explicit zero is recorded |
-
-The rows are materialized by
-`create_carried_over_usage_if_invoice_has_been_created`
-(`src/waldur_mastermind/invoices/handlers.py`), which fires when the new month's
-invoice is created, reads the previous month's rows and copies the policy onto
-the new row so it survives beyond one month.
-
-Both policies only *fill a gap*: if a row already exists for the new period —
-which happens when the invoice is created late, after the provider has already
-reported — that report wins outright. Its value, its own policy and the plan
-period it was measured against are all left untouched. A usage row is identified
-by `(resource, component, billing_period)`; `plan_period` is a mutable attribute
-and deliberately not part of that identity (see migration `0212`).
-
-New rows are attached to the plan period resolved for the *new* month via
-`get_plan_period_for_billing`, not to the source row's — the latter may have been
-closed by a plan switch at the month boundary, which would price the carried-over
-usage against the old plan.
-
-A materialized zero goes through the normal billing path and therefore produces
-an invoice item with quantity `0` — the same as a zero the provider reports
-explicitly.
-
-Because `get_info_about_missing_usage_reports` (`marketplace/utils.py`) skips
-resources that have any usage row for the current period, both `reuse` and
-`zero` also silence the "missing usage reports" reminder for that resource.
-
-`recurring` remains on the API as a deprecated read/write alias for
-`missing_usage_policy == 'reuse'`.
-
 ### Invoice Finalization
 
 Finalization transitions invoices from mutable to immutable (CREATED) state. The behavior depends on the `INVOICE_FINALIZATION_GRACE_PERIOD_HOURS` setting:
@@ -54476,6 +54629,8 @@ Waldur supports a two-level credit system: **CustomerCredit** (organization-wide
 | `apply_as_minimal_consumption` | Boolean | Whether to enforce minimal consumption |
 
 **ProjectCredit** is a sub-allocation of the customer credit. The sum of all project credit values cannot exceed the customer credit value.
+
+Every change to either balance is recorded in the [credit ledger](../credit-ledger.md), which is what makes the drawdown below observable after the fact: the minimal-consumption tail writes no invoice item, so the ledger is the only place it is visible.
 
 #### Invoice Finalization Flow
 
@@ -54537,6 +54692,11 @@ sequenceDiagram
         end
     end
 ```
+
+Both deductions against a balance — what usage consumed and what the floor took
+— land in a single `value` write. The flow declares the breakdown so that the
+ledger can record them as separate `compensation` and `minimal_draw` rows; see
+[Credit ledger](../credit-ledger.md).
 
 #### Minimal Consumption
 
@@ -54708,7 +54868,6 @@ For TOTAL period components, the system:
 | `src/waldur_mastermind/marketplace/billing_usage.py` | `BillingUsageProcessor` | USAGE billing type logic |
 | `src/waldur_mastermind/marketplace/handlers.py` | `process_billing_on_resource_save` | Signal handler for resource changes |
 | `src/waldur_mastermind/invoices/tasks.py` | `create_monthly_invoices` | Monthly invoice creation task |
-| `src/waldur_mastermind/invoices/handlers.py` | `create_carried_over_usage_if_invoice_has_been_created` | Materializes reused/zero usage for the new period |
 | `src/waldur_mastermind/invoices/tasks.py` | `finalize_previous_invoices` | Deferred invoice finalization (grace period) |
 | `src/waldur_mastermind/invoices/compensations.py` | `MonthlyCompensation` | Credit-based compensation logic |
 | `src/waldur_mastermind/marketplace/enums.py` | `BillingTypes`, `LimitPeriods` | Billing type and period enums |
@@ -83800,25 +83959,29 @@ Robustness guarantees:
 
 ## Credit ledger and withdrawable balance
 
-Every change to `CustomerCredit.value` — from any source — is recorded as a
-`CreditTransaction` row by a `post_save` handler. The semantic type of the
-change is declared by the programmatic flow that makes it, via the
-`ledger.credit_transaction_type(...)` context manager; any untyped change
-(staff UI, REST API, shell) is conservatively recorded as a **staff grant**.
+Every change to a credit balance — from any source, on an organization credit
+or a project allocation — is recorded as a `CreditTransaction` row by a
+`post_save` handler, typed by the flow that makes it and recorded as a **staff
+grant** when untyped. See [Credit ledger](credit-ledger.md) for the full
+mechanism; what matters here is which of those rows count as *earnings*.
 
 ```mermaid
 flowchart TB
     subgraph Sources["Value mutations"]
         SG["Staff grant<br/>(untyped default)"]
         AFFEE["Affiliate fee"]
-        COMP["Compensation"]
+        TR["Transfer in / out"]
+        PO["Payout"]
+        DRAW["Compensation /<br/>minimal consumption draw"]
         EXP["Expiry"]
         RB["Rollback / adjustment"]
     end
 
     SG --> LED["CreditTransaction ledger"]
     AFFEE --> LED
-    COMP --> LED
+    TR --> LED
+    PO --> LED
+    DRAW --> LED
     EXP --> LED
     RB --> LED
 
@@ -83826,12 +83989,16 @@ flowchart TB
 ```
 
 The **withdrawable balance** is the sum of *earnings-typed* ledger entries
-(`affiliate_fee`, `transfer_in`, `transfer_out`, `payout`), capped by the current
-credit value. Two consequences fall out of this definition:
+(`affiliate_fee`, `transfer_in`, `transfer_out`, `payout` and
+`withdrawable_adjustment`), capped by the current credit value. Two consequences
+fall out of this definition:
 
 - Staff-granted (promotional) credit is **never** withdrawable.
 - Credit **expiry wipes earnings too** — when the value is zeroed, the cap drops
   the withdrawable balance to zero.
+
+Drawdown types — `compensation` and `minimal_draw` — are not earnings and never
+raise the withdrawable balance; they lower the cap by lowering the value.
 
 Example — an affiliate with a 1000 promotional grant earns a 30 fee:
 
@@ -83842,7 +84009,9 @@ Example — an affiliate with a 1000 promotional grant earns a 30 fee:
 | Credit expires (value → 0) | 0 | 0 |
 
 The ledger is **append-only** — it is the source of truth for the withdrawable
-balance, so rows are never edited or deleted; corrections are new rows.
+balance, so rows are never edited or deleted; corrections are new rows. The one
+exception is reconstructing history that predates the ledger, described in
+[Backfilling the credit ledger](../admin-guide/mastermind-configuration/credit-ledger-backfill.md).
 
 ## Worked scenarios
 
@@ -85576,6 +85745,153 @@ This simulates all backend operations locally, useful for:
 - Development environments
 - Demo installations
 - Training environments
+
+---
+
+### Credit ledger
+<!-- Source: docs/developer-guide/credit-ledger.md -->
+
+# Credit ledger
+
+`CreditTransaction` is an append-only record of every change to a credit
+balance — `CustomerCredit` for an organization, `ProjectCredit` for a project
+allocation. It answers two questions that nothing else in the system can:
+how much of a credit was *withdrawable* (see
+[Affiliate program](affiliate-program.md)), and where the credit *went*.
+
+## Why the invoice items are not enough
+
+A month of compensation moves a balance twice, in one write:
+
+- against real usage, which leaves a negative `InvoiceItem`;
+- to top that draw up to the minimal-consumption floor, which leaves nothing at
+  all — the value simply drops.
+
+So anything reconstructing history from invoice items sees only the first
+movement. "Used", "Lost", "Last month drew" and the consumption chart all read
+about half the money, and a figure derived as
+`lost = max(0, |compensation| − incurred)` is structurally zero, because a
+compensation never exceeds the cost it offsets.
+
+The ledger records both movements, which makes the balance reconcile:
+
+```text
+granted = used + lost + remaining
+```
+
+where `remaining` is the credit's current `value`.
+
+## Transaction types
+
+| Type | Meaning |
+|------|---------|
+| `staff_grant` | An untyped write — staff UI, REST, shell. The conservative default. |
+| `compensation` | Credit given up against real usage. |
+| `minimal_draw` | Credit given up to reach the minimal-consumption floor: the "Lost" figure, spent without buying anything. |
+| `affiliate_fee` | A fee earned by referring another organization. |
+| `transfer_in` / `transfer_out` | Credit moved between organizations. |
+| `payout` | Earned credit paid out of the platform. |
+| `expiry` | The balance zeroed because its end date passed. |
+| `rollback` | A month's compensation reversed, before it is re-applied. |
+| `adjustment` | A correction that is not withdrawable. |
+| `withdrawable_adjustment` | A staff correction of the withdrawable part. |
+
+## How a row is written
+
+A `post_save` handler on both credit models computes the delta from the
+model's `FieldTracker` and writes a row. Ledger writes are never suppressed —
+unlike the audit events, which flows can silence to avoid duplicates — because
+the withdrawable balance and the drawdown history are derived from them.
+
+The *semantic type* comes from the innermost
+`ledger.credit_transaction_type(...)` block. A flow that does not declare one
+has its write recorded as a staff grant rather than skipped, so an untyped path
+degrades to a conservative default instead of leaving a gap.
+
+### One write, two kinds of movement
+
+Compensation applies both the usage draw and the floor draw in a single `value`
+write, so a single type cannot describe it. Saving twice was rejected: it fires
+the policy `post_save` receivers twice and briefly exposes an intermediate
+balance to policy evaluation.
+
+Instead the writer *declares the breakdown* of the delta it is about to apply,
+with `ledger.credit_transaction_parts(...)`, and the handler emits one row per
+part:
+
+```mermaid
+flowchart LR
+    W["MonthlyCompensation.save()"] -->|"declares parts"| H["record_credit_transaction"]
+    W -->|"one value write"| H
+    H --> C["compensation row"]
+    H --> M["minimal_draw row"]
+```
+
+Two properties make this safe to rely on:
+
+- **The split is measured, not inferred.** The compensation flow records what
+  each balance gives up at the point of each subtraction, rather than deriving
+  it from the invoice items afterwards. The last partial compensation of an
+  exhausted credit is written net of tax, so the item and the balance movement
+  genuinely differ there.
+- **A breakdown that does not add up is refused.** If the parts do not sum to
+  the delta, the handler logs a warning and records the movement as a single
+  row instead, so the ledger never states a split it cannot back. The row still
+  takes its type from the enclosing `credit_transaction_type` block — declare
+  both, or a refusal degrades to an untyped staff grant.
+
+## Billing period
+
+`billing_period` is the first day of the month a movement *belongs to*, which is
+not the month it was recorded in. It is a real column rather than the
+`reference` generic foreign key, because dashboards group drawdown by month in
+SQL and a generic foreign key cannot be grouped on.
+
+Movements that reverse or re-state a month carry that month, not the day they
+ran. Applying compensations is a roll-back followed by a re-application, and
+staff can run it against a pending invoice repeatedly; an undated roll-back
+would leave every superseded run standing in its month, and the month would
+report its drawdown once per run.
+
+Grants, expiry and transfers belong to no month and leave it empty.
+
+## Attribution outlives the allocation
+
+`ProjectCredit` is deleted outright when its project is removed, so the row
+cannot rely on the foreign key alone. `project_credit` is `SET_NULL`, and the
+project's uuid and name are denormalised onto the row — a ledger that loses its
+attribution on a delete is not a ledger.
+
+## Reading the ledger
+
+`GET /api/credit-transactions/` is read-only and scoped by role: staff see
+every row, an organization owner sees their organization's rows on either
+balance, and project roles see their own project's drawdown.
+
+| Filter | Selects |
+|--------|---------|
+| `customer_uuid` | Rows on either balance belonging to that organization |
+| `credit_uuid` | Rows on one organization credit |
+| `project_credit_uuid` | Rows on one project allocation |
+| `project_uuid` | A project's rows, including those whose allocation is gone |
+| `transaction_type` | One type |
+| `billing_period` | One month |
+| `billing_period_after` / `billing_period_before` | A range of months |
+
+Ordering is available on `created` and `billing_period` via `o`.
+
+Note that `project_uuid` filters the denormalised column rather than the
+allocation, which is what keeps a deleted project's history queryable.
+
+## Append-only
+
+Rows are never edited or deleted: the ledger is the source of truth for the
+withdrawable balance, and corrections are new rows.
+
+The single exception is
+[backfilling history that predates the ledger](../admin-guide/mastermind-configuration/credit-ledger-backfill.md),
+where `--force` deletes and rewrites the rows that command itself wrote. It
+touches nothing else, and reconstructed rows are labelled as such.
 
 ---
 
