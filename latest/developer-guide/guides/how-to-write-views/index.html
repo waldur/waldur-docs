@@ -2194,6 +2194,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../admin-guide/deployment/helm/docs/mail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mail
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../admin-guide/deployment/helm/docs/marketplace-script/" class="md-nav__link">
         
   
@@ -7896,6 +7924,17 @@
     <span class="md-ellipsis">
       
         View workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pagination-and-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pagination and ordering
       
     </span>
   </a>
@@ -18009,6 +18048,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pagination-and-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pagination and ordering
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -18049,6 +18099,26 @@
 <li>
 <p><strong>Serialization and response output</strong> - return serialized data as response.</p>
 </li>
+</ul>
+<h2 id="pagination-and-ordering">Pagination and ordering</h2>
+<p>List endpoints are sliced with <code>LIMIT/OFFSET</code>, so their ordering has to be a
+<em>total</em> order: if the last sort key can repeat, rows sharing it may swap places
+between two requests, and a page then shows one row twice while another is never
+returned.</p>
+<ul>
+<li>Every model declares <code>Meta.ordering</code> ending on a unique column, normally the
+  primary key: <code>ordering = ["-created", "id"]</code>. Declare <code>class Meta(Parent.Meta)</code>
+  rather than a bare <code>class Meta</code> when inheriting, otherwise Django drops the
+  parent's ordering. <code>PaginationOrderingTest</code> enforces both rules.</li>
+<li><code>LinkHeaderPagination</code> appends the primary key to whatever ordering reaches it,
+  which covers <code>?o=&lt;field&gt;</code> - an ordering filter <em>replaces</em> the ordering instead
+  of extending it - and querysets built inside a custom action. Querysets built
+  with <code>values()</code>, <code>union()</code> or <code>distinct(&lt;field&gt;)</code> are left untouched, since an
+  extra column would change what they return.</li>
+<li>Widening an ordering changes <code>SELECT DISTINCT</code>: default-ordering columns are
+  appended to the select list, so <code>values_list("x", flat=True).distinct()</code> starts
+  deduplicating on the ordering columns as well. Call <code>order_by()</code> first to clear
+  the ordering in aggregates of that shape.</li>
 </ul>
 
 
