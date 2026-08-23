@@ -1910,6 +1910,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Upgrading Waldur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-folder-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config folder changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1999,6 +2016,56 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outgoing-email" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outgoing email
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Outgoing email">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#smtp-relay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SMTP relay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enabling-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying
+      
+    </span>
+  </a>
   
 </li>
         
@@ -18392,6 +18459,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Upgrading Waldur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-folder-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config folder changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -18481,6 +18565,56 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outgoing-email" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outgoing email
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Outgoing email">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#smtp-relay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SMTP relay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enabling-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying
+      
+    </span>
+  </a>
   
 </li>
         
@@ -18721,6 +18855,22 @@ setup, so make sure you understand what you are doing.</p>
 docker<span class="w"> </span>compose<span class="w"> </span>down
 docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="config-folder-changes">Config folder changes</h3>
+<p>Every file under <code>${CONFIG_FOLDER}/waldur-mastermind</code> listed in
+<code>docker-compose.yml</code> is a <strong>file</strong> bind mount. If the source is missing on the
+host, Docker silently creates a <em>directory</em> in its place and the startup command
+that reads it fails with <code>IsADirectoryError</code>. <code>initdb</code> runs under <code>set -e</code>, so
+the stack does not come up.</p>
+<p>With the default <code>CONFIG_FOLDER=./config/</code> this cannot happen — the files arrive
+with the repository. If <code>CONFIG_FOLDER</code> points at a directory of your own, diff
+it against <code>config/waldur-mastermind/</code> after pulling a release and copy over
+anything new.</p>
+<p>Recently added or renamed:</p>
+<ul>
+<li><code>notifications-templates.yaml</code> — renamed from <code>notification-templates.yaml</code>.
+  The old name never took effect: <code>initdb</code> reads the plural form.</li>
+<li><code>notifications.json</code> — added. Must exist even if empty (<code>{}</code>).</li>
+</ul>
 <h2 id="upgrade-instructions-for-postgresql-images">Upgrade Instructions for PostgreSQL Images</h2>
 <h3 id="automated-upgrade-recommended">Automated Upgrade (Recommended)</h3>
 <p>To simplify the upgrade process, an upgrade script <code>db-upgrade-script.sh</code> is included in the root directory. This script automates the entire upgrade process.</p>
@@ -18854,6 +19004,63 @@ docker<span class="w"> </span>logs<span class="w"> </span>keycloak-db
 </code></pre></div></td></tr></tbody></table></div>
 </li>
 </ol>
+<h2 id="outgoing-email">Outgoing email</h2>
+<p>Two independent things must be configured before Waldur sends anything. Each is
+necessary and neither is sufficient:</p>
+<ol>
+<li><strong>An SMTP relay.</strong> The stack ships none, and the mastermind image's own
+   placeholder is overwritten by the mounted <code>override.conf.py</code>.</li>
+<li><strong>Enabled notifications.</strong> Every notification type ships disabled.</li>
+</ol>
+<p>A correct relay with no notifications enabled sends nothing at all, and logs
+nothing to explain it.</p>
+<h3 id="smtp-relay">SMTP relay</h3>
+<p>Set the relay in <code>.env</code>; <code>config/waldur-mastermind/override.conf.py</code> reads these
+and leaves Django's defaults untouched when <code>EMAIL_HOST</code> is empty:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">GLOBAL_DEFAULT_FROM_EMAIL</span><span class="o">=</span>waldur@example.com
+<span class="nv">GLOBAL_DEFAULT_REPLY_TO_EMAIL</span><span class="o">=</span>support@example.com
+<span class="nv">EMAIL_HOST</span><span class="o">=</span>smtp.example.com
+<span class="nv">EMAIL_PORT</span><span class="o">=</span><span class="m">587</span>
+<span class="nv">EMAIL_USER</span><span class="o">=</span>waldur@example.com
+<span class="nv">EMAIL_PASSWORD</span><span class="o">=</span>s3cret
+<span class="nv">EMAIL_USE_TLS</span><span class="o">=</span><span class="nb">true</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Use <code>EMAIL_USE_TLS</code> with port 587 (STARTTLS) or <code>EMAIL_USE_SSL</code> with port 465
+(implicit TLS) — never both, or Django raises at send time. Leave <code>EMAIL_USER</code>
+and <code>EMAIL_PASSWORD</code> empty for a relay that accepts unauthenticated mail.</p>
+<h3 id="enabling-notifications">Enabling notifications</h3>
+<p>List the notification types to enable in
+<code>config/waldur-mastermind/notifications.json</code>, which is mounted into the
+containers and loaded on startup:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">"users.invitation_created"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"users.invitation_approved"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"marketplace.notification_usages"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Keys not listed keep their current value. The same toggles are available at
+runtime under <strong>Administration → Notifications</strong> in the UI.</p>
+<p>To customise the message bodies, put the replacement templates in
+<code>config/waldur-mastermind/notifications-templates.yaml</code>.</p>
+<h3 id="verifying">Verifying</h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>waldur-mastermind-api<span class="w"> </span>waldur<span class="w"> </span>sendtestemail<span class="w"> </span>you@example.org
+</code></pre></div></td></tr></tbody></table></div>
+<p>This bypasses the notification system, so it isolates the relay. It does not
+show up under <strong>Support → Email logs</strong>: that log is written by Waldur's own send
+path, and only after the relay has accepted a message. An empty log with SMTP
+errors in the worker logs points at the relay; an empty log with silent workers
+means nothing was generated, so check the notifications above.</p>
+<p>Full reference: <a href="https://docs.waldur.com/latest/admin-guide/mastermind-configuration/email/">Email configuration</a> in the admin guide.</p>
 <h2 id="using-tls">Using TLS</h2>
 <p>This setup supports following types of SSL certificates:</p>
 <ul>

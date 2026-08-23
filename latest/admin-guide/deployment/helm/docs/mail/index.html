@@ -18325,9 +18325,11 @@ under <strong>Administration → Notifications</strong> in the UI.</p>
 <span class="w">  </span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>waldur<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-l<span class="w"> </span><span class="nv">app</span><span class="o">=</span>waldur-mastermind-api<span class="w"> </span>-o<span class="w"> </span>name<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1<span class="k">)</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--<span class="w"> </span>waldur<span class="w"> </span>sendtestemail<span class="w"> </span>you@example.org
 </code></pre></div></td></tr></tbody></table></div>
-<p>This bypasses the notification system, so it isolates the transport half.
-Messages Waldur composes are recorded regardless of relay outcome and can be
-browsed under <strong>Support → Email logs</strong>.</p>
+<p>This bypasses the notification system, so it isolates the transport half. It
+does not appear under <strong>Support → Email logs</strong>: that log is written by Waldur's
+own send path, and only once the relay has accepted a message. An empty log with
+SMTP errors in the worker logs points at the transport; an empty log with silent
+workers means nothing was generated, so check the notifications above.</p>
 
 
 
