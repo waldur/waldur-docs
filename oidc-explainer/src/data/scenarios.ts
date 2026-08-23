@@ -334,11 +334,13 @@ client_secret = ********
         channel: 'front',
         credential: 'none',
         narration:
-          'The victim clicks a login link on the attacker\'s site, so the Referer header, and the return destination derived from it, points at that site.',
+          'The victim clicks a login link on the attacker\'s site. It points at the real Mastermind, but carries a return_url of the attacker\'s choosing — and the parameter is taken ahead of the Referer header, so the origin the victim actually came from is never consulted.',
         wire: {
           kind: 'http',
           method: 'GET',
-          url: `${F.api}/api-auth/${F.provider}/init/`,
+          url: `${F.api}/api-auth/${F.provider}/init/?return_url=${encodeURIComponent(
+            'https://waldur-login.evil.example',
+          )}`,
           headers: { Referer: 'https://waldur-login.evil.example/go' },
         },
         code: [],
