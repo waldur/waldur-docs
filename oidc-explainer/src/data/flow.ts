@@ -87,7 +87,7 @@ export const FLOW: Step[] = [
     wire: {
       kind: 'http',
       method: 'GET',
-      url: `${F.api}/api-auth/${F.provider}/init/?redirect_uri=${encodeURIComponent(
+      url: `${F.api}/api-auth/${F.provider}/init/?return_url=${encodeURIComponent(
         F.portal,
       )}&ui_locales=en`,
       headers: { Referer: `${F.portal}/login` },
@@ -101,7 +101,7 @@ export const FLOW: Step[] = [
     ],
     callout: {
       tone: 'insight',
-      text: 'Homeport sends redirect_uri here, but OAuthViewInit reads a query parameter named return_url. In practice it is the Referer header that carries the destination back, via the fallback branch.',
+      text: 'return_url is where the flow will land once it comes back. OAuthViewInit takes it over the Referer header, and only falls back to the header when the parameter is absent — which is what happens for any client that is not Homeport. Either way the value is an origin, and it has to be one the provider already allows.',
     },
   },
 
@@ -120,7 +120,7 @@ export const FLOW: Step[] = [
       body: `session.flush()
 session["oidc_state"]         = "${F.state}"
 session["oidc_code_verifier"] = "${F.codeVerifier}"
-session["oidc_referrer"]      = "${F.portal}/login"
+session["oidc_return_url"]    = "${F.portal}"
 
 code_challenge = b64url(sha256(code_verifier))
                = "${F.codeChallenge}"`,
@@ -149,7 +149,7 @@ code_challenge = b64url(sha256(code_verifier))
             value: F.codeVerifier,
             credential: 'pkce',
           },
-          { id: 'referrer', label: 'referrer', value: `${F.portal}/login` },
+          { id: 'return-url', label: 'return_url', value: F.portal },
         ],
       },
     ],
@@ -525,7 +525,7 @@ token.key = "${F.waldurToken}"`,
 exchange_code.uuid.hex = "${F.exchangeCode}"
 
 redirect_base = validate_and_get_redirect_url(
-    config, referrer="${F.portal}/login", return_url=None
+    config, referrer=None, return_url="${F.portal}"
 )   # must match IdentityProvider.allowed_redirects`,
       note: 'TOKEN_EXCHANGE_TTL is 10 seconds.',
     },
