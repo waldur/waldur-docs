@@ -1,5 +1,54 @@
 # Changelog
 
+## 8.1.3-rc.3 - 2026-08-24
+
+### Highlights
+
+This release makes order handling and provider identity management noticeably more workable. Providers can now nominate exactly who gets told about a new order — configured email addresses and provider roles — and the notification itself spells out what was ordered instead of just pointing at a link. A single user now keeps one POSIX identity across all of a provider's offerings, so account mapping on HPC and SLURM systems stops fragmenting per offering. Credit accounting moved onto a proper ledger, so what the UI shows as consumed credit is now read from recorded transactions rather than inferred. Deployments also gained IPv6 support end to end, across the API container, the Homeport nginx config and the Helm chart.
+
+### What's New
+
+- Providers can configure who receives new-order notifications: a list of email addresses plus selected provider roles, set from the offering's integration settings. The notification email now describes the ordered items rather than only linking to them.
+- Calls and proposals send their own dedicated invitation emails instead of reusing the generic invitation template.
+- Credit drawdown is recorded in a ledger per project and split by kind, with a backfill command for existing data; the project health view now reads consumption from the ledger. Credit expiry is dated to the month the balance was actually forfeited.
+- Offerings can declare a missing usage policy, replacing the old recurring-usage checkbox, and component usage can be filtered by it in reporting.
+- Service providers get a searchable POSIX ID pool list showing which identities are shared across offerings.
+- Accepted proposals now show what was allocated and where the allocation lives.
+- Reporting overview gained a period filter.
+
+### Improvements
+
+- One POSIX identity per user is now shared across all offerings of a provider, with a migration and a `collapse_posix_identities` command to consolidate existing per-offering identities.
+- Deployments work on IPv4-only, IPv6-only and dual-stack setups: gunicorn binds the IPv6 wildcard when available, the Homeport nginx config listens on both families, and the Helm chart picks IP families per service.
+- Outgoing email is now configurable in both the Helm chart (SMTP credentials delivered to pods) and the Docker Compose deployment.
+- Pooled Postgres deployments can disable server-side cursors via a new Helm toggle, and the user revision backfill migration no longer relies on them.
+- Paginated resource listings have a stable total ordering, so pages no longer repeat or skip records.
+- Offering fields visible only to providers, and offering secret options, are now gated on the same permission that allows writing them.
+- Auto-approval is respected consistently: `disable_autoapprove` now overrides owner self-approval, and auto-approving invitations no longer send a "request submitted" email.
+- Interface polish: visible keyboard focus rings restored on buttons and menus, a flatter offering pricing panel, resource state shown next to the resource name, tooltips on disabled navigation tabs, and a more robust login hero with an image fallback.
+- Django upgraded to 6.0.8, picking up a fix for a GeoDjango denial-of-service issue.
+
+### Bug Fixes
+
+- The terms-of-service reconsent filter now compares actual ToS versions, so users are only asked to re-consent when the terms really changed.
+- A plan component price of zero is accepted again, both when editing prices and when scheduling next month's price.
+- Configurable plan components are no longer displayed as an included quantity of zero.
+- The 404 page keeps the requested URL, and navigation blocked by the profile-completion gate now explains itself and resumes where the user left off.
+- Users are no longer prompted to complete their profile while profile editing is disabled.
+- Login redirects use the correct `return_url` query parameter.
+- Comma-separated list fields no longer emit a blank entry.
+- Conflicting invoice migration branches were merged into a single history.
+- Provider action visibility now follows one rule across all order surfaces.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [30 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.2...8.1.3-rc.3) - order notifications, shared POSIX identities, credit ledger, permission gating and pagination ordering.
+- **Waldur Homeport**: [25 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.2...8.1.3-rc.3) - notification recipient settings, POSIX identity views, credit ledger display, plus accessibility and navigation fixes.
+- **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.2...8.1.3-rc.3) - IP family support, SMTP credential delivery and a server-side cursor toggle.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.2...8.1.3-rc.3) - configurable outgoing email.
+
+---
+
 ## 8.1.3-rc.2 - 2026-08-19
 
 ### Highlights
