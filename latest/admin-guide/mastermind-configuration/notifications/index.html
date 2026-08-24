@@ -12530,6 +12530,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../developer-guide/posix-id-pools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Posix id pools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../developer-guide/project-lifecycle/" class="md-nav__link">
         
   
@@ -12905,10 +12933,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_44">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_45">
         
           
-          <label class="md-nav__link" for="__nav_3_44" id="__nav_3_44_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_45" id="__nav_3_45_label" tabindex="0">
             
   
   
@@ -12926,8 +12954,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_44_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_44">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_45_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_45">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -12991,10 +13019,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_45">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_46">
         
           
-          <label class="md-nav__link" for="__nav_3_45" id="__nav_3_45_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_46" id="__nav_3_46_label" tabindex="0">
             
   
   
@@ -13012,8 +13040,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_45_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_45">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_46_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_46">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -13077,10 +13105,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_46">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_47">
         
           
-          <label class="md-nav__link" for="__nav_3_46" id="__nav_3_46_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_47" id="__nav_3_47_label" tabindex="0">
             
   
   
@@ -13098,8 +13126,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_46_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_46">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_47_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_47">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -25327,16 +25355,28 @@
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code>    Hello!
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code>    Hello!
 
     {{ order.created_by.get_full_name|default:"A user" }} has placed a new {{ order_type }} order for {{ order.offering.name }}
     in project {{ order.project.name }} of organization {{ order.project.customer.name }}.
-
+    {% if order_attributes %}
+    Requested configuration:
+    {% for label, value in order_attributes %}* {{ label }}: {{ value }}
+    {% endfor %}{% endif %}{% if order_limits %}
+    Requested limits:
+    {% for label, value in order_limits %}* {{ label }}: {{ value }}
+    {% endfor %}{% endif %}
     Please visit {{ order_url }} to find out more details.
 </code></pre></div></td></tr></tbody></table></div>
 <div class="tabbed-set tabbed-alternate" data-tabs="114:1"><input checked="" id="__tabbed_114_1" name="__tabbed_114" type="radio"><div class="tabbed-labels"><label for="__tabbed_114_1">marketplace/notify_about_new_order_message.html</label></div>
@@ -25361,7 +25401,25 @@
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
-<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code>    &lt;html&gt;
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span></pre></div></td><td class="code"><div><pre><span></span><code>    &lt;html&gt;
     &lt;head lang="en"&gt;
         &lt;meta charset="UTF-8"&gt;
         &lt;title&gt;A new {{ order_type }} order for {{ order.offering.name }} has been placed by {{ order.created_by.get_full_name|default:"a user" }}.&lt;/title&gt;
@@ -25374,6 +25432,24 @@
         {{ order.created_by.get_full_name|default:"A user" }} has placed a new {{ order_type }} order for {{ order.offering.name }}
         in project {{ order.project.name }} of organization {{ order.project.customer.name }}.
     &lt;/p&gt;
+    {% if order_attributes %}
+    &lt;p&gt;
+        Requested configuration:
+    &lt;/p&gt;
+    &lt;ul&gt;
+        {% for label, value in order_attributes %}&lt;li&gt;{{ label|escape }}: {{ value|escape }}&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+    {% endif %}
+    {% if order_limits %}
+    &lt;p&gt;
+        Requested limits:
+    &lt;/p&gt;
+    &lt;ul&gt;
+        {% for label, value in order_limits %}&lt;li&gt;{{ label|escape }}: {{ value|escape }}&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+    {% endif %}
     &lt;p&gt;
         Please visit &lt;a href="{{ order_url }}"&gt;{{ site_name }}&lt;/a&gt; to find out more details.
     &lt;/p&gt;
