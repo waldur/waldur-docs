@@ -131,16 +131,25 @@ class ExternalDocSyncer:
         return False
 
     def rewrite_links(self, content, source, current_mapping, rel_file_path):
-        """Rewrite relative markdown links that cross mapping boundaries.
+        """Rewrite relative markdown links so they resolve in the local tree.
 
-        When source directories are remapped to different local paths, relative
-        links between them break. This resolves each relative link in the source
-        tree and rewrites it to the correct relative path in the local tree.
+        Two things break a relative link on the way in.
+
+        A link that crosses a mapping boundary points into a directory that was
+        remapped somewhere else locally. It is resolved in the source tree and
+        re-pointed at the local path.
+
+        A link that leaves the synced subtree altogether — `../apps/foo.md` from
+        a `docs/` mapping — has no local target at all, because nothing outside
+        the mapping is copied. The link is dropped and its text kept: a
+        repository-relative path is not followable from the docs site either
+        way, and left as a link it aborts the strict mkdocs build.
+
+        Images are the exception to that second rule. Alt text is no substitute
+        for the image, so a missing one stays a loud build failure rather than
+        silently disappearing from the page.
         """
         mappings = source.get("mappings", [])
-        if len(mappings) < 2:
-            return content
-
         current_remote = Path(current_mapping["remote"])
         current_local = Path(current_mapping["local"])
 
@@ -164,9 +173,11 @@ class ExternalDocSyncer:
         file_local_dir = current_local / Path(rel_file_path).parent
 
         def rewrite_match(match):
-            prefix = match.group(1)
-            url = match.group(2)
-            suffix = match.group(3)
+            bang = match.group(1)
+            text = match.group(2)
+            url = match.group(3)
+            suffix = match.group(4)
+            prefix = f"{bang}[{text}]("
 
             # Skip non-relative links
             if url.startswith(("http://", "https://", "mailto:", "#", "/")):
@@ -202,11 +213,26 @@ class ExternalDocSyncer:
                 new_rel = new_rel.replace("\\", "/")
                 return prefix + new_rel + anchor + suffix
 
-            return match.group(0)
+            # No mapping owns the target. It may still resolve locally — the
+            # local tree keeps the source repo's shape closely enough that some
+            # of these land on a hand-written page (a site-agent doc linking
+            # `../CHANGELOG.md` finds the stub written for it here). Those links
+            # work, so leave them alone.
+            local_target = os.path.normpath(
+                os.path.join(str(file_local_dir), path_part)
+            )
+            if os.path.exists(local_target):
+                return match.group(0)
+
+            # Nothing was copied and nothing local answers to it. Keep the text,
+            # drop the link.
+            if bang:
+                return match.group(0)
+            return text
 
         # Rewrite inline and image links: [text](url) and ![alt](url)
         content = re.sub(
-            r'(!?\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))', rewrite_match, content
+            r'(!?)\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?\))', rewrite_match, content
         )
 
         return content
