@@ -1,5 +1,46 @@
 # Changelog
 
+## 8.1.3-rc.4 - 2026-08-25
+
+### Highlights
+
+Credit reporting is now visible to every project that actually has a credit, instead of hiding behind a staff-only toggle, so project members can finally see their own credit balance and usage. Staff and support users are no longer locked out of restricted offerings when placing orders, removing a long-standing friction point for support teams acting on behalf of customers. This release also modernises the messaging and deployment stack — Celery, RabbitMQ 4.3 compatibility, and a move from Bitnami to CloudPirates subcharts in the Helm chart — and cuts down log noise from resources that have disappeared at the backend.
+
+### What's New
+
+- Credit reports and credit blocks on the project dashboard now appear automatically for any project holding a credit, replacing the previous per-project display toggle.
+- A new management command lists resources that are missing at the backend, so operators can review them on demand rather than digging through logs.
+- Service providers can now see the `creation_order` field on resources they serve, giving them the ordering context behind a provisioned resource.
+
+### Improvements
+
+- Staff and support users are exempt from offering role restrictions, both in the API and in the order form, so restricted offerings remain usable for administrative and support work.
+- Resources that vanish from the backend are recorded once with a first-seen timestamp instead of being re-logged on every pull cycle, dramatically reducing repetitive event log entries.
+- The offering orders list no longer applies a default state filter, showing all orders straight away.
+- Provider-specific actions are hidden from users without a provider role, so resource action menus only show what the user can actually do.
+- The terms-of-service consent banner now checks whether an offering user exists for the resource before warning about it.
+- Long-running background jobs, migrations and admin queries walk large querysets in client-side chunks, so they no longer fail when a pooled database cursor is dropped mid-iteration.
+- Celery upgraded to 5.6.3 with kombu 5.6.2, control-plane queues declared as exclusive, and RabbitMQ 4.3 compatibility prepared across the server, Docker Compose and Helm deployments.
+- The Helm chart replaces Bitnami subcharts (PostgreSQL, PostgreSQL-HA, RabbitMQ, MinIO) with CloudPirates charts on officially maintained images, and CI test fixtures are excluded from the packaged chart.
+- Support ticket HTML-to-text conversion moved from the deprecated `html2text` to `markdownify`, producing cleaner comment and issue bodies.
+- The map component now uses direct Leaflet bindings instead of react-leaflet, and shared UI work continued on the dashboard micro-app with design-token and visual-parity coverage.
+
+### Bug Fixes
+
+- Fixed a crash in the VMware order form caused by composed form validators.
+- Fixed display issues in the service provider customers and organization project tables.
+- Fixed the call offering filter so its options render correctly in the proposal resource request step.
+- Credit ledger backfill now infers the floor-draw month in the deployment timezone, preventing off-by-one-month entries near month boundaries.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [11 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.3...8.1.3-rc.4) - credit report visibility, offering role exemptions for staff/support, missing-resource logging, Celery/RabbitMQ upgrades.
+- **Waldur Homeport**: [11 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.3...8.1.3-rc.4) - credit dashboard gating, order form and table fixes, Leaflet migration, shared UI component work.
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.3...8.1.3-rc.4) - migration from Bitnami to CloudPirates subcharts, RabbitMQ operator test coverage, leaner chart packaging.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.3...8.1.3-rc.4) - RabbitMQ 4.3 upgrade compatibility.
+
+---
+
 ## 8.1.3-rc.3 - 2026-08-24
 
 ### Highlights
