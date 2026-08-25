@@ -56,7 +56,9 @@ sync-external-docs:
   # exactly what happened during the 8.1.0 release. Shared with the schema
   # commit job in .gitlab-ci.yml, which pushes the same ref.
   resource_group: master-push
-  image: $PYTHON_IMAGE
+  # Not $PYTHON_IMAGE: this job builds the docs before pushing (see below), so it
+  # needs the same full image as "Test mkdocs" rather than the slim one.
+  image: registry.hpc.ut.ee/mirror/library/python:3.13
   rules:
     - if: '$BUILD_SDK == "true"'
       when: never
@@ -73,25 +75,46 @@ sync-external-docs:
   script:
     # Run the sync
     - python scripts/sync-external-docs.py
-    # Check if there are any changes
+    # Nothing to do if the sources have not moved
     - |
-      if [ -n "$(git status --porcelain)" ]; then
-        echo "Changes detected, committing..."
-        git add .
-        git commit -m "Sync external documentation
-
-        Updated documentation from external sources:
-        - HomePort UI docs
-        - MasterMind API docs
-        - Integration docs
-
-        Automated sync from CI/CD pipeline.
-        Pipeline: $CI_PIPELINE_URL"
-        git push origin HEAD:$CI_COMMIT_REF_NAME
-        echo "✅ External documentation synchronized and committed"
-      else
+      if [ -z "$(git status --porcelain)" ]; then
         echo "✅ No changes detected - external docs are up to date"
+        exit 0
       fi
+    # Commit before building, not after: the build below writes .venv/ and the
+    # site directory into the working tree, and this commit sweeps with
+    # `git add .`. Nothing is pushed until the build passes.
+    - |
+      echo "Changes detected, committing..."
+      git add .
+      git commit -m "Sync external documentation
+
+      Updated documentation from external sources:
+      - HomePort UI docs
+      - MasterMind API docs
+      - Integration docs
+
+      Automated sync from CI/CD pipeline.
+      Pipeline: $CI_PIPELINE_URL"
+    # Build what the sync just produced, before it reaches master. The push
+    # below uses CI_JOB_TOKEN, which by design starts no pipeline, so
+    # "Test mkdocs" never sees this commit — an upstream page that links to a
+    # path outside the synced subtree would otherwise land on master unbuilt and
+    # fail the next unrelated merge request instead of failing here.
+    #
+    # These steps mirror .setup_mkdocs_steps in .gitlab-ci.yml. YAML anchors do
+    # not cross `include:` boundaries, so they are repeated rather than shared.
+    # llms-full.txt is deliberately not regenerated: it is committed to the repo
+    # and would enlarge the sync commit with a derived file.
+    - pip install uv
+    - uv sync --frozen
+    - uv pip install --reinstall --no-deps mkdocs-materialx
+    - curl -fsSL https://d2lang.com/install.sh | sh -s -- --version v0.7.1
+    - export PATH="$HOME/.local/bin:$PATH"
+    # `test/` is gitignored, so the build output cannot reach the commit above.
+    - uv run mkdocs build --strict --site-dir test
+    - git push origin HEAD:$CI_COMMIT_REF_NAME
+    - echo "✅ External documentation synchronized and committed"
 
 # Job to validate sync after changes
 post-sync-validation:

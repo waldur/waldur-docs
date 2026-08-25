@@ -26,14 +26,14 @@ workspace member (root `package.json`'s `"workspaces"` already includes
 `"apps/*"`), consuming `packages/*` the way a genuinely separate
 micro-frontend would — not through the root app's own `src/`, its
 `vite.config.ts` aliases, or its Tailwind theme overrides. See
-[`apps/micro-app-poc`](../apps/micro-app-poc) for a concrete example and
+`apps/micro-app-poc` for a concrete example and
 what building one that way surfaced about `packages/*`'s own portability
 gaps.
 
 A new micro-app that wants the same Sidebar/TopBar chrome and app
 bootstrap sequence (auth, font/brand-token, sidebar-style, i18n, Sentry)
 doesn't need to rebuild any of that — see `packages/shell` (`waldur-shell`)
-and [`apps/micro-app-poc/README.md`](../apps/micro-app-poc/README.md)'s
+and `apps/micro-app-poc/README.md`'s
 "Shared app-shell" section.
 Reach for it directly rather than re-deriving the same bootstrap wiring
 `micro-app-poc` used to have inline; see this doc's "Known gaps" section
@@ -211,7 +211,7 @@ MR's live k8s preview, while never appearing in a real `Publish` image.
   the Sidebar/TopBar chrome and the `configureAuthCore`/`initApiClient`/
   font/brand-token/sidebar-style/i18n/Sentry bootstrap sequence would be
   identical for any future micro-app. See
-  [`apps/micro-app-poc/README.md`](../apps/micro-app-poc/README.md)'s
+  `apps/micro-app-poc/README.md`'s
   "Shared app-shell" section for what it covers and what a new micro-app
   gets for free versus what stays its own responsibility (nav content,
   page content, org/customer data). A genuinely different micro-app (a

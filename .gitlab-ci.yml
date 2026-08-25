@@ -192,6 +192,9 @@ Test mkdocs:
     - python scripts/check-changelog-api-links.py
     - python3 -m unittest scripts/test_generate_enhanced_changelog.py
     - *setup_mkdocs_steps
+    # Runs after the environment is synced, not with the fast pre-checks above:
+    # importing the sync script pulls in PyYAML.
+    - uv run python -m unittest scripts/test_sync_external_docs.py
     - uv run mkdocs build --strict --site-dir test
 
 Test Docker Compose deployment before tagging:
