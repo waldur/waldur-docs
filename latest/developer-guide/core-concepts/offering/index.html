@@ -19044,7 +19044,7 @@
 <td><code>disable_autoapprove</code></td>
 <td>boolean</td>
 <td><code>false</code></td>
-<td>Force manual approval for all orders, overriding other auto-approve settings</td>
+<td>Force manual consumer approval for all provisioning orders, overriding every other consumer-side auto-approve setting (including role-based and project-level auto-approval rules); termination orders, staff and provider approval are exempt</td>
 </tr>
 </tbody>
 </table>
@@ -19646,13 +19646,21 @@
 </ol>
 <p>The <code>check_unique_backend_id</code> endpoint performs the same checks when <code>use_offering_rules</code> is <code>true</code>, returning <code>is_unique</code> and <code>is_valid_format</code> fields in the response.</p>
 <h3 id="approval-flow">Approval Flow</h3>
-<p>The approval flow is determined by:</p>
+<p>Consumer and provider approval are decided separately, by two independent gates.</p>
+<p><strong>Consumer approval</strong> is decided by <code>order_should_not_be_reviewed_by_consumer()</code>, which applies these rules in order:</p>
 <ol>
-<li>If <code>disable_autoapprove</code> is <code>true</code>, manual approval is always required</li>
-<li>If ordering within same organization and <code>auto_approve_in_service_provider_projects</code> is <code>true</code>, consumer approval is skipped</li>
-<li>If <code>auto_approve_remote_orders</code> is <code>true</code>, provider approval is skipped for external customers</li>
-<li>Staff users bypass most approval requirements</li>
+<li>If the offering sets <code>require_purchase_order_upload</code> and no purchase order is attached, manual approval is required — this applies to staff too. Termination orders are exempt</li>
+<li>Staff users skip consumer approval. This includes the system robot that drives scheduled sweeps and backend-triggered flows</li>
+<li>If <code>disable_autoapprove</code> is <code>true</code>, manual approval is required. It overrides every consumer-side mechanism below it: private-offering permissions, <code>auto_approve_in_service_provider_projects</code>, <code>auto_approve_for_roles</code>, project-level auto-approval rules, and the general <code>ORDER.APPROVE</code> permission that owners and managers hold by default. Termination orders are exempt: they reduce spend, so they follow the normal termination rules instead</li>
+<li>Otherwise the private-offering, same-organization (<code>auto_approve_in_service_provider_projects</code>), termination, role-based (<code>auto_approve_for_roles</code>) and <code>ORDER.APPROVE</code> rules apply, in that order</li>
 </ol>
+<p><strong>Provider approval</strong> is decided by <code>order_should_not_be_reviewed_by_provider()</code> and is <em>not</em> affected by <code>disable_autoapprove</code>. It is governed by the offering type together with <code>auto_approve_remote_orders</code> (skips provider approval for orders from external customers) and <code>auto_approve_marketplace_script</code>.</p>
+<p>Both gates only decide whether an order needs <em>approval</em>. Flows that create an order already approved — as a record of a provisioning decision made elsewhere — do not consult them, so <code>disable_autoapprove</code> does not apply to:</p>
+<ul>
+<li><strong>Proposal allocation.</strong> The call review is itself the consumer-side decision: the project is created under the call manager's own organization. The offering's purchase-order requirement is still honoured</li>
+<li><strong>Autoprovisioning and HPC onboarding rules</strong>, which create the resource and its order at user signup. An order left pending would strand the resource in <code>Creating</code></li>
+<li><strong>Resource migration</strong> (<code>waldur_openstack_replication</code>), which records the order once the migration has already succeeded or failed</li>
+</ul>
 
 
 
