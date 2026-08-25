@@ -2401,34 +2401,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../postgres-db-ha/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Postgres db ha
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../postgres-db/" class="md-nav__link">
         
   
@@ -2588,6 +2560,17 @@
     <span class="md-ellipsis">
       
         Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-upgrade-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version upgrade path
       
     </span>
   </a>
@@ -18342,6 +18325,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-upgrade-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version upgrade path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18608,6 +18602,22 @@
 
 <h1 id="rabbitmq-cluster-operator-production">RabbitMQ Cluster Operator (Production)</h1>
 <p>For <strong>production deployments</strong>, it is strongly recommended to use the official <a href="https://www.rabbitmq.com/kubernetes/operator/operator-overview">RabbitMQ Cluster Kubernetes Operator</a> instead of the Bitnami Helm chart. The operator provides better lifecycle management, high availability, and production-grade features.</p>
+<blockquote>
+<p><strong>The bundled Bitnami subchart is stuck on RabbitMQ 4.1 and cannot be upgraded.</strong>
+The chart's <code>rabbitmq</code> dependency pulls <code>bitnamilegacy/rabbitmq</code>, a registry
+that's frozen at <code>4.1.3-debian-12-r1</code> — no <code>4.2.x</code>/<code>4.3.x</code> tags exist
+(confirmed via <code>docker manifest inspect</code> against several candidate tags on
+2026-08-03, and reproduced in-cluster: <code>helm install</code> with a bumped
+<code>rabbitmq.image.tag</code> leaves the RabbitMQ pod in <code>ImagePullBackOff</code>/
+<code>ErrImagePull</code> — <code>... not found</code>). Since RabbitMQ 4.1 loses community
+support in January 2026 and 4.2 reaches EOL July 31, 2026, the bundled
+subchart cannot be the long-term path for any deployment. This is why
+<code>waldur/test/values.yaml</code> (CI's test install target) now points at an
+operator-managed cluster instead of the subchart. Migrating the bundled
+subchart itself off the frozen registry — to a different chart/image
+entirely — is tracked as separate future work, not part of this
+compatibility fix.</p>
+</blockquote>
 <h2 id="overview">Overview</h2>
 <p>The RabbitMQ Cluster Operator automates:</p>
 <ul>
@@ -18639,118 +18649,166 @@
 <p>Appropriate RBAC permissions</p>
 </li>
 </ul>
+<h2 id="version-upgrade-path">Version upgrade path</h2>
+<p>RabbitMQ does not support skipping a minor version. From the upstream
+<a href="https://www.rabbitmq.com/docs/upgrade">upgrade guide</a>: <em>"Upgrading to <code>4.3.x</code> is
+only possible from <code>4.2.x</code>."</em> The supported steps are <code>4.1.x → 4.2.x</code> and
+<code>4.2.x → 4.3.x</code>; there is no <code>4.1.x → 4.3.x</code> path. A cluster on 4.1 must therefore
+be walked through 4.2, rolling and verifying at each step, rather than jumped
+straight to 4.3.</p>
+<p>Before each step:</p>
+<ul>
+<li><strong>Enable all stable feature flags.</strong> The upgrade guide is explicit that <em>"all
+  stable feature flags must be enabled before an upgrade, or the upgrade may
+  fail"</em>. This is not hypothetical — a default 4.1 node has <code>khepri_db</code> disabled,
+  and 4.3 requires it.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>&lt;cluster-name&gt;-server-0<span class="w"> </span>--<span class="w"> </span>rabbitmqctl<span class="w"> </span>enable_feature_flag<span class="w"> </span>all
+kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>&lt;cluster-name&gt;-server-0<span class="w"> </span>--<span class="w"> </span>rabbitmqctl<span class="w"> </span>list_feature_flags
+</code></pre></div></td></tr></tbody></table></div>
+<ul>
+<li><strong>Check the Erlang requirement.</strong> RabbitMQ <code>4.3.3</code> and later require Erlang 27,
+  and nodes fail to start on anything older. The official <code>rabbitmq:4.3.x</code> container
+  images already ship OTP 27, so this only affects package-based installations.</li>
+</ul>
+<p>Bump <code>spec.image</code> one minor series at a time and let the operator roll the
+StatefulSet, waiting for <code>AllReplicasReady</code> before starting the next step:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span><span class="nb">wait</span><span class="w"> </span>--for<span class="o">=</span><span class="nv">condition</span><span class="o">=</span>AllReplicasReady<span class="w"> </span>--timeout<span class="o">=</span>600s<span class="w"> </span>rabbitmqcluster/&lt;cluster-name&gt;
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="installation">Installation</h2>
 <h3 id="1-install-the-rabbitmq-cluster-operator">1. Install the RabbitMQ Cluster Operator</h3>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="s2">"&lt;https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml"</span>&gt;
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>https://github.com/rabbitmq/cluster-operator/releases/download/v2.22.5/cluster-operator.yml
 </code></pre></div></td></tr></tbody></table></div>
+<p>Pin the version rather than using <code>latest</code>: the operator is cluster-scoped, so an
+unpinned re-apply upgrades it for every <code>RabbitmqCluster</code> on the cluster at once.</p>
 <p>Verify the operator is running:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>rabbitmq-system
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="2-create-a-production-rabbitmq-cluster">2. Create a Production RabbitMQ Cluster</h3>
 <p>Create a production-ready RabbitMQ cluster configuration:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span>
-<span class="normal">89</span>
-<span class="normal">90</span>
-<span class="normal">91</span>
-<span class="normal">92</span>
-<span class="normal">93</span>
-<span class="normal">94</span>
-<span class="normal">95</span>
-<span class="normal">96</span>
-<span class="normal">97</span>
-<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq.com/v1beta1</span>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  1</span>
+<span class="normal">  2</span>
+<span class="normal">  3</span>
+<span class="normal">  4</span>
+<span class="normal">  5</span>
+<span class="normal">  6</span>
+<span class="normal">  7</span>
+<span class="normal">  8</span>
+<span class="normal">  9</span>
+<span class="normal"> 10</span>
+<span class="normal"> 11</span>
+<span class="normal"> 12</span>
+<span class="normal"> 13</span>
+<span class="normal"> 14</span>
+<span class="normal"> 15</span>
+<span class="normal"> 16</span>
+<span class="normal"> 17</span>
+<span class="normal"> 18</span>
+<span class="normal"> 19</span>
+<span class="normal"> 20</span>
+<span class="normal"> 21</span>
+<span class="normal"> 22</span>
+<span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq.com/v1beta1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RabbitmqCluster</span>
 <span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-rabbitmq</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 <span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># Pin explicitly -- an unset image field silently takes whatever the</span>
+<span class="w">  </span><span class="c1"># operator's default is, rather than a deliberate version.</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq:4.3.5</span>
+
 <span class="w">  </span><span class="c1"># Production recommendation: use odd numbers (3, 5, 7)</span>
 <span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
 
@@ -18793,8 +18851,17 @@
 <span class="w">      </span><span class="no">log.console = true</span>
 <span class="w">      </span><span class="no">log.console.level = info</span>
 
-<span class="w">      </span><span class="no"># Queue master location policy</span>
-<span class="w">      </span><span class="no">queue_master_locator = balanced</span>
+<span class="w">      </span><span class="no"># Queue leader location policy (queue_master_locator is deprecated)</span>
+<span class="w">      </span><span class="no">queue_leader_locator = balanced</span>
+
+<span class="w">      </span><span class="no"># RabbitMQ 4.3 compatibility: 4.3 denies transient, non-exclusive</span>
+<span class="w">      </span><span class="no"># queues by default, the combination kombu's pidbox and Celery's</span>
+<span class="w">      </span><span class="no"># gossip queues declare. Mastermind now declares both exclusive</span>
+<span class="w">      </span><span class="no"># (CELERY_CONTROL_QUEUE_EXCLUSIVE / CELERY_EVENT_QUEUE_EXCLUSIVE), so</span>
+<span class="w">      </span><span class="no"># this flag is only needed while the deployed Waldur image predates</span>
+<span class="w">      </span><span class="no"># that change. It is read at node boot and is accepted on 4.1, 4.2 and</span>
+<span class="w">      </span><span class="no"># 4.3 alike, so it can be set or removed at any point in the walk.</span>
+<span class="w">      </span><span class="no">deprecated_features.permit.transient_nonexcl_queues = true</span>
 
 <span class="w">    </span><span class="c1"># Additional plugins</span>
 <span class="w">    </span><span class="nt">additionalPlugins</span><span class="p">:</span>
@@ -18806,6 +18873,8 @@
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq_auth_backend_ldap</span><span class="w">  </span><span class="c1"># If LDAP auth is needed</span>
 
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq_stomp</span><span class="w">              </span><span class="c1"># If STOMP protocol is needed</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rabbitmq_web_stomp</span><span class="w">          </span><span class="c1"># Required for Waldur's websocket-STOMP ingress</span>
 
 <span class="w">  </span><span class="c1"># Service configuration</span>
 <span class="w">  </span><span class="nt">service</span><span class="p">:</span>
@@ -18877,31 +18946,27 @@ kubectl<span class="w"> </span>get<span class="w"> </span>secret<span class="w">
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Disable the bitnami rabbitmq chart</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Disable the bundled rabbitmq subchart and point the chart at the</span>
+<span class="c1"># operator-managed cluster. `host` must match the RabbitmqCluster name -- the</span>
+<span class="c1"># operator creates a Service of that name -- and the secret is the one the</span>
+<span class="c1"># operator generates as `&lt;cluster-name&gt;-default-user`.</span>
 
 <span class="nt">rabbitmq</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<span class="w">  </span><span class="c1"># External RabbitMQ secret configuration</span>
+<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-rabbitmq"</span>
 <span class="w">  </span><span class="nt">secret</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-rabbitmq-default-user"</span>
 <span class="w">    </span><span class="nt">usernameKey</span><span class="p">:</span><span class="w"> </span><span class="s">"username"</span>
 <span class="w">    </span><span class="nt">passwordKey</span><span class="p">:</span><span class="w"> </span><span class="s">"password"</span>
-
-<span class="c1"># Configure external RabbitMQ connection</span>
-
-<span class="nt">global</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">waldur</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">rabbitmq</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur-rabbitmq.default.svc.cluster.local"</span>
-<span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5672</span>
-<span class="w">      </span><span class="nt">vhost</span><span class="p">:</span><span class="w"> </span><span class="s">"/"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<blockquote>
+<p><strong>Do not set <code>global.waldur.rabbitmq.*</code>.</strong> The chart does not read those keys;
+the broker host comes from the top-level <code>rabbitmq.host</code> value
+(<code>templates/_helpers.tpl</code>, <code>waldur.rabbitmq.rmqHost</code>). Setting only the
+<code>global.*</code> form leaves <code>rabbitmq.host</code> at its default of <code>rmq-rabbitmq</code> — the
+name of the old Bitnami release — and the deployment points at a Service that
+does not exist.</p>
+</blockquote>
 <p><strong>RabbitMQ Operator Secret Management:</strong></p>
 <p>The RabbitMQ Cluster Operator automatically creates a default user secret named <code>[cluster-name]-default-user</code> containing:</p>
 <ul>

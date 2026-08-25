@@ -10,7 +10,7 @@
         <link rel="canonical" href="https://docs.waldur.com/latest/admin-guide/deployment/helm/docs/postgres-db/">
       
       
-        <link rel="prev" href="../postgres-db-ha/">
+        <link rel="prev" href="../postgres-backup-management/">
       
       
         <link rel="next" href="../postgres-operator/">
@@ -107,7 +107,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#postgresql-configuration" class="md-skip">
+        <a href="#postgresql-bundled-subchart" class="md-skip">
           Skip to content
         </a>
       
@@ -2398,34 +2398,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../postgres-db-ha/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Postgres db ha
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -2489,10 +2461,10 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
-  <a href="#production-vs-demo-deployments" class="md-nav__link">
+  <a href="#enabling-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Production vs Demo Deployments
+        Enabling it
       
     </span>
   </a>
@@ -2500,10 +2472,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#demodevelopment-installation" class="md-nav__link">
+  <a href="#postgresql-version" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Demo/Development Installation
+        PostgreSQL version
       
     </span>
   </a>
@@ -2511,38 +2483,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#demo-standalone-installation" class="md-nav__link">
+  <a href="#installing-postgresql-separately" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Demo Standalone Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Demo Standalone Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#chart-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Chart configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#demo-dependency-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Demo Dependency Installation
+        Installing PostgreSQL separately
       
     </span>
   </a>
@@ -2550,10 +2494,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#readonly-user-configuration" class="md-nav__link">
+  <a href="#migrating-from-the-bitnami-subchart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Readonly user configuration
+        Migrating from the Bitnami subchart
       
     </span>
   </a>
@@ -18120,10 +18064,10 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
-  <a href="#production-vs-demo-deployments" class="md-nav__link">
+  <a href="#enabling-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Production vs Demo Deployments
+        Enabling it
       
     </span>
   </a>
@@ -18131,10 +18075,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#demodevelopment-installation" class="md-nav__link">
+  <a href="#postgresql-version" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Demo/Development Installation
+        PostgreSQL version
       
     </span>
   </a>
@@ -18142,38 +18086,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#demo-standalone-installation" class="md-nav__link">
+  <a href="#installing-postgresql-separately" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Demo Standalone Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Demo Standalone Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#chart-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Chart configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#demo-dependency-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Demo Dependency Installation
+        Installing PostgreSQL separately
       
     </span>
   </a>
@@ -18181,10 +18097,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#readonly-user-configuration" class="md-nav__link">
+  <a href="#migrating-from-the-bitnami-subchart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Readonly user configuration
+        Migrating from the Bitnami subchart
       
     </span>
   </a>
@@ -18206,133 +18122,75 @@
                 
                   
 
-<h1 id="postgresql-configuration">PostgreSQL Configuration</h1>
-<h2 id="production-vs-demo-deployments">Production vs Demo Deployments</h2>
-<p>⚠️ <strong>Important:</strong> This document describes PostgreSQL setup for <strong>demo/development environments only</strong>.</p>
-<p><strong>For production deployments</strong>, use the <a href="../postgres-operator/">CloudNativePG Operator</a> instead of the Bitnami Helm chart. The operator provides:</p>
-<ul>
-<li>
-<p>Kubernetes-native PostgreSQL cluster management</p>
-</li>
-<li>
-<p>Automated failover and high availability</p>
-</li>
-<li>
-<p>Built-in backup and Point-in-Time Recovery (PITR)</p>
-</li>
-<li>
-<p>Zero-downtime maintenance operations</p>
-</li>
-<li>
-<p>Enhanced monitoring and observability</p>
-</li>
-<li>
-<p>Production-grade security features</p>
-</li>
-</ul>
-<h2 id="demodevelopment-installation">Demo/Development Installation</h2>
-<p>For development and demo environments,
-<a href="https://github.com/bitnami/charts/tree/main/bitnami/postgresql">bitnami/postgresql chart</a>
-can be used for quick setup.</p>
-<h2 id="demo-standalone-installation">Demo Standalone Installation</h2>
-<p>Add <code>bitnami</code> repo to helm:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>bitnami<span class="w"> </span>&lt;https://charts.bitnami.com/bitnami&gt;
+<h1 id="postgresql-bundled-subchart">PostgreSQL (bundled subchart)</h1>
+<p>For <strong>demo and development</strong> installs, the chart can bring up its own PostgreSQL.
+For <strong>production</strong>, use an operator instead — see
+<a href="../postgres-operator/">PostgreSQL Operators</a> and
+<a href="../external-db-integration/">External DB Integration</a>.</p>
+<p>The subchart is <a href="https://github.com/CloudPirates-io/helm-charts/tree/main/charts/postgres">CloudPirates <code>postgres</code></a>,
+which runs the official <code>docker.io/postgres</code> image.</p>
+<h2 id="enabling-it">Enabling it</h2>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">postgresql</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">auth</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
+<span class="w">    </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
+<span class="w">  </span><span class="nt">persistence</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="s">"10Gi"</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>Install PostgreSQL release for demo/development:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span>helm<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>bitnami/postgresql<span class="w"> </span>--version<span class="w"> </span><span class="m">16</span>.0.1<span class="w"> </span>-f<span class="w"> </span>postgresql-values.yaml
+<p>Then <code>helm dependency update waldur/ &amp;&amp; helm install waldur waldur/ -f values.yaml</code>.
+Nothing else is needed: the chart derives the database host and credentials from
+the subchart's own Service and Secret.</p>
+<p><code>externalDB.enabled</code> takes precedence over this, so leave it <code>false</code> when using
+the bundled database.</p>
+<h2 id="postgresql-version">PostgreSQL version</h2>
+<p><code>waldur/values.yaml</code> pins <code>postgresql.image.tag</code> to a 17.x release because
+<code>templates/_helpers.tpl</code> hardcodes <code>waldur.postgresql.version: 17</code>, which selects
+the client image used by the initdb and backup containers. <strong>Move both together</strong> —
+<code>pg_dump</code> and <code>psql</code> refuse to talk to a server newer than themselves.</p>
+<h2 id="installing-postgresql-separately">Installing PostgreSQL separately</h2>
+<p>To run PostgreSQL as its own release rather than as a subchart, use
+<code>postgresql-values.yaml</code> from the repository root:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>helm<span class="w"> </span>install<span class="w"> </span>postgresql<span class="w"> </span>oci://registry-1.docker.io/cloudpirates/postgres<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--version<span class="w"> </span><span class="m">0</span>.20.1<span class="w"> </span>-f<span class="w"> </span>postgresql-values.yaml
 </code></pre></div></td></tr></tbody></table></div>
-<p><strong>Note:</strong></p>
-<ul>
-<li>
-<p>The default configuration in <code>postgresql-values.yaml</code> uses <code>bitnamilegacy</code> Docker images for compatibility</p>
-</li>
-<li>
-<p>This setup is <strong>not recommended for production use</strong></p>
-</li>
-</ul>
-<p><strong>NB</strong>: the values <code>postgresql.enabled</code> and <code>postgresqlha.enabled</code> must be <code>false</code>.</p>
-<h3 id="chart-configuration">Chart configuration</h3>
-<p>You can change default PostgreSQL config with the following variables in <code>postgresql-values.yaml</code>:</p>
-<ol>
-<li>
-<p><code>auth.database</code> - name of a database.</p>
-<p><strong>NB</strong>: must match <code>postgresql.database</code> value in <code>waldur/values.yaml</code></p>
-</li>
-<li>
-<p><code>auth.username</code> - name of a database user.</p>
-<p><strong>NB</strong>: must match <code>postgresql.username</code> value in <code>waldur/values.yaml</code></p>
-</li>
-<li>
-<p><code>auth.password</code> - password of a database user</p>
-</li>
-<li>
-<p><code>primary.persistence.size</code> - size of a database</p>
-</li>
-<li>
-<p><code>image.tag</code> - tag of <code>PostgreSQL</code> image.</p>
-<p>Possible tags for default image can be found <a href="https://hub.docker.com/r/bitnami/postgresql/tags">here</a></p>
-</li>
-<li>
-<p><code>image.registry</code> - registry of <code>PostgreSQL</code> image.</p>
-</li>
-</ol>
-<p>More information related to possible values <a href="https://github.com/bitnami/charts/tree/main/bitnami/postgresql#parameters">here</a>.</p>
-<p><strong>Important:</strong></p>
-<ul>
-<li>
-<p>The PostgreSQL configuration uses legacy Bitnami images (<code>bitnamilegacy/postgresql</code> and <code>bitnamilegacy/postgres-exporter</code>) for demo/development compatibility</p>
-</li>
-<li>
-<p>These images are configured in the <code>postgresql-values.yaml</code> file</p>
-</li>
-<li>
-<p>For production deployments, migrate to the <a href="../postgres-operator/">CloudNativePG Operator</a></p>
-</li>
-</ul>
-<h2 id="demo-dependency-installation">Demo Dependency Installation</h2>
-<p>Waldur Helm chart supports PostgreSQL installation as a dependency.
-For this, set <code>postgresql.enabled</code> to <code>true</code> and update related settings in <code>postgresql</code> section in <code>waldur/values.yaml</code></p>
-<p><strong>NB</strong>: the value <code>postgresqlha.enabled</code> and <code>externalDB.enabled</code> must be <code>false</code>.</p>
-<p>Prior Waldur installation, update chart dependencies:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>helm<span class="w"> </span>dependency<span class="w"> </span>update
+<p>Its <code>nameOverride: "waldur"</code> produces a Service and Secret named
+<code>postgresql-waldur</code>, which is what the chart falls back to when neither
+<code>externalDB.enabled</code> nor <code>postgresql.enabled</code> is set.</p>
+<h2 id="migrating-from-the-bitnami-subchart">Migrating from the Bitnami subchart</h2>
+<p>Earlier releases used the Bitnami <code>postgresql</code> and <code>postgresql-ha</code> subcharts.
+Both are gone: Bitnami moved its images to a frozen <code>bitnamilegacy</code> archive, and
+the chart's own image references no longer resolve.</p>
+<p><strong>An existing Bitnami volume cannot be reused, even though the PVC name is the
+same.</strong> Bitnami stored data at <code>/bitnami/postgresql</code>; the official image uses
+<code>/var/lib/postgresql/data</code>. Reattaching the old claim gives PostgreSQL a
+directory it does not recognise, and it will refuse to initialise into it.</p>
+<p>Migrate with a dump and restore:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>&lt;old-postgres-pod&gt;<span class="w"> </span>--<span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span>waldur<span class="w"> </span>waldur<span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span>waldur.sql.gz
+<span class="c1"># switch the values over, delete the old PVC, install</span>
+gunzip<span class="w"> </span>-c<span class="w"> </span>waldur.sql.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>&lt;new-postgres-pod&gt;<span class="w"> </span>--<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>waldur<span class="w"> </span>waldur
 </code></pre></div></td></tr></tbody></table></div>
-<h2 id="readonly-user-configuration">Readonly user configuration</h2>
-<p>In order to enable /api/query/ endpoint please make sure that read-only user is configured.</p>
-<p>The endpoint executes caller-supplied SQL against the read replica, so the calling Waldur user must have the <code>is_staff</code> flag set. (Prior to Waldur 8.x the endpoint also accepted <code>is_support</code> users; this was tightened to staff-only because even a SELECT-only DB role still exposes token hashes, password hashes, and PII.)</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">-- Create a read-only user</span>
-<span class="k">CREATE</span><span class="w"> </span><span class="k">USER</span><span class="w"> </span><span class="n">readonly</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="n">PASSWORD</span><span class="w"> </span><span class="s1">'{readonly_password}'</span>
-
-<span class="c1">-- Grant read-only access to the database</span>
-<span class="k">GRANT</span><span class="w"> </span><span class="k">CONNECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="s1">'{database_name}'</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
-
-<span class="c1">-- Grant read-only access to the schema</span>
-<span class="k">GRANT</span><span class="w"> </span><span class="k">USAGE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">SCHEMA</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
-
-<span class="c1">-- Grant read-only access to existing tables</span>
-<span class="k">GRANT</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">ALL</span><span class="w"> </span><span class="n">TABLES</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="k">SCHEMA</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
-
-<span class="c1">-- Grant read-only access to future tables</span>
-<span class="k">ALTER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">PRIVILEGES</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="k">SCHEMA</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">GRANT</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">TABLES</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
-
-<span class="c1">-- Revoke access to authtoken_token table</span>
-<span class="k">REVOKE</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">authtoken_token</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="s1">'{readonly_username}'</span>
-</code></pre></div></td></tr></tbody></table></div>
+<p><code>postgresql-ha</code> has no replacement subchart. It was frozen upstream, and every
+credible HA option is an operator that cannot work as a plain Helm dependency —
+use <a href="../postgres-operator/">PostgreSQL Operators</a> via <code>externalDB</code>.</p>
+<p>One behavioural note: <code>postgresql-ha</code> used pgpool, and the chart forced
+<code>DISABLE_SERVER_SIDE_CURSORS</code> on because transaction pooling breaks Django's
+named cursors. Nothing forces it now. If you front the database with any
+transaction-pooling proxy — PgBouncer under CloudNativePG or Zalando's connection
+pooler — set <code>externalDB.disableServerSideCursors: "true"</code> yourself.</p>
 
 
 

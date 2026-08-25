@@ -2592,34 +2592,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../postgres-db-ha/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Postgres db ha
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../postgres-db/" class="md-nav__link">
         
   
@@ -18366,7 +18338,7 @@
 <p>To use external PostgreSQL, set the following variables in <code>values.yaml</code>:</p>
 <ol>
 <li>
-<p><code>externalDB.enabled</code> - toggler for integration; requires <code>postgresql.enabled</code> and <code>postgresqlha.enabled</code> to be <code>false</code></p>
+<p><code>externalDB.enabled</code> - toggler for integration; requires <code>postgresql.enabled</code> to be <code>false</code></p>
 </li>
 <li>
 <p><code>externalDB.secretName</code> - name of the secret with PostgreSQL credentials for Waldur user</p>
@@ -18381,7 +18353,10 @@
 <p><code>externalDB.username</code> - custom username (optional, defaults to "waldur")</p>
 </li>
 <li>
-<p><code>externalDB.disableServerSideCursors</code> - set to <code>"true"</code> when the external Postgres sits behind a connection pooler running in transaction-pooling mode (e.g. the Zalando Postgres Operator's built-in PgBouncer sidecar, <code>enableConnectionPooler: true</code>). Named server-side cursors opened by Django's <code>QuerySet.iterator()</code> can be routed to a different backend between <code>DECLARE</code> and <code>FETCH</code>/<code>CLOSE</code> under transaction pooling, raising <code>psycopg.errors.InvalidCursorName</code>. Defaults to <code>"false"</code>. <code>postgresqlha</code> (pgpool) always pools connections, so it forces this on regardless of this setting.</p>
+<p><code>externalDB.passwordKey</code> - key holding the password inside <code>externalDB.secretName</code>. Defaults to <code>"password"</code>, which is correct for both CloudNativePG's <code>&lt;cluster&gt;-app</code> secret and Zalando's <code>*.credentials.postgresql.acid.zalan.do</code> secret.</p>
+</li>
+<li>
+<p><code>externalDB.disableServerSideCursors</code> - set to <code>"true"</code> when the external Postgres sits behind a connection pooler running in transaction-pooling mode (e.g. the Zalando Postgres Operator's built-in PgBouncer sidecar, <code>enableConnectionPooler: true</code>). Named server-side cursors opened by Django's <code>QuerySet.iterator()</code> can be routed to a different backend between <code>DECLARE</code> and <code>FETCH</code>/<code>CLOSE</code> under transaction pooling, raising <code>psycopg.errors.InvalidCursorName</code>. Defaults to <code>"false"</code>. Nothing forces it on any more — the pgpool-based <code>postgresql-ha</code> subchart has been removed — so set it yourself when using any transaction-pooling proxy.</p>
 </li>
 </ol>
 <h2 id="cloudnativepg-integration-example">CloudNativePG Integration Example</h2>
