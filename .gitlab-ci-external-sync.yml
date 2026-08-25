@@ -113,8 +113,34 @@ sync-external-docs:
     - export PATH="$HOME/.local/bin:$PATH"
     # `test/` is gitignored, so the build output cannot reach the commit above.
     - uv run mkdocs build --strict --site-dir test
-    - git push origin HEAD:$CI_COMMIT_REF_NAME
-    - echo "✅ External documentation synchronized and committed"
+    # The branch may have moved while the build ran. resource_group serialises
+    # the jobs that push here, but it does not refresh their checkouts: a
+    # push-triggered and a scheduled pipeline both reach this job holding the
+    # commit their own pipeline was created for, so whichever runs second is
+    # behind and its push is rejected as non-fast-forward. Rebase onto whatever
+    # is there now. Rebasing after the build is safe enough — everything else
+    # that reaches this branch is gated by "Test mkdocs" on its way in.
+    #
+    # A conflict means the sync that landed first already rewrote the same
+    # files, and the two disagree only on their `Last Sync:` markers. There is
+    # nothing left for this run to publish, so it stops rather than fighting
+    # over a timestamp.
+    - |
+      for attempt in 1 2 3; do
+        if git push origin HEAD:$CI_COMMIT_REF_NAME; then
+          echo "✅ External documentation synchronized and committed"
+          exit 0
+        fi
+        echo "Push rejected, reconciling with $CI_COMMIT_REF_NAME (attempt $attempt)..."
+        git fetch origin "$CI_COMMIT_REF_NAME"
+        if ! git rebase "origin/$CI_COMMIT_REF_NAME"; then
+          git rebase --abort
+          echo "ℹ️ Another sync reached $CI_COMMIT_REF_NAME first - nothing left to publish"
+          exit 0
+        fi
+      done
+      echo "❌ Could not publish the sync after 3 attempts"
+      exit 1
 
 # Job to validate sync after changes
 post-sync-validation:
