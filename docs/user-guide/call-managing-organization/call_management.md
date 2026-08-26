@@ -91,8 +91,10 @@ step asks the applicant for. Each field is one of:
 | **Not asked** | not shown at all | — |
 
 **Name** and **Project duration in days** are always required and are not
-configurable: the name becomes the name of the awarded project, and the duration
-states the length of the award. The configurable fields are **Summary**,
+configurable. The name identifies the proposal and forms the last part of the
+awarded project's name — a granted project is named
+`<call reference or slug> - <round start date> - <proposal name>` — and the
+duration states the length of the award. The configurable fields are **Summary**,
 **Description**, **Science domain** and **Supporting documentation**.
 
 Each row lists what the field feeds, so the cost of switching one off is visible
