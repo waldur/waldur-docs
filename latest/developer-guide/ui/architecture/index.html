@@ -19155,13 +19155,30 @@
 </tbody>
 </table>
 <h4 id="eslint-enforcement">ESLint Enforcement</h4>
-<p>The <code>no-direct-bootstrap-button</code> ESLint rule prevents direct Bootstrap Button imports. Allowed wrapper files:</p>
+<p>Two rules cover the two ways a Bootstrap button reaches the tree.</p>
+<p><code>waldur-custom/no-direct-bootstrap-button</code> (<strong>error</strong>) catches the import —
+<code>import { Button } from 'react-bootstrap'</code>.</p>
+<p><code>waldur-custom/no-bootstrap-button-markup</code> (<strong>warning</strong>) catches the hand-rolled
+form — <code>&lt;button className="btn btn-danger"&gt;</code> — which carries no import and so was
+invisible to the rule above. It is a warning rather than an error because the tree
+still holds well over a hundred of these and converting one is a per-screen
+judgement, not a mechanical swap; promote it to <code>error</code> once the count reaches zero.
+<code>waldur-custom/prefer-alert-item</code> works the same way for <code>&lt;div className="alert"&gt;</code>.</p>
+<p>Each rule keeps its own <code>ALLOWED_FILES</code> list at the top of
+<code>packages/eslint-plugin-waldur/rules/</code>, and the two lists differ on purpose — the
+import rule additionally exempts files that reference <code>Button</code> only as a type or
+compose it with <code>ButtonGroup</code>/<code>Dropdown</code>, which says nothing about markup. The
+wrappers exempted from both are:</p>
 <ul>
 <li><code>src/core/buttons/BaseButton.tsx</code></li>
-<li><code>src/table/ActionButton.tsx</code></li>
-<li><code>src/form/SubmitButton.tsx</code></li>
+<li><code>src/core/buttons/IconButton.tsx</code></li>
+<li><code>src/core/SaveButton.tsx</code></li>
 <li><code>src/modal/CloseDialogButton.tsx</code></li>
+<li><code>src/table/ToolbarButton.tsx</code></li>
 </ul>
+<p><code>src/core/Link.tsx</code> is exempt from the markup rule only: its <code>buttonVariant</code> prop is
+the sanctioned link-as-button, so the <code>btn</code> class it composes is the abstraction
+rather than an instance of the problem.</p>
 <h2 id="key-directories">Key Directories</h2>
 <ul>
 <li><code>src/core/</code> - Shared utilities, API clients, and base components</li>

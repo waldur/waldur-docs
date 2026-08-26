@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-26T10:01:30.865983Z
+Generated: 2026-08-26T12:57:45.854895Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -62538,12 +62538,33 @@ Bootstrap Button (internal only, wrapped by BaseButton)
 
 #### ESLint Enforcement
 
-The `no-direct-bootstrap-button` ESLint rule prevents direct Bootstrap Button imports. Allowed wrapper files:
+Two rules cover the two ways a Bootstrap button reaches the tree.
+
+`waldur-custom/no-direct-bootstrap-button` (**error**) catches the import —
+`import { Button } from 'react-bootstrap'`.
+
+`waldur-custom/no-bootstrap-button-markup` (**warning**) catches the hand-rolled
+form — `<button className="btn btn-danger">` — which carries no import and so was
+invisible to the rule above. It is a warning rather than an error because the tree
+still holds well over a hundred of these and converting one is a per-screen
+judgement, not a mechanical swap; promote it to `error` once the count reaches zero.
+`waldur-custom/prefer-alert-item` works the same way for `<div className="alert">`.
+
+Each rule keeps its own `ALLOWED_FILES` list at the top of
+`packages/eslint-plugin-waldur/rules/`, and the two lists differ on purpose — the
+import rule additionally exempts files that reference `Button` only as a type or
+compose it with `ButtonGroup`/`Dropdown`, which says nothing about markup. The
+wrappers exempted from both are:
 
 - `src/core/buttons/BaseButton.tsx`
-- `src/table/ActionButton.tsx`
-- `src/form/SubmitButton.tsx`
+- `src/core/buttons/IconButton.tsx`
+- `src/core/SaveButton.tsx`
 - `src/modal/CloseDialogButton.tsx`
+- `src/table/ToolbarButton.tsx`
+
+`src/core/Link.tsx` is exempt from the markup rule only: its `buttonVariant` prop is
+the sanctioned link-as-button, so the `btn` class it composes is the abstraction
+rather than an instance of the problem.
 
 ## Key Directories
 
@@ -102149,8 +102170,12 @@ backend-specific.
 still serves at the backend. Termination cleanup deletes the rows directly (see
 [States](#states)).
 
-Provider side (used by the site agent), gated on `RESOURCE.MANAGE_API_KEY` on
-the offering customer:
+Provider side (used by the site agent), gated on `RESOURCE.MANAGE_API_KEY` held
+on any of the provider-side scopes the permission is granted at — the offering
+itself (`OFFERING.MANAGER`, which is what a site agent runs as), the offering's
+customer (`CUSTOMER.OWNER`), or that customer's `ServiceProvider`
+(`CUSTOMER.MANAGER`). The list of keys is likewise visible to the provider
+organization, but reading a value is not: `reveal` stays consumer-side only.
 
 - `POST /report_created/` — the agent pushes a freshly-applied key value after
   provisioning; Waldur encrypts, stores, and the row lands `OK`. Idempotent per

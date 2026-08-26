@@ -18421,8 +18421,12 @@ backend-specific.</p>
 <p><code>destroy</code> is in <code>disabled_actions</code>: an ungated delete could drop a row whose key
 still serves at the backend. Termination cleanup deletes the rows directly (see
 <a href="#states">States</a>).</p>
-<p>Provider side (used by the site agent), gated on <code>RESOURCE.MANAGE_API_KEY</code> on
-the offering customer:</p>
+<p>Provider side (used by the site agent), gated on <code>RESOURCE.MANAGE_API_KEY</code> held
+on any of the provider-side scopes the permission is granted at — the offering
+itself (<code>OFFERING.MANAGER</code>, which is what a site agent runs as), the offering's
+customer (<code>CUSTOMER.OWNER</code>), or that customer's <code>ServiceProvider</code>
+(<code>CUSTOMER.MANAGER</code>). The list of keys is likewise visible to the provider
+organization, but reading a value is not: <code>reveal</code> stays consumer-side only.</p>
 <ul>
 <li><code>POST /report_created/</code> — the agent pushes a freshly-applied key value after
   provisioning; Waldur encrypts, stores, and the row lands <code>OK</code>. Idempotent per
