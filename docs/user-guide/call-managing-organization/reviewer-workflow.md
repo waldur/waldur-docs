@@ -107,8 +107,7 @@ The sections you see mirror the call's configuration, so you evaluate exactly th
 information the call manager expects reviewers to weigh:
 
 - **Details overview** — call, round, deadline and applicant.
-- **Project details** — name, summary, description, research field, duration and
-  the civilian-purpose / confidentiality flags.
+- **Project details** — name, summary, description, science domain and duration.
 - **Resource requests** — the offerings and quantities requested.
 - **Project team** — members and their roles.
 

@@ -92,7 +92,7 @@ Each review includes:
 - **Summary score** — overall numeric rating
 - **Summary public comment** — feedback shared with the applicant
 - **Summary private comment** — internal feedback for call managers
-- **Field-specific comments** — feedback on the project title, summary, description, duration, supporting documentation, resource requests, and team, plus confidentiality and civilian-purpose flags where the call requires them
+- **Field-specific comments** — feedback on the project title, summary, description, duration, supporting documentation, resource requests, and team
 
 ### Proposal context during review
 

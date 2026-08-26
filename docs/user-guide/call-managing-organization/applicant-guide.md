@@ -60,14 +60,13 @@ Expand **Project details** and describe your project:
 | **Name** | Required |
 | **Summary** | Required |
 | **Description** | Optional, longer free text |
-| **Project for civilian purpose?** | Yes/no, with room for a comment |
-| **Research field (OECD code)** | Required on deployments configured to mandate it |
-| **Is the project confidential?** | Yes/no, with room for a comment |
+| **Science domain** | Optional; pick a domain, then a sub-domain from the taxonomy your deployment maintains |
 | **Project duration in days** | Required, unless the call fixes the duration |
 | **Upload supporting documentation** | Optional attachments |
 
 Required fields are marked with a red asterisk, and the card header shows how
-many fields are filled.
+many fields are filled. **Project details** is expanded when the page opens, so
+this is the first section you see.
 
 ![Project details step](../img/applicant-project-details.png)
 
