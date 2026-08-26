@@ -73,10 +73,46 @@ Under **Configuration → General configuration**, set the basic call parameters
 
 ![Call general configuration](../img/call_configuration_general.png)
 
-Two further sub-tabs sit alongside it under **Configuration**:
+Further sub-tabs sit alongside it under **Configuration**:
 
+- **Project details fields** — what this call asks applicants for (see below)
 - **Applicant data visibility** — which applicant data is exposed during evaluation
 - **Resource templates** — templates defining valid offering/plan combinations, so proposal creators can only select from those templates. Each template carries a name and offering, predefined attributes and usage limits, and a description.
+
+#### 1a. Project details fields
+
+Under **Configuration → Project details fields**, choose what the Project details
+step asks the applicant for. Each field is one of:
+
+| State | On the form | On submission |
+|---|---|---|
+| **Required** | shown, marked with a red asterisk | blocked while empty |
+| **Optional** | shown | may be left empty |
+| **Not asked** | not shown at all | — |
+
+**Name** and **Project duration in days** are always required and are not
+configurable: the name becomes the name of the awarded project, and the duration
+states the length of the award. The configurable fields are **Summary**,
+**Description**, **Science domain** and **Supporting documentation**.
+
+Each row lists what the field feeds, so the cost of switching one off is visible
+before you do. Fields marked with a warning have a functional consumer — the
+summary and description are the text that **automatic reviewer matching** scores
+against reviewer profiles, so a call that does not collect them gets less
+accurate reviewer suggestions.
+
+A field **cannot be made required once the call has proposals**. Drafts that were
+complete under the published form would silently stop being submittable, and
+nothing notifies the applicants who wrote them. Relaxing a field — making it
+optional, or not asking for it at all — stays possible at any time. To run a
+stricter round, duplicate the call: the copy starts in draft with no proposals,
+and its field configuration is carried over ready to tighten.
+
+New calls start from the deployment defaults, which an administrator sets under
+**Proposal settings** in the Constance configuration
+(`DEFAULT_PROPOSAL_REQUIRED_FIELDS`, `DEFAULT_PROPOSAL_HIDDEN_FIELDS`). Those
+defaults are applied when the call is created; changing them later never alters
+a call that already exists.
 
 #### 2. Offerings configuration
 
