@@ -68,6 +68,14 @@ Required fields are marked with a red asterisk, and the card header shows how
 many fields are filled. **Project details** is expanded when the page opens, so
 this is the first section you see.
 
+Which of these fields you see, and which you must fill in, is set per call.
+**Name** and **Project duration in days** are always required; each of the
+others may be required, optional, or not asked for at all. A call that does not
+ask for a field simply does not show it, so your form may be shorter than the
+table above. See
+[Project details fields](call_management.md#1a-project-details-fields) for the
+call manager's side of it.
+
 ![Project details step](../img/applicant-project-details.png)
 
 ### Resource requests
