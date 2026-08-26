@@ -1,5 +1,46 @@
 # Changelog
 
+## 8.1.3-rc.5 - 2026-08-26
+
+### Highlights
+
+Call managers can now tailor the Project details step of a proposal form per call, deciding which fields applicants see and which are required — and the submission form renders exactly that configuration. Applicants get clearer guidance too: the reason Submit is unavailable is shown before they press it, and proposals now collect a science domain instead of an OECD code. On the billing side, one-time fees are quoted the way the invoice will actually charge them, and project credit reporting now reflects the cost a credit will really be drawn for.
+
+### What's New
+
+- Call managers can configure which Project details fields appear on a call's proposal form and which are mandatory, with the applicant-facing form rendering directly from that configuration.
+- Proposals now ask for a science domain rather than an OECD code, and two unused proposal flags were removed.
+- Service providers can offer an offering via a call and choose the call manager and review workflow as part of the same dialog.
+- Resource API keys can now be managed using provider-level scopes, not just project scopes.
+- Configured latitude and longitude are shown wherever a location is set, including on the map.
+- Deployments can point `waldur.homeport.inferencePlaygroundURL` at an inference playground and have it allowed by the content security policy.
+
+### Improvements
+
+- Applicants are told why Submit is refused before they press it, and the Project details step now opens expanded by default.
+- Project prepaid duration is derived from the requested length rather than a date, and the subscription starts when the allocation is scheduled.
+- The project credit pacing indicator and health view now measure the month against the cost a credit actually covers; three incorrect credit figures were corrected.
+- The round-closing email to call managers now describes what closing a round actually does, and the round details show the call's managing organisation.
+- Total offering quotas are no longer exposed in the public offering view.
+- Navigation links and menu entries for features a deployment has disabled are now hidden instead of leading to dead ends.
+- Dialog titles name the scope they act on, across marketplace, OpenStack, project, invoice and support dialogs.
+- Machine-translation errors were corrected across 23 locales.
+- Proposal lists load faster — the submit-eligibility check no longer issues a query per proposal.
+- The offering details dialog loads a smaller bundle by deferring the map library until the location tab is opened.
+
+### Bug Fixes
+
+- `rebill_historical_usage` now previews dry runs correctly and handles partial credit draws.
+- The anonymous chat panel no longer breaks the page when it hits an error.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [23 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.4...8.1.3-rc.5) - per-call proposal field configuration, prepaid duration and credit cost reporting, offering quota visibility, plus CI test-selection work.
+- **Waldur Homeport**: [21 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.4...8.1.3-rc.5) - configurable proposal form, credit pacing corrections, scope-aware dialog titles, locale fixes and shared UI package groundwork.
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.4...8.1.3-rc.5) - inference playground URL added to the CSP, dead ArgoCD sync job removed.
+
+---
+
 ## 8.1.3-rc.4 - 2026-08-25
 
 ### Highlights
