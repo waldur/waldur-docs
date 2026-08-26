@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-25T21:09:29.496168Z
+Generated: 2026-08-26T02:04:23.547287Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6470,6 +6470,20 @@ options:
                    current month only.
   --all-time       Calculate from the oldest invoice in the database to the
                    current month.
+
+```
+
+## list_missing_resources
+
+List OpenStack resources which are marked as missing at the backend. Deletion is left to the operator: each resource is linked to a marketplace resource, invoice items and order history.
+
+```bash
+
+usage: waldur list_missing_resources [--days DAYS]
+
+options:
+  --days DAYS  Only report resources missing for at least this many days
+               (default: 7).
 
 ```
 
@@ -15617,13 +15631,13 @@ Notifies call managers that a round has ended, with a summary of proposals and r
 
     Round summary:
     - Total proposals submitted: {{ total_proposals }}
+    - Reviews on record: {{ total_reviews }}
     - Start date: {{ start_date }}
     - Closed date: {{ close_date }}
 
-    Based on the review strategy selected for this round ({{ review_strategy }}), the system has:
-    - Set all draft proposals to "canceled" state
-    - Moved all submitted proposals to "in_review" state
-    - Created {{ total_reviews }} review assignments
+    No further proposals can be submitted to this round. Proposals that had not been
+    accepted or rejected by the cutoff are cancelled automatically, drafts included,
+    so only proposals with a final decision remain.
 
     You can view the round details and manage proposals by visiting:
     {{ round_url }}
@@ -15649,16 +15663,12 @@ Notifies call managers that a round has ended, with a summary of proposals and r
         <h4>Round summary:</h4>
         <ul>
             <li><strong>Total proposals submitted:</strong> {{ total_proposals }}</li>
+            <li><strong>Reviews on record:</strong> {{ total_reviews }}</li>
             <li><strong>Start date:</strong> {{ start_date }}</li>
             <li><strong>Closed date:</strong> {{ close_date }}</li>
         </ul>
 
-        <p>Based on the review strategy selected for this round ({{ review_strategy }}), the system has:</p>
-        <ul>
-            <li>Set all draft proposals to "canceled" state</li>
-            <li>Moved all submitted proposals to "in_review" state</li>
-            <li>Created {{ total_reviews }} review assignments</li>
-        </ul>
+        <p>No further proposals can be submitted to this round. Proposals that had not been accepted or rejected by the cutoff are cancelled automatically, drafts included, so only proposals with a final decision remain.</p>
 
         <p>You can view the round details and manage proposals by visiting: <a href="{{ round_url }}">{{ round_url }}</a></p>
 
@@ -20215,13 +20225,13 @@ The round "{{ round_name }}" for call "{{ call_name }}" has now closed.
 
 Round summary:
 - Total proposals submitted: {{ total_proposals }}
+- Reviews on record: {{ total_reviews }}
 - Start date: {{ start_date }}
 - Closed date: {{ close_date }}
 
-Based on the review strategy selected for this round ({{ review_strategy }}), the system has:
-- Set all draft proposals to "canceled" state
-- Moved all submitted proposals to "in_review" state
-- Created {{ total_reviews }} review assignments
+No further proposals can be submitted to this round. Proposals that had not been
+accepted or rejected by the cutoff are cancelled automatically, drafts included,
+so only proposals with a final decision remain.
 
 You can view the round details and manage proposals by visiting:
 {{ round_url }}
@@ -20630,16 +20640,12 @@ All reviews complete for proposal: {{ proposal_name }}
     <h4>Round summary:</h4>
     <ul>
         <li><strong>Total proposals submitted:</strong> {{ total_proposals }}</li>
+        <li><strong>Reviews on record:</strong> {{ total_reviews }}</li>
         <li><strong>Start date:</strong> {{ start_date }}</li>
         <li><strong>Closed date:</strong> {{ close_date }}</li>
     </ul>
 
-    <p>Based on the review strategy selected for this round ({{ review_strategy }}), the system has:</p>
-    <ul>
-        <li>Set all draft proposals to "canceled" state</li>
-        <li>Moved all submitted proposals to "in_review" state</li>
-        <li>Created {{ total_reviews }} review assignments</li>
-    </ul>
+    <p>No further proposals can be submitted to this round. Proposals that had not been accepted or rejected by the cutoff are cancelled automatically, drafts included, so only proposals with a final decision remain.</p>
 
     <p>You can view the round details and manage proposals by visiting: <a href="{{ round_url }}">{{ round_url }}</a></p>
 
@@ -91322,6 +91328,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`UpdateExecutorMixin`](#updateexecutormixin) | `waldur_core.core.mixins` | Mixin to execute update operations using background executors |
 | [`ActionMixin`](#actionmixin) | `waldur_core.core.models` | Mixin for action tracking with state management |
 | [`AvailableMixin`](#availablemixin) | `waldur_core.core.models` | Make subclasses preserve the alters_data attribute on overridden methods |
+| [`BackendMissingMixin`](#backendmissingmixin) | `waldur_core.core.models` | Mixin for resources that may disappear from the backend |
 | [`BackendMixin`](#backendmixin) | `waldur_core.core.models` | Mixin to add standard backend_id field |
 | [`BackendModelMixin`](#backendmodelmixin) | `waldur_core.core.models` | Mixin for models connected to backend objects |
 | [`DescendantMixin`](#descendantmixin) | `waldur_core.core.models` | Mixin to provide child-parent relationships |
@@ -91725,6 +91732,20 @@ Used for models that need to track ongoing operations.
 **Description:**
 
 Make subclasses preserve the alters_data attribute on overridden methods.
+
+**Base classes:** `Model`
+
+### BackendMissingMixin
+
+**Module:** `waldur_core.core.models`
+
+**Description:**
+
+Mixin for resources that may disappear from the backend.
+
+Records the moment a resource was first observed as missing, so that a fresh
+disappearance can be told apart from a long-dead leftover. The field is
+cleared as soon as the resource is seen at the backend again.
 
 **Base classes:** `Model`
 
