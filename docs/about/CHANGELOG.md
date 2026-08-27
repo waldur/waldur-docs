@@ -1,5 +1,42 @@
 # Changelog
 
+## 8.1.3-rc.6 - 2026-08-27
+
+### Highlights
+
+This release tightens control over who can see what: attachments uploaded with marketplace orders, proposal documents, invoices and other media files are now served through a central access registry that checks the requester's permissions before handing over the file. Call applicants get their own state-change notification with wording tailored to them, and one-time fees are finally invoiced at the quantity the plan actually specifies. Users, call managers and reviewers each get purpose-built dashboard endpoints, so the landing pages they see reflect their role.
+
+### What's New
+
+- Marketplace order attachments, proposal and call documents, invoices, support files and other uploaded media are now protected by a per-module access registry that verifies the requester's permissions on every download.
+- New dashboard endpoints tailored to the user, call-manager and reviewer roles, surfacing the orders, providers and proposals relevant to each.
+- Organization and service provider project lists gained filters, making large project sets easier to narrow down.
+- The offering API now reports which fields the current caller is allowed to change, so the interface can present editable and read-only fields accurately.
+
+### Improvements
+
+- Applicants receive a dedicated notification when their call application changes state, controlled by a single administrator switch that covers both applicant and manager wordings; the older access-request notification has been retired.
+- Expired projects are now deleted in the background instead of blocking the request that triggers the cleanup, avoiding long waits and timeouts.
+- One-time plan components can carry an explicit amount, and invoices bill them at that quantity rather than assuming a single unit.
+- The database cache table size is now capped explicitly in both the Helm chart and Docker Compose configuration, keeping the cache table from growing without limit.
+- Administrator documentation for configuration, the CLI, notifications and templates has been refreshed.
+
+### Bug Fixes
+
+- The offering integration panel no longer breaks when an offering has no secret options configured.
+- Prepaid components are no longer offered in the plan quotas dialog, where they do not apply.
+- Read-only proposal views no longer display fields that the call did not ask for.
+- The application version is hidden from unauthenticated visitors in the footer.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [11 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.5...8.1.3-rc.6) - media access controls, role dashboards, applicant notifications, one-time fee billing.
+- **Waldur Homeport**: [11 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.5...8.1.3-rc.6) - project list filters, offering integration fixes, proposal view and footer corrections.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.5...8.1.3-rc.6) - explicit database cache table cap.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.5...8.1.3-rc.6) - explicit database cache table cap.
+
+---
+
 ## 8.1.3-rc.5 - 2026-08-26
 
 ### Highlights
