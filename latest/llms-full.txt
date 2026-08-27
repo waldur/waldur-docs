@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-27T09:24:41.514026Z
+Generated: 2026-08-27T17:30:05.670914Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -78006,7 +78006,7 @@ Waldur includes a configurable notification system for managing email communicat
 
 ## Overview
 
-Waldur has 40+ notification types organized by module. Each notification has:
+Waldur has 70+ notification types organized by module. Each notification has:
 
 - **Subject template**: Email subject line
 - **Text template**: Plain text email body
@@ -78017,13 +78017,23 @@ Waldur has 40+ notification types organized by module. Each notification has:
 
 **Performed by:** Staff users
 
-1. Navigate to **Administration** → **Notifications**
-2. View the list of all notification types with their current status (enabled/disabled)
+1. Navigate to **Support** → **User management** → **Notifications**
+2. View the list of all notification types with their current status
+
+Each row shows the notification code, when it was created, and whether it is enabled.
+A pencil icon next to the code marks a notification whose template has been
+customised, and a question mark icon reveals its description.
+
+!!! note
+    The actions described below are available to staff users only. Other users
+    can open the list but see no actions on it.
 
 ### Enabling and disabling notifications
 
-- Click the **toggle** next to any notification to enable or disable it
-- Disabled notifications will not send any emails
+1. Open the **actions menu** at the end of the notification's row
+2. Select **Enable** or **Disable**
+
+Disabled notifications will not send any emails.
 
 !!! warning
     All notifications are disabled by default. Enable the notifications relevant to your deployment before going live.
@@ -78032,16 +78042,22 @@ Waldur has 40+ notification types organized by module. Each notification has:
     requires a configured SMTP relay — see
     [Email configuration](../../admin-guide/mastermind-configuration/email.md).
 
+### Viewing templates
+
+Expand a notification's row to read its templates without editing them. Each
+template is shown on its own tab, with a **Copy** button for its content.
+
 ### Editing email templates
 
-1. Click on a notification to open the template editor
-2. The editor shows three tabs:
-    - **Subject**: Plain text subject line template
-    - **Message (text)**: Plain text body template
-    - **Message (HTML)**: Rich HTML body template
-3. Use the **Variables** pane on the right to see available template variables
-4. Edit the template using the Monaco code editor
-5. Click **Save** to apply changes
+1. Open the **actions menu** at the end of the notification's row and select **Edit**
+2. The editor shows one tab per template — the subject line, the plain text body
+   and the HTML body — named after the underlying template file
+3. Open the **Available variables** tab for a table of the variables this
+   notification provides, with their types and descriptions
+4. Edit the template in the code editor
+5. Click **Confirm** to apply changes
+
+Changes take effect on the next email sent; no restart is required.
 
 ### Template syntax
 
@@ -78060,13 +78076,13 @@ Best regards,
 {{ call.name }} Team
 ```
 
-### Resetting templates
+### Reverting a customised template
 
-To restore a template to its default:
-
-1. Open the notification template editor
-2. Click **Reset to default**
-3. The template reverts to the system default version
+There is no reset action in the interface. A customised template is marked with a
+pencil icon in the list and on its tab; to return it to the shipped wording,
+replace its content with the original text. Clearing the editor shows the
+original as a placeholder, and it is also returned by the API as
+`original_content`.
 
 ## Proposal notifications
 

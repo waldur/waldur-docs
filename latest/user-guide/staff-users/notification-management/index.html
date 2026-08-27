@@ -17665,6 +17665,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#viewing-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#editing-email-templates" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -17687,10 +17698,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#resetting-templates" class="md-nav__link">
+  <a href="#reverting-a-customised-template" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Resetting templates
+        Reverting a customised template
       
     </span>
   </a>
@@ -18269,6 +18280,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#viewing-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#editing-email-templates" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18291,10 +18313,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#resetting-templates" class="md-nav__link">
+  <a href="#reverting-a-customised-template" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Resetting templates
+        Reverting a customised template
       
     </span>
   </a>
@@ -18357,7 +18379,7 @@
 <h1 id="notification-management">Notification management</h1>
 <p>Waldur includes a configurable notification system for managing email communications. Administrators can enable/disable notifications, customize email templates, and manage notification delivery.</p>
 <h2 id="overview">Overview</h2>
-<p>Waldur has 40+ notification types organized by module. Each notification has:</p>
+<p>Waldur has 70+ notification types organized by module. Each notification has:</p>
 <ul>
 <li><strong>Subject template</strong>: Email subject line</li>
 <li><strong>Text template</strong>: Plain text email body</li>
@@ -18367,14 +18389,23 @@
 <h2 id="managing-notifications">Managing notifications</h2>
 <p><strong>Performed by:</strong> Staff users</p>
 <ol>
-<li>Navigate to <strong>Administration</strong> → <strong>Notifications</strong></li>
-<li>View the list of all notification types with their current status (enabled/disabled)</li>
+<li>Navigate to <strong>Support</strong> → <strong>User management</strong> → <strong>Notifications</strong></li>
+<li>View the list of all notification types with their current status</li>
 </ol>
+<p>Each row shows the notification code, when it was created, and whether it is enabled.
+A pencil icon next to the code marks a notification whose template has been
+customised, and a question mark icon reveals its description.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The actions described below are available to staff users only. Other users
+can open the list but see no actions on it.</p>
+</div>
 <h3 id="enabling-and-disabling-notifications">Enabling and disabling notifications</h3>
-<ul>
-<li>Click the <strong>toggle</strong> next to any notification to enable or disable it</li>
-<li>Disabled notifications will not send any emails</li>
-</ul>
+<ol>
+<li>Open the <strong>actions menu</strong> at the end of the notification's row</li>
+<li>Select <strong>Enable</strong> or <strong>Disable</strong></li>
+</ol>
+<p>Disabled notifications will not send any emails.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>All notifications are disabled by default. Enable the notifications relevant to your deployment before going live.</p>
@@ -18382,19 +18413,20 @@
 requires a configured SMTP relay — see
 <a href="../../../admin-guide/mastermind-configuration/email/">Email configuration</a>.</p>
 </div>
+<h3 id="viewing-templates">Viewing templates</h3>
+<p>Expand a notification's row to read its templates without editing them. Each
+template is shown on its own tab, with a <strong>Copy</strong> button for its content.</p>
 <h3 id="editing-email-templates">Editing email templates</h3>
 <ol>
-<li>Click on a notification to open the template editor</li>
-<li>The editor shows three tabs:<ul>
-<li><strong>Subject</strong>: Plain text subject line template</li>
-<li><strong>Message (text)</strong>: Plain text body template</li>
-<li><strong>Message (HTML)</strong>: Rich HTML body template</li>
-</ul>
-</li>
-<li>Use the <strong>Variables</strong> pane on the right to see available template variables</li>
-<li>Edit the template using the Monaco code editor</li>
-<li>Click <strong>Save</strong> to apply changes</li>
+<li>Open the <strong>actions menu</strong> at the end of the notification's row and select <strong>Edit</strong></li>
+<li>The editor shows one tab per template — the subject line, the plain text body
+   and the HTML body — named after the underlying template file</li>
+<li>Open the <strong>Available variables</strong> tab for a table of the variables this
+   notification provides, with their types and descriptions</li>
+<li>Edit the template in the code editor</li>
+<li>Click <strong>Confirm</strong> to apply changes</li>
 </ol>
+<p>Changes take effect on the next email sent; no restart is required.</p>
 <h3 id="template-syntax">Template syntax</h3>
 <p>Templates use Django template syntax:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -18417,13 +18449,12 @@ requires a configured SMTP relay — see
 <span class="x">Best regards,</span>
 <span class="cp">{{</span> <span class="nv">call.name</span> <span class="cp">}}</span><span class="x"> Team</span>
 </code></pre></div></td></tr></tbody></table></div>
-<h3 id="resetting-templates">Resetting templates</h3>
-<p>To restore a template to its default:</p>
-<ol>
-<li>Open the notification template editor</li>
-<li>Click <strong>Reset to default</strong></li>
-<li>The template reverts to the system default version</li>
-</ol>
+<h3 id="reverting-a-customised-template">Reverting a customised template</h3>
+<p>There is no reset action in the interface. A customised template is marked with a
+pencil icon in the list and on its tab; to return it to the shipped wording,
+replace its content with the original text. Clearing the editor shows the
+original as a placeholder, and it is also returned by the API as
+<code>original_content</code>.</p>
 <h2 id="proposal-notifications">Proposal notifications</h2>
 <p>The following notifications are available for call management:</p>
 <table>
