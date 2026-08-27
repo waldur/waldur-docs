@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-27T02:04:44.896497Z
+Generated: 2026-08-27T09:24:41.514026Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6914,11 +6914,15 @@ usage: waldur rebill_historical_usage [--execute] [--offering OFFERING_UUID]
 options:
   --execute             Actually apply the correction. Without this flag the
                         command always runs as a dry run -- it computes and
-                        prints the exact same plan (inside a transaction
-                        that's deliberately rolled back at the end) but writes
-                        nothing to the database. This default is deliberate:
-                        review the printed plan first, then re-run with
-                        --execute once it looks right.
+                        prints the exact same plan (inside one transaction
+                        spanning every resource-period in the run,
+                        deliberately rolled back at the very end) but writes
+                        nothing to the database. Cost Policy previews
+                        therefore see earlier periods' corrections in the same
+                        dry run too, matching what --execute would actually
+                        produce. This default is deliberate: review the
+                        printed plan first, then re-run with --execute once it
+                        looks right.
   --offering OFFERING_UUID
                         Only process resources belonging to the offering with
                         this UUID.
@@ -9350,6 +9354,20 @@ Shared secret expected in the X-Webhook-Secret header of inbound SMAX webhook de
 **Default value:** 7
 
 Review duration in days.
+
+#### DEFAULT_PROPOSAL_REQUIRED_FIELDS
+
+**Type:** multiple_choice_field
+
+**Default value:** ['project_summary']
+
+Project details fields a new call requires by default. Applied when the call is created; changing this never alters an existing call.
+
+#### DEFAULT_PROPOSAL_HIDDEN_FIELDS
+
+**Type:** multiple_choice_field
+
+Project details fields a new call does not ask for at all. Applied when the call is created; changing this never alters an existing call.
 
 #### REVIEWER_PROFILES_ENABLED
 
@@ -14614,6 +14632,180 @@ A template used for generating the issue summary field during issue creation.
 ```
 
 ## WALDUR_MASTERMIND.PROPOSAL
+
+### proposal.access_request_state_changed
+
+The same state changes, for a deployment that hides calls from applicants (SERVICE_ACCESS_MODE = 'marketplace'). Its own notification rather than a branch inside the proposal one, so each can be worded, overridden and switched off independently.
+
+#### Templates
+
+=== "proposal/access_request_state_changed_subject.txt"
+
+```txt
+
+    Access request update: {{ proposal_name }} - {{ new_state }}
+
+```
+
+=== "proposal/access_request_state_changed_message.txt"
+
+```txt
+
+    Dear {{ proposal_creator_name }},
+
+    The state of your access request "{{ proposal_name }}" has been updated.
+
+    State change:
+    - Previous state: {{ previous_state }}
+    - New state: {{ new_state }}
+    - Updated on: {{ update_date }}
+
+    {% if new_state == 'accepted' %}
+    Project created: {{ project_name }}
+    {% if allocation_date %}Allocation start date: {{ allocation_date }}
+    {% endif %}{% if duration %}Duration: {{ duration }} days
+    {% endif %}
+    Allocated resources:
+    {% for resource in allocated_resources %}
+    {{ forloop.counter }}. {{ resource.name }} - {{ resource.provider_name }} - {{ resource.plan_name }} - Provisioned
+    {% empty %}
+    No resources allocated yet.
+    {% endfor %}
+    {% endif %}
+
+    {% if new_state == 'rejected' %}
+    Feedback: {{ rejection_feedback }}
+    {% endif %}
+
+    {% if new_state == 'submitted' %}
+    Your access request has been submitted and is now being processed. You will receive further notifications as it moves forward.
+    {% endif %}
+
+    {% if new_state == 'in_review' %}
+    Your access request is being evaluated. You will be notified as soon as a decision has been made.
+    {% endif %}
+
+    {% if new_state == 'accepted' %}
+    Your access request has been approved. A project has been created with the resources you asked for, and you can open it using the link below.
+    {% endif %}
+
+    {% if new_state == 'rejected' %}
+    Your access request has not been approved at this time. Please review any feedback provided above. You are welcome to submit a new request later.
+    {% endif %}
+
+    View access request: {{ proposal_url }}
+    {% if new_state == 'accepted' and project_url %}
+    View Project: {{ project_url }}
+    {% endif %}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/access_request_state_changed_message.html"
+
+```txt
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Access Request Update</title>
+        <style>
+            body {
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                margin-bottom: 20px;
+            }
+            .state-change {
+                background-color: #f9f9f9;
+                padding: 15px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+            }
+            .message-box {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            .footer {
+                margin-top: 30px;
+                color: #777;
+                border-top: 1px solid #eee;
+                padding-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <p>Dear {{ proposal_creator_name }},</p>
+            <p>The state of your access request "<strong>{{ proposal_name }}</strong>" has been updated.</p>
+        </div>
+
+        <div class="state-change">
+            <h3>State change:</h3>
+            <ul>
+                <li><strong>Previous state:</strong> {{ previous_state }}</li>
+                <li><strong>New state:</strong> {{ new_state }}</li>
+                <li><strong>Updated on:</strong> {{ update_date }}</li>
+            </ul>
+
+            {% if new_state == 'accepted' %}
+            <ul>
+                <li><strong>Project created:</strong> {{ project_name }}</li>
+                {% if allocation_date %}<li><strong>Allocation start date:</strong> {{ allocation_date }}</li>{% endif %}
+                {% if duration %}<li><strong>Duration:</strong> {{ duration }} days</li>{% endif %}
+            </ul>
+            <div>
+                <h4>Allocated resources:</h4>
+                {% for resource in allocated_resources %}
+                <div>
+                    <strong>{{ forloop.counter }}.</strong> {{ resource.name }} - {{ resource.provider_name }} - {{ resource.plan_name }} - Provisioned
+                </div>
+                {% empty %}
+                <p><em>No resources allocated yet.</em></p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if new_state == 'rejected' %}
+            <p><strong>Feedback:</strong> {{ rejection_feedback }}</p>
+            {% endif %}
+        </div>
+
+        <div class="message-box">
+            {% if new_state == 'submitted' %}
+            <p>Your access request has been submitted and is now being processed. You will receive further notifications as it moves forward.</p>
+            {% endif %}
+
+            {% if new_state == 'in_review' %}
+            <p>Your access request is being evaluated. You will be notified as soon as a decision has been made.</p>
+            {% endif %}
+
+            {% if new_state == 'accepted' %}
+            <p>Your access request has been approved. A project has been created with the resources you asked for, and you can open it using the link below.</p>
+            {% endif %}
+
+            {% if new_state == 'rejected' %}
+            <p>Your access request has not been approved at this time. Please review any feedback provided above. You are welcome to submit a new request later.</p>
+            {% endif %}
+        </div>
+
+        <a href="{{ proposal_url }}">View access request</a>
+        <br>
+        {% if new_state == 'accepted' and project_url %}
+        <a href="{{ project_url }}">View Project</a>
+        {% endif %}
+
+        <div class="footer">
+            <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
+        </div>
+    </body>
+    </html>
+
+```
 
 ### proposal.new_proposal_submitted
 
@@ -20215,6 +20407,14 @@ New limits: {{ new_limits }}.
 
 ```
 
+### access_request_state_changed_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+Access request update: {{ proposal_name }} - {{ new_state }}
+
+```
+
 ### round_closing_for_managers_message.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -20333,6 +20533,111 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 
 ```
 
+### access_request_state_changed_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Access Request Update</title>
+    <style>
+        body {
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            margin-bottom: 20px;
+        }
+        .state-change {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .message-box {
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <p>Dear {{ proposal_creator_name }},</p>
+        <p>The state of your access request "<strong>{{ proposal_name }}</strong>" has been updated.</p>
+    </div>
+
+    <div class="state-change">
+        <h3>State change:</h3>
+        <ul>
+            <li><strong>Previous state:</strong> {{ previous_state }}</li>
+            <li><strong>New state:</strong> {{ new_state }}</li>
+            <li><strong>Updated on:</strong> {{ update_date }}</li>
+        </ul>
+
+        {% if new_state == 'accepted' %}
+        <ul>
+            <li><strong>Project created:</strong> {{ project_name }}</li>
+            {% if allocation_date %}<li><strong>Allocation start date:</strong> {{ allocation_date }}</li>{% endif %}
+            {% if duration %}<li><strong>Duration:</strong> {{ duration }} days</li>{% endif %}
+        </ul>
+        <div>
+            <h4>Allocated resources:</h4>
+            {% for resource in allocated_resources %}
+            <div>
+                <strong>{{ forloop.counter }}.</strong> {{ resource.name }} - {{ resource.provider_name }} - {{ resource.plan_name }} - Provisioned
+            </div>
+            {% empty %}
+            <p><em>No resources allocated yet.</em></p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if new_state == 'rejected' %}
+        <p><strong>Feedback:</strong> {{ rejection_feedback }}</p>
+        {% endif %}
+    </div>
+
+    <div class="message-box">
+        {% if new_state == 'submitted' %}
+        <p>Your access request has been submitted and is now being processed. You will receive further notifications as it moves forward.</p>
+        {% endif %}
+
+        {% if new_state == 'in_review' %}
+        <p>Your access request is being evaluated. You will be notified as soon as a decision has been made.</p>
+        {% endif %}
+
+        {% if new_state == 'accepted' %}
+        <p>Your access request has been approved. A project has been created with the resources you asked for, and you can open it using the link below.</p>
+        {% endif %}
+
+        {% if new_state == 'rejected' %}
+        <p>Your access request has not been approved at this time. Please review any feedback provided above. You are welcome to submit a new request later.</p>
+        {% endif %}
+    </div>
+
+    <a href="{{ proposal_url }}">View access request</a>
+    <br>
+    {% if new_state == 'accepted' and project_url %}
+    <a href="{{ project_url }}">View Project</a>
+    {% endif %}
+
+    <div class="footer">
+        <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
+    </div>
+</body>
+</html>
+
+```
+
 ### proposal_decision_for_reviewer_subject.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -20443,6 +20748,61 @@ You can still view your proposal by visiting:
 {{ proposal_url }}
 
 If you would like to resubmit your proposal, please check for upcoming rounds in this call or other relevant calls.
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+### access_request_state_changed_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Dear {{ proposal_creator_name }},
+
+The state of your access request "{{ proposal_name }}" has been updated.
+
+State change:
+- Previous state: {{ previous_state }}
+- New state: {{ new_state }}
+- Updated on: {{ update_date }}
+
+{% if new_state == 'accepted' %}
+Project created: {{ project_name }}
+{% if allocation_date %}Allocation start date: {{ allocation_date }}
+{% endif %}{% if duration %}Duration: {{ duration }} days
+{% endif %}
+Allocated resources:
+{% for resource in allocated_resources %}
+{{ forloop.counter }}. {{ resource.name }} - {{ resource.provider_name }} - {{ resource.plan_name }} - Provisioned
+{% empty %}
+No resources allocated yet.
+{% endfor %}
+{% endif %}
+
+{% if new_state == 'rejected' %}
+Feedback: {{ rejection_feedback }}
+{% endif %}
+
+{% if new_state == 'submitted' %}
+Your access request has been submitted and is now being processed. You will receive further notifications as it moves forward.
+{% endif %}
+
+{% if new_state == 'in_review' %}
+Your access request is being evaluated. You will be notified as soon as a decision has been made.
+{% endif %}
+
+{% if new_state == 'accepted' %}
+Your access request has been approved. A project has been created with the resources you asked for, and you can open it using the link below.
+{% endif %}
+
+{% if new_state == 'rejected' %}
+Your access request has not been approved at this time. Please review any feedback provided above. You are welcome to submit a new request later.
+{% endif %}
+
+View access request: {{ proposal_url }}
+{% if new_state == 'accepted' and project_url %}
+View Project: {{ project_url }}
+{% endif %}
 
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
 
@@ -59447,6 +59807,140 @@ This includes:
 
 ---
 
+### Media Access Control
+<!-- Source: docs/developer-guide/guides/media-access.md -->
+
+# Media Access Control
+
+Every `FileField` and `ImageField` in Waldur is stored by `DatabaseStorage`, the
+global default storage. Uploads do not go to disk or S3 — they become rows in
+`waldur_core.media.models.File`, and they are all served by a single endpoint:
+
+```text
+GET /api/media/<uuid>/
+```
+
+That endpoint has `permission_classes = ()`. The only thing it knows about a
+file is its storage path, so **access rules are keyed by the `upload_to`
+prefix**, and they are **deny by default**: a file whose prefix has no
+registered rule is served to nobody, staff included.
+
+## Adding a file field
+
+Whenever you add a `FileField` or `ImageField`, you must also declare who may
+download it. Skipping this step is not silently insecure — it is silently
+*broken*, and `CoverageTest` in `waldur_core/media/tests/test_access_registry.py`
+fails until you do.
+
+Declare rules in a `media_access.py` module at the root of your app. It is
+imported automatically at startup; no registration in `apps.py` is needed.
+
+```python
+# src/waldur_mastermind/invoices/media_access.py
+"""Media access rules for files owned by the invoices app.
+
+See :mod:`waldur_core.media.access`.
+"""
+
+from waldur_core.media import access
+from waldur_core.structure.managers import filter_queryset_for_user
+from waldur_mastermind.invoices.models import Payment
+
+# Payment.Permissions routes through profile__organization, which is what
+# PaymentViewSet's GenericRoleFilter applies.
+access.register(
+    access.upload_prefix(Payment, "proof"),
+    access.queryset_rule(Payment, ["proof"], filter_queryset_for_user),
+)
+```
+
+That is the real rule for payment proofs, verbatim.
+
+## Choosing a rule
+
+| Helper | Who gets the file |
+|---|---|
+| `register_public(prefix)` | Everyone, including anonymous users |
+| `register_authenticated(prefix)` | Any logged-in user, no per-object check |
+| `register_staff_only(prefix)` | Staff and support only |
+| `register(prefix, check)` | Custom `check(file, user) -> bool` |
+| `queryset_rule(...)` | Whoever the app's own read rule allows |
+
+Prefer `queryset_rule`. It looks the file up in its owning table and hands the
+result to the same filter the ViewSet uses — usually
+`filter_queryset_for_user` or a manager's `filter_for_user` — so a download
+cannot outlive the permission the API itself enforces.
+
+Use `register_public` **only** for files already reachable through an anonymous
+API endpoint, and say which one in a comment. Everything on the unauthenticated
+marketplace catalogue and the public call-for-proposals page falls in this
+category.
+
+## Deriving the prefix
+
+Never write the prefix as a literal. Derive it, so renaming an `upload_to`
+cannot leave a stale rule registered and the new path wide open:
+
+- `access.upload_prefix(Model, "field")` — for a string `upload_to`. A
+  strftime-formatted value such as `matrix_exports/%Y/%m/` is truncated at the
+  first format token.
+- `access.image_prefix(Model)` — for a field using `get_upload_path` from
+  `waldur_core.media.mixins`, including anything using `ImageModelMixin`.
+
+`get_upload_path` builds paths from the bare model name with no app label, so
+two image-bearing models with the same class name in different apps would share
+a prefix. `test_model_names_used_as_prefixes_are_unique` guards against that.
+
+## Constraints on `media_access` modules
+
+`MediaConfig.ready()` runs before `constance` and before the plugin apps' own
+`ready()`. A `media_access` module therefore must not:
+
+- touch the database or `constance.config` at import time;
+- import its own app's `views` or `serializers`.
+
+Building a closure is fine; evaluating one is not. If you need a queryset
+helper that currently lives in `views.py`, move it to `managers.py` — see
+`matrix_chat.managers.get_accessible_room_ids`.
+
+A `media_access` module that fails to import raises rather than warning. Under
+default-deny a swallowed import error would silently stop serving every file
+that app owns.
+
+## Out-of-tree plugins
+
+Waldur loads any plugin registered under the `waldur_extensions` entry point,
+including packages outside this repository. `CoverageTest` only walks the
+models of installed apps in CI, so it cannot warn a third-party plugin author.
+
+**If you maintain a Waldur plugin with a `FileField` and it is not in this
+repository, add a `media_access.py` to it.** Without one, its files return 404
+for every user after upgrading. The failure is fail-closed rather than a data
+leak, but it is still an outage for that plugin's downloads.
+
+## Testing
+
+For a test that needs a synthetic registry, use the context manager — never
+clear the registry directly. Autodiscovery runs once per process, so an
+unrestored registry would leave every later test in the same worker denying
+everything:
+
+```python
+with access.override_rules():
+    access.register_public("my_test_prefix/")
+    ...
+```
+
+## Reference
+
+- `src/waldur_core/media/access.py` — the registry
+- `src/waldur_core/media/apps.py` — autodiscovery
+- `src/waldur_core/media/tests/test_access_registry.py` — registry and coverage tests
+- `src/waldur_mastermind/marketplace/media_access.py` — a worked example covering
+  public, authenticated and scope-checked prefixes
+
+---
+
 ### Membership Sync Status
 <!-- Source: docs/developer-guide/guides/membership-sync-status.md -->
 
@@ -89828,6 +90322,7 @@ td:nth-child(4) {
 | `revoke_roles_on_offering_deletion` | `Django Signal (pre_delete)` | `marketplace.Offering` | Revoke active user roles bound to an offering before it is deleted. |
 | `run_reset_actions_upon_cost_policy_deletion` | `Django Signal (pre_delete)` | `policy.ProjectEstimatedCostPolicy` | Execute reset actions when a cost policy is deleted. |
 | `schedule_component_usage_billing` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Thin post_save handler — schedules the async billing+policy task on commit. |
+| `seed_proposal_field_config` | `Django Signal (post_save)` | `proposal.Call` | Materialise a call's Project details field configuration at creation. |
 | `seed_workflow_steps` | `Django Signal (post_save)` | `proposal.Call` | Seed catalog workflow steps on call creation. |
 | `send_comment_added_notification` | `Django Signal (post_save)` | `support.Comment` | No description |
 | `send_course_account_deletion_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
@@ -90009,14 +90504,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 807
+Total unique handlers found: 808
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 417 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 337 handlers
+- **waldur_mastermind**: 338 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
