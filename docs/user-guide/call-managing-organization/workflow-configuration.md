@@ -65,7 +65,7 @@ For each enabled step, you can configure:
 | **Requires CoI confirmation** | The evaluator must confirm absence of a conflict of interest before starting. |
 | **Minimum reviewers** | Minimum number of reviews required before the step can be completed. |
 | **Minimum score threshold** | Minimum average score required to complete the step. |
-| **Applicant visible** | Whether the applicant sees the step's details or only its status. |
+| **Applicant visible** | Whether the applicant sees this step by name on their progress tracker. Off by default: while an invisible step is the current one the applicant sees only that the proposal is in review, and once it has passed it leaves no trace on their tracker at all. Call managers and reviewers always see every step. |
 | **Transition** | **Advance immediately on completion** moves to the next step as soon as the step is completed; **Hold for manual advance** parks the proposal so a manager advances it explicitly. |
 
 Two further settings appear on the **Allocation decision** step only:
@@ -142,7 +142,11 @@ Deadlines are enforced automatically. An hourly job checks active steps against 
 
 ### For applicants
 
-Applicants see a timeline on the proposal page showing its progress through the evaluation steps, starting from submission. Steps that were not reached because of an earlier rejection are struck through and marked **Not reached**. The timeline appears once the proposal leaves draft state; calls without a configured workflow fall back to a coarse progress tracker instead.
+Applicants see a timeline on the proposal page showing its progress, starting from submission. Only steps marked **Applicant visible** are named there — the setting is off by default, so a call that has not turned it on for any step shows the applicant the coarse Submission → Review → Decision tracker instead of the evaluation steps.
+
+While an invisible step is the current one, it appears as an unnamed **In review** marker so the tracker still shows where the proposal has got to; once it has passed, it leaves no trace. Steps that were not reached because of an earlier rejection are struck through and marked **Not reached**. The timeline appears once the proposal leaves draft state; calls without a configured workflow fall back to the coarse tracker as well.
+
+A short line under the tracker says what is happening — the expected decision date where the step has a deadline, or that the applicant's own confirmation is needed on an award response.
 
 ### For call managers
 
