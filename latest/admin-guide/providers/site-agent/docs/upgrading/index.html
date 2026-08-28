@@ -18666,9 +18666,22 @@ pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="
 <strong>Always upgrade all installed plugins together with the core.</strong></p>
 <h3 id="helm-chart">Helm chart</h3>
 <p>If you deploy via Helm, the chart version mirrors the agent release version.
-Update <code>image.tag</code> (or use the chart's default) and run:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>helm<span class="w"> </span>upgrade<span class="w"> </span>waldur-site-agent<span class="w"> </span>waldur/waldur-site-agent<span class="w"> </span>--version<span class="w"> </span>&lt;NEW_VERSION&gt;
+Charts are published to <a href="https://waldur.github.io/waldur-site-agent">https://waldur.github.io/waldur-site-agent</a>. If you have
+not added that repository yet:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>waldur<span class="w"> </span>https://waldur.github.io/waldur-site-agent
 </code></pre></div></td></tr></tbody></table></div>
+<p>Refresh the index, check which versions are available, then upgrade. Update
+<code>image.tag</code> (or use the chart's default) and run:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>helm<span class="w"> </span>repo<span class="w"> </span>update
+helm<span class="w"> </span>search<span class="w"> </span>repo<span class="w"> </span>waldur/waldur-site-agent<span class="w"> </span>--versions
+helm<span class="w"> </span>upgrade<span class="w"> </span>waldur-site-agent<span class="w"> </span>waldur/waldur-site-agent<span class="w"> </span>--version<span class="w"> </span>&lt;NEW_VERSION&gt;
+</code></pre></div></td></tr></tbody></table></div>
+<p>Add <code>--devel</code> to both <code>helm search</code> and <code>helm upgrade</code> when moving to a release
+candidate — Helm hides pre-release versions otherwise.</p>
+<p>See the chart README for the full list of
+configurable values.</p>
 <hr>
 <h2 id="validating-the-upgrade">Validating the Upgrade</h2>
 <h3 id="1-run-diagnostics">1. Run diagnostics</h3>
