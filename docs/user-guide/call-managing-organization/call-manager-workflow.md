@@ -128,7 +128,8 @@ Key settings:
   conflict with the proposal before they can **submit** their review; it does not
   block them from opening or drafting it (see
   [Conflict of interest](#conflict-of-interest)).
-- **Applicant visible** — applicants see the step's details, not just its status.
+- **Applicant visible** — applicants see this step by name on their progress tracker.
+  Off by default; an invisible step shows to them only as "In review" while it runs.
 
 ### Required vs advisory checklists
 
