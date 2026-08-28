@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-28T11:36:41.776993Z
+Generated: 2026-08-28T15:29:51.426694Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -72034,7 +72034,8 @@ Key settings:
   conflict with the proposal before they can **submit** their review; it does not
   block them from opening or drafting it (see
   [Conflict of interest](#conflict-of-interest)).
-- **Applicant visible** — applicants see the step's details, not just its status.
+- **Applicant visible** — applicants see this step by name on their progress tracker.
+  Off by default; an invisible step shows to them only as "In review" while it runs.
 
 ### Required vs advisory checklists
 
@@ -73816,7 +73817,7 @@ For each enabled step, you can configure:
 | **Requires CoI confirmation** | The evaluator must confirm absence of a conflict of interest before starting. |
 | **Minimum reviewers** | Minimum number of reviews required before the step can be completed. |
 | **Minimum score threshold** | Minimum average score required to complete the step. |
-| **Applicant visible** | Whether the applicant sees the step's details or only its status. |
+| **Applicant visible** | Whether the applicant sees this step by name on their progress tracker. Off by default: while an invisible step is the current one the applicant sees only that the proposal is in review, and once it has passed it leaves no trace on their tracker at all. Call managers and reviewers always see every step. |
 | **Transition** | **Advance immediately on completion** moves to the next step as soon as the step is completed; **Hold for manual advance** parks the proposal so a manager advances it explicitly. |
 
 Two further settings appear on the **Allocation decision** step only:
@@ -73893,7 +73894,11 @@ Deadlines are enforced automatically. An hourly job checks active steps against 
 
 ### For applicants
 
-Applicants see a timeline on the proposal page showing its progress through the evaluation steps, starting from submission. Steps that were not reached because of an earlier rejection are struck through and marked **Not reached**. The timeline appears once the proposal leaves draft state; calls without a configured workflow fall back to a coarse progress tracker instead.
+Applicants see a timeline on the proposal page showing its progress, starting from submission. Only steps marked **Applicant visible** are named there — the setting is off by default, so a call that has not turned it on for any step shows the applicant the coarse Submission → Review → Decision tracker instead of the evaluation steps.
+
+While an invisible step is the current one, it appears as an unnamed **In review** marker so the tracker still shows where the proposal has got to; once it has passed, it leaves no trace. Steps that were not reached because of an earlier rejection are struck through and marked **Not reached**. The timeline appears once the proposal leaves draft state; calls without a configured workflow fall back to the coarse tracker as well.
+
+A short line under the tracker says what is happening — the expected decision date where the step has a deadline, or that the applicant's own confirmation is needed on an award response.
 
 ### For call managers
 
@@ -75611,6 +75616,77 @@ permissions or scheduling.
 
 ---
 
+### How you reach services
+<!-- Source: docs/user-guide/end-users/service-access-modes.md -->
+
+# How you reach services
+
+Waldur can be set up to hand out services in two different ways, and a deployment picks one. The
+difference is only in navigation and wording — the same requests, the same reviews, the same
+resources underneath — but it changes enough of what you see that it is worth knowing which one
+you are looking at.
+
+Your deployment administrator chooses this with the **SERVICE_ACCESS_MODE** setting. You cannot
+change it yourself, and there is no switch in the interface to tell you which is active. The
+quickest way to tell is the sidebar: if it has a **Calls** section, calls are browsable.
+
+| Mode | How you get a service |
+|---|---|
+| `both` | Browse the marketplace, or browse open calls. Both are in the sidebar. (Default.) |
+| `calls` | Only through calls for proposals. No marketplace navigation. |
+| `marketplace` | The marketplace is the only entry point. You reach a call through an offering, without meeting it as a concept. |
+
+## `both` and `calls` — the call is visible
+
+You browse **Calls for proposals**, pick a call and a round, and submit a proposal to it. The
+proposal names the call it belongs to and the round it was submitted under, and your submissions
+are listed under **My proposals**.
+
+[Image: A submitted proposal in a deployment that shows calls]
+
+This is the vocabulary the rest of this guide uses, and the
+[applicant guide](../call-managing-organization/applicant-guide.md) describes the flow in full.
+
+## `marketplace` — the call is behind the offering
+
+You browse offerings as you would any catalogue. When an offering is available through a call, its
+**Request** button offers **Apply for access** alongside the ordinary **Order now**, and choosing it
+opens a submission deadline to pick rather than a call to choose.
+
+Everything after that drops the parts that only make sense inside a call:
+
+- Your submissions are **access requests**, not proposals, and live under **My access requests** in
+  your profile — there is no calls section to hold them.
+- The call name and the round reference are not shown; the round's cutoff appears as
+  **Submission closes**.
+- The progress tracker is the coarse **Submission → Review → Decision** one, with a line under it
+  saying what is happening.
+- There is no project-duration field: it is a question a call asks, and the allocation takes each
+  resource request's own end date regardless.
+
+[Image: The same request in a marketplace-only deployment]
+
+[Image: Access requests listed in the user profile]
+
+!!! note
+    Reviewers, call managers and service providers keep the call vocabulary in every mode. Calls,
+    rounds and proposals are the objects they manage, so hiding the words from them would only make
+    their own screens harder to read. The change is for the applicant's side of the flow.
+
+## What does not change
+
+The API serves the same data in every mode, and so does everything below the navigation:
+
+- Resource requests, their amounts and their purchase orders.
+- The compliance checklist and the project team.
+- Reviews, the decision, and the project created when a request is accepted.
+- The state badges — draft, submitted, in review, accepted, rejected.
+
+A request submitted while the deployment ran in one mode continues to work if the mode changes; it
+is only presented differently.
+
+---
+
 ### User guide
 <!-- Source: docs/user-guide/index.md -->
 
@@ -75638,6 +75714,7 @@ for deployment-specific documentation.
 
 ## Practical guides for the end users
 
+* [How you reach services](end-users/service-access-modes.md)
 * [Interface overview](end-users/interface.md)
 
 ## Practical guides for the staff and support users (deployment administrators)
