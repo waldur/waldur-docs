@@ -17969,10 +17969,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ci-flow" class="md-nav__link">
+  <a href="#ci-flow-per-job" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CI flow
+        CI flow (per job)
       
     </span>
   </a>
@@ -18246,8 +18246,10 @@ and role assignments.</p>
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>ci/docker-compose.e2e.yml<span class="w"> </span>up<span class="w"> </span>waldur-db-migration
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>ci/docker-compose.e2e.yml<span class="w"> </span>up<span class="w"> </span>waldur-db-migration
 docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>ci/docker-compose.e2e.yml<span class="w"> </span>up<span class="w"> </span>-d
+<span class="c1"># add `--profile ldap` (or COMPOSE_PROFILES=ldap) to also start OpenLDAP for test_e2e_ldap.py</span>
 
 <span class="c1"># Wait for API to be ready</span>
 curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s2">"%{http_code}"</span><span class="w"> </span>http://localhost:8080/api/
@@ -18379,22 +18381,35 @@ STOMP connection settings:</p>
 </tbody>
 </table>
 <h2 id="ci-pipeline">CI pipeline</h2>
-<p>The E2E job runs in the <code>E2E integration tests</code> stage in <code>.gitlab-ci.yml</code>.
-It triggers on pushes to <code>main</code> and release tags.</p>
-<h3 id="ci-flow">CI flow</h3>
+<p>The E2E suites run as three jobs in <code>.gitlab-ci.yml</code>, all extending a shared
+<code>.E2E base</code> that boots its own Waldur stack:</p>
+<ul>
+<li><code>E2E: REST &amp; STOMP</code> — REST suite, <code>test_e2e_stomp.py</code>,
+  <code>test_e2e_qos_backcompat.py</code>. Runs on MRs touching slurm/ldap/core/ci
+  files, on tags, and when <code>RUN_E2E_TESTS</code> / <code>RUN_E2E</code> is set.</li>
+<li><code>E2E: policy, QoS &amp; LDAP</code> — <code>test_e2e_policy.py</code>,
+  <code>test_e2e_qos_polling.py</code>, <code>test_e2e_qos_stomp.py</code>, <code>test_e2e_ldap.py</code>.
+  Same triggers as above.</li>
+<li><code>E2E: QoS matrix</code> — <code>test_e2e_qos_matrix.py</code> (11 policy configs, ~5 min).
+  Runs on tags; on <code>main</code> / MRs only with <code>RUN_E2E_TESTS</code>.</li>
+</ul>
+<p>The REST job lists its test files explicitly. A new <code>test_e2e_*.py</code> must be
+added to exactly one job's <code>script</code>, otherwise it never runs in CI.</p>
+<h3 id="ci-flow-per-job">CI flow (per job)</h3>
 <ol>
 <li>Install Docker CLI + Compose plugin (static binaries)</li>
 <li><code>uv sync --all-packages</code> — install site-agent + slurm-emulator</li>
 <li><code>docker compose -f ci/docker-compose.e2e.yml up</code> — boot Waldur stack</li>
-<li>Wait for API health check (<code>curl http://docker:8080/api/</code>)</li>
+<li>Wait for the Celery worker and the API (<code>curl http://docker:8080/api/</code>)</li>
 <li>Copy and load <code>site_agent_e2e</code> demo preset</li>
 <li>Force-set deterministic auth token</li>
-<li><strong>REST E2E tests</strong> — <code>pytest plugins/slurm/tests/e2e/ --ignore=test_e2e_stomp.py</code></li>
-<li><strong>STOMP E2E tests</strong> — <code>pytest plugins/slurm/tests/e2e/test_e2e_stomp.py</code></li>
+<li>One <code>pytest</code> invocation over the job's test files, with coverage disabled
+   (<code>-o addopts=</code>) and every <code>WALDUR_E2E_*_CONFIG</code> variable the files need</li>
 <li>Collect JUnit XML reports, stack logs, and markdown reports as artifacts</li>
 </ol>
-<p>The REST and STOMP tests run sequentially in the same job to reuse the
-~14min Docker stack boot + migration time.</p>
+<p>Steps 1-6 live in <code>before_script</code> and cost ~3 min per job; splitting the
+suites across jobs trades that for running them in parallel (~21 min serial
+→ ~10 min wall).</p>
 <h3 id="ci-files">CI files</h3>
 <table>
 <thead>
@@ -18440,7 +18455,7 @@ It triggers on pushes to <code>main</code> and release tags.</p>
 </table>
 <h3 id="artifacts">Artifacts</h3>
 <ul>
-<li><code>e2e-report-rest.xml</code> / <code>e2e-report-stomp.xml</code> — JUnit test results</li>
+<li><code>e2e-report-*.xml</code> — JUnit test results (one file per job)</li>
 <li><code>waldur-stack-logs.txt</code> — Docker stack logs for debugging failures</li>
 <li><code>plugins/slurm/tests/e2e/*-report.md</code> — Detailed markdown reports with API call tables</li>
 <li><code>plugins/slurm/tests/e2e/*-report.json</code> — Machine-readable API call counts</li>

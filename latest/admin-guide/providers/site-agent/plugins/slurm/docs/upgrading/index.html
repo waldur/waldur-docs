@@ -18231,11 +18231,46 @@ to <code>common</code>.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">qos_management</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="c1"># Opt-in; both default false so existing enabled-only configs are unchanged.</span>
+<span class="w">    </span><span class="c1"># skip_qos_swap: true         # pause/downscale/restore use GrpSubmitJobs, never set qos=</span>
+<span class="w">    </span><span class="c1"># apply_limits_to_qos: true   # GrpTRESMins on the QoS (requires enabled + skip_qos_swap)</span>
 <span class="w">    </span><span class="c1"># ...other QoS management keys</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p><code>skip_qos_swap</code> cannot be combined with <code>qos_default</code> / <code>qos_paused</code> /
+<code>qos_downscaled</code> — <code>SlurmBackend</code> construction raises <code>BackendError</code> (plugin
+schema validation alone is soft-fail and only logs a warning). Drop those keys
+on the offering that uses <code>skip_qos_swap</code>.</p>
+<p><strong>Trade-off:</strong> with <code>skip_qos_swap</code>, Waldur <code>paused</code> / <code>downscaled</code> no longer change
+the account QoS list. Instead the agent sets <code>GrpSubmitJobs=0</code> (block new
+submissions) and clears it with <code>GrpSubmitJobs=-1</code> on restore — the same
+orthogonal lever used by QoS enforcement. Budget exhaustion is still enforced by
+<code>DenyOnLimit</code> on the dedicated QoS when <code>apply_limits_to_qos</code> is also on. This is
+compatible with QoS enforcement: enabling both does not silently disable pause.</p>
+<p><strong><code>apply_limits_to_qos</code> prerequisites:</strong></p>
+<ul>
+<li>Requires <code>enabled</code> and <code>skip_qos_swap</code>. Misconfiguration
+  (<code>apply_limits_to_qos</code> without <code>enabled</code>) is rejected at backend construction —
+  otherwise the agent would write GrpTRESMins to a QoS that was never created
+  and SLURM would silently leave the allocation uncapped.</li>
+<li>The agent creates a QoS with the <strong>same name as the allocation account</strong> and
+  writes <code>GrpTRESMins</code> there. Do not enable this on an offering where a QoS with
+  that name already exists and is shared across accounts — creation is skipped when
+  the name exists; GrpTRESMins is still written, but <code>RawUsage</code> is <strong>not</strong> reset
+  on collision (only on a freshly created QoS).</li>
+<li>When <code>backend_components</code> use <code>target_components</code> (one Waldur component mapped to
+  several SLURM TRES, e.g. <code>node_hours</code> → <code>billing</code> + <code>gres/gpu</code>), pushing limits
+  <strong>from Waldur to SLURM</strong> works. Pulling limits <strong>from SLURM back into Waldur</strong>
+  during periodic sync does not yet reverse-map multi-target caps — the sync step
+  no-ops and Waldur keeps the limits from the order. <strong>Usage reporting (<code>sacct</code>) is
+  unaffected</strong>; only the limit echo is incomplete until a single reverse source is
+  configured (follow-up).</li>
+</ul>
 <h2 id="account-hierarchy-and-sync_resource_project">Account hierarchy and <code>sync_resource_project</code></h2>
 <p>When a project is moved to a different customer in Waldur, the SLURM account's parent
 must be updated to reflect the new customer account. The agent handles this via

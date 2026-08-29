@@ -18931,8 +18931,9 @@ helm<span class="w"> </span>repo<span class="w"> </span>update
 helm<span class="w"> </span>install<span class="w"> </span>waldur-site-agent<span class="w"> </span>waldur/waldur-site-agent
 </code></pre></div></td></tr></tbody></table></div>
 <p>The chart runs the same agent modes described below as separate deployments.
-See the chart README for available
-versions and configurable values.</p>
+See the
+<a href="https://github.com/waldur/waldur-site-agent/blob/main/helm/waldur-site-agent/README.md">chart README</a>
+for available versions and configurable values.</p>
 </blockquote>
 <h2 id="deployment-overview">Deployment Overview</h2>
 <p>The agent can run in 4 different modes, deployed as separate systemd services:</p>
@@ -19201,6 +19202,16 @@ sudo<span class="w"> </span>chown<span class="w"> </span>root:root<span class="w
 <li>Configure firewall rules appropriately</li>
 </ul>
 <h2 id="troubleshooting">Troubleshooting</h2>
+<p>Before digging into a specific symptom below, run:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur_site_diagnostics<span class="w"> </span>-c<span class="w"> </span>/etc/waldur/waldur-site-agent-config.yaml
+</code></pre></div></td></tr></tbody></table></div>
+<p>This checks the Waldur side of the setup — API reachability, token auth, offering state, loaded
+components — regardless of which backend you're running. It does <strong>not</strong> check backend
+connectivity (SLURM/MOAB/etc.). If you're on the SLURM backend, follow up with
+<code>waldur_site_diagnose_slurm_account -c /etc/waldur/waldur-site-agent-config.yaml</code> for a deeper
+check that compares actual SLURM account state against what Waldur expects. Other backends don't
+have an equivalent tool yet — for those, the sections below and the service logs are your best
+signal.</p>
 <h3 id="common-issues">Common Issues</h3>
 <h4 id="service-wont-start">Service Won't Start</h4>
 <ol>
