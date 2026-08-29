@@ -66,7 +66,7 @@ Before activating a call, the Call manager must configure all necessary settings
 
 Under **Configuration → General configuration**, set the basic call parameters:
 
-- **Fixed duration for granted projects (in days)**: a proposal duration applied uniformly across all proposals. When set, the duration field becomes read-only in the proposal submission form.
+- **Fixed duration for granted projects (in days)**: how long a granted project runs when the proposal requests no subscription. A requested subscription length takes precedence — the project cannot end before its longest subscription does. Applicants see the resulting length in the submission form; they are not asked for a duration.
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
@@ -90,11 +90,12 @@ step asks the applicant for. Each field is one of:
 | **Optional** | shown | may be left empty |
 | **Not asked** | not shown at all | — |
 
-**Name** and **Project duration in days** are always required and are not
-configurable. The name identifies the proposal and forms the last part of the
-awarded project's name — a granted project is named
-`<call reference or slug> - <round start date> - <proposal name>` — and the
-duration states the length of the award. The configurable fields are **Summary**,
+**Name** is always required and is not configurable: it identifies the
+proposal and forms the last part of the awarded project's name — a granted
+project is named `<call reference or slug> - <round start date> - <proposal name>`.
+The project duration is not a field the applicant fills in either; it is derived
+from the subscription lengths requested and the call's fixed duration, and shown
+read-only. The configurable fields are **Summary**,
 **Description**, **Science domain** and **Supporting documentation**.
 
 Each row lists what the field feeds, so the cost of switching one off is visible
@@ -193,7 +194,7 @@ Applicants follow these steps to request resources through an active call:
     ![Call detail with application button](../img/scenario_call_detail.png)
 
 3. Fill in the required fields.
-      -     When the call round has a fixed duration set by the Call manager, this duration (in days) is automatically applied to all proposals. The duration field becomes read-only for proposal creators in both creation and editing interfaces.
+      -     The project duration is not asked for. It follows from the subscription lengths chosen on the resource requests, or from the fixed duration the Call manager set when nothing sold by the month is requested, and is shown read-only.
 4. Select required **offerings and allocations**.
       -     When there is predefined resource templates, proposal creators now select resources based on predefined templates configured by the Call manager. These templates include specific offering and plan combinations, predefined attributes and resource limits.
 5. Add **team members** (optional).

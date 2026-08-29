@@ -61,7 +61,7 @@ Expand **Project details** and describe your project:
 | **Summary** | Required |
 | **Description** | Optional, longer free text |
 | **Science domain** | Optional; pick a domain, then a sub-domain from the taxonomy your deployment maintains |
-| **Project duration in days** | Required, unless the call fixes the duration |
+| **Project duration** | Read-only. The longest subscription you request under **Resource requests**, or the duration the call fixes; see below |
 | **Upload supporting documentation** | Optional attachments |
 
 Required fields are marked with a red asterisk, and the card header shows how
@@ -69,14 +69,22 @@ many fields are filled. **Project details** is expanded when the page opens, so
 this is the first section you see.
 
 Which of these fields you see, and which you must fill in, is set per call.
-**Name** and **Project duration in days** are always required; each of the
-others may be required, optional, or not asked for at all. A call that does not
+**Name** is always required; each of the others may be required, optional, or
+not asked for at all. A call that does not
 ask for a field simply does not show it, so your form may be shorter than the
 table above. See
 [Project details fields](call_management.md#1a-project-details-fields) for the
 call manager's side of it.
 
 ![Project details step](../img/applicant-project-details.png)
+
+!!! note "Project duration"
+    You are not asked how long the project should run. When a resource you
+    request is sold by the month, you choose the subscription length on that
+    request, and the project lasts as long as the longest subscription. When
+    nothing you request is sold by the month, the project lasts the fixed
+    duration the call sets, if any. The **Project details** card and the
+    **Summary** panel state the length this comes to.
 
 ### Resource requests
 
