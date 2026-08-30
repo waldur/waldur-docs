@@ -18284,8 +18284,17 @@ ALTER<span class="w"> </span>USER<span class="w"> </span>waldur<span class="w"> 
 ALTER<span class="w"> </span>DATABASE<span class="w"> </span>waldur<span class="w"> </span>OWNER<span class="w"> </span>TO<span class="w"> </span>waldur<span class="p">;</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h4 id="final-setup-steps">Final Setup Steps</h4>
-<p>Run migrations:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>waldur<span class="w"> </span>migrate<span class="w"> </span>--noinput
+<p>Create the database schema (<code>migrate_fresh</code> builds it from the models in seconds when
+the database is empty; use <code>migrate</code> for an existing database):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>waldur<span class="w"> </span>migrate_fresh
+</code></pre></div></td></tr></tbody></table></div>
+<p>Load the system roles, notifications and feature flags (migrations do not seed them;
+the Docker image's <code>initdb</code> runs the same commands):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>waldur<span class="w"> </span>import_roles<span class="w"> </span>docker/rootfs/etc/waldur/permissions.yaml
+uv<span class="w"> </span>run<span class="w"> </span>waldur<span class="w"> </span>load_notifications<span class="w"> </span>docker/rootfs/etc/waldur/notifications.json
+uv<span class="w"> </span>run<span class="w"> </span>waldur<span class="w"> </span>load_features<span class="w"> </span>docker/rootfs/etc/waldur/features.json
 </code></pre></div></td></tr></tbody></table></div>
 <p>Collect static files:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>waldur<span class="w"> </span>collectstatic<span class="w"> </span>--noinput
