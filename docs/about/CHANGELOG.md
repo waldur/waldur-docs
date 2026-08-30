@@ -1,5 +1,55 @@
 # Changelog
 
+## 8.1.3-rc.7 - 2026-08-30
+
+### Highlights
+
+This release introduces passkey (WebAuthn) authentication across the stack: users can register and sign in with passkeys, operators can require them for privileged accounts, and staff can revoke another user's passkeys with an audited reason. Call management gains configurable per-step notification rules, a panel chair role, and a cleaner proposal flow where project duration is derived from the call and prepaid subscription length is chosen where the resource is requested. Administrators also get new visibility into site-agent event queues and PubSub consumers, and the UI is now available in Croatian, Macedonian, and Albanian.
+
+### What's New
+
+- Passkey authentication: users can register, rename, and revoke passkeys from their profile and sign in with a passkey button on the login form. Operators can enable passkeys and passkey enforcement for privileged accounts via Helm chart values or Docker Compose configuration; when enforced, staff and support users are held at an enrollment page until they add a passkey, then resume the page they were on. The Django admin now prompts for a passkey step instead of denying access, and a rollout command reports and revokes privileged personal access tokens that were issued without passkey verification.
+- Staff can revoke another user's passkeys from the user management view, with a mandatory reason recorded in the event log.
+- Call managers can define per-call notification rules for workflow steps, see who evaluates each step, and flag a panel member as panel chair.
+- Applicants now choose the prepaid subscription length when requesting a resource, capped by the call's fixed duration; the project duration is derived from the call rather than entered separately.
+- New read-only API endpoint listing the service providers of an organisation, and service providers can be filtered by creation date.
+- OpenStack security groups now expose the instances attached to them.
+- Administration: the PubSub health page has an Event consumers card, the RabbitMQ page shows unified consumer queues, and each site agent shows its event queue and connection state. The legacy event subscriptions page is marked as deprecated.
+- Croatian, Macedonian, and Albanian added as UI languages, with role and category translation fields to match.
+- Reporting overview tiles show period-over-period growth.
+- Anonymous AI chat KPIs include a clarification-rate tile, severity is sortable by rank, and the assistant tools now see offering access-route metadata.
+
+### Improvements
+
+- Updating a call's fixed duration now propagates to all pending proposals, with a confirmation prompt in the UI.
+- Applicants no longer see call-management controls in their request view; the two profile request tabs are merged into one.
+- Offering extra fields are annotated when explicitly requested via the `field` parameter.
+- Proposal-scoped roles now report their organisation, and permission serialization returns the organisation directly when the scope is an organisation.
+- Internal plumbing terms and icons were removed from customer-facing copy; truncated breadcrumbs keep the full name for screen readers.
+- After login the app boots once and navigates directly to the target page.
+- Fresh database setup is faster thanks to regenerated migration squashes.
+- Demo preset now includes an offering with a mandatory purchase order.
+
+### Bug Fixes
+
+- File downloads work again with the new media permissions by sending authentication.
+- Offering managers can now use provider resource write-back actions.
+- Project cards show the real cost estimate.
+- Order form refreshes project options when the organisation changes.
+- Partially saving an issue template no longer creates duplicates.
+- Dark theme warning bar colours restored; an unmapped language code no longer crashes the app; a restored workspace scope that no longer resolves is dropped instead of breaking the sidebar.
+- Group invitation email patterns are anchored so partial matches no longer pass the uninvited-user gate.
+- Passkey RP name falls back to the site name when unset.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [33 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.6...8.1.3-rc.7) - passkey backend and enforcement, workflow-step notification rules, prepaid duration validation, new languages, migration squashes
+- **Waldur Homeport**: [32 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.6...8.1.3-rc.7) - passkey UI, proposal flow rework, panel chair, admin queue visibility, new locales, assorted fixes
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.6...8.1.3-rc.7) - passkey and passkey-enforcement chart values, updated chart icon
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.6...8.1.3-rc.7) - passkey and passkey-enforcement configuration options
+
+---
+
 ## 8.1.3-rc.6 - 2026-08-27
 
 ### Highlights
