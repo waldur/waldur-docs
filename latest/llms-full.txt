@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-08-31T02:04:26.807409Z
+Generated: 2026-08-31T09:08:15.044253Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -15998,6 +15998,85 @@ A notification to reviewers about a new call round opening.
 
 ```
 
+### proposal.workflow_step_event
+
+Sent when a call's workflow notification rule fires: a workflow step started, completed, was rejected, expired, or its deadline is approaching. Audience is configured per call and step.
+
+#### Templates
+
+=== "proposal/workflow_step_event_subject.txt"
+
+```txt
+
+    {% if trigger == "deadline_approaching" %}Reminder: {{ step_name }} for "{{ proposal_name }}" is due in {{ days_before }} day{{ days_before|pluralize }}{% elif trigger == "step_started" %}{{ step_name }} has started for "{{ proposal_name }}"{% elif trigger == "step_completed" %}{{ step_name }} completed for "{{ proposal_name }}"{% elif trigger == "step_rejected" %}"{{ proposal_name }}" was rejected at {{ step_name }}{% elif trigger == "step_expired" %}{{ step_name }} for "{{ proposal_name }}" has expired{% else %}Update on "{{ proposal_name }}"{% endif %}
+
+```
+
+=== "proposal/workflow_step_event_message.txt"
+
+```txt
+
+    Dear {% if is_applicant %}applicant{% else %}colleague{% endif %},
+
+    {% if trigger == "deadline_approaching" %}The "{{ step_name }}" step for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") is due on {{ deadline|date:"Y-m-d" }} — in {{ days_before }} day{{ days_before|pluralize }}.{% if is_applicant %} Please respond before the deadline.{% else %} Please complete the step or follow up before it expires.{% endif %}
+    {% elif trigger == "step_started" %}The "{{ step_name }}" step has started for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}").{% if deadline %} It is due on {{ deadline|date:"Y-m-d" }}.{% endif %}
+    {% elif trigger == "step_completed" %}The "{{ step_name }}" step has been completed for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}").{% if outcome %} Outcome: {{ outcome }}.{% endif %}{% if outcome_reason %}
+    Reason: {{ outcome_reason }}{% endif %}
+    {% elif trigger == "step_rejected" %}Proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") was rejected at the "{{ step_name }}" step.{% if outcome_reason %}
+    Reason: {{ outcome_reason }}{% endif %}
+    {% elif trigger == "step_expired" %}The "{{ step_name }}" step for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") has expired without being completed.{% if not is_applicant %} Please follow up so the workflow can continue.{% endif %}
+    {% endif %}
+    You can view the proposal here:
+    {{ proposal_url }}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/workflow_step_event_message.html"
+
+```txt
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <p>Dear {% if is_applicant %}applicant{% else %}colleague{% endif %},</p>
+
+        <p>
+        {% if trigger == "deadline_approaching" %}
+            The "{{ step_name }}" step for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") is due on {{ deadline|date:"Y-m-d" }} — in {{ days_before }} day{{ days_before|pluralize }}.
+            {% if is_applicant %}Please respond before the deadline.{% else %}Please complete the step or follow up before it expires.{% endif %}
+        {% elif trigger == "step_started" %}
+            The "{{ step_name }}" step has started for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}").
+            {% if deadline %}It is due on {{ deadline|date:"Y-m-d" }}.{% endif %}
+        {% elif trigger == "step_completed" %}
+            The "{{ step_name }}" step has been completed for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}").
+            {% if outcome %}Outcome: {{ outcome }}.{% endif %}
+            {% if outcome_reason %}<br>Reason: {{ outcome_reason }}{% endif %}
+        {% elif trigger == "step_rejected" %}
+            Proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") was rejected at the "{{ step_name }}" step.
+            {% if outcome_reason %}<br>Reason: {{ outcome_reason }}{% endif %}
+        {% elif trigger == "step_expired" %}
+            The "{{ step_name }}" step for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") has expired without being completed.
+            {% if not is_applicant %}Please follow up so the workflow can continue.{% endif %}
+        {% endif %}
+        </p>
+
+        <p>
+            You can view the proposal here:<br>
+            <a href="{{ proposal_url }}">{{ proposal_url }}</a>
+        </p>
+
+        <p>
+            This is an automated message from the {{ site_name }}. Please do not reply to this email.
+        </p>
+    </body>
+    </html>
+
+```
+
 ## WALDUR_CORE.ONBOARDING
 
 ### onboarding.justification_review_notification
@@ -16292,6 +16371,7 @@ td:nth-child(4) {
 | `send-project-digest-notifications` | `waldur_core.structure.send_project_digest_notifications` | Cron: `0 8 * * * (m/h/dM/MY/d)` | Daily task. For each org with an enabled digest config,<br>check if it's time to send based on frequency + last_sent_at,<br>then dispatch per-customer subtasks. |
 | `send-reminder-for-pending-invitations` | `waldur_core.users.send_reminder_for_pending_invitations` | 1 day | Send reminder emails for pending invitations that are about to expire. |
 | `send-scheduled-broadcast-notifications` | `waldur_mastermind.notifications.send_scheduled_broadcast_messages` | 12 hours | Send broadcast messages that have been scheduled for delivery. |
+| `send-workflow-step-deadline-reminders` | `waldur_mastermind.proposal.send_workflow_step_deadline_reminders` | 1 day | Fire ``deadline_approaching`` rules for active steps whose lead time is today.<br><br>A reminder is sent when ``(deadline - now).days == days_before`` and is<br>recorded in the instance ledger so the daily beat cannot repeat it. Steps<br>already past their deadline are left to ``mark_expired_workflow_steps``. |
 | `send_telemetry` | `waldur_mastermind.marketplace.send_metrics` | 1 day | Send anonymous usage metrics and telemetry data to the Waldur team. |
 | `structure-set-erred-stuck-resources` | `waldur_core.structure.SetErredStuckResources` | 1 hour | This task marks all resources which have been provisioning for more than 3 hours as erred. |
 | `sync-arrow-billing` | `waldur_mastermind.waldur_arrow.sync_arrow_billing_scheduled` | 6 hours | Scheduled task to sync Arrow billing for the current month.<br><br>Runs every ARROW_SYNC_INTERVAL_HOURS hours. |
@@ -20931,6 +21011,50 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 
 ```
 
+### workflow_step_event_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <p>Dear {% if is_applicant %}applicant{% else %}colleague{% endif %},</p>
+
+    <p>
+    {% if trigger == "deadline_approaching" %}
+        The "{{ step_name }}" step for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") is due on {{ deadline|date:"Y-m-d" }} — in {{ days_before }} day{{ days_before|pluralize }}.
+        {% if is_applicant %}Please respond before the deadline.{% else %}Please complete the step or follow up before it expires.{% endif %}
+    {% elif trigger == "step_started" %}
+        The "{{ step_name }}" step has started for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}").
+        {% if deadline %}It is due on {{ deadline|date:"Y-m-d" }}.{% endif %}
+    {% elif trigger == "step_completed" %}
+        The "{{ step_name }}" step has been completed for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}").
+        {% if outcome %}Outcome: {{ outcome }}.{% endif %}
+        {% if outcome_reason %}<br>Reason: {{ outcome_reason }}{% endif %}
+    {% elif trigger == "step_rejected" %}
+        Proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") was rejected at the "{{ step_name }}" step.
+        {% if outcome_reason %}<br>Reason: {{ outcome_reason }}{% endif %}
+    {% elif trigger == "step_expired" %}
+        The "{{ step_name }}" step for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") has expired without being completed.
+        {% if not is_applicant %}Please follow up so the workflow can continue.{% endif %}
+    {% endif %}
+    </p>
+
+    <p>
+        You can view the proposal here:<br>
+        <a href="{{ proposal_url }}">{{ proposal_url }}</a>
+    </p>
+
+    <p>
+        This is an automated message from the {{ site_name }}. Please do not reply to this email.
+    </p>
+</body>
+</html>
+
+```
+
 ### access_request_state_changed_message.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -21257,6 +21381,27 @@ Round closed: {{ round_name }} - {{ call_name }}
     </p>
   </body>
 </html>
+
+```
+
+### workflow_step_event_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Dear {% if is_applicant %}applicant{% else %}colleague{% endif %},
+
+{% if trigger == "deadline_approaching" %}The "{{ step_name }}" step for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") is due on {{ deadline|date:"Y-m-d" }} — in {{ days_before }} day{{ days_before|pluralize }}.{% if is_applicant %} Please respond before the deadline.{% else %} Please complete the step or follow up before it expires.{% endif %}
+{% elif trigger == "step_started" %}The "{{ step_name }}" step has started for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}").{% if deadline %} It is due on {{ deadline|date:"Y-m-d" }}.{% endif %}
+{% elif trigger == "step_completed" %}The "{{ step_name }}" step has been completed for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}").{% if outcome %} Outcome: {{ outcome }}.{% endif %}{% if outcome_reason %}
+Reason: {{ outcome_reason }}{% endif %}
+{% elif trigger == "step_rejected" %}Proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") was rejected at the "{{ step_name }}" step.{% if outcome_reason %}
+Reason: {{ outcome_reason }}{% endif %}
+{% elif trigger == "step_expired" %}The "{{ step_name }}" step for proposal "{{ proposal_name }}" (call "{{ call_name }}", round "{{ round_name }}") has expired without being completed.{% if not is_applicant %} Please follow up so the workflow can continue.{% endif %}
+{% endif %}
+You can view the proposal here:
+{{ proposal_url }}
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
 
 ```
 
@@ -21614,6 +21759,14 @@ You can view the full review details at:
 {{ review_url }}
 
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+### workflow_step_event_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+{% if trigger == "deadline_approaching" %}Reminder: {{ step_name }} for "{{ proposal_name }}" is due in {{ days_before }} day{{ days_before|pluralize }}{% elif trigger == "step_started" %}{{ step_name }} has started for "{{ proposal_name }}"{% elif trigger == "step_completed" %}{{ step_name }} completed for "{{ proposal_name }}"{% elif trigger == "step_rejected" %}"{{ proposal_name }}" was rejected at {{ step_name }}{% elif trigger == "step_expired" %}{{ step_name }} for "{{ proposal_name }}" has expired{% else %}Update on "{{ proposal_name }}"{% endif %}
 
 ```
 
@@ -91090,6 +91243,7 @@ td:nth-child(4) {
 | `change_order_state` | `Django Signal (post_save)` | `waldur_vmware.VirtualMachine` | Change the state of an order based on resource state changes. |
 | `cleanup_admin_announcement_on_maintenance_deletion` | `Django Signal (pre_delete)` | `marketplace.MaintenanceAnnouncement` | Ensure AdminAnnouncement is cleaned up when MaintenanceAnnouncement is deleted. |
 | `cleanup_agent_identity_queue` | `Django Signal (pre_delete)` | `marketplace_site_agent.AgentIdentity` | Delete the linked EventConsumer when an AgentIdentity is deleted. |
+| `clear_panel_chair_on_role_revoked` | `Custom Signal (role_revoked)` | `—` | Drop ``Call.panel_chair`` when the chair loses the panel member role. |
 | `close_course_accounts_after_project_removal` | `Django Signal (pre_delete)` | `structure.Project` | No description |
 | `close_customer_service_accounts_on_customer_deletion` | `Django Signal (pre_delete)` | `structure.Customer` | Close service accounts associated with a customer when the customer is deleted. |
 | `close_resource_plan_period_when_resource_is_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Handle case when resource has been terminated by service provider. |
@@ -91417,14 +91571,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 808
+Total unique handlers found: 809
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 417 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 338 handlers
+- **waldur_mastermind**: 339 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
