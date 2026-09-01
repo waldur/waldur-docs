@@ -1,6 +1,6 @@
 # Service desk configuration
 
-Waldur offers a convenient way to integrate with popular service desk solutions like Atlassian, Zammad, and Smax. With this integration, you can manage service desk tickets directly within Waldur.
+Waldur can either run its own built-in service desk, or integrate with an external one like Atlassian, Zammad, or Smax. Either way you manage tickets directly within Waldur.
 
 To set up the configuration, navigate to the Service Desk configuration page by going to **Administration** -> **Service Desk**.
 
@@ -9,6 +9,99 @@ To set up the configuration, navigate to the Service Desk configuration page by 
 * **Waldur support display request type** - Toggle to show the request type.
 
 ![Service desk configuration](../../img/Service_desk_config.png)
+
+## Choosing a backend
+
+| Backend | Where tickets live | When to use it |
+|---------|--------------------|----------------|
+| **Basic** | In Waldur | You have no external service desk, or you want to keep support inside the portal. |
+| **Atlassian**, **Zammad**, **Smax** | In that system | Your team already works in an external service desk and Waldur should mirror it. |
+
+The difference matters for who owns a ticket's status. With **Basic**, Waldur owns the whole lifecycle and your agents change the status in Waldur. With the external backends the remote system is the source of truth: status flows *into* Waldur through synchronisation and webhooks, so it cannot be edited in the portal.
+
+## Built-in service desk (Basic)
+
+Select **Basic** as the active backend type to run the service desk inside Waldur. No credentials or external system are needed.
+
+![Built-in service desk configuration](../../img/built-in-service-desk-config.png)
+
+Two further settings on this page apply to the built-in desk:
+
+* **Waldur support auto assign** - hand each new ticket to a support user automatically, using either the `least_loaded` or `round_robin` strategy.
+* **Waldur support SLA enabled** - track response and resolution deadlines, shown as an SLA badge on every ticket.
+
+### Request types
+
+Users pick a request type when they open a ticket. Add the types you want to offer under **Administration** -> **Service Desk** -> **Request types**. Until at least one is active, the create-request form tells users the service desk configuration is incomplete.
+
+### Which statuses close a ticket
+
+Waldur needs to know which of your status names mean "finished". Map them on the **Issue status mapping** tab, giving each a **Resolved** or **Canceled** outcome.
+
+![Issue status mapping](../../img/built-in-service-desk-status-mapping.png)
+
+!!! warning
+    Configure this before going live. A status that is not mapped is treated as still open, so those tickets keep counting towards **Open issues** and never report their SLA as met.
+
+Only closing statuses belong here. The status a ticket *opens* in is not one of them — the built-in desk opens every ticket as **Open**.
+
+### Restricting how tickets move (optional)
+
+By default an agent may move a ticket from any status to any other. To enforce a workflow, define the permitted transitions in the Django admin under **Support** -> **Issue status transitions**, as `from` / `to` pairs.
+
+!!! note
+    The table is all-or-nothing. While it is empty every transition is allowed; as soon as it holds a single row, only the listed transitions are permitted. Remember to include the ones that reopen a ticket, such as `Resolved` -> `Open`, or agents will not be able to undo a mistaken closure.
+
+### A worked example
+
+A desk that triages, resolves and can reopen needs four statuses. Two of them are closing ones, so only those two go in the status mapping:
+
+| Status | Outcome type | Meaning |
+|--------|--------------|---------|
+| `Open` | *not mapped* | Waiting for an agent. Every new ticket starts here. |
+| `In progress` | *not mapped* | An agent is working on it. |
+| `Resolved` | Resolved | Done. |
+| `Canceled` | Canceled | Closed without a fix — duplicate, withdrawn, out of scope. |
+
+If you also want to constrain the workflow, these transitions give the flow above, including the two that reopen a closed ticket:
+
+| From | To |
+|------|-----|
+| `Open` | `In progress`, `Canceled` |
+| `In progress` | `Resolved`, `Canceled`, `Open` |
+| `Resolved` | `Open` |
+| `Canceled` | `Open` |
+
+An agent then works a ticket like this: open it from **Support → Communication → Support requests**, reply with a comment, and select **Change status** → `In progress`. Once the problem is fixed, **Change status** → `Resolved`. The ticket leaves the **Open issues** count, its SLA badge settles to **SLA met**, and — if issue feedback is enabled — the person who reported it is emailed a request to rate the support they received.
+
+Leave the transition table empty if you would rather not constrain anything; agents can then move a ticket to any configured status, and the reopen path works without further setup.
+
+### Notifications
+
+The service desk can email **the person who reported the ticket** when it is updated, when a comment is added, and — on resolution — a request to rate the support they received. It can also tell **your staff and support users** that a new request has arrived, which is the built-in desk's equivalent of the alert an external service desk sends its own agents.
+
+| Notification | Goes to |
+|--------------|---------|
+| `support.notification_issue_created` | staff and support users — built-in desk only |
+| `support.notification_issue_updated` | the reporter |
+| `support.notification_comment_added` | the reporter |
+| `support.notification_comment_updated` | the reporter |
+| `support.notification_issue_feedback` | the reporter, after resolution |
+
+!!! warning
+    **Every notification is disabled by default.** The records themselves are created at deployment, so they appear under **Administration** -> **Notifications** ready to switch on, but nothing is emailed until you enable them. You can also enable them up front by listing the keys in `notifications.json`, or in the `waldur.notifications` map in the Helm chart's values:
+
+    ```yaml
+    waldur:
+      notifications:
+        support.notification_issue_created: true
+        support.notification_comment_added: true
+    ```
+
+The new-request notification reaches every active staff and support user who has an email address and has not turned notifications off in their own profile. It is not sent for a ticket routed to a provider helpdesk — that provider is notified separately — and not by the Atlassian, Zammad or Smax backends, which alert their agents themselves.
+
+!!! tip
+    Turning on **Waldur support auto assign** in addition gives every incoming ticket an owner, so it is clear who picked it up.
 
 ## Atlassian configuration
 
