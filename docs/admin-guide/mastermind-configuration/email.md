@@ -227,7 +227,23 @@ Add `--clean` to remove any stored template not named in the file. See
 
 Work outwards from the transport.
 
-**1. Send a test message.** This bypasses the notification system entirely, so it isolates the SMTP
+**1. Read the sanity check in the UI.** Staff users find it under
+**Administration → System management → Email configuration**. It reports the effective mail
+settings — the password only as present or absent — and flags the misconfigurations that break
+delivery silently: no relay, the `waldur-smtp` placeholder, `EMAIL_USE_TLS` and `EMAIL_USE_SSL`
+together, an encryption flag that does not match the port, a username without a password, no
+`EMAIL_TIMEOUT`, a non-delivering `EMAIL_BACKEND`, and every notification type still disabled.
+The page reads settings only; two buttons act:
+
+- **Test connection** opens and closes a session with the relay without sending anything. It runs
+  from the API process, so it proves the API's route to the relay, not the workers'.
+- **Send test email** delivers a real message through the same code path as a notification,
+  defaulting to your own address. Unlike `sendtestemail` below, a message sent this way *is*
+  recorded in the email log.
+
+Everything below is the command-line equivalent, for when the UI is not reachable.
+
+**2. Send a test message.** This bypasses the notification system entirely, so it isolates the SMTP
 half:
 
 ```bash
@@ -243,7 +259,7 @@ A connection error here means the transport settings are wrong. Success with no 
 inbox means the relay accepted it and something downstream — SPF, DKIM, a spam filter — discarded
 it.
 
-**2. Check the email log.** A message is recorded once the relay has *accepted* it: Waldur writes
+**3. Check the email log.** A message is recorded once the relay has *accepted* it: Waldur writes
 the log row after the send returns, so a message the relay refuses raises first and is never
 logged. `sendtestemail` uses Django's own send path and never appears here either. Browse the log
 under **Support → Email logs** in the UI, or query `/api/email-logs/` directly. Each entry carries
@@ -253,7 +269,7 @@ An empty log therefore has two readings, and the worker logs distinguish them: S
 mean the transport is at fault; silence means no message was ever generated — go back to
 [Enabling notifications](#3-enabling-notifications).
 
-**3. Check the worker logs.** Notifications are sent from Celery workers, not from the API process.
+**4. Check the worker logs.** Notifications are sent from Celery workers, not from the API process.
 Each dispatch logs an `about to send` line:
 
 ```bash
@@ -268,6 +284,7 @@ See [Debugging](../debugging.md) for the Docker Compose equivalent and broader l
 | Symptom | Likely cause |
 |---|---|
 | Email log empty, worker logs silent | Notifications are disabled — see [step 3](#3-enabling-notifications) |
+| Not sure which half is broken | Start from the sanity check under **Administration → System management → Email configuration** |
 | Email log empty, worker logs show SMTP errors | Transport is failing — the log row is only written after the relay accepts |
 | `sendtestemail` fails with "connection refused" | `EMAIL_HOST` unset, still the `waldur-smtp` placeholder, or unreachable from the pod/container |
 | Relay rejects the session as unauthenticated | `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` did not reach the process |
