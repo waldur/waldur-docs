@@ -18341,6 +18341,30 @@ separate priority tier above all layered rules regardless of layer order.
 instead of the identically-named Tailwind utilities for exactly this
 reason — those two collide with Bootstrap's <code>!important</code> classes; nothing
 else needed the workaround once layering was in place.</p>
+<p><strong>The <code>@layer bootstrap</code> wrapper is not Storybook-only.</strong> <code>src/tailwind.css</code>
+is, but the wrapper lives in <code>style.scss</code>/<code>style.dark.scss</code>, so it ships in
+the real app — and unlayered CSS beats layered CSS <em>regardless of
+specificity</em>. That silently promoted every one of the ~99 component
+stylesheets imported from a <code>.tsx</code> (<code>import './Foo.scss'</code>, which Vite injects
+unlayered) above all of Metronic, including where Metronic previously won on
+specificity.</p>
+<p>Only one file was actually affected, and it shows the shape to avoid.
+<code>MarketplaceTrigger.scss</code> scoped itself under a Metronic layout root:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="cm">/* specificity 0,4,0 — used to lose, now wins unconditionally */</span>
+<span class="nc">.aside</span><span class="w"> </span><span class="nc">.menu-item.add-resource-toggle</span><span class="w"> </span><span class="nc">.menu-link</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">justify-content</span><span class="nd">:</span><span class="w"> </span><span class="nt">center</span><span class="o">;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>against <code>custom/_aside.scss</code>'s collapsed-sidebar rule (0,5,0), which needs
+<code>justify-content: start</code> inside a 43px box. The result was the Add resource
+plus icon pushed out of view whenever the sidebar was minimized. The fix was
+to move the block into <code>custom/_aside.scss</code> so it shares the layer.</p>
+<p>So: <strong>component SCSS must be scoped under its own class, never under a
+Metronic layout root</strong> (<code>.aside</code>, <code>.header</code>, <code>.toolbar</code>, …). Anything that
+genuinely needs to override Metronic layout belongs in
+<code>src/metronic/sass/custom/</code>, inside the layer. Nesting a Metronic class
+<em>inside</em> your own class is fine — that is what every other component
+stylesheet does, and it already outranks Metronic on specificity, so the
+layer change is a no-op for them.</p>
 <h3 id="root-font-size-override">Root font-size override</h3>
 <p>Metronic forces <code>html, body { font-size: 13px !important }</code> (12px below
 the <code>lg</code> breakpoint). Tailwind's default scale is rem-based, so any

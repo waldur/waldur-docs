@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-01T02:04:30.700468Z
+Generated: 2026-09-01T16:27:08.777496Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6741,7 +6741,7 @@ positional arguments:
 
 ## override_templates
 
-Override dbtemplates content from a YAML file. Use --clean to remove DB templates not present in the file.
+Override notification template content from a YAML file. Use --clean to reset templates not present in the file to their filesystem default.
 
 ```bash
 
@@ -6751,8 +6751,8 @@ positional arguments:
   templates_file  Path to a YAML file mapping template names to their content.
 
 options:
-  -c, --clean     Remove DB templates whose names are not present in the file
-                  (full sync mode).
+  -c, --clean     Reset templates not present in the file to their filesystem
+                  default (full sync mode).
 
 ```
 
@@ -29229,8 +29229,31 @@ Budget about 15-20 minutes if the offering side is already set up in Waldur.
 
   [Image: offering-uuid]
 
-- Create an API token for a user with the **OFFERING.MANAGER** role on this offering. You'll need
-  it below too.
+- Create a dedicated **agent account** — a Waldur login that exists only for the agent to
+  authenticate with, not a real person's. As a staff user, go to the `Support` workspace →
+  `User management` → `Users` → `Create user`, and work through the wizard: set a `username` and
+  `email`, and set (or generate) a `Password` on the Account step — leave it blank and the account
+  ends up passwordless. Leave `Staff` and `Support` unchecked; offering-level access, granted next,
+  is all this account needs.
+
+- Grant that account the **OFFERING.MANAGER** role on this specific offering — not a customer-wide
+  role. On the offering's `Team` tab, use `Add` to invite the account with the `OFFERING.MANAGER`
+  role. This is the minimum the agent needs and nothing more: it covers order approval, usage
+  reporting, and resource state/backend-metadata updates. It's unrelated to the
+  `GET_SERVICE_PROVIDER_API_SECRET_CODE` permission mentioned in step 3 below — that one's only
+  needed by a *human* using the UI config generator, not by the agent's own token.
+
+- Create an API token for the agent account. You'll need it below too. Log in as that account,
+  open the avatar menu in the top-right corner → **Profile** → **API token** tab, then click the
+  eye icon to reveal and copy the token.
+
+  That page also has a **Token lifetime** setting (10/30 min, 1/2/12 hours, or indefinite) — it's
+  extended automatically on each successful API call, but the agent runs unattended and can go
+  quiet for stretches (initial setup, a paused service, sparse polling intervals) that outlast any
+  timed option. **Set it to indefinite** — anything shorter will eventually expire and break the
+  agent's auth. The UI warns that an indefinite token can be used by anyone who has it until it's
+  changed, so treat it like any other long-lived service credential: keep it out of version
+  control and out of shell history.
 
 ## 2. Install the agent
 
@@ -69866,6 +69889,35 @@ instead of the identically-named Tailwind utilities for exactly this
 reason — those two collide with Bootstrap's `!important` classes; nothing
 else needed the workaround once layering was in place.
 
+**The `@layer bootstrap` wrapper is not Storybook-only.** `src/tailwind.css`
+is, but the wrapper lives in `style.scss`/`style.dark.scss`, so it ships in
+the real app — and unlayered CSS beats layered CSS *regardless of
+specificity*. That silently promoted every one of the ~99 component
+stylesheets imported from a `.tsx` (`import './Foo.scss'`, which Vite injects
+unlayered) above all of Metronic, including where Metronic previously won on
+specificity.
+
+Only one file was actually affected, and it shows the shape to avoid.
+`MarketplaceTrigger.scss` scoped itself under a Metronic layout root:
+
+```scss
+/* specificity 0,4,0 — used to lose, now wins unconditionally */
+.aside .menu-item.add-resource-toggle .menu-link { justify-content: center; }
+```
+
+against `custom/_aside.scss`'s collapsed-sidebar rule (0,5,0), which needs
+`justify-content: start` inside a 43px box. The result was the Add resource
+plus icon pushed out of view whenever the sidebar was minimized. The fix was
+to move the block into `custom/_aside.scss` so it shares the layer.
+
+So: **component SCSS must be scoped under its own class, never under a
+Metronic layout root** (`.aside`, `.header`, `.toolbar`, …). Anything that
+genuinely needs to override Metronic layout belongs in
+`src/metronic/sass/custom/`, inside the layer. Nesting a Metronic class
+*inside* your own class is fine — that is what every other component
+stylesheet does, and it already outranks Metronic on specificity, so the
+layer change is a no-op for them.
+
 ### Root font-size override
 
 Metronic forces `html, body { font-size: 13px !important }` (12px below
@@ -79781,7 +79833,7 @@ attempt).
 
 # Service desk configuration
 
-Waldur offers a convenient way to integrate with popular service desk solutions like Atlassian, Zammad, and Smax. With this integration, you can manage service desk tickets directly within Waldur.
+Waldur can either run its own built-in service desk, or integrate with an external one like Atlassian, Zammad, or Smax. Either way you manage tickets directly within Waldur.
 
 To set up the configuration, navigate to the Service Desk configuration page by going to **Administration** -> **Service Desk**.
 
@@ -79790,6 +79842,99 @@ To set up the configuration, navigate to the Service Desk configuration page by 
 * **Waldur support display request type** - Toggle to show the request type.
 
 [Image: Service desk configuration]
+
+## Choosing a backend
+
+| Backend | Where tickets live | When to use it |
+|---------|--------------------|----------------|
+| **Basic** | In Waldur | You have no external service desk, or you want to keep support inside the portal. |
+| **Atlassian**, **Zammad**, **Smax** | In that system | Your team already works in an external service desk and Waldur should mirror it. |
+
+The difference matters for who owns a ticket's status. With **Basic**, Waldur owns the whole lifecycle and your agents change the status in Waldur. With the external backends the remote system is the source of truth: status flows *into* Waldur through synchronisation and webhooks, so it cannot be edited in the portal.
+
+## Built-in service desk (Basic)
+
+Select **Basic** as the active backend type to run the service desk inside Waldur. No credentials or external system are needed.
+
+[Image: Built-in service desk configuration]
+
+Two further settings on this page apply to the built-in desk:
+
+* **Waldur support auto assign** - hand each new ticket to a support user automatically, using either the `least_loaded` or `round_robin` strategy.
+* **Waldur support SLA enabled** - track response and resolution deadlines, shown as an SLA badge on every ticket.
+
+### Request types
+
+Users pick a request type when they open a ticket. Add the types you want to offer under **Administration** -> **Service Desk** -> **Request types**. Until at least one is active, the create-request form tells users the service desk configuration is incomplete.
+
+### Which statuses close a ticket
+
+Waldur needs to know which of your status names mean "finished". Map them on the **Issue status mapping** tab, giving each a **Resolved** or **Canceled** outcome.
+
+[Image: Issue status mapping]
+
+!!! warning
+    Configure this before going live. A status that is not mapped is treated as still open, so those tickets keep counting towards **Open issues** and never report their SLA as met.
+
+Only closing statuses belong here. The status a ticket *opens* in is not one of them — the built-in desk opens every ticket as **Open**.
+
+### Restricting how tickets move (optional)
+
+By default an agent may move a ticket from any status to any other. To enforce a workflow, define the permitted transitions in the Django admin under **Support** -> **Issue status transitions**, as `from` / `to` pairs.
+
+!!! note
+    The table is all-or-nothing. While it is empty every transition is allowed; as soon as it holds a single row, only the listed transitions are permitted. Remember to include the ones that reopen a ticket, such as `Resolved` -> `Open`, or agents will not be able to undo a mistaken closure.
+
+### A worked example
+
+A desk that triages, resolves and can reopen needs four statuses. Two of them are closing ones, so only those two go in the status mapping:
+
+| Status | Outcome type | Meaning |
+|--------|--------------|---------|
+| `Open` | *not mapped* | Waiting for an agent. Every new ticket starts here. |
+| `In progress` | *not mapped* | An agent is working on it. |
+| `Resolved` | Resolved | Done. |
+| `Canceled` | Canceled | Closed without a fix — duplicate, withdrawn, out of scope. |
+
+If you also want to constrain the workflow, these transitions give the flow above, including the two that reopen a closed ticket:
+
+| From | To |
+|------|-----|
+| `Open` | `In progress`, `Canceled` |
+| `In progress` | `Resolved`, `Canceled`, `Open` |
+| `Resolved` | `Open` |
+| `Canceled` | `Open` |
+
+An agent then works a ticket like this: open it from **Support → Communication → Support requests**, reply with a comment, and select **Change status** → `In progress`. Once the problem is fixed, **Change status** → `Resolved`. The ticket leaves the **Open issues** count, its SLA badge settles to **SLA met**, and — if issue feedback is enabled — the person who reported it is emailed a request to rate the support they received.
+
+Leave the transition table empty if you would rather not constrain anything; agents can then move a ticket to any configured status, and the reopen path works without further setup.
+
+### Notifications
+
+The service desk can email **the person who reported the ticket** when it is updated, when a comment is added, and — on resolution — a request to rate the support they received. It can also tell **your staff and support users** that a new request has arrived, which is the built-in desk's equivalent of the alert an external service desk sends its own agents.
+
+| Notification | Goes to |
+|--------------|---------|
+| `support.notification_issue_created` | staff and support users — built-in desk only |
+| `support.notification_issue_updated` | the reporter |
+| `support.notification_comment_added` | the reporter |
+| `support.notification_comment_updated` | the reporter |
+| `support.notification_issue_feedback` | the reporter, after resolution |
+
+!!! warning
+    **Every notification is disabled by default.** The records themselves are created at deployment, so they appear under **Administration** -> **Notifications** ready to switch on, but nothing is emailed until you enable them. You can also enable them up front by listing the keys in `notifications.json`, or in the `waldur.notifications` map in the Helm chart's values:
+
+    ```yaml
+    waldur:
+      notifications:
+        support.notification_issue_created: true
+        support.notification_comment_added: true
+    ```
+
+The new-request notification reaches every active staff and support user who has an email address and has not turned notifications off in their own profile. It is not sent for a ticket routed to a provider helpdesk — that provider is notified separately — and not by the Atlassian, Zammad or Smax backends, which alert their agents themselves.
+
+!!! tip
+    Turning on **Waldur support auto assign** in addition gives every incoming ticket an owner, so it is clear who picked it up.
 
 ## Atlassian configuration
 
@@ -79941,6 +80086,14 @@ Zammad sends webhooks via a **webhook** definition that is invoked by a **trigge
 
 This guide will help you navigate and effectively use the support system to manage service requests, track tickets, and communicate with users.
 
+## Support dashboard
+
+Open **Support → Dashboard** for an overview of the workload: how many tickets are still open, how many were closed this month, and the open ones listed below. Each counter links to the matching list.
+
+[Image: Support dashboard]
+
+A ticket counts as open until it reaches a status mapped to an outcome — see [which statuses close a ticket](service-desk-config.md#which-statuses-close-a-ticket).
+
 ## Accessing the service desk support tickets
 
 Open **Support → Communication → Support requests**.
@@ -79961,6 +80114,24 @@ On this page, you can:
 * Read the content of the ticket.
 * Check attachments.
 * Add comments/replies to communicate with users.
+* Change the ticket's status, when Waldur runs the service desk itself.
+
+## Changing the status of a ticket
+
+Select **Change status** and pick the new status.
+
+[Image: Change the status of a ticket]
+
+The list offers only the statuses this ticket may move to. If your deployment defines a workflow, that is what constrains the list; otherwise every configured status is available.
+
+Once the ticket reaches a closing status it stops counting as open, and its SLA badge settles to **SLA met**.
+
+[Image: A resolved ticket]
+
+Reopening works the same way — pick **Open** from the same menu, and the ticket returns to the open list with its SLA tracking again.
+
+!!! note
+    **Change status** appears only where Waldur owns the ticket's lifecycle. With the Atlassian, Zammad or Smax backends the external service desk is the source of truth, so change the status there and Waldur will pick it up. The same applies to a ticket routed to a provider helpdesk: its status belongs to that provider.
 
 ---
 
@@ -90724,6 +90895,7 @@ td:nth-child(4) {
 | `_bind_user_uuid` | `Custom Signal (bind_extra_request_metadata)` | `—` | Bind user_uuid and override user_id for consistency with request_id, task_id (UUIDs). |
 | `_bind_user_uuid` | `Custom Signal (bind_extra_request_finished_metadata)` | `—` | Bind user_uuid and override user_id for consistency with request_id, task_id (UUIDs). |
 | `_bind_user_uuid` | `Custom Signal (bind_extra_request_failed_metadata)` | `—` | Bind user_uuid and override user_id for consistency with request_id, task_id (UUIDs). |
+| `add_template_to_cache` | `Django Signal (post_save)` | `core.NotificationTemplate` | Refresh the cache entry for *instance* after its content was created or changed. |
 | `cancel_invitations_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | Cancel open invitations scoped to a project when it is deleted (incl. soft delete). |
 | `change_email_has_been_requested` | `Django Signal (post_save)` | `core.ChangeEmailRequest` | Send a notification when a user requests to change their email. |
 | `change_users_quota` | `Custom Signal (role_granted)` | `—` | Update the user count quota for a customer when a user's role is changed. |
@@ -90735,6 +90907,7 @@ td:nth-child(4) {
 | `create_existing_projects_completions` | `Django Signal (post_save)` | `structure.Customer` | Create ChecklistCompletion for existing projects when customer checklist is updated. |
 | `create_initial_revision` | `Django Signal (post_save)` | `core.User` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `core.SshPublicKey` | Create an initial reversion snapshot when an object is first created. |
+| `create_initial_revision` | `Django Signal (post_save)` | `core.NotificationTemplate` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `structure.Customer` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `invoices.Invoice` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `marketplace.Resource` | Create an initial reversion snapshot when an object is first created. |
@@ -91121,6 +91294,7 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_vmware.Disk` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_firecrest.Job` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `marketplace.Order` | Recalculate count quota when an instance is created or deleted. |
+| `remove_cached_template` | `Django Signal (pre_delete)` | `core.NotificationTemplate` | Also wired as a pre_delete receiver on NotificationTemplate (see core/apps.py). |
 | `rename_clones_on_customer_slug_change` | `Django Signal (post_save)` | `structure.Customer` | Keep an organization's cloned role names in sync with its slug. |
 | `revoke_roles_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | When project is deleted, capture user role snapshots before revoking them. |
 | `revoke_user_pats_on_deactivation` | `Django Signal (pre_save)` | `core.User` | Revoke all active PATs when a user is deactivated. |
@@ -91571,11 +91745,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 809
+Total unique handlers found: 812
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 417 handlers
+- **waldur_core**: 420 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 339 handlers

@@ -18163,9 +18163,35 @@ with a different <code>backend_type</code> and <code>backend_settings</code> blo
 </ul>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/offering-uuid.png" data-desc-position="bottom"><img alt="offering-uuid" src="../img/offering-uuid.png"></a></p>
 <ul>
-<li>Create an API token for a user with the <strong>OFFERING.MANAGER</strong> role on this offering. You'll need
-  it below too.</li>
+<li>
+<p>Create a dedicated <strong>agent account</strong> — a Waldur login that exists only for the agent to
+  authenticate with, not a real person's. As a staff user, go to the <code>Support</code> workspace →
+  <code>User management</code> → <code>Users</code> → <code>Create user</code>, and work through the wizard: set a <code>username</code> and
+  <code>email</code>, and set (or generate) a <code>Password</code> on the Account step — leave it blank and the account
+  ends up passwordless. Leave <code>Staff</code> and <code>Support</code> unchecked; offering-level access, granted next,
+  is all this account needs.</p>
+</li>
+<li>
+<p>Grant that account the <strong>OFFERING.MANAGER</strong> role on this specific offering — not a customer-wide
+  role. On the offering's <code>Team</code> tab, use <code>Add</code> to invite the account with the <code>OFFERING.MANAGER</code>
+  role. This is the minimum the agent needs and nothing more: it covers order approval, usage
+  reporting, and resource state/backend-metadata updates. It's unrelated to the
+  <code>GET_SERVICE_PROVIDER_API_SECRET_CODE</code> permission mentioned in step 3 below — that one's only
+  needed by a <em>human</em> using the UI config generator, not by the agent's own token.</p>
+</li>
+<li>
+<p>Create an API token for the agent account. You'll need it below too. Log in as that account,
+  open the avatar menu in the top-right corner → <strong>Profile</strong> → <strong>API token</strong> tab, then click the
+  eye icon to reveal and copy the token.</p>
+</li>
 </ul>
+<p>That page also has a <strong>Token lifetime</strong> setting (10/30 min, 1/2/12 hours, or indefinite) — it's
+  extended automatically on each successful API call, but the agent runs unattended and can go
+  quiet for stretches (initial setup, a paused service, sparse polling intervals) that outlast any
+  timed option. <strong>Set it to indefinite</strong> — anything shorter will eventually expire and break the
+  agent's auth. The UI warns that an indefinite token can be used by anyone who has it until it's
+  changed, so treat it like any other long-lived service credential: keep it out of version
+  control and out of shell history.</p>
 <h2 id="2-install-the-agent">2. Install the agent</h2>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>waldur-site-agent
 </code></pre></div></td></tr></tbody></table></div>
