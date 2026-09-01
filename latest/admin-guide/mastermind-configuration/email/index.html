@@ -18529,7 +18529,22 @@ template editor in <strong>Administration → Notifications</strong>, or in bulk
 <a href="../templates/">Templates</a> for the full catalogue of overridable templates.</p>
 <h2 id="verifying-delivery">Verifying delivery</h2>
 <p>Work outwards from the transport.</p>
-<p><strong>1. Send a test message.</strong> This bypasses the notification system entirely, so it isolates the SMTP
+<p><strong>1. Read the sanity check in the UI.</strong> Staff users find it under
+<strong>Administration → System management → Email configuration</strong>. It reports the effective mail
+settings — the password only as present or absent — and flags the misconfigurations that break
+delivery silently: no relay, the <code>waldur-smtp</code> placeholder, <code>EMAIL_USE_TLS</code> and <code>EMAIL_USE_SSL</code>
+together, an encryption flag that does not match the port, a username without a password, no
+<code>EMAIL_TIMEOUT</code>, a non-delivering <code>EMAIL_BACKEND</code>, and every notification type still disabled.
+The page reads settings only; two buttons act:</p>
+<ul>
+<li><strong>Test connection</strong> opens and closes a session with the relay without sending anything. It runs
+  from the API process, so it proves the API's route to the relay, not the workers'.</li>
+<li><strong>Send test email</strong> delivers a real message through the same code path as a notification,
+  defaulting to your own address. Unlike <code>sendtestemail</code> below, a message sent this way <em>is</em>
+  recorded in the email log.</li>
+</ul>
+<p>Everything below is the command-line equivalent, for when the UI is not reachable.</p>
+<p><strong>2. Send a test message.</strong> This bypasses the notification system entirely, so it isolates the SMTP
 half:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -18546,7 +18561,7 @@ kubectl<span class="w"> </span>-n<span class="w"> </span>waldur<span class="w"> 
 <p>A connection error here means the transport settings are wrong. Success with no message in your
 inbox means the relay accepted it and something downstream — SPF, DKIM, a spam filter — discarded
 it.</p>
-<p><strong>2. Check the email log.</strong> A message is recorded once the relay has <em>accepted</em> it: Waldur writes
+<p><strong>3. Check the email log.</strong> A message is recorded once the relay has <em>accepted</em> it: Waldur writes
 the log row after the send returns, so a message the relay refuses raises first and is never
 logged. <code>sendtestemail</code> uses Django's own send path and never appears here either. Browse the log
 under <strong>Support → Email logs</strong> in the UI, or query <code>/api/email-logs/</code> directly. Each entry carries
@@ -18554,7 +18569,7 @@ the subject, body and recipient list.</p>
 <p>An empty log therefore has two readings, and the worker logs distinguish them: SMTP errors there
 mean the transport is at fault; silence means no message was ever generated — go back to
 <a href="#3-enabling-notifications">Enabling notifications</a>.</p>
-<p><strong>3. Check the worker logs.</strong> Notifications are sent from Celery workers, not from the API process.
+<p><strong>4. Check the worker logs.</strong> Notifications are sent from Celery workers, not from the API process.
 Each dispatch logs an <code>about to send</code> line:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Kubernetes</span>
@@ -18573,6 +18588,10 @@ kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </
 <tr>
 <td>Email log empty, worker logs silent</td>
 <td>Notifications are disabled — see <a href="#3-enabling-notifications">step 3</a></td>
+</tr>
+<tr>
+<td>Not sure which half is broken</td>
+<td>Start from the sanity check under <strong>Administration → System management → Email configuration</strong></td>
 </tr>
 <tr>
 <td>Email log empty, worker logs show SMTP errors</td>
