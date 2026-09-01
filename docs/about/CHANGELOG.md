@@ -1,5 +1,48 @@
 # Changelog
 
+## 8.1.3-rc.8 - 2026-09-02
+
+### Highlights
+
+Support teams get a much more capable built-in service desk in this release: staff can now change issue status directly from the issue page, receive email when a new ticket arrives, and see a support dashboard that only exposes statistics to the people entitled to them. Cost policies now report how many days remain before they trigger, with the estimate computed server-side so the project credit view no longer guesses from burn rate. Staff also gain a dedicated email configuration page that checks outgoing mail settings and sends a test message, making it far easier to diagnose "notifications never arrive" problems.
+
+### What's New
+
+- The built-in helpdesk supports changing issue status from the issue details page, with the available statuses reflecting how the issue was routed — provider-routed issues offer none.
+- Cost policies expose an estimated time to trigger (`eta_days`) through the API, and the project policy watch view now reads that value from the server instead of projecting it locally; thresholds that have already been reached are no longer hidden.
+- A new staff-only email configuration page reports on outgoing mail setup, surfaces findings, and can send a test email, backed by a new sanity-check API and an index on email log timestamps.
+- Staff are notified by email when a ticket arrives on the built-in service desk, and the previously dormant issue escalation notification now actually fires.
+- Role administration gained a comparison dialog showing how two roles differ and who an impending permission change would affect.
+- Marketplace provider resources now expose the project start date, and the offerings list gained customers and cost columns.
+- OpenStack security groups can be expanded to show the instances attached to them.
+
+### Improvements
+
+- The credit offering list now documents that leaving it empty applies the credit to every offering.
+- Creating auto-provisioning rules is restricted to staff, and support statistics are limited to support staff and providers.
+- Issue action dialogs (attach resource, reroute, route to provider) were made usable.
+- The de-emphasised local sign-in link is back on the login page.
+- `django-dbtemplates` was removed as a dependency; notification templates are now handled by Waldur's own template loading, with migrations to deduplicate and enforce unique template paths.
+- Helm charts dropped the legacy `networking.k8s.io/v1beta1` Ingress fallback.
+- Front-end dependencies were bumped to clear two high-severity advisories.
+
+### Bug Fixes
+
+- Background Celery task locks are now released when the task completes, so recurring jobs no longer stall behind a stale lock.
+- An unconfigured Zammad backend no longer breaks the support module.
+- The auto-provisioning rule dialog's Confirm button is no longer inert, and the standalone-issue toggle no longer deadlocks the issue creation wizard.
+- Table string filters no longer crash on cyclic object values.
+- Expired tokens no longer send the UI through the login state twice.
+- Fixed warning bar margins, the collapsed "Add resource" plus icon, and sidebar hover overflow.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [16 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.7...8.1.3-rc.8) - built-in helpdesk status handling and notifications, cost policy ETA, email diagnostics API, dbtemplates removal.
+- **Waldur Homeport**: [19 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.7...8.1.3-rc.8) - issue status control and support dashboard, email configuration page, role comparison, plus several UI fixes.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.7...8.1.3-rc.8) - removed the legacy Ingress API fallback from templates.
+
+---
+
 ## 8.1.3-rc.7 - 2026-08-30
 
 ### Highlights
