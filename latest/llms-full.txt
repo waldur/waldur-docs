@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-01T16:29:17.540640Z
+Generated: 2026-09-01T17:14:46.910770Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -14335,6 +14335,56 @@ Notification about an update in the issue comment. The recipient is issue caller
     </p>
     </body>
     </html>
+
+```
+
+### support.notification_issue_created
+
+Notification to staff and support users about a newly created support request. Sent only by the built-in service desk — the Atlassian, Zammad and SMAX backends notify their own agents.
+
+#### Templates
+
+=== "support/notification_issue_created_subject.txt"
+
+```txt
+
+    [{{ issue.key }}] New support request: {{ issue.summary.strip }}
+
+```
+
+=== "support/notification_issue_created_message.txt"
+
+```txt
+
+    A new support request has been created.
+
+    Request: {{ issue.key }}
+    Summary: {{ issue.summary.strip }}
+    Type: {{ issue.type }}
+    {% if issue.priority %}Priority: {{ issue.priority }}
+    {% endif %}Reported by: {{ issue.caller.full_name|default:issue.caller.username|default:"unknown" }}
+    {% if issue.customer %}Organization: {{ issue.customer.name }}
+    {% endif %}{% if issue.project %}Project: {{ issue.project.name }}
+    {% endif %}
+    Description:
+    {{ issue.description.strip }}
+
+```
+
+=== "support/notification_issue_created_message.html"
+
+```txt
+
+    <p>A new support request has been created.</p>
+    <p><strong>Request:</strong> {{ issue.key }}<br>
+    <strong>Summary:</strong> {{ issue.summary.strip }}<br>
+    <strong>Type:</strong> {{ issue.type }}<br>
+    {% if issue.priority %}<strong>Priority:</strong> {{ issue.priority }}<br>{% endif %}
+    <strong>Reported by:</strong> {{ issue.caller.full_name|default:issue.caller.username|default:"unknown" }}
+    {% if issue.customer %}<br><strong>Organization:</strong> {{ issue.customer.name }}{% endif %}
+    {% if issue.project %}<br><strong>Project:</strong> {{ issue.project.name }}{% endif %}</p>
+    <p><strong>Description:</strong></p>
+    <p>{{ issue.description.strip }}</p>
 
 ```
 
@@ -79048,7 +79098,9 @@ This page provides an overview of already assigned credit policies. To create a 
 [Image: Credit management new policy]
 
 1. Select an organization to which you would like to assign credits.
-2. Select an offering for which credits can be used.
+2. Select the offerings the credit may be spent on. **Leave this empty to allow all offerings** —
+   an empty list means unrestricted, not "none". Cost on any other offering is invoiced
+   normally and is never drawn from the credit.
 3. Set the credit value. This is the total value that the organization will be able to spent.
 4. Minimal consumption logic defines, how minimal monthly consumption is calculated:
 
@@ -79056,6 +79108,13 @@ This page provides an overview of already assigned credit policies. To create a 
     - Linear means that by setting the end date, the total value of the credit will be divided evenly across the period until the end date and the overall value will be reduced monthly by the calculated value even if the consumption is less than the calculated value.
 
 5. If all set, click "Create".
+
+!!! warning
+    Restricting the offerings is not the same as excluding cost from the organization.
+    Resources on offerings outside the list are still bought and still invoiced — the
+    credit simply never covers them. Because that cost is never compensated, it counts
+    towards [cost policies](../customer-organization/cost-and-usage-policies.md)
+    immediately, while the credit balance still looks untouched.
 
 ---
 
