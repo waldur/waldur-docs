@@ -9825,16 +9825,38 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#standard-crud-operations" class="md-nav__link">
+  <a href="#public-read-only-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Standard CRUD Operations
+        Public Read-Only API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Standard CRUD Operations">
+    <nav class="md-nav" aria-label="Public Read-Only API">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-public-maintenance-announcements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List Public Maintenance Announcements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieve-public-maintenance-announcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieve Public Maintenance Announcement
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#list-maintenance-announcements" class="md-nav__link">
@@ -18650,16 +18672,38 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#standard-crud-operations" class="md-nav__link">
+  <a href="#public-read-only-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Standard CRUD Operations
+        Public Read-Only API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Standard CRUD Operations">
+    <nav class="md-nav" aria-label="Public Read-Only API">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-public-maintenance-announcements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List Public Maintenance Announcements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieve-public-maintenance-announcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieve Public Maintenance Announcement
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#list-maintenance-announcements" class="md-nav__link">
@@ -19319,7 +19363,155 @@ maintenance announcement and the service provider customer). Actor details
 <p>These appear under the <code>providers</code> event group and can be queried via
 <code>/api/events/?scope=.../maintenance-announcements/{uuid}/</code>.</p>
 <h2 id="rest-api-operations">REST API Operations</h2>
-<h3 id="standard-crud-operations">Standard CRUD Operations</h3>
+<p>Waldur exposes two API surfaces for maintenance announcements:</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Base path</th>
+<th>Authentication</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public read-only</td>
+<td><code>/api/public-maintenance-announcements/</code></td>
+<td>None</td>
+<td>External status checks, status pages, integrations</td>
+</tr>
+<tr>
+<td>Management</td>
+<td><code>/api/maintenance-announcements/</code></td>
+<td>Required</td>
+<td>Service provider CRUD and state transitions</td>
+</tr>
+</tbody>
+</table>
+<p>Request/response schemas are documented in the OpenAPI schema (<code>waldur spectacular</code>).</p>
+<h3 id="public-read-only-api">Public Read-Only API</h3>
+<p>Use these endpoints when an external service, status page, or unauthenticated
+client needs to check whether maintenance is scheduled or in progress. No token
+is required.</p>
+<h4 id="list-public-maintenance-announcements">List Public Maintenance Announcements</h4>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/public-maintenance-announcements/</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Returns announcements in <strong>Scheduled</strong>, <strong>In progress</strong>, or <strong>Completed</strong>
+state only. Draft and cancelled announcements are excluded.</p>
+<p><strong>Query Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>state</code></td>
+<td>String</td>
+<td>State label, e.g. <code>Scheduled</code>, <code>In progress</code>, <code>Completed</code></td>
+</tr>
+<tr>
+<td><code>service_provider_uuid</code></td>
+<td>UUID</td>
+<td>Limit to a specific service provider</td>
+</tr>
+<tr>
+<td><code>maintenance_type</code></td>
+<td>Integer</td>
+<td>Numeric maintenance type (see <a href="#maintenance-types">Maintenance Types</a>)</td>
+</tr>
+<tr>
+<td><code>scheduled_start_after</code> / <code>scheduled_start_before</code></td>
+<td>DateTime</td>
+<td>Filter by planned start window</td>
+</tr>
+<tr>
+<td><code>scheduled_end_after</code> / <code>scheduled_end_before</code></td>
+<td>DateTime</td>
+<td>Filter by planned end window</td>
+</tr>
+<tr>
+<td><code>o</code></td>
+<td>String</td>
+<td>Ordering, e.g. <code>scheduled_start</code>, <code>-scheduled_start</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example Requests:</strong></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err"># Is any maintenance currently in progress?</span>
+<span class="err">GET /api/public-maintenance-announcements/?state=In progress</span>
+
+<span class="err"># Upcoming maintenance for a provider</span>
+<span class="err">GET /api/public-maintenance-announcements/?state=Scheduled&amp;service_provider_uuid={uuid}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h4 id="retrieve-public-maintenance-announcement">Retrieve Public Maintenance Announcement</h4>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/public-maintenance-announcements/{uuid}/</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Returns <code>404</code> for draft or cancelled announcements, even if the UUID exists.</p>
+<p><strong>Response:</strong></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"http://localhost:8000/api/public-maintenance-announcements/{uuid}/"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"550e8400-e29b-41d4-a716-446655440000"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Database Server Upgrade"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"We will be upgrading our database servers to improve performance..."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"maintenance_type"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"maintenance_type_display"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Upgrade"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"external_reference_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://maintenance.example.com/ticket/12345"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Scheduled"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"scheduled_start"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-01-15T02:00:00Z"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"scheduled_end"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-01-15T04:00:00Z"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"actual_start"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"actual_end"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"service_provider_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Example Cloud Services"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"affected_offerings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"impact_level"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"impact_level_display"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Partial outage"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"impact_description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"API endpoints will be unavailable during database migration"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"offering_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"My Service API"</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Not exposed on the public API:</strong> <code>created_by</code>, <code>service_provider</code> URL,
+<code>internal_notes</code>, audit timestamps, and other management-only fields. Write
+methods (<code>POST</code>, <code>PATCH</code>, <code>DELETE</code>) return <code>405 Method Not Allowed</code>.</p>
+<p>There is no separate public aggregate maintenance status endpoint. Poll the
+list endpoint (optionally filtered by <code>state</code>) or retrieve individual records.</p>
+<p>The management endpoints below require authentication. List and retrieve are
+available to users connected to the service provider's customer; create,
+update, delete, and state transitions require
+<code>SERVICE_PROVIDER.MANAGE_MAINTENANCE_ANNOUNCEMENT</code> (see
+<a href="#permission-system">Permission System</a>).</p>
 <h4 id="list-maintenance-announcements">List Maintenance Announcements</h4>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/maintenance-announcements/</span>
 </code></pre></div></td></tr></tbody></table></div>
@@ -19870,8 +20062,8 @@ AdminAnnouncement content: "🔧 Scheduled Maintenance: Database servers will be
 </ul>
 <p><strong>Unrelated Users:</strong></p>
 <ul>
-<li>No access to private maintenance announcement endpoints (empty list / 404)</li>
-<li>Public scheduled announcements remain available via the public endpoint</li>
+<li>No access to management endpoints at <code>/api/maintenance-announcements/</code> (empty list / 404)</li>
+<li>Published announcements remain readable at <code>/api/public-maintenance-announcements/</code> without authentication</li>
 </ul>
 <p><strong>Personal Access Tokens:</strong></p>
 <ul>
