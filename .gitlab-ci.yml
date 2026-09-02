@@ -2,6 +2,8 @@ include:
   - project: "waldur/waldur-pipelines"
     file: "/templates/test/check-merge-compatibility.yml"
   - project: "waldur/waldur-pipelines"
+    file: "/templates/test/python-linters.yml"
+  - project: "waldur/waldur-pipelines"
     file: "/templates/test/vulnerability-scan.yml"
   - project: "waldur/waldur-pipelines"
     file: "/templates/utils/release-utils.yml"
@@ -85,16 +87,12 @@ stages:
 #    - node lint-markdown.mjs
 
 Run linters:
-  image: ghcr.io/astral-sh/uv:python3.13-bookworm
-  stage: test
-  interruptible: true
+  extends: .Run linters template
   rules:
     - if: '$BUILD_SDK == "true"'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "master"'
-  script:
-    - uvx prek run --all-files
 
 Scan Python dependencies:
   extends: .Vulnerability scan template
