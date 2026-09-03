@@ -2606,6 +2606,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ipv6-only-and-dual-stack-clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IPv6-only and dual-stack clusters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installing-rabbitmq-separately" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18026,6 +18037,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ipv6-only-and-dual-stack-clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IPv6-only and dual-stack clusters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installing-rabbitmq-separately" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18150,6 +18172,53 @@ to declare them explicitly alongside <code>additionalPlugins</code>:</p>
 <code>waldur-secret</code> Secret by <code>templates/secrets.yaml</code>, and the application reads them
 from there. When pointing at a broker deployed outside the chart, set
 <code>rabbitmq.enabled: false</code> plus <code>rabbitmq.host</code> and <code>rabbitmq.secret.*</code> instead.</p>
+<h2 id="ipv6-only-and-dual-stack-clusters">IPv6-only and dual-stack clusters</h2>
+<p>The bundled broker works on an IPv6-only cluster out of the box; the chart's
+default values carry the wiring and no operator configuration is needed. Two
+separate parts of RabbitMQ default to IPv4 and both are redirected:</p>
+<table>
+<thead>
+<tr>
+<th>part</th>
+<th>what defaults to IPv4</th>
+<th>how the chart fixes it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Erlang name resolution</td>
+<td>epmd resolves the node's own hostname through <code>inet</code>, which asks for A records only</td>
+<td>an inetrc with <code>{inet6, true}</code> plus <code>-proto_dist inet6_tcp</code>, applied from a <code>rabbitmq-env.conf</code> that tests <code>/proc/net/if_inet6</code> at container start</td>
+</tr>
+<tr>
+<td>Cowboy HTTP listeners</td>
+<td>the management API (15672) and web-STOMP (15674) bind <code>0.0.0.0</code></td>
+<td><code>management.tcp.ip = ::</code> and <code>web_stomp.tcp.ip = ::</code> in <code>rabbitmq.config.extraConfiguration</code></td>
+</tr>
+</tbody>
+</table>
+<p>Without the first, the broker aborts at boot even though the AAAA record
+resolves:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>{epmd_error,"&lt;pod&gt;.&lt;svc&gt;.&lt;ns&gt;.svc.cluster.local",nxdomain}
+</code></pre></div></td></tr></tbody></table></div>
+<p>The CLI half of it (<code>CTL_ERL_ARGS</code>) is not optional. Both the liveness and the
+readiness probe run <code>rabbitmq-diagnostics -q check_running</code>, so without it the
+broker boots but the pod never becomes ready and every <code>rabbitmqctl</code> call hangs
+until it times out.</p>
+<p>Without the second, the broker runs and AMQP works, but the management API and
+the realtime web-STOMP stream behind <code>templates/ingress-rmq-ws.yaml</code> are
+unreachable. Note that <code>rabbitmq-diagnostics listeners</code> reports these two as
+<code>[::]</code> whether or not they are — <code>/proc/net/tcp</code> and <code>/proc/net/tcp6</code> inside the
+pod are the only reliable check:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>&lt;broker-pod&gt;<span class="w"> </span>--<span class="w"> </span>bash<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s1">'tail -n +2 /proc/net/tcp | awk "\$4==\"0A\"{print \$2}"'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Binding <code>[::]</code> is correct on IPv4-only, IPv6-only and dual-stack clusters alike:
+with the Linux default <code>net.ipv6.bindv6only=0</code> the same socket also accepts IPv4
+connections as v4-mapped. A host whose kernel has IPv6 compiled out or disabled
+at boot is the one case that needs an override — empty
+<code>rabbitmq.config.extraConfiguration</code>; the Erlang half already no-ops there.</p>
 <h2 id="installing-rabbitmq-separately">Installing RabbitMQ separately</h2>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>helm<span class="w"> </span>install<span class="w"> </span>rmq<span class="w"> </span>oci://registry-1.docker.io/cloudpirates/rabbitmq<span class="w"> </span><span class="se">\</span>
