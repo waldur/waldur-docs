@@ -147,12 +147,16 @@ Build OIDC explainer:
     # the product repos. Sparse shallow clones of just the referenced trees keep
     # this to a few seconds and ~40 MB.
     #
-    # Cloned from the public GitHub mirrors rather than the internal GitLab for
-    # two reasons: the page's code links point there, so this verifies exactly
-    # what a reader will click, and no token is involved, so the check is strict
-    # on every pipeline including forks instead of quietly degrading.
+    # Cloned from GitLab with the job token, not from the public GitHub mirrors
+    # the page's code links point at. GitHub rate-limits anonymous clones per
+    # source IP and the whole runner fleet shares one egress, so the mirror
+    # clone failed the nightly pipeline with "could not read Username for
+    # 'https://github.com'" (waldur/waldur-mastermind#343 has the same failure
+    # in the linter jobs). GitLab is the source the mirrors are pushed from, so
+    # checking it is at least as strict as checking the mirror. waldur-docs is
+    # on both projects' job-token allowlists; no extra credential is needed.
     - |
-      BASE="https://github.com/waldur"
+      BASE="https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/waldur"
       git clone --depth 1 --filter=blob:none --sparse --branch develop "$BASE/waldur-mastermind.git" /tmp/mm
       git -C /tmp/mm sparse-checkout set src/waldur_auth_social src/waldur_core/core src/waldur_core/server
       git clone --depth 1 --filter=blob:none --sparse --branch develop "$BASE/waldur-homeport.git" /tmp/hp
