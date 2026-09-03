@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-02T13:50:54.119264Z
+Generated: 2026-09-03T06:27:01.016992Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -22133,6 +22133,25 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 
 ```
 
+### notification_issue_created_message.txt (waldur_mastermind.support)
+
+```txt
+
+A new support request has been created.
+
+Request: {{ issue.key }}
+Summary: {{ issue.summary.strip }}
+Type: {{ issue.type }}
+{% if issue.priority %}Priority: {{ issue.priority }}
+{% endif %}Reported by: {{ issue.caller.full_name|default:issue.caller.username|default:"unknown" }}
+{% if issue.customer %}Organization: {{ issue.customer.name }}
+{% endif %}{% if issue.project %}Project: {{ issue.project.name }}
+{% endif %}
+Description:
+{{ issue.description.strip }}
+
+```
+
 ### notification_issue_updated_message.html (waldur_mastermind.support)
 
 ```html
@@ -22247,6 +22266,14 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 
 ```
 
+### notification_issue_created_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] New support request: {{ issue.summary.strip }}
+
+```
+
 ### provider_sla_warning_message.html (waldur_mastermind.support)
 
 ```html
@@ -22311,6 +22338,23 @@ Comment:
 
 ```
 
+### notification_issue_created_message.html (waldur_mastermind.support)
+
+```html
+
+<p>A new support request has been created.</p>
+<p><strong>Request:</strong> {{ issue.key }}<br>
+<strong>Summary:</strong> {{ issue.summary.strip }}<br>
+<strong>Type:</strong> {{ issue.type }}<br>
+{% if issue.priority %}<strong>Priority:</strong> {{ issue.priority }}<br>{% endif %}
+<strong>Reported by:</strong> {{ issue.caller.full_name|default:issue.caller.username|default:"unknown" }}
+{% if issue.customer %}<br><strong>Organization:</strong> {{ issue.customer.name }}{% endif %}
+{% if issue.project %}<br><strong>Project:</strong> {{ issue.project.name }}{% endif %}</p>
+<p><strong>Description:</strong></p>
+<p>{{ issue.description.strip }}</p>
+
+```
+
 ### provider_ticket_withdrawn_message.html (waldur_mastermind.support)
 
 ```html
@@ -22319,6 +22363,19 @@ Comment:
 <p><strong>Ticket:</strong> {{ issue.key }}<br>
 <strong>Summary:</strong> {{ issue.summary }}</p>
 <p>No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.</p>
+
+```
+
+### notification_issue_escalated_message.html (waldur_mastermind.support)
+
+```html
+
+<p>A support request has been escalated.</p>
+<p><strong>Request:</strong> {{ issue.key }}<br>
+<strong>Summary:</strong> {{ issue.summary.strip }}
+{% if issue.customer %}<br><strong>Organization:</strong> {{ issue.customer.name }}{% endif %}</p>
+<p><strong>Reason for escalation:</strong></p>
+<p>{{ reason }}</p>
 
 ```
 
@@ -22412,6 +22469,21 @@ No further action is required on your side. If you have already opened a corresp
 ```txt
 
 {% if issue.customer.abbreviation %}{{issue.customer.abbreviation}}: {% endif %}{{issue.summary}}
+
+```
+
+### notification_issue_escalated_message.txt (waldur_mastermind.support)
+
+```txt
+
+A support request has been escalated.
+
+Request: {{ issue.key }}
+Summary: {{ issue.summary.strip }}
+{% if issue.customer %}Organization: {{ issue.customer.name }}
+{% endif %}
+Reason for escalation:
+{{ reason }}
 
 ```
 
@@ -22514,6 +22586,14 @@ Updated issue: {{issue.key}} {{issue.summary}}
 <strong>Priority:</strong> {{ issue.priority }}</p>
 <p><strong>Description:</strong></p>
 <p>{{ issue.description }}</p>
+
+```
+
+### notification_issue_escalated_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] Escalated: {{ issue.summary.strip }}
 
 ```
 
@@ -90881,6 +90961,9 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - resource_update_floating_ips_failed
 - resource_update_floating_ips_scheduled
 - resource_update_floating_ips_succeeded
+- resource_update_metadata_failed
+- resource_update_metadata_scheduled
+- resource_update_metadata_succeeded
 - resource_update_ports_failed
 - resource_update_ports_scheduled
 - resource_update_ports_succeeded
@@ -91848,6 +91931,7 @@ td:nth-child(4) {
 | `send_course_account_deletion_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
 | `send_course_account_info` | `Django Signal (post_save)` | `marketplace.CourseAccount` | No description |
 | `send_end_date_change_request_to_message_queue` | `Django Signal (post_save)` | `marketplace.ResourceEndDateChangeRequest` | Emit an end date change request event on creation and every state change. |
+| `send_issue_created_notification` | `Django Signal (post_save)` | `support.Issue` | Tell helpdesk personnel that a new support request has arrived. |
 | `send_issue_updated_notification` | `Django Signal (post_save)` | `support.Issue` | No description |
 | `send_offering_user_created_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Send OfferingUser creation message to message queue for external systems. |
 | `send_offering_user_deleted_message` | `Django Signal (post_delete)` | `marketplace.OfferingUser` | Send OfferingUser deletion message to message queue for external systems. |
@@ -92024,14 +92108,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 812
+Total unique handlers found: 813
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
 - **waldur_core**: 420 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 339 handlers
+- **waldur_mastermind**: 340 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
