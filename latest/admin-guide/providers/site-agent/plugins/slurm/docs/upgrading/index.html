@@ -6061,6 +6061,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="QoS configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accounts-with-a-defaultqos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accounts with a DefaultQOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -18105,6 +18122,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="QoS configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accounts-with-a-defaultqos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accounts with a DefaultQOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -18355,6 +18389,20 @@ compatible with QoS enforcement: enabling both does not silently disable pause.<
   unaffected</strong>; only the limit echo is incomplete until a single reverse source is
   configured (follow-up).</li>
 </ul>
+<h3 id="accounts-with-a-defaultqos">Accounts with a <code>DefaultQOS</code></h3>
+<p>slurmdbd requires every association's effective DefaultQOS to be in its
+effective QoS list and rolls back any <code>sacctmgr modify</code> that would break that
+(<code>These associations don't have access to their default qos</code>). The
+pause/downscale/restore swap reads the account's current default and, when it
+is set and not in the new list, writes <code>qos=&lt;x&gt; defaultqos=&lt;x&gt;</code> in one command.
+Accounts without a DefaultQOS are handled exactly as before (<code>qos=&lt;x&gt;</code> only);
+no configuration change is needed.</p>
+<p>The agent only writes the <em>account-level</em> default. A user association that
+carries its own explicit DefaultQOS outside the new list still makes slurmdbd
+reject the swap — the error lists the offending <code>U = &lt;user&gt;</code> rows. Either clear
+those user-level defaults so they inherit the account's, or move them by hand:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>sacctmgr<span class="w"> </span>modify<span class="w"> </span>user<span class="w"> </span>where<span class="w"> </span><span class="nv">account</span><span class="o">=</span>&lt;acct&gt;<span class="w"> </span><span class="nv">cluster</span><span class="o">=</span>&lt;cluster&gt;<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">defaultqos</span><span class="o">=</span>&lt;qos_paused&gt;
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="account-hierarchy-and-sync_resource_project">Account hierarchy and <code>sync_resource_project</code></h2>
 <p>When a project is moved to a different customer in Waldur, the SLURM account's parent
 must be updated to reflect the new customer account. The agent handles this via
