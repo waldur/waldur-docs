@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-04T02:07:21.874132Z
+Generated: 2026-09-05T02:04:27.487186Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -70664,6 +70664,23 @@ undeploying is applied to:
 
 Please use "synchronise" instead of "pull" in action title.
 
+## Marketplace
+
+The destination is called **Marketplace**. "Service catalogue", "catalogue" and
+"store" are not synonyms for it in the UI.
+
+A deployment may rename it through the `MARKETPLACE_LANDING_PAGE` setting, and
+then the chosen name replaces "Marketplace" everywhere at once. So never write
+the name as a literal: read it from `getMarketplaceTitle()`
+(`src/marketplace/title.ts`). The sidebar entry, the breadcrumbs, the browser
+title and the landing hero all derive from it — a deployment that sets "Service
+Catalog" must not end up with a sidebar saying "Marketplace" next to a hero
+saying "Welcome to Service Catalog".
+
+What the marketplace lists are **offerings**; what a user has ordered are
+**resources**. Search inputs are named after the scope they cover, so an
+offering search never says just "Search".
+
 ## Units of measurement
 
 Component units (`measured_unit`) are written in the **singular**. They appear
@@ -90819,6 +90836,74 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - openstack_rbac_policy_created
 - openstack_rbac_policy_deleted
 
+## Openstack_resources
+
+- openstack_floating_ip_attached
+- openstack_floating_ip_connected
+- openstack_floating_ip_description_updated
+- openstack_floating_ip_detached
+- openstack_floating_ip_disconnected
+- openstack_instance_security_groups_changed
+- openstack_listener_created
+- openstack_listener_deleted
+- openstack_listener_updated
+- openstack_load_balancer_created
+- openstack_load_balancer_deleted
+- openstack_load_balancer_security_groups_changed
+- openstack_load_balancer_updated
+- openstack_network_cleaned
+- openstack_network_created
+- openstack_network_deleted
+- openstack_network_imported
+- openstack_network_pulled
+- openstack_network_updated
+- openstack_pool_created
+- openstack_pool_deleted
+- openstack_pool_member_created
+- openstack_pool_member_deleted
+- openstack_pool_member_updated
+- openstack_pool_updated
+- openstack_port_allowed_address_pairs_changed
+- openstack_port_cleaned
+- openstack_port_created
+- openstack_port_deleted
+- openstack_port_imported
+- openstack_port_pulled
+- openstack_port_security_disabled
+- openstack_port_security_enabled
+- openstack_port_security_groups_changed
+- openstack_port_updated
+- openstack_rbac_policy_created
+- openstack_rbac_policy_deleted
+- openstack_router_interface_added
+- openstack_router_interface_removed
+- openstack_router_updated
+- openstack_security_group_cleaned
+- openstack_security_group_created
+- openstack_security_group_deleted
+- openstack_security_group_imported
+- openstack_security_group_pulled
+- openstack_security_group_rule_cleaned
+- openstack_security_group_rule_created
+- openstack_security_group_rule_deleted
+- openstack_security_group_rule_imported
+- openstack_security_group_rule_updated
+- openstack_security_group_rules_changed
+- openstack_security_group_updated
+- openstack_server_group_cleaned
+- openstack_server_group_created
+- openstack_server_group_deleted
+- openstack_server_group_imported
+- openstack_server_group_pulled
+- openstack_subnet_cleaned
+- openstack_subnet_created
+- openstack_subnet_deleted
+- openstack_subnet_host_routes_changed
+- openstack_subnet_imported
+- openstack_subnet_pulled
+- openstack_subnet_updated
+- openstack_tenant_quota_limit_updated
+
 ## Openstack_router
 
 - openstack_router_interface_added
@@ -90949,71 +91034,6 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - marketplace_resource_update_limits_succeeded
 - marketplace_resource_update_requested
 - marketplace_resource_update_succeeded
-- openstack_floating_ip_attached
-- openstack_floating_ip_connected
-- openstack_floating_ip_description_updated
-- openstack_floating_ip_detached
-- openstack_floating_ip_disconnected
-- openstack_instance_security_groups_changed
-- openstack_listener_created
-- openstack_listener_deleted
-- openstack_listener_updated
-- openstack_load_balancer_created
-- openstack_load_balancer_deleted
-- openstack_load_balancer_security_groups_changed
-- openstack_load_balancer_updated
-- openstack_network_cleaned
-- openstack_network_created
-- openstack_network_deleted
-- openstack_network_imported
-- openstack_network_pulled
-- openstack_network_updated
-- openstack_pool_created
-- openstack_pool_deleted
-- openstack_pool_member_created
-- openstack_pool_member_deleted
-- openstack_pool_member_updated
-- openstack_pool_updated
-- openstack_port_allowed_address_pairs_changed
-- openstack_port_cleaned
-- openstack_port_created
-- openstack_port_deleted
-- openstack_port_imported
-- openstack_port_pulled
-- openstack_port_security_disabled
-- openstack_port_security_enabled
-- openstack_port_security_groups_changed
-- openstack_port_updated
-- openstack_rbac_policy_created
-- openstack_rbac_policy_deleted
-- openstack_router_interface_added
-- openstack_router_interface_removed
-- openstack_router_updated
-- openstack_security_group_cleaned
-- openstack_security_group_created
-- openstack_security_group_deleted
-- openstack_security_group_imported
-- openstack_security_group_pulled
-- openstack_security_group_rule_cleaned
-- openstack_security_group_rule_created
-- openstack_security_group_rule_deleted
-- openstack_security_group_rule_imported
-- openstack_security_group_rule_updated
-- openstack_security_group_rules_changed
-- openstack_security_group_updated
-- openstack_server_group_cleaned
-- openstack_server_group_created
-- openstack_server_group_deleted
-- openstack_server_group_imported
-- openstack_server_group_pulled
-- openstack_subnet_cleaned
-- openstack_subnet_created
-- openstack_subnet_deleted
-- openstack_subnet_host_routes_changed
-- openstack_subnet_imported
-- openstack_subnet_pulled
-- openstack_subnet_updated
-- openstack_tenant_quota_limit_updated
 - request_downscaling
 - request_pausing
 - request_slurm_resource_downscaling
@@ -91507,6 +91527,10 @@ td:nth-child(4) {
 | `emit_user_ssh_key_save` | `Django Signal (post_save)` | `core.SshPublicKey` | No description |
 | `handle_aggregated_quotas` | `Django Signal (post_save)` | `quotas.QuotaUsage` | Call aggregated quotas fields update methods |
 | `handle_aggregated_quotas` | `Django Signal (pre_delete)` | `quotas.QuotaUsage` | Call aggregated quotas fields update methods |
+| `invalidate_cache_on_commit` | `Django Signal (post_save)` | `core.Feature` | Signal receiver that defers the drop until the transaction commits. |
+| `invalidate_cache_on_commit` | `Django Signal (post_save)` | `marketplace.Offering` | Signal receiver that defers the drop until the transaction commits. |
+| `invalidate_cache_on_commit` | `Django Signal (post_delete)` | `core.Feature` | Signal receiver that defers the drop until the transaction commits. |
+| `invalidate_cache_on_commit` | `Django Signal (post_delete)` | `marketplace.Offering` | Signal receiver that defers the drop until the transaction commits. |
 | `log_access_subnet_deletion_succeeded` | `Django Signal (post_delete)` | `structure.AccessSubnet` | Log successful access subnet deletion. |
 | `log_access_subnet_save` | `Django Signal (post_save)` | `structure.AccessSubnet` | Log access subnet creation and updates. |
 | `log_customer_delete` | `Django Signal (post_delete)` | `structure.Customer` | Log customer deletion. |
@@ -92227,11 +92251,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 813
+Total unique handlers found: 817
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 1 handlers
-- **waldur_core**: 420 handlers
+- **waldur_core**: 424 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 340 handlers
