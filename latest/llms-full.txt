@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-05T02:04:27.487186Z
+Generated: 2026-09-06T02:04:19.334331Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6652,11 +6652,20 @@ Sync notifications and their templates from a JSON/YAML config file to the DB.
 
 ```bash
 
-usage: waldur load_notifications notifications_file
+usage: waldur load_notifications [--prune] notifications_file
 
 positional arguments:
   notifications_file  Path to a JSON or YAML file mapping notification keys to
                       their enabled status (bool).
+
+options:
+  --prune             Delete Notification rows whose key is no longer in the
+                      NOTIFICATIONS registry, along with any of their
+                      templates that are not shared with a registered
+                      notification and have no operator-customised content.
+                      Without this flag, orphaned rows are only reported.
+                      Never enabled by default (e.g. by initdb) — an
+                      unattended boot should not delete data.
 
 ```
 
@@ -11598,6 +11607,8 @@ Set `TIME_ZONE` setting in `/etc/waldur/override.conf.py` to use local time zone
 
 # Notifications
 
+When a notification is removed from a release, its database row is not deleted automatically. Run `waldur load_notifications <file> --prune` to report and remove notifications whose key is no longer listed below, along with any of their templates that no other notification declares and that have no operator-customised content. Customised template content is never deleted automatically.
+
 ## WALDUR_CORE.STRUCTURE
 
 ### structure.change_email_request
@@ -13108,6 +13119,7 @@ A notification of a successful resource plan update. The recipients are all the 
 
     {% if resource_old_plan %}
     The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
+    {% if billing_consequence %}{{ billing_consequence }}{% endif %}
     {% endif %}
 
     {% if support_email or support_phone %}
@@ -13142,6 +13154,11 @@ A notification of a successful resource plan update. The recipients are all the 
     <p>
         The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
     </p>
+    {% if billing_consequence %}
+    <p>
+        {{ billing_consequence }}
+    </p>
+    {% endif %}
     {% endif %}
     {% if support_email or support_phone %}
     <p>
@@ -19652,6 +19669,7 @@ Following request from {{ order_user }}, resource {{ resource_name }} has been u
 
 {% if resource_old_plan %}
 The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
+{% if billing_consequence %}{{ billing_consequence }}{% endif %}
 {% endif %}
 
 {% if support_email or support_phone %}
@@ -19705,6 +19723,11 @@ Response from {{ order.created_by.get_full_name }} regarding order for {{ order.
 <p>
     The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
 </p>
+{% if billing_consequence %}
+<p>
+    {{ billing_consequence }}
+</p>
+{% endif %}
 {% endif %}
 {% if support_email or support_phone %}
 <p>
@@ -64690,6 +64713,29 @@ Update to latest version in package.json, then install
 - Optimized asset loading (images, fonts, SVG)
 - Bundle analysis and optimization tools
 
+### Cold-start budget
+
+Everything statically reachable from `src/index.tsx` is downloaded before the
+first paint, so the entry graph is kept deliberately small:
+
+- `public/boot-redirect.js` runs before the module preloads and sends anonymous
+  visitors of `/` and `/login/` to `/api-auth/default/init/`, where the backend
+  resolves `DEFAULT_IDP` itself. It probes that endpoint with `probe=1` first
+  and navigates only on the `204` a probe-aware backend answers, so a backend
+  without a default provider, without the route, or unreachable leaves the
+  visitor on the application's own login page. Whether a session exists is
+  decided from web storage in the script, since only the browser can see it.
+- `yarn build:check` (`scripts/bundle-budget.mjs`, run by the `Check cold-path
+  budget` CI job on every MR) fails when the entry script plus its `modulepreload`s exceed the
+  gzip budget, or when echarts, matrix-js-sdk, livekit-client, monaco-editor,
+  @mdxeditor/editor or mermaid appear in that set. Each of those is loaded
+  lazily on purpose: `reporting/screens.ts` keeps the route flags chart-free,
+  `MatrixRoot` lazy-loads `MatrixProviders`, `MatrixCallHost` lazy-loads the
+  call view, the `@/form` barrel lazy-loads `MonacoGroup`/`MarkdownGroup`, and
+  the assistant registry lazy-loads the mermaid block.
+- `docker/nginx-tpl.conf` serves `assets/` as immutable for a year with
+  build-time precompressed gzip; `index.html` is never cached.
+
 ## Asset Management
 
 - SVG files processed through SVGR 8.1.0 plugin for React components
@@ -94107,6 +94153,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`FieldFilteringMixin`](#fieldfilteringmixin) | `waldur_core.structure.serializers` | Mixin allowing to filter fields by user |
 | [`PermissionFieldFilteringMixin`](#permissionfieldfilteringmixin) | `waldur_core.structure.serializers` | Mixin allowing to filter related fields |
 | [`SshPublicKeySerializerMixin`](#sshpublickeyserializermixin) | `waldur_core.structure.serializers` | A type of `ModelSerializer` that uses hyperlinked relationships instead of pr... |
+| [`DashboardFeedHelpersMixin`](#dashboardfeedhelpersmixin) | `waldur_core.structure.tests.test_dashboard` | Helpers for driving the dashboard feed from throwaway providers |
 | [`ProjectMetadataTestMixin`](#projectmetadatatestmixin) | `waldur_core.structure.tests.test_project_metadata` | Shared test setup and utilities for project metadata tests |
 | [`AvailabilityCheckViewMixin`](#availabilitycheckviewmixin) | `waldur_core.structure.views` | A viewset that provides default `create()`, `retrieve()`, `update()`, `partia... |
 | [`ScopeInvitationMixin`](#scopeinvitationmixin) | `waldur_core.users.models` | Mixin for invitations scoped to a Customer with a system Role |
@@ -95259,6 +95306,17 @@ of primary key relationships. Specifically:
 - Relationships to other instances are hyperlinks, instead of primary keys.
 
 **Base classes:** `HyperlinkedModelSerializer`
+
+### DashboardFeedHelpersMixin
+
+**Module:** `waldur_core.structure.tests.test_dashboard`
+
+**Description:**
+
+Helpers for driving the dashboard feed from throwaway providers.
+
+Shared rather than copied: _item encodes the eight-key feed contract, so
+two copies drift the moment that contract changes.
 
 ### ProjectMetadataTestMixin
 

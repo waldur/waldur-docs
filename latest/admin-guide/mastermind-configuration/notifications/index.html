@@ -22887,6 +22887,7 @@
                   
 
 <h1 id="notifications">Notifications</h1>
+<p>When a notification is removed from a release, its database row is not deleted automatically. Run <code>waldur load_notifications &lt;file&gt; --prune</code> to report and remove notifications whose key is no longer listed below, along with any of their templates that no other notification declares and that have no operator-customised content. Customised template content is never deleted automatically.</p>
 <h2 id="waldur_corestructure">WALDUR_CORE.STRUCTURE</h2>
 <h3 id="structurechange_email_request">structure.change_email_request</h3>
 <p>A notification sent out when an email change is requested. Recipient is the old email address.</p>
@@ -24867,12 +24868,14 @@
 <span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code>    Hello!
+<span class="normal">17</span>
+<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code>    Hello!
 
     Following request from {{ order_user }}, resource {{ resource_name }} has been updated.
 
     {% if resource_old_plan %}
     The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
+    {% if billing_consequence %}{{ billing_consequence }}{% endif %}
     {% endif %}
 
     {% if support_email or support_phone %}
@@ -24923,7 +24926,12 @@
 <span class="normal">31</span>
 <span class="normal">32</span>
 <span class="normal">33</span>
-<span class="normal">34</span></pre></div></td><td class="code"><div><pre><span></span><code>    &lt;html&gt;
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span></pre></div></td><td class="code"><div><pre><span></span><code>    &lt;html&gt;
     &lt;head lang="en"&gt;
         &lt;meta charset="UTF-8"&gt;
         &lt;title&gt;Resource {{ resource_name }} has been updated.&lt;/title&gt;
@@ -24939,6 +24947,11 @@
     &lt;p&gt;
         The plan has been changed from {{ resource_old_plan }} to {{ resource_plan }}.
     &lt;/p&gt;
+    {% if billing_consequence %}
+    &lt;p&gt;
+        {{ billing_consequence }}
+    &lt;/p&gt;
+    {% endif %}
     {% endif %}
     {% if support_email or support_phone %}
     &lt;p&gt;

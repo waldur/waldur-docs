@@ -8751,6 +8751,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cold-start-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cold-start budget
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -18703,6 +18714,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cold-start-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cold-start budget
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19178,6 +19200,28 @@ rather than an instance of the problem.</p>
 <li>Automatic code splitting by route and feature</li>
 <li>Optimized asset loading (images, fonts, SVG)</li>
 <li>Bundle analysis and optimization tools</li>
+</ul>
+<h3 id="cold-start-budget">Cold-start budget</h3>
+<p>Everything statically reachable from <code>src/index.tsx</code> is downloaded before the
+first paint, so the entry graph is kept deliberately small:</p>
+<ul>
+<li><code>public/boot-redirect.js</code> runs before the module preloads and sends anonymous
+  visitors of <code>/</code> and <code>/login/</code> to <code>/api-auth/default/init/</code>, where the backend
+  resolves <code>DEFAULT_IDP</code> itself. It probes that endpoint with <code>probe=1</code> first
+  and navigates only on the <code>204</code> a probe-aware backend answers, so a backend
+  without a default provider, without the route, or unreachable leaves the
+  visitor on the application's own login page. Whether a session exists is
+  decided from web storage in the script, since only the browser can see it.</li>
+<li><code>yarn build:check</code> (<code>scripts/bundle-budget.mjs</code>, run by the <code>Check cold-path
+  budget</code> CI job on every MR) fails when the entry script plus its <code>modulepreload</code>s exceed the
+  gzip budget, or when echarts, matrix-js-sdk, livekit-client, monaco-editor,
+  @mdxeditor/editor or mermaid appear in that set. Each of those is loaded
+  lazily on purpose: <code>reporting/screens.ts</code> keeps the route flags chart-free,
+  <code>MatrixRoot</code> lazy-loads <code>MatrixProviders</code>, <code>MatrixCallHost</code> lazy-loads the
+  call view, the <code>@/form</code> barrel lazy-loads <code>MonacoGroup</code>/<code>MarkdownGroup</code>, and
+  the assistant registry lazy-loads the mermaid block.</li>
+<li><code>docker/nginx-tpl.conf</code> serves <code>assets/</code> as immutable for a year with
+  build-time precompressed gzip; <code>index.html</code> is never cached.</li>
 </ul>
 <h2 id="asset-management">Asset Management</h2>
 <ul>
