@@ -1,5 +1,55 @@
 # Changelog
 
+## 8.1.3-rc.9 - 2026-09-07
+
+### Highlights
+
+This release lets a single marketplace offering carry plans with different billing modes, including a new prepaid mode, so operators can offer limit-based, usage-based and prepaid plans side by side and the UI now explains what each plan's billing period actually bills. OpenStack VM termination no longer stalls on leftover backups and snapshots, VM creation keeps the system volume bootable and attached, and the Nova instance metadata is now supported. Operators get a much faster cold start of the web UI with a pre-bundled IdP redirect, a new default-IdP login endpoint, IPv6-only RabbitMQ support in the Helm chart, and generic Constance and feature-flag overrides in chart values.
+
+### What's New
+
+- Per-plan billing modes: one offering can now combine limit, usage and prepaid plans, with the API reporting whether a plan's billing period affects invoicing. The order form, plan editor, invoice rows and plan-switch dialogs show the billing mode and pin the period where it bills nothing.
+- New default-IdP login endpoint starts authentication with the configured default identity provider. It is safe and cheap to probe, and the web UI now takes a fast path when the stored token has already expired.
+- A configurable registration method for Bearer token introspection over OIDC.
+- OpenStack instances can carry Nova metadata, and the console log endpoint now accepts POST.
+- A new report lists projects, resources and cost by affiliated organization.
+- The maintenance announcement banner marks maintenance that has already completed.
+- The Helm chart accepts generic Constance and feature-flag overrides, brings up the bundled RabbitMQ on IPv6-only clusters, and only redirects to HTTPS when the deployment is actually served over HTTPS.
+
+### Improvements
+
+- OpenStack VM termination now automatically cleans up backups and snapshots that previously blocked deletion.
+- The VMware backend was rewritten on pyVmomi, validated against vcsim, and now caches vCenter sessions per process.
+- Offerings that are not charged refuse plans and pricing, and child offerings hide the accounting tab and plan guard.
+- Offering managers can now set resource end dates.
+- Pending user actions are folded into the dashboard feed, and the events filter only advertises event groups the deployment can emit.
+- Pub/sub, RabbitMQ and site-agent admin pages read queue kind and consumer from typed API fields instead of parsing names.
+- The create/edit role dialog was redesigned, organization-scoped role cloning is guarded for integrity, and the invitation dialog disables the project manager role when a project already has one.
+- Marketplace naming, search scope and category card content were unified, and selects and plan row actions now use library components in brand colours.
+- The web UI cold load is lighter with a pre-bundled IdP redirect and immutable assets.
+- Celery worker concurrency can be overridden from the environment, and the Docker image installs from the lock file.
+- Orphaned notification rows are reported and pruned by the notification management commands.
+- Migration squashes keep their data operations, and databases that skipped them are repaired automatically.
+- The country list is now vendored, and Django REST Framework and several JavaScript dependencies were bumped to clear known vulnerabilities.
+
+### Bug Fixes
+
+- Fixed OpenStack VM creation so the system volume stays bootable and attached.
+- A stored zero quota limit is now reported as zero instead of unlimited, and fractional limits are handled correctly in total-period billing.
+- Fixed the VM order form clearing entered data on tab switch.
+- Fixed the maintenance window picker calendar selection and Custom button.
+- Restored missing table row dividers, fixed dark-mode select states, and kept the HTTP status on API errors.
+- Closed terms-of-service consent filtering gaps in the compliance view and glauth.
+- The Helm whitelabeling job now waits for the database schema before applying settings.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [40 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.8...8.1.3-rc.9) - per-plan billing modes, OpenStack termination and volume fixes, VMware backend rewrite, default-IdP login, migration squash repairs
+- **Waldur Homeport**: [21 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.8...8.1.3-rc.9) - billing mode UI, faster cold load, affiliated organization report, role dialog redesign, styling fixes
+- **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.8...8.1.3-rc.9) - Constance and feature-flag overrides, IPv6 RabbitMQ, conditional HTTPS redirect, whitelabeling job ordering
+
+---
+
 ## 8.1.3-rc.8 - 2026-09-02
 
 ### Highlights
