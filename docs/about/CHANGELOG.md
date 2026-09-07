@@ -1,5 +1,33 @@
 # Changelog
 
+## 8.1.3-rc.10 - 2026-09-07
+
+### Highlights
+
+This release makes affiliated-organization reporting available as a configurable screen across the backend and web interface, so operators can switch it on for their deployment. Service and course account integrations become more predictable: account payloads now identify offerings by their backend identifier, and accounts without an assigned user are reported explicitly instead of silently omitting the field. Permission checks and the OpenStack event-group migration also received correctness fixes.
+
+### What's New
+
+- The affiliated-organization report screen can now be enabled and configured, with matching backend settings and web interface registration.
+
+### Improvements
+
+- Service and course account payloads now prefer the offering's backend identifier over its slug, giving integrations a stabler reference to match against.
+- Course account records always include the user field, returning an explicit empty value when no user is assigned, so clients no longer have to handle a missing key.
+- Select inputs across the web interface now take their colours from the shared design tokens, keeping dropdowns consistent with the rest of the theme and with custom branding.
+
+### Bug Fixes
+
+- User membership checks now account for organization-scoped role templates, so permissions on cloned organization roles are evaluated correctly for invitations, group invitations and support issues.
+- The migration that splits OpenStack resource event groups now processes all notification hooks, preventing hooks from being left with outdated event group references after upgrade.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [5 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.9...8.1.3-rc.10) - account payload identifiers, organization-scoped permission checks, event-group migration fix, affiliated-organization report setting.
+- **Waldur Homeport**: [2 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.9...8.1.3-rc.10) - design-token-driven select styling and affiliated-organization report screen registration.
+
+---
+
 ## 8.1.3-rc.9 - 2026-09-07
 
 ### Highlights
