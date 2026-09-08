@@ -9,6 +9,14 @@ ownership) resolves Waldur identities. This page shows how to connect such a hos
 and use the project GIDs to own **shared project folders** with the correct group
 permissions.
 
+!!! tip "Already running OpenLDAP?"
+    This page covers the GLAuth path, where Waldur renders the directory. If the
+    provider already operates an OpenLDAP tree, the site agent can write Waldur's
+    accounts into it instead -- see
+    [Waldur-authoritative accounts in OpenLDAP](openldap-sssd-accounts.md). That
+    path needs none of the attribute-mapping overrides below, but does not yet
+    publish SSH keys, so key-based SSH login remains a GLAuth capability for now.
+
 ## How the pieces fit together
 
 Identities flow one way — from Waldur, through GLAuth, to the login node — and
