@@ -39,6 +39,10 @@ A pool is attached to one of two scopes:
 | **Service provider** (default) | One identifier space shared by all of your offerings. Most providers need only this. |
 | **Offering** (override) | A single offering needs its own isolated number space — for example a separate cluster with its own LDAP directory. |
 
+The identifiers a pool hands out reach a directory either through
+[GLAuth](glauth-user-accounts.md) or, for a provider running its own OpenLDAP,
+through [the site agent writing them into that tree](openldap-sssd-accounts.md).
+
 When Waldur needs an identifier for an offering, it uses the offering's own pool
 if one is defined, otherwise the service-provider pool. If neither resolves, the
 affected accounts are left without a UID/GID and are excluded from the GLAuth
