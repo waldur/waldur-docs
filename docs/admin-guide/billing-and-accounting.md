@@ -18,12 +18,16 @@ can view information for all projects within their organization.
 
 ## Billing models
 
-Waldur supports two billing models for resource components, configurable per offering:
+Waldur supports three billing models for resource components, configurable per offering:
 
 - **Monthly (Limit-based)**: Resources are billed each month based on reserved limits. This is the default for OpenStack Tenant offerings. Limits can be changed at any time, with billing adjusted on the current invoice.
 - **Prepaid (One-time + Pre-paid)**: Resources are billed upfront for the full subscription period. The charge is calculated as `price × limit × months`. An end date is required. Mid-period limit changes create supplementary charges for the remaining period.
 
+- **Usage-based**: Resources are billed on polled consumption, for example core-hours and GB-hours for OpenStack tenants. Quotas cap usage and are not billed.
+
 Both models can coexist on the same offering — for example, CPU cores can be prepaid while a management fee remains monthly. Custom components (e.g., consultancy hours) can use the "Maximum total" limit period for flat one-time charges.
+
+A plan can also override how the offering's built-in components are billed through its **billing mode** (inherit, limit-based or usage-based), so one OpenStack offering can carry a reserved plan and a pay-as-you-go plan side by side. Prepaid is not among the plan modes: it says *when* a limit-based subscription is paid rather than how consumption is counted, so it stays on the components and is set there. Customers switch between them with a plan change: the limit fee is charged for the plan's current billing period (whole month for monthly plans, per day for daily plans) and usage accrues from the switch. See [Offering a limit-based and a usage-based plan side by side](../user-guide/service-provider-organization/adding-an-offering.md#offering-a-limit-based-and-a-usage-based-plan-side-by-side).
 
 For configuration details, see [Configuring billing model per component](../user-guide/service-provider-organization/adding-an-offering.md#configuring-billing-model-per-component).
 

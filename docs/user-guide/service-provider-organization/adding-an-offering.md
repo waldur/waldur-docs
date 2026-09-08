@@ -157,8 +157,91 @@ One-time components also support **Min value** and **Max value** constraints, wh
 | Billing model | Invoice frequency | Formula | Limit changes |
 |---------------|-------------------|---------|---------------|
 | **Limit-based** (monthly) | Every month | `price × limit` per month | Adjusted on current month's invoice |
+| **Usage-based** | Every month, as usage is polled | `price × accumulated usage` (for example core-hours) | Not applicable: quotas cap usage and are not billed |
 | **One-time + prepaid** (upfront) | Once at creation | `price × limit × months` | Supplementary charge for `(new - old) × remaining months` |
 | **Limit-based / Total** (one-time) | Once at creation | `price × limit` | Incremental charge for difference |
+
+## Offering a limit-based and a usage-based plan side by side
+
+The accounting type on a component applies to every plan of the offering. To sell
+the same OpenStack Tenant offering both as a reserved product and as a
+pay-as-you-go product, give each plan its own **billing mode**. The mode
+overrides how the built-in components (Cores, RAM, Storage and the per-volume-type
+storage) are billed under that plan; custom components keep their own accounting
+type.
+
+1. Open the offering's **Edit** → **Accounting** → **Plans** tab and click **Add plan**.
+2. Set **Billing mode** to one of:
+    - **Inherit from components** (default): the built-in components are billed as
+      configured on the Components tab.
+    - **Limit-based (monthly)**: customers request cores, RAM and storage when
+      ordering and are billed `price × limit` every month.
+    - **Usage-based**: customers order without limits; the tenant starts with the
+      backend's default quotas, and the plan bills accumulated consumption
+      (core-hours, GB-hours) at the plan's prices. Adjust quotas with the
+      resource's **Set quotas** action.
+3. Enter the prices for each component. Under a usage-based plan the prices are per
+   core-hour and per GB-hour.
+
+![Plan form with the Billing mode selector](../img/plan-billing-mode-plan-form.png)
+
+The Plans tab shows the mode of every plan, and customers see it next to each plan
+name when ordering. A plan's billing mode cannot be changed while resources use the
+plan.
+
+![Plans tab listing a limit-based and a usage-based plan](../img/plan-billing-mode-plans-tab.png)
+
+When a customer picks the usage-based plan, the order form shows no quota inputs:
+each built-in component is listed with its per-unit price and the total reads
+"Billed by usage".
+
+![Order form with the usage-based plan selected](../img/plan-billing-mode-order-form.png)
+
+The **Switch modes** dialog still rewrites the components, and it now applies the
+same choice to every plan of the offering, so the switch changes what is billed
+whatever mode the plans were on. Switching to **Prepaid** puts the plans back on
+**Inherit from components**: prepaid is a property of the components, not a plan
+mode, and inherit is what defers to them.
+
+!!! note
+    An offering whose built-in components are prepaid has no plan-level choice to
+    make — every mode would bill those components per period instead of upfront —
+    so the **Billing mode** selector is not shown on its plans. Move the offering
+    off prepaid with **Switch modes** first.
+
+### Switching between the two plans
+
+Customers can move a resource between the plans with **Change plan** at any time.
+Both plans must share the same billing period.
+
+- **Limit-based → usage-based**: the limit fee is charged for the current billing
+  period of the plan: a plan billed per month keeps the whole month's fee, a plan
+  billed per day is charged for the days used. From the switch the resource is
+  billed on consumption. Its quotas stay unchanged and only cap usage.
+- **Usage-based → limit-based**: usage accrued before the switch is invoiced at
+  the old plan's rates. From the switch the new plan bills the resource's current
+  quotas as limits for its billing period (the whole month for a monthly plan,
+  per day for a daily plan). The switch is refused until the provider has set
+  quotas for cores, RAM and storage.
+
+!!! note
+    Limit items of a plan billed per month are not prorated by day: a tenant created
+    or switched on the 20th is charged the full monthly fee, exactly as when it is
+    terminated mid-month. Use a plan billed per day when day-level proration is wanted.
+
+The change-plan dialog explains the consequence before the customer submits, the
+order shows both plans with their billing modes, and the confirmation email
+carries the same summary.
+
+![Change plan dialog explaining the switch to usage-based billing](../img/plan-billing-mode-change-plan.png)
+
+On the invoice the resource lists every plan it was billed with during the month,
+and its lines are grouped under one header per plan with the period and subtotal,
+so a month with a switch reads as one reserved block next to the usage block.
+Switching back to a plan within the same month continues that plan's line rather
+than charging its fee a second time.
+
+![Invoice lines of a resource grouped by plan after a switch](../img/plan-billing-mode-invoice.png)
 
 ## Pausing or downscaling resources on usage limit
 
