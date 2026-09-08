@@ -138,6 +138,32 @@ If it turns out that initial limits for the resource are too low or higher than 
 
 ![type:video](../img/allocation_update.mp4)
 
+## Changing the plan of a resource
+
+If the offering has several plans, **Change plan** in the resource actions moves
+the resource to another plan. The dialog lists each plan with its billing
+(limit-based, usage-based, prepaid) and price; plans with a different billing
+period cannot be selected. When the new plan bills differently from the current
+one, the dialog explains what changes:
+
+- Moving from a limit-based plan to a usage-based plan charges the limit fee for
+  the plan's current billing period (the whole month for a monthly plan, the days
+  used for a daily plan). From then on you are billed for actual consumption; your
+  quotas stay unchanged and cap usage instead of being billed.
+- Moving from a usage-based plan to a limit-based plan invoices the usage accrued
+  before the switch at the old rates, then bills your current quotas as limits
+  for the new plan's billing period. The dialog shows the limits that will be
+  billed. If the resource has no quotas yet, ask the service provider to set them
+  first.
+
+![Change plan dialog explaining the switch to usage-based billing](../img/plan-billing-mode-change-plan.png)
+
+Like any change, the request follows the approval flow; the order shows both
+plans with their billing modes. On the invoice, the resource's lines for the month
+are grouped by plan, each group with its period and subtotal.
+
+![Invoice lines of a resource grouped by plan after a switch](../img/plan-billing-mode-invoice.png)
+
 ## Resource end date update
 
 The termination date can be changed the same way on offerings that enable it —

@@ -40,7 +40,7 @@ invoice -> org: billed
 |---|---|---|
 | Invoice item | A single line on an invoice — one resource, one component, one period. | [Glossary](../terminology/glossary.md) |
 | Invoice | A monthly statement aggregating all invoice items for one organization. | [Admin guide](../../admin-guide/billing-and-accounting.md) |
-| Billing model | How an offering charges: monthly (limit-based) or prepaid (one-time + recurring). | [Admin guide](../../admin-guide/billing-and-accounting.md#billing-models) |
+| Billing model | How an offering charges: monthly (limit-based), usage-based or prepaid (one-time + recurring). A plan may override it for the built-in components. | [Admin guide](../../admin-guide/billing-and-accounting.md#billing-models) |
 | Period | The window an invoice item covers — month, quarter, year, or total. | [Glossary](../terminology/glossary.md) |
 | Credit | A prepaid balance attached to an organization or project that offsets future invoice items. | [User guide](../../user-guide/customer-organization/credit-management.md) |
 | Compensation | An ad-hoc adjustment (refund, discount) applied to an invoice. | — |
@@ -52,7 +52,11 @@ Two models cover almost every offering and can be mixed within a single offering
 - **Monthly (limit-based)** — billed each month based on reserved limits; limits can change anytime and the current invoice is adjusted accordingly. Default for OpenStack tenants.
 - **Prepaid (one-time + recurring)** — billed upfront for the full subscription period (`price × limit × months`). An end date is required; mid-period limit changes create supplementary charges for the remaining time.
 
+- **Usage-based** — billed on polled consumption (core-hours, GB-hours). Quotas cap usage and are not billed.
+
 A "Maximum total" limit period exists for flat one-time charges (consultancy hours, setup fees).
+
+A plan's **billing mode** (inherit, limit-based or usage-based) overrides how the built-in components are billed under that plan, so one offering can sell a reserved plan and a pay-as-you-go plan at once.
 
 ## Lifecycle
 

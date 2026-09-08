@@ -98,7 +98,7 @@ Only project managers, organization owners and staff can edit the tag.
 Project owners and managers with the order-approval permission can configure a project-level rule that auto-approves marketplace orders on the consumer side when the order's estimated monthly cost is at or below a configured ceiling. This removes a manual step for predictable, low-value orders while keeping anything unusual under human review.
 
 !!! note
-    Only orders for plans whose components have predictable cost qualify. If the offering has any usage-based component, the order will always require manual review regardless of the configured limit.
+    Only orders for plans whose components have predictable cost qualify. If the selected plan bills any component by usage, the order will always require manual review regardless of the configured limit. A limit-based plan qualifies even when the same offering also has a usage-based plan.
 
 ### Configuring the rule
 
@@ -120,8 +120,8 @@ The widget's actions menu also exposes a **Manage order auto-approval** shortcut
 
 When a project member submits a new order through the marketplace, the deploy page's total card shows one of these notices based on the order's estimated monthly cost:
 
-- **Order will be auto-approved** — recurring monthly cost is at or below the project limit and the offering's plan has no usage-based components. The order skips manual consumer review on submission.
-- **Order will need consumer approval** — either the recurring monthly cost exceeds the project limit, or the offering has usage-based components (in which case the rule never applies).
+- **Order will be auto-approved** — recurring monthly cost is at or below the project limit and the selected plan has no usage-based components. The order skips manual consumer review on submission.
+- **Order will need consumer approval** — either the recurring monthly cost exceeds the project limit, or the selected plan has usage-based components (in which case the rule never applies).
 
 **Terminate orders** auto-approve unconditionally whenever a rule is enabled — terminating a resource removes future billing, so the cost check is always satisfied. Update orders use the same recurring monthly cost check as new orders.
 
