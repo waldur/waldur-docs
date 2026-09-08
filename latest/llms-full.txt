@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-08T06:50:08.031037Z
+Generated: 2026-09-08T11:52:07.947347Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -22954,12 +22954,16 @@ can view information for all projects within their organization.
 
 ## Billing models
 
-Waldur supports two billing models for resource components, configurable per offering:
+Waldur supports three billing models for resource components, configurable per offering:
 
 - **Monthly (Limit-based)**: Resources are billed each month based on reserved limits. This is the default for OpenStack Tenant offerings. Limits can be changed at any time, with billing adjusted on the current invoice.
 - **Prepaid (One-time + Pre-paid)**: Resources are billed upfront for the full subscription period. The charge is calculated as `price × limit × months`. An end date is required. Mid-period limit changes create supplementary charges for the remaining period.
 
+- **Usage-based**: Resources are billed on polled consumption, for example core-hours and GB-hours for OpenStack tenants. Quotas cap usage and are not billed.
+
 Both models can coexist on the same offering — for example, CPU cores can be prepaid while a management fee remains monthly. Custom components (e.g., consultancy hours) can use the "Maximum total" limit period for flat one-time charges.
+
+A plan can also override how the offering's built-in components are billed through its **billing mode** (inherit, limit-based or usage-based), so one OpenStack offering can carry a reserved plan and a pay-as-you-go plan side by side. Prepaid is not among the plan modes: it says *when* a limit-based subscription is paid rather than how consumption is counted, so it stays on the components and is set there. Customers switch between them with a plan change: the limit fee is charged for the plan's current billing period (whole month for monthly plans, per day for daily plans) and usage accrues from the switch. See [Offering a limit-based and a usage-based plan side by side](../user-guide/service-provider-organization/adding-an-offering.md#offering-a-limit-based-and-a-usage-based-plan-side-by-side).
 
 For configuration details, see [Configuring billing model per component](../user-guide/service-provider-organization/adding-an-offering.md#configuring-billing-model-per-component).
 
@@ -28443,6 +28447,37 @@ class CustomUsernameBackend(AbstractUsernameManagementBackend):
             username = self.generate_username(offering_user)
         return username
 ```
+
+#### When Waldur owns the username
+
+A backend does not have to mint usernames. If the identity is Waldur's — the
+offering uses a `username_generation_policy` other than `service_provider`, and
+the backend's job is to *write* Waldur's values into an external system — set
+`is_username_authoritative = False`:
+
+```python
+class MirroringBackend(AbstractUsernameManagementBackend):
+    is_username_authoritative = False
+```
+
+Core then skips username generation for that offering entirely, and in particular
+never PATCHes a username back over the authoritative value. Backends that leave
+the default (`True`) are unaffected.
+
+Such a backend does its work in `sync_user_profiles(offering_users)` instead of
+`generate_username`. That hook is called with the **full** offering-user list on
+every membership cycle, including accounts already in `OK` — which the
+username-generation path never sees, since it only handles accounts still in
+`REQUESTED` or a pending state. It is therefore the right place for a reconcile
+loop: create what is missing, update what has drifted, leave the rest alone.
+
+The POSIX identity Waldur holds for an account is available on the offering user
+as `uidnumber`, `primarygroup`, `login_shell` and `home_directory`. These are
+always requested by the membership processor, and are not gated by the offering's
+`OfferingUserAttributeConfig` — they are account attributes, not personal data.
+
+`waldur-site-agent-ldap` is the reference implementation; see its
+`account_source: waldur` mode.
 
 #### Plugin Registration
 
@@ -35929,11 +35964,105 @@ offerings:
 | `gid_range_end` | No | `65000` | End of GID allocation range |
 | `default_login_shell` | No | `/bin/bash` | Default login shell for new users |
 | `default_home_base` | No | `/home` | Base path for home directories |
-| `username_format` | No | `first_initial_lastname` | Username generation strategy (see below) |
+| `account_source` | No | `ldap` | Who owns username/UID/GID: `ldap` (this agent) or `waldur` (see below) |
+| `on_missing_posix_ids` | No | `error` | `error` or `skip` when Waldur holds no ids (waldur mode) |
+| `on_posix_mismatch` | No | `report` | `report`, `adopt` or `fail` on an id disagreement (waldur mode) |
+| `username_format` | No | `first_initial_lastname` | Username strategy (see below); rejected in waldur mode |
+| `waldur_username_attribute` | No | -- | LDAP attribute to store the Waldur username (e.g. a CUID) in |
 | `remove_user_on_deactivate` | No | `false` | Delete LDAP entry on deactivation |
 | `generate_vpn_password` | No | `false` | Generate random VPN password on creation |
 | `access_groups` | No | `[]` | LDAP groups to add new users to |
 | `welcome_email` | No | -- | SMTP settings for welcome email (disabled when absent) |
+
+## Waldur-authoritative mode
+
+By default this plugin owns the identity: it derives a username from the user's
+name and allocates a UID and GID by scanning the directory for free numbers.
+That breaks down as soon as **one directory serves several offerings of the same
+service provider** — each offering allocates independently, so the same person
+ends up with two UIDs behind one DN and one home directory, and two site agents
+fight over the entry.
+
+Waldur already solves this on its side: a `PosixIdPool` attached to the service
+provider gives each user one UID and one primary GID across every offering that
+resolves to it. Setting `account_source: waldur` makes the agent *write those
+values* rather than invent its own.
+
+```yaml
+backend_settings:
+  ldap:
+    uri: "ldap://ldap.example.com"
+    bind_dn: "cn=admin,dc=example,dc=com"
+    bind_password: "admin-password"
+    base_dn: "dc=example,dc=com"
+
+    account_source: "waldur"
+    on_posix_mismatch: "report"   # report | adopt | fail
+    on_missing_posix_ids: "error" # error | skip
+```
+
+In this mode the agent takes `username`, `uidnumber`, `primarygroup`,
+`home_directory` and `login_shell` from the offering user and writes them into
+the directory. `username_format` is rejected (Waldur names the accounts), and
+`uid_range_*` is ignored for user accounts. The offering's
+`username_generation_policy` must be anything **other** than `service_provider`
+— under that policy Waldur expects the agent to assign names, which is the
+opposite of what this mode does.
+
+Provisioning runs as a **reconcile loop** on every membership cycle, over the
+full account list rather than only newly-requested ones, so an entry that was
+deleted or edited out of band is repaired on the next pass.
+
+### What happens in each case
+
+| Directory state | Action |
+|---|---|
+| No entry, UID free | Create the entry, its personal group, and any access-group memberships |
+| Entry matches Waldur | Nothing |
+| Home directory, shell, name or mail differ | Rewritten to match Waldur |
+| `uidNumber` or `gidNumber` differ | Governed by `on_posix_mismatch` |
+| The wanted UID is held by a *different* entry | Error, the account is left alone — always |
+| Another entry shares the email address | Warning, and the account is created anyway |
+
+`on_posix_mismatch` decides only the id-disagreement row:
+
+- **`report`** (default) logs a before/after diff and changes nothing.
+  Renumbering a live account orphans every file it owns, so this is a human
+  decision.
+- **`adopt`** rewrites the entry and its personal group to Waldur's ids. Intended
+  for a one-shot migration. **Afterwards you must `chown -R` the affected files
+  from the old ids to the new ones** — nothing else will.
+- **`fail`** raises instead of logging.
+
+None of the three can move an account onto a UID another entry already holds.
+LDAP does not enforce `uidNumber` uniqueness, so such a write would succeed and
+leave two accounts owning the same files; that row is refused before policy is
+consulted.
+
+An account Waldur holds no ids for is never given a locally-invented one: that
+would reintroduce the double allocation this mode exists to remove. Attach a
+POSIX ID pool to the service provider, or turn POSIX accounts off for the
+offering.
+
+### Project group GIDs are still allocated locally
+
+Only *user* accounts and their personal groups come from Waldur. Project and role
+group GIDs are still allocated by the resource backend from
+`gid_range_start`..`gid_range_end`.
+
+> **These ranges must not overlap the offering's POSIX ID pool.** LDAP does not
+> enforce `gidNumber` uniqueness, so an overlap silently produces two groups
+> sharing a GID and files whose ownership is ambiguous. The agent cannot read the
+> pool's bounds, so it warns at startup with the range it is configured with, but
+> it cannot check this for you.
+
+### A note on settings validation
+
+`validate_backend_settings_with_plugin_schema` in the agent core keys on
+`backend_type`, and the usual deployment sets `backend_type: slurm`, whose schema
+allows unknown keys — so this plugin's schema is never applied by core. The
+plugin therefore validates its own `ldap:` block at construction, and a bad value
+fails the backend rather than being silently ignored.
 
 ### Username Formats
 
@@ -76515,7 +76644,7 @@ Only project managers, organization owners and staff can edit the tag.
 Project owners and managers with the order-approval permission can configure a project-level rule that auto-approves marketplace orders on the consumer side when the order's estimated monthly cost is at or below a configured ceiling. This removes a manual step for predictable, low-value orders while keeping anything unusual under human review.
 
 !!! note
-    Only orders for plans whose components have predictable cost qualify. If the offering has any usage-based component, the order will always require manual review regardless of the configured limit.
+    Only orders for plans whose components have predictable cost qualify. If the selected plan bills any component by usage, the order will always require manual review regardless of the configured limit. A limit-based plan qualifies even when the same offering also has a usage-based plan.
 
 ### Configuring the rule
 
@@ -76537,8 +76666,8 @@ The widget's actions menu also exposes a **Manage order auto-approval** shortcut
 
 When a project member submits a new order through the marketplace, the deploy page's total card shows one of these notices based on the order's estimated monthly cost:
 
-- **Order will be auto-approved** — recurring monthly cost is at or below the project limit and the offering's plan has no usage-based components. The order skips manual consumer review on submission.
-- **Order will need consumer approval** — either the recurring monthly cost exceeds the project limit, or the offering has usage-based components (in which case the rule never applies).
+- **Order will be auto-approved** — recurring monthly cost is at or below the project limit and the selected plan has no usage-based components. The order skips manual consumer review on submission.
+- **Order will need consumer approval** — either the recurring monthly cost exceeds the project limit, or the selected plan has usage-based components (in which case the rule never applies).
 
 **Terminate orders** auto-approve unconditionally whenever a rule is enabled — terminating a resource removes future billing, so the cost check is always satisfied. Update orders use the same recurring monthly cost check as new orders.
 
@@ -77088,6 +77217,32 @@ Leave it off for normal cases where the metadata service is reachable.
 If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.
 
 [Image: type:video]
+
+## Changing the plan of a resource
+
+If the offering has several plans, **Change plan** in the resource actions moves
+the resource to another plan. The dialog lists each plan with its billing
+(limit-based, usage-based, prepaid) and price; plans with a different billing
+period cannot be selected. When the new plan bills differently from the current
+one, the dialog explains what changes:
+
+- Moving from a limit-based plan to a usage-based plan charges the limit fee for
+  the plan's current billing period (the whole month for a monthly plan, the days
+  used for a daily plan). From then on you are billed for actual consumption; your
+  quotas stay unchanged and cap usage instead of being billed.
+- Moving from a usage-based plan to a limit-based plan invoices the usage accrued
+  before the switch at the old rates, then bills your current quotas as limits
+  for the new plan's billing period. The dialog shows the limits that will be
+  billed. If the resource has no quotas yet, ask the service provider to set them
+  first.
+
+[Image: Change plan dialog explaining the switch to usage-based billing]
+
+Like any change, the request follows the approval flow; the order shows both
+plans with their billing modes. On the invoice, the resource's lines for the month
+are grouped by plan, each group with its period and subtotal.
+
+[Image: Invoice lines of a resource grouped by plan after a switch]
 
 ## Resource end date update
 
@@ -78101,8 +78256,91 @@ One-time components also support **Min value** and **Max value** constraints, wh
 | Billing model | Invoice frequency | Formula | Limit changes |
 |---------------|-------------------|---------|---------------|
 | **Limit-based** (monthly) | Every month | `price × limit` per month | Adjusted on current month's invoice |
+| **Usage-based** | Every month, as usage is polled | `price × accumulated usage` (for example core-hours) | Not applicable: quotas cap usage and are not billed |
 | **One-time + prepaid** (upfront) | Once at creation | `price × limit × months` | Supplementary charge for `(new - old) × remaining months` |
 | **Limit-based / Total** (one-time) | Once at creation | `price × limit` | Incremental charge for difference |
+
+## Offering a limit-based and a usage-based plan side by side
+
+The accounting type on a component applies to every plan of the offering. To sell
+the same OpenStack Tenant offering both as a reserved product and as a
+pay-as-you-go product, give each plan its own **billing mode**. The mode
+overrides how the built-in components (Cores, RAM, Storage and the per-volume-type
+storage) are billed under that plan; custom components keep their own accounting
+type.
+
+1. Open the offering's **Edit** → **Accounting** → **Plans** tab and click **Add plan**.
+2. Set **Billing mode** to one of:
+    - **Inherit from components** (default): the built-in components are billed as
+      configured on the Components tab.
+    - **Limit-based (monthly)**: customers request cores, RAM and storage when
+      ordering and are billed `price × limit` every month.
+    - **Usage-based**: customers order without limits; the tenant starts with the
+      backend's default quotas, and the plan bills accumulated consumption
+      (core-hours, GB-hours) at the plan's prices. Adjust quotas with the
+      resource's **Set quotas** action.
+3. Enter the prices for each component. Under a usage-based plan the prices are per
+   core-hour and per GB-hour.
+
+[Image: Plan form with the Billing mode selector]
+
+The Plans tab shows the mode of every plan, and customers see it next to each plan
+name when ordering. A plan's billing mode cannot be changed while resources use the
+plan.
+
+[Image: Plans tab listing a limit-based and a usage-based plan]
+
+When a customer picks the usage-based plan, the order form shows no quota inputs:
+each built-in component is listed with its per-unit price and the total reads
+"Billed by usage".
+
+[Image: Order form with the usage-based plan selected]
+
+The **Switch modes** dialog still rewrites the components, and it now applies the
+same choice to every plan of the offering, so the switch changes what is billed
+whatever mode the plans were on. Switching to **Prepaid** puts the plans back on
+**Inherit from components**: prepaid is a property of the components, not a plan
+mode, and inherit is what defers to them.
+
+!!! note
+    An offering whose built-in components are prepaid has no plan-level choice to
+    make — every mode would bill those components per period instead of upfront —
+    so the **Billing mode** selector is not shown on its plans. Move the offering
+    off prepaid with **Switch modes** first.
+
+### Switching between the two plans
+
+Customers can move a resource between the plans with **Change plan** at any time.
+Both plans must share the same billing period.
+
+- **Limit-based → usage-based**: the limit fee is charged for the current billing
+  period of the plan: a plan billed per month keeps the whole month's fee, a plan
+  billed per day is charged for the days used. From the switch the resource is
+  billed on consumption. Its quotas stay unchanged and only cap usage.
+- **Usage-based → limit-based**: usage accrued before the switch is invoiced at
+  the old plan's rates. From the switch the new plan bills the resource's current
+  quotas as limits for its billing period (the whole month for a monthly plan,
+  per day for a daily plan). The switch is refused until the provider has set
+  quotas for cores, RAM and storage.
+
+!!! note
+    Limit items of a plan billed per month are not prorated by day: a tenant created
+    or switched on the 20th is charged the full monthly fee, exactly as when it is
+    terminated mid-month. Use a plan billed per day when day-level proration is wanted.
+
+The change-plan dialog explains the consequence before the customer submits, the
+order shows both plans with their billing modes, and the confirmation email
+carries the same summary.
+
+[Image: Change plan dialog explaining the switch to usage-based billing]
+
+On the invoice the resource lists every plan it was billed with during the month,
+and its lines are grouped under one header per plan with the period and subtotal,
+so a month with a switch reads as one reserved block next to the usage block.
+Switching back to a plan within the same month continues that plan's line rather
+than charging its fee a second time.
+
+[Image: Invoice lines of a resource grouped by plan after a switch]
 
 ## Pausing or downscaling resources on usage limit
 
@@ -82640,7 +82878,7 @@ invoice -> org: billed
 |---|---|---|
 | Invoice item | A single line on an invoice — one resource, one component, one period. | [Glossary](../terminology/glossary.md) |
 | Invoice | A monthly statement aggregating all invoice items for one organization. | [Admin guide](../../admin-guide/billing-and-accounting.md) |
-| Billing model | How an offering charges: monthly (limit-based) or prepaid (one-time + recurring). | [Admin guide](../../admin-guide/billing-and-accounting.md#billing-models) |
+| Billing model | How an offering charges: monthly (limit-based), usage-based or prepaid (one-time + recurring). A plan may override it for the built-in components. | [Admin guide](../../admin-guide/billing-and-accounting.md#billing-models) |
 | Period | The window an invoice item covers — month, quarter, year, or total. | [Glossary](../terminology/glossary.md) |
 | Credit | A prepaid balance attached to an organization or project that offsets future invoice items. | [User guide](../../user-guide/customer-organization/credit-management.md) |
 | Compensation | An ad-hoc adjustment (refund, discount) applied to an invoice. | — |
@@ -82652,7 +82890,11 @@ Two models cover almost every offering and can be mixed within a single offering
 - **Monthly (limit-based)** — billed each month based on reserved limits; limits can change anytime and the current invoice is adjusted accordingly. Default for OpenStack tenants.
 - **Prepaid (one-time + recurring)** — billed upfront for the full subscription period (`price × limit × months`). An end date is required; mid-period limit changes create supplementary charges for the remaining time.
 
+- **Usage-based** — billed on polled consumption (core-hours, GB-hours). Quotas cap usage and are not billed.
+
 A "Maximum total" limit period exists for flat one-time charges (consultancy hours, setup fees).
+
+A plan's **billing mode** (inherit, limit-based or usage-based) overrides how the built-in components are billed under that plan, so one offering can sell a reserved plan and a pay-as-you-go plan at once.
 
 ## Lifecycle
 

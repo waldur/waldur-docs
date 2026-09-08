@@ -18039,12 +18039,18 @@ GPU, and storage. End users can export this usage data in PDF, CSV, and XLSX for
 varies by user role: project members can see details for their specific projects, while organization owners
 can view information for all projects within their organization.</p>
 <h2 id="billing-models">Billing models</h2>
-<p>Waldur supports two billing models for resource components, configurable per offering:</p>
+<p>Waldur supports three billing models for resource components, configurable per offering:</p>
 <ul>
 <li><strong>Monthly (Limit-based)</strong>: Resources are billed each month based on reserved limits. This is the default for OpenStack Tenant offerings. Limits can be changed at any time, with billing adjusted on the current invoice.</li>
-<li><strong>Prepaid (One-time + Pre-paid)</strong>: Resources are billed upfront for the full subscription period. The charge is calculated as <code>price × limit × months</code>. An end date is required. Mid-period limit changes create supplementary charges for the remaining period.</li>
+<li>
+<p><strong>Prepaid (One-time + Pre-paid)</strong>: Resources are billed upfront for the full subscription period. The charge is calculated as <code>price × limit × months</code>. An end date is required. Mid-period limit changes create supplementary charges for the remaining period.</p>
+</li>
+<li>
+<p><strong>Usage-based</strong>: Resources are billed on polled consumption, for example core-hours and GB-hours for OpenStack tenants. Quotas cap usage and are not billed.</p>
+</li>
 </ul>
 <p>Both models can coexist on the same offering — for example, CPU cores can be prepaid while a management fee remains monthly. Custom components (e.g., consultancy hours) can use the "Maximum total" limit period for flat one-time charges.</p>
+<p>A plan can also override how the offering's built-in components are billed through its <strong>billing mode</strong> (inherit, limit-based or usage-based), so one OpenStack offering can carry a reserved plan and a pay-as-you-go plan side by side. Prepaid is not among the plan modes: it says <em>when</em> a limit-based subscription is paid rather than how consumption is counted, so it stays on the components and is set there. Customers switch between them with a plan change: the limit fee is charged for the plan's current billing period (whole month for monthly plans, per day for daily plans) and usage accrues from the switch. See <a href="../../user-guide/service-provider-organization/adding-an-offering/#offering-a-limit-based-and-a-usage-based-plan-side-by-side">Offering a limit-based and a usage-based plan side by side</a>.</p>
 <p>For configuration details, see <a href="../../user-guide/service-provider-organization/adding-an-offering/#configuring-billing-model-per-component">Configuring billing model per component</a>.</p>
 <p>In addition to that, Waldur offers convenient way for exporting the usage information for visualization <a href="../grafana/">with
 Grafana</a>.</p>

@@ -4288,6 +4288,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#when-waldur-owns-the-username" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When Waldur owns the username
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#plugin-registration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18569,6 +18580,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#when-waldur-owns-the-username" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When Waldur owns the username
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#plugin-registration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19006,6 +19028,30 @@ identity providers and naming conventions.</p>
             <span class="n">username</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_username</span><span class="p">(</span><span class="n">offering_user</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">username</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h4 id="when-waldur-owns-the-username">When Waldur owns the username</h4>
+<p>A backend does not have to mint usernames. If the identity is Waldur's — the
+offering uses a <code>username_generation_policy</code> other than <code>service_provider</code>, and
+the backend's job is to <em>write</em> Waldur's values into an external system — set
+<code>is_username_authoritative = False</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MirroringBackend</span><span class="p">(</span><span class="n">AbstractUsernameManagementBackend</span><span class="p">):</span>
+    <span class="n">is_username_authoritative</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Core then skips username generation for that offering entirely, and in particular
+never PATCHes a username back over the authoritative value. Backends that leave
+the default (<code>True</code>) are unaffected.</p>
+<p>Such a backend does its work in <code>sync_user_profiles(offering_users)</code> instead of
+<code>generate_username</code>. That hook is called with the <strong>full</strong> offering-user list on
+every membership cycle, including accounts already in <code>OK</code> — which the
+username-generation path never sees, since it only handles accounts still in
+<code>REQUESTED</code> or a pending state. It is therefore the right place for a reconcile
+loop: create what is missing, update what has drifted, leave the rest alone.</p>
+<p>The POSIX identity Waldur holds for an account is available on the offering user
+as <code>uidnumber</code>, <code>primarygroup</code>, <code>login_shell</code> and <code>home_directory</code>. These are
+always requested by the membership processor, and are not gated by the offering's
+<code>OfferingUserAttributeConfig</code> — they are account attributes, not personal data.</p>
+<p><code>waldur-site-agent-ldap</code> is the reference implementation; see its
+<code>account_source: waldur</code> mode.</p>
 <h4 id="plugin-registration">Plugin Registration</h4>
 <p>Register your backend via entry points in <code>pyproject.toml</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>

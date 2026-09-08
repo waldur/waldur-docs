@@ -16934,6 +16934,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#offering-a-limit-based-and-a-usage-based-plan-side-by-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offering a limit-based and a usage-based plan side by side
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Offering a limit-based and a usage-based plan side by side">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#switching-between-the-two-plans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching between the two plans
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pausing-or-downscaling-resources-on-usage-limit" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18541,6 +18569,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#offering-a-limit-based-and-a-usage-based-plan-side-by-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offering a limit-based and a usage-based plan side by side
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Offering a limit-based and a usage-based plan side by side">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#switching-between-the-two-plans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching between the two plans
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pausing-or-downscaling-resources-on-usage-limit" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19040,6 +19096,12 @@ opening of an SSH client if configured for the browser. Out of the box works on 
 <td>Adjusted on current month's invoice</td>
 </tr>
 <tr>
+<td><strong>Usage-based</strong></td>
+<td>Every month, as usage is polled</td>
+<td><code>price × accumulated usage</code> (for example core-hours)</td>
+<td>Not applicable: quotas cap usage and are not billed</td>
+</tr>
+<tr>
 <td><strong>One-time + prepaid</strong> (upfront)</td>
 <td>Once at creation</td>
 <td><code>price × limit × months</code></td>
@@ -19053,6 +19115,80 @@ opening of an SSH client if configured for the browser. Out of the box works on 
 </tr>
 </tbody>
 </table>
+<h2 id="offering-a-limit-based-and-a-usage-based-plan-side-by-side">Offering a limit-based and a usage-based plan side by side</h2>
+<p>The accounting type on a component applies to every plan of the offering. To sell
+the same OpenStack Tenant offering both as a reserved product and as a
+pay-as-you-go product, give each plan its own <strong>billing mode</strong>. The mode
+overrides how the built-in components (Cores, RAM, Storage and the per-volume-type
+storage) are billed under that plan; custom components keep their own accounting
+type.</p>
+<ol>
+<li>Open the offering's <strong>Edit</strong> → <strong>Accounting</strong> → <strong>Plans</strong> tab and click <strong>Add plan</strong>.</li>
+<li>Set <strong>Billing mode</strong> to one of:<ul>
+<li><strong>Inherit from components</strong> (default): the built-in components are billed as
+  configured on the Components tab.</li>
+<li><strong>Limit-based (monthly)</strong>: customers request cores, RAM and storage when
+  ordering and are billed <code>price × limit</code> every month.</li>
+<li><strong>Usage-based</strong>: customers order without limits; the tenant starts with the
+  backend's default quotas, and the plan bills accumulated consumption
+  (core-hours, GB-hours) at the plan's prices. Adjust quotas with the
+  resource's <strong>Set quotas</strong> action.</li>
+</ul>
+</li>
+<li>Enter the prices for each component. Under a usage-based plan the prices are per
+   core-hour and per GB-hour.</li>
+</ol>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/plan-billing-mode-plan-form.png" data-desc-position="bottom"><img alt="Plan form with the Billing mode selector" src="../../img/plan-billing-mode-plan-form.png"></a></p>
+<p>The Plans tab shows the mode of every plan, and customers see it next to each plan
+name when ordering. A plan's billing mode cannot be changed while resources use the
+plan.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/plan-billing-mode-plans-tab.png" data-desc-position="bottom"><img alt="Plans tab listing a limit-based and a usage-based plan" src="../../img/plan-billing-mode-plans-tab.png"></a></p>
+<p>When a customer picks the usage-based plan, the order form shows no quota inputs:
+each built-in component is listed with its per-unit price and the total reads
+"Billed by usage".</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/plan-billing-mode-order-form.png" data-desc-position="bottom"><img alt="Order form with the usage-based plan selected" src="../../img/plan-billing-mode-order-form.png"></a></p>
+<p>The <strong>Switch modes</strong> dialog still rewrites the components, and it now applies the
+same choice to every plan of the offering, so the switch changes what is billed
+whatever mode the plans were on. Switching to <strong>Prepaid</strong> puts the plans back on
+<strong>Inherit from components</strong>: prepaid is a property of the components, not a plan
+mode, and inherit is what defers to them.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>An offering whose built-in components are prepaid has no plan-level choice to
+make — every mode would bill those components per period instead of upfront —
+so the <strong>Billing mode</strong> selector is not shown on its plans. Move the offering
+off prepaid with <strong>Switch modes</strong> first.</p>
+</div>
+<h3 id="switching-between-the-two-plans">Switching between the two plans</h3>
+<p>Customers can move a resource between the plans with <strong>Change plan</strong> at any time.
+Both plans must share the same billing period.</p>
+<ul>
+<li><strong>Limit-based → usage-based</strong>: the limit fee is charged for the current billing
+  period of the plan: a plan billed per month keeps the whole month's fee, a plan
+  billed per day is charged for the days used. From the switch the resource is
+  billed on consumption. Its quotas stay unchanged and only cap usage.</li>
+<li><strong>Usage-based → limit-based</strong>: usage accrued before the switch is invoiced at
+  the old plan's rates. From the switch the new plan bills the resource's current
+  quotas as limits for its billing period (the whole month for a monthly plan,
+  per day for a daily plan). The switch is refused until the provider has set
+  quotas for cores, RAM and storage.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Limit items of a plan billed per month are not prorated by day: a tenant created
+or switched on the 20th is charged the full monthly fee, exactly as when it is
+terminated mid-month. Use a plan billed per day when day-level proration is wanted.</p>
+</div>
+<p>The change-plan dialog explains the consequence before the customer submits, the
+order shows both plans with their billing modes, and the confirmation email
+carries the same summary.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/plan-billing-mode-change-plan.png" data-desc-position="bottom"><img alt="Change plan dialog explaining the switch to usage-based billing" src="../../img/plan-billing-mode-change-plan.png"></a></p>
+<p>On the invoice the resource lists every plan it was billed with during the month,
+and its lines are grouped under one header per plan with the period and subtotal,
+so a month with a switch reads as one reserved block next to the usage block.
+Switching back to a plan within the same month continues that plan's line rather
+than charging its fee a second time.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/plan-billing-mode-invoice.png" data-desc-position="bottom"><img alt="Invoice lines of a resource grouped by plan after a switch" src="../../img/plan-billing-mode-invoice.png"></a></p>
 <h2 id="pausing-or-downscaling-resources-on-usage-limit">Pausing or downscaling resources on usage limit</h2>
 <p>For offerings with <strong>limit-based</strong> components, Waldur can automatically restrict a resource once its reported usage reaches the component's limit for the current accounting period — pausing or downscaling the resource until usage drops back below the limit. Use this when a limit should act as a hard ceiling on consumption, not only as a billing basis.</p>
 <h3 id="prerequisites">Prerequisites</h3>

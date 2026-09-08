@@ -5121,6 +5121,56 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#waldur-authoritative-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waldur-authoritative mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Waldur-authoritative mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-in-each-case" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens in each case
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-group-gids-are-still-allocated-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project group GIDs are still allocated locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-note-on-settings-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A note on settings validation
+      
+    </span>
+  </a>
+  
+</li>
+        
           <li class="md-nav__item">
   <a href="#username-formats" class="md-nav__link">
     <span class="md-ellipsis">
@@ -18345,6 +18395,56 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#waldur-authoritative-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Waldur-authoritative mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Waldur-authoritative mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-in-each-case" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens in each case
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-group-gids-are-still-allocated-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project group GIDs are still allocated locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-note-on-settings-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A note on settings validation
+      
+    </span>
+  </a>
+  
+</li>
+        
           <li class="md-nav__item">
   <a href="#username-formats" class="md-nav__link">
     <span class="md-ellipsis">
@@ -18873,10 +18973,34 @@ and welcome email delivery.</p>
 <td>Base path for home directories</td>
 </tr>
 <tr>
+<td><code>account_source</code></td>
+<td>No</td>
+<td><code>ldap</code></td>
+<td>Who owns username/UID/GID: <code>ldap</code> (this agent) or <code>waldur</code> (see below)</td>
+</tr>
+<tr>
+<td><code>on_missing_posix_ids</code></td>
+<td>No</td>
+<td><code>error</code></td>
+<td><code>error</code> or <code>skip</code> when Waldur holds no ids (waldur mode)</td>
+</tr>
+<tr>
+<td><code>on_posix_mismatch</code></td>
+<td>No</td>
+<td><code>report</code></td>
+<td><code>report</code>, <code>adopt</code> or <code>fail</code> on an id disagreement (waldur mode)</td>
+</tr>
+<tr>
 <td><code>username_format</code></td>
 <td>No</td>
 <td><code>first_initial_lastname</code></td>
-<td>Username generation strategy (see below)</td>
+<td>Username strategy (see below); rejected in waldur mode</td>
+</tr>
+<tr>
+<td><code>waldur_username_attribute</code></td>
+<td>No</td>
+<td>--</td>
+<td>LDAP attribute to store the Waldur username (e.g. a CUID) in</td>
 </tr>
 <tr>
 <td><code>remove_user_on_deactivate</code></td>
@@ -18904,6 +19028,117 @@ and welcome email delivery.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="waldur-authoritative-mode">Waldur-authoritative mode</h2>
+<p>By default this plugin owns the identity: it derives a username from the user's
+name and allocates a UID and GID by scanning the directory for free numbers.
+That breaks down as soon as <strong>one directory serves several offerings of the same
+service provider</strong> — each offering allocates independently, so the same person
+ends up with two UIDs behind one DN and one home directory, and two site agents
+fight over the entry.</p>
+<p>Waldur already solves this on its side: a <code>PosixIdPool</code> attached to the service
+provider gives each user one UID and one primary GID across every offering that
+resolves to it. Setting <code>account_source: waldur</code> makes the agent <em>write those
+values</em> rather than invent its own.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ldap</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">"ldap://ldap.example.com"</span>
+<span class="w">    </span><span class="nt">bind_dn</span><span class="p">:</span><span class="w"> </span><span class="s">"cn=admin,dc=example,dc=com"</span>
+<span class="w">    </span><span class="nt">bind_password</span><span class="p">:</span><span class="w"> </span><span class="s">"admin-password"</span>
+<span class="w">    </span><span class="nt">base_dn</span><span class="p">:</span><span class="w"> </span><span class="s">"dc=example,dc=com"</span>
+
+<span class="w">    </span><span class="nt">account_source</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
+<span class="w">    </span><span class="nt">on_posix_mismatch</span><span class="p">:</span><span class="w"> </span><span class="s">"report"</span><span class="w">   </span><span class="c1"># report | adopt | fail</span>
+<span class="w">    </span><span class="nt">on_missing_posix_ids</span><span class="p">:</span><span class="w"> </span><span class="s">"error"</span><span class="w"> </span><span class="c1"># error | skip</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>In this mode the agent takes <code>username</code>, <code>uidnumber</code>, <code>primarygroup</code>,
+<code>home_directory</code> and <code>login_shell</code> from the offering user and writes them into
+the directory. <code>username_format</code> is rejected (Waldur names the accounts), and
+<code>uid_range_*</code> is ignored for user accounts. The offering's
+<code>username_generation_policy</code> must be anything <strong>other</strong> than <code>service_provider</code>
+— under that policy Waldur expects the agent to assign names, which is the
+opposite of what this mode does.</p>
+<p>Provisioning runs as a <strong>reconcile loop</strong> on every membership cycle, over the
+full account list rather than only newly-requested ones, so an entry that was
+deleted or edited out of band is repaired on the next pass.</p>
+<h3 id="what-happens-in-each-case">What happens in each case</h3>
+<table>
+<thead>
+<tr>
+<th>Directory state</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No entry, UID free</td>
+<td>Create the entry, its personal group, and any access-group memberships</td>
+</tr>
+<tr>
+<td>Entry matches Waldur</td>
+<td>Nothing</td>
+</tr>
+<tr>
+<td>Home directory, shell, name or mail differ</td>
+<td>Rewritten to match Waldur</td>
+</tr>
+<tr>
+<td><code>uidNumber</code> or <code>gidNumber</code> differ</td>
+<td>Governed by <code>on_posix_mismatch</code></td>
+</tr>
+<tr>
+<td>The wanted UID is held by a <em>different</em> entry</td>
+<td>Error, the account is left alone — always</td>
+</tr>
+<tr>
+<td>Another entry shares the email address</td>
+<td>Warning, and the account is created anyway</td>
+</tr>
+</tbody>
+</table>
+<p><code>on_posix_mismatch</code> decides only the id-disagreement row:</p>
+<ul>
+<li><strong><code>report</code></strong> (default) logs a before/after diff and changes nothing.
+  Renumbering a live account orphans every file it owns, so this is a human
+  decision.</li>
+<li><strong><code>adopt</code></strong> rewrites the entry and its personal group to Waldur's ids. Intended
+  for a one-shot migration. <strong>Afterwards you must <code>chown -R</code> the affected files
+  from the old ids to the new ones</strong> — nothing else will.</li>
+<li><strong><code>fail</code></strong> raises instead of logging.</li>
+</ul>
+<p>None of the three can move an account onto a UID another entry already holds.
+LDAP does not enforce <code>uidNumber</code> uniqueness, so such a write would succeed and
+leave two accounts owning the same files; that row is refused before policy is
+consulted.</p>
+<p>An account Waldur holds no ids for is never given a locally-invented one: that
+would reintroduce the double allocation this mode exists to remove. Attach a
+POSIX ID pool to the service provider, or turn POSIX accounts off for the
+offering.</p>
+<h3 id="project-group-gids-are-still-allocated-locally">Project group GIDs are still allocated locally</h3>
+<p>Only <em>user</em> accounts and their personal groups come from Waldur. Project and role
+group GIDs are still allocated by the resource backend from
+<code>gid_range_start</code>..<code>gid_range_end</code>.</p>
+<blockquote>
+<p><strong>These ranges must not overlap the offering's POSIX ID pool.</strong> LDAP does not
+enforce <code>gidNumber</code> uniqueness, so an overlap silently produces two groups
+sharing a GID and files whose ownership is ambiguous. The agent cannot read the
+pool's bounds, so it warns at startup with the range it is configured with, but
+it cannot check this for you.</p>
+</blockquote>
+<h3 id="a-note-on-settings-validation">A note on settings validation</h3>
+<p><code>validate_backend_settings_with_plugin_schema</code> in the agent core keys on
+<code>backend_type</code>, and the usual deployment sets <code>backend_type: slurm</code>, whose schema
+allows unknown keys — so this plugin's schema is never applied by core. The
+plugin therefore validates its own <code>ldap:</code> block at construction, and a bad value
+fails the backend rather than being silently ignored.</p>
 <h3 id="username-formats">Username Formats</h3>
 <table>
 <thead>
