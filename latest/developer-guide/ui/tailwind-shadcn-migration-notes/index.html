@@ -18716,8 +18716,7 @@ single primitive in the app.</p>
   hover/disabled treatment.</li>
 <li><strong><code>.dropdown-toggle</code> stays on trigger buttons</strong> even though Radix
   supplies its own <code>aria-haspopup</code>/<code>data-state</code> — removing it breaks
-  <code>.disabled-view</code>'s <code>table .dropdown-toggle, .dropdown-toggle.btn-icon
-  { display: none }</code> rule.</li>
+  <code>.disabled-view</code>'s <code>table .dropdown-toggle, .dropdown-toggle.btn-icon { display: none }</code> rule.</li>
 <li><strong><code>ActionsDropdownShellProps</code> vs. <code>ActionsDropdownProps</code> are
   deliberately different types.</strong> <code>ActionsDropdownComponent</code>'s <code>...rest</code>
   spreads onto <code>RadixDropdownMenu.Content</code>, a real DOM element — widening
@@ -18813,7 +18812,7 @@ and, pre-migration, were driven by Metronic's imperative <code>MenuComponent</co
   jsdom has no <code>window.matchMedia</code> at all, and <code>react-responsive</code> captures
   whatever it resolves to <em>at module-import time</em> — reassigning
   <code>window.matchMedia</code> inside a test has no effect. Use <code>vi.mock('react-responsive',
-  () =&gt; ({ useMediaQuery: mockFn }))</code> instead.</li>
+() =&gt; ({ useMediaQuery: mockFn }))</code> instead.</li>
 </ul>
 <h3 id="radix-popoverportal-renders-outside-the-local-dom-subtree-watch-z-index-and-modal-stacking">Radix <code>Popover.Portal</code> renders outside the local DOM subtree — watch z-index and modal stacking</h3>
 <p><code>Popover.Portal</code>/<code>DropdownMenu.Portal</code> append to <code>document.body</code> by default,
@@ -18894,7 +18893,7 @@ all).</p>
   exactly once, while <code>contentRef.current</code> is still null).</li>
 <li><strong>Animate via <code>animation</code>/<code>@keyframes</code>, not <code>transition</code>.</strong> Radix's own
   <code>CollapsibleContentImpl</code> synchronously disables (<code>transitionDuration =
-  '0s'</code>, <code>animationName = 'none'</code>), force-reflows via
+'0s'</code>, <code>animationName = 'none'</code>), force-reflows via
   <code>getBoundingClientRect()</code>, then restores — a disable→reflow→restore
   dance that reliably <em>restarts</em> a named <code>animation</code> but gives a
   <code>transition</code> nothing to interpolate from (no intervening painted frame
@@ -18942,13 +18941,12 @@ all).</p>
   route match, never the equivalent of <code>.hide()</code>, so a route-active section
   the user manually collapsed doesn't reopen until the next matching
   navigation.</li>
-<li><strong><code>MenuComponent.ts</code> has been deleted entirely</strong>, along with its
-  <code>bootstrap()</code>/<code>reinitialization()</code> calls in <code>MasterInit.tsx</code>/<code>MasterLayout.tsx</code>
-  and its barrel export. Verify before assuming otherwise: a repo-wide grep
-  for <code>data-kt-menu</code> should turn up nothing live. <code>Sidebar.tsx</code>'s other
-  Metronic widgets (<code>DrawerComponent</code>, <code>ScrollComponent</code>, <code>ToggleComponent</code>
-  — mobile drawer, custom scrollbar, minimize toggle) are unrelated and
-  untouched.</li>
+<li><strong><code>MenuComponent.ts</code>, <code>_SwapperComponent.ts</code>, <code>_ToggleComponent.ts</code>, and <code>_ScrollComponent.ts</code> have been deleted entirely</strong>, along with their
+  <code>bootstrap()</code>/<code>reinitialization()</code> calls in <code>MasterInit.tsx</code>/<code>Sidebar.tsx</code>
+  and their barrel exports. The sidebar minimizer toggle in <code>BrandName.tsx</code> runs
+  on <code>@radix-ui/react-toggle</code>. The sidebar menu scroll area in <code>Sidebar.tsx</code> runs
+  on <code>@radix-ui/react-scroll-area</code> (with a shared <code>ScrollArea</code> primitive in <code>packages/ui</code>).
+  The only remaining Metronic component is <code>DrawerComponent</code> (mobile drawer).</li>
 </ul>
 <h3 id="testing-gotcha-resizeobserver-and-animation-timing">Testing gotcha: <code>ResizeObserver</code> and animation timing</h3>
 <p>jsdom doesn't implement <code>ResizeObserver</code> — stub it in tests that render
