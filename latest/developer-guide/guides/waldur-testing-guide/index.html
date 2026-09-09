@@ -18385,12 +18385,36 @@
 <p>Choose the right test base class for each test:</p>
 <ul>
 <li><strong>Default: <code>test.APITestCase</code></strong> — uses transaction rollback, much faster</li>
-<li><strong>Use <code>test.APITransactionTestCase</code></strong> only when:</li>
-<li><code>transaction.on_commit()</code> callbacks must fire (e.g., Celery task dispatch)</li>
-<li><code>IntegrityError</code> is deliberately triggered (breaks TestCase's wrapping transaction)</li>
-<li>Threading or multi-process database access is needed</li>
-<li><code>responses.start()</code> in <code>setUp</code> for class-wide HTTP mocking (leaks across TestCase classes)</li>
+<li><strong><code>test.APITransactionTestCase</code> is a last resort.</strong> It truncates every table
+  between tests. Only two situations actually need it:</li>
+<li>Threading or multi-process database access (<code>select_for_update</code> under real
+     concurrency)</li>
+<li><code>transaction.on_commit()</code> callbacks must fire and wrapping the triggering
+     call is impractical</li>
 </ul>
+<p>Three reasons that look like they need it, but do not:</p>
+<table>
+<thead>
+<tr>
+<th>Looks like it needs TransactionTestCase</th>
+<th>What to do instead</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>transaction.on_commit()</code> must fire</td>
+<td>Wrap the triggering call in <code>self.captureOnCommitCallbacks(execute=True)</code></td>
+</tr>
+<tr>
+<td>Deliberate <code>IntegrityError</code></td>
+<td>Raise it inside <code>transaction.atomic()</code> — the savepoint keeps the wrapping transaction intact</td>
+</tr>
+<tr>
+<td><code>responses.start()</code> in <code>setUp</code></td>
+<td>Register <code>addCleanup(responses.reset)</code> <em>before</em> <code>addCleanup(responses.stop)</code>; leaked mocks come from a missing <code>reset()</code>, not from the base class</td>
+</tr>
+</tbody>
+</table>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -18400,18 +18424,44 @@
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># GOOD: Default to APITestCase</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># GOOD: Default to APITestCase</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITestCase</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_something</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="o">...</span>
 
-<span class="c1"># GOOD: Use APITransactionTestCase when on_commit is needed</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OrderProcessingTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITransactionTestCase</span><span class="p">):</span>
+<span class="c1"># GOOD: on_commit under APITestCase — capture the callbacks explicitly</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderProcessingTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITestCase</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_order_triggers_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># on_commit callback fires Celery task</span>
-        <span class="o">...</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">captureOnCommitCallbacks</span><span class="p">(</span><span class="n">execute</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+        <span class="n">mock_task</span><span class="o">.</span><span class="n">delay</span><span class="o">.</span><span class="n">assert_called_once</span><span class="p">()</span>
+
+<span class="c1"># GOOD: a deliberate IntegrityError, contained by a savepoint</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UniqueConstraintTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITestCase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_duplicate_is_rejected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="n">IntegrityError</span><span class="p">),</span> <span class="n">transaction</span><span class="o">.</span><span class="n">atomic</span><span class="p">():</span>
+            <span class="n">Model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">duplicate</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>A CI lint job (<code>scripts/analyze_transaction_test_cases.py --ci --baseline N</code>) enforces this — adding new unjustified <code>APITransactionTestCase</code> classes will fail the pipeline. The baseline is lowered as classes are migrated.</p>
+<p>A CI lint job (<code>scripts/analyze_transaction_test_cases.py --ci --baseline 0</code>)
+enforces this: any <code>APITransactionTestCase</code> class the analyzer cannot see a
+reason for fails the pipeline. When the reason lives in production code the
+analyzer cannot see — typically an <code>on_commit()</code> in a signal handler the test
+drives through the API — state it in a comment on the class:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># APITransactionTestCase required: the order handler dispatches the task</span>
+<span class="c1"># from transaction.on_commit</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderNotificationTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">APITransactionTestCase</span><span class="p">):</span>
+    <span class="o">...</span>
+</code></pre></div></td></tr></tbody></table></div>
 <h3 id="7-performance-testing-considerations">7. Performance Testing Considerations</h3>
 <ul>
 <li><strong>Include query optimization tests</strong> where appropriate</li>
@@ -18492,6 +18542,20 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
         <span class="c1"># Set up mocks directly instead of inheriting from a TestCase mixin</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>The declaration is already misleading — the class reads as a
+<code>TransactionTestCase</code> while running with <code>TestCase</code> semantics — and it turns
+into a hard error the moment the first base is migrated: a base class may not
+precede its own subclass, so <code>class MyTest(test.APITestCase, SomeTestMixin)</code>
+cannot be linearised and the whole module fails to import. Drop the redundant
+base rather than rewriting it:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># GOOD: SomeTestMixin already supplies APITestCase</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyTest</span><span class="p">(</span><span class="n">SomeTestMixin</span><span class="p">):</span>
+    <span class="o">...</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>analyze_transaction_test_cases.py</code> fails CI on an unlinearisable base list and
+warns about a mixed one.</p>
 <h3 id="12-openstack-backend-test-patterns">12. OpenStack Backend Test Patterns</h3>
 <p>When writing standalone backend tests that don't inherit from <code>BaseBackendTestCase</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>

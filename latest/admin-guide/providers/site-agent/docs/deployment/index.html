@@ -4488,6 +4488,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#agent-identity-registration-is-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Identity Registration Is Refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#waldur-api-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18869,6 +18880,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#agent-identity-registration-is-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Identity Registration Is Refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#waldur-api-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19354,6 +19376,47 @@ mam-list-accounts
 </code></pre></div></td></tr></tbody></table></div>
 <ol>
 <li>Check permissions and PATH</li>
+</ol>
+<h4 id="agent-identity-registration-is-refused">Agent Identity Registration Is Refused</h4>
+<p>Symptom — every cycle, for the same offering:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>Registering a new identity for offering my-offering with name agent-&lt;uuid&gt;
+Unable to register the identity agent-&lt;uuid&gt; for the offering my-offering:
+Unexpected status code: 400 ... {"offering":["Object with uuid=&lt;uuid&gt; does not exist."]}
+Continuing without agent telemetry.
+</code></pre></div></td></tr></tbody></table></div>
+<p>The offering does exist. Waldur registers an agent identity only for the offering types listed
+under <a href="../configuration/#waldur_offering_uuid"><code>waldur_offering_uuid</code></a>, and reports any other type
+as a missing object rather than as an unsupported one.</p>
+<p>The agent keeps processing the offering: the identity, its service and its processors are
+telemetry, and the agent's actual work — orders, membership sync, usage reporting — goes through
+the marketplace API and does not touch them. What you lose until the offering type is accepted:</p>
+<ul>
+<li>the agent does not appear in Waldur's agent monitoring view, so there is no version, uptime,
+  dependency or processor information for it;</li>
+<li>log shipping never starts. A shipper is keyed by the agent identity's UUID, so without an
+  identity there is nothing to attach a batch to — and the endpoint that receives the batches
+  applies the same offering-type restriction, so it would refuse them anyway. Agent logs stay in
+  the service's own output (<code>journalctl -u waldur-agent-*.service</code>).</li>
+</ul>
+<p>What to do:</p>
+<ol>
+<li>Confirm the offering's type, using the agent's own token:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Token your-token"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://waldur.example.com/api/marketplace-provider-offerings/&lt;offering-uuid&gt;/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'{name, type, state}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<ol>
+<li>If it comes back <code>404</code>, the UUID in <code>waldur_offering_uuid</code> is wrong or belongs to another
+   Waldur instance — the offering name in the log line comes from your configuration file, not
+   from the API, so a stale UUID looks identical to this symptom.</li>
+<li>If the type is not one of the supported ones, either move the agent to an offering of a
+   supported type, or ask your Waldur operator to widen the accepted types on the server.</li>
 </ol>
 <h4 id="waldur-api-issues">Waldur API Issues</h4>
 <ol>
