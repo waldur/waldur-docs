@@ -2082,6 +2082,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../admin-guide/deployment/helm/docs/gateway-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gateway api
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../admin-guide/deployment/helm/docs/helm/" class="md-nav__link">
         
   
@@ -9025,6 +9053,17 @@
   
     <nav class="md-nav" aria-label="The sidebar navigation accordion: Collapsible, not Accordion">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-shared-content-drawer-kt_drawer-dialog-real-keyframes-and-a-manual-drawer-on-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shared content drawer (#kt_drawer): Dialog, real @keyframes, and a manual .drawer-on class
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#testing-gotcha-resizeobserver-and-animation-timing" class="md-nav__link">
@@ -18414,6 +18453,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-shared-content-drawer-kt_drawer-dialog-real-keyframes-and-a-manual-drawer-on-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shared content drawer (#kt_drawer): Dialog, real @keyframes, and a manual .drawer-on class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#testing-gotcha-resizeobserver-and-animation-timing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18941,12 +18991,95 @@ all).</p>
   route match, never the equivalent of <code>.hide()</code>, so a route-active section
   the user manually collapsed doesn't reopen until the next matching
   navigation.</li>
-<li><strong><code>MenuComponent.ts</code>, <code>_SwapperComponent.ts</code>, <code>_ToggleComponent.ts</code>, and <code>_ScrollComponent.ts</code> have been deleted entirely</strong>, along with their
-  <code>bootstrap()</code>/<code>reinitialization()</code> calls in <code>MasterInit.tsx</code>/<code>Sidebar.tsx</code>
-  and their barrel exports. The sidebar minimizer toggle in <code>BrandName.tsx</code> runs
+<li><strong><code>MenuComponent.ts</code>, <code>_SwapperComponent.ts</code>, <code>_ToggleComponent.ts</code>, <code>_ScrollComponent.ts</code>, and <code>DrawerComponent.ts</code> have been deleted entirely</strong>, along with their
+  <code>bootstrap()</code>/<code>reinitialization()</code> calls in <code>MasterInit.tsx</code>/<code>Sidebar.tsx</code>,
+  <code>hideAll()</code> in <code>Content.tsx</code>, and the entire <code>src/metronic/_utils/</code> helper
+  directory. The sidebar minimizer toggle in <code>BrandName.tsx</code> runs
   on <code>@radix-ui/react-toggle</code>. The sidebar menu scroll area in <code>Sidebar.tsx</code> runs
   on <code>@radix-ui/react-scroll-area</code> (with a shared <code>ScrollArea</code> primitive in <code>packages/ui</code>).
-  The only remaining Metronic component is <code>DrawerComponent</code> (mobile drawer).</li>
+  <code>Sidebar.tsx</code>'s mobile responsive drawer below <code>lg</code> now runs on declarative React
+  state (<code>mobileSidebarOpen</code> in <code>LayoutContext</code>, toggled by <code>AppHeader.tsx</code>'s hamburger button)
+  with a scoped <code>.drawer-mobile</code> CSS transition and portal overlay, closing automatically
+  on route changes and <code>Escape</code>. The app's other central drawer use — the shared
+  <code>#kt_drawer</code> content panel behind <code>DrawerContext</code>/<code>DrawerRoot</code> (support, chat, table
+  filters, pending-order confirmations, …) — runs on <code>@radix-ui/react-dialog</code>; see below.</li>
+</ul>
+<h3 id="the-shared-content-drawer-kt_drawer-dialog-real-keyframes-and-a-manual-drawer-on-class">The shared content drawer (<code>#kt_drawer</code>): Dialog, real <code>@keyframes</code>, and a manual <code>.drawer-on</code> class</h3>
+<p><code>DrawerRoot.tsx</code> now wraps the exact same <code>.card</code>/<code>.card-header</code>/<code>.card-body</code>
+Bootstrap markup in <code>Dialog.Root</code>/<code>Dialog.Content</code> instead of Metronic's
+<code>data-kt-drawer-*</code> attributes; <code>DrawerContext.tsx</code> gained a real <code>isOpen</code>
+boolean (previously visibility lived <strong>only</strong> in the imperative
+<code>DrawerComponent.getInstance('kt_drawer').show()/.hide()</code> calls, with no
+React state backing it at all).</p>
+<ul>
+<li><strong><code>forceMount</code> on <code>Dialog.Content</code> was tried first and reverted — it broke
+  real clicks elsewhere on the page.</strong> The motivation looked sound: a handful
+  of existing helpers (<code>useDrawerExpand</code>/<code>useDrawerShellClass</code>/<code>isDrawerOpen</code>
+  in <code>src/drawer/</code>) read and write <code>#kt_drawer</code>'s <code>classList</code>/<code>dataset</code>/inline
+  <code>style</code> directly and assume the node always exists, mirroring Metronic's own
+  DOM lifecycle (the div was permanently mounted; only a CSS class toggled its
+  visibility) — <code>forceMount</code> looked like the natural way to preserve that
+  (same family of "looks like the fix" trap as <code>Collapsible.Content</code>'s
+  <code>forceMount</code> hazard above, different mechanism). In reality, <code>forceMount</code>
+  keeps <code>DialogContentModal</code>'s inner <code>DismissableLayer</code> <strong>permanently
+  mounted</strong>, and <code>DismissableLayer</code> registers a real
+  <code>document.addEventListener('pointerdown', …)</code> unconditionally on mount —
+  its own "is this pointerdown outside the layer" gate checks the
+  cross-layer <code>layersWithOutsidePointerEventsDisabled</code> set, not
+  <code>context.open</code>, so it runs (and calls <code>onOpenChange(false)</code>, harmlessly, on
+  an already-closed drawer) for <strong>every click anywhere in the document</strong>, not
+  just while genuinely open. That alone is inert — until it interacts with
+  something else on the same element, at which point real (trusted) clicks
+  on the header's Support/Pending-tasks toggle buttons silently did nothing,
+  while every diagnostic that used an untrusted/synthetic click (<code>el.click()</code>,
+  <code>dispatchEvent(new MouseEvent(...))</code>) or a plain DOM state check looked
+  completely fine — the discrepancy is <em>only</em> visible against a real,
+  trusted pointer event, which is why it shipped past <code>tsc</code>/lint/the full
+  unit suite/an initial Browser-pane pass and was only caught by a manual
+  real-click regression report. <strong>Lesson: test open/close on this kind of
+  shell with a real trusted click, not just <code>el.click()</code> or a DOM assertion —
+  they are not equivalent once <code>DismissableLayer</code> is involved.</strong></li>
+<li><strong>The fix drops <code>forceMount</code> and gives Radix's own Presence something real
+  to detect instead.</strong> Presence (<code>@radix-ui/react-presence</code>, this version)
+  only detects an <em>animation</em> (<code>animationstart</code>/<code>animationend</code>, via
+  <code>getComputedStyle(node).animationName</code>) to decide whether to delay
+  unmounting past a <code>present</code> flip to <code>false</code> — it does <strong>not</strong> detect plain
+  CSS <code>transition</code>s, which is what core <code>_drawer.scss</code>'s <code>.drawer</code> uses for
+  every other <code>.drawer</code> consumer (e.g. <code>SidebarLayout.tsx</code>'s wizard sidebar,
+  untouched by any of this). So <code>_shell.scss</code> gives <code>#kt_drawer</code> specifically
+  a real <code>@keyframes kt-drawer-slide-in</code>/<code>kt-drawer-slide-out</code> pair, keyed off
+  the same manually-toggled <code>.drawer-on</code> class <code>DrawerRoot</code> already sets from
+  <code>isOpen</code> (not Radix's own <code>data-state</code> — keeping the literal <code>.drawer-on</code>
+  class is what keeps <code>useDrawerShellClass</code>/<code>isDrawerOpen</code>'s
+  <code>classList.contains('drawer-on')</code> checks, and <code>LLMChatDrawer.tsx</code>'s own
+  copy of that same check, working completely unmodified). Without
+  <code>forceMount</code>, <code>Dialog.Content</code> doesn't even mount until the <em>first</em> open
+  (matching Metronic's initial <code>display: none</code>), and on every close Presence
+  keeps it mounted for exactly the animation's real duration before removing
+  it — verified in the real dev stack with a <code>computer</code> screenshot burst
+  (forces a real paint per capture; blind <code>setTimeout</code> polling of
+  <code>getAnimations()</code> in an automated/CDP-driven tab reads <code>currentTime: 0</code>
+  forever, since such tabs don't advance animation compositing while
+  backgrounded — see the testing gotcha below, this bit it twice).</li>
+<li><strong>Width moved from a Metronic breakpoint-string attribute
+  (<code>data-kt-drawer-width="{default:'100%', 'lg':'800px'}"</code>) to a
+  <code>--drawer-width</code> CSS custom property</strong> set inline by <code>DrawerRoot</code> from
+  <code>drawerProps.width</code>, consumed by a real <code>@include media-breakpoint-up(lg)</code>
+  rule in <code>_shell.scss</code> (100% below <code>lg</code>, <code>var(--drawer-width, 800px)</code> at/above
+  it). <code>useDrawerExpand</code>'s full-screen toggle writes the same custom property
+  (<code>style.setProperty('--drawer-width', …)</code>) instead of <code>style.width</code>
+  directly — the existing <code>MutationObserver</code> re-assertion (guarding against
+  <code>DrawerRoot</code> re-renders clobbering an expanded width) still applies
+  unchanged, just retargeted.</li>
+<li><strong>Two <code>_thread.scss</code> selectors scoped to <code>[data-kt-drawer]</code></strong> (an ancestor
+  attribute-presence selector, matching the AI thread root/composer only when
+  nested inside a Metronic-managed drawer) had to move to <code>#kt_drawer</code> — the
+  attribute itself is gone from this element now that Radix owns it.</li>
+<li><strong><code>Dialog.Title</code> wraps the existing <code>&lt;h3 className="card-title …"&gt;</code></strong> via
+  <code>asChild</code> (Radix requires an accessible name for the dialog role);
+  <code>aria-describedby={undefined}</code> opts out of the paired description warning,
+  since drawer content is arbitrary and has no natural description. Both are
+  strict a11y additions — the old drawer had no ARIA role at all.</li>
 </ul>
 <h3 id="testing-gotcha-resizeobserver-and-animation-timing">Testing gotcha: <code>ResizeObserver</code> and animation timing</h3>
 <p>jsdom doesn't implement <code>ResizeObserver</code> — stub it in tests that render

@@ -2082,6 +2082,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../admin-guide/deployment/helm/docs/gateway-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gateway api
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../admin-guide/deployment/helm/docs/helm/" class="md-nav__link">
         
   
@@ -7644,6 +7672,28 @@
   
     <nav class="md-nav" aria-label="Data Model">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#registration-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registration attribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-nothing-is-arriving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why nothing is arriving
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#scope-bindings" class="md-nav__link">
@@ -18700,6 +18750,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#registration-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registration attribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-nothing-is-arriving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why nothing is arriving
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#scope-bindings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19300,9 +19372,110 @@ standalone (owned by any external integration).</p>
 <td>reverse FK</td>
 <td>The consumer's entity bindings — see below</td>
 </tr>
+<tr>
+<td><code>auth_kind</code></td>
+<td>CharField</td>
+<td>How the registering request authenticated: <code>pat</code>, <code>token</code> (DRF), <code>session</code>, <code>oidc</code>, <code>unknown</code></td>
+</tr>
+<tr>
+<td><code>auth_token_prefix</code></td>
+<td>CharField(10)</td>
+<td>PAT prefix, when <code>auth_kind</code> is <code>pat</code></td>
+</tr>
+<tr>
+<td><code>auth_token_name</code></td>
+<td>CharField(150)</td>
+<td>PAT name, when <code>auth_kind</code> is <code>pat</code></td>
+</tr>
+<tr>
+<td><code>authorized_via</code></td>
+<td>CharField</td>
+<td>Permission branch that authorised the registration — see below</td>
+</tr>
 </tbody>
 </table>
 <p>The queue name is <code>consumer_{consumer_uuid}</code> (property <code>EventConsumer.queue_name</code>).</p>
+<h3 id="registration-attribution">Registration attribution</h3>
+<p>The last four fields answer the two questions a queue otherwise cannot: <strong>on
+what credential</strong> it runs, and <strong>by what right</strong> it was registered. Both are
+refreshed on <em>every</em> re-registration, including the already-provisioned 200
+fast path, because they describe the credential in use now — an agent that
+restarts with a PAT after having been registered from a staff browser session
+must stop looking like a staff-session agent.</p>
+<p>They matter because a site agent on a staff user's session token is otherwise
+indistinguishable from one on a scoped PAT of an offering manager, while having
+a far broader delivery scope and an RMQ password that rotates with
+<code>token_lifetime</code>. A PAT is recorded by prefix and name rather than by foreign
+key on purpose: tracing a consumer back to a credential matters most once that
+credential has been revoked or deleted.</p>
+<p><code>authorized_via</code> values:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Path</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>staff</code></td>
+<td>both</td>
+<td><code>user.is_staff</code></td>
+</tr>
+<tr>
+<td><code>support</code></td>
+<td>standalone</td>
+<td><code>user.is_support</code> (global consumers)</td>
+</tr>
+<tr>
+<td><code>customer_owner</code></td>
+<td>site agent</td>
+<td><code>CREATE_OFFERING</code> on the offering's customer</td>
+</tr>
+<tr>
+<td><code>offering_manager</code></td>
+<td>site agent</td>
+<td><code>UPDATE_OFFERING</code> on the offering</td>
+</tr>
+<tr>
+<td><code>identity_manager</code></td>
+<td>site agent</td>
+<td><code>is_identity_manager</code> with <code>managed_isds</code></td>
+</tr>
+<tr>
+<td><code>scope_role</code></td>
+<td>standalone</td>
+<td>Holds a role on every requested binding</td>
+</tr>
+<tr>
+<td><code>self</code></td>
+<td>standalone</td>
+<td>Bound only to the caller's own user scope</td>
+</tr>
+</tbody>
+</table>
+<p>Registering with a non-PAT credential, or as staff, emits an
+<code>event_consumer_registered_with_broad_credential</code> audit event — but only when
+the attribution <em>changes</em>, so an agent restarting every few minutes does not
+bury the signal.</p>
+<p>Rows registered before this was recorded carry empty strings in all four fields.</p>
+<h3 id="why-nothing-is-arriving">Why nothing is arriving</h3>
+<p><code>EventConsumerSerializer</code> and the connection-stats endpoint both expose
+<code>delivery_blocked_reason</code> (<code>event_dispatch.delivery_blocked_reason</code>), which is
+null while events flow. It walks the drop conditions of <code>build_messages</code> in
+order: a deactivated owner, an unprovisioned queue, a missing RMQ credential, a
+global consumer whose owner is no longer staff/support, bindings whose target
+rows are gone, and finally an owner holding no role on any scope the consumer is
+bound to. Without it, each of those is silent — no log line, no exception, no
+state on the row.</p>
+<p>It checks a role anywhere in a binding's chain rather than against one event's
+scope-keys, so a null value means "something is being delivered", not
+"everything is".</p>
+<p>Note that <code>register_queue</code> admits an <strong>identity manager</strong>, who holds no role on
+the offering at all — the standalone path's <code>holds_any_role_on_scope_or_ancestor</code>
+guard does not apply there. Delivery re-authorization bypasses only staff and
+support, so such a consumer is reported blocked, and genuinely receives nothing.</p>
 <h3 id="scope-bindings">Scope bindings</h3>
 <p>A consumer is bound to a <strong>list</strong> of entities via <code>EventConsumerScope(consumer,
 content_type, object_id)</code>. An event is delivered when its <strong>scope-keys</strong>
