@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-11T13:37:56.907322Z
+Generated: 2026-09-11T14:56:14.939541Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -45500,6 +45500,235 @@ filters based on ISD identity manager access.
 
 ---
 
+### VMware vSphere
+<!-- Source: docs/admin-guide/providers/vmware.md -->
+
+# VMware vSphere
+
+Waldur provisions and manages virtual machines on a VMware vCenter through the
+**vSphere Virtual Machine** offering type. Customers order VMs from the marketplace, choosing
+from the templates in your vCenter Content Library, and then start, stop, resize and extend
+them from Waldur without access to vCenter.
+
+The integration talks to vCenter over its two APIs: the vSphere Web Services API (vim25) for
+inventory, power, reconfiguration, disks, network adapters and consoles, and the REST API for
+the Content Library, which vim25 does not expose.
+
+## Requirements
+
+- vCenter Server 8.0 with the Content Library service enabled. The integration is tested
+  against the vSphere 8.0 API.
+- HTTPS access from the Waldur backend and workers to vCenter.
+- A dedicated vCenter account for Waldur (see [Service account](#service-account)).
+- At least one **VM template** in a Content Library (see [Templates](#templates)).
+- The name of the cluster that new VMs are placed in by default.
+
+## Service account
+
+Create a dedicated vCenter user for Waldur rather than reusing an administrator account, and
+grant it a role on the datacenter (or on the cluster, datastores, networks and VM folder it
+should manage) that allows it to:
+
+- read the inventory: datacenters, clusters, hosts, datastores, networks and folders;
+- read the Content Library and deploy VMs from its VM templates;
+- create, reconfigure (CPU, memory, disks, network adapters) and delete virtual machines;
+- power VMs on, off, reset and suspend them, and shut down or reboot the guest OS;
+- allocate space on datastores and assign networks to VMs;
+- open a remote console on VMs.
+
+!!! warning
+    Waldur's automated tests run against VMware's vCenter simulator, which does not enforce
+    privileges. Check the role against a real vCenter before you rely on it. If an action
+    fails with a permission error, the error is shown on the resource and in the Waldur
+    worker log.
+
+## Templates
+
+Waldur provisions VMs by deploying **VM templates** from vCenter's Content Library. To make a
+VM available for ordering:
+
+1. Prepare the VM in vCenter: install the guest OS and VMware Tools. Give it one network
+   adapter; in [basic mode](#basic-mode), templates with more than one are not offered.
+2. In the vSphere Client, right-click the VM and select **Clone → Clone as Template to
+   Library**. Choose **VM Template** as the template type (not OVF).
+3. Pick a Content Library that the Waldur service account can read.
+
+Waldur lists the template's CPU, memory, disk and guest OS on the order form and uses them as
+the defaults for a new VM. Templates are refreshed automatically; see
+[Synchronisation](#synchronisation) to refresh them on demand.
+
+!!! tip
+    Name templates `<OS>-<version>`, e.g. `Ubuntu-24.04` or `Rocky-9.4`. The order form splits
+    the name at the first separator followed by a digit and shows the OS and version on two
+    lines.
+
+## Creating the offering
+
+1. Go to **Organizations → your service provider → Service provider → Offerings** and click
+   **Add**.
+2. Enter a name, pick a category, and select the **vSphere Virtual Machine** type.
+
+    [Image: New offering dialog with the vSphere Virtual Machine type selected]
+
+3. Click **Create**. The offering opens on its **Edit** tab.
+
+## Configuring credentials
+
+Open **Integration → Credentials** on the offering's Edit tab and fill in each field with its
+edit button.
+
+[Image: Credentials of a vSphere offering in the OK state]
+
+| Field | Description |
+|-------|-------------|
+| Hostname | vCenter address, e.g. `https://vcenter.example.org`. A non-default port can be given as `https://vcenter.example.org:8443`. |
+| Username | The [service account](#service-account), e.g. `waldur@vsphere.local`. |
+| Password | Its password. |
+| Default cluster label | Name of the cluster that new VMs are placed in when the organization has no cluster of its own ([below](#assigning-inventory-to-organizations)). **Ordering fails without it.** |
+| Maximum vCPU for each VM | Upper bound for the CPU slider on the order form. |
+| Maximum RAM for each VM | Upper bound for memory, in GB. |
+| Maximum capacity for each disk | Upper bound for a single disk, in GB. |
+| Maximum total size of the disk space per VM | Upper bound for all disks of a VM together, in GB. |
+
+The four maximums are optional; if you leave one empty, that dimension is unlimited.
+
+[Image: Maximum RAM dialog with the value in GB]
+
+!!! note "Units in the API"
+    The API stores the RAM and disk maximums in **MiB**: 32 GB entered in the dialog is saved
+    as `32768`. Use MiB when you set them through the API or an automation tool.
+
+Two more options are available through the API only (`service_attributes` in
+`POST /api/marketplace-provider-offerings/{uuid}/update_integration/`):
+
+- `max_cores_per_socket` — upper bound for cores per socket.
+- `verify_ssl` — verify vCenter's TLS certificate. It is **off by default**, because vCenter
+  is commonly deployed with a self-signed certificate. Turn it on once vCenter presents a
+  certificate that the Waldur hosts trust.
+
+### Synchronisation
+
+Saving the first field creates the connection, and Waldur immediately tries to read vCenter.
+That first attempt fails because the other credentials have not been entered yet, so the
+**State** badge turns **ERRED**. Once all fields are saved, click **Synchronize** at the top of
+the Credentials tab.
+
+A successful synchronisation sets the state to **OK** and imports the templates, clusters,
+networks, datastores and folders from vCenter. Waldur repeats it every 24 hours, including
+for settings in ERRED, so new templates and inventory appear on their own; click
+**Synchronize** when you need them sooner, for example right after publishing a new template.
+
+The same synchronisation is available through the API:
+
+```bash
+curl -X POST -H "Authorization: Token $WALDUR_TOKEN" \
+  https://waldur.example.org/api/marketplace-provider-offerings/<offering-uuid>/sync/
+```
+
+### Pricing
+
+vSphere offerings bill by limits on three components: **CPU** (per vCPU), **RAM** (per GB) and
+**Disk** (per GB). A Default plan is created automatically; set its prices on the offering's
+**Accounting** tab. Customers see a monthly estimate on the order form.
+
+### Activating
+
+Click **Activate** on the offering once the credentials show **OK**. The offering now appears
+in the marketplace.
+
+## Assigning inventory to organizations
+
+Clusters, networks, datastores and folders imported from vCenter are **not** visible to any
+organization until staff assign them. You do this in the Django admin: open **Organizations**,
+select the customer, and expand the VMware sections at the bottom of the page.
+
+[Image: Customer admin page with VMware cluster, network, datastore and folder assignments]
+
+| Section | What it controls |
+|---------|------------------|
+| Customer VMware clusters | Clusters the organization's VMs may be placed in. With none assigned, the offering's default cluster is used. |
+| Customer VMware networks for new VMs | Networks offered on the order form. With none assigned, a VM is created with the template's network settings only. |
+| Customer VMware networks for existing VMs | Networks offered when a network adapter is added to an existing VM. |
+| Customer VMware datastores | Datastores the organization's VMs may use. With none assigned, Waldur uses the first datastore vCenter lists. |
+| Customer VMware folders | VM folders the organization's VMs may be created in. With none assigned, Waldur uses the first VM folder vCenter lists. |
+
+This is how you keep organizations apart on shared vCenter infrastructure: each one sees only
+the networks and datastores assigned to it.
+
+### Basic mode
+
+In basic mode, customers don't choose any placement: each organization gets exactly one
+cluster, one network, a datastore and a folder assigned in the admin, and the order form hides
+those choices. Only templates with a single network adapter are offered. Enable it in the
+Mastermind settings:
+
+```python
+WALDUR_VMWARE = {
+    "BASIC_MODE": True,
+}
+```
+
+## What customers can do
+
+Once an organization can order from the offering, its members can:
+
+- order a VM from a template, choosing CPU, cores per socket, memory, networks and, outside
+  basic mode, the cluster, datastore and folder;
+- start, stop, reset and suspend the VM;
+- shut down and reboot the guest OS, when VMware Tools are running in the guest;
+- change CPU and memory while the VM is powered off;
+- add, extend and delete disks within the offering's maximums;
+- add network adapters on the networks assigned for existing VMs;
+- open the VM in VMware Remote Console;
+- terminate the VM while it is powered off.
+
+The end-user workflow is described in
+[VMware virtual machines](../../user-guide/customer-organization/vmware-virtual-machines.md).
+
+## Trying it out without vCenter
+
+VMware ships a vCenter simulator, **vcsim**, as part of its Go SDK
+[govmomi](https://github.com/vmware/govmomi/tree/main/vcsim). Waldur's plugin tests and
+end-to-end tests run against it. It is useful for a demo or for checking an upgrade, but it is
+not a vCenter: it validates API calls, not vCenter's behaviour, so check the result against a
+real vCenter before a production rollout.
+
+- `waldur-mastermind/docker/vcsim-dev/docker-compose.yml` starts vcsim with the inventory used
+  by the backend tests (one datacenter and cluster, two hosts, datastores and port groups).
+- `waldur-integration-testing` adds a TLS front, `ci/vcsim-shim/`, that fills two gaps in
+  vcsim's Content Library, plus `tests/vcsim.py`, which publishes a VM template to the library.
+  Point the offering's Hostname at the front (`https://localhost:8989`, user and password
+  `waldur`) and set the default cluster label to `DC0_C0`.
+
+Differences from a real vCenter to expect with vcsim:
+
+- A VM deployed from a template keeps the template's CPU and memory; the hardware chosen on
+  the order form is applied only by a later resize.
+- A deployed VM keeps its template flag, so power operations and reconfiguration (resizing,
+  adding a disk or network adapter) fail with `NotSupported` until it is cleared (the test
+  helper `Vcsim.mark_as_virtual_machine` does that).
+- VMware Tools never report as running, so **Shutdown** and **Reboot** stay disabled.
+
+Run a Celery worker next to the API when you try it out. A development setup that runs tasks
+inline (`CELERY_TASK_ALWAYS_EAGER`) executes the vCenter call inside the API request, so a
+failure surfaces as an HTTP 500 and the resource is left without its error message; with a
+worker, the request succeeds and the resource turns Erred with vCenter's error. On macOS,
+start the worker with `--pool=solo`: forked worker processes crash there with `SIGSEGV`.
+
+## Troubleshooting
+
+| Symptom | Cause |
+|---------|-------|
+| Credentials stay **ERRED** after all fields are filled | The first synchronisation ran before the other fields were saved. Click **Synchronize** ([Synchronisation](#synchronisation)). If it stays ERRED, the error is in the offering's service settings in the Django admin. |
+| The order form lists no templates | The Content Library holds no VM templates, the service account cannot read it, or a template is missing CPU, memory or disk information (such templates are skipped). In basic mode, templates with more than one network adapter are skipped too. |
+| Order fails with "Default cluster is not defined for this service." | Set **Default cluster label** to an existing cluster name, or assign a cluster to the organization. |
+| Order fails with "This network is not available for this customer." | Assign the network to the organization under *networks for new VMs*. |
+| **Change limits** or **Terminate** is refused | The VM must be powered off first. |
+| A VM, disk or network adapter turns **Erred** | vCenter refused the operation. Hover over the **Erred** badge or expand the row to read vCenter's error; the Waldur worker log has the full traceback. A disk or adapter that vCenter never created can be removed with **Destroy**. |
+| **Shutdown** and **Reboot** are greyed out | VMware Tools are not running in the guest. Use **Stop** instead, or install VMware Tools in the template. |
+
+---
+
 
 ## API Authentication
 
@@ -78521,6 +78750,169 @@ To check the current resource allocation limit:
 
 ---
 
+### VMware virtual machines
+<!-- Source: docs/user-guide/customer-organization/vmware-virtual-machines.md -->
+
+# VMware virtual machines
+
+If your service provider offers VMware vSphere, you can order virtual machines from the
+marketplace and manage them from Waldur: power, resize, disks, network adapters and console.
+The provider sets the offering up as described in the
+[VMware vSphere admin guide](../../admin-guide/providers/vmware.md).
+
+## Ordering a virtual machine
+
+1. Click **Add resource** in the sidebar, or open the offering in the **Service Catalog** and
+   click **Request**.
+2. Under **General information**, pick the organization and the project the VM belongs to.
+3. Under **Plan**, pick a plan. The table below it shows what each component costs per month.
+
+    [Image: vSphere order form with plan pricing and progress panel]
+
+4. Under **Template**, pick the operating system image. The template's hardware fills in the
+   **Processor**, **Memory** and **Storage** steps.
+5. Adjust the number of cores, cores per socket and memory if needed. The sliders stop at the
+   maximums the provider allows. The storage size and guest OS come from the template; add
+   more disks after the VM is created.
+
+    [Image: Template, processor and memory steps of the order form]
+
+6. Under **Network interfaces**, tick the networks the VM should be connected to. Only the
+   networks your organization is allowed to use are listed.
+7. **Advanced options** lets you pick a cluster, datastore and folder. Leave them empty to use
+   the provider's defaults. Your provider may hide these options.
+
+    [Image: Network interfaces and advanced options of the order form]
+
+8. Under **Final configuration**, enter the **VM name**, an optional description and an
+   optional termination date. The name is also the VM's name in vCenter.
+
+    [Image: Final configuration step with the VM name and description]
+
+9. Check the monthly total on the right and click **Create**, then confirm.
+
+The VM is deployed from the template and starts out **powered off**. The resource page opens
+once provisioning finishes.
+
+!!! note
+    Depending on the organization's settings, an order may need approval before it is
+    provisioned. See [Resource management](resource_management.md).
+
+## The resource page
+
+The badge next to the VM name shows its power state: **Powered on**, **Powered off** or
+**Suspended**. The panel on the right shows the VM's CPU, RAM and disk limits, which are
+what you are billed for. The **Details** menu switches between the VM's **Disks** and
+**Network adapters**.
+
+[Image: VM header with the power-state badge and the Details menu]
+
+All VM operations are in the **Actions** menu. An action that cannot run right now is greyed
+out; hover over its question mark to see why.
+
+[Image: Actions menu of a VMware virtual machine]
+
+## Power operations
+
+| Action | Effect | Available when |
+|--------|--------|----------------|
+| **Start** | Powers the VM on; also resumes a suspended VM. | Powered off or suspended |
+| **Stop** | Powers the VM off immediately, like pulling the plug. | Powered on or suspended |
+| **Reset** | Hard-resets the VM. | Powered on |
+| **Suspend** | Saves the VM's memory to disk and pauses it. | Powered on |
+| **Shutdown** | Asks the guest OS to shut down cleanly. | Powered on, VMware Tools running |
+| **Reboot** | Asks the guest OS to restart cleanly. | Powered on, VMware Tools running |
+
+**Shutdown** and **Reboot** go through VMware Tools inside the guest. If the template has no
+VMware Tools, or they are not running yet, use **Stop** and **Reset** instead.
+
+## Changing CPU and memory
+
+1. **Stop** the VM. vCenter changes CPU and memory only while the VM is powered off.
+2. Choose **Actions → Change limits**.
+3. Enter the new number of vCPUs and the memory in GB. The **Difference** and **Price** columns
+   show what changes on your bill.
+
+    [Image: Change resource limits dialog raising CPU from 2 to 4 and RAM from 4 to 8 GB]
+
+4. Click **Request for a change**, then **Start** the VM again.
+
+The **Disk** row reflects the total size of the VM's disks and cannot be changed here. Use
+the disk actions below instead.
+
+## Disks
+
+The **Disks** tab lists the VM's disks with their size and state.
+
+[Image: Disks tab of a virtual machine]
+
+- **Add a disk**: click **Create disk**, enter the size in GB and click **Submit**.
+
+    [Image: Create disk dialog]
+
+- **Extend a disk**: open the disk's **⋮** menu, choose **Extend** and enter the new, larger
+  size. Then grow the partition and file system inside the guest OS.
+
+    [Image: Extend disk dialog]
+
+- **Delete a disk**: open the disk's **⋮** menu and choose **Destroy**. The disk and its data
+  are deleted in vCenter.
+
+A disk cannot be shrunk. The provider may cap the size of a single disk and the total size of
+all disks of a VM; a request over either cap is refused with a message saying which one.
+
+### When a change fails
+
+Disk and adapter changes are carried out by vCenter after Waldur accepts them: a new disk is
+listed as **Creation scheduled** and turns **OK** once vCenter has added it. If vCenter
+refuses the change, the disk turns **Erred** instead. Hover over the **Erred** badge, or
+expand the row, to see the error vCenter returned.
+
+[Image: An Erred disk with vCenter's error in the tooltip and in the expanded row]
+
+An Erred disk that vCenter never created can be removed with **Destroy** in its **⋮** menu.
+If the reason is not clear from the message, contact your provider's support with it.
+
+## Network adapters
+
+The **Network adapters** tab lists the VM's adapters with their network and MAC address.
+
+[Image: Network adapters tab of a virtual machine]
+
+To connect the VM to another network, click **Create network adapter**, pick the network and
+click **Submit**. Only networks the provider has enabled for your organization are offered,
+and a VM can have at most 10 adapters.
+
+[Image: Create network adapter dialog]
+
+The list shows each adapter under the label vCenter gives it (for example *Network adapter
+2*), not the name entered in the dialog.
+
+## Console
+
+**Actions → Open console** opens the VM in VMware Remote Console (VMRC), which must be
+installed on your computer. Waldur hands VMRC a one-time ticket, so you do not need a vCenter
+account. Your computer must be able to reach the vCenter address the provider configured.
+
+## Terminating a virtual machine
+
+1. **Stop** the VM. A VM is deleted only while it is powered off.
+2. Choose **Actions → Terminate** and confirm with **Request for a termination**.
+
+[Image: Terminate resource confirmation]
+
+The VM and all its disks are deleted from vCenter, and billing stops.
+
+!!! warning
+    Termination cannot be undone. Copy any data you need off the VM first.
+
+!!! tip
+    The **Destroy** action in the same menu also deletes the VM, but directly, without a
+    termination order. Use **Terminate**: it goes through your organization's approval
+    settings and is recorded in the order history.
+
+---
+
 ### AI Assistant
 <!-- Source: docs/user-guide/end-users/ai-assistant.md -->
 
@@ -83033,7 +83425,7 @@ Waldur connects with a wide range of resource providers, identity services, and 
 
 * **MS Azure** - Support for creating, importing, and managing Virtual Machines on Microsoft Azure public cloud.
 
-* **VMware** - Integration with VMware virtualization platform for managing virtual infrastructure resources.
+* **VMware** - Self-service virtual machines on VMware vCenter: deployment from Content Library templates, power operations, resizing, disks, network adapters and remote console. See the [VMware vSphere guide](../admin-guide/providers/vmware.md).
 
 ### HPC and Scientific Computing
 
