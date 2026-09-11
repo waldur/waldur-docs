@@ -36,7 +36,7 @@ creating an offering is through a HomePort.
 
 6. If everything is filled in, click on **Synchronize** in the top left corner. After few seconds, the **State** field will show **OK** if the integration is completed between Waldur and OpenStack.
 
-7. To adjust the accounting, select **Accounting** from the top menu and then **Plans** -> **Edit prices**. Default accounting components are already defined.
+7. To adjust the accounting, select **Accounting** from the top menu. It opens on the **Components** tab, where the default accounting components (Cores, RAM and Storage) are already defined. To set their prices, switch to the **Plans** tab and choose **Edit prices**.
 
     ![Adding details](../img/OpenStack_accounting_config.png)
 
@@ -294,6 +294,21 @@ Custom components appear alongside built-in components in the order form and pri
 
 !!! tip
     Use **Limit-based** with **Maximum total** period for one-time flat-rate services like consultancy hours. Use **One-time + Pre-paid** for subscription-based add-ons that scale with duration.
+
+## Built-in components
+
+Every offering has an **Accounting** tab with **Components** and **Plans**, and selecting **Accounting** opens **Components** first. Some offering types come with **built-in components** that their integration defines and relies on — for example Cores, RAM and Storage for OpenStack tenants, CPU, RAM and Disk for VMware virtual machines, and CPU, RAM and Storage hours for Rancher clusters. Other offering types start without components, and you add your own as described in [Adding custom components](#adding-custom-components).
+
+Because the integration looks built-in components up by their internal name, they are protected:
+
+- A built-in component cannot be removed — the **Delete** action is not offered for it.
+- Its **Internal name** is read-only in the edit dialog.
+- Everything else stays editable: display name, measured unit, accounting type, limits and article code. For OpenStack tenant offerings the display name and measured unit are fixed as well.
+
+Custom components can be edited, including their internal name, and removed as long as no resource of the offering uses them. A custom component cannot take the internal name of a built-in one.
+
+!!! note "Per-tenant Instance and Volume offerings"
+    The OpenStack **Instance** and **Volume** offerings that Waldur creates for each tenant are child offerings of the tenant offering. They use the tenant offering's plans and components, so they have no **Accounting** tab of their own — manage prices and components on the tenant offering.
 
 ## Volume discounts
 
