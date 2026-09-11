@@ -10,7 +10,7 @@ Waldur connects with a wide range of resource providers, identity services, and 
 
 * **MS Azure** - Support for creating, importing, and managing Virtual Machines on Microsoft Azure public cloud.
 
-* **VMware** - Integration with VMware virtualization platform for managing virtual infrastructure resources.
+* **VMware** - Self-service virtual machines on VMware vCenter: deployment from Content Library templates, power operations, resizing, disks, network adapters and remote console. See the [VMware vSphere guide](../admin-guide/providers/vmware.md).
 
 ### HPC and Scientific Computing
 
