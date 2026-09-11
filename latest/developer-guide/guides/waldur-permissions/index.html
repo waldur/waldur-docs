@@ -2996,6 +2996,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../admin-guide/identities/role-assignment-from-claims/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assigning roles from identity provider claims
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../admin-guide/identities/summary/" class="md-nav__link">
         
   
@@ -18636,6 +18664,18 @@
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RESOURCE.MY_ACTION</span><span class="w">   </span><span class="c1"># Add here</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>This file is loaded by the <code>import_roles</code> management command, which runs on deployment. The command creates roles and syncs their permissions from the YAML definition.</p>
+<p><strong>Operator-defined custom roles</strong> (a deployment's own role, not a built-in one shipped with
+Waldur) go through a separate file, <code>docker/rootfs/etc/waldur/custom-roles.yaml</code>, mounted at
+<code>/etc/waldur/custom-roles.yaml</code> — same schema, also loaded by <code>import_roles</code> on every
+deployment, but empty (<code>[]</code>) by default. The <code>waldur-helm</code> chart exposes it as
+<code>waldur.customRoles</code>. Don't add operator-specific roles to <code>permissions.yaml</code> — that file ships
+with the image and is the same for every deployment.</p>
+<p>Two caveats. A role loaded from this file is created as a <strong>system role</strong>, so it can no longer
+be renamed or deleted through the API; if a role of that name was created by hand in the UI, it
+is converted to a system role and its permission set is replaced by the file's. And there is no
+counterpart to <code>drop_stale_permissions</code> for roles — removing a role from the file does <strong>not</strong>
+remove it from the database, it only stops being managed. Deactivate roles you no longer want
+via <code>permissions-override.yaml</code> (<code>is_active: false</code>) rather than by deleting the entry.</p>
 <h3 id="3-use-in-viewsets">3. Use in ViewSets</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
