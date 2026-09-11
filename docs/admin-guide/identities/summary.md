@@ -12,3 +12,6 @@
 
 For what an OIDC login does step by step, see the interactive
 [OIDC login flow](../../developer-guide/oidc-explainer.md) walkthrough.
+
+To turn a claim in the token into a role on an organization, see
+[Assigning roles from identity provider claims](./role-assignment-from-claims.md).
