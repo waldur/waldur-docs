@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-11T10:48:31.737219Z
+Generated: 2026-09-11T13:37:56.907322Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -7348,6 +7348,25 @@ options:
 ## rebuild_billing
 
 Create or update price estimates based on invoices.
+
+## reconcile_autoprovisioned_roles
+
+Re-apply auto-provisioning rules, granting and revoking roles.
+
+```bash
+
+usage: waldur reconcile_autoprovisioned_roles (--username USERNAME | --all)
+                                              [--dry-run] [--rate RATE]
+
+options:
+  --username USERNAME  Reconcile a single user identified by their Waldur
+                       username.
+  --all                Reconcile every active user.
+  --dry-run            Report what would change without writing anything.
+  --rate RATE          Users per second when using --all. 0 (default) means no
+                       limit.
+
+```
 
 ## reencrypt_fields
 
@@ -79080,7 +79099,7 @@ creating an offering is through a HomePort.
 
 6. If everything is filled in, click on **Synchronize** in the top left corner. After few seconds, the **State** field will show **OK** if the integration is completed between Waldur and OpenStack.
 
-7. To adjust the accounting, select **Accounting** from the top menu and then **Plans** -> **Edit prices**. Default accounting components are already defined.
+7. To adjust the accounting, select **Accounting** from the top menu. It opens on the **Components** tab, where the default accounting components (Cores, RAM and Storage) are already defined. To set their prices, switch to the **Plans** tab and choose **Edit prices**.
 
     [Image: Adding details]
 
@@ -79338,6 +79357,21 @@ Custom components appear alongside built-in components in the order form and pri
 
 !!! tip
     Use **Limit-based** with **Maximum total** period for one-time flat-rate services like consultancy hours. Use **One-time + Pre-paid** for subscription-based add-ons that scale with duration.
+
+## Built-in components
+
+Every offering has an **Accounting** tab with **Components** and **Plans**, and selecting **Accounting** opens **Components** first. Some offering types come with **built-in components** that their integration defines and relies on — for example Cores, RAM and Storage for OpenStack tenants, CPU, RAM and Disk for VMware virtual machines, and CPU, RAM and Storage hours for Rancher clusters. Other offering types start without components, and you add your own as described in [Adding custom components](#adding-custom-components).
+
+Because the integration looks built-in components up by their internal name, they are protected:
+
+- A built-in component cannot be removed — the **Delete** action is not offered for it.
+- Its **Internal name** is read-only in the edit dialog.
+- Everything else stays editable: display name, measured unit, accounting type, limits and article code. For OpenStack tenant offerings the display name and measured unit are fixed as well.
+
+Custom components can be edited, including their internal name, and removed as long as no resource of the offering uses them. A custom component cannot take the internal name of a built-in one.
+
+!!! note "Per-tenant Instance and Volume offerings"
+    The OpenStack **Instance** and **Volume** offerings that Waldur creates for each tenant are child offerings of the tenant offering. They use the tenant offering's plans and components, so they have no **Accounting** tab of their own — manage prices and components on the tenant offering.
 
 ## Volume discounts
 
@@ -93657,7 +93691,8 @@ td:nth-child(4) {
 
 | Handler Name | Signal Type | Sender | Description |
 |--------------|-------------|--------|-------------|
-| `handle_new_user` | `Django Signal (post_save)` | `core.User` | Create project and order for new user based on autoprovisioning rules. |
+| `handle_identity_synced` | `Custom Signal (user_identity_synced)` | `—` | Reconcile rule-issued roles after identity data is refreshed. |
+| `handle_new_user` | `Django Signal (post_save)` | `core.User` | Provision projects and orders when an account first appears. |
 
 ## Application: `waldur_core`
 
@@ -94525,10 +94560,10 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 821
+Total unique handlers found: 822
 
 - **waldur_auth_saml2**: 1 handlers
-- **waldur_autoprovisioning**: 1 handlers
+- **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 424 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
