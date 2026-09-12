@@ -1,5 +1,59 @@
 # Changelog
 
+## 8.1.3-rc.11 - 2026-09-12
+
+### Highlights
+
+Organizations can now receive roles automatically from OIDC claims. Waldur keeps those grants in sync as claims change and shows where each role came from. OpenStack subnet management gets more flexible, and the built-in helpdesk behaves more like a real service desk, with read-only closed tickets, configurable ticket keys and tighter access scoping. Operators also get Gateway API support in the Helm chart, fractional component limits that bill correctly, and a large batch of VMware and UI reliability fixes.
+
+### What's New
+
+- **Claim-based organization roles**: auto-provisioning rules can assign organization roles from OIDC claims. Grants are kept in sync as claims change, and a management command can re-sync them on demand. The rule editor configures claim matching, reports claims that no identity provider passes through, and user affiliations show how each role was granted.
+- **Shared service provider accounts**: user accounts can be shared across all of a service provider's offerings instead of being created per offering.
+- **OpenStack subnet routing**: choose which router a new subnet attaches to, or create a subnet with no router at all. Consumers can also attach a subnet shared with them over RBAC to their own router.
+- **Gateway API in Helm**: the Helm chart can expose Waldur through Kubernetes Gateway API routes as an alternative to Ingress.
+- **Fractional component limits**: each offering component has a precision setting that controls whether fractional limits are allowed. Limit inputs follow that setting, and fractional limits are kept intact in billing.
+- **Plan comparison and pricing**: public offering pages compare plans side by side. Plan editors warn about unpriced plans and let you set prices when you create a plan. Accounting dialogs explain what each billing type charges.
+- **Configurable helpdesk ticket prefix**: the ticket key prefix of the built-in helpdesk can be configured, and it is validated in the admin as well. Service desk defaults are seeded on first start.
+- **Custom roles on deployment**: operator-defined custom roles are loaded automatically when Waldur is deployed. A new check reports malformed roles and roles that are unintentionally global.
+- **Staff user deletion**: staff can delete users from the row actions of the Users table.
+- **Remote offering user sync**: offering user state is now pulled from remote Waldur instances on a schedule.
+
+### Improvements
+
+- **Helpdesk**: resolved and canceled tickets no longer accept new comments. The helpdesk is notified when the reporter comments, and new tickets no longer also send an "updated" notification. Ticket access is limited to the project or organization the ticket was raised in, provider ticket lists and stats can be limited to a single helpdesk, and the Canceled status appears in lists and filters.
+- **Roles and invitations**: the `INVITATION_DISABLE_MULTIPLE_ROLES` setting now also applies to roles granted directly. Built-in system roles now carry descriptions. When no roles are available, the invite dialog explains why instead of showing an empty popup.
+- **Offering components**: accounting components can be managed for every offering type. Built-in components and components inherited by child offerings are protected from edits.
+- **AI assistant**: the assistant now sits in the page header and is labelled for anonymous visitors. The offering page no longer has a separate assistant button.
+- **OpenStack**: running instances can be terminated without a force destroy. Subnets keep the address pool that Neutron allocated, report their real connection state, and show a single clear error for an invalid gateway IP.
+- **Event consumers**: Waldur records how each event consumer was registered and on whose authority.
+- **Interface modernization**: menus, dropdowns, popovers, the sidebar and the content drawer now use a new component library. Many follow-up fixes cover positioning, focus rings, active-item highlighting and animations.
+- **Deployment**: RabbitMQ runs as a three-replica cluster in the reference Helm values. Docker Compose lets you set Celery worker concurrency through an environment variable. Both deployments bundle the Tuwunel Matrix server v1.9.0.
+
+### Bug Fixes
+
+- **VMware**: fixed gaps in the VMware marketplace integration and the vSphere order form, which now includes a plan step. Other VMware fixes:
+  - The disk actions work correctly, and new network adapters use the selected network.
+  - RAM and disk sizes are shown in GB, and dialogs say a disk or adapter is scheduled rather than created.
+  - Synchronize is available on vSphere offering credentials.
+- **Service provider managers**: managers can again see their own provider's offerings, statistics and revenue.
+- **OIDC and SAML**: OIDC lookup claims that arrive as lists are now stored as plain values, and a migration corrects values already stored the wrong way. Returning OAuth users get their registration method updated, and `SAML_ATTRIBUTE_MAPPING` accepts list values.
+- **Usage reports**: fixed a crash in the usage report dialog, fixed its layout, and the usage tab now says why it is empty.
+- **Other fixes**:
+  - Fixed the GLAuth TOML output for custom attributes.
+  - The My Orders dashboard applies the order filters.
+  - Plan forms now use the component units that match each billing mode.
+  - Course account errors show the real status code and message.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [49 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.10...8.1.3-rc.11) - claim-based role provisioning, shared provider accounts, OpenStack subnet routing, helpdesk behavior and fractional limits.
+- **Waldur Homeport**: [138 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.10...8.1.3-rc.11) - migration to the new menu, drawer and sidebar components, plan pricing and comparison, VMware order and action fixes, and UI for the new backend features.
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.10...8.1.3-rc.11) - Gateway API support, a clustered RabbitMQ reference setup and Tuwunel v1.9.0.
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.10...8.1.3-rc.11) - Celery concurrency set from the environment and Tuwunel v1.9.0.
+
+---
+
 ## 8.1.3-rc.10 - 2026-09-07
 
 ### Highlights
