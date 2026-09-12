@@ -83,7 +83,7 @@ The Marketplace is plugin-driven. Plugins shipped with Waldur include:
 | `openstack` | Tenants, VMs, volumes, networks, floating IPs |
 | `slurm` | HPC allocations (CPU/GPU hours, storage) |
 | `rancher` | Kubernetes clusters via Rancher |
-| `azure`, `vmware` | VMs on the respective backend |
+| `vmware` | VMs on VMware vCenter |
 | `openportal` | Federated HPC accounts via the OpenPortal protocol |
 | `remote` | Resources hosted on another Waldur instance |
 | `support` | Ticket-backed offerings |
