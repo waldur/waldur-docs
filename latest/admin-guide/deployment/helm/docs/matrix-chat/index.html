@@ -2427,6 +2427,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#supported-homeserver-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported homeserver version
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported homeserver version">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cve-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CVE response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#required-runtime-steps-not-automated-by-the-chart" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18216,6 +18255,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#supported-homeserver-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported homeserver version
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported homeserver version">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cve-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CVE response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#required-runtime-steps-not-automated-by-the-chart" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18344,8 +18422,9 @@ managers.</p>
 <h2 id="image-pinning">Image pinning</h2>
 <p>Images are pinned to specific versions by default — never <code>latest</code>:</p>
 <ul>
-<li><strong>homeserver</strong> — <code>ghcr.io/matrix-construct/tuwunel</code>, pinned to the latest bare
-  multiarch tag. Set <code>homeserver.imageDigest</code> to pin immutably by digest.</li>
+<li><strong>homeserver</strong> — <code>ghcr.io/matrix-construct/tuwunel</code>, pinned to the single
+  supported version (see below). Set <code>homeserver.imageDigest</code> to pin immutably by
+  digest.</li>
 <li><strong>livekit</strong> — <code>livekit/livekit-server</code>, pinned by tag; <code>livekit.imageDigest</code>
   available. Pulled from <code>livekit.imageRegistry</code> (<code>docker.io</code> by default) — its
   own key, <strong>not</strong> <code>global.imageRegistry</code>, so pointing <code>global</code> at a private
@@ -18355,6 +18434,69 @@ managers.</p>
   (only <code>latest</code> and <code>sha-&lt;commit&gt;</code>), so it is pinned <strong>by digest</strong>
   (<code>lkJwt.imageDigest</code>). Update the digest to upgrade, or set <code>lkJwt.imageTag</code> to
   a <code>sha-&lt;commit&gt;</code> tag and clear the digest.</li>
+</ul>
+<h2 id="supported-homeserver-version">Supported homeserver version</h2>
+<p>Waldur bundles the homeserver, so its version is ours to support, not yours to
+choose. <strong>One version is supported at a time</strong>, the same across both packaging
+paths:</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Helm</td>
+<td><code>matrixChat.homeserver.imageTag</code></td>
+</tr>
+<tr>
+<td>Docker Compose</td>
+<td><code>WALDUR_TUWUNEL_IMAGE_TAG</code></td>
+</tr>
+</tbody>
+</table>
+<p>Both are <code>v1.9.0</code>. Do not set a version we do not ship, and do not let the two
+diverge.</p>
+<h3 id="upgrading">Upgrading</h3>
+<p>Tuwunel migrates its embedded database in place on the first boot of a new
+version, before it opens its port, and logs nothing while it runs. Every minor
+release so far has done this, so read the
+<a href="https://github.com/matrix-construct/tuwunel/releases">upstream release notes</a>
+before moving in either direction.</p>
+<ol>
+<li>Scale the homeserver StatefulSet to zero and snapshot the PVC.</li>
+<li>Bump <code>imageTag</code> and <code>helm upgrade</code>.</li>
+<li>Let the first boot finish. A pod that is slow to become ready is migrating,
+   not hung. The chart's <code>startupProbe</code> keeps liveness off for up to six hours
+   so Kubernetes does not kill it mid-migration, which corrupts the database.</li>
+<li>Check <code>/_matrix/client/versions</code>, then <code>/api/admin/matrix/diagnostics/</code> on
+   the Waldur side.</li>
+</ol>
+<p><strong>Downgrades are the dangerous direction.</strong> An older Tuwunel starts cleanly on
+a migrated database and then silently serves stale data from the old stores. A
+successful downgrade boot means nothing. Roll back by restoring the snapshot,
+never by re-pointing the tag at an older image.</p>
+<p><code>serverName</code> is immutable: it is baked into every user and room ID. From 1.9.0
+the homeserver stamps it into the database and refuses to boot under another
+name:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>Critical error starting server: Database belongs to old.example; configured server name is new.example. Cannot reuse.
+</code></pre></div></td></tr></tbody></table></div>
+<p>Restore the original <code>serverName</code>; do not wipe the PVC, which is the chat
+corpus.</p>
+<h3 id="cve-response">CVE response</h3>
+<p>Tuwunel publishes advisories on its
+<a href="https://github.com/matrix-construct/tuwunel/security/advisories">GitHub repository</a>.
+Both the client-server and federation surfaces are exposed through the Matrix
+ingress.</p>
+<ul>
+<li>Fix in a patch release of the supported minor: bump both packaging paths and
+  ship a chart patch release.</li>
+<li>Fix needs a minor or major jump: follow the upgrade procedure above, verify
+  on a restored snapshot first, bump both paths together.</li>
+<li>No fixed release yet: <code>matrixChat.enabled=false</code> removes the homeserver, its
+  ingress and the chat UI. The PVC and its history are kept.</li>
 </ul>
 <h2 id="required-runtime-steps-not-automated-by-the-chart">Required runtime steps (not automated by the chart)</h2>
 <ol>

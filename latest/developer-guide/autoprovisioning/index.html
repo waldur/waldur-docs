@@ -9634,6 +9634,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#dry-run-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry-run evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#validation-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18734,6 +18745,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#dry-run-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry-run evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#validation-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19059,15 +19081,17 @@
                   
 
 <h1 id="auto-provisioning">Auto-Provisioning</h1>
-<p>Waldur's auto-provisioning feature automatically creates projects and provisions resources for new users based on predefined rules. This capability streamlines user onboarding by eliminating manual setup processes.</p>
+<p>Waldur's auto-provisioning feature turns what an identity provider asserts about a user into projects, roles and resources, without an administrator acting on each account.</p>
 <h2 id="overview">Overview</h2>
-<p>Auto-provisioning works by matching new users against configured rules based on email patterns or affiliations. When a matching rule is found, the system:</p>
+<p>A rule matches users on their profile attributes and identity provider claims. For every matching rule the system:</p>
 <ol>
-<li>Creates or assigns users to projects</li>
-<li>Grants appropriate project roles</li>
-<li>Optionally provisions marketplace resources</li>
-<li>Processes orders automatically</li>
+<li>Resolves the organization — the rule's own, or the one named by the user's organization claim</li>
+<li>Creates or joins a project, unless the rule is organization-level only</li>
+<li>Grants the roles the rule asserts: a project role, an organization role, or both</li>
+<li>Optionally provisions a marketplace resource and processes the order asynchronously</li>
+<li>Withdraws roles it previously granted once the user stops matching, when the rule opts into revocation</li>
 </ol>
+<p>Provisioning (steps 1–4) happens once, when the account first appears. Role reconciliation (steps 3 and 5) re-runs every time identity data is refreshed, which is what keeps a grant in step with a claim that comes and goes.</p>
 <h2 id="core-components">Core Components</h2>
 <h3 id="rule-model">Rule Model</h3>
 <p>The <code>Rule</code> model (<code>src/waldur_autoprovisioning/models.py:11</code>) defines auto-provisioning configurations with the following key fields:</p>
@@ -19120,15 +19144,19 @@ mapped <code>User</code> field (<code>affiliations</code>, <code>organization</c
 through <code>attribute_mapping</code> instead also works.</p>
 <h2 id="organization-mapping-feature">Organization Mapping Feature</h2>
 <h3 id="organization-mapping-overview">Organization Mapping Overview</h3>
-<p>The organization mapping feature (added in commit 77c31bb25) allows auto-provisioning rules to dynamically resolve customers based on user organization claims from identity providers. This enables multi-tenant scenarios where each organization has its own customer in Waldur.</p>
+<p>Organization mapping allows auto-provisioning rules to resolve the customer dynamically from the user's organization claim. This enables multi-tenant scenarios where each organization has its own customer in Waldur.</p>
 <h3 id="how-it-works">How It Works</h3>
-<p>When <code>use_user_organization_as_customer_name</code> is enabled:</p>
+<p>When <code>use_user_organization_as_customer_name</code> is enabled, <code>resolve_customer()</code> checks, in this order:</p>
 <ol>
-<li>System extracts organization claim from user's identity provider data</li>
-<li>Looks up existing customer with matching name</li>
-<li>Creates project under the resolved customer</li>
-<li>Validates user has protected details flag set</li>
+<li>The user's details are protected — their registration method is listed in
+   <code>PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS</code>. An unprotected user's
+   organization claim is self-asserted and is not trusted here.</li>
+<li>The user carries an organization claim at all.</li>
+<li>Exactly one customer has that name. Zero matches and ambiguous matches both
+   block the rule rather than guessing.</li>
 </ol>
+<p>The resolved customer is then used for the project (when <code>create_project</code> is on)
+and for any organization-level role the rule grants.</p>
 <h3 id="protected-user-details">Protected User Details</h3>
 <p>For security, organization mapping requires users to have protected details:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -19150,53 +19178,36 @@ through <code>attribute_mapping</code> instead also works.</p>
     <span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="customer-resolution-logic">Customer Resolution Logic</h3>
-<p>From <code>src/waldur_autoprovisioning/handlers.py:33</code>:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">if</span> <span class="ow">not</span> <span class="n">rule</span><span class="o">.</span><span class="n">use_user_organization_as_customer_name</span><span class="p">:</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">rule</span><span class="o">.</span><span class="n">customer</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Rule has no customer configured"</span><span class="p">)</span>
-        <span class="k">return</span>
-    <span class="n">customer</span> <span class="o">=</span> <span class="n">rule</span><span class="o">.</span><span class="n">customer</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">should_protect_user_details</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"User not marked as protected for organization-based rules"</span><span class="p">)</span>
-        <span class="k">return</span>
+<p><code>resolve_customer()</code> (<code>src/waldur_autoprovisioning/reconciliation.py</code>) is the single
+place that answers "which organization does this rule target for this user?", and
+it is shared by three callers: the provisioning handler, the dry-run evaluator
+behind <code>test-match</code>, and reconciliation. They therefore always agree on the
+verdict <em>and</em> on the wording of the reason.</p>
+<p>It returns a <code>CustomerResolution</code> rather than logging and bailing out:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomerResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Outcome of working out which organization a rule applies to for a user."""</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">organization</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"User has no organization claim"</span><span class="p">)</span>
-        <span class="k">return</span>
-
-    <span class="n">customers</span> <span class="o">=</span> <span class="n">Customer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">organization</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">customers</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No Customer found with name='</span><span class="si">%s</span><span class="s2">'"</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">organization</span><span class="p">)</span>
-        <span class="k">return</span>
-    <span class="k">elif</span> <span class="n">customers</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Multiple Customers found with name='</span><span class="si">%s</span><span class="s2">'"</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">organization</span><span class="p">)</span>
-        <span class="k">return</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">customer</span> <span class="o">=</span> <span class="n">customers</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="n">customer</span><span class="p">:</span> <span class="n">Customer</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">block_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">ambiguous</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">lookup_performed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>A <code>None</code> customer always carries a <code>block_reason</code> naming what went wrong — no
+organization configured, registration method not protected, no organization
+claim, no customer with that name, or several customers sharing it. That string
+is what the caller logs and what the test-match dialog shows the administrator,
+so a rule that silently provisions nothing can be diagnosed without reading the
+server log.</p>
 <h2 id="api-endpoints">API Endpoints</h2>
 <h3 id="rules-management">Rules Management</h3>
 <p><strong>Endpoint</strong>: <code>/api/autoprovisioning-rules/</code></p>
@@ -19244,6 +19255,19 @@ through <code>attribute_mapping</code> instead also works.</p>
 <span class="w">    </span><span class="nt">"plan_limits"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"vcpu"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"ram"</span><span class="p">:</span><span class="w"> </span><span class="mi">4096</span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="dry-run-evaluation">Dry-run evaluation</h3>
+<p><strong>Endpoint</strong>: <code>POST /api/autoprovisioning-rules/&lt;uuid&gt;/test-match/</code>, staff only.</p>
+<p>Takes <code>{"user_uuid": "..."}</code> and evaluates the rule against that user without
+writing anything — no project, no grant, no order. The response carries a
+per-filter breakdown (<code>configured</code>, <code>matched</code>, the user's value and the rule's
+value for each of affiliations, email patterns, identity sources, nationalities,
+organization types, assurance levels and claims), the customer-lookup verdict
+when <code>use_user_organization_as_customer_name</code> is set, a top-line
+<code>would_provision</code> flag and a human-readable <code>block_reason</code>.</p>
+<p>It also reports <code>unconfigured_claims</code>: claims the rule matches on that no active
+identity provider lists in its <code>extra_fields</code>. That distinguishes "the provider
+sent a different value" from "the provider never sends this claim", which look
+identical in the raw filter breakdown.</p>
 <h3 id="validation-rules">Validation Rules</h3>
 <p>The serializer enforces these validation constraints:</p>
 <ul>
@@ -19269,8 +19293,8 @@ through <code>attribute_mapping</code> instead also works.</p>
     <span class="n">dispatch_uid</span><span class="o">=</span><span class="s2">"waldur_autoprovisioning.handle_new_user"</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>The handler returns early unless <code>created</code>. It used to run on <em>every</em>
-<code>User.save()</code>, which meant an ordinary profile edit could materialise projects.</p>
+<p>The handler returns early unless <code>created</code>, so an ordinary profile edit never
+materialises projects.</p>
 <p><strong>Role reconciliation</strong> runs whenever identity data is refreshed — after an OIDC
 login and after a SCIM pull — via <code>waldur_core.core.signals.user_identity_synced</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -19297,10 +19321,10 @@ cannot distinguish.</p>
    rules assert, and withdraws the ones they no longer do</li>
 </ol>
 <h2 id="role-reconciliation">Role reconciliation</h2>
-<p>Rules used to be grant-only: a matching user gained a role and nothing ever took
-it away. Inbound SCIM behaves the opposite way — a group-membership <code>PUT</code>
-revokes what the identity provider no longer asserts. <code>revoke_when_unmatched</code>
-brings rules into line with that.</p>
+<p>A rule with <code>revoke_when_unmatched</code> enabled withdraws the roles it granted once
+the user stops matching it, the same way inbound SCIM revokes a membership the
+identity provider no longer asserts in a group <code>PUT</code>. Without it a rule is
+grant-only: a matching user gains a role and nothing takes it away.</p>
 <h3 id="provenance">Provenance</h3>
 <p>Every rule-issued grant records <code>UserRole.source = "rule:&lt;rule uuid&gt;"</code>.
 Reconciliation only ever revokes rows carrying the source of a rule it is
@@ -19327,12 +19351,20 @@ of step until each of them next signs in. To close that window:</p>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Preview one user</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Preview one user</span>
 waldur<span class="w"> </span>reconcile_autoprovisioned_roles<span class="w"> </span>--username<span class="w"> </span>alice<span class="w"> </span>--dry-run
 
 <span class="c1"># Apply to everyone</span>
 waldur<span class="w"> </span>reconcile_autoprovisioned_roles<span class="w"> </span>--all
+
+<span class="c1"># Throttle a large run to 20 users per second</span>
+waldur<span class="w"> </span>reconcile_autoprovisioned_roles<span class="w"> </span>--all<span class="w"> </span>--rate<span class="w"> </span><span class="m">20</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p><code>--username</code> and <code>--all</code> are mutually exclusive and one of them is required.
+<code>--dry-run</code> reports what would change and writes nothing.</p>
 <h2 id="configuration-examples">Configuration Examples</h2>
 <h3 id="organization-role-from-an-identity-provider-claim">Organization role from an identity provider claim</h3>
 <p>Grant organization ownership to whoever carries <code>roles: acme-owner</code>, and take it

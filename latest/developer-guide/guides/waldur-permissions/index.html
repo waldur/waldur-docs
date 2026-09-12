@@ -8535,6 +8535,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#role-hygiene-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role hygiene report
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -18601,6 +18612,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#role-hygiene-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role hygiene report
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -18885,6 +18907,36 @@ PAT auth should <code>select_related("customer", "project__customer",
 "offering")</code> (or whichever ancestors apply) — scoped PATs walk the
 ancestor chain on every permission check, so each missed <code>select_related</code>
 multiplies into one query per ancestor per check.</p>
+<h2 id="role-hygiene-report">Role hygiene report</h2>
+<p><code>waldur_core/permissions/hygiene.py</code> checks the role catalogue for names that
+are not machine codes, system roles this release does not define, clones whose
+name or organization binding drifted, custom roles that are silently offered in
+every organization, and permissions that can never apply to a role's scope.
+Offering catalog roles (<code>resource</code> / <code>resource_project</code>) are exempt — their
+names are the provider's to choose.</p>
+<p>Two entry points, both read-only:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>check_role_names<span class="w">                       </span><span class="c1"># text, exits 1 on errors</span>
+waldur<span class="w"> </span>check_role_names<span class="w"> </span>--severity<span class="w"> </span>warning<span class="w">    </span><span class="c1"># errors and warnings only</span>
+waldur<span class="w"> </span>check_role_names<span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div></td></tr></tbody></table></div>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/roles/hygiene_report/                # staff only</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Only the findings that cannot be legitimately deployment-specific carry the
+error severity that fails the command: a name that is not a machine code, a
+system role bound to the wrong scope, a clone whose name drifted from its
+organization, a clone that lost its organization binding, and a role bound to
+more than one organization. A role name this release does not define is a
+warning — <code>import_roles</code> marks every role in a deployment's own
+<code>permissions.yaml</code> as a system role, and a deployment cannot add its roles to
+<code>SYSTEM_ROLE_SCOPES</code>.</p>
+<p>Two tables drive the scope checks and are the place to extend when a scope type
+or permission category is added, both in <code>permissions/enums.py</code>:
+<code>SCOPE_ANCESTORS</code> (which scopes a role governs from where it is granted) and
+<code>PERMISSION_TARGET_SCOPES</code> (the scope each permission category acts on). A
+permission is meaningful on its target scope and on every ancestor of it; a
+category missing from the table is skipped rather than guessed at.</p>
 
 
 
