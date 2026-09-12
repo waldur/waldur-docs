@@ -6126,6 +6126,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#preserve_unmanaged_backend_users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        preserve_unmanaged_backend_users
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#default_account_policy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18243,6 +18254,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#preserve_unmanaged_backend_users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        preserve_unmanaged_backend_users
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#default_account_policy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18451,6 +18473,33 @@ Required keys must be present or the agent will fail to start.</p>
 </tbody>
 </table>
 <p>Check the <a href="../../../../CHANGELOG/">CHANGELOG</a> for any new required keys before upgrading.</p>
+<h2 id="preserve_unmanaged_backend_users"><code>preserve_unmanaged_backend_users</code></h2>
+<p>Offering-level (not <code>backend_settings</code>). Default <code>false</code>: membership sync
+removes every backend user who is not on the Waldur resource team.</p>
+<p>Set to <code>true</code> if the service provider also adds users locally on a
+Waldur-managed allocation (for example people who cannot get an offering user
+because of identity-document policy). Then:</p>
+<ul>
+<li>users Waldur has <strong>ever</strong> known as offering users of this offering (any
+  state, including <code>DELETED</code> / <code>REQUESTED_DELETION</code> and restricted) are
+  removed once they leave the team;</li>
+<li>accounts Waldur has <strong>never</strong> seen are kept.</li>
+</ul>
+<p>Applies to every local-username backend (SLURM, MOAB, MUP, OKD, Harbor, …).
+Ignored for Waldur-to-Waldur federation (identity-bridge).</p>
+<p>Remaining gaps — all of which leave the user in place, not remove them:</p>
+<ul>
+<li>an offering user hard-deleted in Waldur (API delete, deleting the user
+  account, remote-offering sync);</li>
+<li>offering users hidden from the agent's token by
+  <code>ENFORCE_USER_CONSENT_FOR_OFFERINGS</code> consent filtering.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Example</span><span class="nv"> </span><span class="s">SLURM</span><span class="nv"> </span><span class="s">Offering"</span>
+<span class="w">    </span><span class="nt">preserve_unmanaged_backend_users</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="default_account_policy"><code>default_account_policy</code></h2>
 <p>Controls which account is passed as <code>DefaultAccount=</code> when the agent creates a
 user→account association (<code>sacctmgr add user …</code>). The default account is where a

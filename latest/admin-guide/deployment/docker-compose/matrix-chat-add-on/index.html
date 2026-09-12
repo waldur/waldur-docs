@@ -18374,8 +18374,8 @@
 <tbody>
 <tr>
 <td><code>WALDUR_TUWUNEL_IMAGE_TAG</code></td>
-<td><code>v1.7.1</code></td>
-<td>Tuwunel homeserver — requires 1.7.0+ for Synapse-compatible <code>registration_shared_secret</code></td>
+<td><code>v1.9.0</code></td>
+<td>Tuwunel homeserver — requires 1.7.0+ for Synapse-compatible <code>registration_shared_secret</code>. <strong>Kept in lockstep with the Helm chart's <code>matrixChat.homeserver.imageTag</code></strong> — one supported homeserver version across both packaging paths</td>
 </tr>
 <tr>
 <td><code>WALDUR_LIVEKIT_IMAGE_TAG</code></td>
@@ -18390,6 +18390,28 @@
 </tbody>
 </table>
 <p>All three publish multi-arch (<code>linux/amd64</code> and <code>linux/arm64</code>) manifests for the pinned tags. Re-check with <code>docker buildx imagetools inspect &lt;image&gt;:&lt;tag&gt;</code> after bumps.</p>
+<p><strong>Back up before bumping Tuwunel.</strong> It migrates its embedded database in place
+on the first boot of a new version, before it listens and without logging
+anything, so read the
+<a href="https://github.com/matrix-construct/tuwunel/releases">upstream release notes</a>
+before moving in either direction. A <code>tuwunel</code> container that is up but not
+answering <code>/_matrix/client/versions</code> is migrating, not hung: do not restart it,
+a restart mid-migration corrupts the database.</p>
+<p><strong>Downgrades are the dangerous direction.</strong> An older Tuwunel boots cleanly on a
+migrated database and then silently serves stale data from the old stores. Stop
+the stack and back up the <code>tuwunel_data</code> volume before changing the tag;
+restoring that backup is the only rollback. The Helm chart's
+<a href="https://docs.waldur.com/latest/admin-guide/deployment/helm/docs/matrix-chat/">Matrix chat guide</a>
+has the upgrade and CVE-response procedure, which applies to both packaging
+paths.</p>
+<p><strong><code>WALDUR_DOMAIN</code> is frozen once the homeserver has data.</strong> It is the Matrix
+<code>server_name</code>, baked into every user and room ID. From 1.9.0 the homeserver
+also stamps it into the database on first boot and refuses to start under a
+different name:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>Critical error starting server: Database belongs to old.example; configured server name is new.example. Cannot reuse.
+</code></pre></div></td></tr></tbody></table></div>
+<p>That is not a bug to work around by wiping <code>tuwunel_data</code> — wiping it discards
+the whole chat corpus. Changing the domain means a fresh homeserver.</p>
 <h2 id="one-time-appservice-registration">One-time appservice registration</h2>
 <p>Tuwunel does not load appservice descriptors from a file — it requires registration via the <code>!admin appservices register</code> admin-room command. The <code>waldur-matrix-init</code> container renders a ready-to-paste descriptor into the <code>waldur_matrix_secrets</code> volume; do the following once after the first <code>--profile matrix up -d</code>.</p>
 <p>The default config has <code>WALDUR_MATRIX_OPEN_REGISTRATION=false</code>, so client-side registration (Element Web sign-up form) is disabled. Use Tuwunel's Synapse-compatible admin endpoint (HMAC-keyed by the registration secret) to provision the admin user. The snippet below does the whole thing — create admin, log in, find the auto-joined admin room, post the <code>!admin appservices register</code> message with the descriptor:</p>

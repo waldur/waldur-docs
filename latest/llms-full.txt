@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-12T02:03:57.318928Z
+Generated: 2026-09-12T11:20:18.906432Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -5239,11 +5239,39 @@ Matrix component versions live in `.env`. Bump them deliberately:
 
 | Variable | Default | Component |
 |---|---|---|
-| `WALDUR_TUWUNEL_IMAGE_TAG` | `v1.7.1` | Tuwunel homeserver — requires 1.7.0+ for Synapse-compatible `registration_shared_secret` |
+| `WALDUR_TUWUNEL_IMAGE_TAG` | `v1.9.0` | Tuwunel homeserver — requires 1.7.0+ for Synapse-compatible `registration_shared_secret`. **Kept in lockstep with the Helm chart's `matrixChat.homeserver.imageTag`** — one supported homeserver version across both packaging paths |
 | `WALDUR_LIVEKIT_IMAGE_TAG` | `v1.12.0` | LiveKit SFU |
 | `WALDUR_LK_JWT_IMAGE_TAG` | `0.5.0` | lk-jwt-service — requires explicit `LIVEKIT_FULL_ACCESS_HOMESERVERS` (auto-set) |
 
 All three publish multi-arch (`linux/amd64` and `linux/arm64`) manifests for the pinned tags. Re-check with `docker buildx imagetools inspect <image>:<tag>` after bumps.
+
+**Back up before bumping Tuwunel.** It migrates its embedded database in place
+on the first boot of a new version, before it listens and without logging
+anything, so read the
+[upstream release notes](https://github.com/matrix-construct/tuwunel/releases)
+before moving in either direction. A `tuwunel` container that is up but not
+answering `/_matrix/client/versions` is migrating, not hung: do not restart it,
+a restart mid-migration corrupts the database.
+
+**Downgrades are the dangerous direction.** An older Tuwunel boots cleanly on a
+migrated database and then silently serves stale data from the old stores. Stop
+the stack and back up the `tuwunel_data` volume before changing the tag;
+restoring that backup is the only rollback. The Helm chart's
+[Matrix chat guide](https://docs.waldur.com/latest/admin-guide/deployment/helm/docs/matrix-chat/)
+has the upgrade and CVE-response procedure, which applies to both packaging
+paths.
+
+**`WALDUR_DOMAIN` is frozen once the homeserver has data.** It is the Matrix
+`server_name`, baked into every user and room ID. From 1.9.0 the homeserver
+also stamps it into the database on first boot and refuses to start under a
+different name:
+
+```text
+Critical error starting server: Database belongs to old.example; configured server name is new.example. Cannot reuse.
+```
+
+That is not a bug to work around by wiping `tuwunel_data` — wiping it discards
+the whole chat corpus. Changing the domain means a fresh homeserver.
 
 ## One-time appservice registration
 
@@ -6251,6 +6279,42 @@ options:
 ## check_provider_helpdesks
 
 Check connectivity of all active provider helpdesks.
+
+## check_role_names
+
+Report malformed, mis-scoped and silently global roles.
+
+  Read-only: nothing is created, changed or deleted. Exits with status 1 when
+  an error-severity finding is reported, so it can run as an ops check. The
+  status follows what the filters actually report.
+
+  Usage:
+
+```yaml
+waldur check_role_names
+waldur check_role_names --severity warning
+waldur check_role_names --format json
+waldur check_role_names --check global-custom-role --check org-role-unmanaged
+```
+
+```bash
+
+usage: waldur check_role_names [--format {text,json}]
+                               [--severity {error,warning,info}]
+                               [--check {clone-name-drift,cross-scope-permission,global-custom-role,label-equals-name,label-missing,multi-org-binding,name-not-a-code,org-role-unmanaged,scope-prefix-mismatch,system-name-unknown,system-scope-mismatch,template-without-scope}]
+                               [--exit-zero]
+
+options:
+  --format {text,json}  Output format (default: text)
+  --severity {error,warning,info}
+                        Lowest severity to report (default: info, i.e.
+                        everything)
+  --check {clone-name-drift,cross-scope-permission,global-custom-role,label-equals-name,label-missing,multi-org-binding,name-not-a-code,org-role-unmanaged,scope-prefix-mismatch,system-name-unknown,system-scope-mismatch,template-without-scope}
+                        Report only this check; repeat for several
+  --exit-zero           Always exit with status 0, even when errors are
+                        reported
+
+```
 
 ## clean_celery_results
 
@@ -26248,6 +26312,20 @@ username_management_backend: "base"  # Backend for username management
 - **Default**: `false`
 - **Description**: Whether to expose importable resources to Waldur
 
+#### `preserve_unmanaged_backend_users`
+
+- **Type**: Boolean
+- **Default**: `false`
+- **Description**: Controls how membership sync treats backend users who are
+  not on the Waldur resource team. When `false` (default), any such user is
+  removed. When `true`, users Waldur has ever known as offering users of this
+  offering (any state, including `DELETED` and restricted) are removed once
+  they leave the team; accounts Waldur has never seen — for example people
+  the service provider added locally because Waldur validation blocked their
+  offering user — are kept. Applies to every local-username backend
+  (SLURM, MOAB, MUP, OKD, Harbor, …). Ignored for identity-bridge /
+  Waldur-to-Waldur federation.
+
 ## Common Backend Settings
 
 These settings can be used in `backend_settings` for any backend type.
@@ -42168,6 +42246,36 @@ Required keys must be present or the agent will fail to start.
 | `default_homedir_umask` | No | Default `0077` |
 
 Check the [CHANGELOG](../../../CHANGELOG.md) for any new required keys before upgrading.
+
+## `preserve_unmanaged_backend_users`
+
+Offering-level (not `backend_settings`). Default `false`: membership sync
+removes every backend user who is not on the Waldur resource team.
+
+Set to `true` if the service provider also adds users locally on a
+Waldur-managed allocation (for example people who cannot get an offering user
+because of identity-document policy). Then:
+
+- users Waldur has **ever** known as offering users of this offering (any
+  state, including `DELETED` / `REQUESTED_DELETION` and restricted) are
+  removed once they leave the team;
+- accounts Waldur has **never** seen are kept.
+
+Applies to every local-username backend (SLURM, MOAB, MUP, OKD, Harbor, …).
+Ignored for Waldur-to-Waldur federation (identity-bridge).
+
+Remaining gaps — all of which leave the user in place, not remove them:
+
+- an offering user hard-deleted in Waldur (API delete, deleting the user
+  account, remote-offering sync);
+- offering users hidden from the agent's token by
+  `ENFORCE_USER_CONSENT_FOR_OFFERINGS` consent filtering.
+
+```yaml
+offerings:
+  - name: "Example SLURM Offering"
+    preserve_unmanaged_backend_users: true
+```
 
 ## `default_account_policy`
 
