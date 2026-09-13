@@ -8,7 +8,7 @@ Waldur connects with a wide range of resource providers, identity services, and 
 
 * **OpenStack** - Complete integration with OpenStack's core services (Keystone, Nova, Cinder, Glance, and Neutron) enabling management of projects, networks, subnets, floating IPs, instances, and more.
 
-* **MS Azure** - Support for creating, importing, and managing Virtual Machines on Microsoft Azure public cloud.
+* **MS Azure** - Virtual machines on Microsoft Azure public cloud through the Waldur Site Agent: creation, deletion, and pausing by deallocation. See the [Azure guide](../admin-guide/providers/azure.md).
 
 * **VMware** - Self-service virtual machines on VMware vCenter: deployment from Content Library templates, power operations, resizing, disks, network adapters and remote console. See the [VMware vSphere guide](../admin-guide/providers/vmware.md).
 
