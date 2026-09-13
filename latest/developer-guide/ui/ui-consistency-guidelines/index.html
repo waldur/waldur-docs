@@ -20392,6 +20392,50 @@
 <span class="c1">// Or use dash for consistency</span>
 <span class="p">{</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">items</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">', '</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">DASH_ESCAPE_CODE</span><span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p><strong>What the column holds decides it, not how empty the cell looks.</strong></p>
+<p>An empty cell is rarely a null: a count is 0, a price is 0.0000000, a relation
+is []. Deciding per cell is how one table ends up saying nothing three
+different ways, so decide by type:</p>
+<table>
+<thead>
+<tr>
+<th>The column holds</th>
+<th>Empty renders as</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>money — a price, a cost, a total</td>
+<td>the figure, always: <code>defaultCurrency(...)</code></td>
+<td><code>€0.00</code> for a plan whose components are all priced at 0</td>
+</tr>
+<tr>
+<td>a count</td>
+<td>the number, or the column's own word for zero</td>
+<td><code>Not used</code> for the resources on a plan</td>
+</tr>
+<tr>
+<td>an optional list or relation, where empty is the ordinary state</td>
+<td><code>—</code></td>
+<td>a plan's organization groups: none assigned means no restriction</td>
+</tr>
+<tr>
+<td>a genuinely absent field (<code>null</code>/<code>undefined</code>)</td>
+<td><code>—</code> via <code>renderFieldOrDash</code></td>
+<td>a description nobody wrote</td>
+</tr>
+</tbody>
+</table>
+<p>A price, a count or a total is never dashed: <code>0</code> is a fact somebody's
+configuration produced and usually one they must act on, while <code>—</code> reads as
+"does not apply". Money columns print <code>defaultCurrency(...)</code> unconditionally
+for the same reason, and <code>PlanComponentsTable</code> spells it out where a plan's
+zero prices are listed.</p>
+<p>Where the two conventions collide — the app-wide idiom for an unconfigured
+value is muted text (<code>FieldRow</code>, <code>WaldurResourcesList</code>), while a neighbouring
+column in the same table states its zero at full weight — match the table.
+Cells read against the ones beside them before they read against the app.</p>
 <h3 id="14-empty-state-message-templates">1.4 Empty State Message Templates</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
