@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-13T02:03:58.045847Z
+Generated: 2026-09-13T05:48:06.309828Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -24494,18 +24494,41 @@ To turn a claim in the token into a role on an organization, see
 
 ## Overview
 
-This guide will help you set up Azure integration with Waldur by creating a service principal and collecting the necessary credentials. You can use either the **Azure CLI** (recommended) or the **Azure Portal**.
+Waldur offers Microsoft Azure virtual machines through the Azure plugin of the
+[Waldur Site Agent](site-agent/index.md). The agent runs at the provider site, holds the Azure
+service principal credentials and talks to Azure Resource Manager; Waldur itself does not
+connect to Azure. Customers order machines from a Site Agent offering in the marketplace.
+
+| Action in Waldur | Effect on Azure |
+|---|---|
+| Create a resource | A running virtual machine, with its own resource group, virtual network, subnet, public IP address and network interface |
+| Terminate the resource | The virtual machine and its network objects are deleted |
+| Pause or downscale (staff actions) | The virtual machine is deallocated, so compute is no longer billed; its disks remain |
+| Restore the resource | The virtual machine is started again |
+
+There are no start, stop or restart actions, and a plan change does not resize a machine.
+Usage is reported as allocation: the cores, memory and disk of the machine's size, for as long
+as the machine exists.
+
+Setting up the integration takes three steps:
+
+1. [Create a service principal](#prepare-azure) in the Azure subscription the machines run in.
+2. [Create a Site Agent offering](#create-the-offering) in Waldur.
+3. [Configure and run the agent](#configure-the-agent) with the credentials and the offering's UUID.
 
 ## Prerequisites
 
 - An Azure account with an active subscription
-- One of the following:
-  - **Azure CLI installed** (for CLI method) - [Install Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-  - **Sufficient Azure permissions** (for either method):
+- **Azure CLI installed** - [Install Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
+  The steps below use the CLI; the same can be done in the Azure Portal.
+- **Sufficient Azure permissions**:
     - To create service principals: **Cloud Application Administrator** role or higher in Microsoft Entra ID
     - To assign roles: **Owner** or **User Access Administrator** role on the subscription
+- A host at the provider site for the Waldur Site Agent, with HTTPS access to Waldur and to Azure
 
-## Login to Azure CLI
+## Prepare Azure
+
+### Log in to the Azure CLI
 
 ```bash
 az login
@@ -24513,15 +24536,15 @@ az login
 
 This will open a browser window for authentication. Complete the login process.
 
-## Get Your Subscription ID
+### Get your subscription ID
 
 ```bash
 az account show --query id --output tsv
 ```
 
-Save this value - you'll need it for Waldur configuration.
+Save this value - you'll need it for the agent configuration.
 
-## Register Resource Providers
+### Register resource providers
 
 To avoid errors when creating Virtual Machines and related resources, register the necessary resource providers:
 
@@ -24543,7 +24566,7 @@ az provider show -n Microsoft.Network --query "registrationState"
 # Should output: "Registered"
 ```
 
-## Create Service Principal with Role Assignment
+### Create a service principal with a role assignment
 
 Run the following command to create a service principal with **Contributor** access to your subscription:
 
@@ -24554,12 +24577,12 @@ az ad sp create-for-rbac \
   --scopes /subscriptions/<YOUR_SUBSCRIPTION_ID>
 ```
 
-Replace `<YOUR_SUBSCRIPTION_ID>` with the subscription ID from Step 2.
+Replace `<YOUR_SUBSCRIPTION_ID>` with the subscription ID from [Get your subscription ID](#get-your-subscription-id).
 
 !!! tip
     You can use a different role if needed. See [Azure built-in roles](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles) for other options.
 
-## Save the Output
+### Save the output
 
 The command will output JSON containing all the credentials you need:
 
@@ -24572,15 +24595,118 @@ The command will output JSON containing all the credentials you need:
 }
 ```
 
-**Map these values for Waldur:**
+**Map these values to the agent's backend settings:**
 
-- `appId` → **Client ID**
-- `password` → **Client Secret**
-- `tenant` → **Tenant ID**
-- Subscription ID from Step 2 → **Subscription ID**
+- `appId` → `client_id`
+- `password` → `client_secret`
+- `tenant` → `tenant_id`
+- Subscription ID → `subscription_id`
 
 !!! warning
     The `password` (Client Secret) is only shown once. Save it immediately in a secure location.
+
+## Create the offering
+
+Create a Site Agent offering (offering type `Marketplace.Slurm`) as described in the
+[Site Agent documentation](site-agent/index.md), and note its UUID: the agent is bound to the
+offering by it.
+
+### Components
+
+Give the offering the components the plugin reports: `cpu`, `ram` and `disk`, matching the
+`backend_components` of the agent configuration below. The plugin also recognises `cores`,
+`memory` and `storage`, or any name mapped with `backend_name`.
+
+### Order options
+
+The order form is the Site Agent order form. Define the machine's parameters as the offering's
+order options so that the form asks for them; each overrides the agent's default for one
+machine:
+
+| Option | Type | Meaning |
+|---|---|---|
+| `location` | select | Azure region, e.g. `westeurope` |
+| `size` | select | Machine size, e.g. `Standard_B1s` |
+| `image` | select | Image as `publisher:offer:sku:version` |
+| `ssh_public_key` | text | SSH public key for the administrator account |
+
+The key is the only way into a machine: the administrator password is generated and never
+shown. An order without a key is refused before anything is created on Azure.
+
+### Pausing and downscaling
+
+Set the offering's `supports_pausing` and `supports_downscaling` plugin options to let staff
+pause and downscale its resources. Both deallocate the machine; restoring the resource starts it.
+
+## Configure the agent
+
+Install the agent as described in the [Site Agent documentation](site-agent/index.md), and
+add the offering to its configuration with the Azure backend:
+
+```yaml
+offerings:
+  - name: Azure VM
+    waldur_api_url: https://waldur.example.com/api/
+    waldur_api_token: <TOKEN>
+    waldur_offering_uuid: <OFFERING_UUID>
+    backend_type: azure
+    order_processing_backend: azure
+    reporting_backend: azure
+    backend_settings:
+      subscription_id: <SUBSCRIPTION_ID>
+      tenant_id: <TENANT_ID>
+      client_id: <CLIENT_ID>
+      client_secret: <CLIENT_SECRET>
+      default_location: westeurope
+      default_size: Standard_B1s
+      default_image: Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest
+      # Without any range a machine accepts no SSH connections.
+      allowed_ssh_ranges:
+        - 203.0.113.0/24
+    backend_components:
+      cpu:
+        measured_unit: Cores
+        unit_factor: 1
+        accounting_type: limit
+        label: CPU
+      ram:
+        measured_unit: MiB
+        unit_factor: 1
+        accounting_type: limit
+        label: RAM
+      disk:
+        measured_unit: MiB
+        unit_factor: 1
+        accounting_type: limit
+        label: Disk
+```
+
+- The four credentials are the values collected in [Save the output](#save-the-output).
+- `allowed_ssh_ranges` lists the CIDR prefixes that may reach the machines over SSH. The plugin
+  opens port 22 only to these ranges; with none configured, no SSH connections are admitted.
+- `default_location`, `default_size` and `default_image` apply when an order does not set the
+  corresponding order option.
+
+Run the agent for order processing and usage reporting. The full list of backend settings
+(including `default_resource_group`, `network_cidr` and `subnet_cidr`) is in the
+[Azure plugin README](https://code.opennodecloud.com/waldur/waldur-site-agent/-/blob/main/plugins/azure/README.md).
+
+## Upgrading from Waldur's built-in Azure integration
+
+Upgrading Waldur converts existing Azure offerings into Site Agent offerings. Their resources
+are kept, and the plugin manages the existing machines under their current names and ARM ids.
+The upgrade deletes the offerings' Azure service settings, which hold the service principal
+credentials.
+
+!!! warning
+    Copy the credentials before upgrading. The upgrade deletes them from Waldur.
+
+1. For each Azure offering, copy `subscription_id`, `tenant_id`, `client_id` and
+   `client_secret` from its Azure service settings into the agent's `backend_settings`. The
+   settings carry the same names in both places.
+2. Upgrade Waldur.
+3. Run an agent with each offering's UUID as `waldur_offering_uuid`, configured as in
+   [Configure the agent](#configure-the-agent).
 
 ---
 
@@ -83653,7 +83779,7 @@ Waldur connects with a wide range of resource providers, identity services, and 
 
 * **OpenStack** - Complete integration with OpenStack's core services (Keystone, Nova, Cinder, Glance, and Neutron) enabling management of projects, networks, subnets, floating IPs, instances, and more.
 
-* **MS Azure** - Support for creating, importing, and managing Virtual Machines on Microsoft Azure public cloud.
+* **MS Azure** - Virtual machines on Microsoft Azure public cloud through the Waldur Site Agent: creation, deletion, and pausing by deallocation. See the [Azure guide](../admin-guide/providers/azure.md).
 
 * **VMware** - Self-service virtual machines on VMware vCenter: deployment from Content Library templates, power operations, resizing, disks, network adapters and remote console. See the [VMware vSphere guide](../admin-guide/providers/vmware.md).
 
@@ -84884,7 +85010,7 @@ The Marketplace is plugin-driven. Plugins shipped with Waldur include:
 | `openstack` | Tenants, VMs, volumes, networks, floating IPs |
 | `slurm` | HPC allocations (CPU/GPU hours, storage) |
 | `rancher` | Kubernetes clusters via Rancher |
-| `azure`, `vmware` | VMs on the respective backend |
+| `vmware` | VMs on VMware vCenter |
 | `openportal` | Federated HPC accounts via the OpenPortal protocol |
 | `remote` | Resources hosted on another Waldur instance |
 | `support` | Ticket-backed offerings |
@@ -94389,8 +94515,6 @@ td:nth-child(4) {
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_azure.NetworkInterface` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_azure.PublicIP` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_azure.VirtualMachine` | Delete error message if instance state changed from erred |
-| `delete_error_message` | `Custom Signal (post_transition)` | `waldur_azure.SQLServer` | Delete error message if instance state changed from erred |
-| `delete_error_message` | `Custom Signal (post_transition)` | `waldur_azure.SQLDatabase` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_digitalocean.Droplet` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `google.GoogleCalendar` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_openportal.Allocation` | Delete error message if instance state changed from erred |
@@ -94446,8 +94570,6 @@ td:nth-child(4) {
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_azure.NetworkInterface` | If VM that contains service settings were deleted - all settings |
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_azure.PublicIP` | If VM that contains service settings were deleted - all settings |
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_azure.VirtualMachine` | If VM that contains service settings were deleted - all settings |
-| `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_azure.SQLServer` | If VM that contains service settings were deleted - all settings |
-| `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_azure.SQLDatabase` | If VM that contains service settings were deleted - all settings |
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_digitalocean.Droplet` | If VM that contains service settings were deleted - all settings |
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_openportal.Allocation` | If VM that contains service settings were deleted - all settings |
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_openportal.RemoteAllocation` | If VM that contains service settings were deleted - all settings |
@@ -94505,8 +94627,6 @@ td:nth-child(4) {
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_azure.NetworkInterface` | Log resource state transitions. |
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_azure.PublicIP` | Log resource state transitions. |
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_azure.VirtualMachine` | Log resource state transitions. |
-| `log_resource_action` | `Custom Signal (post_transition)` | `waldur_azure.SQLServer` | Log resource state transitions. |
-| `log_resource_action` | `Custom Signal (post_transition)` | `waldur_azure.SQLDatabase` | Log resource state transitions. |
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_digitalocean.Droplet` | Log resource state transitions. |
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_openportal.Allocation` | Log resource state transitions. |
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_openportal.RemoteAllocation` | Log resource state transitions. |
@@ -94545,8 +94665,6 @@ td:nth-child(4) {
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_azure.NetworkInterface` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_azure.PublicIP` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_azure.VirtualMachine` | Log scheduled resource creation. |
-| `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_azure.SQLServer` | Log scheduled resource creation. |
-| `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_azure.SQLDatabase` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_digitalocean.Droplet` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_openportal.Allocation` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_openportal.RemoteAllocation` | Log scheduled resource creation. |
@@ -94585,8 +94703,6 @@ td:nth-child(4) {
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_azure.NetworkInterface` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_azure.PublicIP` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_azure.VirtualMachine` | Log resource deletion. |
-| `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_azure.SQLServer` | Log resource deletion. |
-| `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_azure.SQLDatabase` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_digitalocean.Droplet` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_openportal.Allocation` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_openportal.RemoteAllocation` | Log resource deletion. |
@@ -94625,8 +94741,6 @@ td:nth-child(4) {
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_azure.NetworkInterface` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_azure.PublicIP` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_azure.VirtualMachine` | Log resource import. |
-| `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_azure.SQLServer` | Log resource import. |
-| `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_azure.SQLDatabase` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_digitalocean.Droplet` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_openportal.Allocation` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_openportal.RemoteAllocation` | Log resource import. |
@@ -94683,8 +94797,6 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_azure.NetworkInterface` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_azure.PublicIP` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_azure.VirtualMachine` | Recalculate count quota when an instance is created or deleted. |
-| `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_azure.SQLServer` | Recalculate count quota when an instance is created or deleted. |
-| `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_azure.SQLDatabase` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_digitalocean.Droplet` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_openportal.Allocation` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_openportal.RemoteAllocation` | Recalculate count quota when an instance is created or deleted. |
@@ -94725,8 +94837,6 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_azure.NetworkInterface` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_azure.PublicIP` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_azure.VirtualMachine` | Recalculate count quota when an instance is created or deleted. |
-| `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_azure.SQLServer` | Recalculate count quota when an instance is created or deleted. |
-| `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_azure.SQLDatabase` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_digitalocean.Droplet` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_openportal.Allocation` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_openportal.RemoteAllocation` | Recalculate count quota when an instance is created or deleted. |
@@ -94829,9 +94939,7 @@ td:nth-child(4) {
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `OpenStackInstanceSerializer` | Add marketplace offering related fields to the serializer. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `AwsVolumeSerializer` | Add marketplace offering related fields to the serializer. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `AzureResourceGroupSerializer` | Add marketplace offering related fields to the serializer. |
-| `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `AzureSqlServerSerializer` | Add marketplace offering related fields to the serializer. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `AzurePublicIPSerializer` | Add marketplace offering related fields to the serializer. |
-| `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `AzureSqlDatabaseSerializer` | Add marketplace offering related fields to the serializer. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `AllocationSerializer` | Add marketplace offering related fields to the serializer. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `RemoteAllocationSerializer` | Add marketplace offering related fields to the serializer. |
 | `add_marketplace_offering` | `Custom Signal (pre_serializer_fields)` | `OpenStackTenantSerializer` | Add marketplace offering related fields to the serializer. |
@@ -94868,8 +94976,6 @@ td:nth-child(4) {
 | `apply_campaign_to_pending_invoices` | `Django Signal (post_save)` | `promotions.Campaign` | Apply campaign discounts to pending invoices and create discounted resources. |
 | `archive_offering` | `Django Signal (pre_delete)` | `openstack.Tenant` | Archive marketplace offerings when OpenStack tenant is deleted. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_azure.VirtualMachine` | Change the state of an order based on resource state changes. |
-| `change_order_state` | `Django Signal (post_save)` | `waldur_azure.SQLServer` | Change the state of an order based on resource state changes. |
-| `change_order_state` | `Django Signal (post_save)` | `waldur_azure.SQLDatabase` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_openportal.Allocation` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_openportal.RemoteAllocation` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `openstack.Instance` | Change the state of an order based on resource state changes. |
@@ -95076,8 +95182,6 @@ td:nth-child(4) {
 | `synchronize_ports_on_delete` | `Django Signal (post_delete)` | `openstack.Port` | No description |
 | `synchronize_public_ip` | `Django Signal (post_save)` | `waldur_azure.PublicIP` | No description |
 | `synchronize_resource_metadata_on_delete` | `Django Signal (post_delete)` | `waldur_azure.VirtualMachine` | Synchronize resource metadata on delete. |
-| `synchronize_resource_metadata_on_delete` | `Django Signal (post_delete)` | `waldur_azure.SQLServer` | Synchronize resource metadata on delete. |
-| `synchronize_resource_metadata_on_delete` | `Django Signal (post_delete)` | `waldur_azure.SQLDatabase` | Synchronize resource metadata on delete. |
 | `synchronize_resource_metadata_on_delete` | `Django Signal (post_delete)` | `waldur_openportal.Allocation` | Synchronize resource metadata on delete. |
 | `synchronize_resource_metadata_on_delete` | `Django Signal (post_delete)` | `waldur_openportal.RemoteAllocation` | Synchronize resource metadata on delete. |
 | `synchronize_resource_metadata_on_delete` | `Django Signal (post_delete)` | `openstack.Instance` | Synchronize resource metadata on delete. |
@@ -95086,8 +95190,6 @@ td:nth-child(4) {
 | `synchronize_resource_metadata_on_delete` | `Django Signal (post_delete)` | `waldur_rancher.Cluster` | Synchronize resource metadata on delete. |
 | `synchronize_resource_metadata_on_delete` | `Django Signal (post_delete)` | `waldur_vmware.VirtualMachine` | Synchronize resource metadata on delete. |
 | `synchronize_resource_metadata_on_save` | `Django Signal (post_save)` | `waldur_azure.VirtualMachine` | Synchronize resource metadata on save. |
-| `synchronize_resource_metadata_on_save` | `Django Signal (post_save)` | `waldur_azure.SQLServer` | Synchronize resource metadata on save. |
-| `synchronize_resource_metadata_on_save` | `Django Signal (post_save)` | `waldur_azure.SQLDatabase` | Synchronize resource metadata on save. |
 | `synchronize_resource_metadata_on_save` | `Django Signal (post_save)` | `waldur_openportal.Allocation` | Synchronize resource metadata on save. |
 | `synchronize_resource_metadata_on_save` | `Django Signal (post_save)` | `waldur_openportal.RemoteAllocation` | Synchronize resource metadata on save. |
 | `synchronize_resource_metadata_on_save` | `Django Signal (post_save)` | `openstack.Instance` | Synchronize resource metadata on save. |
@@ -95102,8 +95204,6 @@ td:nth-child(4) {
 | `synchronize_volume_metadata_on_save` | `Django Signal (post_save)` | `openstack.Volume` | No description |
 | `tenant_does_not_exist_in_backend` | `Custom Signal (tenant_does_not_exist_in_backend)` | `openstack.Tenant` | No description |
 | `terminate_resource` | `Django Signal (pre_delete)` | `waldur_azure.VirtualMachine` | Terminate a resource. |
-| `terminate_resource` | `Django Signal (pre_delete)` | `waldur_azure.SQLServer` | Terminate a resource. |
-| `terminate_resource` | `Django Signal (pre_delete)` | `waldur_azure.SQLDatabase` | Terminate a resource. |
 | `terminate_resource` | `Django Signal (pre_delete)` | `waldur_openportal.Allocation` | Terminate a resource. |
 | `terminate_resource` | `Django Signal (pre_delete)` | `waldur_openportal.RemoteAllocation` | Terminate a resource. |
 | `terminate_resource` | `Django Signal (pre_delete)` | `openstack.Instance` | Terminate a resource. |
@@ -95212,14 +95312,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 822
+Total unique handlers found: 796
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 424 handlers
+- **waldur_core**: 408 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 344 handlers
+- **waldur_mastermind**: 334 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
