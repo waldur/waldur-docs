@@ -161,6 +161,55 @@ One-time components also support **Min value** and **Max value** constraints, wh
 | **One-time + prepaid** (upfront) | Once at creation | `price × limit × months` | Supplementary charge for `(new - old) × remaining months` |
 | **Limit-based / Total** (one-time) | Once at creation | `price × limit` | Incremental charge for difference |
 
+### Allowing fractional limits
+
+By default a component limit is a whole number: a customer ordering storage can ask for
+10 GB but not 10.5 GB. Some resources are naturally fractional — storage measured in TB,
+GPU shares, a budget in currency — and rounding them up charges the customer for capacity
+they did not ask for.
+
+**Decimal places** on the component edit dialog controls this. Set it to 1 or 2 to let
+customers request that many decimals; 0, the default, keeps the component whole-number only.
+
+![Decimal places on the component edit dialog](../img/component-decimal-places.png)
+
+The setting applies to the order form and to every later limit change: the input steps by
+the matching amount (0.1 for one place, 0.01 for two), rejects a finer value, and the price
+follows the fraction.
+
+![Ordering fractional limits in the order form](../img/fractional-limit-order-form.png)
+
+!!! note
+    Precision is per component. One offering can price storage in tenths of a TB while
+    keeping CPU cores whole, which is usually what you want — half a core is rarely
+    meaningful.
+
+Offering types whose backend maps a limit onto an integer quota refuse the setting
+outright. OpenStack Tenant and VMware components, for example, reject anything above 0
+decimal places with an explanatory error when you save.
+
+#### Site agent offerings
+
+A **Waldur site agent** offering is the exception. One offering type covers every backend
+an agent can front — SLURM, Kubernetes, LiteLLM, Harbor and others — and they disagree
+about fractions: a SLURM allocation must be whole numbers, an LLM budget must not be.
+
+Waldur cannot decide that for you, so it does not refuse the setting. When the agent
+reports a backend that stores whole numbers, the dialog warns you and leaves the choice in
+your hands:
+
+![Precision warning on a site agent offering](../img/component-decimal-places-advisory.png)
+
+!!! warning
+    Keeping a fractional precision on a backend that cannot hold one means the customer is
+    **invoiced for the fraction they requested** while the backend receives the truncated
+    value. Ordering 0.5 TB against a whole-number backend is paying for 0.5 TB and being
+    granted 0.
+
+    The warning appears only once the precision is above 0, and only when an agent has
+    reported such a backend. Its absence is not a guarantee: if no agent has registered
+    yet, Waldur has nothing to go on.
+
 ## Offering a limit-based and a usage-based plan side by side
 
 The accounting type on a component applies to every plan of the offering. To sell
