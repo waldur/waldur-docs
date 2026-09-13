@@ -14,6 +14,9 @@ kubectl get pods -A | grep waldur-mastermind-worker  # to find POD id
 kubectl exec --stdin --tty waldur-mastermind-worker-POD-ID -- waldur shell
 ```
 
+On development and demo deployments that run with `DEBUG`, staff can also open the shell in a
+browser tab from the user menu, without access to the host. See [Web shell](web-shell.md).
+
 ## Examples
 
 ### Setting/removing staff permissions for a user
