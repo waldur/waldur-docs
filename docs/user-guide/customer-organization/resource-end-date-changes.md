@@ -37,9 +37,9 @@ pending one and lets you withdraw it if the date is no longer what you need.
 
 ## Following your request
 
-Requests appear on the resource under **Change requests → End date**, or as an
-**End date change requests** tab when the resource has no limit change requests
-to group it with.
+Requests appear on the resource under **Change requests → End date** when limit
+change requests are shown on the resource as well, or as an **End date change
+requests** tab on its own.
 
 You see the requests on any resource you can see. **Pending** is shown first;
 **All** keeps the history, so you can tell whether something was approved or
@@ -94,9 +94,9 @@ until it opts in.
 ![Enabling end date change requests on an offering](../img/resource-end-date-offering-toggle.png)
 
 !!! note
-    Editing this setting requires permission to manage the offering — the
-    offering's service manager or the provider organization owner. It cannot be
-    enabled on a prepaid offering.
+    Editing this setting requires permission to manage the offering's
+    integration, held by the provider organization's owners, service provider
+    managers and offering managers. It cannot be enabled on a prepaid offering.
 
 ## Approving outside Waldur
 

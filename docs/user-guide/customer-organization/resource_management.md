@@ -136,6 +136,9 @@ Leave it off for normal cases where the metadata service is reachable.
 
 If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.
 
+Users who may not change the limits themselves can ask for new ones on offerings
+that enable it — see [Requesting resource limit changes](resource-limit-change-requests.md).
+
 ![type:video](../img/allocation_update.mp4)
 
 ## Changing the plan of a resource
