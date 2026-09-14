@@ -1,5 +1,53 @@
 # Changelog
 
+## 8.1.3-rc.12 - 2026-09-15
+
+### Highlights
+
+This release removes the built-in Azure integration. Existing Azure VMs are handed over to the site agent, and the retired Azure SQL Server offering is gone. Resource limit change requests are now an opt-in setting per offering, and email patterns now have to match the whole address before they grant access. Auto-provisioning rules also apply to existing accounts at login, and staff on development deployments can open a web shell in the browser.
+
+### What's New
+
+- **Browser web shell for development deployments**: Staff can open a web shell in the browser from a new entry in the user menu. It is off by default and can be turned on in Helm or through a new Docker Compose profile.
+- **Role hygiene report panel**: Staff can review role hygiene findings in a new administration panel that shows a summary, a table and details for each finding.
+- **Matrix room reprovisioning**: The new `reprovision_matrix_rooms` management command lets operators rebuild Matrix chat rooms.
+
+### Improvements
+
+- **Limit change requests are opt-in per offering**: Users can request resource limit changes only on offerings that enable this feature. The setting is in the offering's lifecycle policy section. A migration turns it on for offerings that already use limit change requests.
+- **Auto-provisioning rules**: Rule projects are now also created for existing accounts when they log in. Admins can edit a rule's project name template in the UI, and the dry-run shows what will happen to the project. If an email pattern is written as a wildcard, Waldur suggests the anchored regex instead.
+- **Offering user accounts**: Anonymized usernames are now based on the POSIX uid. A member who leaves and is granted access again gets their account back under the same name.
+- **Project metadata answers**: The API now returns only the latest checklist answer for each question. Each answer shows when it was last edited, and service providers see this time in the project metadata panel.
+- **Fractional limit warning**: Service providers see a warning in the offering component form when a fractional limit won't survive the site agent.
+- **Offering state controls**: The offering state split button is now a plain Activate/Pause/Resume button. Set to draft, Make unavailable and Archive moved into the Actions menu.
+- **Customer manager access**: Access handling was updated for users who hold only the customer manager role and no other organization roles, including access to service provider data.
+- **OpenStack sync**: Instance metadata is imported when its resource is linked, and provider accounting on volume-type components is kept across syncs.
+- **Matrix calls**: The LiveKit token exchange now goes to lk-jwt's `/get_token`. LiveKit is updated to v1.13.7 and lk-jwt to 0.7.0, and the development images are pinned.
+- **Navigation and forms**: The sidebar and select inputs were rebuilt on the new Tailwind-based UI components.
+- **Event reliability**: Real-time events for orders, resources and accounts are sent only after the database transaction commits. Member sync statuses are written only when they change.
+- **Documentation**: New guidance explains how to overwrite a built-in role's permissions using `custom-roles.yaml`.
+
+### Removed
+
+- **Azure integration**: The Azure plugin and its UI are removed, and existing Azure VMs are handed over to the site agent. The retired Azure SQL Server offering is also removed.
+
+### Bug Fixes
+
+- Email patterns now have to match the whole address wherever they grant access, including invitations, user restrictions, call eligibility and auto-provisioning.
+- In proposals, the allocated consumer step is approved only while it is still pending.
+- Call filters in proposal lists are no longer decoded twice.
+- The top navigation bar and toolbar now have the correct width when the sidebar is collapsed.
+- The email-pattern and project-name examples in the core concepts documentation are corrected.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [25 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.11...8.1.3-rc.12) - Azure removal and hand-over to the site agent, opt-in limit change requests, auto-provisioning and email pattern fixes, offering user account restore, staff web shell
+- **Waldur Homeport**: [14 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.11...8.1.3-rc.12) - Role hygiene panel, web shell menu entry, opt-in limit change request UI, auto-provisioning rule editing, sidebar and select rebuilt on Tailwind, Azure UI removal
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.11...8.1.3-rc.12) - Opt-in web shell for development deployments
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.11...8.1.3-rc.12) - Opt-in web shell profile, LiveKit and lk-jwt version updates
+
+---
+
 ## 8.1.3-rc.11 - 2026-09-12
 
 ### Highlights
