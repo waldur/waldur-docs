@@ -18721,13 +18721,13 @@
                   
 
 <h1 id="matrix-chat-add-on">Matrix chat add-on</h1>
-<p>Waldur ships an optional Matrix chat integration (the <code>matrix_chat</code> Django app and the homeport <code>src/matrix/</code> views). When the add-on is enabled, project members can chat in per-project Matrix rooms; with the <code>matrix-rtc</code> sub-profile they can also start Element Call voice/video calls.</p>
+<p>Waldur ships an optional Matrix chat integration (the <code>matrix_chat</code> Django app and the homeport <code>src/matrix/</code> views). When the add-on is enabled, project members can chat in per-project Matrix rooms; with the <code>matrix-rtc</code> sub-profile they can also start voice/video calls from the chat.</p>
 <p>The add-on bundles a <a href="https://github.com/matrix-construct/tuwunel">Tuwunel</a> homeserver (the same image used by the upstream dev stack) wired into the Caddy reverse proxy on the same domain — no extra DNS, no federation port. Tokens are auto-generated on first start and persisted in a Docker volume.</p>
 <h2 id="activation">Activation</h2>
 <p>Chat only:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>matrix<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div></td></tr></tbody></table></div>
-<p>Chat + Element Call (voice/video):</p>
+<p>Chat + voice/video calls:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>matrix<span class="w"> </span>--profile<span class="w"> </span>matrix-rtc<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div></td></tr></tbody></table></div>
 <p>The <code>matrix-rtc</code> profile requires <code>matrix</code> because <code>lk-jwt-service</code> shares Tuwunel's network namespace. Activating it on its own will fail.</p>
@@ -18749,13 +18749,13 @@
 </tr>
 <tr>
 <td><code>WALDUR_LIVEKIT_IMAGE_TAG</code></td>
-<td><code>v1.12.0</code></td>
+<td><code>v1.13.7</code></td>
 <td>LiveKit SFU</td>
 </tr>
 <tr>
 <td><code>WALDUR_LK_JWT_IMAGE_TAG</code></td>
-<td><code>0.5.0</code></td>
-<td>lk-jwt-service — requires explicit <code>LIVEKIT_FULL_ACCESS_HOMESERVERS</code> (auto-set)</td>
+<td><code>0.7.0</code></td>
+<td>lk-jwt-service, 0.4.0 or newer: homeport requests call tokens from its <code>/get_token</code> endpoint. Requires explicit <code>LIVEKIT_FULL_ACCESS_HOMESERVERS</code> (auto-set)</td>
 </tr>
 </tbody>
 </table>
@@ -18863,7 +18863,8 @@ docker<span class="w"> </span>compose<span class="w"> </span>--profile<span clas
 <p>On re-up, <code>waldur-matrix-init</code> generates fresh tokens, re-renders the descriptor, and re-seeds Constance. <strong>Re-run the one-time appservice registration step</strong> above — Tuwunel still holds the old descriptor until you re-register, and the bot will fail with <code>M_UNKNOWN_TOKEN</code> in the meantime. The room database in <code>tuwunel_data</code> is untouched, so existing rooms survive.</p>
 <h2 id="livekit-voice-video-notes">LiveKit / voice &amp; video notes</h2>
 <p><code>WALDUR_LIVEKIT_NODE_IP</code> advertises the host's RTC media address to clients. The default <code>127.0.0.1</code> is correct for a local demo only — for any reachable deployment, set this to the host's external IP or DNS name so remote clients can connect. The RTC media ports (<code>WALDUR_MATRIX_RTC_TCP_PORT</code>/<code>UDP_PORT</code>, default 7881/7882) must also be reachable from clients.</p>
-<p><code>WALDUR_LIVEKIT_KEY</code> / <code>WALDUR_LIVEKIT_SECRET</code> default to development values. <strong>Override both</strong> for anything beyond a localhost demo.</p>
+<p><code>WALDUR_LIVEKIT_KEY</code> / <code>WALDUR_LIVEKIT_SECRET</code> default to development values. <strong>Override both</strong> for anything beyond a localhost demo. Use a secret of at least 32 characters; LiveKit logs an error at startup for anything shorter.</p>
+<p><strong>Calls need a <code>WALDUR_DOMAIN</code> that resolves to the host from inside containers.</strong> <code>lk-jwt-service</code> shares Tuwunel's network namespace and verifies each caller's Matrix OpenID token with a federation lookup of the homeserver named <code>WALDUR_DOMAIN</code>. With <code>WALDUR_DOMAIN=localhost</code> that lookup dials <code>localhost:443</code> and <code>localhost:8448</code> inside the namespace, where nothing listens, so every call token request fails and calls never start. Chat is unaffected. Use a DNS name that points at the host, or <code>host.docker.internal</code> for a local demo on Docker Desktop. Choose it before the first start, because <code>WALDUR_DOMAIN</code> is frozen once the homeserver has data (see Pinned image tags above).</p>
 <h3 id="turn-relay-symmetric-nat-icloud-private-relay">TURN relay (symmetric NAT / iCloud Private Relay)</h3>
 <p>Direct media to <code>WALDUR_LIVEKIT_NODE_IP</code> fails for clients behind symmetric NAT or proxies that don't carry WebRTC UDP. Enabling TURN gives LiveKit a relay those clients fall back to.</p>
 <p>Set <code>WALDUR_MATRIX_TURN_ENABLED=true</code> (within <code>--profile matrix-rtc</code>). The stack uses <strong>TURN/UDP on port 443</strong> — <code>udp_port</code> is the port LiveKit advertises to clients, and 443 is the firewall-friendly choice. Because the stack is single-host, the relay lives at <code>WALDUR_DOMAIN:443/udp</code> — the same IP that already serves the web UI, so <strong>no extra DNS record is needed</strong>.</p>
@@ -18908,7 +18909,7 @@ docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </spa
 <li><strong><code>M_UNKNOWN_TOKEN</code> in worker logs after a token rotation</strong>: re-run the one-time appservice registration step. The descriptor Tuwunel has is stale.</li>
 <li><strong>Webhook <code>DisallowedHost</code> errors</strong>: the appservice descriptor is rendered with <code>url: http://waldur-mastermind-api:8080</code> (the Compose service name), which is in <code>ALLOWED_HOSTS</code> for the dockerised settings. If you change the URL — for example to call back via an external hostname — patch <code>ALLOWED_HOSTS</code> in <code>config/waldur-mastermind/override.conf.py</code>.</li>
 <li><strong>Browser chat drawer fails to connect</strong>: the backend talks to Tuwunel internally at <code>http://tuwunel.internal:6167</code> (Docker DNS); the browser must reach Tuwunel through Caddy at <code>https://${WALDUR_DOMAIN}</code>. <code>waldur-matrix-init</code> seeds both — backend uses <code>MATRIX_HOMESERVER_URL</code>, browser-facing endpoints serve <code>MATRIX_HOMESERVER_PUBLIC_URL</code> (requires <code>waldur-mastermind</code> &gt;= 8.x with the dual-URL split). If the chat drawer logs CSP errors connecting to <code>tuwunel.internal</code>, verify <code>MATRIX_HOMESERVER_PUBLIC_URL</code> is set: <code>docker exec waldur-mastermind-worker waldur shell -c "from constance import config; print(config.MATRIX_HOMESERVER_PUBLIC_URL)"</code>.</li>
-<li><strong>Element Call fails to fetch a JWT</strong>: confirm <code>--profile matrix-rtc</code> is active, then check <code>docker compose logs lk-jwt-service</code> — the most common cause is a <code>WALDUR_DOMAIN</code> mismatch with <code>LIVEKIT_FULL_ACCESS_HOMESERVERS</code>.</li>
+<li><strong>A call shows "Could not connect to the call."</strong>: confirm <code>--profile matrix-rtc</code> is active, then check the call token request to <code>https://${WALDUR_DOMAIN}/lk-jwt/…</code> in the browser's network tab and <code>docker compose logs lk-jwt-service</code>. Common causes: <code>WALDUR_DOMAIN=localhost</code> (see the LiveKit notes above); a <code>WALDUR_DOMAIN</code> mismatch with <code>LIVEKIT_FULL_ACCESS_HOMESERVERS</code>; or <code>400 Missing room parameter</code> from <code>/lk-jwt/sfu/get</code>, which means the homeport image still posts to lk-jwt's legacy endpoint while lk-jwt is 0.6.0 or newer. Keep <code>WALDUR_HOMEPORT_IMAGE_TAG</code> and <code>WALDUR_LK_JWT_IMAGE_TAG</code> at the versions <code>.env.example</code> pins.</li>
 <li><strong>Diagnostics shows "Public homeserver reachable" as FAIL even though the chat works</strong>: the reachability probe at <code>/api/admin/matrix/diagnostics/</code> runs from inside the mastermind container. The public URL (<code>https://${WALDUR_DOMAIN}</code>) is a Caddy-proxied address reachable from the browser, not from the backend's network namespace — so the probe gets <code>Connection refused</code>. The "Public homeserver URL configured" check above it confirms the value is set; verify the chat round-trips end-to-end from a browser instead of trusting this single probe.</li>
 <li><strong>Communication tab missing on a project</strong>: requires three things — the <code>project.show_matrix_chat</code> feature flag is on, a Matrix room exists for the project, AND the room cache has populated. The third only happens after the project view is visited at least once in the current session. If you navigate directly to <code>/projects/&lt;uuid&gt;/communication/</code> and get 404, visit <code>/projects/&lt;uuid&gt;/</code> first, then the tab appears in the nav.</li>
 </ul>
