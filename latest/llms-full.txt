@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-14T12:13:08.716391Z
+Generated: 2026-09-14T12:18:12.041154Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -24310,6 +24310,11 @@ Pick *BioML Research Institute* as the organization and *Organization owner* as
 the organization role, and switch **Create a project** off. With it off the
 project role picker disappears: this rule grants an organization role only.
 
+With **Create a project** on, the step also asks for a **project role** and a
+**project name template**. The template can use `{username}`, `{email}` and
+`{full_name}`, e.g. `{full_name} workspace`. Left empty, the project is named
+after the username, which for OIDC accounts is often an opaque id.
+
 [Image: Wizard step 2, granting an organization role]
 
 #### Step 3 — Revocation
@@ -24334,6 +24339,9 @@ with the stored values filled in.
 - Claims are an **additional** requirement, not an alternative to the other
   filters. A rule with both an email pattern and a claim needs both to match.
 - A bare `*` is rejected: it would match every value the claim carries.
+- Email patterns, unlike claim values, are regular expressions. They are matched
+  against the **whole** address, ignoring case, so `.*@example\.com` does not
+  match `alice@example.com.attacker.net`.
 
 #### The same rule over the API
 
@@ -24373,6 +24381,14 @@ apart — if no active identity provider lists the claim in its extra fields, it
 says so explicitly and names the claim, because that is step 1 being skipped and
 no amount of editing the rule will fix it.
 
+For a rule with **Create a project** on, the dialog also says what will happen
+to the project:
+
+- **will be created at the next login**: the user has no such project yet.
+- **uses the existing project**: the user will be added to it.
+- **was provisioned before and has been deleted**: the rule does not recreate
+  it. If a project role is all the rule grants, the verdict is *Blocked*.
+
 ### 4. The user signs in
 
 The role appears on the organization. Expanding the row in **Roles and
@@ -24401,8 +24417,15 @@ second one appearing — see [Regaining a claim](#regaining-a-claim).
 - **When the account is first created**, alongside project creation and any
   configured resource order.
 
+A rule that creates projects creates its project the first time an account
+matches it. For a new account that is at sign-up. For an account that already
+existed when the rule was created or edited, it is at the account's next
+sign-in or SCIM pull. This happens once per rule and user: a project the rule
+created and someone later deleted is not recreated, and a repeat sign-in does
+not order a second resource.
+
 Editing a rule does not retroactively touch existing users; they are brought
-into line the next time they sign in. To close that window immediately:
+into line the next time they sign in. To bring **roles** into line immediately:
 
 ```bash
 # Preview a single user, writing nothing
@@ -24411,6 +24434,10 @@ waldur reconcile_autoprovisioned_roles --username alice --dry-run
 # Apply to everyone
 waldur reconcile_autoprovisioned_roles --all
 ```
+
+The command only grants and revokes roles. It does not create projects or
+resource orders, so existing users still get a new rule's project at their
+next sign-in.
 
 ### What revocation never touches
 
@@ -24538,7 +24565,10 @@ enabling it on a rule that matches a large population, run
 | Rule matches but nothing is granted | No organization could be resolved — check the block reason in the test dialog. With *Use user organization as customer name*, the user's organization must match a Waldur organization by exact name |
 | Role is granted but never revoked | `revoke_when_unmatched` is off, or the grant predates the rule and carries no source tag |
 | Role granted by hand disappeared | It would not have been revoked by a rule. Check the audit log for the actual revoker |
-| A user gets an unexpected personal project | The rule has *Create a project* enabled; turn it off for organization-only rules |
+| A user gets an unexpected personal project | The rule has *Create a project* enabled; turn it off for organization-only rules. Existing users who match get the project at their next sign-in, not only new accounts |
+| Projects are named after an opaque id | The rule has no project name template, so projects are named after the username. Set one, e.g. `{full_name} workspace` |
+| A deleted project did not come back | By design: a rule creates its project once per user and never recreates it |
+| An email pattern stopped matching some users | Patterns match the whole address. One that relied on matching only the start, e.g. `.*@example` for several domains, must list each domain or end in `.*` |
 
 ## Reference
 
@@ -53099,6 +53129,8 @@ OfferingUser has the following lifecycle states:
 | `ERROR_CREATING` | An error occurred during account creation |
 | `ERROR_DELETING` | An error occurred during account deletion |
 
+The deletion-flow states (`DELETION_REQUESTED`, `DELETING`, `ERROR_DELETING`, `DELETED`) are not terminal for the person: a member who regains project access while their account is in any of them gets it back through the `restore()` transition. Under a Waldur-named username policy (`waldur_username`, `anonymized`, `full_name`, `freeipa`, `identity_claim`) the account returns straight to `OK` under its existing username, because the name is a stable function of the person and the provider keeps (or parks) the entry behind it. Under the `service_provider` policy a `DELETED` account is asked for again as `CREATION_REQUESTED`, since the provider chose the name and has torn the account down; one whose deletion was only requested or begun returns to `OK`. See [Departure and return](#departure-and-return).
+
 ## State Transitions
 
 ```mermaid
@@ -53141,6 +53173,15 @@ stateDiagram-v2
 
     ERROR_DELETING --> DELETING : set_deleting()
     ERROR_DELETING --> OK : set_ok()
+
+    %% Return of a departed member (Waldur-named username policies)
+    DELETION_REQUESTED --> OK : restore()
+    DELETING --> OK : restore()
+    ERROR_DELETING --> OK : restore()
+    DELETED --> OK : restore()
+
+    %% Return of a departed member (service_provider username policy)
+    DELETED --> CREATION_REQUESTED : account requested again
 
     %% Legacy error transitions (backward compatibility)
     CREATION_REQUESTED --> ERROR_CREATING : set_error() [legacy]
@@ -53218,6 +53259,8 @@ POST /api/marketplace-offering-users/{uuid}/set_error_deleting/
 
 Sets the user account to error state during the deletion process. Used when deletion operations fail.
 
+**409 Conflict:** returned when the account is `OK` again because the member regained access after the deletion was requested (see [Departure and return](#departure-and-return)). The deletion no longer stands; re-read the account and keep it enabled.
+
 #### Begin Creating
 
 ```http
@@ -53248,6 +53291,8 @@ POST /api/marketplace-offering-users/{uuid}/set_deleting/
 
 Begins the account deletion process. Can be used to retry deletion after an error.
 
+**409 Conflict:** returned when the account is `OK` again because the member regained access after the deletion was requested (see [Departure and return](#departure-and-return)). The deletion no longer stands; re-read the account and keep it enabled.
+
 #### Set Deleted
 
 ```http
@@ -53256,7 +53301,9 @@ POST /api/marketplace-offering-users/{uuid}/set_deleted/
 
 **Valid transitions from:** `DELETING`
 
-Marks the user account as successfully deleted. This is the final state for successful account deletion.
+Marks the user account as successfully deleted. This is the final state for successful account deletion. When the account reads through a provider-level account (`account_scope: provider`) and this was the last offering account still reading through it, the provider account completes its own deletion in the same request (see [Departure and return](#departure-and-return)).
+
+**409 Conflict:** returned when the account is `OK` again because the member regained access after the deletion was requested. The deletion no longer stands; re-read the account and keep it enabled.
 
 ### Service Provider Comment Management
 
@@ -53430,6 +53477,17 @@ POST /api/marketplace-offering-users/abc123/set_error_deleting/
 # Then retry deletion process
 POST /api/marketplace-offering-users/abc123/set_deleting/
 ```
+
+## Departure and return
+
+A member who leaves a project and later comes back gets the same account back: same username, same POSIX uid. The flow, end to end:
+
+1. **Last project role revoked.** For offerings with `offering_user_auto_deletion` enabled, every account of the user in an offering where they no longer hold a live resource moves `OK` → `DELETION_REQUESTED` (`request_deletion`). An account that was never provisioned (`CREATION_REQUESTED`) goes straight to `DELETED`.
+2. **Provider tears down (or parks) the entry.** The service provider or site agent claims the request with `set_deleting` and acknowledges it with `set_deleted`. A provider that runs a shared directory may park the entry instead of removing it -- disable it while keeping its uid and username -- so that it can be re-enabled on return; the site agent's `on_departure` setting controls this (see *Waldur-authoritative accounts in OpenLDAP* in the user guide).
+3. **Provider account completes.** Under `account_scope: provider` the offering accounts read through one `ServiceProviderAccount`. When the last account still reading through it leaves the live states, the provider account moves to `DELETION_REQUESTED`; once every account reading through it is `DELETED`, the provider account completes to `DELETED` on its own, in the request that acknowledged the last one. There is no separate acknowledgement for the provider account: it is a projection of its offering accounts and has no backend of its own. The `PosixIdentity` behind it is **not** released, so a parked entry keeps its uid.
+4. **Return.** When the user is granted a project role again (or a new resource brings the project back into the offering), every existing account of theirs in an offering with a live resource in that project is restored, whether or not the offering allows minting new accounts (`service_provider_can_create_offering_user` gates creation only). The provider account, if any, returns to `OK` first; the offering account then comes back under its existing username -- or, for a Waldur-named policy, a name derived on the way back if it never had one -- and lands in `OK`. Under the `service_provider` policy a `DELETED` account is asked for again as `CREATION_REQUESTED` instead. An `OFFERING_USER` event with `action: update` is published, so a directory writer subscribed to it re-enables the parked entry.
+
+A provider that still holds a pending deletion when the member returns may acknowledge it late. `set_deleting`, `set_deleted` and `set_error_deleting` refuse such an acknowledgement with **409 Conflict** when the account is already `OK` again, so the account ends live rather than deleted; the provider should re-read the account and keep the entry enabled.
 
 ## Permissions
 
@@ -54061,6 +54119,8 @@ The related `resource_slug_template` option (e.g. `{project_slug}-{counter}`) ge
 | `initial_usergroup_number` | integer | `6000` | Starting GID for user groups |
 | `homedir_prefix` | string | `"/home/"` | Prefix for home directory paths |
 | `username_anonymized_prefix` | string | `"waldur_"` | Prefix for anonymized usernames; the name is the prefix followed by the account's POSIX UID (a per-offering counter when no UID resolves). Inherits from the provider's `account_username_anonymized_prefix` when unset |
+
+The `anonymized` policy names an account `<prefix><posix uid>` -- for example `hpc_9001` for a prefix of `hpc_` and uid 9001. The uid is the one the account holds (or is allocated) from the POSIX ID pool that resolves for the offering, or the user's `uid_number` when `uid_source` is `user_attribute`. Because a pool allocates one uid per person across every offering that resolves to it, the same person gets the same username on every offering sharing that pool, and regenerating the name (`refresh_offering_usernames`, a policy change) is a no-op. When no uid resolves -- no pool covers the offering, or POSIX accounts are disabled -- the name falls back to a per-offering counter (`<prefix>00000`, `<prefix>00001`, ...) and a warning is logged. The prefix, like `username_generation_policy`, `homedir_prefix` and `login_shell`, is resolved most-specific-first: the offering's plugin option, else the provider's `account_*` field, else the default.
 
 ## Plugin-Specific Options
 
@@ -66076,19 +66136,31 @@ If the permission is for managing team members (creating/updating/deleting roles
 
 This file is loaded by the `import_roles` management command, which runs on deployment. The command creates roles and syncs their permissions from the YAML definition.
 
-**Operator-defined custom roles** (a deployment's own role, not a built-in one shipped with
-Waldur) go through a separate file, `docker/rootfs/etc/waldur/custom-roles.yaml`, mounted at
+**Operator-defined custom roles** (a deployment's own role, not one shipped with Waldur) go
+through a separate file, `docker/rootfs/etc/waldur/custom-roles.yaml`, mounted at
 `/etc/waldur/custom-roles.yaml` — same schema, also loaded by `import_roles` on every
 deployment, but empty (`[]`) by default. The `waldur-helm` chart exposes it as
 `waldur.customRoles`. Don't add operator-specific roles to `permissions.yaml` — that file ships
 with the image and is the same for every deployment.
 
-Two caveats. A role loaded from this file is created as a **system role**, so it can no longer
-be renamed or deleted through the API; if a role of that name was created by hand in the UI, it
-is converted to a system role and its permission set is replaced by the file's. And there is no
-counterpart to `drop_stale_permissions` for roles — removing a role from the file does **not**
-remove it from the database, it only stops being managed. Deactivate roles you no longer want
-via `permissions-override.yaml` (`is_active: false`) rather than by deleting the entry.
+**Reusing a built-in role's name here is also valid**, and is how an operator fully replaces
+that role's permission set rather than adding/dropping individual permissions.
+`import_roles` matches by name, so an entry for e.g. `CUSTOMER.OWNER` in `custom-roles.yaml`
+overwrites its permissions with exactly the list given — the built-in `permissions.yaml` loads
+first (in `initdb`), so this always wins. This is a deliberate, one-way handover: from then on
+the operator owns that role's full permission set, and any permission mastermind adds to it in
+a later release is loaded and then immediately overwritten again on every deployment until the
+operator adds it to their own list too. Use `permissions-override.yaml`
+(`add_permissions`/`drop_permissions`, below) instead when the goal is to adjust a role while
+still tracking future upstream changes to it.
+
+Two more caveats, regardless of which name is used. A role loaded from this file is created as
+a **system role**, so it can no longer be renamed or deleted through the API; if a role of that
+name was created by hand in the UI, it is converted to a system role and its permission set is
+replaced by the file's. And there is no counterpart to `drop_stale_permissions` for roles —
+removing a role from the file does **not** remove it from the database, it only stops being
+managed. Deactivate roles you no longer want via `permissions-override.yaml`
+(`is_active: false`) rather than by deleting the entry.
 
 ### 3. Use in ViewSets
 
@@ -91087,6 +91159,10 @@ Checks performed (the `checks` array in the response):
 
 Resets all active rooms to `creating` state and re-queues them for provisioning on the homeserver. Also resets all user provisioning status. Use this when migrating to a new homeserver. Staff only.
 
+Do not run it against the homeserver the rooms already live on. Old rooms are not
+deleted, so each one stays behind with its history while Waldur replaces it with
+an empty room.
+
 **Example response (202):**
 
 ```json
@@ -91095,6 +91171,28 @@ Resets all active rooms to `creating` state and re-queues them for provisioning 
   "users_reset": 42
 }
 ```
+
+#### From the command line
+
+The same operation is available as a management command, for deployments where
+opening a shell is easier than authenticating to the API as staff:
+
+```bash
+waldur reprovision_matrix_rooms --dry-run   # report the counts, change nothing
+waldur reprovision_matrix_rooms             # prompts before writing
+waldur reprovision_matrix_rooms -y          # no prompt, for scripts
+```
+
+It prompts by default because it discards every stored room id, room alias and
+user access token, and only a working homeserver can issue replacements. With no
+terminal attached, as in a Kubernetes Job or a cron run, it refuses and tells you
+to pass `-y`. It refuses to run when Matrix chat is disabled or the homeserver is
+unconfigured: the room-creation tasks it queues would have nothing to talk to,
+leaving every room stuck in `creating`. `--dry-run` works either way, so the
+counts can be checked before the new homeserver is switched on.
+
+Room creation happens in the background, so the command returns before the
+rooms exist. Watch the room states to confirm they leave `creating`.
 
 ### Token rotation
 
@@ -91733,7 +91831,7 @@ A rule matches users on their profile attributes and identity provider claims. F
 4. Optionally provisions a marketplace resource and processes the order asynchronously
 5. Withdraws roles it previously granted once the user stops matching, when the rule opts into revocation
 
-Provisioning (steps 1–4) happens once, when the account first appears. Role reconciliation (steps 3 and 5) re-runs every time identity data is refreshed, which is what keeps a grant in step with a claim that comes and goes.
+Provisioning (steps 1–4) happens once per rule and account. For a new account that is at sign-up; for an account that already existed when the rule was created, it is at the account's next login or SCIM pull. A project the rule provisioned and someone later deleted is not recreated. Role reconciliation (steps 3 and 5) runs every time identity data is refreshed, which keeps a grant in step with a claim that comes and goes.
 
 ## Core Components
 
@@ -91750,13 +91848,13 @@ The `Rule` model (`src/waldur_autoprovisioning/models.py:11`) defines auto-provi
 - **create_project**: Whether to create/join a project at all (default `true`)
 - **revoke_when_unmatched**: Withdraw this rule's grants once a user stops matching (default `false`)
 - **use_user_organization_as_customer_name**: Map user's organization claim to existing customer
-- **project_name_template**: Template for project naming (e.g., `"{username}_workspace"`)
+- **project_name_template**: Template for project naming (e.g., `"{username}_workspace"`). Available placeholders are `{username}`, `{email}` and `{full_name}`. Empty means the project is named after the username, which for OIDC accounts is often an opaque id
 
 ### User Matching
 
 Rules use the `UserDetailsMatchMixin` for pattern matching:
 
-- **user_email_patterns**: Regex patterns for email matching (e.g., `[".+@example.com"]`)
+- **user_email_patterns**: Regex patterns for email matching (e.g., `[".+@example\\.com"]`). A pattern must match the **whole** address, case-insensitively, so `.+@example\.com` does not match `alice@example.com.attacker.net`. A trailing `$` is allowed but not needed. An invalid or potentially dangerous pattern never matches. The same rules apply to membership restrictions on organizations, projects and calls, and to invitations. Patterns are regular expressions, not shell wildcards. `*@example.com` is rejected, and the error suggests the equivalent regex
 - **user_affiliations**: Organization affiliations for matching (e.g., `["staff", "faculty"]`)
 - **user_identity_sources**: Identity provider matching (e.g., `["eduGAIN", "SAML"]`)
 
@@ -91882,6 +91980,7 @@ server log.
     "user_claims": {"roles": ["acme-owner"]},
     "customer": "customer-uuid",
     "create_project": true,
+    "project_name_template": "{username}_workspace",
     "revoke_when_unmatched": false,
     "customer_role": "role-uuid",
     "customer_role_display_name": "Owner",
@@ -91911,6 +92010,15 @@ identity provider lists in its `extra_fields`. That distinguishes "the provider
 sent a different value" from "the provider never sends this claim", which look
 identical in the raw filter breakdown.
 
+For a rule that creates projects, `resolved_project_name` is the name the
+project gets, and `project_action` says what provisioning does with it:
+
+- `create`: no such project exists, and one is created at the user's next login
+- `existing`: the project exists, and the user is added to it
+- `not_recreated`: this rule provisioned the project before and it has since
+  been deleted, so it is not created again. If a project role is all the rule
+  grants, `would_provision` is `false` and `block_reason` says why.
+
 ### Validation Rules
 
 The serializer enforces these validation constraints:
@@ -91920,8 +92028,9 @@ The serializer enforces these validation constraints:
 - A rule with `create_project=false` must specify a `customer_role`, since it has nothing else to grant
 - `project_role` / `customer_role` may each be given as a URL or by name (`*_role_name`), but not both
 - Roles must be valid for their scope (project role on projects, organization role on organizations)
-- Email patterns must be valid regex expressions
+- Email patterns must be valid regex expressions. A wildcard such as `*@example.org` is rejected with the equivalent anchored regex (`.*@example\.org$`) in the error message
 - A claim must have a non-empty name and at least one accepted value; a bare `*` is rejected
+- `project_name_template` may use only `{username}`, `{email}` and `{full_name}`. Positional (`{0}`, `{}`) and attribute (`{username.upper}`) fields are rejected
 
 ## Processing Flow
 
@@ -91929,7 +92038,7 @@ The serializer enforces these validation constraints:
 
 Two triggers, deliberately separate.
 
-**Provisioning** (projects and orders) runs once, when the account first appears:
+**Account creation** runs the full pass (projects, orders, then roles):
 
 ```python
 signals.post_save.connect(
@@ -91940,10 +92049,10 @@ signals.post_save.connect(
 ```
 
 The handler returns early unless `created`, so an ordinary profile edit never
-materialises projects.
+creates projects.
 
-**Role reconciliation** runs whenever identity data is refreshed — after an OIDC
-login and after a SCIM pull — via `waldur_core.core.signals.user_identity_synced`:
+**Identity refresh** (after an OIDC login and after a SCIM pull) runs through
+`waldur_core.core.signals.user_identity_synced`:
 
 ```python
 core_signals.user_identity_synced.connect(
@@ -91952,12 +92061,28 @@ core_signals.user_identity_synced.connect(
 )
 ```
 
-That is the moment a claim may have been added or withdrawn, which `post_save`
-cannot distinguish.
+That is when a claim may have been added or withdrawn, which `post_save`
+cannot tell. For an existing account, the handler provisions the project of
+each matching rule that hasn't provisioned one for this user yet, then runs
+role reconciliation, even when no rule matches.
+
+Without the project step, a rule created after an account existed could never
+give that account a project. Reconciliation only grants roles on projects that
+already exist.
+
+"Already provisioned" (`has_provisioned_project`) means the user holds, or
+once held, a project role carrying the rule's source, or any role on a project
+with the resolved name in the rule's organization. Revoked roles count, and
+so do soft-deleted projects: deleting a project revokes its roles but keeps
+the rows. So a repeat login orders no second resource, and a deleted project
+stays deleted. That includes projects granted before `UserRole.source`
+existed.
 
 ### Auto-Provisioning Workflow
 
-1. **User Creation**: New user triggers `handle_new_user` handler
+1. **Trigger**: a new account (`handle_new_user`), or an identity refresh of an
+   existing one (`handle_identity_synced`). The latter skips rules that already
+   provisioned their project for the user.
 2. **Rule Matching**: System finds applicable rules using `Rule.get_objects_by_user_patterns()`
 3. **Customer Resolution**: `resolve_customer()` — either the configured customer or the one
    resolved from the organization claim
@@ -92017,6 +92142,10 @@ waldur reconcile_autoprovisioned_roles --all --rate 20
 
 `--username` and `--all` are mutually exclusive and one of them is required.
 `--dry-run` reports what would change and writes nothing.
+
+The command reconciles roles only: it does not create projects or orders. An
+existing account that matches a new project rule gets its project at its next
+login or SCIM pull.
 
 ## Configuration Examples
 
@@ -92172,7 +92301,7 @@ Auto-provisioning integrates with Waldur's marketplace:
 
 ### User Management Integration
 
-- Hooks into user creation process
+- Hooks into user creation and into identity refresh (OIDC login, SCIM pull)
 - Respects user protection settings
 - Leverages organization claims from identity providers
 - Integrates with role-based access control

@@ -7839,6 +7839,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#departure-and-return" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Departure and return
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#permissions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19438,6 +19449,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#departure-and-return" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Departure and return
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#permissions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19782,6 +19804,7 @@
 </tr>
 </tbody>
 </table>
+<p>The deletion-flow states (<code>DELETION_REQUESTED</code>, <code>DELETING</code>, <code>ERROR_DELETING</code>, <code>DELETED</code>) are not terminal for the person: a member who regains project access while their account is in any of them gets it back through the <code>restore()</code> transition. Under a Waldur-named username policy (<code>waldur_username</code>, <code>anonymized</code>, <code>full_name</code>, <code>freeipa</code>, <code>identity_claim</code>) the account returns straight to <code>OK</code> under its existing username, because the name is a stable function of the person and the provider keeps (or parks) the entry behind it. Under the <code>service_provider</code> policy a <code>DELETED</code> account is asked for again as <code>CREATION_REQUESTED</code>, since the provider chose the name and has torn the account down; one whose deletion was only requested or begun returns to <code>OK</code>. See <a href="#departure-and-return">Departure and return</a>.</p>
 <h2 id="state-transitions">State Transitions</h2>
 <pre class="mermaid"><code>stateDiagram-v2
     [*] --&gt; CREATION_REQUESTED : Account requested
@@ -19822,6 +19845,15 @@
 
     ERROR_DELETING --&gt; DELETING : set_deleting()
     ERROR_DELETING --&gt; OK : set_ok()
+
+    %% Return of a departed member (Waldur-named username policies)
+    DELETION_REQUESTED --&gt; OK : restore()
+    DELETING --&gt; OK : restore()
+    ERROR_DELETING --&gt; OK : restore()
+    DELETED --&gt; OK : restore()
+
+    %% Return of a departed member (service_provider username policy)
+    DELETED --&gt; CREATION_REQUESTED : account requested again
 
     %% Legacy error transitions (backward compatibility)
     CREATION_REQUESTED --&gt; ERROR_CREATING : set_error() [legacy]
@@ -19882,6 +19914,7 @@
 </code></pre></div></td></tr></tbody></table></div>
 <p><strong>Valid transitions from:</strong> <code>DELETION_REQUESTED</code>, <code>DELETING</code></p>
 <p>Sets the user account to error state during the deletion process. Used when deletion operations fail.</p>
+<p><strong>409 Conflict:</strong> returned when the account is <code>OK</code> again because the member regained access after the deletion was requested (see <a href="#departure-and-return">Departure and return</a>). The deletion no longer stands; re-read the account and keep it enabled.</p>
 <h4 id="begin-creating">Begin Creating</h4>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/begin_creating/</span>
 </code></pre></div></td></tr></tbody></table></div>
@@ -19897,11 +19930,13 @@
 </code></pre></div></td></tr></tbody></table></div>
 <p><strong>Valid transitions from:</strong> <code>DELETION_REQUESTED</code>, <code>ERROR_DELETING</code></p>
 <p>Begins the account deletion process. Can be used to retry deletion after an error.</p>
+<p><strong>409 Conflict:</strong> returned when the account is <code>OK</code> again because the member regained access after the deletion was requested (see <a href="#departure-and-return">Departure and return</a>). The deletion no longer stands; re-read the account and keep it enabled.</p>
 <h4 id="set-deleted">Set Deleted</h4>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_deleted/</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p><strong>Valid transitions from:</strong> <code>DELETING</code></p>
-<p>Marks the user account as successfully deleted. This is the final state for successful account deletion.</p>
+<p>Marks the user account as successfully deleted. This is the final state for successful account deletion. When the account reads through a provider-level account (<code>account_scope: provider</code>) and this was the last offering account still reading through it, the provider account completes its own deletion in the same request (see <a href="#departure-and-return">Departure and return</a>).</p>
+<p><strong>409 Conflict:</strong> returned when the account is <code>OK</code> again because the member regained access after the deletion was requested. The deletion no longer stands; re-read the account and keep it enabled.</p>
 <h3 id="service-provider-comment-management">Service Provider Comment Management</h3>
 <h4 id="update-comments">Update Comments</h4>
 <p>Service providers can directly update comment fields without changing the user's state:</p>
@@ -20149,6 +20184,15 @@
 <span class="err"># Then retry deletion process</span>
 <span class="err">POST /api/marketplace-offering-users/abc123/set_deleting/</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h2 id="departure-and-return">Departure and return</h2>
+<p>A member who leaves a project and later comes back gets the same account back: same username, same POSIX uid. The flow, end to end:</p>
+<ol>
+<li><strong>Last project role revoked.</strong> For offerings with <code>offering_user_auto_deletion</code> enabled, every account of the user in an offering where they no longer hold a live resource moves <code>OK</code> → <code>DELETION_REQUESTED</code> (<code>request_deletion</code>). An account that was never provisioned (<code>CREATION_REQUESTED</code>) goes straight to <code>DELETED</code>.</li>
+<li><strong>Provider tears down (or parks) the entry.</strong> The service provider or site agent claims the request with <code>set_deleting</code> and acknowledges it with <code>set_deleted</code>. A provider that runs a shared directory may park the entry instead of removing it -- disable it while keeping its uid and username -- so that it can be re-enabled on return; the site agent's <code>on_departure</code> setting controls this (see <em>Waldur-authoritative accounts in OpenLDAP</em> in the user guide).</li>
+<li><strong>Provider account completes.</strong> Under <code>account_scope: provider</code> the offering accounts read through one <code>ServiceProviderAccount</code>. When the last account still reading through it leaves the live states, the provider account moves to <code>DELETION_REQUESTED</code>; once every account reading through it is <code>DELETED</code>, the provider account completes to <code>DELETED</code> on its own, in the request that acknowledged the last one. There is no separate acknowledgement for the provider account: it is a projection of its offering accounts and has no backend of its own. The <code>PosixIdentity</code> behind it is <strong>not</strong> released, so a parked entry keeps its uid.</li>
+<li><strong>Return.</strong> When the user is granted a project role again (or a new resource brings the project back into the offering), every existing account of theirs in an offering with a live resource in that project is restored, whether or not the offering allows minting new accounts (<code>service_provider_can_create_offering_user</code> gates creation only). The provider account, if any, returns to <code>OK</code> first; the offering account then comes back under its existing username -- or, for a Waldur-named policy, a name derived on the way back if it never had one -- and lands in <code>OK</code>. Under the <code>service_provider</code> policy a <code>DELETED</code> account is asked for again as <code>CREATION_REQUESTED</code> instead. An <code>OFFERING_USER</code> event with <code>action: update</code> is published, so a directory writer subscribed to it re-enables the parked entry.</li>
+</ol>
+<p>A provider that still holds a pending deletion when the member returns may acknowledge it late. <code>set_deleting</code>, <code>set_deleted</code> and <code>set_error_deleting</code> refuse such an acknowledgement with <strong>409 Conflict</strong> when the account is already <code>OK</code> again, so the account ends live rather than deleted; the provider should re-read the account and keep the entry enabled.</p>
 <h2 id="permissions">Permissions</h2>
 <p>State transition endpoints use the <code>permission_factory</code> pattern with:</p>
 <ul>

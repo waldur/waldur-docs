@@ -11030,6 +11030,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#from-the-command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From the command line
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -18888,6 +18899,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#from-the-command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From the command line
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19312,6 +19334,9 @@
 </code></pre></div></td></tr></tbody></table></div>
 <h4 id="post-apiadminmatrixreprovision">POST /api/admin/matrix/reprovision/</h4>
 <p>Resets all active rooms to <code>creating</code> state and re-queues them for provisioning on the homeserver. Also resets all user provisioning status. Use this when migrating to a new homeserver. Staff only.</p>
+<p>Do not run it against the homeserver the rooms already live on. Old rooms are not
+deleted, so each one stays behind with its history while Waldur replaces it with
+an empty room.</p>
 <p><strong>Example response (202):</strong></p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -19321,6 +19346,24 @@
 <span class="w">  </span><span class="nt">"users_reset"</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h4 id="from-the-command-line">From the command line</h4>
+<p>The same operation is available as a management command, for deployments where
+opening a shell is easier than authenticating to the API as staff:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>reprovision_matrix_rooms<span class="w"> </span>--dry-run<span class="w">   </span><span class="c1"># report the counts, change nothing</span>
+waldur<span class="w"> </span>reprovision_matrix_rooms<span class="w">             </span><span class="c1"># prompts before writing</span>
+waldur<span class="w"> </span>reprovision_matrix_rooms<span class="w"> </span>-y<span class="w">          </span><span class="c1"># no prompt, for scripts</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>It prompts by default because it discards every stored room id, room alias and
+user access token, and only a working homeserver can issue replacements. With no
+terminal attached, as in a Kubernetes Job or a cron run, it refuses and tells you
+to pass <code>-y</code>. It refuses to run when Matrix chat is disabled or the homeserver is
+unconfigured: the room-creation tasks it queues would have nothing to talk to,
+leaving every room stuck in <code>creating</code>. <code>--dry-run</code> works either way, so the
+counts can be checked before the new homeserver is switched on.</p>
+<p>Room creation happens in the background, so the command returns before the
+rooms exist. Watch the room states to confirm they leave <code>creating</code>.</p>
 <h3 id="token-rotation">Token rotation</h3>
 <p>Every call to the setup endpoint generates new AS and HS tokens, overwriting any
 existing ones. Re-running setup therefore invalidates the previous registration

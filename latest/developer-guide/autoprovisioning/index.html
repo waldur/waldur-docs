@@ -19433,7 +19433,7 @@
 <li>Optionally provisions a marketplace resource and processes the order asynchronously</li>
 <li>Withdraws roles it previously granted once the user stops matching, when the rule opts into revocation</li>
 </ol>
-<p>Provisioning (steps 1–4) happens once, when the account first appears. Role reconciliation (steps 3 and 5) re-runs every time identity data is refreshed, which is what keeps a grant in step with a claim that comes and goes.</p>
+<p>Provisioning (steps 1–4) happens once per rule and account. For a new account that is at sign-up; for an account that already existed when the rule was created, it is at the account's next login or SCIM pull. A project the rule provisioned and someone later deleted is not recreated. Role reconciliation (steps 3 and 5) runs every time identity data is refreshed, which keeps a grant in step with a claim that comes and goes.</p>
 <h2 id="core-components">Core Components</h2>
 <h3 id="rule-model">Rule Model</h3>
 <p>The <code>Rule</code> model (<code>src/waldur_autoprovisioning/models.py:11</code>) defines auto-provisioning configurations with the following key fields:</p>
@@ -19447,12 +19447,12 @@
 <li><strong>create_project</strong>: Whether to create/join a project at all (default <code>true</code>)</li>
 <li><strong>revoke_when_unmatched</strong>: Withdraw this rule's grants once a user stops matching (default <code>false</code>)</li>
 <li><strong>use_user_organization_as_customer_name</strong>: Map user's organization claim to existing customer</li>
-<li><strong>project_name_template</strong>: Template for project naming (e.g., <code>"{username}_workspace"</code>)</li>
+<li><strong>project_name_template</strong>: Template for project naming (e.g., <code>"{username}_workspace"</code>). Available placeholders are <code>{username}</code>, <code>{email}</code> and <code>{full_name}</code>. Empty means the project is named after the username, which for OIDC accounts is often an opaque id</li>
 </ul>
 <h3 id="user-matching">User Matching</h3>
 <p>Rules use the <code>UserDetailsMatchMixin</code> for pattern matching:</p>
 <ul>
-<li><strong>user_email_patterns</strong>: Regex patterns for email matching (e.g., <code>[".+@example.com"]</code>)</li>
+<li><strong>user_email_patterns</strong>: Regex patterns for email matching (e.g., <code>[".+@example\\.com"]</code>). A pattern must match the <strong>whole</strong> address, case-insensitively, so <code>.+@example\.com</code> does not match <code>alice@example.com.attacker.net</code>. A trailing <code>$</code> is allowed but not needed. An invalid or potentially dangerous pattern never matches. The same rules apply to membership restrictions on organizations, projects and calls, and to invitations. Patterns are regular expressions, not shell wildcards. <code>*@example.com</code> is rejected, and the error suggests the equivalent regex</li>
 <li><strong>user_affiliations</strong>: Organization affiliations for matching (e.g., <code>["staff", "faculty"]</code>)</li>
 <li><strong>user_identity_sources</strong>: Identity provider matching (e.g., <code>["eduGAIN", "SAML"]</code>)</li>
 </ul>
@@ -19577,7 +19577,8 @@ server log.</p>
 <span class="normal">16</span>
 <span class="normal">17</span>
 <span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="normal">19</span>
+<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
 <span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"University Users Rule"</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"user_email_patterns"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">".+@university\\.edu"</span><span class="p">],</span>
@@ -19586,6 +19587,7 @@ server log.</p>
 <span class="w">    </span><span class="nt">"user_claims"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"acme-owner"</span><span class="p">]},</span>
 <span class="w">    </span><span class="nt">"customer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"customer-uuid"</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"create_project"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"project_name_template"</span><span class="p">:</span><span class="w"> </span><span class="s2">"{username}_workspace"</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"revoke_when_unmatched"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"customer_role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"role-uuid"</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"customer_role_display_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Owner"</span><span class="p">,</span>
@@ -19610,6 +19612,15 @@ when <code>use_user_organization_as_customer_name</code> is set, a top-line
 identity provider lists in its <code>extra_fields</code>. That distinguishes "the provider
 sent a different value" from "the provider never sends this claim", which look
 identical in the raw filter breakdown.</p>
+<p>For a rule that creates projects, <code>resolved_project_name</code> is the name the
+project gets, and <code>project_action</code> says what provisioning does with it:</p>
+<ul>
+<li><code>create</code>: no such project exists, and one is created at the user's next login</li>
+<li><code>existing</code>: the project exists, and the user is added to it</li>
+<li><code>not_recreated</code>: this rule provisioned the project before and it has since
+  been deleted, so it is not created again. If a project role is all the rule
+  grants, <code>would_provision</code> is <code>false</code> and <code>block_reason</code> says why.</li>
+</ul>
 <h3 id="validation-rules">Validation Rules</h3>
 <p>The serializer enforces these validation constraints:</p>
 <ul>
@@ -19618,13 +19629,14 @@ identical in the raw filter breakdown.</p>
 <li>A rule with <code>create_project=false</code> must specify a <code>customer_role</code>, since it has nothing else to grant</li>
 <li><code>project_role</code> / <code>customer_role</code> may each be given as a URL or by name (<code>*_role_name</code>), but not both</li>
 <li>Roles must be valid for their scope (project role on projects, organization role on organizations)</li>
-<li>Email patterns must be valid regex expressions</li>
+<li>Email patterns must be valid regex expressions. A wildcard such as <code>*@example.org</code> is rejected with the equivalent anchored regex (<code>.*@example\.org$</code>) in the error message</li>
 <li>A claim must have a non-empty name and at least one accepted value; a bare <code>*</code> is rejected</li>
+<li><code>project_name_template</code> may use only <code>{username}</code>, <code>{email}</code> and <code>{full_name}</code>. Positional (<code>{0}</code>, <code>{}</code>) and attribute (<code>{username.upper}</code>) fields are rejected</li>
 </ul>
 <h2 id="processing-flow">Processing Flow</h2>
 <h3 id="trigger-mechanism">Trigger Mechanism</h3>
 <p>Two triggers, deliberately separate.</p>
-<p><strong>Provisioning</strong> (projects and orders) runs once, when the account first appears:</p>
+<p><strong>Account creation</strong> runs the full pass (projects, orders, then roles):</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -19636,9 +19648,9 @@ identical in the raw filter breakdown.</p>
 <span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>The handler returns early unless <code>created</code>, so an ordinary profile edit never
-materialises projects.</p>
-<p><strong>Role reconciliation</strong> runs whenever identity data is refreshed — after an OIDC
-login and after a SCIM pull — via <code>waldur_core.core.signals.user_identity_synced</code>:</p>
+creates projects.</p>
+<p><strong>Identity refresh</strong> (after an OIDC login and after a SCIM pull) runs through
+<code>waldur_core.core.signals.user_identity_synced</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -19647,11 +19659,25 @@ login and after a SCIM pull — via <code>waldur_core.core.signals.user_identity
     <span class="n">dispatch_uid</span><span class="o">=</span><span class="s2">"waldur_autoprovisioning.handle_identity_synced"</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>That is the moment a claim may have been added or withdrawn, which <code>post_save</code>
-cannot distinguish.</p>
+<p>That is when a claim may have been added or withdrawn, which <code>post_save</code>
+cannot tell. For an existing account, the handler provisions the project of
+each matching rule that hasn't provisioned one for this user yet, then runs
+role reconciliation, even when no rule matches.</p>
+<p>Without the project step, a rule created after an account existed could never
+give that account a project. Reconciliation only grants roles on projects that
+already exist.</p>
+<p>"Already provisioned" (<code>has_provisioned_project</code>) means the user holds, or
+once held, a project role carrying the rule's source, or any role on a project
+with the resolved name in the rule's organization. Revoked roles count, and
+so do soft-deleted projects: deleting a project revokes its roles but keeps
+the rows. So a repeat login orders no second resource, and a deleted project
+stays deleted. That includes projects granted before <code>UserRole.source</code>
+existed.</p>
 <h3 id="auto-provisioning-workflow">Auto-Provisioning Workflow</h3>
 <ol>
-<li><strong>User Creation</strong>: New user triggers <code>handle_new_user</code> handler</li>
+<li><strong>Trigger</strong>: a new account (<code>handle_new_user</code>), or an identity refresh of an
+   existing one (<code>handle_identity_synced</code>). The latter skips rules that already
+   provisioned their project for the user.</li>
 <li><strong>Rule Matching</strong>: System finds applicable rules using <code>Rule.get_objects_by_user_patterns()</code></li>
 <li><strong>Customer Resolution</strong>: <code>resolve_customer()</code> — either the configured customer or the one
    resolved from the organization claim</li>
@@ -19707,6 +19733,9 @@ waldur<span class="w"> </span>reconcile_autoprovisioned_roles<span class="w"> </
 </code></pre></div></td></tr></tbody></table></div>
 <p><code>--username</code> and <code>--all</code> are mutually exclusive and one of them is required.
 <code>--dry-run</code> reports what would change and writes nothing.</p>
+<p>The command reconciles roles only: it does not create projects or orders. An
+existing account that matches a new project rule gets its project at its next
+login or SCIM pull.</p>
 <h2 id="configuration-examples">Configuration Examples</h2>
 <h3 id="organization-role-from-an-identity-provider-claim">Organization role from an identity provider claim</h3>
 <p>Grant organization ownership to whoever carries <code>roles: acme-owner</code>, and take it
@@ -19879,7 +19908,7 @@ reach Waldur at all.</p>
 </ul>
 <h3 id="user-management-integration">User Management Integration</h3>
 <ul>
-<li>Hooks into user creation process</li>
+<li>Hooks into user creation and into identity refresh (OIDC login, SCIM pull)</li>
 <li>Respects user protection settings</li>
 <li>Leverages organization claims from identity providers</li>
 <li>Integrates with role-based access control</li>

@@ -19174,6 +19174,10 @@ reports these before it lets you continue.</p>
 <p>Pick <em>BioML Research Institute</em> as the organization and <em>Organization owner</em> as
 the organization role, and switch <strong>Create a project</strong> off. With it off the
 project role picker disappears: this rule grants an organization role only.</p>
+<p>With <strong>Create a project</strong> on, the step also asks for a <strong>project role</strong> and a
+<strong>project name template</strong>. The template can use <code>{username}</code>, <code>{email}</code> and
+<code>{full_name}</code>, e.g. <code>{full_name} workspace</code>. Left empty, the project is named
+after the username, which for OIDC accounts is often an opaque id.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/claim-role-wizard-grants.png" data-desc-position="bottom"><img alt="Wizard step 2, granting an organization role" src="../img/claim-role-wizard-grants.png"></a></p>
 <h4 id="step-3-revocation">Step 3 — Revocation</h4>
 <p>The last step restates what the rule will do and carries the revocation switch.
@@ -19193,6 +19197,9 @@ with the stored values filled in.</p>
 <li>Claims are an <strong>additional</strong> requirement, not an alternative to the other
   filters. A rule with both an email pattern and a claim needs both to match.</li>
 <li>A bare <code>*</code> is rejected: it would match every value the claim carries.</li>
+<li>Email patterns, unlike claim values, are regular expressions. They are matched
+  against the <strong>whole</strong> address, ignoring case, so <code>.*@example\.com</code> does not
+  match <code>alice@example.com.attacker.net</code>.</li>
 </ul>
 <h4 id="the-same-rule-over-the-api">The same rule over the API</h4>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -19229,6 +19236,14 @@ different value, or may not have sent the claim at all. The dialog tells those
 apart — if no active identity provider lists the claim in its extra fields, it
 says so explicitly and names the claim, because that is step 1 being skipped and
 no amount of editing the rule will fix it.</p>
+<p>For a rule with <strong>Create a project</strong> on, the dialog also says what will happen
+to the project:</p>
+<ul>
+<li><strong>will be created at the next login</strong>: the user has no such project yet.</li>
+<li><strong>uses the existing project</strong>: the user will be added to it.</li>
+<li><strong>was provisioned before and has been deleted</strong>: the rule does not recreate
+  it. If a project role is all the rule grants, the verdict is <em>Blocked</em>.</li>
+</ul>
 <h3 id="4-the-user-signs-in">4. The user signs in</h3>
 <p>The role appears on the organization. Expanding the row in <strong>Roles and
 permissions</strong> shows where it came from — <em>Granted by: Auto-provisioning rule</em> —
@@ -19249,8 +19264,14 @@ second one appearing — see <a href="#regaining-a-claim">Regaining a claim</a>.
 <li><strong>When the account is first created</strong>, alongside project creation and any
   configured resource order.</li>
 </ul>
+<p>A rule that creates projects creates its project the first time an account
+matches it. For a new account that is at sign-up. For an account that already
+existed when the rule was created or edited, it is at the account's next
+sign-in or SCIM pull. This happens once per rule and user: a project the rule
+created and someone later deleted is not recreated, and a repeat sign-in does
+not order a second resource.</p>
 <p>Editing a rule does not retroactively touch existing users; they are brought
-into line the next time they sign in. To close that window immediately:</p>
+into line the next time they sign in. To bring <strong>roles</strong> into line immediately:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -19261,6 +19282,9 @@ waldur<span class="w"> </span>reconcile_autoprovisioned_roles<span class="w"> </
 <span class="c1"># Apply to everyone</span>
 waldur<span class="w"> </span>reconcile_autoprovisioned_roles<span class="w"> </span>--all
 </code></pre></div></td></tr></tbody></table></div>
+<p>The command only grants and revokes roles. It does not create projects or
+resource orders, so existing users still get a new rule's project at their
+next sign-in.</p>
 <h3 id="what-revocation-never-touches">What revocation never touches</h3>
 <p><code>revoke_when_unmatched</code> is <strong>off by default</strong>, so turning claim matching on
 cannot silently strip access that is already in use. Enable it per rule, once
@@ -19426,7 +19450,19 @@ enabling it on a rule that matches a large population, run
 </tr>
 <tr>
 <td>A user gets an unexpected personal project</td>
-<td>The rule has <em>Create a project</em> enabled; turn it off for organization-only rules</td>
+<td>The rule has <em>Create a project</em> enabled; turn it off for organization-only rules. Existing users who match get the project at their next sign-in, not only new accounts</td>
+</tr>
+<tr>
+<td>Projects are named after an opaque id</td>
+<td>The rule has no project name template, so projects are named after the username. Set one, e.g. <code>{full_name} workspace</code></td>
+</tr>
+<tr>
+<td>A deleted project did not come back</td>
+<td>By design: a rule creates its project once per user and never recreates it</td>
+</tr>
+<tr>
+<td>An email pattern stopped matching some users</td>
+<td>Patterns match the whole address. One that relied on matching only the start, e.g. <code>.*@example</code> for several domains, must list each domain or end in <code>.*</code></td>
 </tr>
 </tbody>
 </table>
