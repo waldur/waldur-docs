@@ -103,6 +103,11 @@ Pick *BioML Research Institute* as the organization and *Organization owner* as
 the organization role, and switch **Create a project** off. With it off the
 project role picker disappears: this rule grants an organization role only.
 
+With **Create a project** on, the step also asks for a **project role** and a
+**project name template**. The template can use `{username}`, `{email}` and
+`{full_name}`, e.g. `{full_name} workspace`. Left empty, the project is named
+after the username, which for OIDC accounts is often an opaque id.
+
 ![Wizard step 2, granting an organization role](img/claim-role-wizard-grants.png)
 
 #### Step 3 — Revocation
@@ -127,6 +132,9 @@ with the stored values filled in.
 - Claims are an **additional** requirement, not an alternative to the other
   filters. A rule with both an email pattern and a claim needs both to match.
 - A bare `*` is rejected: it would match every value the claim carries.
+- Email patterns, unlike claim values, are regular expressions. They are matched
+  against the **whole** address, ignoring case, so `.*@example\.com` does not
+  match `alice@example.com.attacker.net`.
 
 #### The same rule over the API
 
@@ -166,6 +174,14 @@ apart — if no active identity provider lists the claim in its extra fields, it
 says so explicitly and names the claim, because that is step 1 being skipped and
 no amount of editing the rule will fix it.
 
+For a rule with **Create a project** on, the dialog also says what will happen
+to the project:
+
+- **will be created at the next login**: the user has no such project yet.
+- **uses the existing project**: the user will be added to it.
+- **was provisioned before and has been deleted**: the rule does not recreate
+  it. If a project role is all the rule grants, the verdict is *Blocked*.
+
 ### 4. The user signs in
 
 The role appears on the organization. Expanding the row in **Roles and
@@ -194,8 +210,15 @@ second one appearing — see [Regaining a claim](#regaining-a-claim).
 - **When the account is first created**, alongside project creation and any
   configured resource order.
 
+A rule that creates projects creates its project the first time an account
+matches it. For a new account that is at sign-up. For an account that already
+existed when the rule was created or edited, it is at the account's next
+sign-in or SCIM pull. This happens once per rule and user: a project the rule
+created and someone later deleted is not recreated, and a repeat sign-in does
+not order a second resource.
+
 Editing a rule does not retroactively touch existing users; they are brought
-into line the next time they sign in. To close that window immediately:
+into line the next time they sign in. To bring **roles** into line immediately:
 
 ```bash
 # Preview a single user, writing nothing
@@ -204,6 +227,10 @@ waldur reconcile_autoprovisioned_roles --username alice --dry-run
 # Apply to everyone
 waldur reconcile_autoprovisioned_roles --all
 ```
+
+The command only grants and revokes roles. It does not create projects or
+resource orders, so existing users still get a new rule's project at their
+next sign-in.
 
 ### What revocation never touches
 
@@ -331,7 +358,10 @@ enabling it on a rule that matches a large population, run
 | Rule matches but nothing is granted | No organization could be resolved — check the block reason in the test dialog. With *Use user organization as customer name*, the user's organization must match a Waldur organization by exact name |
 | Role is granted but never revoked | `revoke_when_unmatched` is off, or the grant predates the rule and carries no source tag |
 | Role granted by hand disappeared | It would not have been revoked by a rule. Check the audit log for the actual revoker |
-| A user gets an unexpected personal project | The rule has *Create a project* enabled; turn it off for organization-only rules |
+| A user gets an unexpected personal project | The rule has *Create a project* enabled; turn it off for organization-only rules. Existing users who match get the project at their next sign-in, not only new accounts |
+| Projects are named after an opaque id | The rule has no project name template, so projects are named after the username. Set one, e.g. `{full_name} workspace` |
+| A deleted project did not come back | By design: a rule creates its project once per user and never recreates it |
+| An email pattern stopped matching some users | Patterns match the whole address. One that relied on matching only the start, e.g. `.*@example` for several domains, must list each domain or end in `.*` |
 
 ## Reference
 
