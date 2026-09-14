@@ -101,7 +101,7 @@ The toggle sets the **provider-wide default**. Users can override it per instanc
     ![Offering prices](../img/Offering_edit_prices.png)
 
 10. If all set, click "Activate" on the top-right side to make it visible to everybody.
-    ![Activate offering](../img/Offering_activation.png)
+    ![Activate button on a draft offering](../img/offering-activate-button.png)
 
 !!! tip
     For more advanced cases of management of offerings, take a look at how a SLURM offering can be managed using
@@ -415,13 +415,25 @@ each discounted component — see
 
 ## Offering management
 
-It is possible to temporarily unpublish the offering. For example, if the service is down for a longer maintenance. To do that, open the offering edit page and click on **Pause** from the right.
+The offering's state is changed from its **Edit** tab. The button in the top-right corner shows the next step for the current state:
 
-![Offering pause](../img/Offering_pause.png)
+- **Activate** (draft offering) — publishes the offering in the marketplace. When service providers may not manage the offering lifecycle themselves, the button reads **Request publishing** and sends the request to staff.
+- **Pause** (active offering) — temporarily unpublishes the offering, for example if the service is down for a longer maintenance.
+- **Resume** (paused offering) — publishes the offering again.
 
-If the offering is not needed anymore, then it is possible to archive it by selecting **Archive** from the offering edit page.
+![Pause button on the offering Edit tab](../img/offering-pause-button.png)
 
-![Offering archive](../img/Offering_archive.png)
+The other lifecycle actions are in the **Actions** menu next to that button:
+
+- **Set to draft** — returns the offering to draft so it can be edited before publishing it again. Shown as **Request editing** when the change needs staff approval.
+- **Make unavailable** — marks the offering as down. The dialog lists the affected resources and takes an optional reason, which is shown to users. An unavailable offering can be restored later from the same place.
+- **Archive** — retires an offering that is not needed anymore. An archived offering can be returned to draft with the button in the top-right corner.
+- **Delete** — removes the offering permanently. Staff can delete any offering; service providers can delete only a draft offering that has no resources.
+
+![Offering Actions menu with the lifecycle actions](../img/offering-actions-menu.png)
+
+!!! note
+    The lifecycle actions are shown only on the **Edit** tab. **Make unavailable** and **Delete** are available to service providers only when `ALLOW_SERVICE_PROVIDER_OFFERING_MANAGEMENT` is enabled; otherwise they are staff-only.
 
 ## Restricting who can see and order an offering
 
