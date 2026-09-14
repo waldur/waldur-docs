@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-14T12:18:12.041154Z
+Generated: 2026-09-14T14:57:10.405607Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -50833,7 +50833,7 @@ Both Customer and Project models support the following restriction fields:
 
 ```python
 # Available on Customer, Project, and GroupInvitation models
-user_email_patterns: JSONField      # Regex patterns for allowed emails
+user_email_patterns: JSONField      # Regexes for allowed emails, matched against the whole address
 user_affiliations: JSONField        # List of allowed affiliations
 user_identity_sources: JSONField    # List of allowed identity providers
 
@@ -50850,6 +50850,8 @@ Restrictions use **OR logic within a field** and **AND logic across fields and l
 - **Within a field**: User matches if ANY email pattern OR ANY affiliation OR ANY identity source matches
 - **Across fields**: User must pass ALL fields that have restrictions set (e.g., if both email patterns and affiliations are set, user must match at least one of each)
 - **Across levels**: User must pass ALL levels that have restrictions set (Customer → Project → GroupInvitation)
+
+**Email patterns** are regular expressions matched against the **whole** address, ignoring case. `.*@university\.edu` accepts `john@university.edu` and `John@University.EDU`, but not `john@university.edu.attacker.net`. A trailing `$` is allowed but not needed. Escape the dots, since an unescaped `.` matches any character. A pattern that is not a valid regex, or that could cause catastrophic backtracking, never matches. Shell wildcards such as `*@university.edu` are rejected when saved, and the error suggests the equivalent regex.
 
 **Special AAI validation rules:**
 
@@ -50898,7 +50900,7 @@ flowchart TD
 
 ```python
 # Only users from specific domains can join this customer
-customer.user_email_patterns = [".*@university.edu", ".*@research.org"]
+customer.user_email_patterns = [r".*@university\.edu", r".*@research\.org"]
 customer.save()
 
 # User with email "john@university.edu" can be added - matches pattern
@@ -50970,7 +50972,7 @@ project.save()
 
 ```python
 # Customer requires university email
-customer.user_email_patterns = [".*@university.edu"]
+customer.user_email_patterns = [r".*@university\.edu"]
 customer.save()
 
 # Project within customer requires staff affiliation
@@ -51171,7 +51173,7 @@ Group invitations can automatically create projects instead of granting customer
 # Configuration
 auto_create_project = True
 project_role = ProjectRole.MANAGER
-project_name_template = "{user.full_name} Project"
+project_name_template = "{full_name} Project"  # placeholders: {username}, {email}, {full_name}
 
 # On approval, creates:
 # 1. New project with resolved name (excludes soft-deleted projects)
@@ -51184,8 +51186,8 @@ project_name_template = "{user.full_name} Project"
 Group invitations support sophisticated user matching:
 
 ```python
-# Email patterns (regex)
-user_email_patterns = [".*@company.com", ".*@university.edu"]
+# Email patterns (regex, matched against the whole address, ignoring case)
+user_email_patterns = [r".*@company\.com", r".*@university\.edu"]
 
 # Affiliation patterns (exact match)
 user_affiliations = ["staff", "student", "faculty"]
@@ -51343,8 +51345,8 @@ group_invitation = GroupInvitation.objects.create(
     role=CustomerRole.OWNER,
     auto_create_project=True,
     project_role=ProjectRole.MANAGER,
-    project_name_template="{user.full_name}'s Research Project",
-    user_email_patterns=["*@university.edu"],
+    project_name_template="{full_name}'s Research Project",
+    user_email_patterns=[r".*@university\.edu"],
     created_by=admin_user
 )
 
@@ -51361,8 +51363,8 @@ public_invitation = GroupInvitation.objects.create(
     is_public=True,            # Makes it visible to unauthenticated users
     auto_create_project=True,  # Required for public invitations
     project_role=ProjectRole.MANAGER,
-    project_name_template="{user.full_name} Research Project",
-    user_email_patterns=["*@university.edu", "*@research.org"],
+    project_name_template="{full_name} Research Project",
+    user_email_patterns=[r".*@university\.edu", r".*@research\.org"],
     created_by=staff_user      # Must be staff user
 )
 
@@ -54026,6 +54028,8 @@ With this configuration:
 | `supports_downscaling` | boolean | `false` | Allow reducing resource limits |
 | `supports_pausing` | boolean | `false` | Allow pausing/resuming resources |
 | `restrict_deletion_with_active_resources` | boolean | `false` | Prevent offering deletion while it has non-terminated resources (applies to all users including staff) |
+| `enable_resource_end_date_change_requests` | boolean | `false` | Let users without the end date permission request an end date change; not available on prepaid offerings |
+| `enable_resource_limit_change_requests` | boolean | `false` | Let users who cannot change limits directly request a limit change; approval submits an update order |
 
 **Example:**
 
@@ -54585,7 +54589,7 @@ except ValidationError:
 
 The function checks:
 
-- **Email patterns**: User email must match at least one pattern (e.g., `*@example.com`)
+- **Email patterns**: User email must match at least one pattern. A pattern is a regular expression matched against the whole address, ignoring case (e.g., `.*@example\.com` matches `alice@example.com`, not `alice@example.com.attacker.net`). An invalid pattern never matches
 - **Affiliations**: User must have at least one matching affiliation
 - **Identity sources**: User must have a matching identity source
 
@@ -79776,9 +79780,9 @@ pending one and lets you withdraw it if the date is no longer what you need.
 
 ## Following your request
 
-Requests appear on the resource under **Change requests → End date**, or as an
-**End date change requests** tab when the resource has no limit change requests
-to group it with.
+Requests appear on the resource under **Change requests → End date** when limit
+change requests are shown on the resource as well, or as an **End date change
+requests** tab on its own.
 
 You see the requests on any resource you can see. **Pending** is shown first;
 **All** keeps the history, so you can tell whether something was approved or
@@ -79833,9 +79837,9 @@ until it opts in.
 [Image: Enabling end date change requests on an offering]
 
 !!! note
-    Editing this setting requires permission to manage the offering — the
-    offering's service manager or the provider organization owner. It cannot be
-    enabled on a prepaid offering.
+    Editing this setting requires permission to manage the offering's
+    integration, held by the provider organization's owners, service provider
+    managers and offering managers. It cannot be enabled on a prepaid offering.
 
 ## Approving outside Waldur
 
@@ -79851,6 +79855,153 @@ same way and see the same outcome.
 !!! note
     Both routes stay open. A request can be decided in Waldur by anyone holding
     the permission even while an external system is still considering it.
+
+---
+
+### Requesting resource limit changes
+<!-- Source: docs/user-guide/customer-organization/resource-limit-change-requests.md -->
+
+# Requesting resource limit changes
+
+Changing a resource's **limits** directly takes two permissions: the limits
+permission and the right to create orders in the project. Where an offering
+enables it, users who can see the resource but lack them can ask for new limits
+instead, and someone holding those permissions decides.
+
+| Who | What they see | What happens |
+|-----|---------------|--------------|
+| Holders of the limits permission and order creation, staff and support | **Change limits** | An update order is submitted |
+| Other users with access to the resource, on offerings that enable requests | **Request limit change** | A request is raised for someone to approve |
+
+The request flow has to be enabled per offering — see
+[Enabling the flow](#enabling-the-flow-service-provider). Where it is off, only
+the permission holders have any limit action at all.
+
+!!! note "Who this reaches with the default roles"
+    With the default roles, everyone who can see a resource — organization
+    owners, project administrators and project managers — already holds both
+    permissions and changes limits directly. Requests matter for users who can
+    see a resource without holding them: project members (a role that is
+    switched off by default), resource-level roles, and custom roles a
+    deployment defines.
+
+## Asking for a change
+
+Use **Actions → Request limit change** on the resource.
+
+[Image: Request limit change in the resource actions]
+
+The action is offered on resources that have a plan and limit-based components.
+It is enabled while the resource is in the OK state; on a resource without a plan
+it is shown disabled.
+
+The dialog shows the current plan, usage and limits. Set the new limits — the
+difference and the resulting monthly price are shown per component — and submit
+with **Send for Approval**.
+
+[Image: The request dialog]
+
+You can have one open request per resource. Opening the action again shows the
+pending one and lets you withdraw it with **Cancel request**.
+
+[Image: An already pending request]
+
+There is no list of your own requests. You are emailed when a request is
+approved or rejected, provided email notifications are enabled for your account.
+
+## Deciding a request
+
+Organization owners are emailed when a request is raised. Project administrators
+and managers can decide requests too, but are not emailed.
+
+Requests appear on the resource as a **Limit change requests** tab, or under
+**Change requests → Limits** when end date change requests are shown on the
+resource as well. The tab is shown to holders of the limits permission, staff
+and support. **Pending** is shown first; **All** keeps the history.
+
+[Image: Pending limit change requests]
+
+Each pending row has **Approve** and **Reject** in its actions menu.
+
+[Image: Approving or rejecting a request]
+
+- **Approve** needs the limits permission and the right to create orders, and
+  any role restriction the offering has. It submits an **update order** for the
+  requested limits, in the approver's name. That order then follows the
+  offering's usual approval flow — it may still wait for consumer or provider
+  approval — so the limits change once the order has been processed, not at the
+  moment of approval.
+- **Reject** needs only the limits permission. It closes the request and changes
+  nothing.
+
+After approval the request is listed as approved under **All**, and the update
+order's progress is shown at the top of the resource page — here it still waits
+for the provider.
+
+[Image: Decided requests under All, with the update order awaiting provider approval]
+
+A request is re-checked when it is approved, not trusted from when it was
+raised. Approval is refused, and the request stays pending, if the resource is
+no longer in the OK state, the requested limits equal the current ones or are no
+longer valid for the offering, or the offering stopped accepting these requests.
+
+## What is recorded
+
+Raising, approving and rejecting a request are recorded in the resource's audit
+log.
+
+## Enabling the flow (service provider)
+
+Requests are off by default.
+
+1. Open the offering and go to **Edit → Integration → Operations**.
+2. Select the **Resource lifecycle** tab.
+3. Edit **Enable resource limit change requests**, switch it on and confirm.
+
+[Image: Enabling limit change requests on an offering]
+
+!!! note
+    Editing this setting requires permission to manage the offering's
+    integration, held by the provider organization's owners, service provider
+    managers and offering managers.
+
+## Switching the setting on and off
+
+The setting decides whether **new** requests are accepted and whether pending
+ones can be **approved**. It never cancels, rejects or approves anything by
+itself, and switching it sends no emails.
+
+| Situation | What happens |
+|-----------|--------------|
+| Switched on | **Request limit change** appears for users who cannot change limits directly, on resources with a plan and limit-based components. Pages that are already open pick it up on reload. |
+| Switched off, nothing pending | The action and the **Limit change requests** tab disappear. |
+| Switched off, requests pending | Pending requests are kept. The requester sees **Cancel limit change request** instead of the request action and can still withdraw it. Approvers keep the tab while requests are pending, with **Reject** only; approving is refused with *This offering no longer accepts limit change requests.* The tab disappears once nothing is pending. |
+| Switched on again | Requests that stayed pending can be approved again — approval checks the setting at the moment of the decision. |
+| Already approved requests | Their update orders are separate from the request and continue through the order flow whatever the setting says. |
+
+When the setting is off and a request is still pending, the requester can only
+withdraw it:
+
+[Image: Only cancelling is offered once the offering stops accepting requests]
+
+and approvers can only reject it:
+
+[Image: Only rejecting is offered once the offering stops accepting requests]
+
+Other points to keep in mind:
+
+- **Direct changes are unaffected.** **Change limits** for users holding both
+  permissions works the same with the setting on or off.
+- **Child offerings follow their parent.** For an offering that belongs to a
+  parent offering, the parent's setting applies.
+- **Offerings imported from another Waldur keep the local choice.** Once set
+  here, the setting is not overwritten when the offering is synchronized; if it
+  was never set locally, it follows the remote offering.
+- **Prepaid offerings are included.** Unlike end date change requests, limit
+  change requests can be enabled on prepaid offerings.
+- **Upgrade.** Offerings that had received limit change requests before the
+  setting was introduced were switched on automatically, so resources using the
+  flow keep it. Every other offering starts with it off.
 
 ---
 
@@ -79994,6 +80145,9 @@ Leave it off for normal cases where the metadata service is reachable.
 ## Resource components update
 
 If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.
+
+Users who may not change the limits themselves can ask for new ones on offerings
+that enable it — see [Requesting resource limit changes](resource-limit-change-requests.md).
 
 [Image: type:video]
 

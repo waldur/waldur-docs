@@ -17889,6 +17889,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/customer-organization/resource-limit-change-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requesting resource limit changes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/customer-organization/resource_management/" class="md-nav__link">
         
   
@@ -20968,7 +20996,7 @@ previously deleted.</p>
 <span class="normal">7</span>
 <span class="normal">8</span>
 <span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Available on Customer, Project, and GroupInvitation models</span>
-<span class="n">user_email_patterns</span><span class="p">:</span> <span class="n">JSONField</span>      <span class="c1"># Regex patterns for allowed emails</span>
+<span class="n">user_email_patterns</span><span class="p">:</span> <span class="n">JSONField</span>      <span class="c1"># Regexes for allowed emails, matched against the whole address</span>
 <span class="n">user_affiliations</span><span class="p">:</span> <span class="n">JSONField</span>        <span class="c1"># List of allowed affiliations</span>
 <span class="n">user_identity_sources</span><span class="p">:</span> <span class="n">JSONField</span>    <span class="c1"># List of allowed identity providers</span>
 
@@ -20984,6 +21012,7 @@ previously deleted.</p>
 <li><strong>Across fields</strong>: User must pass ALL fields that have restrictions set (e.g., if both email patterns and affiliations are set, user must match at least one of each)</li>
 <li><strong>Across levels</strong>: User must pass ALL levels that have restrictions set (Customer → Project → GroupInvitation)</li>
 </ul>
+<p><strong>Email patterns</strong> are regular expressions matched against the <strong>whole</strong> address, ignoring case. <code>.*@university\.edu</code> accepts <code>john@university.edu</code> and <code>John@University.EDU</code>, but not <code>john@university.edu.attacker.net</code>. A trailing <code>$</code> is allowed but not needed. Escape the dots, since an unescaped <code>.</code> matches any character. A pattern that is not a valid regex, or that could cause catastrophic backtracking, never matches. Shell wildcards such as <code>*@university.edu</code> are rejected when saved, and the error suggests the equivalent regex.</p>
 <p><strong>Special AAI validation rules:</strong></p>
 <ul>
 <li><strong>Nationalities</strong>: User must have at least one nationality in the allowed list (checks both <code>nationality</code> and <code>nationalities</code> fields)</li>
@@ -21078,7 +21107,7 @@ previously deleted.</p>
 <span class="normal">4</span>
 <span class="normal">5</span>
 <span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Only users from specific domains can join this customer</span>
-<span class="n">customer</span><span class="o">.</span><span class="n">user_email_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">".*@university.edu"</span><span class="p">,</span> <span class="s2">".*@research.org"</span><span class="p">]</span>
+<span class="n">customer</span><span class="o">.</span><span class="n">user_email_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="sa">r</span><span class="s2">".*@university\.edu"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">".*@research\.org"</span><span class="p">]</span>
 <span class="n">customer</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
 <span class="c1"># User with email "john@university.edu" can be added - matches pattern</span>
@@ -21173,7 +21202,7 @@ previously deleted.</p>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Customer requires university email</span>
-<span class="n">customer</span><span class="o">.</span><span class="n">user_email_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">".*@university.edu"</span><span class="p">]</span>
+<span class="n">customer</span><span class="o">.</span><span class="n">user_email_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="sa">r</span><span class="s2">".*@university\.edu"</span><span class="p">]</span>
 <span class="n">customer</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
 <span class="c1"># Project within customer requires staff affiliation</span>
@@ -21386,7 +21415,7 @@ matching users. When a user submits a request:</p>
 <span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Configuration</span>
 <span class="n">auto_create_project</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="n">project_role</span> <span class="o">=</span> <span class="n">ProjectRole</span><span class="o">.</span><span class="n">MANAGER</span>
-<span class="n">project_name_template</span> <span class="o">=</span> <span class="s2">"</span><span class="si">{user.full_name}</span><span class="s2"> Project"</span>
+<span class="n">project_name_template</span> <span class="o">=</span> <span class="s2">"</span><span class="si">{full_name}</span><span class="s2"> Project"</span>  <span class="c1"># placeholders: {username}, {email}, {full_name}</span>
 
 <span class="c1"># On approval, creates:</span>
 <span class="c1"># 1. New project with resolved name (excludes soft-deleted projects)</span>
@@ -21405,8 +21434,8 @@ matching users. When a user submits a request:</p>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Email patterns (regex)</span>
-<span class="n">user_email_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">".*@company.com"</span><span class="p">,</span> <span class="s2">".*@university.edu"</span><span class="p">]</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Email patterns (regex, matched against the whole address, ignoring case)</span>
+<span class="n">user_email_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="sa">r</span><span class="s2">".*@company\.com"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">".*@university\.edu"</span><span class="p">]</span>
 
 <span class="c1"># Affiliation patterns (exact match)</span>
 <span class="n">user_affiliations</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"staff"</span><span class="p">,</span> <span class="s2">"student"</span><span class="p">,</span> <span class="s2">"faculty"</span><span class="p">]</span>
@@ -21586,8 +21615,8 @@ matching users. When a user submits a request:</p>
     <span class="n">role</span><span class="o">=</span><span class="n">CustomerRole</span><span class="o">.</span><span class="n">OWNER</span><span class="p">,</span>
     <span class="n">auto_create_project</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">project_role</span><span class="o">=</span><span class="n">ProjectRole</span><span class="o">.</span><span class="n">MANAGER</span><span class="p">,</span>
-    <span class="n">project_name_template</span><span class="o">=</span><span class="s2">"</span><span class="si">{user.full_name}</span><span class="s2">'s Research Project"</span><span class="p">,</span>
-    <span class="n">user_email_patterns</span><span class="o">=</span><span class="p">[</span><span class="s2">"*@university.edu"</span><span class="p">],</span>
+    <span class="n">project_name_template</span><span class="o">=</span><span class="s2">"</span><span class="si">{full_name}</span><span class="s2">'s Research Project"</span><span class="p">,</span>
+    <span class="n">user_email_patterns</span><span class="o">=</span><span class="p">[</span><span class="sa">r</span><span class="s2">".*@university\.edu"</span><span class="p">],</span>
     <span class="n">created_by</span><span class="o">=</span><span class="n">admin_user</span>
 <span class="p">)</span>
 
@@ -21614,8 +21643,8 @@ matching users. When a user submits a request:</p>
     <span class="n">is_public</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>            <span class="c1"># Makes it visible to unauthenticated users</span>
     <span class="n">auto_create_project</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Required for public invitations</span>
     <span class="n">project_role</span><span class="o">=</span><span class="n">ProjectRole</span><span class="o">.</span><span class="n">MANAGER</span><span class="p">,</span>
-    <span class="n">project_name_template</span><span class="o">=</span><span class="s2">"</span><span class="si">{user.full_name}</span><span class="s2"> Research Project"</span><span class="p">,</span>
-    <span class="n">user_email_patterns</span><span class="o">=</span><span class="p">[</span><span class="s2">"*@university.edu"</span><span class="p">,</span> <span class="s2">"*@research.org"</span><span class="p">],</span>
+    <span class="n">project_name_template</span><span class="o">=</span><span class="s2">"</span><span class="si">{full_name}</span><span class="s2"> Research Project"</span><span class="p">,</span>
+    <span class="n">user_email_patterns</span><span class="o">=</span><span class="p">[</span><span class="sa">r</span><span class="s2">".*@university\.edu"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">".*@research\.org"</span><span class="p">],</span>
     <span class="n">created_by</span><span class="o">=</span><span class="n">staff_user</span>      <span class="c1"># Must be staff user</span>
 <span class="p">)</span>
 
