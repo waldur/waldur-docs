@@ -355,8 +355,9 @@ The conditions are:
 ![Chat kebab with Start call available](img/matrix-chat/12-chat-kebab-call.png)
 
 When **Start call** runs, the browser exchanges the user's Matrix
-OpenID token for a short-lived LiveKit JWT at the SFU URL the
-homeserver advertised, then connects to the LiveKit room. While the
+OpenID token for a short-lived LiveKit JWT by posting it to
+`/get_token` under the `livekit_service_url` the homeserver advertised,
+then connects to the LiveKit room. While the
 call is connecting (15-second budget), a spinner replaces the message
 list; on success the call view renders inline with the LiveKit
 participant tiles and call controls (mute, camera, screenshare, hang
@@ -384,7 +385,8 @@ Joining produces a multi-participant view with a tile per LiveKit
 publisher. The local tile is labelled with the user's Waldur display
 name; remote tiles show the display name once the Matrix call
 membership event for that participant has propagated. In a federated
-deployment, the LiveKit identity (a base64 hash of `userId + deviceId`)
+deployment, the LiveKit identity (a base64 hash of the user ID, device ID
+and call member ID)
 may briefly show until the membership event lands, after which the
 homeport's `NameOverrider` swaps the visible label.
 
@@ -392,10 +394,10 @@ homeport's `NameOverrider` swaps the visible label.
 
 > **Dev-stack notes.** The bundled `docker/matrix-dev` stack disables
 > IPv6 in tuwunel's network namespace (`sysctls:
-> net.ipv6.conf.all.disable_ipv6=1`) so `lk-jwt-service`'s Go
-> federation client reaches the bundled Caddy TLS proxy at
-> `127.0.0.1:8448` instead of trying `[::1]:8448` and failing. The
-> Caddyfile binds both IPv4 and IPv6 for the same reason.
+> net.ipv6.conf.all.disable_ipv6=1`) so `lk-jwt-service`'s federation
+> lookups of `localhost` go to the bundled Caddy TLS proxy at
+> `127.0.0.1:8448` rather than `[::1]:8448`. The Caddyfile binds both
+> IPv4 and IPv6 for the same reason.
 
 ---
 
@@ -454,6 +456,8 @@ a single-line denial, not project data.
 | Webhook reaches Waldur but returns `400 DisallowedHost` | The hostname the homeserver uses to reach Waldur is not in Django's `ALLOWED_HOSTS` | Add the hostname (e.g. `host.docker.internal`) to `ALLOWED_HOSTS` and restart. |
 | Diagnostics shows `Bot authentication: 403 Forbidden` | AS token mismatch between Waldur and the homeserver | Re-run Setup, then re-register the appservice on the homeserver with the new YAML. |
 | Voice/video call fails to connect | `lk-jwt-service` cannot reach the homeserver's federation endpoint, or the SFU URL is wrong in `.well-known/matrix/client` | Confirm `https://localhost:8448` is reachable from the JWT service container (Caddy provides the TLS termination) and that `rtc_transports[].livekit_service_url` matches what the JWT service serves. |
+| Call shows **Could not connect to the call.** and the browser's token request returns `400 Missing room parameter` | The homeport build posts to lk-jwt's legacy `/sfu/get`, which accepts homeport's request body only up to lk-jwt 0.5.0 | Upgrade homeport to a build that posts to `/get_token`, or keep lk-jwt at 0.5.0 until you can. |
+| The browser's token request to `/get_token` returns `404` | A reverse proxy in front of `lk-jwt-service` forwards only `/sfu` paths | Forward `/get_token` to `lk-jwt-service` as well. Current Waldur Helm charts route both. |
 | Diagnostics reports `0 active, 0 total` rooms but you created one via API | Constance cache lag — `runserver` reads `API_CONFIGURATION` from its in-process LocMemCache | Restart the dev backend or call `cache.delete('API_CONFIGURATION')` from a shell against the same process. |
 
 For an unauthenticated denial reply from the bot, double-check that the
