@@ -19186,8 +19186,9 @@ LiveKit transport is reachable.</p>
 </ol>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/12-chat-kebab-call.png" data-desc-position="bottom"><img alt="Chat kebab with Start call available" src="../img/matrix-chat/12-chat-kebab-call.png"></a></p>
 <p>When <strong>Start call</strong> runs, the browser exchanges the user's Matrix
-OpenID token for a short-lived LiveKit JWT at the SFU URL the
-homeserver advertised, then connects to the LiveKit room. While the
+OpenID token for a short-lived LiveKit JWT by posting it to
+<code>/get_token</code> under the <code>livekit_service_url</code> the homeserver advertised,
+then connects to the LiveKit room. While the
 call is connecting (15-second budget), a spinner replaces the message
 list; on success the call view renders inline with the LiveKit
 participant tiles and call controls (mute, camera, screenshare, hang
@@ -19209,17 +19210,18 @@ the matrix-js-sdk timeline.</p>
 publisher. The local tile is labelled with the user's Waldur display
 name; remote tiles show the display name once the Matrix call
 membership event for that participant has propagated. In a federated
-deployment, the LiveKit identity (a base64 hash of <code>userId + deviceId</code>)
+deployment, the LiveKit identity (a base64 hash of the user ID, device ID
+and call member ID)
 may briefly show until the membership event lands, after which the
 homeport's <code>NameOverrider</code> swaps the visible label.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/21-owner-in-call.png" data-desc-position="bottom"><img alt="Owner side of a two-participant call" src="../img/matrix-chat/21-owner-in-call.png"></a></p>
 <blockquote>
 <p><strong>Dev-stack notes.</strong> The bundled <code>docker/matrix-dev</code> stack disables
 IPv6 in tuwunel's network namespace (<code>sysctls:
-net.ipv6.conf.all.disable_ipv6=1</code>) so <code>lk-jwt-service</code>'s Go
-federation client reaches the bundled Caddy TLS proxy at
-<code>127.0.0.1:8448</code> instead of trying <code>[::1]:8448</code> and failing. The
-Caddyfile binds both IPv4 and IPv6 for the same reason.</p>
+net.ipv6.conf.all.disable_ipv6=1</code>) so <code>lk-jwt-service</code>'s federation
+lookups of <code>localhost</code> go to the bundled Caddy TLS proxy at
+<code>127.0.0.1:8448</code> rather than <code>[::1]:8448</code>. The Caddyfile binds both
+IPv4 and IPv6 for the same reason.</p>
 </blockquote>
 <hr>
 <h2 id="bot-commands">Bot commands</h2>
@@ -19293,6 +19295,16 @@ a single-line denial, not project data.</p>
 <td>Voice/video call fails to connect</td>
 <td><code>lk-jwt-service</code> cannot reach the homeserver's federation endpoint, or the SFU URL is wrong in <code>.well-known/matrix/client</code></td>
 <td>Confirm <code>https://localhost:8448</code> is reachable from the JWT service container (Caddy provides the TLS termination) and that <code>rtc_transports[].livekit_service_url</code> matches what the JWT service serves.</td>
+</tr>
+<tr>
+<td>Call shows <strong>Could not connect to the call.</strong> and the browser's token request returns <code>400 Missing room parameter</code></td>
+<td>The homeport build posts to lk-jwt's legacy <code>/sfu/get</code>, which accepts homeport's request body only up to lk-jwt 0.5.0</td>
+<td>Upgrade homeport to a build that posts to <code>/get_token</code>, or keep lk-jwt at 0.5.0 until you can.</td>
+</tr>
+<tr>
+<td>The browser's token request to <code>/get_token</code> returns <code>404</code></td>
+<td>A reverse proxy in front of <code>lk-jwt-service</code> forwards only <code>/sfu</code> paths</td>
+<td>Forward <code>/get_token</code> to <code>lk-jwt-service</code> as well. Current Waldur Helm charts route both.</td>
 </tr>
 <tr>
 <td>Diagnostics reports <code>0 active, 0 total</code> rooms but you created one via API</td>
