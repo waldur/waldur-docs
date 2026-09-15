@@ -38,6 +38,26 @@ Each link records:
 Click **Add affiliate link** to create a link. Pick the referred and affiliate
 organizations, set the fee percentage and the active window, and save.
 
+An organization can have only one active affiliate. While **Active** is
+ticked, organizations that already have one are greyed out in the **Referred
+organization** list, with the name of their current affiliate. You can still
+create an inactive link for such an organization, for example to prepare a
+change of affiliate.
+
+To move an organization to a different affiliate:
+
+1. Add the new link with **Active** cleared.
+2. Once the organization's invoices for the old affiliate's last month are
+   finalized, choose **Edit** in the old link's row actions and clear
+   **Active**. Fees stop accruing at once, even for a month not yet invoiced.
+3. Edit the new link and tick **Active** before the invoices for its first
+   month are finalized, or it earns nothing for that month.
+
+Ticking **Active** on a link while another link for the same organization is
+active is refused. Prefer deactivating to deleting: deleting a link removes its
+accrual records and total earned, although fees already credited stay in the
+affiliate's balance.
+
 ### How fees accrue
 
 When an invoice is finalized at the end of the month, an affiliate fee is
