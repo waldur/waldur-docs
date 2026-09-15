@@ -25,17 +25,24 @@ Alternatively this can be done through UI of Waldur as shown below.
 
 **Note:** To be able to create a LEXIS link for a resource using Waldur UI:
 
-1. the offering related to the resource has to have `plugin_options` set;
+1. the offering related to the resource has to have the HEAppE options below set;
 2. the feature `Enabled LEXIS link integrations for offerings.` should be enabled in Waldur site settings.
 
-Namely:
+| Option | Kind | Required | Description |
+|--------|------|----------|-------------|
+| `heappe_url` | plugin | yes | HEAppE server endpoint |
+| `heappe_username` | plugin | yes | HEAppE service account username |
+| `heappe_password` | secret | yes | HEAppE service account password |
+| `heappe_cluster_id` | plugin | yes | ID of the target cluster in HEAppE |
+| `heappe_local_base_path` | plugin | yes | Root directory on the cluster under which project directories are created |
+| `heappe_identifier` | plugin | no | Which HEAppE instance the offering targets, e.g. `it4i-heappe-prod`. Distinct from the cluster ID: when a provider runs several HEAppE instances, consumers such as LEXIS use it to pick the right one |
+| `heappe_cluster_password` | secret | no | Cluster password |
+| `scratch_project_directory` | plugin | no | Temporary scratch directory path |
+| `project_permanent_directory` | plugin | no | Persistent project directory path |
 
-* heappe_url
-* heappe_username
-* heappe_cluster_id
-* heappe_local_base_path
+Plugin options are returned with the offering, including on the public offering endpoint, so `heappe_identifier` is visible to anyone who can see the offering. Secret options are only shown to users who can manage the offering's integration.
 
-You can set these settings via UI:
+You can set these settings via UI, in the **LEXIS integration** section of the offering's integration settings:
 
 ![Offering edit page](images/lexis-offering-edit01.png)
 ![LEXIS settings edit](images/lexis-offering-edit02.png)
