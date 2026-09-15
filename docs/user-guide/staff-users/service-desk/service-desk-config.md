@@ -105,44 +105,57 @@ The new-request notification reaches every active staff and support user who has
 
 ## Atlassian configuration
 
-To configure Atlassian for Waldur, open the Service Desk configuration page and select **Configure** from the Atlassian box.
+Waldur connects to Jira Service Management from the **Credentials** tab of the Service Desk configuration page. The Atlassian card shows the site, the service desk and the sign-in method in use. Like the identity provider cards, it has a status button: **Enabled** when Atlassian is the active service desk, **Disabled** when it is configured but another service desk is active, and **Not configured**. The actions are in that button's menu.
 
-A popup will appear. Fill in the required fields and click **Update**.
+![Atlassian card on the Credentials tab](../../img/atlassian-service-desk-card.png)
 
-* **Atlassian API server URL** – The base URL for connecting to the Atlassian API.
-* **Username for access user** – The username of the account used for API authentication.
-* **Password for access user** – The password for the access user (if required).
-* **Email for access user** – The email address associated with the access user.
-* **Token for access user** – An authentication token used instead of a password for secure access.
-* **Service desk ID or key** – The identifier for the service desk in Jira Service Management.
-* **Issue type used for request-based item processing** – Defines which issue type (e.g., "Service Request") is used for handling requests.
-* **Comma-separated list of file extensions not allowed for attachment** – Specifies file types that cannot be uploaded.
-* **Atlassian issue types** – Lists the types of issues available (e.g., Informational, Service Request, Change Request, Incident).
-* **Affected resource field name** – The field name that captures the impacted resource.
-* **Template for issue description** – A predefined format for issue descriptions.
-* **Template for issue summary** – A predefined format for issue summaries.
-* **Impact field name** – The field used to store impact-related information (e.g., "Impact").
-* **Organisation field name** – Maps the field for the organization associated with the issue (e.g., "Reporter organization").
-* **Resolution SLA field name** – Defines the field tracking SLA (Service Level Agreement) resolution time.
-* **Project field name** – Stores the project identifier for an issue.
-* **Reporter field name** – Identifies the original reporter of an issue (e.g., "Original Reporter").
-* **Caller field name** – Refers to request participants (e.g., users involved in the request process).
-* **SLA field name** – Specifies the field used for tracking SLA metrics (e.g., "Time to first response").
-* **Type of linked issue field name** – Defines the field used to categorize linked issues (e.g., "Relates").
-* **Customer satisfaction field name** – Captures customer satisfaction ratings (e.g., "Customer satisfaction").
-* **Request feedback field name** – Stores feedback related to the request (e.g., "Request feedback").
-* **Template field name** – Allows specifying a template for issue creation.
-* **Atlassian custom issue field mapping enabled** – Allows enabling/disabling custom field mapping.
-* **Atlassian shared username** – Enables a shared username across different configurations.
-* **Atlassian verify SSL** – Controls whether SSL certificates should be verified for security.
-* **Atlassian use old API** – Enables compatibility with older API versions.
-* **Atlassian use automatic request mapping** – When enabled, this setting allows automatic mapping of incoming requests to the appropriate Atlassian issues or service desk requests.
-* **Atlassian map Waldur users to service desk agents** – This suggests an integration between Waldur and Atlassian's service desk. Enabling this would map Waldur users to service desk agent roles.
-* **Atlassian pull priorities** – If enabled, it allows the system to synchronize or pull priority levels from Atlassian issues to maintain consistent prioritization.
+### Setting up Atlassian
 
-![Atlassian configuration](../../img/Atlassian_config1.png)
-![Atlassian configuration](../../img/Atlassian_config2.png)
-![Atlassian configuration](../../img/Atlassian_config3.png)
+Open the status button on the Atlassian card and select **Discovery wizard** (**Re-discover** once Atlassian is configured). When you re-run the wizard, the stored credentials are filled in, so you only change what you need. The wizard has five steps:
+
+1. **Credentials** – choose the sign-in method, then enter the site URL and the credentials. **Validate & Continue** checks them against Jira before moving on.
+2. **Project** – choose the service desk that receives support tickets.
+3. **Request Types** – choose the request types users can raise.
+4. **Field Mapping** – optionally map Waldur fields, such as reporter, organisation, project and affected resource, to Jira custom fields.
+5. **Preview** – review the settings and select **Save Settings**.
+
+![Sign-in step of the Atlassian setup wizard](../../img/atlassian-setup-sign-in.png)
+
+The wizard offers four sign-in methods:
+
+| Method | Use it for | Credentials |
+|--------|------------|-------------|
+| **Service account (OAuth 2.0)** | Atlassian Cloud (recommended) | Client ID and client secret of a service account's OAuth 2.0 credential |
+| **API token (Atlassian Cloud)** | Atlassian Cloud | Email address and API token of an Atlassian account |
+| **Personal access token (Data Center)** | Jira Server and Data Center | Personal access token |
+| **Username and password** | Legacy installations | Username and password; Atlassian Cloud does not accept them |
+
+Saving one method clears the credentials of the others.
+
+### Using an Atlassian service account
+
+A service account is an Atlassian identity that belongs to your organisation rather than to a person, which makes it the recommended way to connect Waldur to Atlassian Cloud.
+
+1. In Atlassian Administration, open **Directory → Service accounts** and create a service account. Give it access to Jira Service Management as an agent, and add it to the **Service Desk Team** role of the service desk project. Waldur raises requests on behalf of the users who report them, which needs this role.
+2. Create an **OAuth 2.0 credential** for the service account with these scopes: `read:servicedesk-request`, `write:servicedesk-request`, `manage:servicedesk-customer`, `read:jira-work`, `write:jira-work` and `read:jira-user`.
+3. In the wizard, choose **Service account (OAuth 2.0)** and enter the site URL (for example `https://your-domain.atlassian.net`), the client ID and the client secret.
+
+Waldur looks up the site's cloud ID, connects through the Atlassian API gateway (`https://api.atlassian.com/ex/jira/<cloud ID>`) and renews the hourly access tokens by itself.
+
+!!! tip
+    If you choose **API token (Atlassian Cloud)** for a service account instead, create a scoped API token with the same scopes and use `https://api.atlassian.com/ex/jira/<cloud ID>` as the site URL. The cloud ID is shown at `https://your-domain.atlassian.net/_edge/tenant_info`.
+
+### Advanced settings
+
+**Edit** in the same menu opens every Atlassian setting, grouped into sections:
+
+* **Connection and sign-in** – the API URL, the sign-in method with only that method's credentials, and SSL certificate verification.
+* **Service desk** – the service desk ID or key, the issue type used for request-based orders, the file types not allowed as attachments, the shared username, mapping Waldur users to service desk agents, and the legacy API.
+* **Templates** – the templates for issue summaries and descriptions.
+* **Custom field mapping** – whether Waldur fills in custom fields, and the names of the Jira fields for the reporter, caller, impact, organisation, project, affected resource, template, Waldur backend ID, SLA, resolution SLA, customer satisfaction, request feedback and linked issue type.
+* **Webhook** – the shared secret for webhook calls from Jira.
+
+![Advanced Atlassian settings](../../img/atlassian-advanced-settings.png)
 
 ## Zammad configuration
 
