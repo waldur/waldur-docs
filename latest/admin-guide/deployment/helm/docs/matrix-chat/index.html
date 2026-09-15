@@ -18800,10 +18800,8 @@ managers.</p>
   own key, <strong>not</strong> <code>global.imageRegistry</code>, so pointing <code>global</code> at a private
   mirror doesn't rewrite LiveKit to a registry that has no such image. Override
   <code>livekit.imageRegistry</code> if you mirror it.</li>
-<li><strong>lk-jwt</strong> — <code>ghcr.io/element-hq/lk-jwt-service</code> publishes <strong>no semver tags</strong>
-  (only <code>latest</code> and <code>sha-&lt;commit&gt;</code>), so it is pinned <strong>by digest</strong>
-  (<code>lkJwt.imageDigest</code>). Update the digest to upgrade, or set <code>lkJwt.imageTag</code> to
-  a <code>sha-&lt;commit&gt;</code> tag and clear the digest.</li>
+<li><strong>lk-jwt</strong> — <code>ghcr.io/element-hq/lk-jwt-service</code>, pinned by tag; <code>lkJwt.imageDigest</code>
+  available and takes precedence over the tag.</li>
 </ul>
 <h2 id="supported-homeserver-version">Supported homeserver version</h2>
 <p>Waldur bundles the homeserver, so its version is ours to support, not yours to
@@ -18890,6 +18888,12 @@ ingress.</p>
    token-exchange step. (<code>lkJwt.insecureSkipVerifyTls</code> only relaxes the cert
    check — it does not fix reachability.)</li>
 </ol>
+<p>A call that shows <strong>Could not connect to the call.</strong> usually fails at this
+   token request; check it in the browser's network tab. <code>404</code> on
+   <code>https://&lt;serverName&gt;/get_token</code> means a chart without the <code>/get_token</code>
+   route. <code>400 Missing room parameter</code> on <code>/sfu/get</code> means a homeport image
+   that still posts to the legacy endpoint, running against lk-jwt 0.6.0 or
+   newer. Upgrade the chart and the homeport image together.</p>
 <h2 id="open-registration-guard">Open-registration guard</h2>
 <p>If <code>homeserver.allowRegistration</code> is <code>true</code> but no <code>registrationToken</code> (or
 <code>registrationTokenExistingSecret</code>) is set, the chart <strong>refuses to render</strong> — this
@@ -18961,15 +18965,16 @@ exposed — relayed media always rides TLS.</p>
   policies) — set it to ship the matrix/livekit policies without opting the
   rest of the stack into NetworkPolicy. The livekit policy accepts media from
   <strong>anywhere</strong> (external WebRTC). The homeserver and lk-jwt policies accept
-  HTTP only from <strong>in-namespace</strong> pods (i.e. the ingress controller, same
-  assumption as the homeport/API policies). Egress is left open on all three —
+  HTTP from <strong>anywhere</strong> on their service port too, because browser requests
+  reach them through the ingress controller, which runs in its own namespace.
+  Egress is left open on all three —
   federation, OpenID verification, and <code>/twirp</code> room creation all need
   outbound reach to <code>serverName</code>.</li>
 </ul>
 <h2 id="using-an-external-livekit">Using an external LiveKit</h2>
 <p>You can run the Matrix calling stack against an <strong>operator-managed LiveKit SFU</strong>
 instead of the bundled <code>livekit-server</code> — the same bring-your-own-backend pattern
-the chart offers for PostgreSQL. Tuwunnel and lk-jwt-service stay bundled, because
+the chart offers for PostgreSQL. Tuwunel and lk-jwt-service stay bundled, because
 lk-jwt is tied to <em>this</em> homeserver's federation identity; only the SFU is external.</p>
 <p>Why it works: the browser reaches LiveKit client-side via the URL lk-jwt returns
 (<code>livekit.publicUrl</code>), and lk-jwt signs call tokens with an API key/secret it shares
@@ -19004,9 +19009,9 @@ is never needed. Mastermind never talks to LiveKit, so there is no backend chang
 <span class="w">  </span><span class="nt">lkJwt</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                               </span><span class="c1"># keep the token broker</span>
 <span class="w">  </span><span class="nt">homeserver</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                               </span><span class="c1"># Tuwunnel stays bundled</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                               </span><span class="c1"># Tuwunel stays bundled</span>
 <span class="w">    </span><span class="nt">serverName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matrix.example.org</span>
-<span class="w">    </span><span class="nt">livekitServiceUrl</span><span class="p">:</span><span class="w"> </span><span class="s">"https://matrix.example.org/sfu"</span>
+<span class="w">    </span><span class="nt">livekitServiceUrl</span><span class="p">:</span><span class="w"> </span><span class="s">"https://matrix.example.org"</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>The <code>existingSecret</code> must hold the <strong>same</strong> API key and secret configured on your
 external LiveKit, under the keys named above. If you omit <code>existingSecret.name</code>

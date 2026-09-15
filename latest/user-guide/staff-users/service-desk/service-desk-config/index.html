@@ -18452,6 +18452,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Atlassian configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setting-up-atlassian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting up Atlassian
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-an-atlassian-service-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using an Atlassian service account
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -18753,6 +18792,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Atlassian configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setting-up-atlassian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting up Atlassian
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-an-atlassian-service-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using an Atlassian service account
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19032,43 +19110,73 @@
 <p>Turning on <strong>Waldur support auto assign</strong> in addition gives every incoming ticket an owner, so it is clear who picked it up.</p>
 </div>
 <h2 id="atlassian-configuration">Atlassian configuration</h2>
-<p>To configure Atlassian for Waldur, open the Service Desk configuration page and select <strong>Configure</strong> from the Atlassian box.</p>
-<p>A popup will appear. Fill in the required fields and click <strong>Update</strong>.</p>
+<p>Waldur connects to Jira Service Management from the <strong>Credentials</strong> tab of the Service Desk configuration page. The Atlassian card shows the site, the service desk and the sign-in method in use. Like the identity provider cards, it has a status button: <strong>Enabled</strong> when Atlassian is the active service desk, <strong>Disabled</strong> when it is configured but another service desk is active, and <strong>Not configured</strong>. The actions are in that button's menu.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../../img/atlassian-service-desk-card.png" data-desc-position="bottom"><img alt="Atlassian card on the Credentials tab" src="../../../img/atlassian-service-desk-card.png"></a></p>
+<h3 id="setting-up-atlassian">Setting up Atlassian</h3>
+<p>Open the status button on the Atlassian card and select <strong>Discovery wizard</strong> (<strong>Re-discover</strong> once Atlassian is configured). When you re-run the wizard, the stored credentials are filled in, so you only change what you need. The wizard has five steps:</p>
+<ol>
+<li><strong>Credentials</strong> – choose the sign-in method, then enter the site URL and the credentials. <strong>Validate &amp; Continue</strong> checks them against Jira before moving on.</li>
+<li><strong>Project</strong> – choose the service desk that receives support tickets.</li>
+<li><strong>Request Types</strong> – choose the request types users can raise.</li>
+<li><strong>Field Mapping</strong> – optionally map Waldur fields, such as reporter, organisation, project and affected resource, to Jira custom fields.</li>
+<li><strong>Preview</strong> – review the settings and select <strong>Save Settings</strong>.</li>
+</ol>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../../img/atlassian-setup-sign-in.png" data-desc-position="bottom"><img alt="Sign-in step of the Atlassian setup wizard" src="../../../img/atlassian-setup-sign-in.png"></a></p>
+<p>The wizard offers four sign-in methods:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Use it for</th>
+<th>Credentials</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Service account (OAuth 2.0)</strong></td>
+<td>Atlassian Cloud (recommended)</td>
+<td>Client ID and client secret of a service account's OAuth 2.0 credential</td>
+</tr>
+<tr>
+<td><strong>API token (Atlassian Cloud)</strong></td>
+<td>Atlassian Cloud</td>
+<td>Email address and API token of an Atlassian account</td>
+</tr>
+<tr>
+<td><strong>Personal access token (Data Center)</strong></td>
+<td>Jira Server and Data Center</td>
+<td>Personal access token</td>
+</tr>
+<tr>
+<td><strong>Username and password</strong></td>
+<td>Legacy installations</td>
+<td>Username and password; Atlassian Cloud does not accept them</td>
+</tr>
+</tbody>
+</table>
+<p>Saving one method clears the credentials of the others.</p>
+<h3 id="using-an-atlassian-service-account">Using an Atlassian service account</h3>
+<p>A service account is an Atlassian identity that belongs to your organisation rather than to a person, which makes it the recommended way to connect Waldur to Atlassian Cloud.</p>
+<ol>
+<li>In Atlassian Administration, open <strong>Directory → Service accounts</strong> and create a service account. Give it access to Jira Service Management as an agent, and add it to the <strong>Service Desk Team</strong> role of the service desk project. Waldur raises requests on behalf of the users who report them, which needs this role.</li>
+<li>Create an <strong>OAuth 2.0 credential</strong> for the service account with these scopes: <code>read:servicedesk-request</code>, <code>write:servicedesk-request</code>, <code>manage:servicedesk-customer</code>, <code>read:jira-work</code>, <code>write:jira-work</code> and <code>read:jira-user</code>.</li>
+<li>In the wizard, choose <strong>Service account (OAuth 2.0)</strong> and enter the site URL (for example <code>https://your-domain.atlassian.net</code>), the client ID and the client secret.</li>
+</ol>
+<p>Waldur looks up the site's cloud ID, connects through the Atlassian API gateway (<code>https://api.atlassian.com/ex/jira/&lt;cloud ID&gt;</code>) and renews the hourly access tokens by itself.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you choose <strong>API token (Atlassian Cloud)</strong> for a service account instead, create a scoped API token with the same scopes and use <code>https://api.atlassian.com/ex/jira/&lt;cloud ID&gt;</code> as the site URL. The cloud ID is shown at <code>https://your-domain.atlassian.net/_edge/tenant_info</code>.</p>
+</div>
+<h3 id="advanced-settings">Advanced settings</h3>
+<p><strong>Edit</strong> in the same menu opens every Atlassian setting, grouped into sections:</p>
 <ul>
-<li><strong>Atlassian API server URL</strong> – The base URL for connecting to the Atlassian API.</li>
-<li><strong>Username for access user</strong> – The username of the account used for API authentication.</li>
-<li><strong>Password for access user</strong> – The password for the access user (if required).</li>
-<li><strong>Email for access user</strong> – The email address associated with the access user.</li>
-<li><strong>Token for access user</strong> – An authentication token used instead of a password for secure access.</li>
-<li><strong>Service desk ID or key</strong> – The identifier for the service desk in Jira Service Management.</li>
-<li><strong>Issue type used for request-based item processing</strong> – Defines which issue type (e.g., "Service Request") is used for handling requests.</li>
-<li><strong>Comma-separated list of file extensions not allowed for attachment</strong> – Specifies file types that cannot be uploaded.</li>
-<li><strong>Atlassian issue types</strong> – Lists the types of issues available (e.g., Informational, Service Request, Change Request, Incident).</li>
-<li><strong>Affected resource field name</strong> – The field name that captures the impacted resource.</li>
-<li><strong>Template for issue description</strong> – A predefined format for issue descriptions.</li>
-<li><strong>Template for issue summary</strong> – A predefined format for issue summaries.</li>
-<li><strong>Impact field name</strong> – The field used to store impact-related information (e.g., "Impact").</li>
-<li><strong>Organisation field name</strong> – Maps the field for the organization associated with the issue (e.g., "Reporter organization").</li>
-<li><strong>Resolution SLA field name</strong> – Defines the field tracking SLA (Service Level Agreement) resolution time.</li>
-<li><strong>Project field name</strong> – Stores the project identifier for an issue.</li>
-<li><strong>Reporter field name</strong> – Identifies the original reporter of an issue (e.g., "Original Reporter").</li>
-<li><strong>Caller field name</strong> – Refers to request participants (e.g., users involved in the request process).</li>
-<li><strong>SLA field name</strong> – Specifies the field used for tracking SLA metrics (e.g., "Time to first response").</li>
-<li><strong>Type of linked issue field name</strong> – Defines the field used to categorize linked issues (e.g., "Relates").</li>
-<li><strong>Customer satisfaction field name</strong> – Captures customer satisfaction ratings (e.g., "Customer satisfaction").</li>
-<li><strong>Request feedback field name</strong> – Stores feedback related to the request (e.g., "Request feedback").</li>
-<li><strong>Template field name</strong> – Allows specifying a template for issue creation.</li>
-<li><strong>Atlassian custom issue field mapping enabled</strong> – Allows enabling/disabling custom field mapping.</li>
-<li><strong>Atlassian shared username</strong> – Enables a shared username across different configurations.</li>
-<li><strong>Atlassian verify SSL</strong> – Controls whether SSL certificates should be verified for security.</li>
-<li><strong>Atlassian use old API</strong> – Enables compatibility with older API versions.</li>
-<li><strong>Atlassian use automatic request mapping</strong> – When enabled, this setting allows automatic mapping of incoming requests to the appropriate Atlassian issues or service desk requests.</li>
-<li><strong>Atlassian map Waldur users to service desk agents</strong> – This suggests an integration between Waldur and Atlassian's service desk. Enabling this would map Waldur users to service desk agent roles.</li>
-<li><strong>Atlassian pull priorities</strong> – If enabled, it allows the system to synchronize or pull priority levels from Atlassian issues to maintain consistent prioritization.</li>
+<li><strong>Connection and sign-in</strong> – the API URL, the sign-in method with only that method's credentials, and SSL certificate verification.</li>
+<li><strong>Service desk</strong> – the service desk ID or key, the issue type used for request-based orders, the file types not allowed as attachments, the shared username, mapping Waldur users to service desk agents, and the legacy API.</li>
+<li><strong>Templates</strong> – the templates for issue summaries and descriptions.</li>
+<li><strong>Custom field mapping</strong> – whether Waldur fills in custom fields, and the names of the Jira fields for the reporter, caller, impact, organisation, project, affected resource, template, Waldur backend ID, SLA, resolution SLA, customer satisfaction, request feedback and linked issue type.</li>
+<li><strong>Webhook</strong> – the shared secret for webhook calls from Jira.</li>
 </ul>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../../img/Atlassian_config1.png" data-desc-position="bottom"><img alt="Atlassian configuration" src="../../../img/Atlassian_config1.png"></a>
-<a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../../img/Atlassian_config2.png" data-desc-position="bottom"><img alt="Atlassian configuration" src="../../../img/Atlassian_config2.png"></a>
-<a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../../img/Atlassian_config3.png" data-desc-position="bottom"><img alt="Atlassian configuration" src="../../../img/Atlassian_config3.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../../img/atlassian-advanced-settings.png" data-desc-position="bottom"><img alt="Advanced Atlassian settings" src="../../../img/atlassian-advanced-settings.png"></a></p>
 <h2 id="zammad-configuration">Zammad configuration</h2>
 <p>To configure Zammad for Waldur, open the Service Desk configuration page and select <strong>Configure</strong> from the Zammad box.</p>
 <p>A popup will appear. Fill in the required fields and click <strong>Update</strong>.</p>

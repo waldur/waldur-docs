@@ -8264,6 +8264,17 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
+  <a href="#how-files-are-served" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How files are served
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#adding-a-file-field" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18549,6 +18560,17 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
+  <a href="#how-files-are-served" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How files are served
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#adding-a-file-field" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18650,6 +18672,21 @@ global default storage. Uploads do not go to disk or S3 — they become rows in
 file is its storage path, so <strong>access rules are keyed by the <code>upload_to</code>
 prefix</strong>, and they are <strong>deny by default</strong>: a file whose prefix has no
 registered rule is served to nobody, staff included.</p>
+<h2 id="how-files-are-served">How files are served</h2>
+<p>Uploads are untrusted content served from the portal's own origin, where
+homeport keeps the API token in <code>localStorage</code>. So that a file opened directly
+can never run as a page, every response carries:</p>
+<ul>
+<li><code>Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox</code></li>
+<li><code>X-Content-Type-Options: nosniff</code></li>
+</ul>
+<p>Raster images are served <code>inline</code>; SVG and everything else as <code>attachment</code>.
+<code>&lt;img src&gt;</code> ignores <code>Content-Disposition</code>, so an SVG logo still renders where
+it is embedded.</p>
+<p>The type is sniffed from the content at upload time (<code>File.mime_type</code>), not
+taken from the file name. Restrict what a field accepts with a
+<code>FileTypeValidator</code> on its serializer: <code>ImageValidator</code> for images,
+<code>DocumentValidator</code> for documents.</p>
 <h2 id="adding-a-file-field">Adding a file field</h2>
 <p>Whenever you add a <code>FileField</code> or <code>ImageField</code>, you must also declare who may
 download it. Skipping this step is not silently insecure — it is silently

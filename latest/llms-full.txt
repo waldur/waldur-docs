@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-15T12:03:40.180998Z
+Generated: 2026-09-15T14:04:07.983747Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -1966,10 +1966,8 @@ Images are pinned to specific versions by default — never `latest`:
   own key, **not** `global.imageRegistry`, so pointing `global` at a private
   mirror doesn't rewrite LiveKit to a registry that has no such image. Override
   `livekit.imageRegistry` if you mirror it.
-- **lk-jwt** — `ghcr.io/element-hq/lk-jwt-service` publishes **no semver tags**
-  (only `latest` and `sha-<commit>`), so it is pinned **by digest**
-  (`lkJwt.imageDigest`). Update the digest to upgrade, or set `lkJwt.imageTag` to
-  a `sha-<commit>` tag and clear the digest.
+- **lk-jwt** — `ghcr.io/element-hq/lk-jwt-service`, pinned by tag; `lkJwt.imageDigest`
+  available and takes precedence over the tag.
 
 ## Supported homeserver version
 
@@ -2053,6 +2051,13 @@ ingress.
    token-exchange step. (`lkJwt.insecureSkipVerifyTls` only relaxes the cert
    check — it does not fix reachability.)
 
+   A call that shows **Could not connect to the call.** usually fails at this
+   token request; check it in the browser's network tab. `404` on
+   `https://<serverName>/get_token` means a chart without the `/get_token`
+   route. `400 Missing room parameter` on `/sfu/get` means a homeport image
+   that still posts to the legacy endpoint, running against lk-jwt 0.6.0 or
+   newer. Upgrade the chart and the homeport image together.
+
 ## Open-registration guard
 
 If `homeserver.allowRegistration` is `true` but no `registrationToken` (or
@@ -2127,8 +2132,9 @@ exposed — relayed media always rides TLS.
   policies) — set it to ship the matrix/livekit policies without opting the
   rest of the stack into NetworkPolicy. The livekit policy accepts media from
   **anywhere** (external WebRTC). The homeserver and lk-jwt policies accept
-  HTTP only from **in-namespace** pods (i.e. the ingress controller, same
-  assumption as the homeport/API policies). Egress is left open on all three —
+  HTTP from **anywhere** on their service port too, because browser requests
+  reach them through the ingress controller, which runs in its own namespace.
+  Egress is left open on all three —
   federation, OpenID verification, and `/twirp` room creation all need
   outbound reach to `serverName`.
 
@@ -2136,7 +2142,7 @@ exposed — relayed media always rides TLS.
 
 You can run the Matrix calling stack against an **operator-managed LiveKit SFU**
 instead of the bundled `livekit-server` — the same bring-your-own-backend pattern
-the chart offers for PostgreSQL. Tuwunnel and lk-jwt-service stay bundled, because
+the chart offers for PostgreSQL. Tuwunel and lk-jwt-service stay bundled, because
 lk-jwt is tied to *this* homeserver's federation identity; only the SFU is external.
 
 Why it works: the browser reaches LiveKit client-side via the URL lk-jwt returns
@@ -2160,9 +2166,9 @@ matrixChat:
   lkJwt:
     enabled: true                               # keep the token broker
   homeserver:
-    enabled: true                               # Tuwunnel stays bundled
+    enabled: true                               # Tuwunel stays bundled
     serverName: matrix.example.org
-    livekitServiceUrl: "https://matrix.example.org/sfu"
+    livekitServiceUrl: "https://matrix.example.org"
 ```
 
 The `existingSecret` must hold the **same** API key and secret configured on your
@@ -54157,12 +54163,15 @@ The `anonymized` policy names an account `<prefix><posix uid>` -- for example `h
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `heappe_url` | URL | HEAppE server endpoint |
-| `heappe_username` | string | Service account username |
-| `heappe_password` | string | Service account password |
-| `heappe_cluster_id` | integer | Target cluster ID |
+| `heappe_url` | URL | HEAppE server endpoint. Required |
+| `heappe_username` | string | Service account username. Required |
+| `heappe_cluster_id` | string | ID of the target cluster in HEAppE. Required |
+| `heappe_local_base_path` | string | Root directory on the cluster under which project directories are created. Required |
+| `heappe_identifier` | string | Human-readable identifier of the HEAppE instance this offering targets, e.g. `it4i-heappe-prod`; disambiguates between multiple HEAppE deployments a provider may run. Distinct from `heappe_cluster_id` |
 | `project_permanent_directory` | string | Persistent project directory path |
 | `scratch_project_directory` | string | Temporary scratch directory path |
+
+The service account password `heappe_password` (required) and `heappe_cluster_password` are secret options: they go in `secret_options`, not `plugin_options`, and are only returned to users who can manage the offering's integration.
 
 ### GLAuth (LDAP)
 
@@ -63515,6 +63524,24 @@ That endpoint has `permission_classes = ()`. The only thing it knows about a
 file is its storage path, so **access rules are keyed by the `upload_to`
 prefix**, and they are **deny by default**: a file whose prefix has no
 registered rule is served to nobody, staff included.
+
+## How files are served
+
+Uploads are untrusted content served from the portal's own origin, where
+homeport keeps the API token in `localStorage`. So that a file opened directly
+can never run as a page, every response carries:
+
+- `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox`
+- `X-Content-Type-Options: nosniff`
+
+Raster images are served `inline`; SVG and everything else as `attachment`.
+`<img src>` ignores `Content-Disposition`, so an SVG logo still renders where
+it is embedded.
+
+The type is sniffed from the content at upload time (`File.mime_type`), not
+taken from the file name. Restrict what a field accepts with a
+`FileTypeValidator` on its serializer: `ImageValidator` for images,
+`DocumentValidator` for documents.
 
 ## Adding a file field
 
@@ -84813,44 +84840,57 @@ The new-request notification reaches every active staff and support user who has
 
 ## Atlassian configuration
 
-To configure Atlassian for Waldur, open the Service Desk configuration page and select **Configure** from the Atlassian box.
+Waldur connects to Jira Service Management from the **Credentials** tab of the Service Desk configuration page. The Atlassian card shows the site, the service desk and the sign-in method in use. Like the identity provider cards, it has a status button: **Enabled** when Atlassian is the active service desk, **Disabled** when it is configured but another service desk is active, and **Not configured**. The actions are in that button's menu.
 
-A popup will appear. Fill in the required fields and click **Update**.
+[Image: Atlassian card on the Credentials tab]
 
-* **Atlassian API server URL** – The base URL for connecting to the Atlassian API.
-* **Username for access user** – The username of the account used for API authentication.
-* **Password for access user** – The password for the access user (if required).
-* **Email for access user** – The email address associated with the access user.
-* **Token for access user** – An authentication token used instead of a password for secure access.
-* **Service desk ID or key** – The identifier for the service desk in Jira Service Management.
-* **Issue type used for request-based item processing** – Defines which issue type (e.g., "Service Request") is used for handling requests.
-* **Comma-separated list of file extensions not allowed for attachment** – Specifies file types that cannot be uploaded.
-* **Atlassian issue types** – Lists the types of issues available (e.g., Informational, Service Request, Change Request, Incident).
-* **Affected resource field name** – The field name that captures the impacted resource.
-* **Template for issue description** – A predefined format for issue descriptions.
-* **Template for issue summary** – A predefined format for issue summaries.
-* **Impact field name** – The field used to store impact-related information (e.g., "Impact").
-* **Organisation field name** – Maps the field for the organization associated with the issue (e.g., "Reporter organization").
-* **Resolution SLA field name** – Defines the field tracking SLA (Service Level Agreement) resolution time.
-* **Project field name** – Stores the project identifier for an issue.
-* **Reporter field name** – Identifies the original reporter of an issue (e.g., "Original Reporter").
-* **Caller field name** – Refers to request participants (e.g., users involved in the request process).
-* **SLA field name** – Specifies the field used for tracking SLA metrics (e.g., "Time to first response").
-* **Type of linked issue field name** – Defines the field used to categorize linked issues (e.g., "Relates").
-* **Customer satisfaction field name** – Captures customer satisfaction ratings (e.g., "Customer satisfaction").
-* **Request feedback field name** – Stores feedback related to the request (e.g., "Request feedback").
-* **Template field name** – Allows specifying a template for issue creation.
-* **Atlassian custom issue field mapping enabled** – Allows enabling/disabling custom field mapping.
-* **Atlassian shared username** – Enables a shared username across different configurations.
-* **Atlassian verify SSL** – Controls whether SSL certificates should be verified for security.
-* **Atlassian use old API** – Enables compatibility with older API versions.
-* **Atlassian use automatic request mapping** – When enabled, this setting allows automatic mapping of incoming requests to the appropriate Atlassian issues or service desk requests.
-* **Atlassian map Waldur users to service desk agents** – This suggests an integration between Waldur and Atlassian's service desk. Enabling this would map Waldur users to service desk agent roles.
-* **Atlassian pull priorities** – If enabled, it allows the system to synchronize or pull priority levels from Atlassian issues to maintain consistent prioritization.
+### Setting up Atlassian
 
-[Image: Atlassian configuration]
-[Image: Atlassian configuration]
-[Image: Atlassian configuration]
+Open the status button on the Atlassian card and select **Discovery wizard** (**Re-discover** once Atlassian is configured). When you re-run the wizard, the stored credentials are filled in, so you only change what you need. The wizard has five steps:
+
+1. **Credentials** – choose the sign-in method, then enter the site URL and the credentials. **Validate & Continue** checks them against Jira before moving on.
+2. **Project** – choose the service desk that receives support tickets.
+3. **Request Types** – choose the request types users can raise.
+4. **Field Mapping** – optionally map Waldur fields, such as reporter, organisation, project and affected resource, to Jira custom fields.
+5. **Preview** – review the settings and select **Save Settings**.
+
+[Image: Sign-in step of the Atlassian setup wizard]
+
+The wizard offers four sign-in methods:
+
+| Method | Use it for | Credentials |
+|--------|------------|-------------|
+| **Service account (OAuth 2.0)** | Atlassian Cloud (recommended) | Client ID and client secret of a service account's OAuth 2.0 credential |
+| **API token (Atlassian Cloud)** | Atlassian Cloud | Email address and API token of an Atlassian account |
+| **Personal access token (Data Center)** | Jira Server and Data Center | Personal access token |
+| **Username and password** | Legacy installations | Username and password; Atlassian Cloud does not accept them |
+
+Saving one method clears the credentials of the others.
+
+### Using an Atlassian service account
+
+A service account is an Atlassian identity that belongs to your organisation rather than to a person, which makes it the recommended way to connect Waldur to Atlassian Cloud.
+
+1. In Atlassian Administration, open **Directory → Service accounts** and create a service account. Give it access to Jira Service Management as an agent, and add it to the **Service Desk Team** role of the service desk project. Waldur raises requests on behalf of the users who report them, which needs this role.
+2. Create an **OAuth 2.0 credential** for the service account with these scopes: `read:servicedesk-request`, `write:servicedesk-request`, `manage:servicedesk-customer`, `read:jira-work`, `write:jira-work` and `read:jira-user`.
+3. In the wizard, choose **Service account (OAuth 2.0)** and enter the site URL (for example `https://your-domain.atlassian.net`), the client ID and the client secret.
+
+Waldur looks up the site's cloud ID, connects through the Atlassian API gateway (`https://api.atlassian.com/ex/jira/<cloud ID>`) and renews the hourly access tokens by itself.
+
+!!! tip
+    If you choose **API token (Atlassian Cloud)** for a service account instead, create a scoped API token with the same scopes and use `https://api.atlassian.com/ex/jira/<cloud ID>` as the site URL. The cloud ID is shown at `https://your-domain.atlassian.net/_edge/tenant_info`.
+
+### Advanced settings
+
+**Edit** in the same menu opens every Atlassian setting, grouped into sections:
+
+* **Connection and sign-in** – the API URL, the sign-in method with only that method's credentials, and SSL certificate verification.
+* **Service desk** – the service desk ID or key, the issue type used for request-based orders, the file types not allowed as attachments, the shared username, mapping Waldur users to service desk agents, and the legacy API.
+* **Templates** – the templates for issue summaries and descriptions.
+* **Custom field mapping** – whether Waldur fills in custom fields, and the names of the Jira fields for the reporter, caller, impact, organisation, project, affected resource, template, Waldur backend ID, SLA, resolution SLA, customer satisfaction, request feedback and linked issue type.
+* **Webhook** – the shared secret for webhook calls from Jira.
+
+[Image: Advanced Atlassian settings]
 
 ## Zammad configuration
 
@@ -91380,6 +91420,23 @@ counts can be checked before the new homeserver is switched on.
 
 Room creation happens in the background, so the command returns before the
 rooms exist. Watch the room states to confirm they leave `creating`.
+
+### Room aliases
+
+The registration claims an alias namespace of `#waldur-<project>:<your domain>`,
+which is what the appservice needs in order to give each project room a readable
+address. Without it the homeserver refuses every alias request with `M_EXCLUSIVE`,
+room creation falls back to an alias-less room, and the "Open in Matrix client"
+link never appears because it is only rendered when an alias exists.
+
+If you registered the appservice before this namespace existed, re-run setup and
+register the new YAML on your homeserver. Only rooms created after that get an
+alias, since it is requested at creation time.
+
+To give existing rooms an alias, run `waldur reprovision_matrix_rooms`. This is
+the exception to the warning above, and it is destructive: every active project
+room is replaced by an empty one, and the old room stays behind with its
+history. Check the counts with `--dry-run` first.
 
 ### Token rotation
 

@@ -11047,6 +11047,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#room-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Room aliases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#token-rotation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18944,6 +18955,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#room-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Room aliases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#token-rotation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19392,6 +19414,19 @@ leaving every room stuck in <code>creating</code>. <code>--dry-run</code> works 
 counts can be checked before the new homeserver is switched on.</p>
 <p>Room creation happens in the background, so the command returns before the
 rooms exist. Watch the room states to confirm they leave <code>creating</code>.</p>
+<h3 id="room-aliases">Room aliases</h3>
+<p>The registration claims an alias namespace of <code>#waldur-&lt;project&gt;:&lt;your domain&gt;</code>,
+which is what the appservice needs in order to give each project room a readable
+address. Without it the homeserver refuses every alias request with <code>M_EXCLUSIVE</code>,
+room creation falls back to an alias-less room, and the "Open in Matrix client"
+link never appears because it is only rendered when an alias exists.</p>
+<p>If you registered the appservice before this namespace existed, re-run setup and
+register the new YAML on your homeserver. Only rooms created after that get an
+alias, since it is requested at creation time.</p>
+<p>To give existing rooms an alias, run <code>waldur reprovision_matrix_rooms</code>. This is
+the exception to the warning above, and it is destructive: every active project
+room is replaced by an empty one, and the old room stays behind with its
+history. Check the counts with <code>--dry-run</code> first.</p>
 <h3 id="token-rotation">Token rotation</h3>
 <p>Every call to the setup endpoint generates new AS and HS tokens, overwriting any
 existing ones. Re-running setup therefore invalidates the previous registration
