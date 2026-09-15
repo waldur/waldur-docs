@@ -9919,10 +9919,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#e-multiple-affiliates-for-one-customer" class="md-nav__link">
+  <a href="#e-one-active-affiliate-per-customer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        E. Multiple affiliates for one customer
+        E. One active affiliate per customer
       
     </span>
   </a>
@@ -18813,10 +18813,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#e-multiple-affiliates-for-one-customer" class="md-nav__link">
+  <a href="#e-one-active-affiliate-per-customer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        E. Multiple affiliates for one customer
+        E. One active affiliate per customer
       
     </span>
   </a>
@@ -18947,7 +18947,7 @@ dormant — and the API returns <code>404</code> — until it is switched on.</p
 </tr>
 <tr>
 <td><strong>Affiliate link</strong></td>
-<td>A staff-configured <code>CustomerAffiliate</code> row binding the two, plus the fee terms. One link per <code>(customer, affiliate)</code> pair.</td>
+<td>A staff-configured <code>CustomerAffiliate</code> row binding the two, plus the fee terms. One link per <code>(customer, affiliate)</code> pair, and at most one active link per customer.</td>
 </tr>
 <tr>
 <td><strong>Fee accrual</strong></td>
@@ -19291,34 +19291,37 @@ inactive).</p>
 </table>
 <p>Setting <code>is_active = False</code> suspends accrual immediately, independent of the
 dates, while keeping the link and its history.</p>
-<h3 id="e-multiple-affiliates-for-one-customer">E. Multiple affiliates for one customer</h3>
-<p>A customer may be referred by several affiliates at once (links are unique per
-<code>(customer, affiliate)</code> pair). Each link accrues independently from the same
-invoice.</p>
-<p><code>AcmeLabs</code> net invoice of 1,200.00, referred by two affiliates:</p>
-<table>
-<thead>
-<tr>
-<th>Affiliate</th>
-<th>Terms</th>
-<th style="text-align: right;">Fee</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ResellerCo</code></td>
-<td><code>fee_percent = 10</code></td>
-<td style="text-align: right;">120.00</td>
-</tr>
-<tr>
-<td><code>ConsultingX</code></td>
-<td><code>fee_percent = 5</code></td>
-<td style="text-align: right;">60.00</td>
-</tr>
-</tbody>
-</table>
-<p>Both fees are accrued; the referred customer's invoice is unaffected (affiliate
-fees are paid by the operator, not added to the customer's bill).</p>
+<h3 id="e-one-active-affiliate-per-customer">E. One active affiliate per customer</h3>
+<p>A customer has at most one active affiliate link. The partial unique constraint
+<code>invoices_one_active_affiliate_per_customer</code> (unique <code>customer</code> where
+<code>is_active</code> is true) enforces it, and the API rejects creating or re-activating
+a second active link with <code>400</code>, naming the current affiliate. Inactive links
+are not restricted and keep their accrual history.</p>
+<p>The constraint follows <code>is_active</code>, not the date window: a link whose end date
+has passed still counts until it is deactivated.</p>
+<p>To move <code>AcmeLabs</code> from <code>ResellerCo</code> to <code>ConsultingX</code>:</p>
+<ol>
+<li>Create the <code>ConsultingX</code> link with <code>is_active = False</code> and the start date
+   of its first month.</li>
+<li>Once the invoices for <code>ResellerCo</code>'s last month are finalized, deactivate
+   the <code>ResellerCo</code> link. Deactivating stops accrual at once, even for a month
+   that has not been invoiced yet.</li>
+<li>Activate the <code>ConsultingX</code> link before the invoices for its first month are
+   finalized; otherwise it earns nothing for that month.</li>
+</ol>
+<p>A handover cannot be scheduled to happen by itself: both switches are manual.</p>
+<p>Do not delete the old link instead. That deletes its accrual records and its
+total earned; fees already credited stay in the affiliate's credit balance and
+ledger, but no longer trace back to the link.</p>
+<p>Links also stay unique per <code>(customer, affiliate)</code> pair, so moving <code>AcmeLabs</code>
+back to <code>ResellerCo</code> later means deactivating <code>ConsultingX</code> and re-activating
+the old link, not creating a new one.</p>
+<div class="admonition warning">
+<p class="admonition-title">Upgrading a deployment with several active links</p>
+<p>Migration <code>invoices.0032</code> stops with the names of any customers that
+have more than one active link. Deactivate all but one link for each
+of them, then run the migration again.</p>
+</div>
 <h2 id="api">API</h2>
 <p>All endpoints live under <code>/api/customer-affiliates/</code> and return <code>404</code> while
 <code>AFFILIATES_ENABLED</code> is off.</p>
@@ -19354,7 +19357,7 @@ fees are paid by the operator, not added to the customer's bill).</p>
 <tr>
 <td><code>DELETE /api/customer-affiliates/{uuid}/</code></td>
 <td><strong>staff only</strong></td>
-<td>Remove a link.</td>
+<td>Remove a link and its accruals.</td>
 </tr>
 <tr>
 <td><code>GET /api/customer-affiliates/{uuid}/accruals/</code></td>
@@ -19373,6 +19376,9 @@ fees are paid by the operator, not added to the customer's bill).</p>
 <li>An organization cannot be its own affiliate.</li>
 <li><code>fee_percent</code> must be between 0 and 100.</li>
 <li><code>end_date</code> must be after <code>start_date</code>.</li>
+<li>A customer can have only one active link. Creating an active link, or
+  setting <code>is_active</code> to true, while another link is active returns <code>400</code>
+  naming the current affiliate.</li>
 </ul>
 <h3 id="example-create-a-link-staff">Example: create a link (staff)</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>

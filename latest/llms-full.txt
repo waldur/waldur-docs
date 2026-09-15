@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-15T14:07:36.872606Z
+Generated: 2026-09-15T18:06:03.488174Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -91749,7 +91749,7 @@ flowchart LR
 |------|---------|
 | **Referred customer** | The organization whose invoices generate fees (`CustomerAffiliate.customer`). |
 | **Affiliate** | The organization that earns the fees (`CustomerAffiliate.affiliate`). |
-| **Affiliate link** | A staff-configured `CustomerAffiliate` row binding the two, plus the fee terms. One link per `(customer, affiliate)` pair. |
+| **Affiliate link** | A staff-configured `CustomerAffiliate` row binding the two, plus the fee terms. One link per `(customer, affiliate)` pair, and at most one active link per customer. |
 | **Fee accrual** | An `AffiliateFeeAccrual` — one fee earned from one finalized invoice. Idempotent per invoice. |
 | **Credit ledger** | `CreditTransaction` rows recording every change to a `CustomerCredit.value`. |
 | **Withdrawable balance** | The part of the affiliate's credit that was *earned* (not granted) and may leave the platform. |
@@ -91993,21 +91993,41 @@ inactive).
 Setting `is_active = False` suspends accrual immediately, independent of the
 dates, while keeping the link and its history.
 
-### E. Multiple affiliates for one customer
+### E. One active affiliate per customer
 
-A customer may be referred by several affiliates at once (links are unique per
-`(customer, affiliate)` pair). Each link accrues independently from the same
-invoice.
+A customer has at most one active affiliate link. The partial unique constraint
+`invoices_one_active_affiliate_per_customer` (unique `customer` where
+`is_active` is true) enforces it, and the API rejects creating or re-activating
+a second active link with `400`, naming the current affiliate. Inactive links
+are not restricted and keep their accrual history.
 
-`AcmeLabs` net invoice of 1,200.00, referred by two affiliates:
+The constraint follows `is_active`, not the date window: a link whose end date
+has passed still counts until it is deactivated.
 
-| Affiliate | Terms | Fee |
-|-----------|-------|----:|
-| `ResellerCo` | `fee_percent = 10` | 120.00 |
-| `ConsultingX` | `fee_percent = 5` | 60.00 |
+To move `AcmeLabs` from `ResellerCo` to `ConsultingX`:
 
-Both fees are accrued; the referred customer's invoice is unaffected (affiliate
-fees are paid by the operator, not added to the customer's bill).
+1. Create the `ConsultingX` link with `is_active = False` and the start date
+   of its first month.
+2. Once the invoices for `ResellerCo`'s last month are finalized, deactivate
+   the `ResellerCo` link. Deactivating stops accrual at once, even for a month
+   that has not been invoiced yet.
+3. Activate the `ConsultingX` link before the invoices for its first month are
+   finalized; otherwise it earns nothing for that month.
+
+A handover cannot be scheduled to happen by itself: both switches are manual.
+
+Do not delete the old link instead. That deletes its accrual records and its
+total earned; fees already credited stay in the affiliate's credit balance and
+ledger, but no longer trace back to the link.
+
+Links also stay unique per `(customer, affiliate)` pair, so moving `AcmeLabs`
+back to `ResellerCo` later means deactivating `ConsultingX` and re-activating
+the old link, not creating a new one.
+
+!!! warning "Upgrading a deployment with several active links"
+    Migration `invoices.0032` stops with the names of any customers that
+    have more than one active link. Deactivate all but one link for each
+    of them, then run the migration again.
 
 ## API
 
@@ -92020,7 +92040,7 @@ All endpoints live under `/api/customer-affiliates/` and return `404` while
 | `POST /api/customer-affiliates/` | **staff only** | Create a link. |
 | `GET /api/customer-affiliates/{uuid}/` | staff, affiliate owner | Retrieve a link. |
 | `PATCH/PUT /api/customer-affiliates/{uuid}/` | **staff only** | Update fee terms. |
-| `DELETE /api/customer-affiliates/{uuid}/` | **staff only** | Remove a link. |
+| `DELETE /api/customer-affiliates/{uuid}/` | **staff only** | Remove a link and its accruals. |
 | `GET /api/customer-affiliates/{uuid}/accruals/` | staff, affiliate owner | Per-invoice fees (amount + period only). |
 | `GET /api/customer-affiliates/{uuid}/earnings/` | staff, affiliate owner | Lifetime total, per-month series, withdrawable balance. |
 
@@ -92029,6 +92049,9 @@ Validation on create/update:
 - An organization cannot be its own affiliate.
 - `fee_percent` must be between 0 and 100.
 - `end_date` must be after `start_date`.
+- A customer can have only one active link. Creating an active link, or
+  setting `is_active` to true, while another link is active returns `400`
+  naming the current affiliate.
 
 ### Example: create a link (staff)
 
@@ -110348,6 +110371,9 @@ Supports multiple authentication methods with automatic fallback:
 
    ```bash
    ATLASSIAN_OAUTH2_CLIENT_ID=your_client_id
+   # Either a client secret: Waldur obtains and renews access tokens itself
+   ATLASSIAN_OAUTH2_CLIENT_SECRET=your_client_secret
+   # ...or an access token obtained elsewhere, used as is until it expires
    ATLASSIAN_OAUTH2_ACCESS_TOKEN=your_access_token
    ATLASSIAN_OAUTH2_TOKEN_TYPE=Bearer  # Optional, defaults to Bearer
    ```
@@ -110385,9 +110411,36 @@ OAuth 2.0 > Personal Access Token > API Token > Basic Authentication
 **OAuth 2.0 Setup:**
 
 1. Create an OAuth 2.0 app in your Atlassian organization
-2. Obtain client_id and access_token from the OAuth flow
+2. Obtain the client ID and client secret (client credentials, e.g. an Atlassian service account's OAuth 2.0 credential), or an access token from the OAuth flow
 3. Configure the credentials in your environment variables
 4. The system will automatically use OAuth 2.0 when configured
+
+**Atlassian Service Accounts (Cloud):**
+
+A service account authenticates with a scoped API token, which Atlassian accepts only at
+the API gateway, not at the site URL:
+
+```bash
+# cloudId: https://<site>.atlassian.net/_edge/tenant_info
+ATLASSIAN_API_URL=https://api.atlassian.com/ex/jira/<cloudId>
+# Sent as a Bearer token
+ATLASSIAN_PERSONAL_ACCESS_TOKEN=<scoped API token>
+```
+
+Setting `ATLASSIAN_EMAIL` to the service account's email and `ATLASSIAN_TOKEN` to the scoped
+token (sent as Basic auth) against the same gateway URL works as well.
+
+- Token scopes: `read:servicedesk-request`, `write:servicedesk-request`,
+  `manage:servicedesk-customer`, `read:jira-work`, `write:jira-work`, `read:jira-user`.
+  Scopes are fixed when the token is created.
+- The service account needs a Jira Service Management agent licence and the Service Desk
+  Team role on the project, because Waldur raises requests on behalf of the caller.
+- Instead of a token, the service account's OAuth 2.0 credential can be used. Set
+  `ATLASSIAN_OAUTH2_CLIENT_ID` and `ATLASSIAN_OAUTH2_CLIENT_SECRET` (leave
+  `ATLASSIAN_OAUTH2_ACCESS_TOKEN` empty): Waldur requests access tokens from
+  `https://auth.atlassian.com/oauth/token` itself, keeps them in the shared cache and
+  renews them a minute before they expire (they are valid for an hour). The scopes are
+  the ones selected on the credential.
 
 **Custom Field Mapping:**
 

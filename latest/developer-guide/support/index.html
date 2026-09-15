@@ -20282,7 +20282,13 @@
 </ol>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">ATLASSIAN_OAUTH2_CLIENT_ID</span><span class="o">=</span>your_client_id
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">ATLASSIAN_OAUTH2_CLIENT_ID</span><span class="o">=</span>your_client_id
+<span class="c1"># Either a client secret: Waldur obtains and renews access tokens itself</span>
+<span class="nv">ATLASSIAN_OAUTH2_CLIENT_SECRET</span><span class="o">=</span>your_client_secret
+<span class="c1"># ...or an access token obtained elsewhere, used as is until it expires</span>
 <span class="nv">ATLASSIAN_OAUTH2_ACCESS_TOKEN</span><span class="o">=</span>your_access_token
 <span class="nv">ATLASSIAN_OAUTH2_TOKEN_TYPE</span><span class="o">=</span>Bearer<span class="w">  </span><span class="c1"># Optional, defaults to Bearer</span>
 </code></pre></div></td></tr></tbody></table></div>
@@ -20317,10 +20323,36 @@ OAuth 2.0 &gt; Personal Access Token &gt; API Token &gt; Basic Authentication</p
 <p><strong>OAuth 2.0 Setup:</strong></p>
 <ol>
 <li>Create an OAuth 2.0 app in your Atlassian organization</li>
-<li>Obtain client_id and access_token from the OAuth flow</li>
+<li>Obtain the client ID and client secret (client credentials, e.g. an Atlassian service account's OAuth 2.0 credential), or an access token from the OAuth flow</li>
 <li>Configure the credentials in your environment variables</li>
 <li>The system will automatically use OAuth 2.0 when configured</li>
 </ol>
+<p><strong>Atlassian Service Accounts (Cloud):</strong></p>
+<p>A service account authenticates with a scoped API token, which Atlassian accepts only at
+the API gateway, not at the site URL:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># cloudId: https://&lt;site&gt;.atlassian.net/_edge/tenant_info</span>
+<span class="nv">ATLASSIAN_API_URL</span><span class="o">=</span>https://api.atlassian.com/ex/jira/&lt;cloudId&gt;
+<span class="c1"># Sent as a Bearer token</span>
+<span class="nv">ATLASSIAN_PERSONAL_ACCESS_TOKEN</span><span class="o">=</span>&lt;scoped<span class="w"> </span>API<span class="w"> </span>token&gt;
+</code></pre></div></td></tr></tbody></table></div>
+<p>Setting <code>ATLASSIAN_EMAIL</code> to the service account's email and <code>ATLASSIAN_TOKEN</code> to the scoped
+token (sent as Basic auth) against the same gateway URL works as well.</p>
+<ul>
+<li>Token scopes: <code>read:servicedesk-request</code>, <code>write:servicedesk-request</code>,
+  <code>manage:servicedesk-customer</code>, <code>read:jira-work</code>, <code>write:jira-work</code>, <code>read:jira-user</code>.
+  Scopes are fixed when the token is created.</li>
+<li>The service account needs a Jira Service Management agent licence and the Service Desk
+  Team role on the project, because Waldur raises requests on behalf of the caller.</li>
+<li>Instead of a token, the service account's OAuth 2.0 credential can be used. Set
+  <code>ATLASSIAN_OAUTH2_CLIENT_ID</code> and <code>ATLASSIAN_OAUTH2_CLIENT_SECRET</code> (leave
+  <code>ATLASSIAN_OAUTH2_ACCESS_TOKEN</code> empty): Waldur requests access tokens from
+  <code>https://auth.atlassian.com/oauth/token</code> itself, keeps them in the shared cache and
+  renews them a minute before they expire (they are valid for an hour). The scopes are
+  the ones selected on the credential.</li>
+</ul>
 <p><strong>Custom Field Mapping:</strong></p>
 <p>Waldur supports custom field mapping with Atlassian Service Desk for enhanced integration capabilities:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
