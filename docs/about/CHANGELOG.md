@@ -1,5 +1,47 @@
 # Changelog
 
+## 8.1.3-rc.13 - 2026-09-15
+
+### Highlights
+
+This release makes several areas safer. Uploaded files can no longer run as web pages, expired SCIM tokens are now rejected, and protected call settings can only be changed by users allowed to update the call. OpenStack users can now create IPv6 subnets with SLAAC and DHCPv6 address modes. Administrators get a guided Atlassian service desk setup, a rule that allows one active affiliate per organization, and a way to define brand-new roles in Helm deployments.
+
+### What's New
+
+- **IPv6 subnets**: OpenStack subnets can now be created with SLAAC and DHCPv6 address modes.
+- **One active affiliate per organization**: Each organization can now have only one active affiliate. The affiliate link dialog greys out organizations that already have one.
+- **Guided Atlassian service desk setup**: The service desk admin screens now guide you through the Atlassian setup and group the advanced settings together. Direct Jira Service Management REST calls now use the same credentials as the Service Desk client.
+- **HEAppE identifier for LEXIS offerings**: LEXIS offerings have a new `heappe_identifier` option, which you can edit in the offering's LEXIS integration section. HEAppE option values can now be cleared, and the offering documentation lists every HEAppE option.
+- **Custom roles in Helm**: The new `waldur.customRoles` Helm value lets operators define brand-new roles.
+- **Service desk offerings for site agents**: Site agent identities now accept service desk offerings.
+
+### Improvements
+
+- **SCIM behind the proxy**: The `/scim/v2/` endpoint is now served through the Helm and Docker Compose proxies.
+- **Allowed address pairs**: Address pairs are now checked before they are applied to an OpenStack instance, and changes are recorded in the port audit log.
+- **Matrix chat**: The appservice can now claim the room aliases it generates. Rooms now open through `matrix.to` links instead of `matrix:` URIs. The Helm chart updates LiveKit to v1.13.7 and lk-jwt to 0.7.0.
+- **Order cost accuracy**: When limits change, the cost of the old limits is now calculated up to the resource's real end date.
+- **Proposal workflows**: Workflow validation errors now name the dependency step that caused the problem.
+- **Organization member roles**: The role picker for organization and project members now works when roles are inactive or missing.
+
+### Bug Fixes
+
+- **Media endpoint**: Uploaded files are no longer run as pages when opened through the media endpoint.
+- **SCIM tokens**: Expired SCIM tokens are now rejected.
+- **Call permissions**: Changes to protected call settings now require the `UPDATE_CALL` permission.
+- **Backend resource lists**: Lists are now filtered by the user's role instead of crashing.
+- **Service provider managers**: Organization visibility and navigation now work correctly for service provider managers.
+- **Monthly Revenue table**: Expanding a row no longer crashes the table.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [15 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.12...8.1.3-rc.13) - IPv6 subnet modes, SCIM and media security fixes, affiliate limit, Atlassian credentials, HEAppE options, Matrix alias claiming and order cost fixes
+- **Waldur Homeport**: [8 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.12...8.1.3-rc.13) - Guided Atlassian setup, affiliate dialog, Matrix links, HEAppE identifier field, role picker and visibility fixes
+- **Waldur Helm**: [2 commits](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.12...8.1.3-rc.13) - Custom role definitions and LiveKit/lk-jwt updates
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.12...8.1.3-rc.13) - Proxy `/scim` to the Mastermind API
+
+---
+
 ## 8.1.3-rc.12 - 2026-09-15
 
 ### Highlights
