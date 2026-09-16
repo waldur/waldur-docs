@@ -1,5 +1,46 @@
 # Changelog
 
+## 8.1.3-rc.14 - 2026-09-16
+
+### Highlights
+
+This release makes IPv6 and dual-stack OpenStack tenants work much better. Routers, subnets, security groups, load balancers and access URLs now handle IPv6 addresses correctly. Floating IP operations now refuse cases that can't work instead of failing partway through. Service providers can also set account settings once and have their offerings inherit them, and they can preview what those settings will produce.
+
+### What's New
+
+- **Account settings shared by a service provider's offerings**: offerings can now inherit account settings from their service provider, so operators no longer have to set them on each offering. A new view shows what a provider's account settings will produce.
+- **IPv6 default subnet for tenants**: giving a tenant an IPv6 subnet CIDR now creates an IPv6 default subnet.
+- **IPv6 load balancers**: load balancer virtual IP (VIP) addresses can now be IPv6 as well as IPv4.
+- **IPv6 allowed address pairs**: instances and ports now accept IPv6 allowed address pairs if the address is within a unique local address (ULA) range or one of the port's own subnets.
+- **SCIM routing in Helm**: the Helm chart's API ingress and HTTPRoute now send `/scim` requests to the Mastermind API, and the IP whitelisting docs cover the new route.
+
+### Improvements
+
+- IPv6 default security group rules are now created only for tenants that use IPv6.
+- Routers are now attached to IPv6 subnets by subnet, and every subnet of a dual-stack network is attached to the router.
+- IPv6 and dual-stack routers now show their IPv6 default routes.
+- External IP mapping now applies only to IPv4 addresses. IPv6 addresses are reported only on the external network.
+- External subnet records can now store IPv6 prefixes.
+- Resource state changes now save only the fields that the change affects.
+- Tooltips throughout the web interface now use a single shared tooltip component.
+
+### Bug Fixes
+
+- Floating IPs now keep their address when attached to or detached from a port.
+- Floating IP requests are now refused on IPv6-only external networks. Admins also can't allocate a floating IP unless the external network has an IPv4 subnet.
+- Changing a port's IP address is now refused where OpenStack networking (Neutron) sets the address automatically.
+- Tenant access and console URLs now keep the square brackets around IPv6 addresses.
+- The `import_roles` command now honors `is_active: false` in the permissions file.
+- Fixed several bugs in table filters, saved filters and the table loading indicator.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [21 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.13...8.1.3-rc.14) - IPv6 and dual-stack support for OpenStack, floating IP fixes, account settings inherited from service providers, and a fix to role import.
+- **Waldur Homeport**: [5 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.13...8.1.3-rc.14) - Switched to a single shared tooltip component, added component previews for tables and fixed the table bugs they revealed.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.13...8.1.3-rc.14) - Added routing for `/scim` requests to the Mastermind API.
+
+---
+
 ## 8.1.3-rc.13 - 2026-09-15
 
 ### Highlights
