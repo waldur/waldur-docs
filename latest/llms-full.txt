@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-16T09:58:34.093901Z
+Generated: 2026-09-16T14:34:28.407360Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -1667,7 +1667,7 @@ Outline:
 
 # Limiting network access to Mastermind APIs
 
-Waldur Helm allows limiting network access to Mastermind API endpoints - i.e. `/api/`, `/api-auth/`, `/admin/` - based on whitelisting the subnets from where access is allowed. To define a list of allowed subnets in CIDR format for the all the API endpoint, please use `ingress.whitelistSourceRange` option in `values.yaml`. Example:
+Waldur Helm allows limiting network access to Mastermind API endpoints - i.e. `/api/`, `/api-auth/`, `/scim/`, `/admin/` - based on whitelisting the subnets from where access is allowed. To define a list of allowed subnets in CIDR format for the all the API endpoint, please use `ingress.whitelistSourceRange` option in `values.yaml`. Example:
 
 ```yaml
 ...
@@ -82046,6 +82046,270 @@ When enabled, terminated resources are included in the uniqueness check. Disable
 
 ---
 
+### POSIX identity with OpenLDAP and FirecREST
+<!-- Source: docs/user-guide/service-provider-organization/firecrest-posix-identity.md -->
+
+# POSIX identity with OpenLDAP and FirecREST
+
+This page puts the pieces described on
+[POSIX ID pools](posix-id-pools.md) and
+[Waldur-authoritative accounts in OpenLDAP](openldap-sssd-accounts.md) into
+one reference architecture: a service provider with **two SLURM clusters**, one
+directory, and an HTTP API in front of both, where a person is one identity
+everywhere — the same username, the same UID and GID, on the cluster's login
+node, in the directory, in the OIDC token and in the job record.
+
+Use it when a provider wants to expose its clusters through
+[FirecREST](https://eth-cscs.github.io/firecrest-v2/) and needs the user that
+FirecREST acts as to be the user Waldur provisioned.
+
+## The architecture
+
+```mermaid
+flowchart LR
+  subgraph Waldur
+    P["POSIX ID pool<br/>9000–9999"]
+    SP["Service provider<br/>account_scope: provider<br/>prefix hpc_"]
+    O1["Offering: cluster A"]
+    O2["Offering: cluster B"]
+    P --> SP
+    SP --> O1
+    SP --> O2
+  end
+  O1 -- "events" --> AG["Site agent<br/>event mode<br/>account_source: waldur"]
+  O2 -- "events" --> AG
+  AG -- "slurmrestd" --> A["slurm-a"]
+  AG -- "slurmrestd" --> B["slurm-b"]
+  AG -- "LDAP" --> L[("OpenLDAP<br/>uid=hpc_9001")]
+  L -. "sssd" .-> A
+  L -. "sssd" .-> B
+  KC["Keycloak<br/>waldur_username claim"] -- "reads username" --> Waldur
+  U["User"] -- "token" --> KC
+  U -- "Bearer token" --> F["FirecREST v2<br/>usernameClaim"]
+  F -- "SSH / slurmrestd as hpc_9001" --> A
+  F -- "SSH / slurmrestd as hpc_9001" --> B
+```
+
+| Component | Role in the chain |
+|---|---|
+| **POSIX ID pool** on the service provider | Allocates one UID and one primary GID per person across both offerings |
+| **Provider-scoped accounts**, `anonymized` usernames | Waldur holds one account per person per provider and names it `hpc_<uid>` — identical on both offerings |
+| **Site agent** in event mode | Receives order, role and offering-user events; creates the SLURM association on the right cluster and writes the account into OpenLDAP without minting anything itself |
+| **OpenLDAP** | The provider's directory; one `posixAccount` per person, shared by both clusters |
+| **sssd** on both clusters | Resolves `hpc_<uid>` to the pool UID/GID for `id`, job submission and accounting |
+| **Keycloak** with the Waldur username mapper | Puts the person's Waldur offering username into a token claim on every token issued |
+| **FirecREST v2** | Reads that claim as the username and acts on the clusters — SSH and slurmrestd — as that user |
+
+## Configuring Waldur
+
+!!! tip "Step by step"
+    The Waldur and site-agent parts of this section are covered as an ordered
+    checklist, with screenshots, in
+    [Shared POSIX identity, step by step](posix-identity-step-by-step.md).
+    This page adds the Keycloak and FirecREST layers on top.
+
+On the service provider:
+
+- Attach a [POSIX ID pool](posix-id-pools.md) with a UID range and a GID range.
+- On the service provider's **Account settings** page (**Accounts → Account settings**), set
+  **Account scope** to *Per service provider* so one person is one account
+  across the provider's offerings, **Username generation policy** to
+  *Anonymized*, and the **Anonymized username prefix** once (for example
+  `hpc_`).
+
+On each SLURM offering, under **Edit → Integration → User management**:
+
+- Leave the naming fields unset. They show the values inherited from the
+  provider, so the two offerings compute the same `hpc_<uid>` for the same
+  person.
+- **Enable automatic deletion of offering users**: on, so that a person who
+  loses their last project role has their account's deletion requested and the
+  agent can release the directory entry.
+
+See [naming the accounts](openldap-sssd-accounts.md#naming-the-accounts) for the
+details.
+
+## Configuring the site agent
+
+One agent serves both offerings. It runs in event mode so that a marketplace
+order, a project role change or an offering-user state change reaches it as it
+happens rather than on the next polling pass, with the periodic reconcile kept
+as a safety net. Each offering talks to its cluster over slurmrestd and shares
+the LDAP username backend in Waldur-authoritative mode:
+
+```yaml
+offerings:
+  - name: "Cluster A"
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "<provider token>"
+    waldur_offering_uuid: "<offering A uuid>"
+    stomp_enabled: true
+    backend_type: "slurm"
+    username_management_backend: "ldap"
+    order_processing_backend: "slurm"
+    membership_sync_backend: "slurm"
+    backend_settings:
+      execution_mode: "rest"
+      cluster_name: "cluster-a"
+      rest_api:
+        url: "https://slurm-a.example.com:6820"
+        api_version: "v0.0.44"
+        username: "root"
+        token_env: "SLURM_JWT"
+      ldap:
+        uri: "ldap://ldap.example.com"
+        bind_dn: "cn=admin,dc=example,dc=com"
+        bind_password: "<password>"
+        base_dn: "dc=example,dc=com"
+        account_source: "waldur"
+        on_departure: "disable"
+  - name: "Cluster B"
+    # identical apart from the offering uuid and the slurmrestd URL
+```
+
+The agent writes the standard `posixAccount` entries that
+[Connecting SSSD](openldap-sssd-accounts.md#connecting-sssd) describes; the
+`sssd.conf` there applies to every login and compute node of both clusters,
+plus `ldap_account_expire_policy = shadow` so that a parked entry cannot log in.
+
+## Configuring Keycloak
+
+FirecREST identifies the caller from a claim in the bearer token. The
+[Waldur Keycloak mapper](../../integrations/waldur-keycloak-mapper/index.md) supplies
+that claim: on every token it asks Waldur for the person's offering username
+and writes it into the token. Add it as a protocol mapper on the client
+FirecREST's users authenticate with:
+
+| Mapper setting | Value |
+|---|---|
+| `url.waldur.api.value` | The Waldur API root, **with the trailing slash** — `https://waldur.example.com/api/` |
+| `uuid.waldur.offering.value` | The UUID of one of the provider's offerings. With provider-scoped accounts the username is the same on both, so either offering serves both clusters |
+| `token.waldur.value` | An API token that can read the offering's users — the provider token the agent uses is a natural choice |
+| `claim.name` | `waldur_username` |
+
+Enable the claim on the access token, the ID token and the userinfo response.
+
+!!! warning "The Keycloak username must equal the Waldur username"
+    The mapper looks the person up in Waldur by the username Keycloak knows them
+    under. When Waldur is the identity source for Keycloak (or both federate the
+    same identity provider) this holds automatically; if Keycloak users are
+    created separately, their usernames must match Waldur's, or the mapper finds
+    nobody and emits no claim.
+
+## Configuring FirecREST
+
+In FirecREST v2's configuration, point `usernameClaim` at the claim the mapper
+writes, and register the clusters:
+
+```yaml
+auth:
+  authentication:
+    tokenUrl: "https://keycloak.example.com/realms/hpc/protocol/openid-connect/token"
+    publicCerts:
+      - "https://keycloak.example.com/realms/hpc/protocol/openid-connect/certs"
+    usernameClaim: "waldur_username"
+
+clusters:
+  - name: "slurm-a"
+    ssh:
+      host: "slurm-a.example.com"
+      port: 22
+    scheduler:
+      type: "slurm"
+      connection_mode: "hybrid"
+      version: "25.11.7"
+      api_url: "https://slurm-a.example.com:6820"
+      api_version: "0.0.44"
+  - name: "slurm-b"
+    # ...
+```
+
+FirecREST then runs `id` over SSH and submits jobs over slurmrestd with
+`X-SLURM-USER-NAME` set to `hpc_<uid>`; sssd on the cluster resolves it, and
+the job carries the pool's `user_id` and `group_id`.
+
+!!! note "Slurm dialect"
+    FirecREST 2.6.0 speaks Slurm's `data_parser` up to **v0.0.44**, which is
+    Slurm **25.11**. Its scheduler health probe reads a field that 26.05
+    (v0.0.45) removed, so against a newer slurmrestd it marks the cluster
+    unhealthy and refuses every compute call. Keep three settings aligned with
+    the FirecREST release: the cluster's Slurm version, `scheduler.api_version` in the
+    FirecREST cluster entry, and `rest_api.api_version` in the site agent's
+    offering.
+
+## The lifecycle of one identity
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant W as Waldur
+  participant AG as Site agent
+  participant S as SLURM (A or B)
+  participant L as OpenLDAP
+  participant K as Keycloak
+  participant F as FirecREST
+
+  U->>W: Joins a project, allocation ordered
+  W->>W: Pool UID 9001 → account hpc_9001 (provider scope)
+  W-->>AG: ORDER / USER_ROLE / OFFERING_USER events
+  AG->>S: Create association for hpc_9001
+  AG->>L: Write posixAccount uid=hpc_9001 (9001:9001)
+  AG-->>W: Order done, offering user OK
+  U->>K: Log in
+  K->>W: Offering username for this user?
+  W-->>K: hpc_9001
+  K-->>U: Token with waldur_username=hpc_9001
+  U->>F: GET /status/{cluster}/userinfo, POST job
+  F->>S: id / sbatch as hpc_9001 (sssd → 9001:9001)
+  S-->>F: uid 9001, job accepted
+  U->>W: Loses last project role
+  W-->>AG: OFFERING_USER: requested deletion
+  AG->>S: Remove association
+  AG->>L: Park entry (nologin, shadowExpire 1, out of groups)
+  AG-->>W: Offering user deleted
+  U->>F: POST job with a still-valid token
+  F->>S: sbatch as hpc_9001
+  S-->>F: Refused — no association
+  U->>W: Re-added to the project
+  W->>W: Same account, same hpc_9001
+  W-->>AG: OFFERING_USER event
+  AG->>S: Recreate association
+  AG->>L: Re-enable the same entry
+  U->>F: POST job
+  S-->>F: Accepted under 9001:9001
+```
+
+| Stage | Waldur | Cluster | Directory | Token / FirecREST |
+|---|---|---|---|---|
+| **Join** — project role granted, allocation exists | Offering user *OK*, username `hpc_9001`, UID 9001 | Association on the allocation's account | `posixAccount` `hpc_9001` 9001:9001, in access groups | Claim `waldur_username=hpc_9001`; `userinfo` reports uid 9001; jobs accepted |
+| **Second offering** — same person, other cluster | Second offering user reading the same provider account: same name, same UID | Association on that cluster too | The same entry, untouched | Same claim works on both clusters |
+| **Leave** — last project role on an offering removed | Offering user *Requested deletion* → *Deleted* | Association removed | Entry parked: `nologin`, `shadowExpire: 1`, removed from groups, UID kept | Existing tokens still name `hpc_9001`; the name still resolves, but a job is refused for lack of an association |
+| **Return** — re-added to a project with an allocation | Offering user restored with the same username and UID | Association recreated | The same entry re-enabled and back in its groups | Jobs accepted again under 9001:9001 |
+
+Two consequences of this design are worth stating plainly:
+
+- **Access is the association, not name resolution.** Because the directory is
+  shared, a person's name resolves on *every* cluster of the provider, including
+  one they hold no allocation on. `userinfo` works there; a job is refused with
+  an invalid-account error. Membership is enforced by SLURM, not by whether
+  `getent` answers.
+- **A UID is never reissued.** A departed person's entry stays in the directory
+  in a parked state, so files they owned keep a name and the pool's reservation
+  and the directory agree. The same person coming back lands on the same UID
+  and the same entry.
+
+## A runnable reference
+
+The `waldur-integration-testing` repository carries this architecture as a
+Docker Compose profile — Waldur, a site agent in event mode, OpenLDAP, two
+SLURM emulator clusters resolving users through sssd, Keycloak with the mapper,
+and FirecREST v2 — together with a test suite (`firecrest` marker) that walks a
+person through every row of the table above: order, name, directory entry,
+token claim, `userinfo`, job, departure, refusal and return. Its
+`docs/firecrest-posix-identity.md` describes the profile and how to run it.
+
+---
+
 ### Shared project storage with GLAuth and SSSD
 <!-- Source: docs/user-guide/service-provider-organization/glauth-sssd-shared-storage.md -->
 
@@ -82710,6 +82974,12 @@ wrote and leaves it alone, so both converge on a single account.
 
 ## Configuring the agent
 
+!!! tip "Step by step"
+    For an ordered checklist with screenshots — creating the pool, setting the
+    account scope and username policy on the provider and its offerings,
+    configuring the agent and checking the first accounts — see
+    [Shared POSIX identity, step by step](posix-identity-step-by-step.md).
+
 `account_source` lives in the LDAP plugin's settings, alongside the connection
 details:
 
@@ -82750,6 +83020,70 @@ ignored with a warning for the same reason.
     primary group — and files end up ambiguously owned. Keep the two ranges
     disjoint. The agent cannot check this for you, but it logs the configured
     range at start-up so the overlap is at least visible.
+
+## Naming the accounts
+
+Under `account_source: waldur` the login name is whatever Waldur minted for the
+offering user, so the **Username generation policy** decides what the directory
+ends up holding. Set it once on the service provider's **Account settings** page
+(**Accounts → Account settings**); every offering inherits it unless
+it sets its own. Any policy works except `service_provider` — under
+that one Waldur waits for the agent to *submit* a name, which is the opposite of
+this mode.
+
+| Policy | Login name | Fits a shared directory? |
+|---|---|---|
+| `anonymized` | `<prefix><POSIX UID>`, for example `hpc_9001` | Yes — see below |
+| `waldur_username` | The user's Waldur username | Yes, if Waldur usernames are directory-safe |
+| `identity_claim` | A username claim from the identity provider | Yes, if the claim is present for every user |
+| `full_name` | `jane_smith_01` — a per-offering counter | Only for a single offering |
+| `freeipa` | The user's FreeIPA profile name | Yes |
+| `service_provider` | Assigned by the agent | **Rejected** in this mode |
+
+### Anonymized names are derived from the pool
+
+An `anonymized` name is a pure function of the account's POSIX UID: the prefix
+followed by the number the [POSIX ID pool](posix-id-pools.md) allocated. Because
+the pool is provider-wide, the same person gets the **same name on every offering
+of the provider that draws from that pool** — two site agents writing the same
+directory agree on `uid=hpc_9001` without ever talking to each other, and a
+second offering's reconcile becomes a no-op on an entry the first one created.
+
+The prefix is an account setting resolved the same way a pool is — the
+offering's own value first, otherwise the provider's, otherwise the default
+`waldur_`:
+
+| Where | Field | Scope |
+|---|---|---|
+| Service provider → **Accounts → Account settings** | *Anonymized username prefix* (`account_options.username_anonymized_prefix`) | Every offering of the provider that does not override it |
+| Offering → **Edit → Integration → User management → Accounts** | *Username anonymized prefix* (`username_anonymized_prefix`) | This offering only |
+
+When all offerings share a directory, set it once on the provider and leave the
+offering field unset; the offering form then shows the value it inherits.
+
+If no UID resolves for a user — no pool is attached, or POSIX accounts are
+disabled on the offering — Waldur falls back to a per-offering counter
+(`hpc_00001`) and logs the gap. Such a name is *not* stable across offerings, so
+attach the pool before users are created rather than after.
+
+### One person, one entry
+
+A directory shared by several offerings also needs Waldur to hold **one account
+per person per provider** rather than one per offering. On the service
+provider's **Account settings** page, set **Account scope** to *Per service
+provider* (`account_scope: provider`; an individual offering can override it back to
+`offering` when it runs its own separate directory). Switching a provider that
+already has offering users links their existing accounts, and is refused while
+one person holds different usernames on different offerings. With provider-scoped accounts the UID, primary GID, home directory
+and — under `anonymized` — the username are held once and read through by every
+offering user, so the directory entry has exactly one owner in Waldur.
+
+`getent` on a node then shows the pool identity under the derived name:
+
+```console
+$ getent passwd hpc_9001
+hpc_9001:*:9001:9001:Jane Smith:/home/hpc_9001:/bin/bash
+```
 
 ### When an account cannot be written
 
@@ -82820,6 +83154,66 @@ uid=9001(jsmith) gid=9001(jsmith) groups=9001(jsmith)
 Add `pam_mkhomedir` to the session stack if home directories should be created on
 first login.
 
+## When a user leaves
+
+Removing the SLURM association is the resource backend's job; releasing the
+directory entry is the LDAP plugin's, and in this mode it is on by default. The
+chain starts in Waldur, not in the agent:
+
+1. Turn on **Enable automatic deletion of offering users** on the offering
+   (`offering_user_auto_deletion: true`). When a person loses their last project
+   role on the offering, Waldur moves the offering user to *Requested deletion*.
+   Without this option the offering user stays *OK* and the entry is kept — the
+   agent only ever acts on Waldur's own request.
+2. The agent picks the request up (on the next membership cycle, or at once from
+   the offering-user event when it runs in event mode), drops the SLURM
+   association, then releases the entry as `on_departure` says.
+3. Because one directory serves every offering of the provider, the agent first
+   asks Waldur whether an account **with the same username** is still live on
+   any sibling offering. If one is, the entry stays enabled; only when every
+   remaining account is in a deletion state (or none remains) is it released.
+   The check runs against Waldur, never the directory, and a failed lookup keeps
+   the entry and retries next cycle.
+
+What "release" means is `on_departure`:
+
+```yaml
+backend_settings:
+  ldap:
+    account_source: "waldur"
+    on_departure: "disable"   # disable (default in this mode) | delete
+```
+
+| `on_departure` | Directory result |
+|---|---|
+| `disable` (default under `waldur`) | The entry is **parked**: DN, `uidNumber`, `gidNumber` and personal group stay as they are. `loginShell` becomes `/usr/sbin/nologin`, the `shadowAccount` class is added with `shadowExpire: 1` (an expiry in the past), every `memberUid` it held in access and project groups is dropped, and `description: waldur-site-agent:disabled` marks the entry as parked by the agent rather than by an operator |
+| `delete` | The entry, its personal group and its group memberships are removed |
+
+`disable` is the default because a UID must never be reissued while files owned
+by it exist: keeping the entry keeps `ls -l` honest and keeps the pool's
+reservation and the directory in agreement. The name still *resolves* on the
+cluster — `getent passwd` answers — but the login is shut and, on SLURM, it is
+the missing association that refuses a job.
+
+For the parked entry to lock the account out, SSSD on the nodes must honour the
+shadow expiry. Add to the `[domain/...]` section of `sssd.conf`:
+
+```ini
+ldap_account_expire_policy = shadow
+```
+
+### Coming back
+
+A returning member — re-added to a project that still holds an allocation —
+gets the **same entry re-enabled**, not a new one. Waldur re-mints the same
+username (an `anonymized` name derives from the pool UID, which the
+provider-wide account keeps), so the reconcile finds a live offering user whose
+entry exists but carries the parked marker. It restores `loginShell` from
+Waldur, drops `shadowExpire` and the marker, re-adds the configured
+`access_groups`, and the SLURM association brings project group membership back
+with it. An entry an operator disabled by hand (no marker) is treated as an
+ordinary profile update and left disabled.
+
 ## Authentication
 
 Identity and authentication are separate concerns, and the table above only covers
@@ -82852,6 +83246,10 @@ It prints the whole chain — Waldur's values, the directory entries, `getent`/`
 a login session, and a PAM check against both a correct and an incorrect password
 — and its fixture gives one provider two offerings against one directory, so the
 convergence behaviour above is visible in the reconcile log.
+
+For the full chain — pool-derived names, the directory, a Keycloak token claim
+and FirecREST acting on two clusters under one identity — see
+[POSIX identity with OpenLDAP and FirecREST](firecrest-posix-identity.md).
 
 ---
 
@@ -83167,9 +83565,9 @@ and predictable across all of the provider's offerings.
 !!! note
     POSIX ID pools are how Waldur allocates UIDs and GIDs — an offering only
     hands out identifiers when a pool resolves for it. If you do not see the
-    **POSIX ID pools** menu under your provider workspace, ask the platform
-    operator to make it visible (the `marketplace.show_posix_id_pools` feature
-    flag).
+    **POSIX ID pools** entry in the **Accounts** menu of your provider
+    workspace, ask the platform operator to make it visible (the
+    `marketplace.show_posix_id_pools` feature flag).
 
 ## How a pool works
 
@@ -83207,7 +83605,7 @@ output until a pool is configured.
 
 ## Creating a pool
 
-1. Open your provider workspace, go to **Marketplace → POSIX ID pools** and
+1. Open your provider workspace, go to **Accounts → POSIX ID pools** and
     click **Add**.
 
     [Image: POSIX ID pools list]
@@ -83262,9 +83660,36 @@ are available.
 Identifiers are handed out sequentially from the resolved pool as offering
 users, robot accounts and groups are created — a high-water mark advances per
 namespace. The assigned values are stored on each account, so you can review the
-**UID** and **GID** in the provider's **Offering users** list.
+**UID** and **GID** on the provider's **Accounts → Users** page, on its
+*Offering users* tab.
 
 [Image: Offering users with UID and GID columns]
+
+## Usernames derived from the pool
+
+A UID is not only a number the directory stores — with the `anonymized`
+username generation policy it also *names* the account. An anonymized username
+is the configured prefix followed by the account's pool UID, so the user whose
+UID is `9001` logs in as `hpc_9001` (with a prefix of `hpc_`; the default is
+`waldur_`). The prefix is set once on the service provider's **Account settings** page
+(*Anonymized username prefix*) or per offering (`username_anonymized_prefix`),
+and the offering's value wins when both are set — the same rule that picks the
+pool.
+
+Deriving the name from the UID is what makes it stable. A counter scoped to one
+offering and a UID scoped to the provider disagree as soon as two offerings share
+a directory: the same person would get two names for one UID, and two people
+could get one name. Because the pool is provider-wide, every offering that draws
+from it computes the same name for the same person, so the username is unique
+wherever the UID is unique, does not change when the person joins a second
+offering, and regenerating it is a no-op. That is the property a shared LDAP
+directory needs — see
+[Waldur-authoritative accounts in OpenLDAP](openldap-sssd-accounts.md#naming-the-accounts).
+
+When no UID resolves for a user — no pool attached, or POSIX accounts disabled
+on the offering — Waldur falls back to a per-offering counter and logs it. A
+counter name is not shared across offerings, so attach the pool before the first
+users are created.
 
 When an offering user or group is deleted, its identifiers are **released** and
 recycled automatically: the next account created from the same pool reuses the
@@ -83357,8 +83782,8 @@ never allocates a UID at all for that offering, so it cannot collide with the
 one the identity provider supplies, while project and role GIDs continue to come
 from the pool.
 
-Both sources are set on the offering, under **Edit → Integration → User
-management**:
+Both sources are set on the offering, on the **POSIX** tab of **Edit →
+Integration → User management**:
 
 [Image: UID source and Primary GID source on the User management panel]
 
@@ -83367,6 +83792,163 @@ place and reserved against reuse, but the numbers are this site's to manage. Use
 attributes keep a user's UID stable across sites, at the cost of those UIDs not
 appearing in any pool's utilisation figures — they will show a dash for pool
 scope, as described in [where an identifier came from](#where-an-identifier-came-from).
+
+---
+
+### Shared POSIX identity, step by step
+<!-- Source: docs/user-guide/service-provider-organization/posix-identity-step-by-step.md -->
+
+# Shared POSIX identity, step by step
+
+One directory, several SLURM offerings of one provider, and one entry per
+person. This page is the ordered checklist for setting that up in Waldur; each
+step links to the page that explains it. The agent and cluster side — the site
+agent's `ldap` settings, `sssd.conf`, and how to verify with `ldapsearch`,
+`getent` and `id` — lives with the agent, on the
+[LDAP username management plugin](../../admin-guide/providers/site-agent/plugins/ldap/README.md)
+page of the administrator guide.
+
+## Before you start
+
+- Waldur with POSIX ID pools and the provider account pages enabled
+  (`marketplace.show_posix_id_pools` and `marketplace.show_provider_accounts`).
+  Both are off by default: if the provider workspace has no **Accounts** menu,
+  ask the platform operator to enable them.
+- A service provider owning every offering that will share the directory.
+- An OpenLDAP directory and a site agent host; both are set up on the agent side.
+
+## 1. Set up the service provider
+
+Everything that makes a person *one* identity — the numbers, the scope of the
+account and its name — is configured once, on the service provider.
+
+### Attach a POSIX ID pool
+
+The pool is what gives a person one UID and one primary GID across every
+offering of the provider. Open the provider's **Accounts → POSIX ID pools** page
+and create one with UID and GID ranges that are free in the directory. The form
+names the allowed bounds and the ranges your other pools already use.
+
+[Image: POSIX ID pools list]
+
+[Image: Creating a POSIX ID pool]
+
+Details, including how a pool attached to an *offering* overrides the provider's
+and why that defeats sharing: [Managing POSIX ID pools](posix-id-pools.md).
+
+### Set the account settings on the service provider
+
+Open the service provider's **Accounts → Account settings** page. It holds the
+account settings every offering of the provider inherits; a field left empty
+shows the default offerings fall back to. Organization owners and staff can edit
+it, and **Preview changes** shows what a change would do to the existing
+accounts before it is saved.
+
+| Field | Value | Why |
+|---|---|---|
+| Account scope | *Per service provider* | Waldur holds one account per person for the whole provider, and every offering user reads its username, UID, primary GID and home directory through it — so the directory entry has exactly one owner in Waldur |
+| Username generation policy | *Anonymized* | Waldur names the account, and the name derives from the pool UID — the same on every offering |
+| Anonymized username prefix | e.g. `hpc_` | Shown once the policy is *Anonymized*. Left empty, the default `waldur_` applies |
+| Home directory prefix | empty, or e.g. `/home/` | Empty lets each offering decide; the default is `/home/` |
+| Login shell | empty, or e.g. `/bin/bash` | Empty lets each offering decide; the default is `/bin/bash` |
+
+[Image: The service provider's Account settings page: Account scope set to Per service provider, with the home directory prefix and login shell left unset so the offerings fall back to the defaults]
+
+How the names are formed: [Usernames derived from the pool](posix-id-pools.md#usernames-derived-from-the-pool).
+Why one account per person matters for a shared directory:
+[One person, one entry](openldap-sssd-accounts.md#one-person-one-entry).
+
+!!! note "Switching an existing provider"
+    Changing **Account scope** to *Per service provider* on a provider that
+    already has offering users links their existing accounts to one account per
+    person. It is refused while a person has different usernames on different
+    offerings; make those consistent first. An offering that runs its own
+    separate directory can still override the scope back to per offering.
+
+## 2. Set up each offering's user management
+
+Open the offering, then **Edit → Integration → User management**. Its settings
+are grouped in tabs — **Offering users**, **Accounts**, **POSIX** and
+**GLAuth** — with a search box above them. Only the settings that are genuinely
+per offering are set here, with the same values on every offering that shares
+the directory:
+
+[Image: The offering's User management settings: automatic creation and deletion of offering users and Manage POSIX/LDAP account enabled; Account scope, Username generation policy and Username anonymized prefix inherited from the service provider]
+
+| Setting | Value | Why |
+|---|---|---|
+| Enable automatic creation of offering users (**Offering users**) | on | Waldur creates the offering user when a person gains access. The naming and POSIX settings on this form can only be changed while this is on |
+| Enable automatic deletion of offering users (**Offering users**) | on | Losing the last project role moves the offering user to *Requested deletion*, which is what makes the agent release the entry |
+| Manage POSIX/LDAP account (**POSIX**) | on | Allocates the UID and GID and exposes them to the agent |
+| UID source / Primary GID source (**POSIX**) | *POSIX ID pool* (the default) | The values come from the provider's pool rather than from identity attributes |
+
+The account fields — **Account scope**, **Username generation policy** and
+**Username anonymized prefix** on the **Accounts** tab, **Home directory
+prefix** and **Login shell** on the **POSIX** tab — show the value in effect
+and where it comes from: *Inherited from service provider*, or *Default* when
+the provider leaves it empty too. The screenshot shows the **Accounts** tab with
+nothing set on the offering: the scope, policy and prefix all come from the
+provider's Account settings, and **Shared with** names the other offerings a
+person's account is shared with. Leave them that way. Set one only when a
+single offering really needs a different value: an offering's own value wins
+over the provider's, and on a shared directory a different scope, policy or
+prefix gives the same person a different account or name on that offering. A
+value set on the offering carries a link that removes it again, naming what
+the offering then inherits — for example *Use provider setting (Anonymized)*.
+The **POSIX** tab also shows the POSIX ID pool the accounts draw from.
+
+What the *UID source* / *Primary GID source* choices mean:
+[Legacy identifiers outside a pool](posix-id-pools.md#legacy-identifiers-outside-a-pool).
+
+!!! warning
+    All sharing offerings must belong to the **same service provider**: the
+    pool, the provider-wide account and the agent's "still active elsewhere?"
+    check on departure all span that provider's offerings only.
+
+## 3. Configure the site agent and the cluster nodes
+
+Follow the
+[LDAP username management plugin](../../admin-guide/providers/site-agent/plugins/ldap/README.md)
+page: one shared `ldap` block with `account_source: waldur`, a project-group GID
+range clear of the pool, SSSD with `ldap_account_expire_policy = shadow`. The
+configuration keys and their meaning are also summarised in
+[Waldur-authoritative accounts in OpenLDAP](openldap-sssd-accounts.md#configuring-the-agent).
+
+## 4. Check the first accounts
+
+Once a person has access, the provider's **Accounts → Users** page shows each
+account's username, UID and GID — the values Waldur allocated and the agent
+writes into the directory. Its *Offering users* tab lists one row per offering;
+the *Provider accounts* tab lists the single account each person holds for the
+whole provider, and expanding a row names the offerings using it:
+
+[Image: Offering users with UID and GID columns]
+
+The same person must show the **same** username and UID on every sharing
+offering. Where that is not yet true, **Accounts → Username conflicts** lists
+the people affected and lets you choose the username each of them keeps. The pool's utilisation and the list of identities drawn from it are on
+the pool page: [Monitoring utilisation](posix-id-pools.md#monitoring-utilisation).
+
+## 5. Know what a departure looks like
+
+When a member loses their last project role on an offering:
+
+1. The offering user moves to **Requested deletion** in the offering users list.
+2. The agent removes the SLURM associations, checks whether the person still
+   holds a live account with the same username on a sibling offering, and — if
+   not — parks the directory entry (or deletes it, depending on
+   `on_departure`).
+3. The offering user is marked **Deleted**. Once every offering user reading
+   through the provider-wide account is deleted, that account is released too.
+
+A member who is added back gets the same username, UID and entry re-enabled.
+The full behaviour, including the `disable`/`delete` choice and why parking is
+the default: [When a user leaves](openldap-sssd-accounts.md#when-a-user-leaves).
+
+!!! note
+    Without **Enable automatic deletion of offering users** nothing above
+    happens: the offering user stays *OK* and the entry is kept. The agent only
+    ever acts on Waldur's own deletion request.
 
 ---
 

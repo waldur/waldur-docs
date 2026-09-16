@@ -13,7 +13,7 @@
         <link rel="prev" href="../order-management/">
       
       
-        <link rel="next" href="../reporting-usage/">
+        <link rel="next" href="../posix-identity-step-by-step/">
       
       
         
@@ -17295,6 +17295,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../firecrest-posix-identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    POSIX identity with OpenLDAP and FirecREST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../glauth-sssd-shared-storage/" class="md-nav__link">
         
   
@@ -17578,6 +17606,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#usernames-derived-from-the-pool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usernames derived from the pool
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-an-identifier-came-from" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -17642,6 +17681,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../posix-identity-step-by-step/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shared POSIX identity, step by step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -18643,6 +18710,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#usernames-derived-from-the-pool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usernames derived from the pool
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-an-identifier-came-from" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18729,9 +18807,9 @@ and predictable across all of the provider's offerings.</p>
 <p class="admonition-title">Note</p>
 <p>POSIX ID pools are how Waldur allocates UIDs and GIDs — an offering only
 hands out identifiers when a pool resolves for it. If you do not see the
-<strong>POSIX ID pools</strong> menu under your provider workspace, ask the platform
-operator to make it visible (the <code>marketplace.show_posix_id_pools</code> feature
-flag).</p>
+<strong>POSIX ID pools</strong> entry in the <strong>Accounts</strong> menu of your provider
+workspace, ask the platform operator to make it visible (the
+<code>marketplace.show_posix_id_pools</code> feature flag).</p>
 </div>
 <h2 id="how-a-pool-works">How a pool works</h2>
 <p>A pool holds <strong>two independent number ranges</strong> — one for UIDs and one for GIDs —
@@ -18777,7 +18855,7 @@ output until a pool is configured.</p>
 <h2 id="creating-a-pool">Creating a pool</h2>
 <ol>
 <li>
-<p>Open your provider workspace, go to <strong>Marketplace → POSIX ID pools</strong> and
+<p>Open your provider workspace, go to <strong>Accounts → POSIX ID pools</strong> and
     click <strong>Add</strong>.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-pools-list.png" data-desc-position="bottom"><img alt="POSIX ID pools list" src="../../img/posix-pools-list.png"></a></p>
 </li>
@@ -18827,8 +18905,31 @@ are available.</p>
 <p>Identifiers are handed out sequentially from the resolved pool as offering
 users, robot accounts and groups are created — a high-water mark advances per
 namespace. The assigned values are stored on each account, so you can review the
-<strong>UID</strong> and <strong>GID</strong> in the provider's <strong>Offering users</strong> list.</p>
+<strong>UID</strong> and <strong>GID</strong> on the provider's <strong>Accounts → Users</strong> page, on its
+<em>Offering users</em> tab.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-offering-users-uid-gid.png" data-desc-position="bottom"><img alt="Offering users with UID and GID columns" src="../../img/posix-offering-users-uid-gid.png"></a></p>
+<h2 id="usernames-derived-from-the-pool">Usernames derived from the pool</h2>
+<p>A UID is not only a number the directory stores — with the <code>anonymized</code>
+username generation policy it also <em>names</em> the account. An anonymized username
+is the configured prefix followed by the account's pool UID, so the user whose
+UID is <code>9001</code> logs in as <code>hpc_9001</code> (with a prefix of <code>hpc_</code>; the default is
+<code>waldur_</code>). The prefix is set once on the service provider's <strong>Account settings</strong> page
+(<em>Anonymized username prefix</em>) or per offering (<code>username_anonymized_prefix</code>),
+and the offering's value wins when both are set — the same rule that picks the
+pool.</p>
+<p>Deriving the name from the UID is what makes it stable. A counter scoped to one
+offering and a UID scoped to the provider disagree as soon as two offerings share
+a directory: the same person would get two names for one UID, and two people
+could get one name. Because the pool is provider-wide, every offering that draws
+from it computes the same name for the same person, so the username is unique
+wherever the UID is unique, does not change when the person joins a second
+offering, and regenerating it is a no-op. That is the property a shared LDAP
+directory needs — see
+<a href="../openldap-sssd-accounts/#naming-the-accounts">Waldur-authoritative accounts in OpenLDAP</a>.</p>
+<p>When no UID resolves for a user — no pool attached, or POSIX accounts disabled
+on the offering — Waldur falls back to a per-offering counter and logs it. A
+counter name is not shared across offerings, so attach the pool before the first
+users are created.</p>
 <p>When an offering user or group is deleted, its identifiers are <strong>released</strong> and
 recycled automatically: the next account created from the same pool reuses the
 lowest released value before the high-water mark advances further. Released
@@ -18908,8 +19009,8 @@ to <code>user_attribute</code> and pair it with a <strong>GID-only pool</strong>
 never allocates a UID at all for that offering, so it cannot collide with the
 one the identity provider supplies, while project and role GIDs continue to come
 from the pool.</p>
-<p>Both sources are set on the offering, under <strong>Edit → Integration → User
-management</strong>:</p>
+<p>Both sources are set on the offering, on the <strong>POSIX</strong> tab of <strong>Edit →
+Integration → User management</strong>:</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-uid-gid-source.png" data-desc-position="bottom"><img alt="UID source and Primary GID source on the User management panel" src="../../img/posix-uid-gid-source.png"></a></p>
 <p>The trade-off between the two: an override pool keeps everything visible in one
 place and reserved against reuse, but the numbers are this site's to manage. User
