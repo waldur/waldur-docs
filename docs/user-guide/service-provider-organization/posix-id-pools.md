@@ -10,9 +10,9 @@ and predictable across all of the provider's offerings.
 !!! note
     POSIX ID pools are how Waldur allocates UIDs and GIDs — an offering only
     hands out identifiers when a pool resolves for it. If you do not see the
-    **POSIX ID pools** menu under your provider workspace, ask the platform
-    operator to make it visible (the `marketplace.show_posix_id_pools` feature
-    flag).
+    **POSIX ID pools** entry in the **Accounts** menu of your provider
+    workspace, ask the platform operator to make it visible (the
+    `marketplace.show_posix_id_pools` feature flag).
 
 ## How a pool works
 
@@ -50,7 +50,7 @@ output until a pool is configured.
 
 ## Creating a pool
 
-1. Open your provider workspace, go to **Marketplace → POSIX ID pools** and
+1. Open your provider workspace, go to **Accounts → POSIX ID pools** and
     click **Add**.
 
     ![POSIX ID pools list](../img/posix-pools-list.png)
@@ -105,9 +105,36 @@ are available.
 Identifiers are handed out sequentially from the resolved pool as offering
 users, robot accounts and groups are created — a high-water mark advances per
 namespace. The assigned values are stored on each account, so you can review the
-**UID** and **GID** in the provider's **Offering users** list.
+**UID** and **GID** on the provider's **Accounts → Users** page, on its
+*Offering users* tab.
 
 ![Offering users with UID and GID columns](../img/posix-offering-users-uid-gid.png)
+
+## Usernames derived from the pool
+
+A UID is not only a number the directory stores — with the `anonymized`
+username generation policy it also *names* the account. An anonymized username
+is the configured prefix followed by the account's pool UID, so the user whose
+UID is `9001` logs in as `hpc_9001` (with a prefix of `hpc_`; the default is
+`waldur_`). The prefix is set once on the service provider's **Account settings** page
+(*Anonymized username prefix*) or per offering (`username_anonymized_prefix`),
+and the offering's value wins when both are set — the same rule that picks the
+pool.
+
+Deriving the name from the UID is what makes it stable. A counter scoped to one
+offering and a UID scoped to the provider disagree as soon as two offerings share
+a directory: the same person would get two names for one UID, and two people
+could get one name. Because the pool is provider-wide, every offering that draws
+from it computes the same name for the same person, so the username is unique
+wherever the UID is unique, does not change when the person joins a second
+offering, and regenerating it is a no-op. That is the property a shared LDAP
+directory needs — see
+[Waldur-authoritative accounts in OpenLDAP](openldap-sssd-accounts.md#naming-the-accounts).
+
+When no UID resolves for a user — no pool attached, or POSIX accounts disabled
+on the offering — Waldur falls back to a per-offering counter and logs it. A
+counter name is not shared across offerings, so attach the pool before the first
+users are created.
 
 When an offering user or group is deleted, its identifiers are **released** and
 recycled automatically: the next account created from the same pool reuses the
@@ -200,8 +227,8 @@ never allocates a UID at all for that offering, so it cannot collide with the
 one the identity provider supplies, while project and role GIDs continue to come
 from the pool.
 
-Both sources are set on the offering, under **Edit → Integration → User
-management**:
+Both sources are set on the offering, on the **POSIX** tab of **Edit →
+Integration → User management**:
 
 ![UID source and Primary GID source on the User management panel](../img/posix-uid-gid-source.png)
 
