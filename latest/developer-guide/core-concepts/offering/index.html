@@ -7675,6 +7675,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Offering Users (Identity Management)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inheriting-account-settings-from-the-service-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inheriting account settings from the service provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -18940,6 +18957,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Offering Users (Identity Management)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inheriting-account-settings-from-the-service-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inheriting account settings from the service provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -19818,8 +19852,8 @@
 <tr>
 <td><code>username_generation_policy</code></td>
 <td>string</td>
-<td><code>"waldur_username"</code></td>
-<td>How usernames are generated: <code>waldur_username</code>, <code>anonymized</code>, <code>service_provider</code>, <code>full_name</code>, <code>freeipa</code>, <code>eduteams</code></td>
+<td><code>"service_provider"</code></td>
+<td>How usernames are generated: <code>waldur_username</code>, <code>anonymized</code>, <code>service_provider</code>, <code>full_name</code>, <code>freeipa</code>, <code>eduteams</code>. Inherits from the provider's <code>account_username_generation_policy</code> when unset</td>
 </tr>
 <tr>
 <td><code>account_name_generation_policy</code></td>
@@ -19849,7 +19883,13 @@
 <td><code>homedir_prefix</code></td>
 <td>string</td>
 <td><code>"/home/"</code></td>
-<td>Prefix for home directory paths</td>
+<td>Prefix for home directory paths. Inherits from the provider's <code>account_homedir_prefix</code> when unset</td>
+</tr>
+<tr>
+<td><code>login_shell</code></td>
+<td>string</td>
+<td><code>"/bin/bash"</code></td>
+<td>Login shell assigned to new accounts. Inherits from the provider's <code>account_login_shell</code> when unset</td>
 </tr>
 <tr>
 <td><code>username_anonymized_prefix</code></td>
@@ -19857,8 +19897,88 @@
 <td><code>"waldur_"</code></td>
 <td>Prefix for anonymized usernames; the name is the prefix followed by the account's POSIX UID (a per-offering counter when no UID resolves). Inherits from the provider's <code>account_username_anonymized_prefix</code> when unset</td>
 </tr>
+<tr>
+<td><code>account_scope</code></td>
+<td>string</td>
+<td><code>"offering"</code></td>
+<td><code>offering</code> keeps one account per offering; <code>provider</code> shares one account per user across the provider's offerings. Inherits from the provider's <code>account_scope</code> when unset</td>
+</tr>
 </tbody>
 </table>
+<h4 id="inheriting-account-settings-from-the-service-provider">Inheriting account settings from the service provider</h4>
+<p>The account settings <code>account_scope</code>, <code>username_generation_policy</code>,
+<code>username_anonymized_prefix</code>, <code>homedir_prefix</code> and <code>login_shell</code> can be set on
+an offering, in its plugin options, and on its service provider, in the
+provider's <code>account_options</code>. Both use the same keys and the same validation.
+They resolve most specific first:</p>
+<ol>
+<li>the offering's own plugin option, when set;</li>
+<li>otherwise the service provider's <code>account_options</code> value of the same key;</li>
+<li>otherwise the built-in default shown in the table above.</li>
+</ol>
+<p>Leave an option out of the offering's plugin options to inherit it. Saving an
+offering does not fill in the defaults, so a provider-level value applies to
+every offering that does not set its own.</p>
+<p>Both are updated key by key: omitting a key keeps its current value, and an
+empty string removes the setting so it is inherited again. For example, to
+set a login shell for all of a provider's offerings and clear its home
+directory prefix:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">PATCH /api/marketplace-service-providers/{uuid}/</span>
+<span class="err">{"account_options": {"login_shell": "/bin/zsh", "homedir_prefix": ""}}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Changing the username generation policy or the anonymized prefix, on the
+offering or on the provider, regenerates the usernames of the offering users
+it affects. A provider change reaches only the offerings that inherit the
+setting. Accounts held at the provider (<code>account_scope: provider</code>) are not
+regenerated this way; their usernames belong to the provider account.</p>
+<p>Moving accounts into provider scope is refused while a person holds different
+usernames on the offerings that would share them. This applies to the
+provider's <code>account_scope</code> and to a single offering's <code>account_scope</code> alike.
+The provider's <code>username_conflicts</code> action lists the people concerned, and
+<code>adopt_provider_accounts</code> resolves them. A clean switch backs the existing
+accounts with provider accounts straight away.</p>
+<p>The provider-offering and public-offering APIs expose the effective values as
+the read-only <code>account_settings</code> field, and resources expose them for their
+offering as <code>offering_account_settings</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"account_scope"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offering"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"default"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"inherited"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offering"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"default"</span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"username_generation_policy"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"anonymized"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"provider"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"inherited"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"anonymized"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"provider"</span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"login_shell"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/bin/sh"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offering"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"inherited"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/bin/zsh"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"provider"</span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>source</code> is <code>offering</code>, <code>provider</code> or <code>default</code>. <code>inherited</code> is what the
+setting resolves to without the offering's own value: what removing the
+offering's override leads to.</p>
+<p>Offerings saved before this behaviour stored the defaults (<code>service_provider</code>,
+<code>waldur_</code>, <code>/home/</code>, <code>/bin/bash</code>) in their plugin options, which hides any
+provider value. A migration removes such a stored default when the offering's
+service provider sets that setting. Values that differ from a default are
+kept, and so is a stored username setting whose removal would rename existing
+accounts. The migration logs those offerings; send the key as an empty string
+to apply the provider setting and regenerate the usernames.</p>
 <p>The <code>anonymized</code> policy names an account <code>&lt;prefix&gt;&lt;posix uid&gt;</code> -- for example <code>hpc_9001</code> for a prefix of <code>hpc_</code> and uid 9001. The uid is the one the account holds (or is allocated) from the POSIX ID pool that resolves for the offering, or the user's <code>uid_number</code> when <code>uid_source</code> is <code>user_attribute</code>. Because a pool allocates one uid per person across every offering that resolves to it, the same person gets the same username on every offering sharing that pool, and regenerating the name (<code>refresh_offering_usernames</code>, a policy change) is a no-op. When no uid resolves -- no pool covers the offering, or POSIX accounts are disabled -- the name falls back to a per-offering counter (<code>&lt;prefix&gt;00000</code>, <code>&lt;prefix&gt;00001</code>, ...) and a warning is logged. The prefix, like <code>username_generation_policy</code>, <code>homedir_prefix</code> and <code>login_shell</code>, is resolved most-specific-first: the offering's plugin option, else the provider's <code>account_*</code> field, else the default.</p>
 <h2 id="plugin-specific-options">Plugin-Specific Options</h2>
 <h3 id="openstack">OpenStack</h3>

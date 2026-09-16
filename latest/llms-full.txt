@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-16T02:03:57.945348Z
+Generated: 2026-09-16T09:58:34.093901Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -8787,30 +8787,60 @@ WALDUR_OPENSTACK = {'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
                                              'access',
                               'name': 'ssh',
                               'rules': ({'cidr': '0.0.0.0/0',
+                                         'ethertype': 'IPv4',
                                          'from_port': 22,
                                          'protocol': 'tcp',
-                                         'to_port': 22},)},
+                                         'to_port': 22},
+                                        {'cidr': '::/0',
+                                         'ethertype': 'IPv6',
+                                         'from_port': 22,
+                                         'protocol': 'tcp',
+                                         'to_port': 22})},
                              {'description': 'Security group for ping',
                               'name': 'ping',
                               'rules': ({'cidr': '0.0.0.0/0',
+                                         'ethertype': 'IPv4',
                                          'icmp_code': -1,
                                          'icmp_type': -1,
-                                         'protocol': 'icmp'},)},
+                                         'protocol': 'icmp'},
+                                        {'cidr': '::/0',
+                                         'ethertype': 'IPv6',
+                                         'from_port': -1,
+                                         'protocol': '58',
+                                         'to_port': -1})},
                              {'description': 'Security group for remote '
                                              'desktop access',
                               'name': 'rdp',
                               'rules': ({'cidr': '0.0.0.0/0',
+                                         'ethertype': 'IPv4',
                                          'from_port': 3389,
                                          'protocol': 'tcp',
-                                         'to_port': 3389},)},
+                                         'to_port': 3389},
+                                        {'cidr': '::/0',
+                                         'ethertype': 'IPv6',
+                                         'from_port': 3389,
+                                         'protocol': 'tcp',
+                                         'to_port': 3389})},
                              {'description': 'Security group for http and '
                                              'https access',
                               'name': 'web',
                               'rules': ({'cidr': '0.0.0.0/0',
+                                         'ethertype': 'IPv4',
+                                         'from_port': 80,
+                                         'protocol': 'tcp',
+                                         'to_port': 80},
+                                        {'cidr': '::/0',
+                                         'ethertype': 'IPv6',
                                          'from_port': 80,
                                          'protocol': 'tcp',
                                          'to_port': 80},
                                         {'cidr': '0.0.0.0/0',
+                                         'ethertype': 'IPv4',
+                                         'from_port': 443,
+                                         'protocol': 'tcp',
+                                         'to_port': 443},
+                                        {'cidr': '::/0',
+                                         'ethertype': 'IPv6',
                                          'from_port': 443,
                                          'protocol': 'tcp',
                                          'to_port': 443})}),
@@ -8845,7 +8875,7 @@ Usernames that cannot be created by Waldur in OpenStack
 
 **Type:** `Tuple[dict[str, str | tuple[dict[str, str | int], ...]], ...]`
 
-Default security groups and rules created in each of the provisioned OpenStack tenants
+Default security groups and rules created in each of the provisioned OpenStack tenants. Rules with the IPv6 ethertype are created only in tenants with IPv6: an IPv6 subnet of their own, or an IPv6 subnet on the external network they use.
 
 #### MAX_CONCURRENT_PROVISION
 
@@ -9776,6 +9806,12 @@ Personal Access Token for user
 
 OAuth 2.0 Client ID
 
+#### ATLASSIAN_OAUTH2_CLIENT_SECRET
+
+**Type:** secret_field
+
+OAuth 2.0 Client Secret. With the client ID set, Waldur obtains and renews access tokens itself (client credentials grant).
+
 #### ATLASSIAN_OAUTH2_ACCESS_TOKEN
 
 **Type:** secret_field
@@ -9808,7 +9844,7 @@ Issue type used for request-based item processing.
 
 **Type:** str
 
-Comma-separated list of file extenstions not allowed for attachment.
+Comma-separated list of file extensions not allowed for attachment.
 
 #### ATLASSIAN_AFFECTED_RESOURCE_FIELD
 
@@ -11999,6 +12035,10 @@ Show the staff diagnostics page listing tenants with duplicate per-tenant OpenSt
 ## marketplace.show_posix_id_pools
 
 Render POSIX ID pool management UI for service providers.
+
+## marketplace.show_provider_accounts
+
+Render service provider account management UI: provider accounts, username conflicts, the shared GLAuth directory and provider account settings.
 
 ## marketplace.show_resource_end_date
 
@@ -54189,13 +54229,87 @@ The related `resource_slug_template` option (e.g. `{project_slug}-{counter}`) ge
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `service_provider_can_create_offering_user` | boolean | `false` | Allow provider to create offering-specific user accounts |
-| `username_generation_policy` | string | `"waldur_username"` | How usernames are generated: `waldur_username`, `anonymized`, `service_provider`, `full_name`, `freeipa`, `eduteams` |
+| `username_generation_policy` | string | `"service_provider"` | How usernames are generated: `waldur_username`, `anonymized`, `service_provider`, `full_name`, `freeipa`, `eduteams`. Inherits from the provider's `account_username_generation_policy` when unset |
 | `account_name_generation_policy` | string | none | Site-agent backend ID (e.g. SLURM account name) generation. Unset = use the resource slug as-is; `project_slug` = derive from the project slug with an incrementing counter. Do not combine with `resource_slug_template` (see [Resource Naming](#resource-naming)) |
 | `initial_uidnumber` | integer | `5000` | Starting UID for generated users |
 | `initial_primarygroup_number` | integer | `5000` | Starting GID for primary groups |
 | `initial_usergroup_number` | integer | `6000` | Starting GID for user groups |
-| `homedir_prefix` | string | `"/home/"` | Prefix for home directory paths |
+| `homedir_prefix` | string | `"/home/"` | Prefix for home directory paths. Inherits from the provider's `account_homedir_prefix` when unset |
+| `login_shell` | string | `"/bin/bash"` | Login shell assigned to new accounts. Inherits from the provider's `account_login_shell` when unset |
 | `username_anonymized_prefix` | string | `"waldur_"` | Prefix for anonymized usernames; the name is the prefix followed by the account's POSIX UID (a per-offering counter when no UID resolves). Inherits from the provider's `account_username_anonymized_prefix` when unset |
+| `account_scope` | string | `"offering"` | `offering` keeps one account per offering; `provider` shares one account per user across the provider's offerings. Inherits from the provider's `account_scope` when unset |
+
+#### Inheriting account settings from the service provider
+
+The account settings `account_scope`, `username_generation_policy`,
+`username_anonymized_prefix`, `homedir_prefix` and `login_shell` can be set on
+an offering, in its plugin options, and on its service provider, in the
+provider's `account_options`. Both use the same keys and the same validation.
+They resolve most specific first:
+
+1. the offering's own plugin option, when set;
+2. otherwise the service provider's `account_options` value of the same key;
+3. otherwise the built-in default shown in the table above.
+
+Leave an option out of the offering's plugin options to inherit it. Saving an
+offering does not fill in the defaults, so a provider-level value applies to
+every offering that does not set its own.
+
+Both are updated key by key: omitting a key keeps its current value, and an
+empty string removes the setting so it is inherited again. For example, to
+set a login shell for all of a provider's offerings and clear its home
+directory prefix:
+
+```http
+PATCH /api/marketplace-service-providers/{uuid}/
+{"account_options": {"login_shell": "/bin/zsh", "homedir_prefix": ""}}
+```
+
+Changing the username generation policy or the anonymized prefix, on the
+offering or on the provider, regenerates the usernames of the offering users
+it affects. A provider change reaches only the offerings that inherit the
+setting. Accounts held at the provider (`account_scope: provider`) are not
+regenerated this way; their usernames belong to the provider account.
+
+Moving accounts into provider scope is refused while a person holds different
+usernames on the offerings that would share them. This applies to the
+provider's `account_scope` and to a single offering's `account_scope` alike.
+The provider's `username_conflicts` action lists the people concerned, and
+`adopt_provider_accounts` resolves them. A clean switch backs the existing
+accounts with provider accounts straight away.
+
+The provider-offering and public-offering APIs expose the effective values as
+the read-only `account_settings` field, and resources expose them for their
+offering as `offering_account_settings`:
+
+```json
+{
+  "account_scope": {
+    "value": "offering", "source": "default",
+    "inherited": {"value": "offering", "source": "default"}
+  },
+  "username_generation_policy": {
+    "value": "anonymized", "source": "provider",
+    "inherited": {"value": "anonymized", "source": "provider"}
+  },
+  "login_shell": {
+    "value": "/bin/sh", "source": "offering",
+    "inherited": {"value": "/bin/zsh", "source": "provider"}
+  }
+}
+```
+
+`source` is `offering`, `provider` or `default`. `inherited` is what the
+setting resolves to without the offering's own value: what removing the
+offering's override leads to.
+
+Offerings saved before this behaviour stored the defaults (`service_provider`,
+`waldur_`, `/home/`, `/bin/bash`) in their plugin options, which hides any
+provider value. A migration removes such a stored default when the offering's
+service provider sets that setting. Values that differ from a default are
+kept, and so is a stored username setting whose removal would rename existing
+accounts. The migration logs those offerings; send the key as an empty string
+to apply the provider setting and regenerate the usernames.
 
 The `anonymized` policy names an account `<prefix><posix uid>` -- for example `hpc_9001` for a prefix of `hpc_` and uid 9001. The uid is the one the account holds (or is allocated) from the POSIX ID pool that resolves for the offering, or the user's `uid_number` when `uid_source` is `user_attribute`. Because a pool allocates one uid per person across every offering that resolves to it, the same person gets the same username on every offering sharing that pool, and regenerating the name (`refresh_offering_usernames`, a policy change) is a no-op. When no uid resolves -- no pool covers the offering, or POSIX accounts are disabled -- the name falls back to a per-offering counter (`<prefix>00000`, `<prefix>00001`, ...) and a warning is logged. The prefix, like `username_generation_policy`, `homedir_prefix` and `login_shell`, is resolved most-specific-first: the offering's plugin option, else the provider's `account_*` field, else the default.
 
@@ -96982,6 +97096,7 @@ td:nth-child(4) {
 | `update_marketplace_resource_limits_when_vm_is_updated` | `Custom Signal (vm_updated)` | `—` | No description |
 | `update_offering_user_username_after_freeipa_profile_update` | `Django Signal (post_save)` | `waldur_freeipa.Profile` | Update offering user usernames after FreeIPA profile creation/update. |
 | `update_offering_user_username_after_offering_settings_change` | `Django Signal (post_save)` | `marketplace.Offering` | Update offering user usernames after offering settings change. |
+| `update_offering_user_username_after_provider_settings_change` | `Django Signal (post_save)` | `marketplace.ServiceProvider` | Regenerate usernames on the provider's offerings that inherit a changed setting. |
 | `update_offering_user_username_after_user_change` | `Django Signal (post_save)` | `core.User` | Set new username for offering users after site_username in user details has been changed. |
 | `update_openstack_tenant_usages` | `Django Signal (post_save)` | `quotas.QuotaUsage` | No description |
 | `update_order_if_issue_was_complete` | `Django Signal (post_save)` | `support.Issue` | No description |
@@ -97057,14 +97172,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 721
+Total unique handlers found: 722
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 343 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 324 handlers
+- **waldur_mastermind**: 325 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -105542,7 +105657,7 @@ These settings are configured in `waldur_core.server.settings` or `local_setting
 |---------|------|---------|-------------|
 | `ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS` | bool | `True` | Allow customer users to access the OpenStack VNC console |
 | `ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION` | bool | `False` | Allow connecting instances directly to external networks (bypassing internal network + router) |
-| `DEFAULT_SECURITY_GROUPS` | list[dict] | SSH (22), ping (ICMP), RDP (3389), web (80, 443) | Default security groups and rules created in each provisioned tenant |
+| `DEFAULT_SECURITY_GROUPS` | list[dict] | SSH (22), ping (ICMP and ICMPv6), RDP (3389), web (80, 443), each open to IPv4 (`0.0.0.0/0`) and IPv6 (`::/0`) | Default security groups and rules created in each provisioned tenant. The IPv6 rules are created only in a tenant with IPv6: an IPv6 subnet of its own, or an IPv6 subnet on the external network it uses |
 | `DEFAULT_BLACKLISTED_USERNAMES` | list[str] | `["admin", "service"]` | Usernames that cannot be created by Waldur in OpenStack |
 | `MAX_CONCURRENT_PROVISION` | dict | `{"OpenStack.Instance": 4, "OpenStack.Volume": 4, "OpenStack.Snapshot": 4}` | Maximum parallel provisioning operations per resource type |
 | `REQUIRE_AVAILABILITY_ZONE` | bool | `False` | Make availability zone selection mandatory during provisioning |
