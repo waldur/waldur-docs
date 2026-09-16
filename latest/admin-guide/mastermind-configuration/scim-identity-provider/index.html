@@ -19091,7 +19091,7 @@
 <h2 id="setup">Setup</h2>
 <ol>
 <li><strong>Add <code>scim2-models</code></strong> — already included in <code>pyproject.toml</code>. No extra installation step needed beyond <code>uv sync</code>.</li>
-<li><strong>Create a staff service-account user</strong> for the IdP to authenticate as. The service account must have <code>is_staff=True</code> and <code>is_active=True</code>.</li>
+<li><strong>Create a staff service-account user</strong> for the IdP to authenticate as. The service account must have <code>is_staff=True</code> and <code>is_active=True</code>, and its token must not expire: new users get the default <code>token_lifetime</code> (1 hour), and an IdP only calls when something changes, so after a quiet hour every SCIM request would be rejected with 401 <code>Token has expired.</code> Clear <code>token_lifetime</code> after creating the account — it can't be passed to <code>create()</code>, because the default is applied when the user is created.</li>
 <li>
 <p><strong>Issue an auth token</strong> for that user. The token's <code>key</code> is what the IdP sends as <code>Authorization: Bearer &lt;key&gt;</code>.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -19103,13 +19103,15 @@
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.authtoken.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Token</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.authtoken.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Token</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_core.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
 
 <span class="n">svc</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">username</span><span class="o">=</span><span class="s2">"scim-okta-svc"</span><span class="p">,</span> <span class="n">is_staff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 <span class="n">svc</span><span class="o">.</span><span class="n">set_unusable_password</span><span class="p">()</span>
+<span class="n">svc</span><span class="o">.</span><span class="n">token_lifetime</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># SCIM tokens must not expire</span>
 <span class="n">svc</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 <span class="n">token</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">svc</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>  <span class="c1"># paste into the IdP</span>
@@ -19122,6 +19124,9 @@
 <li>Optionally narrow <code>SCIM_INBOUND_ALLOWED_ATTRIBUTES</code> (default <code>first_name, last_name, email, organization, affiliations</code>).</li>
 <li>Optionally rename the source label (<code>SCIM_INBOUND_SOURCE_NAME</code>, default <code>scim:default</code>) — useful when you have multiple IdPs and want to distinguish them in <code>attribute_sources</code>.</li>
 </ul>
+</li>
+<li>
+<p><strong>Make <code>/scim/v2/</code> reachable through the reverse proxy.</strong> The endpoint sits outside <code>/api/</code>, so the proxy in front of Waldur must forward it to the API. The Helm chart (API <code>Ingress</code> and Gateway API <code>HTTPRoute</code>) and the docker-compose Caddy config route <code>/scim</code> to mastermind; older chart and compose releases do not, and a SCIM request then reaches the homeport SPA instead. With a custom proxy, add the route yourself. In Helm, <code>ingress.whitelistSourceRange</code> covers <code>/scim</code> too — use it to accept provisioning only from the IdP's addresses (Ingress only; Gateway API has no standard equivalent).</p>
 </li>
 <li>
 <p><strong>Point the IdP at <code>/scim/v2/</code></strong> using the token. The IdP's SCIM connector tester should see <code>GET /scim/v2/ServiceProviderConfig</code> succeed.</p>
@@ -19740,9 +19745,19 @@ waldur<span class="w"> </span>scim_pull_user<span class="w"> </span>--username<s
 </thead>
 <tbody>
 <tr>
+<td><code>/scim/v2/...</code> returns an HTML page, or a 404 from the proxy</td>
+<td>The reverse proxy doesn't forward <code>/scim/</code> to the API, so the request reaches homeport or no backend.</td>
+<td>Upgrade to a Helm chart / docker-compose release that routes <code>/scim</code>, or add the route to your proxy (see Setup step 5).</td>
+</tr>
+<tr>
 <td><code>GET /scim/v2/ServiceProviderConfig</code> returns 403 with <code>detail: SCIM_INBOUND_ENABLED</code></td>
 <td>Feature flag is off.</td>
 <td>Set <code>SCIM_INBOUND_ENABLED=True</code> in Constance.</td>
+</tr>
+<tr>
+<td>SCIM requests start returning 401 <code>Token has expired.</code> after a quiet period</td>
+<td>The service account still has a <code>token_lifetime</code>, and the IdP made no request within it.</td>
+<td>Clear it: <code>User.objects.filter(username=...).update(token_lifetime=None)</code>. The IdP's existing key works again — expired tokens are rejected, not rotated.</td>
 </tr>
 <tr>
 <td>All SCIM requests return 401</td>
@@ -19784,7 +19799,7 @@ waldur<span class="w"> </span>scim_pull_user<span class="w"> </span>--username<s
 <h2 id="security-notes">Security notes</h2>
 <ul>
 <li>The endpoint is gated on <code>is_staff</code> — equivalent in authority to existing staff role-management APIs. Treat the service-account token like any other staff credential.</li>
-<li>Bearer tokens leak silently in proxy logs and error trackers. Consider configuring <code>User.token_lifetime</code> on the SCIM service account if your operational model assumes rotating credentials. (Note: the current <code>ScimBearerAuthentication</code> does not enforce <code>token_lifetime</code>-based expiry — see the security review section of the original MR.)</li>
+<li>Bearer tokens leak silently in proxy logs and error trackers. SCIM tokens are validated exactly like <code>/api/</code> tokens: once <code>token_lifetime</code> passes without a request, the token is rejected with 401 and left in place, never rotated. Because IdPs call only when something changes, leave <code>token_lifetime</code> unset on the service account (see Setup) and rotate the credential deliberately instead — delete the service account's <code>Token</code>, issue a new one, and update the IdP.</li>
 <li><code>/scim/v2/</code> is outside the <code>/api/</code> prefix and excluded from the public OpenAPI schema.</li>
 <li>All writable attributes are gated by both <code>SCIM_INBOUND_ALLOWED_ATTRIBUTES</code> and <code>WRITABLE_USER_FIELDS</code>; privilege flags like <code>is_staff</code> / <code>is_superuser</code> / <code>is_active</code> (directly) / <code>token_lifetime</code> cannot be set via SCIM payloads.</li>
 <li>The SCIM filter parser only emits Django <code>Q</code> objects against a hard-coded attribute whitelist; values are parameterised by Django ORM.</li>

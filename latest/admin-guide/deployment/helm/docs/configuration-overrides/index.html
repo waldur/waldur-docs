@@ -107,7 +107,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#additional-settings-overrides-and-feature-flags" class="md-skip">
+        <a href="#additional-settings-overrides-feature-flags-and-custom-roles" class="md-skip">
           Skip to content
         </a>
       
@@ -2140,6 +2140,17 @@
     <span class="md-ellipsis">
       
         Arbitrary feature flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom roles
       
     </span>
   </a>
@@ -18519,6 +18530,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#custom-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom roles
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -18534,13 +18556,12 @@
                 
                   
 
-<h1 id="additional-settings-overrides-and-feature-flags">Additional settings overrides and feature flags</h1>
+<h1 id="additional-settings-overrides-feature-flags-and-custom-roles">Additional settings overrides, feature flags, and custom roles</h1>
 <p>The chart exposes a dedicated value for most commonly configured
 admin-configurable runtime settings (<code>waldur.support</code>,
 <code>waldur.marketplace.countries</code>, <code>waldur.mail</code>, and so on) and most feature
 flags (<code>waldur.features</code>). For anything not covered by a dedicated value, use
-the two generic escape hatches below instead of running a separate one-off
-job.</p>
+the generic escape hatches below instead of running a separate one-off job.</p>
 <h2 id="arbitrary-settings-overrides">Arbitrary settings overrides</h2>
 <p><code>waldur.settingsOverrides</code> is a free-form map of
 <a href="https://github.com/waldur/waldur-mastermind/blob/develop/src/waldur_core/server/constance_settings.py">runtime setting</a>
@@ -18589,6 +18610,52 @@ booleans:</p>
 on every pod start, so there is no separate job to run or clean up. This also
 lets you override the handful of flags the chart otherwise hardcodes, such as
 <code>project.estimated_cost</code> (defaults to <code>true</code>).</p>
+<h2 id="custom-roles">Custom roles</h2>
+<p><code>waldur.customRoleDescriptions</code> and <code>waldur.customRolePermissions</code> let you
+tweak the description or add/drop individual permissions on the built-in
+roles (<code>CUSTOMER.OWNER</code>, <code>PROJECT.ADMIN</code>, and so on). For a role that isn't
+one of the built-in ones at all, use <code>waldur.customRoles</code> instead — a list of
+full role definitions:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">waldur</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">customRoles</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CUSTOMER.AUDITOR</span>
+<span class="w">      </span><span class="nt">scope</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">customer</span>
+<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Read-only</span><span class="nv"> </span><span class="s">auditor"</span>
+<span class="w">      </span><span class="nt">permissions</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CUSTOMER.LIST_USERS</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT.LIST</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>scope</code> is one of the <code>TYPE_MAP</code> keys in waldur-mastermind's
+<code>waldur_core/permissions/enums.py</code> (<code>customer</code>, <code>service_provider</code>,
+<code>call_organizer</code>, <code>project</code>, <code>offering</code>, <code>resource</code>, <code>resource_project</code>,
+<code>call</code>, <code>proposal</code>) — the chart rejects the render if it isn't. Unlike the
+add/drop deltas above, <code>permissions</code> here is the role's <em>complete</em> permission
+list, since there's no built-in baseline to diff against — and each name is
+taken as given: a misspelled permission is silently dropped rather than
+rejected, since it isn't validated against <code>PermissionEnum</code>.</p>
+<p>This requires a waldur-mastermind image whose <code>initdb</code> step loads
+<code>custom-roles.yaml</code>, shipped from <code>8.1.3-rc.11</code>; earlier images render the
+value but nothing consumes it.</p>
+<p><strong>Reusing a built-in role's name</strong> (e.g. <code>CUSTOMER.OWNER</code>) is also valid, and
+is how you fully replace that role's permission set rather than adding to
+it — <code>custom-roles.yaml</code> is imported right after the built-in <code>permissions.yaml</code>,
+so your list wins. This is a one-way handover: any permission mastermind
+adds to that role in a later release is loaded and then immediately
+overwritten again by your list on every deployment, until you add it
+yourself.</p>
+<p><strong>Removing an entry does not delete or deactivate the role.</strong> A role loaded
+this way is a system role, so the API won't delete or rename it, and there's
+no equivalent of <code>drop_stale_permissions</code> for roles — it just stops being
+managed. Set <code>is_active: false</code> on the entry instead (requires a
+waldur-mastermind image with waldur/waldur-mastermind!6317 — earlier images
+silently ignore <code>is_active: false</code>).</p>
 
 
 

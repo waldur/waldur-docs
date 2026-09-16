@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-15T18:06:03.488174Z
+Generated: 2026-09-16T02:03:57.945348Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -689,6 +689,8 @@ sequenceDiagram
 
 - **mastermind-config-permissions-override-yaml:** Permission overrides
 
+- **mastermind-config-custom-roles-yaml:** Custom (non-built-in) role definitions
+
 - **icons-config:** Custom icons and branding
 
 ### Secrets
@@ -891,17 +893,16 @@ All values must be strings (Kubernetes annotation requirement) — quote numeric
 
 ---
 
-### Additional settings overrides and feature flags
+### Additional settings overrides, feature flags, and custom roles
 <!-- Source: docs/admin-guide/deployment/helm/docs/configuration-overrides.md -->
 
-# Additional settings overrides and feature flags
+# Additional settings overrides, feature flags, and custom roles
 
 The chart exposes a dedicated value for most commonly configured
 admin-configurable runtime settings (`waldur.support`,
 `waldur.marketplace.countries`, `waldur.mail`, and so on) and most feature
 flags (`waldur.features`). For anything not covered by a dedicated value, use
-the two generic escape hatches below instead of running a separate one-off
-job.
+the generic escape hatches below instead of running a separate one-off job.
 
 ## Arbitrary settings overrides
 
@@ -946,6 +947,53 @@ Unlike `waldur.settingsOverrides`, these are merged into `features.json` and app
 on every pod start, so there is no separate job to run or clean up. This also
 lets you override the handful of flags the chart otherwise hardcodes, such as
 `project.estimated_cost` (defaults to `true`).
+
+## Custom roles
+
+`waldur.customRoleDescriptions` and `waldur.customRolePermissions` let you
+tweak the description or add/drop individual permissions on the built-in
+roles (`CUSTOMER.OWNER`, `PROJECT.ADMIN`, and so on). For a role that isn't
+one of the built-in ones at all, use `waldur.customRoles` instead — a list of
+full role definitions:
+
+```yaml
+waldur:
+  customRoles:
+    - role: CUSTOMER.AUDITOR
+      scope: customer
+      description: "Read-only auditor"
+      permissions:
+        - CUSTOMER.LIST_USERS
+        - PROJECT.LIST
+```
+
+`scope` is one of the `TYPE_MAP` keys in waldur-mastermind's
+`waldur_core/permissions/enums.py` (`customer`, `service_provider`,
+`call_organizer`, `project`, `offering`, `resource`, `resource_project`,
+`call`, `proposal`) — the chart rejects the render if it isn't. Unlike the
+add/drop deltas above, `permissions` here is the role's *complete* permission
+list, since there's no built-in baseline to diff against — and each name is
+taken as given: a misspelled permission is silently dropped rather than
+rejected, since it isn't validated against `PermissionEnum`.
+
+This requires a waldur-mastermind image whose `initdb` step loads
+`custom-roles.yaml`, shipped from `8.1.3-rc.11`; earlier images render the
+value but nothing consumes it.
+
+**Reusing a built-in role's name** (e.g. `CUSTOMER.OWNER`) is also valid, and
+is how you fully replace that role's permission set rather than adding to
+it — `custom-roles.yaml` is imported right after the built-in `permissions.yaml`,
+so your list wins. This is a one-way handover: any permission mastermind
+adds to that role in a later release is loaded and then immediately
+overwritten again by your list on every deployment, until you add it
+yourself.
+
+**Removing an entry does not delete or deactivate the role.** A role loaded
+this way is a system role, so the API won't delete or rename it, and there's
+no equivalent of `drop_stale_permissions` for roles — it just stops being
+managed. Set `is_active: false` on the entry instead (requires a
+waldur-mastermind image with waldur/waldur-mastermind!6317 — earlier images
+silently ignore `is_active: false`).
 
 ---
 
@@ -1598,7 +1646,7 @@ Outline:
 
 - [White-labeling](whitelabeling.md)
 
-- [Additional settings overrides and feature flags](configuration-overrides.md)
+- [Additional settings overrides, feature flags, and custom roles](configuration-overrides.md)
 
 - [Custom Mastermind templates](mastermind-templates.md)
 
@@ -17407,7 +17455,7 @@ User attribute writes converge on the same `update_user_attributes_from_source()
 ## Setup
 
 1. **Add `scim2-models`** — already included in `pyproject.toml`. No extra installation step needed beyond `uv sync`.
-2. **Create a staff service-account user** for the IdP to authenticate as. The service account must have `is_staff=True` and `is_active=True`.
+2. **Create a staff service-account user** for the IdP to authenticate as. The service account must have `is_staff=True` and `is_active=True`, and its token must not expire: new users get the default `token_lifetime` (1 hour), and an IdP only calls when something changes, so after a quiet hour every SCIM request would be rejected with 401 `Token has expired.` Clear `token_lifetime` after creating the account — it can't be passed to `create()`, because the default is applied when the user is created.
 3. **Issue an auth token** for that user. The token's `key` is what the IdP sends as `Authorization: Bearer <key>`.
 
     ```python
@@ -17418,6 +17466,7 @@ User attribute writes converge on the same `update_user_attributes_from_source()
         username="scim-okta-svc", is_staff=True, is_active=True
     )
     svc.set_unusable_password()
+    svc.token_lifetime = None  # SCIM tokens must not expire
     svc.save()
     token, _ = Token.objects.get_or_create(user=svc)
     print(token.key)  # paste into the IdP
@@ -17428,9 +17477,11 @@ User attribute writes converge on the same `update_user_attributes_from_source()
     - Optionally narrow `SCIM_INBOUND_ALLOWED_ATTRIBUTES` (default `first_name, last_name, email, organization, affiliations`).
     - Optionally rename the source label (`SCIM_INBOUND_SOURCE_NAME`, default `scim:default`) — useful when you have multiple IdPs and want to distinguish them in `attribute_sources`.
 
-5. **Point the IdP at `/scim/v2/`** using the token. The IdP's SCIM connector tester should see `GET /scim/v2/ServiceProviderConfig` succeed.
+5. **Make `/scim/v2/` reachable through the reverse proxy.** The endpoint sits outside `/api/`, so the proxy in front of Waldur must forward it to the API. The Helm chart (API `Ingress` and Gateway API `HTTPRoute`) and the docker-compose Caddy config route `/scim` to mastermind; older chart and compose releases do not, and a SCIM request then reaches the homeport SPA instead. With a custom proxy, add the route yourself. In Helm, `ingress.whitelistSourceRange` covers `/scim` too — use it to accept provisioning only from the IdP's addresses (Ingress only; Gateway API has no standard equivalent).
 
-6. **Smoke test from the shell** before pointing real users at it:
+6. **Point the IdP at `/scim/v2/`** using the token. The IdP's SCIM connector tester should see `GET /scim/v2/ServiceProviderConfig` succeed.
+
+7. **Smoke test from the shell** before pointing real users at it:
 
     ```bash
     curl -H "Authorization: Bearer <token>" \
@@ -17750,7 +17801,9 @@ sequenceDiagram
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
+| `/scim/v2/...` returns an HTML page, or a 404 from the proxy | The reverse proxy doesn't forward `/scim/` to the API, so the request reaches homeport or no backend. | Upgrade to a Helm chart / docker-compose release that routes `/scim`, or add the route to your proxy (see Setup step 5). |
 | `GET /scim/v2/ServiceProviderConfig` returns 403 with `detail: SCIM_INBOUND_ENABLED` | Feature flag is off. | Set `SCIM_INBOUND_ENABLED=True` in Constance. |
+| SCIM requests start returning 401 `Token has expired.` after a quiet period | The service account still has a `token_lifetime`, and the IdP made no request within it. | Clear it: `User.objects.filter(username=...).update(token_lifetime=None)`. The IdP's existing key works again — expired tokens are rejected, not rotated. |
 | All SCIM requests return 401 | Bearer scheme not used, or token doesn't match a `core.AuthToken`. | Verify the IdP sends `Authorization: Bearer <token>` exactly; check `Token.objects.filter(key=...).exists()`. |
 | All SCIM requests return 403 (with token) | Token user is not `is_staff`. | Promote the service account: `User.objects.filter(username=...).update(is_staff=True)`. |
 | `POST /Groups` returns 400 `invalidValue` | `displayName` doesn't match the `waldur:` convention (see Group naming convention section above). | Build the displayName from the URLs in the Waldur admin (Customer/Project UUID + role name). |
@@ -17762,7 +17815,7 @@ sequenceDiagram
 ## Security notes
 
 - The endpoint is gated on `is_staff` — equivalent in authority to existing staff role-management APIs. Treat the service-account token like any other staff credential.
-- Bearer tokens leak silently in proxy logs and error trackers. Consider configuring `User.token_lifetime` on the SCIM service account if your operational model assumes rotating credentials. (Note: the current `ScimBearerAuthentication` does not enforce `token_lifetime`-based expiry — see the security review section of the original MR.)
+- Bearer tokens leak silently in proxy logs and error trackers. SCIM tokens are validated exactly like `/api/` tokens: once `token_lifetime` passes without a request, the token is rejected with 401 and left in place, never rotated. Because IdPs call only when something changes, leave `token_lifetime` unset on the service account (see Setup) and rotate the credential deliberately instead — delete the service account's `Token`, issue a new one, and update the IdP.
 - `/scim/v2/` is outside the `/api/` prefix and excluded from the public OpenAPI schema.
 - All writable attributes are gated by both `SCIM_INBOUND_ALLOWED_ATTRIBUTES` and `WRITABLE_USER_FIELDS`; privilege flags like `is_staff` / `is_superuser` / `is_active` (directly) / `token_lifetime` cannot be set via SCIM payloads.
 - The SCIM filter parser only emits Django `Q` objects against a hard-coded attribute whitelist; values are parameterised by Django ORM.
@@ -117614,7 +117667,8 @@ types — anything they can do, `marketplace resource` can do generically.
 ## Waiting on anything with real async state, not just orders
 
 Resources with genuine async, server-side state to reach — an OpenStack tenant/instance/
-volume, a generic marketplace resource, and the order itself — get a `wait` command: polling
+volume, a network, subnet, security group, router, port or floating IP, a generic marketplace
+resource, and the order itself — get a `wait` command: polling
 on an interval until a `--jmespath` condition against the fetched object is met, or timing
 out. Waldur's API has no server-side push/watch mechanism, so this is a client-side poll, not
 an instant notification -- but it saves you from writing your own poll loop. Plain CRUD
@@ -117654,13 +117708,215 @@ waldur-cli marketplace order wait "$ORDER" --jmespath "state=='done'" --format j
 when you submitted with `--no-wait` and only have the order UUID, before any resource exists
 to check instead).
 
+## Networking inside a tenant
+
+Tenants, instances and volumes are ordered through the marketplace. Everything an instance
+plugs into inside a tenant is not: networks, subnets, security groups, routers, ports and
+floating IPs are created directly, and each is created **asynchronously** (`Creating` → `OK`).
+Most of them have no REST `create` of their own — you create them through an action on their
+parent:
+
+| To create | Command | Parent |
+| --- | --- | --- |
+| a network | `openstack tenant create-network <tenant-uuid>` | tenant |
+| a subnet | `openstack network create-subnet <network-uuid>` | network |
+| a security group (with rules) | `openstack tenant create-security-group <tenant-uuid>` | tenant |
+| a floating IP | `openstack tenant create-floating-ip <tenant-uuid>` | tenant |
+| a server group | `openstack tenant create-server-group <tenant-uuid>` | tenant |
+| a router | `openstack router create` (the body names the tenant) | — |
+| a port | `openstack port create` (the body names the network) | — |
+
+Every one of these takes a request body and has a `--generate-skeleton` template, which you can
+print without a UUID:
+
+```bash
+waldur-cli openstack network create-subnet --generate-skeleton yaml
+waldur-cli openstack tenant create-security-group --generate-skeleton
+```
+
+The body is validated against the API's schema before anything is sent, and `--dry-run` shows
+the exact request.
+
+### Wait between dependent steps
+
+A network isn't usable until it's `OK`, and `create-subnet` refuses a network that isn't. The
+create commands return the new object straight away (still `Creating`), so capture its `uuid`
+and `wait` on it:
+
+```bash
+NET=$(waldur-cli openstack tenant create-network "$TENANT" \
+  --request '{"name": "app-net"}' --format json | jq -r '.uuid // empty')
+[ -n "$NET" ] || exit 1     # on an API error the JSON output has no uuid
+waldur-cli openstack network wait "$NET" --jmespath "state=='OK'"
+waldur-cli openstack network create-subnet "$NET" \
+  --request '{"name": "app-subnet", "cidr": "10.10.0.0/24"}'
+```
+
+Guard the captured UUID as above: with `--format json`, an API error is printed as a JSON
+`{"error": ...}` object, so `jq -r .uuid` alone yields `null` (or, with `// empty`, nothing)
+and the next command would run against the wrong path.
+
+A new subnet is attached to a router of the tenant unless the body sets
+`"skip_router_connection": true` or names a specific `router`. `subnet connect`/`disconnect`
+attach or detach it later.
+
+### Security groups and their rules
+
+`tenant create-security-group` creates a group together with its rules. A rule is
+`ethertype` (`IPv4`/`IPv6`), `direction` (`ingress`/`egress`), `protocol` (`tcp`, `udp`,
+`icmp`, an IANA protocol number such as `58` for ICMPv6, or empty for any), a port range, and
+either a `cidr` or a `remote_group`:
+
+```bash
+waldur-cli openstack tenant create-security-group "$TENANT" --request '{
+  "name": "ssh-v6",
+  "rules": [
+    {"ethertype": "IPv6", "direction": "ingress", "protocol": "tcp",
+     "from_port": 22, "to_port": 22, "cidr": "::/0"},
+    {"ethertype": "IPv6", "direction": "ingress", "protocol": "58",
+     "from_port": -1, "to_port": -1, "cidr": "::/0"}
+  ]
+}'
+```
+
+For ICMP (and ICMPv6), the port fields hold the ICMP type and code: use `-1` for any. Leaving
+them out is rejected (`to_port: Empty value is not allowed`).
+
+To change the rules of an existing group, `security-group set-rules <uuid>` takes a JSON
+**array** of rules and **replaces the whole rule set**, so send every rule you want to keep,
+not just the new one:
+
+```bash
+waldur-cli openstack security-group set-rules "$SG" --generate-skeleton   # one-rule array template
+waldur-cli openstack security-group set-rules "$SG" --request-file rules.json
+```
+
+An array body is validated as one: a single rule object instead of an array is rejected
+before anything is sent. The `default` group is managed by OpenStack itself and can't be
+renamed or deleted.
+
+To attach groups to an instance at creation, list them under `security_groups` in the
+instance order (below). For an existing instance's port, `port update-security-groups`.
+
+### Routers and ports
+
+Most tenants need neither: a tenant's default router connects its subnets, and an instance
+order creates its own ports. Reach for them when you need to control the topology:
+
+- `router create` / `delete`, `add-router-interface` / `remove-router-interface` (a subnet or
+  port), `set-external-gateway` / `remove-external-gateway`, and `set-routes` for static routes.
+- `port create` / `update` / `delete`, `enable-port` / `disable-port`,
+  `enable-port-security` / `disable-port-security`, `set-allowed-address-pairs`,
+  `update-port-ip`, and `update-security-groups`.
+
+Port security and allowed address pairs matter for a VM that sends or receives traffic for
+addresses other than its own — a router or VPN gateway, or a VM running its own nested cloud.
+Neutron's anti-spoofing drops that traffic until you widen the pairs or disable port security
+on the port.
+
+### Flavors, images and SSH keys
+
+An instance order references a flavor, an image and (optionally) an SSH key by URL. Look the
+first two up in the tenant's catalog, and register your key once:
+
+```bash
+FLAVOR=$(waldur-cli openstack flavor list --filter tenant_uuid="$TENANT" \
+  --filter cores__gte=8 --filter ram__gte=16384 --order cores,ram --limit 1 \
+  --format json --jmespath '[0].url')
+IMAGE=$(waldur-cli openstack image list --filter tenant_uuid="$TENANT" \
+  --filter name_exact="Ubuntu 24.04 LTS" --format json --jmespath '[0].url')
+KEY=$(waldur-cli auth ssh-key create --request "$(jq -n --arg k "$(cat ~/.ssh/id_ed25519.pub)" \
+  '{name: "laptop", public_key: $k}')" --format json | jq -r .url)
+```
+
+A flavor's own `disk` is often small. Set `system_volume_size` (in MB) in the order to boot
+from a larger volume instead, and `system_volume_type` to pick its type.
+
+## Example: an IPv6-only VM
+
+This puts a VM on a tenant network that has only an IPv6 subnet (here `2001:db8:1::/64`,
+routed from the internet to the tenant's router), reachable over SSH from any IPv6 host. It
+uses the commands above end to end; `$TENANT` is the tenant's own UUID, and `$A` the API base
+URL (`https://waldur.example.com/api`).
+
+**1. Find the subnet, and check how it assigns addresses.**
+
+```bash
+waldur-cli openstack subnet list --filter tenant_uuid="$TENANT" --format json \
+  --jmespath '[?ip_version==`6`].{uuid: uuid, cidr: cidr, url: url, dns: dns_nameservers}'
+```
+
+Waldur can't create IPv6 subnets yet, so this one was created outside it — and Waldur doesn't
+show the subnet's IPv6 address mode (SLAAC, DHCPv6, or none) either. If it's SLAAC, the
+instance configures its address from the router's advertisements. If it's unset, Neutron
+hands out no address at all, and the instance learns it only from its **config drive**. Set
+`"config_drive": true` in the order either way: it works in both cases, and you can't tell
+from Waldur which one you have.
+
+**2. Allow SSH and ICMPv6 over IPv6.** The groups a tenant starts with usually allow only
+IPv4. Create `ssh-v6` as in [Security groups and their rules](#security-groups-and-their-rules).
+
+**3. Set DNS in cloud-init if the subnet has none.** An IPv6-only VM also can't reach
+IPv4-only hosts (github.com has no IPv6 address). A DNS64 resolver, such as the public
+nat64.net service, answers for those hosts with addresses its NAT64 gateway translates:
+
+```yaml
+#cloud-config
+write_files:
+  - path: /etc/systemd/resolved.conf.d/dns64.conf
+    content: |
+      [Resolve]
+      DNS=2a00:1098:2b::1 2a01:4f8:c2c:123f::1
+      Domains=~.
+runcmd:
+  - systemctl restart systemd-resolved
+```
+
+**4. Order the instance.**
+
+```json
+{
+  "offering": "<$A>/marketplace-public-offerings/<instance-offering-uuid>/",
+  "project": "<$A>/projects/<project-uuid>/",
+  "accepting_terms_of_service": true,
+  "attributes": {
+    "name": "v6-host",
+    "flavor": "<$FLAVOR>",
+    "image": "<$IMAGE>",
+    "system_volume_size": 102400,
+    "config_drive": true,
+    "ports": [{"subnet": "<the IPv6 subnet's url>"}],
+    "security_groups": [{"url": "<default group url>"}, {"url": "<ssh-v6 url>"}],
+    "ssh_public_key": "<$KEY>",
+    "user_data": "<the cloud-init above, as a string>"
+  }
+}
+```
+
+```bash
+waldur-cli openstack instance provision --request-file v6-host.json --timeout 1200 --interval 10
+```
+
+The instance offering is the one scoped to your tenant:
+`marketplace offering list --filter type=OpenStack.Instance --filter project_uuid=<uuid>`.
+
+**5. Connect.**
+
+```bash
+ssh ubuntu@"$(waldur-cli openstack instance get <instance-uuid> --format json | jq -r '.internal_ips[0]')"
+```
+
+On a routed IPv6 subnet the instance's own address is public, so there's no floating IP;
+`internal_ips` holds it. (`get` has no `--jmespath`, so pipe its `--format json` output
+through `jq`.)
+
 ## The bigger picture
 
 An instance needs a tenant (and usually a network/subnet) to exist first, and its flavor and
 image are looked up **within that tenant** — so a from-scratch VM is a chain: provision a
-tenant, create a network and subnet in it, look up the tenant's flavor/image, then provision
-the instance referencing all of the above. [Recipes & tips](5-recipes-and-tips.md) walks
-through a complete example.
+tenant, [create a network and subnet in it](#networking-inside-a-tenant), look up the
+tenant's flavor/image, then provision the instance referencing all of the above. [Recipes &
+tips](5-recipes-and-tips.md) walks through a complete example.
 
 ---
 
@@ -117741,10 +117997,9 @@ waldur-cli openstack tenant terminate <marketplace_resource_uuid>
 !!! note "Instances need a few things a VPC doesn't"
     An instance order references a `flavor`, an `image`, and a subnet, which live *inside* a
     tenant. Look the first two up with `openstack flavor list` / `openstack image list` (see
-    below); the CLI can also list/get the tenant's networks, subnets, and security groups, but
-    it doesn't expose network *creation* — provision a tenant **without** the
-    `skip_creation_of_default_*` attributes to get a default network + subnet you can point an
-    instance at.
+    below). For the subnet, either provision the tenant **without** the
+    `skip_creation_of_default_*` attributes to get a default network + subnet, or build the
+    network yourself (see [Build a tenant's network by hand](#build-a-tenants-network-by-hand)).
 
 ### Pick a flavor and image for an instance
 
@@ -117773,14 +118028,51 @@ IMAGE=$(waldur-cli openstack image list --filter name_exact="Ubuntu 24.04" \
   --format json --jmespath '[0].url')
 ```
 
+### Build a tenant's network by hand
+
+Networks, security groups, and floating IPs have no REST `create` of their own: Waldur creates
+them through actions on the tenant, and a subnet through an action on its network. Each is
+created asynchronously (`Creating` → `OK`), and a network must be `OK` before it takes a
+subnet, so `wait` between the steps:
+
+```bash
+TENANT=<tenant-uuid>
+
+# 1. a network, and a subnet in it (attached to the tenant's router unless the request
+#    sets "skip_router_connection": true)
+NET=$(waldur-cli openstack tenant create-network "$TENANT" \
+  --request '{"name": "app-net"}' --format json | jq -r .uuid)
+waldur-cli openstack network wait "$NET" --jmespath "state=='OK'"
+waldur-cli openstack network create-subnet "$NET" \
+  --request '{"name": "app-subnet", "cidr": "10.10.0.0/24", "dns_nameservers": ["1.1.1.1"]}'
+
+# 2. a security group that lets SSH in
+waldur-cli openstack tenant create-security-group "$TENANT" --request '{
+  "name": "ssh",
+  "rules": [{"ethertype": "IPv4", "direction": "ingress", "protocol": "tcp",
+             "from_port": 22, "to_port": 22, "cidr": "0.0.0.0/0"}]
+}'
+```
+
+Every action that takes a body has a `--generate-skeleton` template, printed without a UUID:
+`waldur-cli openstack network create-subnet --generate-skeleton`.
+
+To change an existing group's rules, `security-group set-rules <uuid>` takes a JSON *array*
+of rules and **replaces** the whole rule set, so include every rule you want to keep. Routers
+(`openstack router create`, `add-router-interface`, `set-external-gateway`, `set-routes`) and
+ports (`openstack port disable-port-security`, `set-allowed-address-pairs`) cover what the
+tenant's default router and an instance's default port don't, such as a VM that routes
+traffic other than its own.
+
 ### SSH into an instance
 
 There's no dedicated `ssh` command — Waldur doesn't broker a tunnel or manage private keys
 (it only stores the public key's name/fingerprint), so there's nothing for a wrapper to add
-over the system `ssh` binary beyond looking up the address. That's one `--jmespath` away:
+over the system `ssh` binary beyond looking up the address. That's one `jq` away (`get` has
+no `--jmespath` of its own):
 
 ```bash
-ssh ubuntu@$(waldur-cli openstack instance get <uuid> --jmespath 'external_ips[0]')
+ssh ubuntu@$(waldur-cli openstack instance get <uuid> --format json | jq -r '.external_ips[0]')
 ```
 
 Swap the username for whatever the instance's image actually uses (`ubuntu`, `centos`,
@@ -122093,8 +122385,8 @@ consuming machine-readable output.
 
 It covers a curated slice of the API:
 
-- **OpenStack** — tenants, instances, volumes, networks, subnets, security groups, floating
-  IPs, plus the flavor/image catalog
+- **OpenStack** — tenants, instances, volumes, networks, subnets, security groups and their
+  rules, routers, ports, floating IPs, plus the flavor/image catalog
 - **Team management** — customers, projects, users, roles
 - **Marketplace** — browse offerings, and provision/terminate OpenStack tenants, instances,
   and volumes through Waldur's order flow

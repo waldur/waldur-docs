@@ -12776,6 +12776,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#networking-inside-a-tenant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Networking inside a tenant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Networking inside a tenant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#wait-between-dependent-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wait between dependent steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-groups-and-their-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security groups and their rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#routers-and-ports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routers and ports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flavors-images-and-ssh-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flavors, images and SSH keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-an-ipv6-only-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: an IPv6-only VM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-bigger-picture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18617,6 +18689,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#networking-inside-a-tenant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Networking inside a tenant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Networking inside a tenant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#wait-between-dependent-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wait between dependent steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-groups-and-their-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security groups and their rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#routers-and-ports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routers and ports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flavors-images-and-ssh-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flavors, images and SSH keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-an-ipv6-only-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: an IPv6-only VM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-bigger-picture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18798,7 +18942,8 @@ waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>resource<sp
 types — anything they can do, <code>marketplace resource</code> can do generically.</p>
 <h2 id="waiting-on-anything-with-real-async-state-not-just-orders">Waiting on anything with real async state, not just orders</h2>
 <p>Resources with genuine async, server-side state to reach — an OpenStack tenant/instance/
-volume, a generic marketplace resource, and the order itself — get a <code>wait</code> command: polling
+volume, a network, subnet, security group, router, port or floating IP, a generic marketplace
+resource, and the order itself — get a <code>wait</code> command: polling
 on an interval until a <code>--jmespath</code> condition against the fetched object is met, or timing
 out. Waldur's API has no server-side push/watch mechanism, so this is a client-side poll, not
 an instant notification -- but it saves you from writing your own poll loop. Plain CRUD
@@ -18829,12 +18974,246 @@ waldur-cli<span class="w"> </span>marketplace<span class="w"> </span>order<span 
 (the same object <code>provision</code>'s own polling already checks internally, exposed standalone for
 when you submitted with <code>--no-wait</code> and only have the order UUID, before any resource exists
 to check instead).</p>
+<h2 id="networking-inside-a-tenant">Networking inside a tenant</h2>
+<p>Tenants, instances and volumes are ordered through the marketplace. Everything an instance
+plugs into inside a tenant is not: networks, subnets, security groups, routers, ports and
+floating IPs are created directly, and each is created <strong>asynchronously</strong> (<code>Creating</code> → <code>OK</code>).
+Most of them have no REST <code>create</code> of their own — you create them through an action on their
+parent:</p>
+<table>
+<thead>
+<tr>
+<th>To create</th>
+<th>Command</th>
+<th>Parent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a network</td>
+<td><code>openstack tenant create-network &lt;tenant-uuid&gt;</code></td>
+<td>tenant</td>
+</tr>
+<tr>
+<td>a subnet</td>
+<td><code>openstack network create-subnet &lt;network-uuid&gt;</code></td>
+<td>network</td>
+</tr>
+<tr>
+<td>a security group (with rules)</td>
+<td><code>openstack tenant create-security-group &lt;tenant-uuid&gt;</code></td>
+<td>tenant</td>
+</tr>
+<tr>
+<td>a floating IP</td>
+<td><code>openstack tenant create-floating-ip &lt;tenant-uuid&gt;</code></td>
+<td>tenant</td>
+</tr>
+<tr>
+<td>a server group</td>
+<td><code>openstack tenant create-server-group &lt;tenant-uuid&gt;</code></td>
+<td>tenant</td>
+</tr>
+<tr>
+<td>a router</td>
+<td><code>openstack router create</code> (the body names the tenant)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>a port</td>
+<td><code>openstack port create</code> (the body names the network)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Every one of these takes a request body and has a <code>--generate-skeleton</code> template, which you can
+print without a UUID:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>network<span class="w"> </span>create-subnet<span class="w"> </span>--generate-skeleton<span class="w"> </span>yaml
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>create-security-group<span class="w"> </span>--generate-skeleton
+</code></pre></div></td></tr></tbody></table></div>
+<p>The body is validated against the API's schema before anything is sent, and <code>--dry-run</code> shows
+the exact request.</p>
+<h3 id="wait-between-dependent-steps">Wait between dependent steps</h3>
+<p>A network isn't usable until it's <code>OK</code>, and <code>create-subnet</code> refuses a network that isn't. The
+create commands return the new object straight away (still <code>Creating</code>), so capture its <code>uuid</code>
+and <code>wait</code> on it:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">NET</span><span class="o">=</span><span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>create-network<span class="w"> </span><span class="s2">"</span><span class="nv">$TENANT</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--request<span class="w"> </span><span class="s1">'{"name": "app-net"}'</span><span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.uuid // empty'</span><span class="k">)</span>
+<span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">"</span><span class="nv">$NET</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span><span class="w">     </span><span class="c1"># on an API error the JSON output has no uuid</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>network<span class="w"> </span><span class="nb">wait</span><span class="w"> </span><span class="s2">"</span><span class="nv">$NET</span><span class="s2">"</span><span class="w"> </span>--jmespath<span class="w"> </span><span class="s2">"state=='OK'"</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>network<span class="w"> </span>create-subnet<span class="w"> </span><span class="s2">"</span><span class="nv">$NET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--request<span class="w"> </span><span class="s1">'{"name": "app-subnet", "cidr": "10.10.0.0/24"}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Guard the captured UUID as above: with <code>--format json</code>, an API error is printed as a JSON
+<code>{"error": ...}</code> object, so <code>jq -r .uuid</code> alone yields <code>null</code> (or, with <code>// empty</code>, nothing)
+and the next command would run against the wrong path.</p>
+<p>A new subnet is attached to a router of the tenant unless the body sets
+<code>"skip_router_connection": true</code> or names a specific <code>router</code>. <code>subnet connect</code>/<code>disconnect</code>
+attach or detach it later.</p>
+<h3 id="security-groups-and-their-rules">Security groups and their rules</h3>
+<p><code>tenant create-security-group</code> creates a group together with its rules. A rule is
+<code>ethertype</code> (<code>IPv4</code>/<code>IPv6</code>), <code>direction</code> (<code>ingress</code>/<code>egress</code>), <code>protocol</code> (<code>tcp</code>, <code>udp</code>,
+<code>icmp</code>, an IANA protocol number such as <code>58</code> for ICMPv6, or empty for any), a port range, and
+either a <code>cidr</code> or a <code>remote_group</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>create-security-group<span class="w"> </span><span class="s2">"</span><span class="nv">$TENANT</span><span class="s2">"</span><span class="w"> </span>--request<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">  "name": "ssh-v6",</span>
+<span class="s1">  "rules": [</span>
+<span class="s1">    {"ethertype": "IPv6", "direction": "ingress", "protocol": "tcp",</span>
+<span class="s1">     "from_port": 22, "to_port": 22, "cidr": "::/0"},</span>
+<span class="s1">    {"ethertype": "IPv6", "direction": "ingress", "protocol": "58",</span>
+<span class="s1">     "from_port": -1, "to_port": -1, "cidr": "::/0"}</span>
+<span class="s1">  ]</span>
+<span class="s1">}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>For ICMP (and ICMPv6), the port fields hold the ICMP type and code: use <code>-1</code> for any. Leaving
+them out is rejected (<code>to_port: Empty value is not allowed</code>).</p>
+<p>To change the rules of an existing group, <code>security-group set-rules &lt;uuid&gt;</code> takes a JSON
+<strong>array</strong> of rules and <strong>replaces the whole rule set</strong>, so send every rule you want to keep,
+not just the new one:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>security-group<span class="w"> </span>set-rules<span class="w"> </span><span class="s2">"</span><span class="nv">$SG</span><span class="s2">"</span><span class="w"> </span>--generate-skeleton<span class="w">   </span><span class="c1"># one-rule array template</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>security-group<span class="w"> </span>set-rules<span class="w"> </span><span class="s2">"</span><span class="nv">$SG</span><span class="s2">"</span><span class="w"> </span>--request-file<span class="w"> </span>rules.json
+</code></pre></div></td></tr></tbody></table></div>
+<p>An array body is validated as one: a single rule object instead of an array is rejected
+before anything is sent. The <code>default</code> group is managed by OpenStack itself and can't be
+renamed or deleted.</p>
+<p>To attach groups to an instance at creation, list them under <code>security_groups</code> in the
+instance order (below). For an existing instance's port, <code>port update-security-groups</code>.</p>
+<h3 id="routers-and-ports">Routers and ports</h3>
+<p>Most tenants need neither: a tenant's default router connects its subnets, and an instance
+order creates its own ports. Reach for them when you need to control the topology:</p>
+<ul>
+<li><code>router create</code> / <code>delete</code>, <code>add-router-interface</code> / <code>remove-router-interface</code> (a subnet or
+  port), <code>set-external-gateway</code> / <code>remove-external-gateway</code>, and <code>set-routes</code> for static routes.</li>
+<li><code>port create</code> / <code>update</code> / <code>delete</code>, <code>enable-port</code> / <code>disable-port</code>,
+  <code>enable-port-security</code> / <code>disable-port-security</code>, <code>set-allowed-address-pairs</code>,
+  <code>update-port-ip</code>, and <code>update-security-groups</code>.</li>
+</ul>
+<p>Port security and allowed address pairs matter for a VM that sends or receives traffic for
+addresses other than its own — a router or VPN gateway, or a VM running its own nested cloud.
+Neutron's anti-spoofing drops that traffic until you widen the pairs or disable port security
+on the port.</p>
+<h3 id="flavors-images-and-ssh-keys">Flavors, images and SSH keys</h3>
+<p>An instance order references a flavor, an image and (optionally) an SSH key by URL. Look the
+first two up in the tenant's catalog, and register your key once:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">FLAVOR</span><span class="o">=</span><span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>flavor<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span><span class="nv">tenant_uuid</span><span class="o">=</span><span class="s2">"</span><span class="nv">$TENANT</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filter<span class="w"> </span><span class="nv">cores__gte</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>--filter<span class="w"> </span><span class="nv">ram__gte</span><span class="o">=</span><span class="m">16384</span><span class="w"> </span>--order<span class="w"> </span>cores,ram<span class="w"> </span>--limit<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>json<span class="w"> </span>--jmespath<span class="w"> </span><span class="s1">'[0].url'</span><span class="k">)</span>
+<span class="nv">IMAGE</span><span class="o">=</span><span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>image<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span><span class="nv">tenant_uuid</span><span class="o">=</span><span class="s2">"</span><span class="nv">$TENANT</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filter<span class="w"> </span><span class="nv">name_exact</span><span class="o">=</span><span class="s2">"Ubuntu 24.04 LTS"</span><span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--jmespath<span class="w"> </span><span class="s1">'[0].url'</span><span class="k">)</span>
+<span class="nv">KEY</span><span class="o">=</span><span class="k">$(</span>waldur-cli<span class="w"> </span>auth<span class="w"> </span>ssh-key<span class="w"> </span>create<span class="w"> </span>--request<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>jq<span class="w"> </span>-n<span class="w"> </span>--arg<span class="w"> </span>k<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>cat<span class="w"> </span>~/.ssh/id_ed25519.pub<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s1">'{name: "laptop", public_key: $k}'</span><span class="k">)</span><span class="s2">"</span><span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span>.url<span class="k">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>A flavor's own <code>disk</code> is often small. Set <code>system_volume_size</code> (in MB) in the order to boot
+from a larger volume instead, and <code>system_volume_type</code> to pick its type.</p>
+<h2 id="example-an-ipv6-only-vm">Example: an IPv6-only VM</h2>
+<p>This puts a VM on a tenant network that has only an IPv6 subnet (here <code>2001:db8:1::/64</code>,
+routed from the internet to the tenant's router), reachable over SSH from any IPv6 host. It
+uses the commands above end to end; <code>$TENANT</code> is the tenant's own UUID, and <code>$A</code> the API base
+URL (<code>https://waldur.example.com/api</code>).</p>
+<p><strong>1. Find the subnet, and check how it assigns addresses.</strong></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>subnet<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span><span class="nv">tenant_uuid</span><span class="o">=</span><span class="s2">"</span><span class="nv">$TENANT</span><span class="s2">"</span><span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--jmespath<span class="w"> </span><span class="s1">'[?ip_version==`6`].{uuid: uuid, cidr: cidr, url: url, dns: dns_nameservers}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Waldur can't create IPv6 subnets yet, so this one was created outside it — and Waldur doesn't
+show the subnet's IPv6 address mode (SLAAC, DHCPv6, or none) either. If it's SLAAC, the
+instance configures its address from the router's advertisements. If it's unset, Neutron
+hands out no address at all, and the instance learns it only from its <strong>config drive</strong>. Set
+<code>"config_drive": true</code> in the order either way: it works in both cases, and you can't tell
+from Waldur which one you have.</p>
+<p><strong>2. Allow SSH and ICMPv6 over IPv6.</strong> The groups a tenant starts with usually allow only
+IPv4. Create <code>ssh-v6</code> as in <a href="#security-groups-and-their-rules">Security groups and their rules</a>.</p>
+<p><strong>3. Set DNS in cloud-init if the subnet has none.</strong> An IPv6-only VM also can't reach
+IPv4-only hosts (github.com has no IPv6 address). A DNS64 resolver, such as the public
+nat64.net service, answers for those hosts with addresses its NAT64 gateway translates:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">#cloud-config</span>
+<span class="nt">write_files</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/systemd/resolved.conf.d/dns64.conf</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="no">[Resolve]</span>
+<span class="w">      </span><span class="no">DNS=2a00:1098:2b::1 2a01:4f8:c2c:123f::1</span>
+<span class="w">      </span><span class="no">Domains=~.</span>
+<span class="nt">runcmd</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">systemctl restart systemd-resolved</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>4. Order the instance.</strong></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"offering"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;$A&gt;/marketplace-public-offerings/&lt;instance-offering-uuid&gt;/"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;$A&gt;/projects/&lt;project-uuid&gt;/"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"accepting_terms_of_service"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"v6-host"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"flavor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;$FLAVOR&gt;"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"image"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;$IMAGE&gt;"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"system_volume_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">102400</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"config_drive"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"ports"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"subnet"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;the IPv6 subnet's url&gt;"</span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">"security_groups"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;default group url&gt;"</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;ssh-v6 url&gt;"</span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">"ssh_public_key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;$KEY&gt;"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"user_data"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;the cloud-init above, as a string&gt;"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>provision<span class="w"> </span>--request-file<span class="w"> </span>v6-host.json<span class="w"> </span>--timeout<span class="w"> </span><span class="m">1200</span><span class="w"> </span>--interval<span class="w"> </span><span class="m">10</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The instance offering is the one scoped to your tenant:
+<code>marketplace offering list --filter type=OpenStack.Instance --filter project_uuid=&lt;uuid&gt;</code>.</p>
+<p><strong>5. Connect.</strong></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>ssh<span class="w"> </span>ubuntu@<span class="s2">"</span><span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>get<span class="w"> </span>&lt;instance-uuid&gt;<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.internal_ips[0]'</span><span class="k">)</span><span class="s2">"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>On a routed IPv6 subnet the instance's own address is public, so there's no floating IP;
+<code>internal_ips</code> holds it. (<code>get</code> has no <code>--jmespath</code>, so pipe its <code>--format json</code> output
+through <code>jq</code>.)</p>
 <h2 id="the-bigger-picture">The bigger picture</h2>
 <p>An instance needs a tenant (and usually a network/subnet) to exist first, and its flavor and
 image are looked up <strong>within that tenant</strong> — so a from-scratch VM is a chain: provision a
-tenant, create a network and subnet in it, look up the tenant's flavor/image, then provision
-the instance referencing all of the above. <a href="../5-recipes-and-tips/">Recipes &amp; tips</a> walks
-through a complete example.</p>
+tenant, <a href="#networking-inside-a-tenant">create a network and subnet in it</a>, look up the
+tenant's flavor/image, then provision the instance referencing all of the above. <a href="../5-recipes-and-tips/">Recipes &amp;
+tips</a> walks through a complete example.</p>
 
 
 

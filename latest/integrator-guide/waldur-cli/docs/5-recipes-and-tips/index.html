@@ -12794,6 +12794,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#build-a-tenants-network-by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build a tenant's network by hand
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ssh-into-an-instance" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18635,6 +18646,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#build-a-tenants-network-by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build a tenant's network by hand
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ssh-into-an-instance" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18787,10 +18809,9 @@ waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span c
 <p class="admonition-title">Instances need a few things a VPC doesn't</p>
 <p>An instance order references a <code>flavor</code>, an <code>image</code>, and a subnet, which live <em>inside</em> a
 tenant. Look the first two up with <code>openstack flavor list</code> / <code>openstack image list</code> (see
-below); the CLI can also list/get the tenant's networks, subnets, and security groups, but
-it doesn't expose network <em>creation</em> — provision a tenant <strong>without</strong> the
-<code>skip_creation_of_default_*</code> attributes to get a default network + subnet you can point an
-instance at.</p>
+below). For the subnet, either provision the tenant <strong>without</strong> the
+<code>skip_creation_of_default_*</code> attributes to get a default network + subnet, or build the
+network yourself (see <a href="#build-a-tenants-network-by-hand">Build a tenant's network by hand</a>).</p>
 </div>
 <h3 id="pick-a-flavor-and-image-for-an-instance">Pick a flavor and image for an instance</h3>
 <p>Flavors and images are read-only catalog data scoped to a tenant. The flavor filters accept
@@ -18821,11 +18842,57 @@ instance <code>provision</code> body:</p>
 <span class="nv">IMAGE</span><span class="o">=</span><span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>image<span class="w"> </span>list<span class="w"> </span>--filter<span class="w"> </span><span class="nv">name_exact</span><span class="o">=</span><span class="s2">"Ubuntu 24.04"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--format<span class="w"> </span>json<span class="w"> </span>--jmespath<span class="w"> </span><span class="s1">'[0].url'</span><span class="k">)</span>
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="build-a-tenants-network-by-hand">Build a tenant's network by hand</h3>
+<p>Networks, security groups, and floating IPs have no REST <code>create</code> of their own: Waldur creates
+them through actions on the tenant, and a subnet through an action on its network. Each is
+created asynchronously (<code>Creating</code> → <code>OK</code>), and a network must be <code>OK</code> before it takes a
+subnet, so <code>wait</code> between the steps:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">TENANT</span><span class="o">=</span>&lt;tenant-uuid&gt;
+
+<span class="c1"># 1. a network, and a subnet in it (attached to the tenant's router unless the request</span>
+<span class="c1">#    sets "skip_router_connection": true)</span>
+<span class="nv">NET</span><span class="o">=</span><span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>create-network<span class="w"> </span><span class="s2">"</span><span class="nv">$TENANT</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--request<span class="w"> </span><span class="s1">'{"name": "app-net"}'</span><span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span>.uuid<span class="k">)</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>network<span class="w"> </span><span class="nb">wait</span><span class="w"> </span><span class="s2">"</span><span class="nv">$NET</span><span class="s2">"</span><span class="w"> </span>--jmespath<span class="w"> </span><span class="s2">"state=='OK'"</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>network<span class="w"> </span>create-subnet<span class="w"> </span><span class="s2">"</span><span class="nv">$NET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--request<span class="w"> </span><span class="s1">'{"name": "app-subnet", "cidr": "10.10.0.0/24", "dns_nameservers": ["1.1.1.1"]}'</span>
+
+<span class="c1"># 2. a security group that lets SSH in</span>
+waldur-cli<span class="w"> </span>openstack<span class="w"> </span>tenant<span class="w"> </span>create-security-group<span class="w"> </span><span class="s2">"</span><span class="nv">$TENANT</span><span class="s2">"</span><span class="w"> </span>--request<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">  "name": "ssh",</span>
+<span class="s1">  "rules": [{"ethertype": "IPv4", "direction": "ingress", "protocol": "tcp",</span>
+<span class="s1">             "from_port": 22, "to_port": 22, "cidr": "0.0.0.0/0"}]</span>
+<span class="s1">}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Every action that takes a body has a <code>--generate-skeleton</code> template, printed without a UUID:
+<code>waldur-cli openstack network create-subnet --generate-skeleton</code>.</p>
+<p>To change an existing group's rules, <code>security-group set-rules &lt;uuid&gt;</code> takes a JSON <em>array</em>
+of rules and <strong>replaces</strong> the whole rule set, so include every rule you want to keep. Routers
+(<code>openstack router create</code>, <code>add-router-interface</code>, <code>set-external-gateway</code>, <code>set-routes</code>) and
+ports (<code>openstack port disable-port-security</code>, <code>set-allowed-address-pairs</code>) cover what the
+tenant's default router and an instance's default port don't, such as a VM that routes
+traffic other than its own.</p>
 <h3 id="ssh-into-an-instance">SSH into an instance</h3>
 <p>There's no dedicated <code>ssh</code> command — Waldur doesn't broker a tunnel or manage private keys
 (it only stores the public key's name/fingerprint), so there's nothing for a wrapper to add
-over the system <code>ssh</code> binary beyond looking up the address. That's one <code>--jmespath</code> away:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>ssh<span class="w"> </span>ubuntu@<span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>get<span class="w"> </span>&lt;uuid&gt;<span class="w"> </span>--jmespath<span class="w"> </span><span class="s1">'external_ips[0]'</span><span class="k">)</span>
+over the system <code>ssh</code> binary beyond looking up the address. That's one <code>jq</code> away (<code>get</code> has
+no <code>--jmespath</code> of its own):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>ssh<span class="w"> </span>ubuntu@<span class="k">$(</span>waldur-cli<span class="w"> </span>openstack<span class="w"> </span>instance<span class="w"> </span>get<span class="w"> </span>&lt;uuid&gt;<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.external_ips[0]'</span><span class="k">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>Swap the username for whatever the instance's image actually uses (<code>ubuntu</code>, <code>centos</code>,
 <code>cloud-user</code>, ...) — the API doesn't expose it. If the instance has no floating IP (no public
