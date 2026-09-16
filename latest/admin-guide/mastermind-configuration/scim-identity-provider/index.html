@@ -3657,6 +3657,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#matching-scim-users-to-existing-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Matching SCIM users to existing accounts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#scim-to-waldur-attribute-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3725,6 +3736,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sram-profile-scimv2sram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SRAM profile (/scim/v2/sram/)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -11760,6 +11782,34 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../../integrations/sram/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SRAM (SURF Research Access Management)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -11772,10 +11822,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7">
         
           
-          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
             
   
   
@@ -11793,8 +11843,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -18971,6 +19021,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#matching-scim-users-to-existing-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Matching SCIM users to existing accounts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#scim-to-waldur-attribute-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19039,6 +19100,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sram-profile-scimv2sram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SRAM profile (/scim/v2/sram/)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -19477,6 +19549,36 @@
 <li><strong>Deactivation</strong> routes through <code>remove_user_from_isd</code> and honours <code>FEDERATED_IDENTITY_DEACTIVATION_POLICY</code>: with the default <code>any_isd_removed</code> any removal deactivates the user; with <code>all_isds_removed</code> a user is only deactivated when no active sources remain.</li>
 <li><strong>Deactivated users stay visible to SCIM.</strong> <code>GET /Users/{id}</code> returns them with <code>active: false</code>, they match <code>filter=active eq false</code>, and the IdP can reactivate them with <code>PATCH {op: replace, path: active, value: true}</code>.</li>
 </ul>
+<h2 id="matching-scim-users-to-existing-accounts">Matching SCIM users to existing accounts</h2>
+<p>A provisioned user must become the same account the person gets at login, or they end up with two. Two settings decide how an incoming SCIM user is matched, for both <code>/scim/v2/</code> and <code>/scim/v2/sram/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SCIM_USER_MATCH_WALDUR_ATTRIBUTE</code></td>
+<td><code>username</code></td>
+<td>Waldur field compared: <code>username</code>, <code>email</code> or <code>civil_number</code>. Anything other than <code>username</code> must be enabled in <code>ENABLED_USER_PROFILE_ATTRIBUTES</code>. The settings API rejects other values, and SCIM requests answer 503 while the setting is invalid.</td>
+</tr>
+<tr>
+<td><code>SCIM_USER_MATCH_SCIM_ATTRIBUTE</code></td>
+<td><code>userName</code></td>
+<td>Where the value is in the SCIM User: a top-level attribute (<code>userName</code>, <code>emails</code> = primary email), a sub-attribute (<code>name.givenName</code>), or an extension path such as <code>urn:mace:surf.nl:sram:scim:extension:User.eduPersonUniqueId</code>.</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>The lookup order is <code>externalId</code>, then the configured match, then the primary email when <code>OIDC_MATCHMAKING_BY_EMAIL</code> is on.</li>
+<li>More than one matching account is a 409; resolve the duplicate first.</li>
+<li>With <code>username</code>, new accounts are <strong>named after the matched value</strong> (normalised to <code>[0-9a-z_.@+-]</code>), so a login that presents the same value as its username (see <code>OIDC_USER_FIELD</code>) finds the account. Changing that value later is rejected with <code>scimType: mutability</code>.</li>
+<li>With <code>email</code> or <code>civil_number</code>, new accounts are named after <code>userName</code> and the matched attribute is set on them.</li>
+<li>For SRAM, pick the attribute your login uses. If users sign in through SRAM's OIDC with <code>sub</code> as username, use <code>urn:mace:surf.nl:sram:scim:extension:User.eduPersonUniqueId</code>. SRAM-provisioned accounts keep their username if the settings change later.</li>
+</ul>
 <h2 id="scim-to-waldur-attribute-mapping">SCIM-to-Waldur attribute mapping</h2>
 <table>
 <thead>
@@ -19750,6 +19852,66 @@ waldur<span class="w"> </span>scim_pull_user<span class="w"> </span>--username<s
 </tr>
 </tbody>
 </table>
+<h2 id="sram-profile-scimv2sram">SRAM profile (<code>/scim/v2/sram/</code>)</h2>
+<p><a href="https://sram.surf.nl/">SRAM</a> (SURF Research Access Management, SURFscz/SBS) provisions services with its own SCIM client, which differs from generic identity providers in ways the generic endpoint cannot accommodate:</p>
+<ul>
+<li>it looks users and groups up with <code>filter=externalId eq "…"</code>;</li>
+<li>it requests <code>{scim_url}{meta.location}</code>, so locations must be relative to the base URL;</li>
+<li>its group names are free text (collaborations and their groups), not <code>waldur:…</code> names;</li>
+<li>its periodic <strong>sweep</strong> lists everything the service returns and DELETEs whatever SRAM does not know.</li>
+</ul>
+<p>Waldur therefore serves SRAM on a separate base URL, <code>/scim/v2/sram/</code>, gated by <code>SRAM_INTEGRATION_ENABLED</code> in addition to <code>SCIM_INBOUND_ENABLED</code> and the staff token. Register <code>https://&lt;waldur&gt;/scim/v2/sram</code> as the service's SCIM URL in SRAM.</p>
+<table>
+<thead>
+<tr>
+<th>Behaviour</th>
+<th><code>/scim/v2/sram/</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Listing, lookup, update, delete</td>
+<td>Only users and groups SRAM provisioned (<code>waldur_sram.SramUser</code> / <code>SramGroup</code>). A sweep cannot reach other accounts or groups.</td>
+</tr>
+<tr>
+<td><code>meta.location</code></td>
+<td>Relative: <code>/Users/&lt;uuid&gt;</code>, <code>/Groups/&lt;uuid&gt;</code></td>
+</tr>
+<tr>
+<td>Filters</td>
+<td>Users: <code>externalId</code>, <code>userName</code>, <code>emails</code>, <code>active</code>. Groups: <code>externalId</code>, <code>displayName</code>.</td>
+</tr>
+<tr>
+<td>User create</td>
+<td><code>externalId</code> is required. An existing account that matches (see <a href="#matching-scim-users-to-existing-accounts">Matching</a>) is linked instead of duplicated, unless it is staff or support (409). Responses echo SRAM's own <code>userName</code>.</td>
+</tr>
+<tr>
+<td>SSH keys</td>
+<td><code>x509Certificates</code> (base64 OpenSSH keys) are synced as the user's keys when <code>SCIM_INBOUND_SSH_KEYS_ENABLED</code> is on. Invalid keys are skipped.</td>
+</tr>
+<tr>
+<td>Affiliations</td>
+<td><code>eduPersonScopedAffiliation</code> (comma-separated) becomes <code>affiliations</code>.</td>
+</tr>
+<tr>
+<td>Groups</td>
+<td>Stored with SRAM's URN, kind (collaboration or group), description, labels and resolved members. Unknown member ids are skipped.</td>
+</tr>
+<tr>
+<td>User delete</td>
+<td>Deactivates the user through <code>remove_user_from_isd</code> and unlinks it from SRAM. A later push re-links and reactivates it.</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td>Not supported (SRAM always sends full resources with PUT).</td>
+</tr>
+<tr>
+<td>Responses</td>
+<td>Echo SRAM's <code>displayName</code>, <code>x509Certificates</code> and extension blocks, so SRAM's change detection does not re-send unchanged users.</td>
+</tr>
+</tbody>
+</table>
+<p>Register Waldur as <strong>one</strong> SRAM service. All SRAM services pointing at the same Waldur share one set of SRAM-provisioned objects, so a sweep by one service would delete the objects another service provisioned.</p>
 <h2 id="configuration-reference">Configuration reference</h2>
 <p>All keys live under the Constance fieldset <strong>SCIM Identity Provider</strong> in the Waldur admin.</p>
 <table>
@@ -19775,6 +19937,21 @@ waldur<span class="w"> </span>scim_pull_user<span class="w"> </span>--username<s
 <td><code>SCIM_INBOUND_ALLOWED_ATTRIBUTES</code></td>
 <td><code>first_name, last_name, email, organization, affiliations</code></td>
 <td>Subset of writable user attributes that SCIM is allowed to set.</td>
+</tr>
+<tr>
+<td><code>SCIM_USER_MATCH_WALDUR_ATTRIBUTE</code></td>
+<td><code>username</code></td>
+<td>Waldur field that links a SCIM user to an existing account.</td>
+</tr>
+<tr>
+<td><code>SCIM_USER_MATCH_SCIM_ATTRIBUTE</code></td>
+<td><code>userName</code></td>
+<td>SCIM attribute holding the matched value.</td>
+</tr>
+<tr>
+<td><code>SRAM_INTEGRATION_ENABLED</code></td>
+<td><code>False</code></td>
+<td>Serve the SRAM profile at <code>/scim/v2/sram/</code>.</td>
 </tr>
 <tr>
 <td><code>SCIM_PULL_API_URL</code></td>
