@@ -35,6 +35,8 @@ Waldur supports multiple authentication methods to meet diverse organizational n
   * Custom Keycloak mappers for Waldur OfferingUser usernames and group access
   * MinIO integration for policy-based access control
 
+* **SRAM** - SURF Research Access Management pushes research collaborations and their members to Waldur over SCIM 2.0. See the [SRAM integration guide](sram/index.md), including a local SBS setup for development.
+
 * **SAML2** - Support for generic SAML-based identity federations with automated account creation and updates based on SAML attributes.
 
 * **Waldur DB** - Built-in user management with customizable profile fields to adapt to specific deployment requirements.
