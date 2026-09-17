@@ -3748,6 +3748,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="SRAM profile (/scim/v2/sram/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sram-project-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SRAM project rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#switching-sram-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching SRAM off
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19112,6 +19140,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="SRAM profile (/scim/v2/sram/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sram-project-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SRAM project rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#switching-sram-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching SRAM off
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19898,6 +19954,18 @@ waldur<span class="w"> </span>scim_pull_user<span class="w"> </span>--username<s
 <td>Stored with SRAM's URN, kind (collaboration or group), description, labels and resolved members. Unknown member ids are skipped.</td>
 </tr>
 <tr>
+<td>Placeholder roles</td>
+<td>Every collaboration and sub-group gets a customer-scoped role private to its organization, named <code>CUSTOMER.&lt;org-slug&gt;.SRAM.&lt;co&gt;[.&lt;group&gt;]</code> and described by the SRAM display name. It copies the permissions of <code>SRAM_PLACEHOLDER_ROLE_TEMPLATE</code> (none by default). Active members are granted it with <code>UserRole.source = sram:&lt;group uuid&gt;</code>; members that leave, are suspended or are deleted lose SRAM's grant. A grant made by hand is left alone. Deleting the group revokes every grant of the role, including hand-made ones, and deletes the role. The role can also be granted manually. The role hygiene report lists placeholders as <code>org-role-unmanaged</code>: their names are maintained by the SRAM sync.</td>
+</tr>
+<tr>
+<td>Notifications and quotas</td>
+<td>Role events from SRAM grants and revocations are logged with <code>role_source</code> and <code>suppress_email: true</code>: email hooks and system notifications skip them, webhooks still receive them. Placeholder holders count toward the organization's <code>nc_user_count</code>.</td>
+</tr>
+<tr>
+<td>Organizations</td>
+<td>The first URN segment is the SRAM organisation short name. It maps to the customer whose <code>backend_id</code> equals it. Otherwise a customer with exactly that name and an empty <code>backend_id</code> is adopted (its <code>backend_id</code> is set and a <code>customer_update_succeeded</code> event records it). Otherwise a customer is created. Several candidates → 409. Organizations are never deleted by SRAM.</td>
+</tr>
+<tr>
 <td>User delete</td>
 <td>Deactivates the user through <code>remove_user_from_isd</code> and unlinks it from SRAM. A later push re-links and reactivates it.</td>
 </tr>
@@ -19911,7 +19979,52 @@ waldur<span class="w"> </span>scim_pull_user<span class="w"> </span>--username<s
 </tr>
 </tbody>
 </table>
+<p>SBS (observed with its current <code>main</code>) does not push the deletion of a sub-group on its own: the deletion is only propagated by the next sweep. Enable the sweep for the Waldur service once Waldur runs this release.</p>
+<p>After an upgrade or a settings change, <code>waldur sram_resync</code> re-applies the last payload SRAM pushed for every group; SRAM itself only re-sends groups that changed.</p>
 <p>Register Waldur as <strong>one</strong> SRAM service. All SRAM services pointing at the same Waldur share one set of SRAM-provisioned objects, so a sweep by one service would delete the objects another service provisioned.</p>
+<h3 id="sram-project-rules">SRAM project rules</h3>
+<p>Staff define rules, for all organizations at once, that give the holders of SRAM placeholder roles a role in matching projects of the same organization: <code>/api/sram-project-rules/</code> (staff only; 404 while <code>SRAM_INTEGRATION_ENABLED</code> is off). <code>/api/sram-groups/</code> lists what SRAM provisioned.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source_kind</code></td>
+<td><code>co</code>, <code>group</code> or <code>any</code></td>
+</tr>
+<tr>
+<td><code>labels</code></td>
+<td>The collaboration must carry one of them; a group is judged by its collaboration's labels. Empty = any.</td>
+</tr>
+<tr>
+<td><code>group_short_name_patterns</code></td>
+<td>Group short names (<code>admins</code>, <code>adm*</code>). Requires <code>source_kind</code> <code>group</code> or <code>any</code>.</td>
+</tr>
+<tr>
+<td><code>project_field</code> / <code>project_match</code> / <code>project_pattern</code></td>
+<td>Selects projects by <code>backend_id</code> or <code>slug</code>, <code>exact</code>, <code>prefix</code> or <code>regex</code>. Placeholders: <code>{co_external_id}</code>, <code>{co_identifier}</code> (external id without <code>@scope</code>), <code>{co_short_name}</code>, <code>{org_short_name}</code>, <code>{group_short_name}</code>. Values are regex-escaped for <code>regex</code>. Only projects of the group's organization are ever selected.</td>
+</tr>
+<tr>
+<td><code>project_role</code></td>
+<td>An active project-scoped role</td>
+</tr>
+</tbody>
+</table>
+<p>Example: workspaces created by an external system with <code>backend_id = &lt;co external id&gt;_&lt;workspace id&gt;</code> are matched by <code>backend_id</code> + <code>prefix</code> + <code>{co_external_id}_</code>.</p>
+<ul>
+<li>Everyone holding the placeholder role, whoever granted it, gets the project role with <code>UserRole.source = sram-rule:&lt;rule uuid&gt;:&lt;group uuid&gt;</code>. An existing grant of that role is not duplicated, and reconciliation only ever revokes grants carrying its own source.</li>
+<li>Reconciliation runs when a group is pushed (a collaboration push also covers its groups, whose labels it provides), when a placeholder role is granted or revoked (including by hand), when a rule is created, changed or deleted (retroactive, also from the Django admin), when a project is created or its <code>backend_id</code>, slug or organization changes, and on <code>waldur sram_resync</code>.</li>
+<li>A grant that <code>validate_role_grant</code> refuses is skipped and logged. Rule grants are quiet: their events are logged without email.</li>
+<li><code>GET /api/sram-project-rules/&lt;uuid&gt;/preview/</code> lists the matching groups with the projects and users the rule applies to.</li>
+<li>Regular expressions run in PostgreSQL and are validated there on save. A rule whose projects cannot be selected is skipped and keeps its existing grants.</li>
+<li>When a grant is revoked, the other rules of that organization are re-checked, so a role two rules assert survives the removal of one of them.</li>
+</ul>
+<h3 id="switching-sram-off">Switching SRAM off</h3>
+<p><code>SRAM_INTEGRATION_ENABLED</code> is the backend switch; the homeport feature <code>sram.integration</code> only shows or hides the SRAM administration page and the SRAM markers. While the setting is off, SRAM data is <strong>frozen</strong>: <code>/scim/v2/sram/</code> and the SRAM APIs refuse requests, and nothing re-applies placeholder roles or project rules, not even when projects or placeholder grants change. Existing grants stay as they are. After switching it back on, run <code>waldur sram_resync</code>: it re-applies every group and revokes the grants of rules or groups deleted in the meantime.</p>
 <h2 id="configuration-reference">Configuration reference</h2>
 <p>All keys live under the Constance fieldset <strong>SCIM Identity Provider</strong> in the Waldur admin.</p>
 <table>
@@ -19952,6 +20065,11 @@ waldur<span class="w"> </span>scim_pull_user<span class="w"> </span>--username<s
 <td><code>SRAM_INTEGRATION_ENABLED</code></td>
 <td><code>False</code></td>
 <td>Serve the SRAM profile at <code>/scim/v2/sram/</code>.</td>
+</tr>
+<tr>
+<td><code>SRAM_PLACEHOLDER_ROLE_TEMPLATE</code></td>
+<td><code>""</code></td>
+<td>Organization role whose permissions SRAM placeholder roles copy.</td>
 </tr>
 <tr>
 <td><code>SCIM_PULL_API_URL</code></td>
