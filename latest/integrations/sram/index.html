@@ -18981,13 +18981,13 @@ connected COs to that service's SCIM 2.0 endpoint.</p>
 <p>This page describes how to connect Waldur to SRAM as such a service, and how to
 run SBS locally next to a Waldur development stack to work on the integration.</p>
 <div class="admonition note">
-<p class="admonition-title">Availability</p>
+<p class="admonition-title">Requirements</p>
 <p>The SRAM integration (<code>/scim/v2/sram/</code>, organization mapping, placeholder
-roles and project rules) is tracked in
-<a href="https://code.opennodecloud.com/waldur/waldur-mastermind/-/work_items/462">waldur-mastermind#462</a>
-and ships once its merge requests are merged. Older Waldur releases accept
-only the users SRAM pushes to the generic <code>/scim/v2/</code> endpoint; do not
-connect SRAM to them with the sweep enabled (see <a href="#the-sweep">The sweep</a>).</p>
+roles and project rules) requires Waldur 8.1.3 or later; release candidates
+up to <code>8.1.3-rc.14</code> do not include it. Older releases only accept users on
+the generic <code>/scim/v2/</code> endpoint, and a sweep against that endpoint deletes
+everything SRAM does not know, so never connect SRAM to them with the sweep
+enabled (see <a href="#the-sweep">The sweep</a>).</p>
 </div>
 <h2 id="how-sram-talks-to-a-service">How SRAM talks to a service</h2>
 <pre class="mermaid"><code>sequenceDiagram
@@ -19094,9 +19094,11 @@ user quota. <code>waldur sram_resync</code> re-applies the stored SRAM data, for
 after changing the placeholder template.</p>
 <div class="admonition tip">
 <p class="admonition-title">Keep the team private</p>
-<p>Every role in an organization used to reveal the organization's member list.
-Team listing now requires <code>CUSTOMER.VIEW_TEAM</code> / <code>PROJECT.VIEW_TEAM</code>, which
-placeholder roles do not have unless their template does.</p>
+<p>Listing an organization's or project's members requires <code>CUSTOMER.VIEW_TEAM</code>
+or <code>PROJECT.VIEW_TEAM</code>. The built-in owner, support, reader and project roles
+have it, and upgrading adds it to their organization-specific copies too.
+Placeholder roles only have it if <code>SRAM_PLACEHOLDER_ROLE_TEMPLATE</code> does, so
+by default SRAM members cannot see who else is in the organization.</p>
 </div>
 <h2 id="connecting-a-waldur-deployment">Connecting a Waldur deployment</h2>
 <ol>
