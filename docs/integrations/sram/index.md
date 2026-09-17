@@ -9,13 +9,13 @@ connected COs to that service's SCIM 2.0 endpoint.
 This page describes how to connect Waldur to SRAM as such a service, and how to
 run SBS locally next to a Waldur development stack to work on the integration.
 
-!!! note "Availability"
+!!! note "Requirements"
     The SRAM integration (`/scim/v2/sram/`, organization mapping, placeholder
-    roles and project rules) is tracked in
-    [waldur-mastermind#462](https://code.opennodecloud.com/waldur/waldur-mastermind/-/work_items/462)
-    and ships once its merge requests are merged. Older Waldur releases accept
-    only the users SRAM pushes to the generic `/scim/v2/` endpoint; do not
-    connect SRAM to them with the sweep enabled (see [The sweep](#the-sweep)).
+    roles and project rules) requires Waldur 8.1.3 or later; release candidates
+    up to `8.1.3-rc.14` do not include it. Older releases only accept users on
+    the generic `/scim/v2/` endpoint, and a sweep against that endpoint deletes
+    everything SRAM does not know, so never connect SRAM to them with the sweep
+    enabled (see [The sweep](#the-sweep)).
 
 ## How SRAM talks to a service
 
@@ -103,9 +103,11 @@ user quota. `waldur sram_resync` re-applies the stored SRAM data, for example
 after changing the placeholder template.
 
 !!! tip "Keep the team private"
-    Every role in an organization used to reveal the organization's member list.
-    Team listing now requires `CUSTOMER.VIEW_TEAM` / `PROJECT.VIEW_TEAM`, which
-    placeholder roles do not have unless their template does.
+    Listing an organization's or project's members requires `CUSTOMER.VIEW_TEAM`
+    or `PROJECT.VIEW_TEAM`. The built-in owner, support, reader and project roles
+    have it, and upgrading adds it to their organization-specific copies too.
+    Placeholder roles only have it if `SRAM_PLACEHOLDER_ROLE_TEMPLATE` does, so
+    by default SRAM members cannot see who else is in the organization.
 
 ## Connecting a Waldur deployment
 
@@ -171,7 +173,6 @@ members who get the role:
 ![Rule preview](img/waldur-sram-rule-preview.png)
 
 ![SRAM groups provisioned into Waldur](img/waldur-sram-groups.png)
-
 
 ## Switching the integration off
 
