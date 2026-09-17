@@ -104,8 +104,9 @@ after changing the placeholder template.
 
 !!! tip "Keep the team private"
     Listing an organization's or project's members requires `CUSTOMER.VIEW_TEAM`
-    or `PROJECT.VIEW_TEAM`. The built-in owner, support, reader and project roles
-    have it, and upgrading adds it to their organization-specific copies too.
+    or `PROJECT.VIEW_TEAM`. On upgrade, every existing organization and project
+    role receives it, so current users keep their team view; see
+    [team visibility](../../user-guide/staff-users/organization-roles.md#team-visibility).
     Placeholder roles only have it if `SRAM_PLACEHOLDER_ROLE_TEMPLATE` does, so
     by default SRAM members cannot see who else is in the organization.
 

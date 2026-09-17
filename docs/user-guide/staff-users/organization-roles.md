@@ -84,3 +84,26 @@ Members of the organization see its available roles wherever roles are chosen
 (team management, invitations). A concealed system role is no longer offered
 there; its organization clone appears in its place. Members of other
 organizations never see this organization's private roles.
+
+## Team visibility
+
+Seeing who else is in an organization or project is a permission of its own:
+`CUSTOMER.VIEW_TEAM` for the organization, `PROJECT.VIEW_TEAM` for a project.
+A role without it can still be assigned, but its holders get no **Team** tab and
+cannot list the members.
+
+- The built-in owner, support, reader, project administrator, project manager
+  and project member roles have it, and so do their organization clones.
+- When a deployment upgrades to the release that introduced these permissions,
+  every organization and project role that already exists receives the matching
+  one, so nobody loses the team view. SRAM placeholder roles are the exception:
+  they stay private.
+- A role you **create** afterwards has it only if you select it (or, for a
+  clone, if its template has it). Leave it out for roles whose holders should
+  not see the member list.
+- Roles defined in the deployment's `custom-roles.yaml` get their permissions
+  from that file on every deployment. Add `CUSTOMER.VIEW_TEAM` /
+  `PROJECT.VIEW_TEAM` there (or to `add_permissions` in
+  `permissions-override.yaml`); `import_roles` warns about roles that lack it.
+
+Staff and support users always see every team.
