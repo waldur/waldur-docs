@@ -19322,9 +19322,17 @@ reach it. Migration <code>permissions.0029_view_team_permissions</code> therefor
 view-team permission to the six system roles above <strong>and to their existing
 clones</strong>, so organization owners on a cloned role keep the team listing after
 the upgrade. It also covers stacks that never run <code>import_roles</code>.</p>
-<p>If a deployment replaces a built-in role's permission set in
-<code>custom-roles.yaml</code>, it must add the view-team permission to that list itself.
-Otherwise the role loses team visibility on upgrade.</p>
+<p>Migration <code>permissions.0030_view_team_for_existing_roles</code> does the same for
+<strong>every other organization or project role that exists at upgrade time</strong>, such
+as roles staff created by hand, because until then any role let its holder list
+the team. SRAM placeholder roles are left out: they are meant to be private.
+Roles created after the upgrade get the permission only when someone grants it.</p>
+<p>Roles defined in <code>custom-roles.yaml</code> are different: <code>import_roles</code> replaces
+their whole permission set on every deployment, so the migration's addition is
+dropped again. Add <code>CUSTOMER.VIEW_TEAM</code> / <code>PROJECT.VIEW_TEAM</code> to those roles'
+<code>permissions</code> lists, or to <code>add_permissions</code> in <code>permissions-override.yaml</code>,
+which is applied afterwards. <code>import_roles</code> warns about every organization or
+project role it loads without the matching permission.</p>
 <p>The test suite mirrors the YAML grant: an autouse fixture in the root
 <code>conftest.py</code> adds the matching permission to every customer- and
 project-scoped system role that <code>get_system_role</code> creates. A test that needs
