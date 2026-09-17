@@ -1,5 +1,46 @@
 # Changelog
 
+## 8.1.3-rc.15 - 2026-09-17
+
+### Highlights
+
+This release brings first-class support for SURF SRAM as an identity source: SCIM pushes from SRAM can now land directly in Waldur, map collaborations and groups onto organizations and roles, and grant project access through rules that staff configure and preview from a new administration page. Service providers get more control over what customers see and fill in when ordering — offering options can now be shown conditionally, Kubernetes topology and load balancer choices are configurable per offering, and offering managers can approve orders themselves. Team visibility is now driven by an explicit permission rather than "any role", so operators can decide precisely who sees project and organization membership.
+
+### What's New
+
+- SRAM integration: Waldur accepts SCIM pushes on a dedicated endpoint, matches incoming users to accounts by a configurable attribute pair, maps SRAM organisations to Waldur organizations, and creates a placeholder role per collaboration and group. Staff can define rules that turn placeholder membership into real project roles, and manage, preview and duplicate those rules from a new SRAM administration page with SRAM-aware badges across the UI.
+- Team visibility is now gated on an explicit view-team permission instead of any role, with a migration that preserves visibility for custom roles that already exist; the Team tab in the UI follows the same permission.
+- Offering options can be shown only when another option has a given value, configured in the offering editor and applied on order forms, resource option cards and provider approval dialogs.
+- Providers can set the Kubernetes cluster topology on the k8s user input and make the load balancer optional, so order forms only ask for what the offering actually supports.
+- Account settings can be configured once per service provider, with a page that previews what those settings produce for user accounts, POSIX ID pools and username conflicts.
+- Offering managers can now approve and reject orders placed with their offerings.
+- Call managers can activate a proposal workflow step directly from the dialog where they configure it, and calls can specify who support tickets are raised on behalf of.
+
+### Improvements
+
+- The invitation duplicate check now reports which roles an invited person already holds.
+- SRAM-sourced permission grants are recorded with their source, skip notification emails, and custom roles count toward user quotas.
+- SAF and SAP invoice report item texts no longer repeat the plan name.
+- The OpenStack create-subnet dialog supports IPv6 CIDRs and address modes, and instance fixed IPs are labelled "fixed" rather than "internal".
+- The deploy form can recover after an order is rejected instead of leaving the user stuck.
+- Badges across the interface were migrated to the shared design-token component for a consistent look, progress bars now use the live brand colour, and the offering Request button stays aligned with its neighbours.
+- The language list is seeded on boot instead of being overwritten, so whitelabeling customisations survive restarts.
+
+### Bug Fixes
+
+- Panels that stayed light grey in dark mode (Kubernetes order form cards, invoice tables, wizard steps) now follow the theme.
+- Logging configuration shipped in the container image is patched rather than replaced, so custom handlers are preserved; the docker-compose sample config documents the same behaviour.
+- Resource runtime state filtering now requires a scope, and the resource list filters were adjusted to match.
+- SCIM group sync applies the same grant validation as other permission paths.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [22 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.14...8.1.3-rc.15) - SRAM/SCIM identity integration, view-team permission model, conditional offering options and Kubernetes configuration, order approval by offering managers.
+- **Waldur Homeport**: [21 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.14...8.1.3-rc.15) - SRAM administration UI, permission-aware Team tab, provider account settings, Badge design-system migration, dark mode and OpenStack networking fixes.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.14...8.1.3-rc.15) - logging configuration sample updated to patch rather than replace.
+
+---
+
 ## 8.1.3-rc.14 - 2026-09-16
 
 ### Highlights
