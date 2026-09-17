@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-17T04:52:53.510187Z
+Generated: 2026-09-17T08:22:08.896908Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -85526,6 +85526,29 @@ Members of the organization see its available roles wherever roles are chosen
 there; its organization clone appears in its place. Members of other
 organizations never see this organization's private roles.
 
+## Team visibility
+
+Seeing who else is in an organization or project is a permission of its own:
+`CUSTOMER.VIEW_TEAM` for the organization, `PROJECT.VIEW_TEAM` for a project.
+A role without it can still be assigned, but its holders get no **Team** tab and
+cannot list the members.
+
+- The built-in owner, support, reader, project administrator, project manager
+  and project member roles have it, and so do their organization clones.
+- When a deployment upgrades to the release that introduced these permissions,
+  every organization and project role that already exists receives the matching
+  one, so nobody loses the team view. SRAM placeholder roles are the exception:
+  they stay private.
+- A role you **create** afterwards has it only if you select it (or, for a
+  clone, if its template has it). Leave it out for roles whose holders should
+  not see the member list.
+- Roles defined in the deployment's `custom-roles.yaml` get their permissions
+  from that file on every deployment. Add `CUSTOMER.VIEW_TEAM` /
+  `PROJECT.VIEW_TEAM` there (or to `add_permissions` in
+  `permissions-override.yaml`); `import_roles` warns about roles that lack it.
+
+Staff and support users always see every team.
+
 ---
 
 ### Organization onboarding
@@ -87141,8 +87164,9 @@ after changing the placeholder template.
 
 !!! tip "Keep the team private"
     Listing an organization's or project's members requires `CUSTOMER.VIEW_TEAM`
-    or `PROJECT.VIEW_TEAM`. The built-in owner, support, reader and project roles
-    have it, and upgrading adds it to their organization-specific copies too.
+    or `PROJECT.VIEW_TEAM`. On upgrade, every existing organization and project
+    role receives it, so current users keep their team view; see
+    [team visibility](../../user-guide/staff-users/organization-roles.md#team-visibility).
     Placeholder roles only have it if `SRAM_PLACEHOLDER_ROLE_TEMPLATE` does, so
     by default SRAM members cannot see who else is in the organization.
 
