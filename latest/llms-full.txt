@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-17T08:33:39.448929Z
+Generated: 2026-09-17T14:10:10.842663Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -82282,6 +82282,45 @@ each discounted component — see
     different plans of the same offering, keep a component's discount consistent
     across the plans, since the aggregated discount uses one plan's formula for
     the whole offering component.
+
+## Asking customers for order details
+
+The questions a customer answers when ordering an offering are configured on the offering's **User input** tab. Each input has a type (for example **String**, **Integer**, **Boolean**, **Select**, **Select multiple options**, **Date** or one of the Kubernetes configurations), a label, an optional help text, and can be marked required. Inputs on the **Resource options** tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.
+
+### Showing an input only when it applies
+
+A follow-up question often only makes sense after a certain answer. Open the input in the **Add option** or edit dialog, and under **Show only when** click **Add rule**:
+
+1. Pick an earlier input. Only **Boolean**, **Select** and **Select multiple options** inputs can control visibility, and the controlling input must come before the dependent one in the list.
+2. Pick the values that show the input: **Checked** or **Unchecked** for a **Boolean** input, or one or more choices for a select. A **Boolean** input the customer has not ticked counts as unchecked. For **Select multiple options**, the input is shown when any of the picked choices is selected.
+
+While the rule does not match, the input is hidden in the order form. A hidden input is never required, and a value it had is cleared and not stored with the order or the resource. Rules can be chained: when an input is hidden, inputs that depend on it are hidden too. **Remove rule** makes the input always visible again.
+
+For example, to ask which backups a customer wants and, for each of them, which storage account to use:
+
+| Input | Type | Show only when |
+|---|---|---|
+| etcd snapshots | Boolean | — |
+| etcd snapshot storage account | Select: *Own account*, *Request a new account on behalf of the project* (required) | etcd snapshots is **Checked** |
+| Velero backups | Boolean | — |
+| Velero backup storage account | Select, same choices (required) | Velero backups is **Checked** |
+| Longhorn backups | Boolean | — |
+| Longhorn backup storage account | Select, same choices (required) | Longhorn backups is **Checked** |
+
+A customer who ticks only **Velero backups** sees and must answer only the Velero account question.
+
+!!! note
+    An input that another input's rule refers to cannot be deleted, and it cannot lose its type or a choice the rule uses. Change or remove the rule first.
+
+### Kubernetes cluster topology
+
+The **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubernetes Configuration** inputs let the customer describe a cluster: Kubernetes version, OpenStack infrastructure, node groups and access rules. In the input's settings, **Cluster topology** decides how the controller nodes are placed:
+
+- **Single site, 3 controllers** — one datacenter holds all three controllers.
+- **Three sites, 1 controller each** — the cluster spans three datacenters, each configured separately.
+- **Customer chooses** — the order form shows a **Cluster topology** selector with both layouts. Switching it keeps the version, access rules, Longhorn and load balancer choices, and resets the per-datacenter infrastructure and node groups.
+
+When **Cluster topology** is left empty, the input type decides: one site for the single-datacenter input, three sites for the multi-datacenter one. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
 
 ## Offering management
 

@@ -17678,6 +17678,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#asking-customers-for-order-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking customers for order details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Asking customers for order details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#showing-an-input-only-when-it-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Showing an input only when it applies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-cluster-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubernetes cluster topology
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#offering-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19408,6 +19447,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#asking-customers-for-order-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking customers for order details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Asking customers for order details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#showing-an-input-only-when-it-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Showing an input only when it applies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-cluster-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubernetes cluster topology
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#offering-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20009,6 +20087,70 @@ different plans of the same offering, keep a component's discount consistent
 across the plans, since the aggregated discount uses one plan's formula for
 the whole offering component.</p>
 </div>
+<h2 id="asking-customers-for-order-details">Asking customers for order details</h2>
+<p>The questions a customer answers when ordering an offering are configured on the offering's <strong>User input</strong> tab. Each input has a type (for example <strong>String</strong>, <strong>Integer</strong>, <strong>Boolean</strong>, <strong>Select</strong>, <strong>Select multiple options</strong>, <strong>Date</strong> or one of the Kubernetes configurations), a label, an optional help text, and can be marked required. Inputs on the <strong>Resource options</strong> tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.</p>
+<h3 id="showing-an-input-only-when-it-applies">Showing an input only when it applies</h3>
+<p>A follow-up question often only makes sense after a certain answer. Open the input in the <strong>Add option</strong> or edit dialog, and under <strong>Show only when</strong> click <strong>Add rule</strong>:</p>
+<ol>
+<li>Pick an earlier input. Only <strong>Boolean</strong>, <strong>Select</strong> and <strong>Select multiple options</strong> inputs can control visibility, and the controlling input must come before the dependent one in the list.</li>
+<li>Pick the values that show the input: <strong>Checked</strong> or <strong>Unchecked</strong> for a <strong>Boolean</strong> input, or one or more choices for a select. A <strong>Boolean</strong> input the customer has not ticked counts as unchecked. For <strong>Select multiple options</strong>, the input is shown when any of the picked choices is selected.</li>
+</ol>
+<p>While the rule does not match, the input is hidden in the order form. A hidden input is never required, and a value it had is cleared and not stored with the order or the resource. Rules can be chained: when an input is hidden, inputs that depend on it are hidden too. <strong>Remove rule</strong> makes the input always visible again.</p>
+<p>For example, to ask which backups a customer wants and, for each of them, which storage account to use:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Type</th>
+<th>Show only when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>etcd snapshots</td>
+<td>Boolean</td>
+<td>—</td>
+</tr>
+<tr>
+<td>etcd snapshot storage account</td>
+<td>Select: <em>Own account</em>, <em>Request a new account on behalf of the project</em> (required)</td>
+<td>etcd snapshots is <strong>Checked</strong></td>
+</tr>
+<tr>
+<td>Velero backups</td>
+<td>Boolean</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Velero backup storage account</td>
+<td>Select, same choices (required)</td>
+<td>Velero backups is <strong>Checked</strong></td>
+</tr>
+<tr>
+<td>Longhorn backups</td>
+<td>Boolean</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Longhorn backup storage account</td>
+<td>Select, same choices (required)</td>
+<td>Longhorn backups is <strong>Checked</strong></td>
+</tr>
+</tbody>
+</table>
+<p>A customer who ticks only <strong>Velero backups</strong> sees and must answer only the Velero account question.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>An input that another input's rule refers to cannot be deleted, and it cannot lose its type or a choice the rule uses. Change or remove the rule first.</p>
+</div>
+<h3 id="kubernetes-cluster-topology">Kubernetes cluster topology</h3>
+<p>The <strong>Single-Datacenter Kubernetes Configuration</strong> and <strong>Multi-Datacenter Kubernetes Configuration</strong> inputs let the customer describe a cluster: Kubernetes version, OpenStack infrastructure, node groups and access rules. In the input's settings, <strong>Cluster topology</strong> decides how the controller nodes are placed:</p>
+<ul>
+<li><strong>Single site, 3 controllers</strong> — one datacenter holds all three controllers.</li>
+<li><strong>Three sites, 1 controller each</strong> — the cluster spans three datacenters, each configured separately.</li>
+<li><strong>Customer chooses</strong> — the order form shows a <strong>Cluster topology</strong> selector with both layouts. Switching it keeps the version, access rules, Longhorn and load balancer choices, and resets the per-datacenter infrastructure and node groups.</li>
+</ul>
+<p>When <strong>Cluster topology</strong> is left empty, the input type decides: one site for the single-datacenter input, three sites for the multi-datacenter one. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.</p>
 <h2 id="offering-management">Offering management</h2>
 <p>The offering's state is changed from its <strong>Edit</strong> tab. The button in the top-right corner shows the next step for the current state:</p>
 <ul>
