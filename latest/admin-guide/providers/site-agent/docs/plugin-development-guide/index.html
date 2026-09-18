@@ -18563,6 +18563,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#steps-to-implement-a-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Steps to implement a plugin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#basebackend-method-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19434,6 +19445,94 @@ distinct.</p>
     class SA core
     class BE,CL plugin
     class EXT external</code></pre>
+<h2 id="steps-to-implement-a-plugin">Steps to implement a plugin</h2>
+<p>This is the step-by-step path for a developer building a new backend
+plugin from scratch. It links out to the detailed reference sections
+below for the specifics of each step.</p>
+<ol>
+<li>
+<p><strong>Study a reference plugin.</strong> Pick the closest match to your target
+   system: <code>plugins/slurm/</code> for a CLI-based backend, <code>plugins/mup/</code> for
+   an HTTP API-based one, or <code>plugins/waldur/</code> if you need async orders
+   or federation-style hooks. Read its <code>backend.py</code>, <code>client.py</code>, and
+   <code>tests/</code> together — the tests show the expected call shapes.</p>
+</li>
+<li>
+<p><strong>Scaffold the package from the template.</strong> Copy <code>docs/plugin-template/</code>
+   to a new directory (e.g. <code>plugins/mycustom/</code>) and rename the package
+   (<code>waldur_site_agent_mycustom</code> → <code>waldur_site_agent_&lt;yours&gt;</code>) and the
+   class names throughout.</p>
+</li>
+<li>
+<p><strong>Design the config.</strong> Decide what goes in <code>backend_settings</code> (backend
+   behaviour, e.g. account prefixes) versus <code>backend_components</code> (billable
+   dimensions, e.g. cpu/storage). See the <a href="#annotated-yaml-configuration">annotated YAML configuration</a> below, and pick <code>unit_factor</code> values
+   carefully — see <a href="#common-pitfalls">Common pitfalls</a>.</p>
+</li>
+<li>
+<p><strong>Implement <code>BaseClient</code>.</strong> This is the thin layer that talks to the
+   external system. Start with <code>get_resource</code>, <code>create_resource</code>,
+   <code>delete_resource</code>, and <code>list_resources</code> — see the <a href="#baseclient-method-reference">BaseClient method
+   reference</a>.</p>
+</li>
+<li>
+<p><strong>Implement <code>BaseBackend</code>.</strong> Call <code>super().__init__(backend_settings,
+   backend_components)</code> first, then implement the abstract methods in
+   this order: <code>ping</code>, <code>_pre_create_resource</code>, <code>_collect_resource_limits</code>,
+   <code>_get_usage_report</code>. Fill in the remaining abstract methods, and only
+   override hook methods (<code>post_create_resource</code>, <code>_pre_delete_resource</code>,
+   etc.) if your backend needs the extra behaviour — see the <a href="#basebackend-method-reference">BaseBackend
+   method reference</a> and <a href="#agent-mode-method-matrix">Agent mode method
+   matrix</a> for what each mode calls.</p>
+</li>
+<li>
+<p><strong>Opt into capability flags as needed.</strong> <code>supports_decreasing_usage</code>,
+   <code>supports_async_orders</code>, <code>supports_user_homedirs</code>,
+   <code>supports_periodic_settings</code>, <code>handled_resource_states</code>, etc. — see
+   <a href="#capability-flags-and-class-attributes">Capability flags and class attributes</a>.
+   Leave them at their defaults unless your backend actually needs the
+   behaviour change.</p>
+</li>
+<li>
+<p><strong>Add a username management backend, if needed.</strong> Only required if
+   your system needs its own username generation/lookup logic instead of
+   the shared <code>base</code> backend — see <a href="#username-management-backends">Username management
+   backends</a>.</p>
+</li>
+<li>
+<p><strong>Register entry points in <code>pyproject.toml</code>.</strong> At minimum
+   <code>waldur_site_agent.backends</code>; add <code>username_management_backends</code>,
+   <code>component_schemas</code>, or <code>backend_settings_schemas</code> groups as needed —
+   see <a href="#entry-point-registration">Entry point registration</a>.</p>
+</li>
+<li>
+<p><strong>Write tests.</strong> Mock <code>BaseClient</code>, and assert the usage-report shape,
+   the limit-conversion math, and error handling per mode — see <a href="#testing-guidance">Testing
+   guidance</a>.</p>
+</li>
+<li>
+<p><strong>Install and verify.</strong></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>uv<span class="w"> </span>sync<span class="w"> </span>--all-packages
+<span class="nb">cd</span><span class="w"> </span>plugins/mycustom<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/
+uv<span class="w"> </span>run<span class="w"> </span>waldur_site_diagnostics<span class="w">   </span><span class="c1"># confirms the entry point resolves</span>
+uvx<span class="w"> </span>prek<span class="w"> </span>run<span class="w"> </span>--all-files
+</code></pre></div></td></tr></tbody></table></div>
+<p>Plugin tests only resolve their entry points when run from inside the
+plugin directory — see the "Run plugin tests from inside the plugin
+dir" gotcha in the repo's <code>CLAUDE.md</code>.</p>
+</li>
+<li>
+<p><strong>Wire it into a config file.</strong> Add an <code>offerings</code> entry pointing
+    <code>order_processing_backend</code> / <code>reporting_backend</code> /
+    <code>membership_sync_backend</code> at your entry point name, and run the agent
+    against a real or staging offering to confirm end-to-end behaviour.</p>
+</li>
+</ol>
+<p>Before opening a merge request, skim <a href="#common-pitfalls">Common pitfalls</a>
+once more — most plugin review comments trace back to one of those six.</p>
 <h2 id="basebackend-method-reference">BaseBackend method reference</h2>
 <h3 id="abstract-methods-must-implement">Abstract methods (must implement)</h3>
 <h4 id="pingraise_exception-bool-false-bool"><code>ping(raise_exception: bool = False) -&gt; bool</code></h4>
