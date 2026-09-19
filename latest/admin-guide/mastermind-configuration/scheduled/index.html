@@ -18616,7 +18616,7 @@ td:nth-child(4) {
 <td><code>check-polices</code></td>
 <td><code>waldur_mastermind.policy.check_polices</code></td>
 <td>Cron: <code>0 */4 * * * (m/h/dM/MY/d)</code></td>
-<td>Evaluate all policies across all policy types in the system.</td>
+<td>Evaluate all policies across all policy types in the system.<br><br>Passes <code>reconcile_already_fired=True</code> so this periodic sweep also<br>re-applies idempotent immediate actions (request_pausing,<br>request_downscaling, restrict_members) for policies that are still<br>triggered but were already fired by an earlier evaluation -- catching<br>resources that became newly eligible since then (an offering's<br>supports_pausing flag turned on, a resource added to scope) instead of<br>leaving them stuck unpaused/undownscaled forever. See<br><code>utils._reconcile_idempotent_actions</code> for why this is safe to repeat.<br>The frequent per-event evaluation path (<code>evaluate_policies_async</code>)<br>deliberately does not pass this -- only this periodic safety net does.</td>
 </tr>
 <tr>
 <td><code>check-sla-breaches</code></td>
