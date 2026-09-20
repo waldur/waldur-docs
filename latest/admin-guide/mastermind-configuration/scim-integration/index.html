@@ -19824,6 +19824,7 @@
 <li><strong>Project Roles</strong>: User must have active project roles</li>
 <li><strong>Marketplace Resources</strong>: Resources must be in <code>OK</code> state</li>
 <li><strong>Offering Users</strong>: Offering users must be in <code>OK</code> state with usernames</li>
+<li><strong>Offering opt-in</strong>: The offering must set <code>plugin_options.enable_scim_entitlements</code> to <code>true</code></li>
 <li><strong>SSH Endpoints</strong>: Offerings must have SSH endpoints (<code>ssh://</code> URLs)</li>
 </ol>
 <p>The sync process:
@@ -19870,10 +19871,11 @@
 </tr>
 </tbody>
 </table>
+<p>The Constance flag is deployment-wide. Each offering must also opt in via <code>plugin_options.enable_scim_entitlements</code>. An SSH access endpoint alone does not include the offering in entitlement sync. After enabling the option on an existing offering, trigger a full sync (<code>POST /api/users/scim_sync_all/</code>) so current users pick up the change.</p>
 <h3 id="prerequisites">Prerequisites</h3>
 <ul>
 <li>Users must exist in SCIM service with usernames matching Waldur <code>user.username</code></li>
-<li>Marketplace setup: active project roles, resources in <code>OK</code> state, offering users in <code>OK</code> state with usernames, SSH endpoints (<code>ssh://</code> URLs) configured in offerings</li>
+<li>Marketplace setup: active project roles, resources in <code>OK</code> state, offering users in <code>OK</code> state with usernames, <code>enable_scim_entitlements</code> on the offering, SSH endpoints (<code>ssh://</code> URLs) configured in offerings</li>
 </ul>
 <h2 id="api-reference">API Reference</h2>
 <h3 id="scim-client-methods">SCIM Client Methods</h3>
@@ -20030,10 +20032,10 @@ curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </spa
 <p><strong>Solution</strong>: Verify user exists in SCIM with exact <code>user.username</code> from Waldur.</p>
 <h4 id="sync-not-triggering">Sync Not Triggering</h4>
 <p><strong>Symptom</strong>: Entitlements not updating when roles change</p>
-<p><strong>Check</strong>: <code>SCIM_MEMBERSHIP_SYNC_ENABLED</code>, configuration completeness, user has username and active project roles, marketplace resources with SSH endpoints exist.</p>
+<p><strong>Check</strong>: <code>SCIM_MEMBERSHIP_SYNC_ENABLED</code>, configuration completeness, user has username and active project roles, offerings have <code>enable_scim_entitlements</code> and SSH endpoints.</p>
 <h4 id="entitlements-not-being-added">Entitlements Not Being Added</h4>
 <p><strong>Symptom</strong>: User has roles but no entitlements in SCIM</p>
-<p><strong>Check</strong>: Resources in <code>OK</code> state, offering users in <code>OK</code> state with usernames, SSH endpoints configured, user is active.</p>
+<p><strong>Check</strong>: Resources in <code>OK</code> state, offering users in <code>OK</code> state with usernames, offering has <code>enable_scim_entitlements</code>, SSH endpoints configured, user is active.</p>
 <h3 id="logging">Logging</h3>
 <p>SCIM operations are logged with the <code>waldur_core.users.scim</code> logger. Check logs for:
 - <code>SCIM add X entitlements for user Y</code>
