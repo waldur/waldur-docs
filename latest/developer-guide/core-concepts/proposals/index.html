@@ -7981,13 +7981,41 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#support-ticket-caller" class="md-nav__link">
+  <a href="#order-author" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Support Ticket Caller
+        Order Author
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Order Author">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#being-named-does-not-grant-anything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Being named does not grant anything
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-the-author-cannot-receive-a-ticket" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the author cannot receive a ticket
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -19770,13 +19798,41 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#support-ticket-caller" class="md-nav__link">
+  <a href="#order-author" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Support Ticket Caller
+        Order Author
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Order Author">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#being-named-does-not-grant-anything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Being named does not grant anything
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-the-author-cannot-receive-a-ticket" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the author cannot receive a ticket
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -20667,19 +20723,19 @@
 <li>Users gain appropriate project permissions</li>
 <li>Resources become accessible immediately</li>
 </ol>
-<h3 id="support-ticket-caller">Support Ticket Caller</h3>
-<p>Allocation places the marketplace orders as the <strong>system robot</strong>, so that the
-call review — which already authorised the spend — is not second-guessed by a
-consumer approval step. The robot has no email address, and for offerings
-fulfilled by raising a helpdesk ticket the caller's address is what the ticket
-is opened on behalf of. It is also who Waldur addresses its ticket
-notifications to, so a real person has to stand in.</p>
-<p><code>Call.support_ticket_caller</code> decides who:</p>
+<h3 id="order-author">Order Author</h3>
+<p>When a call grants resources it places a marketplace order per granted
+resource. Those orders need a name on them. It is not a formality: for an
+offering fulfilled by raising a helpdesk ticket, the order's <code>created_by</code> is
+who the request is opened on behalf of and who the service desk replies to,
+and it is who Waldur addresses its own order mail to. A robot has no email
+address and cannot be either.</p>
+<p><code>Call.order_author</code> decides whose name they carry:</p>
 <table>
 <thead>
 <tr>
 <th>Value</th>
-<th>Ticket is raised on behalf of</th>
+<th>Orders are attributed to</th>
 </tr>
 </thead>
 <tbody>
@@ -20697,46 +20753,70 @@ notifications to, so a real person has to stand in.</p>
 </tr>
 <tr>
 <td><code>specific_user</code></td>
-<td><code>Call.support_ticket_caller_user</code> — e.g. a shared grants-office account</td>
+<td><code>Call.order_author_user</code> — e.g. a shared grants-office account</td>
 </tr>
 </tbody>
 </table>
 <p>Only someone holding a role on the call, on the organisation managing it, or on
-that organisation's customer may be named as the contact. Whoever is named
-starts receiving the call's ticket mail — project name, order description,
-limits — and gets an account created for them on the helpdesk, so the choice is
-kept to people already attached to the call.</p>
+that organisation's customer may be named. Whoever is named starts receiving
+the call's order mail — project name, order description, limits — and, for a
+helpdesk-backed offering, gets an account created for them on the service desk,
+so the choice is kept to people already attached to the call.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Route every ticket from this call to the grants office</span>
-<span class="n">call</span><span class="o">.</span><span class="n">support_ticket_caller</span> <span class="o">=</span> <span class="n">Call</span><span class="o">.</span><span class="n">TicketCaller</span><span class="o">.</span><span class="n">SPECIFIC_USER</span>
-<span class="n">call</span><span class="o">.</span><span class="n">support_ticket_caller_user</span> <span class="o">=</span> <span class="n">grants_office_user</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Attribute every order this call places to the grants office</span>
+<span class="n">call</span><span class="o">.</span><span class="n">order_author</span> <span class="o">=</span> <span class="n">Call</span><span class="o">.</span><span class="n">OrderAuthor</span><span class="o">.</span><span class="n">SPECIFIC_USER</span>
+<span class="n">call</span><span class="o">.</span><span class="n">order_author_user</span> <span class="o">=</span> <span class="n">grants_office_user</span>
 <span class="n">call</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>If the configured role is held by nobody, allocation falls back to the
+applicant, and then to the system robot, rather than refusing to allocate.</p>
+<h4 id="being-named-does-not-grant-anything">Being named does not grant anything</h4>
+<p>The author is a name on the order, not an authorisation.</p>
+<ul>
+<li><strong>The spend was authorised by the call review.</strong> Accepting the proposal is
+  the consumer-side decision on the order: the granted project belongs to the
+  call's managing organisation, so whoever accepted is deciding on that
+  organisation's behalf, and they are recorded as the order's
+  <code>consumer_reviewed_by</code>. An automatic acceptance records the system robot.</li>
+<li><strong>The order is carried out with system authority.</strong> Provisioning replays the
+  offering plugin's own API as a user, and the person named may hold no role on
+  the granted project at all — a grants office typically does not. Allocated
+  orders are therefore processed as the system robot, and the order is flagged
+  <code>placed_automatically</code> to say so.</li>
+<li><strong>Reading a ticket in Waldur still needs a project role.</strong></li>
+</ul>
 <div class="admonition warning">
-<p class="admonition-title">Being the caller does not grant access to the ticket in Waldur</p>
-<p>These tickets are scoped to the allocated project and its organization, and
-that scope is what decides who can read and answer them in the customer
-portal. A caller with no role on the project still receives Waldur's ticket
-emails, but the <code>support/issue/&lt;uuid&gt;/</code> link in them will not open for them
-and they cannot comment in Waldur — only the helpdesk side works. This is
-worth weighing before pointing <code>call_manager</code> or <code>specific_user</code> at someone
-outside the project, such as a grants office.</p>
+<p class="admonition-title">Being the order's author does not grant access to its ticket in Waldur</p>
+<p>Helpdesk tickets raised for these orders are scoped to the allocated
+project and its organization, and that scope is what decides who can read
+and answer them in the customer portal. An author with no role on the
+project still receives Waldur's ticket emails, but the
+<code>support/issue/&lt;uuid&gt;/</code> link in them will not open for them and they cannot
+comment in Waldur — only the helpdesk side works. This is worth weighing
+before pointing <code>call_manager</code> or <code>specific_user</code> at someone outside the
+project, such as a grants office.</p>
 </div>
-<p>If the chosen person has no email address, the caller falls back through the
-project's manager, administrator and member roles to the organization owner,
-taking the first active user with an address. The same chain handles orders
-with no call behind them at all. Only when nobody on the project can be reached
-does the order fail, naming the project.</p>
-<p>The call's setting is found through the resource the order belongs to, not
-through the project, so it keeps applying after allocation: when the scheduled
-end-date or cost-policy sweep later terminates a granted resource, that
-termination ticket goes to the call's configured caller too. A resource that
-was never granted from a proposal has no call to consult and goes straight to
-the role chain.</p>
-<p>The order's <code>created_by</code> stays the robot regardless: it records who placed the
-order, and the marketplace approval gate reads its staff flag.</p>
+<h4 id="when-the-author-cannot-receive-a-ticket">When the author cannot receive a ticket</h4>
+<p>A helpdesk ticket needs an address. If the order's author has none — an SSO
+account provisioned without an email claim, or one of the automated sweeps that
+still place orders as a robot — the caller falls back through the project's
+manager, administrator and member roles to the organization owner, taking the
+first active user with an address. Only when nobody on the project can be
+reached does the order fail, naming the project.</p>
+<p>Because the name is on the order itself, this keeps working after allocation:
+when the scheduled end-date or cost-policy sweep later terminates a granted
+resource, the termination order it places is a fresh one and follows the
+ordinary rules for the person who triggered it.</p>
+<div class="admonition note">
+<p class="admonition-title">Known gap: termination tickets do not follow the call's author</p>
+<p>Neither sweep carries the call's order author onto the termination order it
+places, so those orders are attributed to the system robot and their
+helpdesk tickets fall through the project's roles instead of reaching the
+configured contact. Tracked in
+<a href="https://code.opennodecloud.com/waldur/waldur-mastermind/-/issues/488">waldur-mastermind#488</a>.</p>
+</div>
 <h2 id="realistic-usage-examples">Realistic Usage Examples</h2>
 <h3 id="1-academic-hpc-resource-allocation">1. Academic HPC Resource Allocation</h3>
 <p><strong>Use Case</strong>: University research computing center allocating CPU hours</p>

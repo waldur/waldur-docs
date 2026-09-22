@@ -19106,16 +19106,27 @@ user's jobs charge when they submit without an explicit <code>-A</code>/<code>--
   Keeps users off the org-wide root by default, <strong>but</strong> when that resource is
   terminated and its account deleted, the user's <code>DefaultAccount</code> dangles and
   SLURM rejects their job submissions until an operator repairs it.</li>
-<li><strong><code>none</code></strong> — <code>DefaultAccount=</code> omitted entirely; sacctmgr auto-assigns for new
-  users. Relies on the deployment's sacctmgr auto-assignment for brand-new users;
-  for an existing user whose prior default account was deleted, the stale default
-  is left unchanged (they may be unable to submit until repaired).</li>
+<li><strong><code>none</code></strong> — the agent does not manage the default: <code>DefaultAccount=</code> is
+  omitted entirely and slurmdbd's own rule applies. That rule makes a brand-new
+  user's <strong>first association their default</strong> (<code>as_mysql_assoc.c</code>), so with this
+  policy a new user's default is whichever resource the agent happened to add
+  first — an empty <code>DefaultAccount</code> is not a reachable state once any
+  association exists. For an existing user whose prior default account was
+  deleted, the stale default is left unchanged (they may be unable to submit
+  until repaired).</li>
 </ul>
 <p><code>common</code> is the safe default and is what most deployments should use. Only switch
 to <code>individual</code> or <code>none</code> if you understand the dangling-<code>DefaultAccount</code> failure
 modes above and have an operational process to handle them. An invalid value
 (e.g. a typo) raises an error at agent startup rather than silently falling back
 to <code>common</code>.</p>
+<p>Whatever the policy, the agent moves a default out of the way before it drops
+the association carrying it: slurmdbd refuses to remove a user's <em>default</em>
+association while the user keeps others (<code>as_mysql_remove_assocs</code>), so the
+default is re-pointed at one of the remaining accounts first. This applies both
+when a single user leaves a resource and when a whole account is terminated and
+all of its users are removed. When the association being dropped is the user's
+last one, the user record goes with it, as <code>sacctmgr remove user</code> does.</p>
 <h2 id="qos-configuration">QoS configuration</h2>
 <p>QoS state is driven by the <code>paused</code> and <code>downscaled</code> flags set by Waldur Mastermind
 (via policy or manual action). The agent maps these flags to SLURM QoS names:</p>

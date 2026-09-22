@@ -5376,6 +5376,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#when-a-user-leaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a user leaves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step-by-step setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#project-group-gids-are-still-allocated-locally" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19130,6 +19152,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#when-a-user-leaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a user leaves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step-by-step setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#project-group-gids-are-still-allocated-locally" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19711,8 +19755,14 @@ and welcome email delivery.</p>
 <tr>
 <td><code>remove_user_on_deactivate</code></td>
 <td>No</td>
-<td><code>false</code></td>
-<td>Delete LDAP entry on deactivation</td>
+<td>per <code>account_source</code></td>
+<td>Release the entry once no live account remains; see below</td>
+</tr>
+<tr>
+<td><code>on_departure</code></td>
+<td>No</td>
+<td>per <code>account_source</code></td>
+<td><code>disable</code> (park, keep ids) or <code>delete</code>; see below</td>
 </tr>
 <tr>
 <td><code>generate_vpn_password</code></td>
@@ -19828,6 +19878,275 @@ consulted.</p>
 would reintroduce the double allocation this mode exists to remove. Attach a
 POSIX ID pool to the service provider, or turn POSIX accounts off for the
 offering.</p>
+<h3 id="when-a-user-leaves">When a user leaves</h3>
+<p>Dropping the SLURM association is the resource backend's job. Releasing the
+directory entry is this plugin's, and in this mode it is <strong>on by default</strong>:
+<code>remove_user_on_deactivate</code> follows <code>account_source</code>, so under <code>waldur</code> an
+unset value means <em>release</em>. A departed user who keeps a working POSIX login
+on the cluster is exactly the gap this exists to close. Set
+<code>remove_user_on_deactivate: false</code> explicitly to leave entries untouched (the
+account is then logged as retained and Waldur is left waiting).</p>
+<p>What <em>release</em> does is <code>on_departure</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ldap</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">account_source</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
+<span class="w">    </span><span class="nt">on_departure</span><span class="p">:</span><span class="w"> </span><span class="s">"disable"</span><span class="w">   </span><span class="c1"># disable (default here) | delete</span>
+</code></pre></div></td></tr></tbody></table></div>
+<ul>
+<li><strong><code>disable</code></strong> (default under <code>waldur</code>) parks the entry. The DN, <code>uidNumber</code>,
+  <code>gidNumber</code> and personal group stay exactly as they are; the account is made
+  unusable by setting <code>loginShell</code> to <code>/usr/sbin/nologin</code>, adding the
+  <code>shadowAccount</code> class with <code>shadowExpire: 1</code> (an expiry in the past), and
+  dropping every group membership it still holds in access and project groups,
+  <code>memberUid</code> and DN-style <code>member</code> alike. A membership that cannot be dropped
+  fails the release instead: parking the entry while a group still lists it
+  would report a teardown that left the access in place. The agent records
+  <code>description: waldur-site-agent:disabled</code> so a later reconcile
+  can tell its own parked entries from ones an operator disabled by hand.
+  This is the default because a uid must never be reused while files owned by
+  it exist: keeping the entry keeps <code>ls -l</code> honest and keeps the pool's
+  reservation and the directory in agreement.</li>
+<li><strong><code>delete</code></strong> (default under <code>ldap</code>, the historical meaning of
+  <code>remove_user_on_deactivate</code>) removes the entry, its personal group and its
+  access-group memberships.</li>
+</ul>
+<p>For <code>disable</code> to lock the account out, sssd on the nodes must honour the shadow
+expiry — add to the <code>[domain/...]</code> section of <code>sssd.conf</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="na">ldap_account_expire_policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">shadow</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Coming back.</strong> Waldur re-mints the same username for a returning person (it
+derives from the pool uid, which the provider-wide account keeps), so the
+reconcile sees a live offering user whose entry exists but is parked. It
+re-enables it in place — restores <code>loginShell</code> from Waldur, drops <code>shadowExpire</code>
+and the marker, re-adds the configured <code>access_groups</code> — rather than failing on
+<code>UID_TAKEN</code> or "entry exists". Project group membership comes back with the
+SLURM association. An entry an operator disabled by hand (no marker) is treated
+as an ordinary profile update, as before.</p>
+<p>Because one directory serves every offering of the provider, "the user left
+this offering" is not enough to act on. Before releasing, the plugin asks
+Waldur for the person's other accounts on the same provider and keeps the
+entry enabled if any account <strong>with the same username</strong> is still live — <code>OK</code>,
+requested, creating or pending, restricted or not. A differently-named account
+on a sibling offering is a separate entry and does not count. The check runs
+against Waldur, never against the directory; a failed lookup keeps the entry.</p>
+<p>The trigger is Waldur's own deletion request: the offering user must be in
+<code>Requested deletion</code>, which Waldur sets when the person leaves their last
+project on an offering that has <code>offering_user_auto_deletion</code> enabled. Without
+that option the offering user stays <code>OK</code> and the entry is kept. The agent
+notices the state on the next membership cycle (and immediately on the
+offering-user <code>update</code> event under STOMP) and runs the deletion flow: SLURM
+associations first, then this plugin's release, then core walks the offering
+user through <code>Deleting</code> to <code>Deleted</code> so Waldur can release the provider-wide
+identity behind it.</p>
+<table>
+<thead>
+<tr>
+<th>Waldur says</th>
+<th>Directory action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Same-named account still live on any offering of the provider</td>
+<td>Kept, enabled</td>
+</tr>
+<tr>
+<td>Only accounts in deletion states (or none) remain</td>
+<td>Parked (<code>disable</code>) or removed (<code>delete</code>)</td>
+</tr>
+<tr>
+<td>Entry already parked / absent (another offering's agent got there first)</td>
+<td>Nothing to do</td>
+</tr>
+<tr>
+<td>Lookup fails, or the offering user carries no <code>user_uuid</code></td>
+<td>Kept; raises, retried next cycle</td>
+</tr>
+</tbody>
+</table>
+<p>In the first three rows the offering user is then marked <code>Deleted</code> in Waldur; in
+the last, core marks it <code>Error deleting</code> so the failure is visible until it goes.</p>
+<p>Under <code>account_source: ldap</code> nothing changes unless <code>remove_user_on_deactivate</code>
+is set to <code>true</code>, in which case the same provider-wide check applies and
+<code>on_departure</code> defaults to <code>delete</code>.</p>
+<h3 id="step-by-step-setup">Step-by-step setup</h3>
+<p>The Waldur side — creating the POSIX ID pool, choosing the username policy and
+prefix, enabling POSIX accounts and offering-user auto-deletion, and reading an
+offering user's uid and username back — is documented with screenshots in the
+Waldur user guide under <em>Managing POSIX ID pools</em> and <em>Waldur-authoritative
+accounts in OpenLDAP</em>. What follows is the agent and cluster side.</p>
+<ol>
+<li>
+<p><strong>Prepare the directory.</strong> The agent creates user entries, personal groups
+   and project groups; it does not create OUs or its own bind account. Create
+   <code>ou=People</code> and <code>ou=Groups</code> under the base DN and a bind DN with write access
+   to both. Make sure the <code>nis</code> schema is loaded (<code>posixAccount</code>, <code>posixGroup</code>,
+   <code>shadowAccount</code>). If access groups are <code>groupOfNames</code>, also create the
+   stand-in member (<code>cn=nobody,&lt;base_dn&gt;</code> by default, <code>empty_group_member_dn</code>).</p>
+</li>
+<li>
+<p><strong>Pick a project-group GID range</strong> that does not overlap the pool's GID range
+   (see below). The pool numbers people; <code>gid_range_*</code> numbers project groups.</p>
+</li>
+<li>
+<p><strong>Configure one <code>ldap</code> block and share it</strong> between every offering of the
+   provider that uses the directory:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">.ldap</span><span class="p">:</span><span class="w"> </span><span class="nl">&amp;ldap_settings</span>
+<span class="w">  </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">"ldaps://ldap.example.org"</span>
+<span class="w">  </span><span class="nt">bind_dn</span><span class="p">:</span><span class="w"> </span><span class="s">"cn=waldur-agent,dc=example,dc=org"</span>
+<span class="w">  </span><span class="nt">bind_password</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;secret&gt;"</span>
+<span class="w">  </span><span class="nt">base_dn</span><span class="p">:</span><span class="w"> </span><span class="s">"dc=example,dc=org"</span>
+<span class="w">  </span><span class="nt">people_ou</span><span class="p">:</span><span class="w"> </span><span class="s">"ou=People"</span>
+<span class="w">  </span><span class="nt">groups_ou</span><span class="p">:</span><span class="w"> </span><span class="s">"ou=Groups"</span>
+<span class="w">  </span><span class="nt">account_source</span><span class="p">:</span><span class="w"> </span><span class="s">"waldur"</span>
+<span class="w">  </span><span class="nt">on_missing_posix_ids</span><span class="p">:</span><span class="w"> </span><span class="s">"error"</span><span class="w">   </span><span class="c1"># error | skip</span>
+<span class="w">  </span><span class="nt">on_posix_mismatch</span><span class="p">:</span><span class="w"> </span><span class="s">"report"</span><span class="w">     </span><span class="c1"># report | adopt | fail</span>
+<span class="w">  </span><span class="nt">on_departure</span><span class="p">:</span><span class="w"> </span><span class="s">"disable"</span><span class="w">         </span><span class="c1"># disable (default here) | delete</span>
+<span class="w">  </span><span class="nt">gid_range_start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20000</span><span class="w">          </span><span class="c1"># project groups only; keep clear of the pool</span>
+<span class="w">  </span><span class="nt">gid_range_end</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29999</span>
+<span class="w">  </span><span class="nt">access_groups</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"cluster-users"</span>
+
+<span class="nt">offerings</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Cluster</span><span class="nv"> </span><span class="s">A"</span>
+<span class="w">    </span><span class="nt">waldur_api_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://waldur.example.org/api/"</span>
+<span class="w">    </span><span class="nt">waldur_api_token</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;token&gt;"</span>
+<span class="w">    </span><span class="nt">waldur_offering_uuid</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;offering</span><span class="nv"> </span><span class="s">A</span><span class="nv"> </span><span class="s">uuid&gt;"</span>
+<span class="w">    </span><span class="nt">backend_type</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">username_management_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"ldap"</span>
+<span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"slurm"</span>
+<span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">default_account</span><span class="p">:</span><span class="w"> </span><span class="s">"root"</span>
+<span class="w">      </span><span class="nt">customer_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"c_"</span>
+<span class="w">      </span><span class="nt">project_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"p_"</span>
+<span class="w">      </span><span class="nt">allocation_prefix</span><span class="p">:</span><span class="w"> </span><span class="s">"a_"</span>
+<span class="w">      </span><span class="nt">ldap</span><span class="p">:</span><span class="w"> </span><span class="nv">*ldap_settings</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Cluster</span><span class="nv"> </span><span class="s">B"</span>
+<span class="w">    </span><span class="c1"># identical apart from the offering uuid</span>
+<span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">ldap</span><span class="p">:</span><span class="w"> </span><span class="nv">*ldap_settings</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Leave out <code>username_format</code> (rejected in this mode) and <code>uid_range_*</code>
+(ignored for user accounts).</p>
+</li>
+<li>
+<p><strong>Point SSSD on the nodes at the directory</strong>, and let it honour the shadow
+   expiry the <code>disable</code> departure mode relies on:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">[domain/ldap]</span>
+<span class="na">id_provider</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ldap</span>
+<span class="na">ldap_uri</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ldaps://ldap.example.org</span>
+<span class="na">ldap_search_base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">dc=example,dc=org</span>
+<span class="na">ldap_user_search_base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ou=People,dc=example,dc=org</span>
+<span class="na">ldap_group_search_base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ou=Groups,dc=example,dc=org</span>
+<span class="na">ldap_schema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">rfc2307</span>
+<span class="na">ldap_account_expire_policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">shadow</span>
+</code></pre></div></td></tr></tbody></table></div>
+</li>
+<li>
+<p><strong>Run a membership-sync cycle and verify each layer.</strong> The first cycle logs
+   <code>LDAP reconcile: N created, ...</code>; then:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Directory: one entry, ids as allocated in Waldur</span>
+ldapsearch<span class="w"> </span>-x<span class="w"> </span>-H<span class="w"> </span>ldaps://ldap.example.org<span class="w"> </span>-b<span class="w"> </span><span class="nv">ou</span><span class="o">=</span>People,dc<span class="o">=</span>example,dc<span class="o">=</span>org<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s1">'(uid=hpc_100001)'</span><span class="w"> </span>uidNumber<span class="w"> </span>gidNumber<span class="w"> </span>homeDirectory<span class="w"> </span>loginShell
+<span class="c1"># Node: SSSD resolves it</span>
+getent<span class="w"> </span>passwd<span class="w"> </span>hpc_100001<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>id<span class="w"> </span>hpc_100001
+<span class="c1"># Cluster: the association exists</span>
+sacctmgr<span class="w"> </span>-P<span class="w"> </span>show<span class="w"> </span>association<span class="w"> </span>where<span class="w"> </span><span class="nv">user</span><span class="o">=</span>hpc_100001<span class="w"> </span><span class="nv">format</span><span class="o">=</span>account,user
+</code></pre></div></td></tr></tbody></table></div>
+<p>Run the same checks after the second cluster's agent has had a cycle: the
+entry must be unchanged, with the same uid — that is what the shared pool
+buys.</p>
+</li>
+<li>
+<p><strong>Watch a departure and a return</strong> (see the section above for what happens).
+   The log lines to expect are <code>Processing deletion of offering user ...</code>,
+   <code>Disabled LDAP user ...</code> (or <code>Deleted LDAP user ...</code>), <code>Marked offering user
+   ... DELETED in Waldur</code>, and on return <code>Re-enabled LDAP user ... (uid N)</code>.</p>
+</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Waldur returned no POSIX attributes ...</code></td>
+<td>Enable <strong>Manage POSIX/LDAP account</strong>; attach a pool to the provider</td>
+</tr>
+<tr>
+<td><code>Offering user X has no UID/primary GID in Waldur</code></td>
+<td>Predates the pool: re-save it, or <code>on_missing_posix_ids: skip</code></td>
+</tr>
+<tr>
+<td><code>UID N is already held by LDAP user Y</code></td>
+<td>Pool overlaps existing entries: move the range, or <code>adopt</code> once</td>
+</tr>
+<tr>
+<td>Departed user can still log in</td>
+<td>SSSD needs <code>ldap_account_expire_policy = shadow</code></td>
+</tr>
+<tr>
+<td>Account stays <em>Requested deletion</em></td>
+<td>A teardown step keeps failing (see <code>Teardown of offering user ... failed</code>)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="project-group-gids-are-still-allocated-locally">Project group GIDs are still allocated locally</h3>
 <p>Only <em>user</em> accounts and their personal groups come from Waldur. Project and role
 group GIDs are still allocated by the resource backend from
