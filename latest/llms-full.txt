@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-22T02:04:04.441802Z
+Generated: 2026-09-22T13:46:59.348904Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -4922,6 +4922,9 @@ Recently added or renamed:
 - `notifications-templates.yaml` — renamed from `notification-templates.yaml`.
   The old name never took effect: `initdb` reads the plural form.
 - `notifications.json` — added. Must exist even if empty (`{}`).
+- `languages.yaml` — added. Must exist; ships fully commented out, which is a
+  valid empty file. It seeds the language list on first start only, so language
+  toggles changed in the UI are no longer reverted on restart.
 
 ## Upgrade Instructions for PostgreSQL Images
 
@@ -6260,6 +6263,36 @@ options:
 
 ```
 
+## assemble_changelog
+
+Assemble changelog fragments from changelog/next/ into a release file.
+
+```bash
+
+usage: waldur assemble_changelog --release-version RELEASE_VERSION --date DATE
+                                 [--release-type {stable,rc}]
+                                 [--base-stable BASE_STABLE]
+                                 [--previous PREVIOUS]
+                                 [--stable-target STABLE_TARGET]
+                                 [--summary SUMMARY] [--no-clear] [--dry-run]
+
+options:
+  --release-version RELEASE_VERSION
+                        Release version (e.g., 8.0.8 or 8.0.8-rc.1)
+  --date DATE           Release date in ISO 8601 format (e.g., 2026-04-15)
+  --release-type {stable,rc}
+                        Release type (default: stable)
+  --base-stable BASE_STABLE
+                        Previous stable version (for cumulative entries)
+  --previous PREVIOUS   Immediately preceding version (for delta)
+  --stable-target STABLE_TARGET
+                        Target stable version (for RC releases)
+  --summary SUMMARY     Release summary text
+  --no-clear            Do not clear changelog/next/ after assembly
+  --dry-run             Validate and print output without writing files
+
+```
+
 ## audit_broker_config
 
 Audit Celery / RabbitMQ broker configuration for common publisher-reliability misconfigurations.
@@ -6589,26 +6622,6 @@ options:
   -u, --username USERNAME
   -p, --password PASSWORD
   -e, --email EMAIL
-
-```
-
-## dedupe_tenant_offerings
-
-Report and optionally resolve tenants that have more than one per-tenant OpenStack.Instance/Volume offering.
-
-```bash
-
-usage: waldur dedupe_tenant_offerings [--tenant TENANT_ID] [--apply] [--merge]
-
-options:
-  --tenant TENANT_ID  Restrict to a single OpenStack tenant (by numeric id).
-                      Matches the tenant id printed in the self-heal ERROR
-                      log.
-  --apply             Delete empty duplicate offerings. Without this flag the
-                      command only reports (dry-run).
-  --merge             Also resolve duplicates that still own resources/orders
-                      by re-pointing them onto the keeper before deletion.
-                      Requires --apply.
 
 ```
 
@@ -8220,6 +8233,7 @@ Default value:
 WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'AUTHENTICATION_METHODS': ['LOCAL_SIGNIN'],
  'BACKEND_FIELDS_EDITABLE': True,
+ 'CHANGELOG_ENABLED': True,
  'COURSE_ACCOUNT_TOKEN_CLIENT_ID': '',
  'COURSE_ACCOUNT_TOKEN_SECRET': '',
  'COURSE_ACCOUNT_TOKEN_URL': '',
@@ -8314,6 +8328,12 @@ List of enabled authentication methods.
 **Type:** bool
 
 Allows to control /admin writable fields. If this flag is disabled it is impossible to edit any field that corresponds to backend value via /admin. Such restriction allows to save information from corruption.
+
+#### CHANGELOG_ENABLED
+
+**Type:** bool
+
+Enable changelog and version checking against upstream releases. Disable for forks that maintain their own release cycle.
 
 #### COURSE_ACCOUNT_TOKEN_CLIENT_ID
 
@@ -55145,7 +55165,13 @@ class MyViewSet(viewsets.ModelViewSet):
 
 ### 5. Audit Role Changes
 
-Role changes are automatically logged via signals (`role_granted`, `role_updated`, `role_revoked`) with enhanced context including initiator and reason. Always pass `current_user` and optional `reason` for clear audit trails:
+Two different things are audited, with two different families of event types:
+changes to role **assignments** (who holds which role) and changes to a role
+**definition** (what the role means).
+
+#### Role assignments
+
+Assignment changes are automatically logged via signals (`role_granted`, `role_updated`, `role_revoked`) with enhanced context including initiator and reason. Always pass `current_user` and optional `reason` for clear audit trails:
 
 ```python
 # Basic usage - uses default reasons
@@ -55179,6 +55205,41 @@ The system automatically assigns these reasons when not explicitly provided:
 | Project deletion | `"Project deletion cascade"` |
 | Role expiration detection | `"Automatic expiration"` |
 | System operations without `current_user` | `"System-initiated [operation]"` |
+
+#### Role definitions
+
+Editing what a role means is a separate audit trail, emitted from
+`RoleViewSet` and from the `CustomerRoleConcealment` model handlers:
+
+| Event type | Emitted when |
+|---|---|
+| `role_definition_created` | a role is created |
+| `role_definition_updated` | its permission set, name or description changes |
+| `role_definition_deleted` | a role is deleted |
+| `role_enabled` / `role_disabled` | it is made (un)available for new grants |
+| `role_cloned` | it is copied into an organization |
+| `role_concealed` / `role_revealed` | it is hidden from, or restored to, an organization |
+
+Note that `role_updated` is **not** part of this family: it means an
+assignment's expiration time changed, and a definition change deliberately
+does not reuse it.
+
+`role_definition_updated` carries `added_permissions` and `removed_permissions`,
+plus `old_name`, `old_descriptions` and `old_content_type` / `new_content_type`
+when those changed; a request that resubmits the current definition emits
+nothing.
+
+`is_active` and the scope are writable through the update endpoint as well as
+through the dedicated actions, so they are diffed there too: disabling a role
+with a `PUT` emits `role_disabled` exactly as the `disable` action does.
+
+Events for an organization-private role are filed in that organization's feed.
+A deployment-wide role has no organization binding, so its events land in the
+global event log only.
+
+The actor is read from the request through
+`waldur_core.logging.middleware.get_event_context()`, so no `current_user`
+argument is threaded through these views.
 
 ### 6. Performance and Accuracy Guidelines
 
@@ -67161,6 +67222,7 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | [filter-migration-guide.md](table/filter-migration-guide.md)       | Generated table filters from the OpenAPI schema                                 |
 | [button-variant-linting.md](button-variant-linting.md)       | Design-token button variants and the ESLint rule enforcing them                 |
 | [theme.md](theme.md)                                         | Dark mode and theming, including third-party components                         |
+| [design-tokens.md](design-tokens.md)                         | Colour ramps as data: `tokens/colors.json`, the generator, what is and isn't generated |
 | [menu-navigation.md](menu-navigation.md)                     | Sidebar menu structure and state-based routing                                  |
 | [sidebar.md](sidebar.md)                                     | Sidebar navigation architecture, design tokens, components, and recipes        |
 | [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md) | Bootstrap → Tailwind/shadcn migration: cascade layers, token extraction, visual-parity test methodology |
@@ -69456,6 +69518,136 @@ When asking an LLM to add configuration:
 2. **Specify group name**: "The settings are in the 'Reporting' group."
 3. **Reference template**: "Use `AdministrationSshKeys.tsx` as a template."
 4. **Target file**: "Register the route in `src/administration/routes.ts`."
+
+---
+
+### Design Tokens
+<!-- Source: docs/developer-guide/ui/design-tokens.md -->
+
+# Design Tokens
+
+How colour primitives are defined, and how to change one.
+
+## The rule
+
+**Colour ramps are edited in one file:**
+`packages/design-tokens/tokens/colors.json`.
+Never edit the two files generated from it:
+
+| Generated file                              | Consumer                                                                                                                           |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `src/metronic/sass/_color-ramps.scss`       | Bootstrap/Metronic (`$gray-500`, `$success-600`, …). Each themed step is `if(isDarkMode(), dark, light)`, resolved at compile time |
+| `packages/design-tokens/src/colorRamps.css` | Tailwind and CSS variables (`--color-gray-500`, `bg-success-600`), declared once in `@theme static`                                |
+
+```bash
+yarn tokens:generate   # rewrite both files from the JSON
+yarn tokens:check      # exit 1 if either is stale (also run by the unit tests)
+```
+
+`generateTokens.test.ts` fails when a generated file no longer matches the JSON, whether the
+JSON or the output was edited. The fix is always `yarn tokens:generate`.
+
+## File format
+
+```jsonc
+"success": {
+  "description": "Optional; becomes a comment in both outputs.",
+  "steps": {
+    "50":  { "light": "#ecfdf3", "dark": "#054f31" },  // differs per theme
+    "950": { "light": "#4e0d30" },                     // same in both themes: no "dark"
+    "400": { "light": "#f670c7", "scss": false }       // CSS-only: no SCSS variable
+  }
+}
+```
+
+Optional ramp-level keys: `scssName` (the SCSS variable prefix when it differs from the CSS
+name — `error` is `$danger-*`), `scssDefault: false` (omit `!default`), `css: false` (SCSS
+only — the static default green `primary`, which Tailwind never sees), `scss: false` (CSS
+only — `gray-dark`).
+
+Colours are lower-case `#rrggbb`; the generator rejects anything else, and a `dark` equal to
+`light`.
+
+## Gray in dark mode: `gray` and `gray-dark`
+
+Dark UI wants neutral grays where the light `gray` is blue-tinted (500 is `#667085` vs
+`#85888e`), so there are two CSS ramps, both physical (step 900 is dark in both):
+
+- `--color-gray-N` (`gray`) is the same in both themes. Nothing overrides it per theme, so a bare
+  `text-gray-500` is one colour everywhere.
+- `--color-gray-dark-N` (`gray-dark`) is the palette for dark surfaces. It is read by the
+  dark-theme blocks of `surfaceColors.css` and `buttonColors.css`, and by the `dark` sidebar style
+  in `sidebarColors.css` (a fixed look that is dark in either theme, so it reads `gray-dark`
+  unconditionally, while the `light` style reads `gray`). A component that needs a dark-specific
+  gray writes `dark:bg-[var(--color-gray-dark-800)]` or `dark:bg-gray-dark-800`.
+
+`gray-dark` is CSS-only (`"scss": false`) and its values are the SCSS dark grays re-indexed:
+SCSS `$gray-N` is **theme-inverted** (`$gray-900` is light in dark mode), so
+`gray-dark-N` = the SCSS dark value of the mirrored step (25 ↔ 950, 50 ↔ 900, …).
+`colorParity.test.ts` keeps them in sync, so change the SCSS dark gray and `gray-dark` together.
+
+The SCSS/CSS mismatch is why Tailwind's `bg-gray-50` and Metronic's `.bg-gray-50` mean opposite
+things in dark mode (see `src/tailwind.css` for the re-point). Retiring the SCSS inversion is a
+separate, larger step: it depends on every `$gray-N` reader in theme-sensitive SCSS first
+moving to semantic tokens.
+
+## Reading a token in code
+
+For code that cannot take `var(--x)` directly (a canvas chart, a third-party widget), read the
+resolved value instead of hard-coding a hex or repeating `getComputedStyle(...)`:
+
+```ts
+import { getCssVar, isDarkTheme } from 'waldur-design-tokens';
+import { useResolvedVar } from 'waldur-design-tokens/react';
+
+getCssVar('--waldur-brand-600', '#307300'); // trimmed; the fallback covers unset or no DOM
+const value = useResolvedVar('--color-gray-500'); // React state, re-read when <html>'s style or data-theme changes
+isDarkTheme(); // the theme applied to <html>, for code that has no theme context
+```
+
+`getCssVar` and `isDarkTheme` are snapshots, so re-read them when the theme or brand colour changes. `useResolvedVar` is
+its own entry point so the main one stays free of React.
+
+## Seeing the tokens
+
+Storybook, group **Foundations**, stories in `packages/design-tokens/src/*.stories.tsx`:
+
+- **Colors** — one page per ramp family, all in the same swatch style (step, resolved hex, variable
+  name on hover): `Neutral` (`gray`, `gray-dark` and a side-by-side comparison), `Status`
+  (`success`, `warning`, `error`, `info`), `Accent` (the decorative hues) and `Brand` (the runtime
+  `--waldur-brand-*` ramp). The first three are driven by `tokens/colors.json`, so a new ramp or
+  step appears with no story edit; `SurfaceTokens` shows the semantic layer.
+- **Typography** and **Elevation** — the type scale, shadows and radii.
+
+They live with the tokens they document, so a token change and its story change land in one package.
+
+## What is not generated (yet)
+
+- **Derived SCSS variables** — `$success`, `$success-active`, `$text-muted`, `$dark-active`, … stay in
+  `_colors.scss` (they use Sass functions and reference other variables).
+- **The brand ramp** — `--waldur-brand-*` is tenant-configurable and injected at runtime
+  (`initBrandTokens()`); `$brand-*` in `_colors.scss` only maps onto it.
+- **The semantic layer** — `$text-*`/`$bg-*`/`$border-*` in `_tokens.scss` and the
+  `--surface-*`/`--btn-*`/`--pill-*` files.
+- **Non-colour scales** — spacing, type, radii, shadows.
+
+## Adding or changing a value
+
+1. Edit `tokens/colors.json`.
+2. `yarn tokens:generate`.
+3. Commit the JSON and both generated files together.
+
+Changing a light value changes what the app renders in both Bootstrap and Tailwind components
+at once, which is the point. A new ramp or step appears in SCSS as `$<name>-<step>` and in CSS
+as `--color-<name>-<step>` (and so as Tailwind utilities).
+
+## Verifying a refactor changes nothing
+
+When the generator or the data model changes and no pixel should move, compile the Metronic
+stylesheets before and after and compare (`src/metronic/sass/style.scss` and `style.dark.scss`
+with Sass's JS API, mapping the `@/` alias to `src/`); the output should be byte-identical.
+For the CSS side, compile `src/tailwind.css` with `@tailwindcss/node` and diff the emitted
+`--color-*` declarations.
 
 ---
 
@@ -73988,52 +74180,63 @@ if the CSS chunking or theme-loading strategy ever changes.
 ### Root font-size override
 
 Metronic forces `html, body { font-size: 13px !important }` (12px below
-`lg`). Tailwind's scale is rem-based against a 16px assumption, so
+`md`, i.e. `max-width: 767.98px` — checked in the compiled stylesheet; the
+992px `lg` query sets the same 13px again). Tailwind's scale is rem-based against a 16px assumption, so
 `src/tailwind.css`'s `@theme` overrides `--spacing`/`--text-sm`/`--text-base`/
 `--radius-md`/`--radius-lg` with explicit px values.
 
-**The override works for `--radius-*` but not for `--spacing`, and the
-spacing failure isn't a clean, predictable ratio.** Verified live via
-`getComputedStyle` (inject a bare `<div class="p-N">`, no other styles):
-`rounded-md`/`rounded-lg` correctly compute 6px/8px, matching the override
-exactly. But the numbered spacing/gap utilities (`p-1`…`gap-96`) don't
-uniformly fall back to Tailwind's un-overridden default either — some steps
-do (`p-1`/`p-2`/`p-3`/`p-5` measured exactly `0.25rem × N` at the current
-root, i.e. the override never reached them), while others land on a value
-that matches _neither_ `4px × N` nor `0.25rem × N` (`p-4` measured
-11.088px; `4 × 4px` = 16, `4 × 0.25rem` at that root = 12). Whatever
-Tailwind v4 is doing internally for those specific steps, it isn't
-reliably steerable via `--spacing`. **Practical rule: never use a numbered
-spacing/gap utility for a value that needs to render at a specific px size
-— use a px arbitrary value (`p-[12px]`) instead**, as `BaseButton.tsx`,
-`Badge.tsx`, and `Tooltip.tsx` all do throughout. `--radius-*` doesn't have
-this problem (`rounded-md`/`rounded-lg`/`rounded-modal` — a custom-named
-addition to the same theme block, see below — are all safe to use
-normally), and neither does Tailwind's own reserved `z-*`/`--z-index-*`
-namespace (see the z-index scale below) — this is specifically a
-`--spacing` quirk, not a general "theme overrides don't work" issue.
+**The override works for `--radius-*` and `--z-index-*`, but numbered
+spacing utilities still don't render at `4px × N` — because Bootstrap's own
+utility of the same name wins, not because Tailwind ignores `--spacing`.**
+Bootstrap's utility API emits `.p-N`/`.m-N`/`.gap-N`/… from `$spacers`, all
+with `!important` (compiled `style-*.css`: `.p-1{padding:.25rem!important}`,
+`.p-4{padding:.924rem!important}`, `.gap-4{gap:.924rem!important}`), and
+Tailwind emits the same class names (`.p-4{padding:calc(var(--spacing) * 4)}`,
+`--spacing:4px` does reach the built CSS). `!important` beats any
+un-`!important` rule regardless of layer order, so on a real app page
+Bootstrap's value is the one that renders. That accounts exactly for the
+measurements that used to look inexplicable: `p-1`/`p-2`/`p-3`/`p-5` measured
+`0.25rem × N` because those are Bootstrap's `$spacers` 1/2/3/5
+(0.25/0.5/0.75/1.25rem), and `p-4` measured 11.088px because Bootstrap's
+`$spacers[4]` is `0.154 × 6 = 0.924rem`, which at the 12px mobile root is
+11.088px (Tailwind's own `p-4` would be 16px). Steps past the
+end of Bootstrap's `$spacers` (its keys stop at 20) fall through to
+Tailwind and render at `4px × N`, which is why the failure looked partial.
+
+Consequence: in `packages/ui`, `p-4` means 16px in Storybook (no Bootstrap
+loaded) and ~12px in the app. **Practical rule, unchanged: never use a
+numbered spacing/gap utility for a value that needs to render at a specific
+px size — use a px arbitrary value (`p-[12px]`)**, as `BaseButton.tsx`,
+`Badge.tsx`, and `Tooltip.tsx` all do throughout. It is a workaround for the
+class-name collision described above, not for a Tailwind limitation; the
+structural fixes are a Tailwind class prefix or dropping Bootstrap's
+overlapping utilities as consumers migrate. `--radius-*`
+(`rounded-md`/`rounded-lg`/`rounded-modal`) is safe to use normally: Bootstrap
+only defines numeric `.rounded-N` and `-circle`/`-pill`/`-top`-style names,
+none of which Tailwind's named steps share. The one collision there is the
+bare `.rounded` (Bootstrap: `8px !important`).
 
 **Named scale tokens beyond the font-size/radius ones above, added as this
 migration needed them** (all in `src/tailwind.css`'s `@theme` block, all
 verified live to resolve to the stated value with zero drift from what
 they replaced):
 
-- **z-index** — `--z-index-sidebar-panel: 105` and
-  `--z-index-mobile-drawer: 110`, generating real `z-sidebar-panel`/
-  `z-mobile-drawer` utilities (Tailwind's `--z-index-*` namespace does
-  auto-generate a matching `z-<name>` class — confirmed empirically, not
-  assumed, before relying on it). Named only where a value was chosen to
-  match a still-present Metronic layer's own z-index (`Sidebar.tsx`'s
-  desktop panel, `Sheet.tsx`'s mobile drawer, matching
-  `$aside-config`/the real mobile drawer's measured 110 respectively) —
-  components with no such parity requirement (`Dialog`, `Popover`,
-  `DropdownMenu`) keep Tailwind's own built-in `z-50`/`z-10`, since that's
-  already a shared, named value with nothing Metronic-specific to anchor
-  to. `Tooltip.tsx`'s `zIndex` prop default (1180, matching `Tip`'s own
-  default) stays a plain JS number rather than a class — its _override_
-  case needs a value only known at runtime, which no static class can
-  express — but is commented to point at `--z-index-tooltip`, the same
-  canonical value, so the two don't drift independently.
+- **z-index** — `--z-index-sidebar-panel: 105`,
+  `--z-index-mobile-drawer: 110`, `--z-index-toast: 1150` and
+  `--z-index-tooltip: 1180`, now in
+  `packages/design-tokens/src/zIndex.css` (not `src/tailwind.css`) so the
+  micro-apps get the same `z-sidebar-panel`/`z-mobile-drawer` utilities that
+  `waldur-ui`'s Sidebar and Sheet use — before, they were simply never
+  generated there. The file opens with the whole stacking order, Bootstrap
+  and Metronic layers included, and `zIndex.test.ts` asserts the ordering
+  (drawer below modals, toast above every Bootstrap overlay, tooltip above
+  toast) plus that `Tooltip.tsx`'s literal `1180` default equals the token.
+  Tailwind's `--z-index-*` namespace auto-generates a matching `z-<name>`
+  class. Named only where a value was chosen to match a still-present
+  Metronic layer — components with no such parity requirement (`Dialog`,
+  `Popover`, `DropdownMenu`) keep Tailwind's built-in `z-50`/`z-10`.
+  `--z-index-toast` is `@theme static` because its only consumer is an inline
+  `var(...)` in a TSX string, which Tailwind's usage scan doesn't see.
 - **radius** — `--radius-modal: 20px`, covering `Dialog.tsx`'s modal
   content and `Sidebar.tsx`'s mode-switcher card (both visibly rounder than
   `rounded-lg`, both pair with `bg-[var(--surface-card-bg)]`). Deliberately
@@ -74048,6 +74251,45 @@ they replaced):
   regex incidentally also matches Tailwind's digit-leading `rounded-2xl`/
   `rounded-3xl`, so those two names can't be used as literal classes
   anywhere in lint-covered code regardless of this migration.
+
+### Breakpoints
+
+`src/tailwind.css` pins `--breakpoint-sm/md/lg/xl/2xl` to 576/768/992/1200/1400px
+— the same values as Bootstrap's `$grid-breakpoints` and `GRID_BREAKPOINTS` in
+`src/core/constants.ts` — instead of Tailwind's 640/768/1024/1280/1536, so
+`lg` is 992px whether it appears as a Tailwind variant, a Bootstrap `.d-lg-*`
+class, an SCSS media query or a `useMediaQuery()` call. The micro-app keeps
+Tailwind's defaults (no Bootstrap there to agree with).
+
+### Color ramps: generated from one file
+
+The colour ramps are generated, not hand-written: `tokens/colors.json` in
+`packages/design-tokens` is the only place a ramp value is edited, and
+`yarn tokens:generate` writes both `src/metronic/sass/_color-ramps.scss`
+(what Bootstrap/Metronic render) and `packages/design-tokens/src/colorRamps.css`
+(what Tailwind reads). See [design-tokens.md](design-tokens.md).
+
+Each CSS ramp step is declared once, in `@theme static`, under Tailwind's own
+name (`--color-gray-50`); that both registers the `bg-gray-50`-style utilities
+and provides the `var(--color-gray-50)` the other token files read. It used to
+be a `:root` block plus a `@theme` block aliasing each variable to itself,
+which shipped 128 self-referencing declarations
+(`--color-gray-50: var(--color-gray-50)`) that only worked because the
+unlayered `:root` value outranked Tailwind's layered `@theme` output.
+(`@theme inline` doesn't fix it: Tailwind re-emits a variable whenever
+`var(--its-name)` appears in the generated CSS.)
+
+The SCSS and CSS copies used to be maintained by hand and had drifted
+(`success-25/100/200`). Now `generateTokens.test.ts` fails when either output
+is stale, and `colorParity.test.ts` checks that the generator's two outputs
+agree. Note the two sides use opposite conventions for gray in dark mode:
+CSS `--color-gray-N` keeps physical lightness (gray-900 is dark in both themes)
+and is the same in both themes, while SCSS `$gray-N` is theme-inverted
+(`$gray-900` is light in dark mode). Dark UI in CSS reads a second ramp,
+`--color-gray-dark-N`, whose values are the SCSS dark grays at the mirrored
+step. The same class name `gray-50` therefore still means opposite things in
+Tailwind and Metronic in dark mode — which is why `.bg-gray-50` needs the
+`!important` re-point in `src/tailwind.css`.
 
 ### Brand color token bridge
 
@@ -74082,7 +74324,7 @@ now import directly from `waldur-ui`.
 - **Typography**: Uses `text-[1.077rem]` and `font-medium` (500) with
   `leading-[1.43]` on the title (`<h6>`) and `text-[1.077rem] font-normal text-[var(--surface-text-secondary)]`
   on the body. This matches Metronic's `$font-weight-bold: 500`, `$font-size-6: 1.077rem`,
-  and `--bs-body-line-height: 1.43` dynamically across all viewports (including below `lg`
+  and `--bs-body-line-height: 1.43` dynamically across all viewports (including below `md`
   where root font-size scales to 12px, as well as desktop 13px).
 - **Actions slot spacing**: Metronic's `$spacers: (4: $spacer * 0.154 * 6)`
   computed to 0.924rem (12.012px @ 13px root), mapped here as `gap-[0.924rem] pr-[2px] items-start`.
@@ -75267,7 +75509,7 @@ The app uses **two separate compiled stylesheets** that are dynamically loaded b
 SCSS variables use the `isDarkMode()` function to return different values at compile time:
 
 ```scss
-// In _colors.scss
+// Generated into _color-ramps.scss from packages/design-tokens/tokens/colors.json
 $gray-50: if(isDarkMode(), #161b26, #f9fafb);
 $gray-100: if(isDarkMode(), #1f242f, #f2f4f7);
 $gray-900: if(isDarkMode(), #f5f5f6, #101828);
@@ -75283,7 +75525,8 @@ $gray-900: if(isDarkMode(), #f5f5f6, #101828);
 | `src/theme/utils.ts` | Dynamic CSS loading, initial theme detection |
 | `src/theme/ThemeSwitcher.tsx` | UI toggle component |
 | `src/metronic/sass/_tokens.scss` | Semantic design tokens |
-| `src/metronic/sass/_colors.scss` | Theme-aware color definitions |
+| `src/metronic/sass/_colors.scss` | Derived color variables (`$success`, `$text-muted`, brand ramp, …) |
+| `src/metronic/sass/_color-ramps.scss` | Theme-aware color ramps — **generated**, edit `packages/design-tokens/tokens/colors.json` (see [design-tokens.md](design-tokens.md)) |
 | `src/metronic/sass/core/base/functions/_mode.scss` | `isDarkMode()` SCSS function |
 
 ## Theme Initialization Flow
@@ -81943,6 +82186,7 @@ for deployment-specific documentation.
 * [Creation of organizations](staff-users/organization-management.md)
 * [Credit management configuration](staff-users/credit-management-staff.md)
 * [Impersonation](staff-users/impersonation.md)
+* [Offering merges](staff-users/offering-merges.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
 * [User role management](staff-users/user_role_management.md)
 * [Remote sync of offerings](staff-users/remote-sync.md)
@@ -85490,6 +85734,522 @@ waldur override_templates /etc/waldur/custom_templates.yaml
 # Generate notification documentation
 waldur print_notifications
 ```
+
+---
+
+### Offering merges
+<!-- Source: docs/user-guide/staff-users/offering-merges.md -->
+
+# Offering merges
+
+A merge moves everything that belongs to one or more **source** offerings onto a single
+**target** offering and archives the sources. Resources, their orders, usage and quota
+history, billing periods and invoice items keep existing — they simply point at the target
+afterwards. No offering and no resource is deleted, and no amount on any invoice changes.
+
+Merging is the tool for consolidating a catalogue that grew one offering per tier or per
+contract into one offering with several plans, and for moving resources between the
+offering types that do not provision anything on a backend.
+
+Only users with the staff role can create, edit, run or undo a merge. Support users can
+open the same pages and read every merge, but see no buttons that change anything. Through
+the API a support user may also compute a preview; it is returned to them but never stored
+on the record.
+
+!!! warning
+    A merge rewrites billing references and archives offerings. Run it outside the busiest
+    hours, after the sources have no pending orders, and check the verification report
+    before telling anyone the work is done. Undo exists, but it is refused once the moved
+    data has changed (see [Undoing a merge](#undoing-a-merge)).
+
+## When to merge
+
+- **Consolidating tiers into plans.** Two or more offerings that describe the same service
+  at different price points become one offering whose plans are those tiers.
+- **Moving between Basic, Service Desk and Site Agent offerings.** These three types have
+  no backend object behind a resource, so their resources can move in any direction: a
+  Basic offering into a Service Desk one, a Service Desk one into a Site Agent one, and so
+  on.
+- **Cleaning up duplicate per-tenant offerings.** When a provider ended up with several
+  auto-created offerings for one and the same tenant, merging them leaves one.
+
+## When not to merge
+
+- **Types whose resources have a backend object.** OpenStack, VMware, Rancher, Script and
+  Booking resources point at something outside the marketplace — a tenant, a virtual
+  machine, a cluster, a calendar. The merge moves marketplace rows only; it never touches
+  the backend. Merging two such offerings that describe *different* backends leaves
+  resources whose new offering cannot serve them. The only safe case is duplicate
+  offerings of one and the same backend scope, which the tool enforces: an offering with a
+  parent may merge only with offerings that share that parent **and** that scope.
+- **Different types.** A source may only be merged into an offering of its own type,
+  unless both sides are among Basic, Service Desk and Site Agent.
+- **Remote offerings.** An offering imported from another Waldur instance is refused on
+  either side of a merge: the remote instance still owns its state.
+- **An offering that has child offerings**, or an archived target.
+
+## Preparing the target
+
+The merge maps source plans and components onto **existing** target plans and components.
+It never creates them, and it never copies prices. So before opening the wizard, open the
+target offering and make sure that:
+
+- **Every plan something still refers to has a counterpart.** In the worked example below,
+  two source plans map onto one target plan — that is allowed, and is the usual way of
+  consolidating tiers. [Map plans and components](#2-map-plans-and-components) lists
+  exactly what counts as a reference.
+- **Plan units match.** A plan billed per month cannot be merged into a plan billed per
+  day. The mapping step lets you pick such a pair and flags it inline; the preview then
+  blocks the merge with `plan_unit_mismatch`.
+- **Every component in use has a counterpart with the same billing type.** A usage-based
+  component cannot be mapped onto a limit-based or a fixed one. Component names may
+  differ, types may differ — only the billing type has to match.
+- **Prices on the target are the prices you want customers to pay from now on.** The merge
+  does not change what past invoices charged, but from the moment it runs, the target
+  plan's price list applies. The preview warns about every difference.
+- **The target's order form covers the answers you care about.** Answers whose keys the
+  target's form does not know are kept on the resources but no longer displayed.
+
+The target keeps its own terms of service, consents, access policies, screenshots, files
+and offering-level roles; nothing of that kind is copied from the sources. See
+[What moves and what stays](#what-moves-and-what-stays).
+
+## Opening the tool
+
+Choose **Administration** from the left menu, then the marketplace section from the top
+menu (it carries the deployment's own marketplace name — *Government Services* in the
+screenshots below), and select **Offering merges**.
+
+[Image: Offering merge history]
+
+The page lists every merge with its sources, target, state and a summary of how many
+resources it moved and whether verification passed. The row menu opens the merge, undoes a
+finished one, or deletes a draft. **New merge** starts the wizard.
+
+States a merge goes through:
+
+| State | Meaning |
+|-------|---------|
+| Draft | Created; mappings may still be edited. |
+| Previewed | A preview is stored and matches the current mappings. Only this state can run. |
+| Queued, Running | Handed to a background worker. |
+| Done | Executed; the verification report is stored. Can be undone. |
+| Failed | Execution was rolled back; nothing was written. The record can no longer be edited or deleted, but running the preview again returns it to *Previewed* and unlocks the mappings. The wizard opens a failed merge on its last step. |
+| Undoing, Undone | Undo in progress, or finished. |
+
+### OpenStack duplicate offerings
+
+Below the list, a second panel groups OpenStack offerings that belong to the same tenant
+and are of the same type — the duplicates that auto-creation leaves behind. Each row shows
+the organisation, the tenant, how many duplicates there are, how many blockers and
+warnings a merge of them would raise, and how many orphaned resources the group has.
+Expanding a row lists the candidate offerings with their resource counts and marks the one
+recommended as the **Keeper**.
+
+**Resolve in merge wizard** on the row opens the wizard with the group already filled in:
+the keeper as the target, the other offerings as sources, and the group's suggested plan
+and component mapping applied. Nothing is created until you choose **Create draft**, so it
+is safe to open and look. The action is disabled when the group has no recommended keeper
+or nothing left to merge.
+
+The panel is shown only where the deployment has enabled it.
+
+## The wizard step by step
+
+### 1. Select offerings
+
+[Image: Selecting sources and target]
+
+Pick one or more **source offerings** — the offerings to merge away — and the **target
+offering** that remains. Each entry shows the offering's type, state and provider, which
+is the quickest way to notice that two candidates are not of the same type or not of the
+same provider.
+
+Choosing **Create draft** stores the merge record. Nothing has been changed yet.
+
+### 2. Map plans and components
+
+[Image: Mapping plans and components]
+
+For each source, every plan and every component is listed with a target to choose.
+**Fill in suggestions** proposes a mapping based on matching names and component types;
+check it rather than trusting it.
+
+- A plan or component that nothing refers to may stay unmapped. It remains on the archived
+  source. Anything that *is* referred to must be mapped, or the preview blocks the merge.
+- A **plan** is referred to when a resource, an order (its plan or the plan it is moving
+  away from), a plan period, or a call's requested offering names it.
+- A **component** is referred to when component usage, a quota, a poll record or a
+  per-user usage limit names it; when a mapped source plan prices it — a plan component
+  with a price or an amount; or when its type is used as a key inside a moved row's JSON,
+  such as order answers or a resource's limits.
+- Two components of one source may not be mapped onto the same target component: their
+  usage, quotas and limits would collide.
+
+### 3. Map order answers
+
+[Image: Mapping order answer keys]
+
+This step lists answer keys used by the sources' order forms that the target's form does
+not have. Rename each one to a target key, or leave it as **Keep as is**: the answer stays
+on the resource and the order, but the target's form does not show it. This step is
+optional and is often left untouched.
+
+### 4. Invoice policy
+
+[Image: Choosing the invoice policy]
+
+Invoice items carry a snapshot of the offering, plan and component they were billed for.
+The policy decides how far back those snapshots are rewritten:
+
+- **Current open month** (the default) rewrites only items on invoices that can still
+  change. Snapshots on closed invoices keep naming the source offering and its plan.
+- **All months** rewrites every item, closed invoices included, so the snapshots name the
+  target throughout.
+
+Neither option changes a price, a quantity or an invoice total.
+
+Neither rewrites the invoice line's own **name** either. That text is composed when the
+item is created and keeps naming the offering and the plan the line was billed under, in
+every period, under both policies. Only the snapshot stored beside it, and the plan
+component it points at, are rewritten — so after a merge a line can read
+`k8s-basic-dev (Kubernetes (Basic) / Kubernetes (basic))` while its snapshot says
+*Kubernetes* and *Basic*.
+
+See [Invoice policy and accounting exports](#invoice-policy-and-accounting-exports) for
+what this means for the SAF and SAP exports.
+
+### 5. Preview
+
+**Run preview** computes what the merge would do. It writes nothing except the stored
+preview, and it is required before the merge can run. Changing any mapping afterwards
+discards it, so preview again after every edit.
+
+[Image: Preview with warnings]
+
+The preview has these panels, and one with nothing to show is left out:
+
+- **Blockers** — conditions that stop the merge. Each carries a code; resolve them and run
+  the preview again. See [Blockers](#blockers).
+- **Warnings** — consequences you have to accept explicitly. Each one has an
+  *I understand the consequences* checkbox, and the merge cannot run until all of them are
+  ticked. See [Warnings](#warnings).
+- **Price differences** — one row per mapped plan component whose price changes, with the
+  price now and the price after the merge. It appears together with the
+  `plan_price_difference` warning and is the detail behind it.
+- **What the merge changes** — the rows it will write, grouped by the area of the service
+  they belong to.
+- **What stays on the sources** — the rows that describe the source offerings themselves
+  and are left behind on them.
+- **Invoices and usage summaries** — what the chosen invoice policy comes to in numbers.
+
+Every heading on the preview, on the merge record and on the verification report carries a
+question mark that explains, in a sentence, what the table below it lists.
+
+[Image: What the merge changes, grouped by area]
+
+Each area — billing history, resources and orders, accounts and access, invoices, offering
+configuration — has its own table, and an area with nothing in it is left out. Every row
+names what it is, what happens to it, and how many rows of that kind there are. The
+*What happens* column is the important one:
+
+| What happens | Meaning |
+|--------------|---------|
+| Moved to the target | The rows follow the resources onto the target offering, plan or component. |
+| Rewritten in place | The row stays where it is; the references inside it are rewritten — invoice item snapshots, resource limits, order answers. |
+| Recomputed after the merge | Not moved but rebuilt from the moved data: the monthly usage summaries. |
+| Moved unless the target has it already | Moved only where the target has no equivalent — offering users, credits, project templates. A second line says how many stay behind. |
+
+A count is a link wherever the rows behind it can be listed. Opening it lists the objects
+themselves, a page at a time, in three columns: **Object**, what it is in words —
+an invoice line reads as its invoice, customer, resource, component, month and amount;
+**What changes**, the value it has now, then a muted *becomes*, then the value the merge
+gives it; and **Stays on the source**, for what the row leaves behind. It is the quickest
+way to check that a rewrite does what you expect before running it.
+
+[Image: The rows behind a count]
+
+Rows that describe the sources rather than follow the resources — the source plans,
+components, price lists and terms of service — are not counted as moving. They are listed
+on their own under **What stays on the sources**, with the area they belong to.
+
+The `source_configuration_stays` warning is narrower than that table. It deliberately
+leaves out the plans, the offering components and the plan components, because those
+staying behind is the whole point of a merge and never a surprise. The warning is about
+the rest: terms of service, screenshots, files, access policies, announcements, endpoints
+and the like.
+
+[Image: What stays on the sources]
+
+[Image: Invoice and usage summary of the preview]
+
+This panel shows how many invoice items the chosen policy rewrites, how many of them sit
+on closed invoices, how many of those are left untouched, and which usage summaries are
+recomputed afterwards.
+
+When something blocks the merge, the preview names it:
+
+[Image: Preview listing blockers]
+
+### 6. Confirm and run
+
+[Image: Confirming the merge]
+
+The last step repeats what is about to happen: sources, target, how many resources move,
+the invoice policy, and how many warnings were acknowledged. **Run merge** hands the merge
+to a background worker; the page follows its progress and can be reloaded or left at any
+time.
+
+The merge runs in a single transaction. If anything fails, every write is rolled back, the
+merge moves to *Failed* and the reason is stored on the record.
+
+Once the run has finished, the same step reports the outcome and links to the merge
+record:
+
+[Image: The finished run on the last wizard step]
+
+## Blockers
+
+Every blocker carries a code. The preview and the refusal message both show it.
+
+| Code | What it means | How to resolve it |
+|------|---------------|-------------------|
+| `no_sources` | No source offering was selected. | Select at least one source. |
+| `target_in_sources` | The target is also listed as a source. | Remove it from the sources. |
+| `target_archived` | The target offering is archived. | Activate or pause the target before merging into it. |
+| `remote_offering` | One of the offerings was imported from another Waldur instance. | Remote offerings cannot be merged. Consolidate them on the instance that owns them. |
+| `offering_hierarchy` | An offering has child offerings, or has a parent and the selection is not a set of siblings of one parent and one scope. | Merge only siblings of the same parent and scope; an offering with children cannot be merged at all. |
+| `offering_type_not_allowed` | The source type differs from the target type, and they are not both among Basic, Service Desk and Site Agent. | Merge into an offering of the same type, or pick a target among the three interchangeable types. |
+| `invalid_plan_mapping` | The plan mapping is malformed, or names a plan that is not a source plan or not a target plan. | Re-open the mapping step and choose the target plans again. |
+| `unmapped_plan` | A source plan that a resource, an order, a plan period or a call's requested offering refers to has no target plan. | Map it, or — if it is genuinely unused — check why something still references it. |
+| `plan_unit_mismatch` | The source plan is billed per a different unit than the target plan. | Map it to a plan with the same billing unit, or add such a plan to the target. |
+| `invalid_component_mapping` | The component mapping is malformed, not keyed by a source offering, or names an unknown component type. | Re-open the mapping step and choose the target components again. |
+| `component_mapping_not_injective` | Two components of one source are mapped onto the same target component. | Give each source component its own target component; usage, quotas and limits would otherwise collide. |
+| `unmapped_component` | A source component has no target component although usage, a quota, a poll record or a per-user limit refers to it, a mapped source plan prices it, or its type is a key in a moved row's answers or limits. | Map it, or add a matching component to the target. |
+| `component_billing_type_mismatch` | The source component's billing type differs from the target component's. | Map it onto a component with the same billing type, or change the target component before merging. |
+| `pending_orders` | Orders of the source offerings are still pending. | Approve, reject or cancel them, then preview again. |
+| `open_creation_issue` | Service Desk resources still have an open creation request. | Resolve those requests first, so the ticket that created the resource is closed. |
+| `component_usage_collision` | Moving usage rows would collide with usage the target already has for the same resource, plan period and billing period. | Check for usage reported twice for the same period; correct it before merging. |
+| `invalid_invoice_policy` | An invoice policy other than the two supported ones was sent. | Only reachable through the API; use `open_month` or `all_months`. |
+
+Two further refusals have no code, and appear when running the merge:
+
+- **The merge has blockers.** The stored preview is not clean. Preview again and resolve
+  what it lists.
+- **The merge changed since it was previewed.** Something about the offerings, plans or
+  components changed after the preview was stored. Run the preview again and compare.
+
+## Warnings
+
+A warning never stops the merge, but each one must be acknowledged before it can run.
+
+| Code | What it means | What to do |
+|------|---------------|------------|
+| `plan_price_difference` | A mapped plan component costs a different amount on the target, or the target plan has no price for it. The table under the warning lists the current and the new price. | Confirm the new prices are intended. From the merge onwards, customers pay the target's prices. |
+| `source_configuration_stays` | Configuration that belongs to the sources — terms of service, screenshots, files, access policies, announcements, endpoints and so on — stays on the archived sources. The sources' own plans, components and plan components stay too, but the warning leaves those out deliberately. | Re-create on the target whatever should keep applying. |
+| `unknown_answer_keys` | Order answers use keys the target's form does not know and that no rename covers. | Either rename them in the answers step, add the fields to the target's order form, or accept that the answers are kept but not shown. |
+| `offering_user_on_both` | Some users already have an account on the target (or on another source). Their source account stays on the archived source. | Check that the account kept on the target is the correct one for those users. |
+| `empty_backend_id` | The target is a Site Agent offering and some of the moved resources that are not terminated have no backend identifier. | The agent cannot match those resources to backend objects. Set their backend identifiers, or expect the agent to skip them. |
+
+## Invoice policy and accounting exports
+
+Invoice item snapshots feed the accounting exports as well as the invoice views, so the
+policy choice is visible in reports:
+
+- **Current open month** leaves the snapshots on closed invoices alone. A re-export of an
+  earlier period still names the source offering and its plan, which is usually what an
+  accounting system that has already received those rows expects.
+- **All months** rewrites the whole history. Past periods re-exported after the merge name
+  the target offering and the mapped plan instead. Amounts, quantities and article codes do
+  not change — only the names and the references.
+
+The policy does **not** keep past exports byte-for-byte, however. The SAF and SAP
+serializers choose the shape of a line from how many plans the resource's *current*
+offering has, not from the snapshot: one plan produces
+`<resource> (<offering>) / <component>`, more than one appends the snapshot's plan name to
+the item name instead. Because that count is read from the offering a resource is on now,
+consolidating single-plan offerings into a multi-plan target flips the branch for every
+line of the moved resources, in past periods too, under either policy. Only the names
+inside the line follow the policy.
+
+Agree that change with whoever consumes those files before merging, and again before
+choosing **All months**.
+
+## What moves and what stays
+
+These are the main cases rather than a full inventory; the preview's own tables are the
+authority for a given merge, because they are generated from the same registry the engine
+works from.
+
+**Moves to the target**, following the resources:
+
+- Resources, their plans, limits and current usages.
+- Orders, including their plans and answers.
+- Plan periods, component usage, quotas, poll records and per-user usage limits.
+- Monthly usage summaries — recomputed rather than moved, for the affected components and
+  months.
+- Invoice items' plan component and snapshot, according to the invoice policy.
+- Offering users and their LDAP groups; a user who already has an account on the target
+  keeps that one and the source account stays behind.
+- Support tickets raised for the moved resources.
+- Customer credits scoped to the source offering, and customer usage caps on the mapped
+  components: they keep covering the same resources.
+- Calls that offered the source, and auto-provisioning rules and project templates that
+  named it.
+
+**Stays on the archived source:**
+
+- The source's own plans and components with their price lists.
+- Offering-scoped roles, such as offering managers — copying them would hand the source's
+  managers control of the target.
+- Terms of service and the consents users gave to them; the target's terms apply after the
+  merge, and its users are asked for consent to those.
+- Screenshots, files, endpoints, access subnets and access policies.
+- Offering-level cost and usage policies, and promotion campaigns — moving them would
+  impose them on every customer of the target.
+- Backend-specific configuration: software catalogues, partitions, QoS, agent identities,
+  POSIX id pools, discovered backend resources and integration status.
+- Announcements and announcement templates, checklist completions, event subscriptions and
+  DOI referrals.
+
+Whatever stays behind that should keep applying has to be re-created on the target by
+hand. The `source_configuration_stays` warning lists what was found.
+
+## Verification
+
+Both a merge and its undo verify themselves inside the same transaction, right after the
+writes, and store the report on the merge record.
+
+[Image: Verification report]
+
+Each check is one row: its code, whether it passed, and a one-line summary of what it
+compared. A merge that has been undone carries two reports, each under its own heading —
+*Verification after the merge* and *Verification after the undo* — with the overall result
+and the time it ran beside the heading.
+
+| Check | What it asserts |
+|-------|-----------------|
+| `resource_count` | Each offering has exactly as many resources as expected: the sources lost them, the target gained them. |
+| `single_open_plan_period` | No moved resource ended up with two open billing periods. |
+| `open_invoice_totals` | Every affected customer's current invoice total is unchanged. |
+| `no_stale_references` | No moved row still points at a source offering, plan, component or plan component. |
+| `offering_roles_unchanged` | No offering's active role count changed; roles stay where they were. |
+| `closed_invoice_items_unchanged` | Under the *Current open month* policy, no item on a closed invoice was touched. |
+
+Opening a summary shows the check's details in full: the offerings it counted, the
+customers whose invoice totals it compared, the rows it found. The payload differs per
+check, so it is rendered by shape rather than by name — which is also why offerings and
+customers appear as uuids there rather than as names — and the raw JSON stays available
+under **Raw payload** for a bug report.
+
+[Image: One verification check in detail]
+
+A failed check does not roll the merge back — the data has been written. Treat it as an
+incident: open the merge record, read the failing check's details, and decide between
+undoing the merge and correcting the rows by hand.
+
+## After the merge
+
+Confirm the outcome from the offerings themselves, not only from the report:
+
+1. The source offerings are **Archived** and have no resources left.
+2. The target offering lists all the moved resources, each on its mapped plan.
+3. The current month's invoice for each affected customer has the same total as before.
+4. Anything that stayed on the sources and should keep applying — terms of service,
+   policies, announcements — exists on the target.
+
+The merge record keeps the mappings, the preview and the verification reports, so it stays
+readable as the record of what happened. The mappings are stored by uuid and shown by
+name, so they keep saying which source plan and which source component ended up where even
+after something is renamed.
+
+[Image: The mappings kept on the merge record]
+
+Support users see the same page, with the verification report and the preview, but without
+the buttons that change anything:
+
+[Image: A merge record as a support user]
+
+## Undoing a merge
+
+A merge in state *Done* can be undone. Undo moves the resources, orders, usage and the
+other rows back to their source offerings, restores their plans and components, unarchives
+the sources, and puts the invoice items back as they were.
+
+[Image: Undo confirmation]
+
+Rows created **after** the merge for the moved resources — new usage, quotas, orders,
+invoice items — go back with them, as long as they can be mapped to something on the
+source. Limit changes and usage reported since the merge survive: undo applies the inverse
+renames to the current values rather than restoring old documents wholesale.
+
+[Image: A merge that has been undone]
+
+Once undone, the merge record stays as history and can no longer be undone again. Running
+the same consolidation later means creating a new merge.
+
+### When undo is refused
+
+Undo checks its preconditions before it changes anything, and refuses without writing when
+one of these holds:
+
+| Code | What it means |
+|------|---------------|
+| `resource_changed` | A moved resource switched plan or offering after the merge. The named resources have to be put back on the target's mapped plan before undo can work. |
+| `changed_since_merge` | A row the merge wrote no longer holds the value the merge gave it — something edited it afterwards. |
+| `pending_orders` | A moved resource has a pending order. Approve, reject or cancel it first. |
+| `unmappable_new_row` | A row created after the merge cannot go back: its component has no counterpart on the source, or an order uses a target plan the resource was not moved to. |
+| `unique_conflict` | Moving rows back would violate a unique constraint — typically usage that exists on both sides for the same resource, component and period. |
+
+A refusal leaves the merge in state *Done*, with the reason on the record: the merge is
+still in effect and nothing was half-undone.
+
+Some invoice items are skipped rather than restored: items deleted since the merge, items
+whose rewritten values changed since, and — under the *Current open month* policy — items
+whose invoice has been closed in the meantime, because restoring them would change an
+issued invoice. No page lists them; they are recorded in the undo's verification report on
+the merge, which is readable through the API.
+
+## Worked example
+
+A provider published two offerings for the same container platform: **Kubernetes (Basic)**,
+with one plan, and **Kubernetes (Premium)**, with a plan for the service itself and a
+second plan for consultancy hours. A third offering, **Kubernetes**, already exists with
+two plans, *Basic* and *Premium*, and is the catalogue entry that should remain. Four
+resources are in use across the two sources, all with usage and invoice items for the
+current month.
+
+1. **Prepare the target.** *Kubernetes* has both plans, with prices and components in
+   place: the node-count component both sources use, and the working-hours component the
+   consultancy plan uses.
+2. **Select.** Sources: *Kubernetes (Basic)* and *Kubernetes (Premium)*. Target:
+   *Kubernetes*. All three are of the same type, so nothing objects.
+3. **Map.** *Kubernetes (basic)* → *Basic*. *Kubernetes (premium)* → *Premium*.
+   *Konsultatsioon (tööajal)*, the consultancy plan, also → *Premium*: two source plans
+   folding into one target plan is what consolidation looks like. The components map onto
+   the target components of the same type.
+4. **Answers.** The sources' order forms carry a handful of keys the target does not have.
+   They are left as they are — the answers stay on the resources for the record.
+5. **Invoice policy.** *Current open month*, so invoices already issued keep naming the
+   offerings that were actually ordered.
+6. **Preview.** Nothing blocks the merge. Two warnings appear: `plan_price_difference`,
+   because the consultancy plan had no price for the node-count component while *Premium*
+   charges for it, and `source_configuration_stays`, because the sources' terms of service
+   remain behind — their plans and components stay too, but the warning is not about
+   those. Both are acknowledged. *Resources and
+   orders* shows four resources and their four plans moving, *Billing history* four billing
+   periods and five usage records, *Invoices* five invoice lines rewritten in place; the
+   sources' own plans, components and terms of service are listed under *What stays on the
+   sources*.
+7. **Run.** The merge finishes and all six verification checks pass: four resources on the
+   target, none left on the sources, the affected customer's open invoice total unchanged.
+8. **Check.** Both sources are archived; *Kubernetes* lists the four resources, two on
+   *Basic* and two on *Premium*. The terms of service that stayed on the sources are
+   re-created on the target.
+
+Had the consultancy plan been left unmapped, the preview would have refused the merge with
+`unmapped_plan`, because a resource is on that plan. Had the target been missing the
+working-hours component, it would have refused with `unmapped_component`.
 
 ---
 
@@ -94423,6 +95183,376 @@ Auto-provisioning integrates with Waldur's marketplace:
 
 ---
 
+### Changelog System
+<!-- Source: docs/developer-guide/changelog-system.md -->
+
+# Changelog System
+
+## Overview
+
+The changelog system provides staff users with context-aware release information, including what changed, whether changes affect their specific deployment, and what actions are needed after upgrading. It replaces the basic "new version available" notification with structured, filterable changelogs that include security alerts, impact analysis, and deployment-specific relevance matching.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A[Release script generates<br/>changelog JSON per version] --> B[Published to<br/>docs.waldur.com/latest/changelog/]
+    B --> C[GET /api/version/<br/>fetches index.json, cached 1h]
+    C --> D{New version<br/>available?}
+    D -->|Yes| E[changelog_summary +<br/>security_alert in response]
+    D -->|Yes| F[Celery: compute_changelog_impact<br/>background task]
+    E --> G[Frontend: badge +<br/>security banner]
+    F --> H[ChangelogImpactAnalysis<br/>model in DB]
+    H --> I[GET /api/changelog/pending/<br/>merges static + analysis]
+    I --> J[Frontend: /administration/changelog/]
+```
+
+### Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Changelog JSON files | `docs.waldur.com/latest/changelog/releases/` | Structured release data (static) |
+| `index.json` manifest | `docs.waldur.com/latest/changelog/index.json` | Version list with summary stats |
+| `waldur_core.changelog` app | `src/waldur_core/changelog/` | Backend API, models, utils |
+| `ChangelogImpactAnalysis` | Database model | Stores background analysis results |
+| `changelog/schema.json` | Repo root | JSON Schema for release files |
+| `assemble_changelog` | Management command | Assembles fragments into release files |
+
+## Changelog Data Format
+
+Each release has a structured JSON file following `changelog/schema.json`. Key fields per entry:
+
+### Entry structure
+
+```json
+{
+  "id": "8.0.7-1",
+  "type": "feature",
+  "category": "auth",
+  "title": "Personal Access Tokens (PATs)",
+  "description": "Previously, API integrations required session tokens. Now, users can create scoped PATs with configurable expiry.",
+  "scope": "core",
+  "component": ["backend", "frontend"],
+  "highlight": true,
+  "impact": {
+    "risk": "low",
+    "affected_scope": "api_consumers"
+  },
+  "actions": [
+    {
+      "type": "migration",
+      "description": "Run waldur migrate",
+      "automatic": true
+    }
+  ],
+  "relevant_when": {
+    "plugins": [],
+    "feature_flags": [],
+    "settings": []
+  }
+}
+```
+
+### Entry types
+
+| Type | Description |
+|------|-------------|
+| `breaking` | Backward-incompatible changes |
+| `security` | Security fixes (must include `security` object) |
+| `deprecation` | Will be removed in a future version |
+| `feature` | New functionality |
+| `improvement` | Enhancement to existing functionality |
+| `fix` | Bug fix |
+
+### Scope
+
+| Value | Meaning | Relevance filtering |
+|-------|---------|-------------------|
+| `core` | Affects all deployments | Always shown |
+| `plugin` | Requires specific plugins | Filtered by `relevant_when` |
+| `infra` | Deployment infrastructure only | Always shown (same as `core` - `component` isn't consulted for relevance) |
+| `dev` | Development/testing only | Hidden in production views |
+
+### Component
+
+Array of stack layers affected: `backend`, `frontend`, `helm`, `docker`, `site-agent`, `sdk`.
+
+### Categories
+
+`marketplace`, `auth`, `identity`, `openstack`, `slurm`, `invoices`, `ai_assistant`, `reporting`, `policy`, `proposal`, `support`, `ui`, `infrastructure`, `notifications`.
+
+### Impact and risk
+
+| Risk | Meaning |
+|------|---------|
+| `high` | Breaking change, data migration, or service disruption |
+| `medium` | Behavior change that may affect workflows |
+| `low` | Minor change, unlikely to affect workflows |
+| `none` | Informational, no action needed |
+
+`affected_scope` provides a broad impact category when a specific Django model doesn't apply: `all_users`, `all_resources`, `infrastructure`, `api_consumers`, `none`.
+
+`affected_resources` with `model` and `filter` enables the Celery task to run live count queries (e.g., "47 pending orders affected"). Both `model` and the keys of `filter` are checked server-side against an explicit allowlist (`ALLOWED_IMPACT_MODELS` in `changelog/tasks.py`) before any query runs — this JSON is remote, unauthenticated input, so only pre-approved `(model, field)` combinations are queryable, with exact-match values only (no `__` lookups). Currently allowlisted: `marketplace.Resource.state`, `marketplace.Offering.{state,type}`, `marketplace.Order.{state,type}`, and `is_staff`/`is_support`/`is_active` for `affected_users`. `state` fields are `FSMIntegerField`s, so filter values must be the numeric state (e.g. `{"state": 1}`), not a display string like `"pending-consumer"` — a non-matching model, field, or value type is skipped (logged, not counted) rather than erroring. Extending the allowlist is a deliberate, reviewed code change in `tasks.py`, not something a changelog entry can request on its own.
+
+### Security entries
+
+Entries with `type: security` must include a `security` object:
+
+```json
+{
+  "security": {
+    "urgency": "high",
+    "cve": "CVE-2026-12345",
+    "ghsa": "GHSA-xxxx-yyyy-zzzz",
+    "affected_versions": "< 8.0.7",
+    "exploitability": "Requires authenticated access.",
+    "mitigation": "Rotate session secrets if you cannot upgrade immediately.",
+    "advisory_url": "https://docs.waldur.com/security/CVE-2026-12345"
+  }
+}
+```
+
+Security urgency levels control frontend notification behavior. `changelog_summary.security_alert` (and the badge/banner it drives) is only ever populated for `critical`/`high` — `build_changelog_summary` filters on exactly those two (`utils.py`) — so `moderate`/`low` entries never reach any dedicated notification; they appear only as regular entries wherever the changelog is listed, ranked by their own `impact.risk`:
+
+| Urgency | UI behavior |
+|---------|-------------|
+| `critical` | Red banner (`SecurityAlertBanner`, `bg-danger`), persistent, cannot dismiss; red footer badge |
+| `high` | Orange/warning banner (`bg-warning`), dismissible per session (`sessionStorage`); orange footer badge |
+| `moderate` | No dedicated banner or badge — standard changelog entry only |
+| `low` | No dedicated banner or badge — standard changelog entry only |
+
+### Version model (stable and RC)
+
+Waldur uses SemVer with `-rc.N` pre-releases. Each release file contains:
+
+- `entries[]` — cumulative since the previous stable release
+- `since_previous[]` — incremental since the immediately preceding version (RC or stable)
+- `component_activity` — per-repo commit counts with compare URLs
+
+This supports three views: stable-to-stable, RC-to-RC, and RC-to-stable.
+
+## API Endpoints
+
+All endpoints require `IsAuthenticated + IsStaffOrSupportUser`.
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/version/` | Returns version + `changelog_summary` with security alerts |
+| `GET /api/changelog/pending/` | Cumulative changelog from current to latest, with relevance and impact analysis |
+| `GET /api/changelog/{version}/` | Full changelog for one version |
+| `GET /api/changelog/{version}/delta/` | Only `since_previous` entries |
+| `GET /api/changelog/compare/{from}/{to}/` | Merged deltas between arbitrary versions |
+| `GET /api/changelog-entries/` | Flat, paginated, filterable list of entries across all pending versions (table view) |
+
+### Version endpoint response
+
+```json
+{
+  "version": "8.0.6",
+  "latest_version": "8.0.8",
+  "changelog_summary": {
+    "versions_behind": 2,
+    "breaking_release_count": 1,
+    "has_breaking_changes": true,
+    "security_alert": {
+      "max_urgency": "high",
+      "count": 1,
+      "versions": [
+        {"version": "8.0.7", "max_urgency": "high"}
+      ]
+    }
+  }
+}
+```
+
+### Pending endpoint response
+
+```json
+{
+  "current_version": "8.0.6",
+  "latest_version": "8.0.8",
+  "versions_behind": 2,
+  "impact_analysis_status": "completed",
+  "impact_analysis_computed_at": "2026-04-15T10:30:00Z",
+  "releases": [
+    {
+      "version": "8.0.8",
+      "date": "2026-04-13",
+      "type": "stable",
+      "summary": "...",
+      "entries": [
+        {
+          "id": "8.0.8-1",
+          "type": "feature",
+          "title": "...",
+          "relevant": true,
+          "relevance_reasons": ["Plugin waldur_marketplace is active"],
+          "impact": {"risk": "low"},
+          "affected_resources_count": 47
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Flat entries endpoint
+
+`GET /api/changelog-entries/` flattens every pending version's entries into one paginated list — for the standard Waldur table component, rather than the per-release grouping `pending` returns. Query parameters:
+
+| Param | Description |
+|-------|-------------|
+| `type` | Filter by entry type |
+| `risk` | Filter by `impact.risk` |
+| `scope` | Filter by scope |
+| `version` | Filter to entries from one release version |
+| `highlight` | `true`/`1` — only entries with `highlight: true` |
+| `relevant_only` | `true`/`1` — only entries relevant to this deployment |
+| `search` | Case-insensitive match against `title`/`description` |
+| `page`, `page_size` | Pagination (`page_size` clamped to 1-200) |
+
+Results are sorted relevant-first, then by risk (high to none). Each entry additionally carries `version`, `release_date`, `release_type` (from the release it belongs to).
+
+```json
+{
+  "count": 12,
+  "current_version": "8.0.6",
+  "latest_version": "8.0.8",
+  "versions_behind": 2,
+  "results": [
+    {
+      "id": "8.0.8-1",
+      "type": "feature",
+      "title": "...",
+      "relevant": true,
+      "impact": {"risk": "low"},
+      "version": "8.0.8",
+      "release_date": "2026-04-13",
+      "release_type": "stable"
+    }
+  ]
+}
+```
+
+## Relevance Matching
+
+Entries are matched against the deployment's configuration:
+
+- **Plugins**: `relevant_when.plugins` checked against `INSTALLED_APPS`
+- **Feature flags**: `relevant_when.feature_flags` checked against the features registry
+- **Settings**: `relevant_when.settings` checked for non-default constance values
+
+Entries with `scope: core` or `scope: infra`, or empty `relevant_when` arrays, are always relevant.
+
+## Background Impact Analysis
+
+The `compute_changelog_impact` Celery task runs automatically when `/api/version/` detects a new release. It computes:
+
+1. **Affected resource counts** — runs `Model.objects.filter(**filter).count()` for entries with `affected_resources.model`, restricted to the `ALLOWED_IMPACT_MODELS`/`ALLOWED_USER_IMPACT_FIELDS` allowlist (see "Impact and risk" above)
+2. **Settings diffs** — captures current vs default values for referenced constance settings
+3. **Plugin state** — records which referenced plugins are installed
+
+Results are stored in the `ChangelogImpactAnalysis` model and refreshed every 24 hours. The `/api/changelog/pending/` endpoint merges these results into the response.
+
+## Configuration
+
+### Disabling the changelog
+
+Set in `override.conf.py` or Helm values:
+
+```python
+WALDUR_CORE["CHANGELOG_ENABLED"] = False
+```
+
+```yaml
+# Helm values.yaml
+waldur:
+  core:
+    CHANGELOG_ENABLED: false
+```
+
+When disabled:
+
+- `/api/version/` returns only `{version}` — no changelog data
+- `/api/changelog/*` endpoints return 404
+- The Celery impact analysis task is a no-op
+- No frontend changelog UI elements are rendered
+
+## Management Command: assemble_changelog
+
+Assembles changelog fragments from `changelog/next/` into a release file:
+
+```bash
+waldur assemble_changelog \
+  --release-version 8.0.8 \
+  --date 2026-04-15 \
+  --release-type stable \
+  --base-stable 8.0.7 \
+  --summary "Security fixes, new reporting features"
+```
+
+### Options
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--release-version` | Yes | Version string (e.g., `8.0.8` or `8.0.8-rc.1`) |
+| `--date` | Yes | Release date (ISO 8601) |
+| `--release-type` | No | `stable` (default) or `rc` |
+| `--base-stable` | No | Previous stable version for cumulative entries |
+| `--previous` | No | Immediately preceding version |
+| `--stable-target` | No | Target stable version (for RC releases) |
+| `--summary` | No | Release summary text |
+| `--no-clear` | No | Don't clear `changelog/next/` after assembly |
+| `--dry-run` | No | Validate and print without writing |
+
+### Fragment format
+
+Each fragment in `changelog/next/` is a JSON file with the same structure as an entry, minus the `id` field (auto-assigned):
+
+```json
+{
+  "type": "feature",
+  "category": "marketplace",
+  "title": "Monthly component usage reporting",
+  "description": "Providers can now view aggregated monthly usage data.",
+  "scope": "core",
+  "component": ["backend", "frontend"],
+  "impact": {"risk": "none"},
+  "relevant_when": {"plugins": [], "feature_flags": [], "settings": []}
+}
+```
+
+### Validation rules
+
+Each assembled entry is validated against `changelog/schema.json` (the `$defs/entry` sub-schema) via `jsonschema` — `schema.json` is the source of truth, so the constraints below track it automatically rather than needing to be kept in sync by hand:
+
+- `type` must be one of: `breaking`, `security`, `deprecation`, `feature`, `improvement`, `fix`
+- `category` must match the predefined category list
+- `scope` must be `core`, `plugin`, `infra`, or `dev`
+- `component` values must be from: `backend`, `frontend`, `helm`, `docker`, `site-agent`, `sdk`
+- `impact.risk` must be `high`, `medium`, `low`, or `none`
+
+One rule the schema can't express and is checked separately: security entries (`type: security`) must include a `security` object with `urgency`, `affected_versions`, `exploitability`, and `mitigation`.
+
+## Schema Versioning
+
+The JSON schema at `changelog/schema.json` includes a `schema_version` field (currently `1.0.0`). Release files include this version for forward compatibility — consumers can check the schema version before parsing.
+
+## Release Script Integration
+
+Changelog entries are generated at release time by `waldur-docs/scripts/release.sh` — a local, interactive script a dev runs to cut a release (`./scripts/release.sh <VERSION>`). It's not CI-driven: there's no dedicated pipeline job for changelog generation, staff/support-facing or otherwise. The script already collects git log data across all core repos (mastermind, homeport, helm, docker-compose) between the previous tag and the new one, and drives two independent Claude Code (`claude --print`) calls against that same commit data:
+
+1. **`scripts/prompts/changelog-prompt.md`** — produces free-form Markdown, prepended to `docs/about/CHANGELOG.md`. This is the pre-existing, human-facing changelog and is unaffected by the structured system described in this document.
+2. **`scripts/prompts/changelog-json-prompt.md`** — produces a single `{summary, entries[]}` JSON object classifying the same changes into this schema's fields (`type`, `category`, `scope`, `component`, `impact`, `relevant_when`, etc.). Each entry in `entries[]` is written to its own file under `waldur-mastermind/changelog/next/` (a fragment, matching this document's fragment format above), then `assemble_changelog` validates and assembles them into `changelog/releases/{version}.json` inside this repo. That file is copied into `waldur-docs/docs/changelog/releases/{version}.json`, and `scripts/update_changelog_index.py` upserts its summary row into `waldur-docs/docs/changelog/index.json`.
+
+Both stable and RC releases go through this same flow — there's no separate "daily RC" cadence script.
+
+Publishing happens for free: `docs/changelog/` lives in `waldur-docs`' normal `docs_dir`, so the site's existing "Deploy MkDocs pages" CI job (`mkdocs build` + `mike deploy $TAG latest --update-aliases`, unchanged by this) picks it up like any other doc content. Because `mike` nests the built site under version-prefixed paths (`docs.waldur.com/8.0.9/...`), the changelog is only reachable at a **stable, unversioned URL via mike's `latest` alias** — `docs.waldur.com/latest/changelog/...` — which is why `CHANGELOG_BASE_URL` in `utils.py` points at `/latest/changelog`, not `/changelog`, and why the alias must be kept up to date on every stable release (mike already does this via `--update-aliases`).
+
+`release.sh` also commits `changelog/releases/{version}.json` directly into this repo (`waldur-mastermind`, `develop` branch) as an audit trail, independent of `waldur-docs` — that commit is not required at runtime (the API only ever fetches from `docs.waldur.com`), it just keeps the generated release data in this repo's history too.
+
+---
+
 ### Component Dynamic Discounts
 <!-- Source: docs/developer-guide/component-discounts.md -->
 
@@ -97019,6 +98149,144 @@ def available_checklists(self, request):
 
 ---
 
+### Changelog support for offline / airgapped deployments
+<!-- Source: docs/developer-guide/design/changelog-offline-support.md -->
+
+# Changelog support for offline / airgapped deployments
+
+Status: **proposal** — not implemented. Builds on [the changelog
+system](../changelog-system.md) (WAL-9853), which this note assumes as given.
+
+## Problem
+
+`fetch_changelog_index()` / `fetch_changelog_release()`
+(`waldur_core/changelog/utils.py`) hit
+`https://docs.waldur.com/latest/changelog/...` over HTTPS. The legacy
+fallback, `get_latest_github_tag()`, hits
+`api.github.com`. Both wrap their request in `try/except RequestException` and
+return `None` on failure, so a deployment with no egress to either host
+doesn't crash — `/api/version/` just returns `{"version": "..."}` with no
+`changelog_summary`, no `latest_version`, no security banner.
+
+That's a silent no-op, not a working feature. It also inverts the risk profile:
+airgapped deployments — the ones least able to casually check "what changed
+upstream" some other way — are exactly the ones this degrades for.
+
+## Goals
+
+- A deployment with zero outbound access still gets `changelog_summary`,
+  `security_alert`, and `/api/changelog/pending/` populated, scoped to
+  whatever changelog data it actually has on hand.
+- Deployments that *do* have some path to fetch updates (an internal mirror,
+  a periodic sync job, a side-loaded file) can use it without code changes.
+- No regression for the common case (direct internet access to
+  docs.waldur.com) — this is additive.
+
+## Non-goals
+
+- Making offline deployments learn about releases that happened *after* their
+  last data refresh, without some operator action. There's no way around that
+  without a network path of some kind, even an indirect one (sneakernet,
+  scheduled sync from a jump host).
+- A generic plugin system for changelog data sources. Three concrete sources
+  (below) cover the realistic cases; more can be added later if needed.
+
+## Design: three-tier lookup
+
+Insert two sources ahead of the existing HTTP fetch, checked in order, first
+hit wins:
+
+```mermaid
+flowchart TD
+    start(["fetch_changelog_index() /\nfetch_changelog_release(version)"]) --> local
+
+    local{"1. Local override dir\nCHANGELOG_LOCAL_PATH set\nand file exists?"}
+    local -->|yes| useLocal["Read from disk\n(no cache needed — already local)"]
+    local -->|no| bundled
+
+    bundled{"2. Bundled snapshot\npackaged with this image?"}
+    bundled -->|yes| useBundled["Read from package data\ncache 1h, same as today"]
+    bundled -->|no| http
+
+    http{"3. HTTP fetch\ndocs.waldur.com reachable?"}
+    http -->|yes| useHttp["Existing behavior\ncache 1h / 30d"]
+    http -->|no| none["None\n(the current silent no-op, now the last resort\nrather than the only option)"]
+
+    useLocal --> done(["changelog_summary populated"])
+    useBundled --> done
+    useHttp --> done
+```
+
+1. **Local override directory.** A path (`WALDUR_CORE["CHANGELOG_LOCAL_PATH"]`,
+   e.g. mounted from a ConfigMap or a plain volume) checked first, so an
+   operator can refresh data by dropping newer `index.json` /
+   `releases/{version}.json` files in without a redeploy or code change. No
+   cache layer needed here — reading a local file is already cheap, and it
+   lets an operator's own sync job (cron, `rsync`, CI artifact) take effect
+   immediately instead of waiting out the 1h cache.
+2. **Bundled snapshot.** `changelog/index.json` + `changelog/releases/*.json`
+   as of build time, shipped as package data inside the image (same tree
+   `assemble_changelog` already writes to — no new format). An 8.0.7 image
+   knows everything that was true when 8.0.7 was built. It can't discover an
+   8.0.9 that shipped later without a new image or tier 1 — that's the
+   fundamental limit of "no network," not a gap in this design.
+3. **HTTP fetch.** Unchanged — today's behavior, now the last resort instead
+   of the only option.
+
+Each tier already produces data in the same shape (`index.json` /
+per-version release JSON per `changelog/schema.json`), so
+`build_changelog_summary()`, `enrich_entries_with_relevance()`,
+`compute_changelog_impact`, and every API view are untouched. This is purely a
+sourcing change inside `fetch_changelog_index()` / `fetch_changelog_release()`.
+
+## Alternatives considered
+
+| Option | Trade-off |
+|---|---|
+| **Configurable `CHANGELOG_BASE_URL` only** (point HTTP at an internal mirror) | Simplest code change — one constant becomes a setting. But it's still "HTTP or nothing": an operator with literally zero egress (not even to an internal-only mirror reachable from the pod) gets nothing, and it doesn't help the zero-config case ("this should say something useful out of the box"). |
+| **Bundled snapshot only** (tier 2, no tier 1) | Works out of the box, no operator setup. But there's no way to refresh it short of shipping a new image, even for operators who *do* have some side-channel (e.g. they already push new images through an internal registry and could push refreshed JSON the same way). |
+| **Local override only** (tier 1, no tier 2) | Fully flexible, but a fresh install has nothing until an operator configures it — worse zero-config behavior than today's HTTP-only design for deployments that *do* have internet. |
+| **Three-tier (this proposal)** | Covers both the zero-config case (bundled) and the "operator wants control" case (local override), at the cost of one more branch in two already-simple functions. |
+
+`CHANGELOG_BASE_URL` becoming a setting (first bullet) is worth doing
+regardless, orthogonal to tiers — it costs nothing and helps the "internal
+mirror instead of docs.waldur.com" case even for deployments that do have
+some internal network access.
+
+## Concrete changes
+
+- `waldur_core/changelog/utils.py`
+  - `fetch_changelog_index()` / `fetch_changelog_release(version)`: try
+    `CHANGELOG_LOCAL_PATH` (if set), then bundled package data, then HTTP —
+    same public signature, same return shape.
+  - `CHANGELOG_BASE_URL` becomes `settings.WALDUR_CORE.get("CHANGELOG_BASE_URL", "https://docs.waldur.com/latest/changelog")`.
+- New `WALDUR_CORE` settings: `CHANGELOG_LOCAL_PATH` (default unset — tier 1
+  skipped unless configured).
+- Packaging: bundling the snapshot means the release pipeline that already
+  writes `changelog/releases/{version}.json` (see [Release Script
+  Integration](../changelog-system.md#release-script-integration)) also needs
+  to land in the built package/image — likely `MANIFEST.in` / `pyproject.toml`
+  package-data entry, no new generation step.
+- `waldur-helm` / `waldur-docker-compose`: document `CHANGELOG_LOCAL_PATH` as
+  an optional mount point, not a mandatory one (existing deployments need no
+  changes) — the **packaging-config** skill's mandatory-config checklist
+  doesn't apply here.
+
+## Open questions
+
+- Does the bundled snapshot need `assemble_changelog` to also copy the latest
+  N releases (not just the current one) into package data, so a fresh
+  install's `changelog_summary` can show `versions_behind > 1` immediately
+  after an offline upgrade skips several versions? Or is "what changed since
+  the version this image replaces" (typically one hop) enough?
+- Should `compute_changelog_impact`'s Celery trigger in `version_detail` be
+  skipped when the *only* available source is the bundled snapshot, since
+  there's nothing new to learn between fixed-at-build-time data refreshes
+  (the 24h re-run in `_trigger_impact_analysis_if_needed` would just repeat
+  the same query on unchanged data until the next image)?
+
+---
+
 ### Event pub/sub architecture
 <!-- Source: docs/developer-guide/design/pubsub-architecture.md -->
 
@@ -97445,6 +98713,11 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - marketplace_offering_component_created
 - marketplace_offering_component_deleted
 - marketplace_offering_component_updated
+- marketplace_offering_merge_created
+- marketplace_offering_merge_executed
+- marketplace_offering_merge_failed
+- marketplace_offering_merge_undone
+- marketplace_offering_merge_verification_failed
 - marketplace_offering_options_updated
 - marketplace_offering_resource_options_updated
 - marketplace_plan_archived
@@ -97594,7 +98867,15 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 
 ## Permissions
 
+- role_cloned
+- role_concealed
+- role_definition_created
+- role_definition_deleted
+- role_definition_updated
+- role_disabled
+- role_enabled
 - role_granted
+- role_revealed
 - role_revoked
 - role_updated
 
@@ -98299,7 +99580,9 @@ td:nth-child(4) {
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_vmware.Port` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_vmware.Disk` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_firecrest.Job` | Log resource import. |
+| `log_role_concealed` | `Django Signal (post_save)` | `permissions.CustomerRoleConcealment` | Log that a role was hidden for an organization. |
 | `log_role_granted` | `Custom Signal (role_granted)` | `—` | Log the event of a user being granted a role. |
+| `log_role_revealed` | `Django Signal (post_delete)` | `permissions.CustomerRoleConcealment` | Log that a concealed role was made available to an organization again. |
 | `log_role_revoked` | `Custom Signal (role_revoked)` | `—` | Log the event of a user having a role revoked. |
 | `log_role_updated` | `Custom Signal (role_updated)` | `—` | Log the event of a user's role being updated. |
 | `log_ssh_key_delete` | `Django Signal (post_delete)` | `core.SshPublicKey` | Log SSH key deletion events. |
@@ -98827,11 +100110,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 728
+Total unique handlers found: 730
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 343 handlers
+- **waldur_core**: 345 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 325 handlers
