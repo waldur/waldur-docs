@@ -7791,22 +7791,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-endpoints_1" class="md-nav__link">
+  <a href="#api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        API Endpoints
+        API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="API Endpoints">
+    <nav class="md-nav" aria-label="API">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#get-attribute-configuration" class="md-nav__link">
+  <a href="#read" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Get Attribute Configuration
+        Read
       
     </span>
   </a>
@@ -7814,21 +7814,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#createupdate-configuration" class="md-nav__link">
+  <a href="#update" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Create/Update Configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete-configuration-revert-to-defaults" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Delete Configuration (Revert to Defaults)
+        Update
       
     </span>
   </a>
@@ -7903,6 +7892,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-eligibility-is-enforced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When Eligibility Is Enforced
+      
+    </span>
+  </a>
   
 </li>
       
@@ -19180,22 +19180,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-endpoints_1" class="md-nav__link">
+  <a href="#api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        API Endpoints
+        API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="API Endpoints">
+    <nav class="md-nav" aria-label="API">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#get-attribute-configuration" class="md-nav__link">
+  <a href="#read" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Get Attribute Configuration
+        Read
       
     </span>
   </a>
@@ -19203,21 +19203,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#createupdate-configuration" class="md-nav__link">
+  <a href="#update" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Create/Update Configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete-configuration-revert-to-defaults" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Delete Configuration (Revert to Defaults)
+        Update
       
     </span>
   </a>
@@ -19292,6 +19281,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-eligibility-is-enforced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When Eligibility Is Enforced
+      
+    </span>
+  </a>
   
 </li>
       
@@ -19416,12 +19416,18 @@
 </tbody>
 </table>
 <h3 id="restriction-logic">Restriction Logic</h3>
-<ul>
-<li><strong>Basic restrictions</strong> (email patterns, affiliations, identity sources) use OR logic</li>
-<li><strong>AAI restrictions</strong> (nationalities, organization types) use OR logic</li>
-<li><strong>Assurance levels</strong> use AND logic - user must have ALL required levels</li>
-<li>All configured restriction categories must pass (AND between categories)</li>
-</ul>
+<p>The check is <code>validate_user_restrictions</code> in <code>waldur_core/permissions/utils.py</code>. It reads as two
+stages, not as six independent allow-lists:</p>
+<ol>
+<li><strong>One OR group</strong> over email patterns, affiliations and identity sources. If none of the three
+   is configured the group passes; otherwise the user needs a match in <em>any one</em> of them.</li>
+<li><strong>Each configured AAI field is a further requirement</strong> on top of that group. Nationalities pass
+   if any of the user's nationalities is listed, organization type if the user's single
+   <code>organization_type</code> is listed, and assurance if the user holds <em>every</em> listed level.</li>
+</ol>
+<p>An empty field is not checked. The reading that trips people up is treating stage 1 as three
+separate requirements: a call that lists both an affiliation and an email pattern admits anyone
+matching either, not only applicants matching both.</p>
 <h3 id="api-endpoints">API Endpoints</h3>
 <h4 id="check-eligibility">Check Eligibility</h4>
 <p>Check if the current user can submit to a call:</p>
@@ -19454,7 +19460,9 @@
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h4 id="configure-restrictions">Configure Restrictions</h4>
-<p>Call managers can configure restrictions when creating or updating a call:</p>
+<p>Restrictions are editable in the UI under <strong>Call management → the call → Configuration →
+Applicant eligibility</strong>, which is the path a call manager should normally use. The API below is
+the same write, for scripted setup:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -19466,7 +19474,7 @@
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">PATCH /api/proposal-calls/{uuid}/</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">PATCH /api/proposal-protected-calls/{uuid}/</span>
 <span class="err">Content-Type: application/json</span>
 <span class="err">Authorization: Bearer {token}</span>
 
@@ -19518,7 +19526,13 @@
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="applicant-attribute-exposure-configuration">Applicant Attribute Exposure Configuration</h2>
-<p>The <code>CallApplicantAttributeConfig</code> model controls which applicant attributes are visible to call managers and reviewers. This supports GDPR compliance and anonymous review workflows.</p>
+<p>The <code>CallApplicantVisibilityConfig</code> model controls which applicant attributes are visible to
+reviewers during evaluation. This supports GDPR compliance and anonymous review workflows.</p>
+<p>It replaced the older <code>CallApplicantAttributeConfig</code>, which was dropped in migration
+<code>0050_remove_callapplicantattributeconfig</code>. That migration also retired
+<code>reviewers_see_applicant_details</code>: a legacy row with it set to <code>False</code> was carried forward with
+every <code>expose_*</code> flag forced off, so anonymity is now expressed by the per-attribute toggles
+alone rather than by one master switch.</p>
 <h3 id="overview">Overview</h3>
 <pre class="mermaid"><code>flowchart LR
     subgraph "Applicant Profile"
@@ -19532,30 +19546,33 @@
     end
 
     subgraph "Call Config"
-        CC[CallApplicantAttributeConfig]
+        CC[CallApplicantVisibilityConfig]
         CC --&gt; |expose_full_name| E1[true]
         CC --&gt; |expose_email| E2[true]
         CC --&gt; |expose_organization| E3[true]
         CC --&gt; |expose_nationality| E4[false]
-        CC --&gt; |reviewers_see_details| RV[false]
     end
 
     subgraph "Visibility"
         MG[Call Managers]
         RW[Reviewers]
-        MG --&gt; |see| V1[name, email, org]
-        RW --&gt; |see| V2[anonymous]
+        MG --&gt; |see| V1[full applicant record]
+        RW --&gt; |see| V2[exposed attributes only]
     end
 
     AP --&gt; CC
     CC --&gt; MG
     CC --&gt; RW</code></pre>
 <h3 id="configuration-fields">Configuration Fields</h3>
+<p>The toggles come from the shared <code>UserAttributeConfigBase</code>
+(<code>waldur_mastermind/marketplace/models.py</code>), which the offering-user configuration also uses.
+Every personal-data field on that base follows the <code>expose_&lt;attribute&gt;</code> convention and is
+available on a call. The ones that matter for proposal review:</p>
 <table>
 <thead>
 <tr>
 <th>Field</th>
-<th>Default</th>
+<th>Model default</th>
 <th>Description</th>
 </tr>
 </thead>
@@ -19571,8 +19588,18 @@
 <td>Show applicant's email address</td>
 </tr>
 <tr>
-<td><code>expose_organization</code></td>
+<td><code>expose_username</code></td>
 <td>true</td>
+<td>Show applicant's username</td>
+</tr>
+<tr>
+<td><code>expose_registration_method</code></td>
+<td>true</td>
+<td>Show how the applicant registered</td>
+</tr>
+<tr>
+<td><code>expose_organization</code></td>
+<td>false</td>
 <td>Show applicant's organization</td>
 </tr>
 <tr>
@@ -19615,20 +19642,28 @@
 <td>false</td>
 <td>Show identity provider</td>
 </tr>
-<tr>
-<td><code>reviewers_see_applicant_details</code></td>
-<td>false</td>
-<td>If false, proposals are anonymized for reviewers</td>
-</tr>
 </tbody>
 </table>
-<h3 id="api-endpoints_1">API Endpoints</h3>
-<h4 id="get-attribute-configuration">Get Attribute Configuration</h4>
+<p>The base carries further toggles — phone number, job title, civil number, birth date, postal
+address, organization registry and VAT codes, and the POSIX <code>uid_number</code>/<code>primary_gid</code> — which
+are accepted on a call for completeness. Consult the model rather than this table when you need
+the exhaustive list.</p>
+<p>The <em>model</em> defaults above only apply to a row written field by field. In practice a call with
+no stored row falls back to the Constance setting <code>DEFAULT_CALL_USER_ATTRIBUTES</code>
+(<code>["username", "full_name", "email"]</code> out of the box) and its serialized config reports
+<code>"is_default": true</code>; and the first write to a call seeds every toggle from that same setting
+before applying what was sent, so an unmentioned attribute is not silently exposed by a
+model-level <code>default=True</code> (<code>get_default_exposure_flags</code>).</p>
+<h3 id="api">API</h3>
+<p>There are no dedicated attribute-configuration endpoints. The configuration is a nested object
+on the protected call, read with the call and written with it — in the UI, under <strong>Call
+management → the call → Configuration → Applicant data visibility</strong>.</p>
+<h4 id="read">Read</h4>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/proposal-calls/{uuid}/applicant_attribute_config/</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">GET /api/proposal-protected-calls/{uuid}/</span>
 <span class="err">Authorization: Bearer {token}</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p><strong>Response (custom config):</strong></p>
+<p>The response carries <code>applicant_visibility_config</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -19646,35 +19681,40 @@
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
-<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abc123..."</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"call_uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def456..."</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"call_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Nordic HPC Call 2025"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_full_name"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_email"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_organization"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_affiliations"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_organization_type"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_organization_country"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_nationality"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_nationalities"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_country_of_residence"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_eduperson_assurance"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_identity_source"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"reviewers_see_applicant_details"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"exposed_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"full_name"</span><span class="p">,</span><span class="w"> </span><span class="s2">"email"</span><span class="p">,</span><span class="w"> </span><span class="s2">"organization"</span><span class="p">,</span><span class="w"> </span><span class="s2">"nationality"</span><span class="p">]</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def456..."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Nordic HPC Call 2025"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"applicant_visibility_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abc123..."</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"created"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-15T09:12:44Z"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"modified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-15T09:12:44Z"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_full_name"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_email"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_username"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_registration_method"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_organization"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_affiliations"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_organization_type"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_organization_country"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_nationality"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_nationalities"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_country_of_residence"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_eduperson_assurance"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_identity_source"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"exposed_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"full_name"</span><span class="p">,</span><span class="w"> </span><span class="s2">"email"</span><span class="p">,</span><span class="w"> </span><span class="s2">"username"</span><span class="p">,</span><span class="w"> </span><span class="s2">"registration_method"</span><span class="p">,</span><span class="w"> </span><span class="s2">"organization"</span><span class="p">,</span><span class="w"> </span><span class="s2">"nationality"</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"is_default"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p><strong>Response (no config - defaults):</strong></p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">"is_default"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"exposed_fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"full_name"</span><span class="p">,</span><span class="w"> </span><span class="s2">"email"</span><span class="p">,</span><span class="w"> </span><span class="s2">"organization"</span><span class="p">]</span>
-<span class="p">}</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h4 id="createupdate-configuration">Create/Update Configuration</h4>
+<p>When the call has no stored configuration, <code>to_representation</code> serializes an unsaved instance
+from the Constance defaults instead, marked <code>"is_default": true</code>.</p>
+<h4 id="update">Update</h4>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -19686,83 +19726,101 @@
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/proposal-calls/{uuid}/update_applicant_attribute_config/</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">PATCH /api/proposal-protected-calls/{uuid}/</span>
 <span class="err">Content-Type: application/json</span>
 <span class="err">Authorization: Bearer {token}</span>
 
 <span class="err">{</span>
-<span class="err">  "expose_full_name": true,</span>
-<span class="err">  "expose_email": true,</span>
-<span class="err">  "expose_organization": true,</span>
-<span class="err">  "expose_nationality": true,</span>
-<span class="err">  "expose_organization_country": true,</span>
-<span class="err">  "reviewers_see_applicant_details": false</span>
+<span class="err">  "applicant_visibility_config": {</span>
+<span class="err">    "expose_full_name": true,</span>
+<span class="err">    "expose_email": true,</span>
+<span class="err">    "expose_organization": true,</span>
+<span class="err">    "expose_nationality": true,</span>
+<span class="err">    "expose_organization_country": true</span>
+<span class="err">  }</span>
 <span class="err">}</span>
 </code></pre></div></td></tr></tbody></table></div>
-<h4 id="delete-configuration-revert-to-defaults">Delete Configuration (Revert to Defaults)</h4>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">DELETE /api/proposal-calls/{uuid}/delete_applicant_attribute_config/</span>
-<span class="err">Authorization: Bearer {token}</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p>Returns <code>204 No Content</code> on success.</p>
+<p>The nested object is a partial update like any other: toggles left out keep their stored value.
+Sending <code>"applicant_visibility_config": null</code> is how a call reverts to the installation defaults.</p>
 <h3 id="permissions">Permissions</h3>
-<p>All attribute configuration endpoints require <code>UPDATE_CALL</code> permission on the call.</p>
+<p>Writing either the eligibility restrictions or the visibility configuration requires the
+<code>UPDATE_CALL</code> permission on the call, which is what the protected call endpoint enforces.</p>
 <h2 id="use-cases">Use Cases</h2>
+<p>Each example below is the body of a <code>PATCH /api/proposal-protected-calls/{uuid}/</code>.</p>
 <h3 id="anonymous-peer-review">Anonymous Peer Review</h3>
-<p>For double-blind review processes:</p>
+<p>For double-blind review, expose nothing that identifies the applicant:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">"expose_full_name"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_email"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_organization"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"reviewers_see_applicant_details"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"applicant_visibility_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"expose_full_name"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_email"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_username"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_organization"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>Call managers still see full applicant details, but reviewers see anonymized proposals.</p>
+<p>Call managers still see the full applicant record; the configuration governs what reviewers see.</p>
 <h3 id="nationality-based-eligibility-tracking">Nationality-Based Eligibility Tracking</h3>
-<p>For calls requiring nationality verification:</p>
+<p>For calls requiring nationality verification, restrict who may apply and expose the attributes a
+reviewer needs to check the claim — two different fields on the same request:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">"expose_nationality"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_nationalities"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_country_of_residence"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-<span class="p">}</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p>Combined with eligibility restrictions:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">"user_nationalities"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"FI"</span><span class="p">,</span><span class="w"> </span><span class="s2">"SE"</span><span class="p">,</span><span class="w"> </span><span class="s2">"NO"</span><span class="p">]</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"user_nationalities"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"FI"</span><span class="p">,</span><span class="w"> </span><span class="s2">"SE"</span><span class="p">,</span><span class="w"> </span><span class="s2">"NO"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"applicant_visibility_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"expose_nationality"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_nationalities"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_country_of_residence"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="high-trust-research-calls">High-Trust Research Calls</h3>
-<p>For calls requiring strong identity assurance:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<p>Strong identity assurance, with the evidence visible during evaluation. Every listed assurance
+level is required, so this admits only applicants whose IdP asserts both:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"user_assurance_levels"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">"https://refeds.org/assurance/IAP/high"</span>
-<span class="w">  </span><span class="p">]</span>
+<span class="w">    </span><span class="s2">"https://refeds.org/assurance/IAP/high"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"https://refeds.org/assurance/ID/eppn-unique-no-reassign"</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"applicant_visibility_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"expose_eduperson_assurance"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expose_identity_source"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>With attribute exposure for verification:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">"expose_eduperson_assurance"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"expose_identity_source"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-<span class="p">}</span>
-</code></pre></div></td></tr></tbody></table></div>
+<h2 id="when-eligibility-is-enforced">When Eligibility Is Enforced</h2>
+<p><code>validate_user_restrictions</code> runs in <code>ProposalViewSet.perform_create</code> — that is, when the
+proposal is created. Two consequences:</p>
+<ul>
+<li>A draft started before a restriction was added is not re-checked when it is submitted. Adding
+  a restriction to a call that already has drafts does not retract them.</li>
+<li>Eligibility does not govern who may join the awarded project. It gates proposal creation only;
+  project membership is governed by the project's own restrictions and invitations.</li>
+</ul>
+<p><code>GET /api/proposal-public-calls/{uuid}/check_eligibility/</code> runs the same validation without
+creating anything, which is what the applicant-facing UI uses to explain a call it cannot apply
+to.</p>
 <h2 id="integration-with-user-profile-attributes">Integration with User Profile Attributes</h2>
 <p>The eligibility and attribute exposure features build on Waldur's extended user profile attributes. See <a href="../../user-profile-attributes/">User Profile Attributes</a> for details on:</p>
 <ul>
