@@ -77,6 +77,7 @@ Further sub-tabs sit alongside it under **Configuration**:
 
 - **Project details fields** — what this call asks applicants for (see below)
 - **Applicant data visibility** — which applicant data is exposed during evaluation
+- **Applicant eligibility** — who may submit a proposal at all (see below)
 - **Resource templates** — templates defining valid offering/plan combinations, so proposal creators can only select from those templates. Each template carries a name and offering, predefined attributes and usage limits, and a description.
 
 #### 1a. Project details fields
@@ -116,6 +117,94 @@ New calls start from the deployment defaults, which an administrator sets under
 (`DEFAULT_PROPOSAL_REQUIRED_FIELDS`, `DEFAULT_PROPOSAL_HIDDEN_FIELDS`). Those
 defaults are applied when the call is created; changing them later never alters
 a call that already exists.
+
+#### 1b. Applicant eligibility
+
+Under **Configuration → Applicant eligibility**, restrict who may submit a
+proposal to this call. Each row holds a list of values; a row left empty is not
+checked, and a call with every row empty is open to anyone who can sign in.
+
+![Applicant eligibility configuration](../img/call-applicant-eligibility.png)
+
+| Restriction | Matched against | Values |
+|---|---|---|
+| **Email patterns** | the applicant's email address | regular expressions, for example `.*@(helsinki\.fi\|kth\.se)$` |
+| **User affiliations** | the affiliations the identity provider asserts | standard eduPerson values are offered as suggestions; any other value can be typed in |
+| **Identity sources** | the institution that authenticated the applicant, exactly as reported at login | free text — no suggestions, because the value comes from the applicant's home institution rather than from the providers this installation is configured with |
+| **Nationalities** | the applicant's nationality or nationalities | picked from the country list, stored as ISO country codes |
+| **Organization types** | the applicant's organization type | standard SCHAC values are offered as suggestions |
+| **Assurance levels** | the assurance levels the identity provider asserts | standard REFEDS values are offered as suggestions |
+
+Values are lists rather than one comma-separated box on purpose: a regular
+expression may itself contain a comma, and splitting on it would turn one
+working pattern into two that match nobody.
+
+##### How the rows combine
+
+This is the part worth reading twice, because the intuitive reading is the wrong
+one. The rows are **not** six independent requirements:
+
+- **Email patterns, user affiliations and identity sources form one group.** An
+  applicant who matches *any one* value in *any one* of those three rows passes
+  the group. Listing both an affiliation and an email pattern therefore *widens*
+  the call — it admits anyone matching either — rather than narrowing it to
+  applicants who match both.
+- **Nationalities, organization types and assurance levels are each an extra
+  requirement on top of that group.** A configured row here must also be
+  satisfied, so these do narrow the call.
+- **Assurance levels are stricter still**: the applicant must hold *every* level
+  listed, not just one of them.
+
+The call in the screenshot above therefore admits an applicant who is either
+`faculty` or `staff`, **or** has a `helsinki.fi` or `kth.se` address — and who,
+in addition, holds a Finnish, Swedish or Norwegian nationality, comes from an
+organization of type *University*, and carries the *IAP Medium* assurance level.
+
+!!! warning
+    Combinations that match nobody are accepted without complaint. Restricting a
+    call to an assurance level the identity providers in use never assert, or to
+    an organization type nobody's home organization reports, produces a call
+    that every applicant is turned away from. If applicants report being refused,
+    check these rows first.
+
+##### Entering values
+
+Click the pencil on a row to edit it. Rows that have a standard vocabulary offer
+it as a list of suggestions — but the list is not closed, and typing a value
+that is not in it is deliberately allowed:
+
+![Choosing user affiliations](../img/call-eligibility-affiliation-picker.png)
+
+That matters most for affiliations. Identity providers routinely send *scoped*
+values — `faculty@university.example` rather than plain `faculty` — and the
+value is matched exactly, character for character, against what the provider
+sends. If applicants who should qualify are refused, compare the stored value
+with what actually arrives at login rather than assuming the plain form.
+
+!!! note
+    Only attributes this installation collects get a row. A deployment that does
+    not collect nationality, for instance, does not show the **Nationalities**
+    row at all — an administrator controls this with
+    `ENABLED_USER_PROFILE_ATTRIBUTES` in the Constance configuration. A row that
+    already holds values stays visible even if its attribute is later switched
+    off, carrying a warning: the restriction keeps being enforced, so leaving it
+    in place behind a hidden row would turn every applicant away.
+
+##### When eligibility is checked
+
+Eligibility is checked when a proposal is **created**. Two consequences follow:
+
+- A draft started before a restriction was added is not re-checked when it is
+  submitted. Tightening a call that already has drafts does not retract them.
+- Eligibility does not limit who may join the project once the proposal is
+  granted. It gates who may apply, nothing further.
+
+Applicants are not shown the restrictions themselves. A call that has any of
+them carries a warning in the call catalogue — *This call restricts who may
+apply. Check the terms before submitting* — and an applicant who does not
+qualify is refused when the proposal is created, with a message naming the
+restriction that failed. Spell the rules out in the call description or the
+external URL, so nobody writes a proposal they cannot submit.
 
 #### 2. Offerings configuration
 

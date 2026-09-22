@@ -65,9 +65,10 @@ human-readable proposal IDs. See
 ### Configuration and workflow steps
 
 The **Configuration** tab is where the evaluation workflow lives. Below the
-general options, applicant data visibility, and resource templates, the
-**Steps & settings** table lists every workflow step with its description,
-deadline, responsible role and transition mode. The **Preview sequence** below
+general options, the project details fields, applicant data visibility,
+applicant eligibility and resource templates, the **Steps & settings** table
+lists every workflow step with its description, deadline, responsible role and
+transition mode. The **Preview sequence** below
 the table visualises the proposal journey exactly as configured.
 
 ![Workflow steps configuration](../img/cm-workflow-steps-config.png)
