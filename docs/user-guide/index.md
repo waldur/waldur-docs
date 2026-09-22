@@ -36,6 +36,7 @@ for deployment-specific documentation.
 * [Creation of organizations](staff-users/organization-management.md)
 * [Credit management configuration](staff-users/credit-management-staff.md)
 * [Impersonation](staff-users/impersonation.md)
+* [Offering merges](staff-users/offering-merges.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
 * [User role management](staff-users/user_role_management.md)
 * [Remote sync of offerings](staff-users/remote-sync.md)
