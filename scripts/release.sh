@@ -41,6 +41,12 @@ else
     # Stable: diff from previous stable (skip RCs).
     PREV_TAG=$(grep "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
 fi
+
+# Most recent NON-RC entry — the true "last stable", independent of whether
+# PREV_TAG (used for diffing) is itself a prior RC of the same base. Used as
+# --base-stable for assemble_changelog below.
+BASE_STABLE=$(grep "^## " "$PROJECT_DIR/docs/about/CHANGELOG.md" | grep -v "\-rc\." | head -1 | sed 's/^## \([^ ]*\).*/\1/')
+
 DATE=$(date +%Y-%m-%d)
 
 CACHE_DIR="$PROJECT_DIR/.cache/release/$VERSION"
@@ -89,8 +95,19 @@ fi
 echo "  Tag $VERSION does not exist in any repository. Good to proceed."
 echo ""
 
+# The structured changelog is assembled by the local mastermind checkout, so
+# it must be recent enough to carry entries across RCs.
+echo "[pre-flight] Checking that ../waldur-mastermind can assemble the structured changelog..."
+ASSEMBLE_HELP=$(cd "$PROJECT_DIR/../waldur-mastermind" && uv run waldur assemble_changelog --help 2>/dev/null || true)
+if [[ "$ASSEMBLE_HELP" != *--previous-release* ]]; then
+    echo "ERROR: ../waldur-mastermind's assemble_changelog has no --previous-release option."
+    echo "Update that checkout to the latest develop and re-run."
+    exit 1
+fi
+echo ""
+
 # Step 1: Collect commit data from local repos
-echo "[1/5] Collecting commit data from local repositories..."
+echo "[1/6] Collecting commit data from local repositories..."
 LOCAL_REPOS='{"waldur-mastermind":"'"$PROJECT_DIR"'/../waldur-mastermind","waldur-homeport":"'"$PROJECT_DIR"'/../waldur-homeport","waldur-helm":"'"$PROJECT_DIR"'/../waldur-helm","waldur-docker-compose":"'"$PROJECT_DIR"'/../waldur-docker-compose"}'
 
 collect_commit_data() {
@@ -115,7 +132,7 @@ echo "  Collected $CORE_COMMITS core commits"
 echo ""
 
 # Step 2: Build prompt and call Claude Code
-echo "[2/5] Generating changelog with Claude Code..."
+echo "[2/6] Generating changelog with Claude Code..."
 
 PROMPT_TEMPLATE=$(cat "$SCRIPT_DIR/prompts/changelog-prompt.md")
 
@@ -186,9 +203,240 @@ else
     esac
 fi
 
-# Step 3: Commit changelog to waldur-docs
+# Step 2b: Build the structured JSON changelog from the same commit data.
+JSON_PROMPT_TEMPLATE=$(cat "$SCRIPT_DIR/prompts/changelog-json-prompt.md")
+FULL_JSON_PROMPT="${JSON_PROMPT_TEMPLATE//\{VERSION\}/$VERSION}"
+FULL_JSON_PROMPT="${FULL_JSON_PROMPT//\{PREV_VERSION\}/$PREV_TAG}"
+FULL_JSON_PROMPT="${FULL_JSON_PROMPT//\{DATE\}/$DATE}"
+
+MASTERMIND_DIR="$PROJECT_DIR/../waldur-mastermind"
+NEXT_DIR="$MASTERMIND_DIR/changelog/next"
+RELEASE_TYPE="stable"
+[ "$IS_RC" = "true" ] && RELEASE_TYPE="rc"
+
+# One fragment file per entry, descriptive-slug filename purely for
+# readability when inspecting next/ — assemble_changelog globs *.json there
+# and treats each file as one fragment object regardless of name.
+# changelog/next/ is gitignored in waldur-mastermind and populated only by
+# this script (not a hand-authored/per-MR contribution path), so clearing
+# and rewriting it on every call is always safe. Paths are passed as argv
+# (not interpolated into the source) to avoid quoting fragility, matching
+# the footer-normalization step below.
+split_fragments() {
+    python3 - "$CACHE_DIR/changelog-fragments.json" "$NEXT_DIR" <<'PY'
+import json, os, glob, re, sys
+
+fragments_path, next_dir = sys.argv[1], sys.argv[2]
+
+def slugify(title):
+    s = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
+    return s[:60]
+
+data = json.load(open(fragments_path))
+os.makedirs(next_dir, exist_ok=True)
+for f in glob.glob(os.path.join(next_dir, '*.json')):
+    os.remove(f)
+
+seen = {}
+for e in data['entries']:
+    slug = slugify(e['title'])
+    seen[slug] = seen.get(slug, 0) + 1
+    if seen[slug] > 1:
+        slug = f'{slug}-{seen[slug]}'
+    json.dump(e, open(os.path.join(next_dir, f'{slug}.json'), 'w'), indent=2)
+
+print(f"  Wrote {len(data['entries'])} fragments to {next_dir}")
+PY
+}
+
+generate_changelog_json() {
+    printf '%s\n\nHere is the commit data:\n\n```json\n%s\n```\n' "$FULL_JSON_PROMPT" "$COMMIT_DATA" | \
+        env -u CLAUDECODE claude --print > "$CACHE_DIR/changelog-fragments.json"
+    # The prompt asks for bare JSON, but the model can still wrap it in a
+    # code fence; unwrap it rather than make the operator do it by hand.
+    python3 - "$CACHE_DIR/changelog-fragments.json" <<'PY'
+import re, sys
+path = sys.argv[1]
+text = open(path).read().strip()
+match = re.fullmatch(r"```[a-z]*\s*\n(.*?)\n?```", text, re.S)
+if match:
+    open(path, "w").write(match.group(1).strip() + "\n")
+PY
+}
+
+# Valid JSON of the shape split_fragments needs: an object with an entries list.
+json_is_valid() {
+    python3 -c "import json,sys; d=json.load(sys.stdin); assert isinstance(d, dict) and isinstance(d.get('entries'), list)" \
+        < "$CACHE_DIR/changelog-fragments.json" >/dev/null 2>&1
+}
+
+# A high or critical security entry puts a banner on the staff UI of every
+# deployment behind this release (critical cannot be dismissed), so it needs
+# a deliberate yes rather than slipping through with the rest of the JSON.
+confirm_security_entries() {
+    local flagged
+    flagged=$(python3 - "$CACHE_DIR/changelog-fragments.json" <<'PY'
+import json, sys
+for e in json.load(open(sys.argv[1]))["entries"]:
+    urgency = (e.get("security") or {}).get("urgency")
+    if e.get("type") == "security" and urgency in ("high", "critical"):
+        print(f"    [{urgency}] {e.get('title')}: {e.get('description')}")
+PY
+)
+    [ -z "$flagged" ] && return 0
+    echo ""
+    echo "  These security entries will show an alert banner on every deployment behind $VERSION:"
+    echo "$flagged"
+    read -p "  Type 'yes' to publish them: " security_choice
+    [ "$security_choice" = "yes" ]
+}
+
+# The version this release directly follows, and its release file if one was
+# published: an RC continues the previous RC's cumulative entries, and a stable
+# release after RCs gets since_previous relative to the last of them. PREV_TAG
+# is the right diff base for the commit data, but for a stable release it is
+# the previous stable, not the RC just before it.
+PREVIOUS="$PREV_TAG"
+if [ "$IS_RC" = "false" ] && [ -f "$PROJECT_DIR/docs/changelog/index.json" ]; then
+    LAST_RC=$(python3 - "$PROJECT_DIR/docs/changelog/index.json" "$VERSION" <<'PY'
+import json, sys
+index, version = json.load(open(sys.argv[1])), sys.argv[2]
+prefix = f"{version}-rc."
+numbers = [
+    int(r["version"][len(prefix):])
+    for r in index.get("releases", [])
+    if r["version"].startswith(prefix) and r["version"][len(prefix):].isdigit()
+]
+print(f"{prefix}{max(numbers)}" if numbers else "")
+PY
+)
+    [ -n "$LAST_RC" ] && PREVIOUS="$LAST_RC"
+fi
+PREVIOUS_FILE="$PROJECT_DIR/docs/changelog/releases/$PREVIOUS.json"
+
+if [ -f "$CACHE_DIR/changelog-fragments.json" ] && json_is_valid; then
+    echo ""
+    echo "  Found cached structured changelog:"
+    echo ""
+    cat "$CACHE_DIR/changelog-fragments.json"
+    echo ""
+    read -p "  Reuse cached structured changelog? [Y/n/edit] " reuse_json
+    case $reuse_json in
+        [Nn])
+            echo "  Regenerating..."
+            generate_changelog_json
+            ;;
+        edit|e)
+            ${EDITOR:-vim} "$CACHE_DIR/changelog-fragments.json"
+            ;;
+    esac
+else
+    if [ -f "$CACHE_DIR/changelog-fragments.json" ]; then
+        echo "  Cached structured changelog is not valid JSON — regenerating."
+    fi
+    generate_changelog_json
+
+    echo ""
+    echo "=== Generated Structured Changelog ==="
+    echo ""
+    cat "$CACHE_DIR/changelog-fragments.json"
+    echo ""
+    echo "======================================="
+    echo ""
+    read -p "Accept this structured changelog? [y/edit/regenerate/quit] " json_choice
+
+    case $json_choice in
+        y|Y|yes)
+            ;;
+        edit|e)
+            ${EDITOR:-vim} "$CACHE_DIR/changelog-fragments.json"
+            ;;
+        regenerate|r)
+            echo "Regenerating..."
+            generate_changelog_json
+            echo ""
+            cat "$CACHE_DIR/changelog-fragments.json"
+            echo ""
+            read -p "Accept now? [y/edit/quit] " json_choice2
+            case $json_choice2 in
+                edit|e) ${EDITOR:-vim} "$CACHE_DIR/changelog-fragments.json" ;;
+                y|Y) ;;
+                *) echo "Aborted."; exit 1 ;;
+            esac
+            ;;
+        *)
+            echo "Aborted."
+            exit 1
+            ;;
+    esac
+fi
+
 echo ""
-echo "[3/5] Updating CHANGELOG.md..."
+
+# Guard: validate the fragments against assemble_changelog's own schema rules
+# right here, while the edit/regenerate loop is still available — catching a
+# bad LLM fragment now beats aborting mid-release at step 3, after the
+# CHANGELOG.md track has already been generated and accepted.
+echo "  Validating structured changelog fragments..."
+while true; do
+    if ! json_is_valid; then
+        echo "  $CACHE_DIR/changelog-fragments.json is not a JSON object with an entries list."
+    else
+        SUMMARY=$(python3 -c "import json,sys; print(json.load(sys.stdin).get('summary', ''))" < "$CACHE_DIR/changelog-fragments.json")
+        ASSEMBLE_ARGS=(--release-version "$VERSION" --date "$DATE" --release-type "$RELEASE_TYPE" --summary "$SUMMARY")
+        [ -n "$PREVIOUS" ] && ASSEMBLE_ARGS+=(--previous "$PREVIOUS")
+        [ -n "$PREVIOUS" ] && [ -f "$PREVIOUS_FILE" ] && ASSEMBLE_ARGS+=(--previous-release "$PREVIOUS_FILE")
+        [ -n "$BASE_STABLE" ] && ASSEMBLE_ARGS+=(--base-stable "$BASE_STABLE")
+        [ "$IS_RC" = "true" ] && ASSEMBLE_ARGS+=(--stable-target "$BASE_VERSION")
+
+        split_fragments
+        if (cd "$MASTERMIND_DIR" && uv run waldur assemble_changelog "${ASSEMBLE_ARGS[@]}" --dry-run) >/dev/null; then
+            echo "  Fragments are valid."
+            if confirm_security_entries; then
+                break
+            fi
+            echo "  Security entries not confirmed."
+        else
+            echo ""
+            echo "  Structured changelog fragments failed validation (see errors above)."
+        fi
+    fi
+
+    read -p "  [edit/regenerate/quit] " fix_choice
+    case $fix_choice in
+        edit|e) ${EDITOR:-vim} "$CACHE_DIR/changelog-fragments.json" ;;
+        regenerate|r) echo "  Regenerating..."; generate_changelog_json ;;
+        *) echo "Aborted."; exit 1 ;;
+    esac
+done
+echo ""
+
+# Step 3: Assemble the structured changelog and publish it into waldur-docs.
+# Fragments are already split into $NEXT_DIR and validated above (--dry-run
+# reads them but doesn't write the release file or clear next/) — this just
+# runs assemble_changelog for real.
+echo "[3/6] Assembling structured changelog..."
+
+# Subshell: assemble_changelog's _find_project_root() walks up from CWD
+# looking for changelog/ or pyproject.toml — must run inside mastermind, and
+# must not change this script's own CWD for the steps that follow.
+(cd "$MASTERMIND_DIR" && uv run waldur assemble_changelog "${ASSEMBLE_ARGS[@]}")
+
+mkdir -p "$PROJECT_DIR/docs/changelog/releases"
+# waldur-docs is where release files are kept; the copy in waldur-mastermind
+# (git-ignored there) is only assemble_changelog's output.
+mv "$MASTERMIND_DIR/changelog/releases/$VERSION.json" "$PROJECT_DIR/docs/changelog/releases/$VERSION.json"
+
+python3 "$SCRIPT_DIR/update_changelog_index.py" \
+    "$PROJECT_DIR/docs/changelog/releases/$VERSION.json" \
+    "$PROJECT_DIR/docs/changelog/index.json"
+
+echo "  Structured changelog assembled and published to docs/changelog/."
+echo ""
+
+# Step 4: Commit changelog to waldur-docs
+echo ""
+echo "[4/6] Updating CHANGELOG.md..."
 
 cd "$PROJECT_DIR"
 
@@ -275,9 +523,11 @@ PY
     # the last commit subject alone, so a re-run with any commit on top of the
     # changelog commit lands here and regenerates an identical file — and a
     # bare `git commit` on an empty diff aborts the whole script under `set -e`.
-    git add docs/about/CHANGELOG.md
+    git add docs/about/CHANGELOG.md \
+        "docs/changelog/releases/$VERSION.json" \
+        docs/changelog/index.json
     if git diff --cached --quiet; then
-        echo "  CHANGELOG.md is already up to date for $VERSION — nothing to commit."
+        echo "  CHANGELOG.md and json files are already up to date for $VERSION — nothing to commit."
     else
         git commit -m "Update changelog for $VERSION"
         echo "  Changelog committed."
@@ -286,7 +536,7 @@ fi
 
 # Tag and push
 echo ""
-echo "[4/5] Tagging waldur-docs with $VERSION..."
+echo "[5/6] Tagging waldur-docs with $VERSION..."
 read -p "Push changelog commit and tag $VERSION to origin? [y/n] " push_choice
 if [[ "$push_choice" != "y" && "$push_choice" != "Y" ]]; then
     echo "Aborted. Changelog is committed locally. You can push manually."
@@ -364,23 +614,28 @@ if command -v glab >/dev/null 2>&1; then
 fi
 
 git push origin master
+
 cd "$PROJECT_DIR"
 git tag -a "$VERSION" -m "Release $VERSION"
 git push origin "$VERSION"
 
 echo ""
-echo "[5/5] Done!"
+echo "[6/6] Done!"
+echo ""
+echo "Structured changelog published: docs/changelog/releases/$VERSION.json"
+echo "(reachable at docs.waldur.com/latest/changelog/releases/$VERSION.json once deployed)"
 echo ""
 echo "Tag $VERSION pushed. The CI pipeline will now:"
 echo "  - Tag waldur-mastermind, waldur-homeport, waldur-helm, waldur-docker-compose"
 echo "  - Bump versions in helm Chart.yaml and docker-compose .env.example"
 if [ "$IS_RC" = "false" ]; then
     echo "  - Release SDKs"
-    echo "  - Build and deploy documentation"
+    echo "  - Build and deploy documentation (including docs/changelog/)"
     echo "  - Generate changelog (if not already committed) and update publiccode.yml"
 else
     echo "  - Generate changelog (if not already committed)"
-    echo "  (RC release — SDKs, docs deployment, and publiccode.yml are skipped)"
+    echo "  - Build and deploy documentation via the master-push trigger (including docs/changelog/)"
+    echo "  (RC release — SDK release and publiccode.yml are skipped)"
 fi
 
 # Everything that went wrong in the 8.1.0 release happened after this point,
