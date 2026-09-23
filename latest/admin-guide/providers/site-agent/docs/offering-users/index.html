@@ -19806,31 +19806,38 @@ backend's, through a second optional hook:</p>
 <p>Core calls it in two situations, always after the resource backend has dropped
 the associations:</p>
 <ul>
-<li><strong>At removal time</strong>, with the offering users whose usernames were just removed
-  from a resource — on a revoked project role, or as stale users on a full sync.
-  Only names that resolve to an offering user of the offering are passed on;
-  service, course and robot accounts, and directory entries the agent never
-  managed, are not. A failed removal holds the release back: on a revoked role
-  the account is left alone and the periodic sweep retries, so an entry is
-  never parked or deleted while its association is still live. Failures of the
-  release itself are logged and do not abort the cycle.</li>
-<li>
-<p><strong>As part of the deletion flow</strong> for every offering user Waldur has moved into
+<li><strong>At removal time</strong>, with the offering users the resource backend confirms are
+  no longer associated — on a revoked project role, or as stale users on a full
+  sync. Only names that resolve to an offering user of the offering are passed
+  on; service, course and robot accounts, and directory entries the agent never
+  managed, are not.</li>
+</ul>
+<p><em>Confirms</em> is the operative word, and it is why
+  <code>remove_users_from_resource</code> returns a list: it logs a per-user failure and
+  leaves that name out, so the names asked for are no evidence that anything was
+  removed. Core releases only what comes back. A backend that removes nothing
+  because there is nothing to remove — Harbor manages access through OIDC groups
+  and holds no per-user association — returns the names anyway, or their
+  accounts would wait forever on a membership that cannot exist. One that
+  predates the return value is trusted as before, with a warning.</p>
+<p>A failed removal therefore holds the release back on both paths, and a pull
+  that failed does too: the account is left alone and the periodic sweep
+  retries, so an entry is never parked or deleted while its association is still
+  live. Failures of the release itself are logged and do not abort the cycle.
+- <strong>As part of the deletion flow</strong> for every offering user Waldur has moved into
   <code>Requested deletion</code>, <code>Deleting</code> or <code>Error deleting</code>. <code>teardown_offering_user</code>
   in <code>common/processors.py</code> runs, in this order:</p>
-</li>
-<li>
-<p><code>set_deleting</code> first, as the claim: Waldur refuses it for a row that was
+<ol>
+<li><code>set_deleting</code> first, as the claim: Waldur refuses it for a row that was
      restored to a live state since the list was taken (a re-grant landed
      meanwhile), and that refusal means "leave this account alone" — nothing on
-     the provider side is touched before the claim holds;</p>
-</li>
+     the provider side is touched before the claim holds;</li>
 <li><code>remove_user</code> on every resource of the offering whose pulled report lists
      the user (one users-only pull per sweep, shared by the whole batch), through
      the same <code>remove_user_from_resource</code> helper the role-revoke path uses;</li>
 <li><code>release_users</code> on the username backend;</li>
 <li><code>set_deleted</code>, so Waldur can release the provider-wide identity behind it.</li>
-</ul>
+</ol>
 <p>A failure in step 2 or 3 stops before step 4 and marks the offering user
   <code>Error deleting</code>, so the next cycle retries and nothing is ever marked
   <code>Deleted</code> while something on the cluster still refers to it.
