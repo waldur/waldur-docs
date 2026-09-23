@@ -96,12 +96,33 @@ echo "  Tag $VERSION does not exist in any repository. Good to proceed."
 echo ""
 
 # The structured changelog is assembled by the local mastermind checkout, so
-# it must be recent enough to carry entries across RCs.
+# it must be recent enough to carry entries across RCs. The fetch above only
+# moved origin/develop; fast-forward the working tree too, but only when that
+# cannot disturb local work (on develop, no tracked changes, no local commits).
+echo "[pre-flight] Updating ../waldur-mastermind to origin/develop..."
+MM_DIR="$PROJECT_DIR/../waldur-mastermind"
+MM_BRANCH=$(git -C "$MM_DIR" symbolic-ref --short -q HEAD || echo "(detached)")
+if [ "$MM_BRANCH" != "develop" ]; then
+    echo "  WARNING: on branch '$MM_BRANCH', not develop; leaving it as is."
+elif [ -n "$(git -C "$MM_DIR" status --porcelain --untracked-files=no)" ]; then
+    echo "  WARNING: uncommitted changes to tracked files; leaving it as is."
+elif ! git -C "$MM_DIR" merge-base --is-ancestor HEAD origin/develop; then
+    echo "  WARNING: local develop has commits not on origin/develop; leaving it as is."
+else
+    BEHIND=$(git -C "$MM_DIR" rev-list --count HEAD..origin/develop)
+    if [ "$BEHIND" -gt 0 ]; then
+        git -C "$MM_DIR" merge --ff-only --quiet origin/develop
+        echo "  Fast-forwarded $BEHIND commit(s)."
+    else
+        echo "  Already up to date."
+    fi
+fi
+
 echo "[pre-flight] Checking that ../waldur-mastermind can assemble the structured changelog..."
 ASSEMBLE_HELP=$(cd "$PROJECT_DIR/../waldur-mastermind" && uv run waldur assemble_changelog --help 2>/dev/null || true)
 if [[ "$ASSEMBLE_HELP" != *--previous-release* ]]; then
     echo "ERROR: ../waldur-mastermind's assemble_changelog has no --previous-release option."
-    echo "Update that checkout to the latest develop and re-run."
+    echo "Update that checkout to the latest develop (see warning above) and re-run."
     exit 1
 fi
 echo ""
