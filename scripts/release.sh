@@ -319,6 +319,13 @@ try:
 except Exception:
     print("SKIP could not reach the CI lint API")
     sys.exit(0)
+# An API error (e.g. 401, or 404 when glab resolves the wrong host) comes
+# back as {"message": ...} with no verdict. That says nothing about the
+# config, so it must not be reported as an invalid one.
+if not isinstance(result, dict) or "valid" not in result:
+    message = result.get("message") if isinstance(result, dict) else None
+    print(f"SKIP the CI lint API returned no verdict: {message or proc.stdout.strip()}")
+    sys.exit(0)
 if result.get("valid"):
     print("OK")
 else:
