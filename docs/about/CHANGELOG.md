@@ -1,5 +1,59 @@
 # Changelog
 
+## 8.1.3-rc.16 - 2026-09-23
+
+### Highlights
+
+Staff can now merge duplicate marketplace offerings. A guided wizard previews exactly which records will change, runs the merge in the background, checks the result afterwards and can undo it. Call-allocated orders are now attributed to a real person, and changes to role definitions are recorded in the audit log. The release also fixes many problems in the order form, drawers and menus, dark mode and keyboard accessibility.
+
+### What's New
+
+- **Offering merges**: staff can merge duplicate offerings using a new wizard with merge history and detail pages. The preview groups affected rows by area and lets you drill into them. Merges run in the background, and the invoice snapshot policy and post-merge verification results are shown in a dialog. Merges can also be undone.
+- **Duplicate OpenStack tenant offerings**: duplicate per-tenant OpenStack offerings are now resolved through the new offering merge engine, from both the API and the command line.
+- **Role definition auditing**: creating or changing a role definition now records an audit event, and these events appear in the audit feed.
+- **Applicant eligibility for calls**: call managers can configure who is eligible to apply directly from the call settings.
+- **Outbound SCIM entitlements per offering**: outbound SCIM entitlements are now controlled by an offering integration option, which can be switched on in the offering's user management settings.
+- **Limits column in the orders list**: the marketplace orders list now shows the limits requested in each order.
+- **Context-aware changelog**: a new backend serves release notes to the UI, and each change appears only once across a release-candidate cycle.
+- **Editable language list**: Docker Compose deployments now mount `languages.yaml`, so operators can change the list of available languages.
+
+### Improvements
+
+- Orders created from call allocations are now attributed to a real person instead of a system account.
+- Only staff and support users can create support requests on behalf of another user.
+- Requested resource amounts are shown in their measured units.
+- Prepaid limit changes are priced over the resource's actual remaining months.
+- Project chat room actions are grouped under one menu, and the room switcher that listed other projects' rooms has been removed.
+- Toast notifications have been rebuilt and share one notification system with the application shell.
+- Accessibility findings from a WCAG 2.2 AA scan have been fixed across tables, tabs, sidebars and forms. The My Access Requests view switch can now be operated with the keyboard.
+- Clicking a parent tab now opens its first child page.
+- Plan component price updates that changed nothing are no longer logged, and existing log entries of this kind are cleaned up.
+- The system now logs when a notification setting prevents an email from being sent.
+
+### Bug Fixes
+
+- A refused resource restore now returns the resource to the terminated state.
+- The order form keeps the offering's default limits when the form reloads, follows the offering when you switch it inside the form, and gives a single consistent reason when its steps are closed.
+- The usage values shown in the Change limits dialog are now correct.
+- Offering export keeps empty units and zero amounts, and offering import normalises null values and rejects invalid input.
+- Removing a project grant from the organisation team list now sends the correct project.
+- Permission checks now wait for the workspace to load, and a refused route keeps the address you were denied.
+- Header popovers appear above the toolbar, select menus can be clicked inside drawers, floating drawers stay under the header, and tall action menus stay inside the window.
+- Pressing Enter on links without a click handler, or on read-only avatar strips, no longer causes an error.
+- Dark mode has been fixed for Mermaid diagrams, login layouts and the provider ticket assignee picker. Login footer links are readable on gradient layouts.
+- AI assistant Mermaid diagrams fit inside the chat bubble, and the conversation marker stays on the assistant button.
+- VMware datastore sizes are stored in 64-bit columns, so large datastores no longer overflow.
+- Email diagnostics now handle sender addresses that include a display name.
+- Service desk setup now fixes a status with a mistyped value instead of skipping it.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [25 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.15...8.1.3-rc.16) - offering merge engine and staff API, call order attribution, role definition auditing, changelog backend, SCIM entitlement option and several fixes
+- **Waldur Homeport**: [61 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.15...8.1.3-rc.16) - offering merge wizard, call eligibility settings, accessibility fixes, rebuilt notifications, order form and drawer fixes, and ongoing design-token and style cleanup
+- **Waldur Docker Compose**: [2 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.15...8.1.3-rc.16) - editable language list mount and smoke test tuning
+
+---
+
 ## 8.1.3-rc.15 - 2026-09-17
 
 ### Highlights
