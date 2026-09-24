@@ -34,9 +34,15 @@ On this page, you can:
 
 ## Editing and deleting comments
 
-Staff can edit or delete any comment on a ticket with **Change** and **Delete** next to the comment. Only staff can change whether a comment is public or internal.
+Staff can edit or delete any comment on a ticket, including internal ones, with **Change** and **Remove** next to the comment. Editing changes only the text: an internal comment stays internal, and only staff can change whether a comment is public.
 
-Users can edit and delete their own comments too, but only when Waldur runs the service desk itself, while the ticket is open, and as long as the ticket has not been routed to a provider helpdesk. Elsewhere the buttons are shown disabled.
+![Staff see Change and Remove on every comment](../../img/helpdesk-comment-actions-staff.png)
+
+Users can edit and remove their own comments too, but only when Waldur runs the service desk itself, while the ticket is open, and as long as the ticket has not been routed to a provider helpdesk. They never see the buttons on other people's comments.
+
+![The person who raised the ticket sees Change and Remove on their own comments only](../../img/helpdesk-comment-actions-author.png)
+
+The buttons appear only where the action is possible. On a closed ticket, for example, they are gone for everyone.
 
 !!! note
     With the Atlassian, Zammad or Smax backends the comment has already reached the external service desk, so users cannot change it from Waldur. Changes made by staff to a ticket routed to a provider helpdesk stay in Waldur: the provider keeps its copy of the original comment.
