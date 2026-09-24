@@ -7557,6 +7557,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#set-ok" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set OK
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#set-error-creating" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19419,6 +19430,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#set-ok" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set OK
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#set-error-creating" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20156,6 +20178,11 @@
 </code></pre></div></td></tr></tbody></table></div>
 <p><strong>Valid transitions from:</strong> <code>PENDING_ADDITIONAL_VALIDATION</code>, <code>PENDING_ACCOUNT_LINKING</code></p>
 <p><strong>Note:</strong> This action clears both the <code>service_provider_comment</code> and <code>service_provider_comment_url</code> fields.</p>
+<h4 id="set-ok">Set OK</h4>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_ok/</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><strong>Valid transitions from:</strong> <code>CREATION_REQUESTED</code>, <code>CREATING</code>, <code>PENDING_ADDITIONAL_VALIDATION</code>, <code>PENDING_ACCOUNT_LINKING</code>, <code>ERROR_CREATING</code>, <code>ERROR_DELETING</code></p>
+<p>Manually sets the account to <code>OK</code>, for example to recover from an error state or to finish a manual creation. Like <code>set_validation_complete</code>, it clears both the <code>service_provider_comment</code> and <code>service_provider_comment_url</code> fields.</p>
 <h4 id="set-error-creating">Set Error Creating</h4>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST /api/marketplace-offering-users/{uuid}/set_error_creating/</span>
 </code></pre></div></td></tr></tbody></table></div>
@@ -20190,6 +20217,7 @@
 <p>Marks the user account as successfully deleted. This is the final state for successful account deletion. When the account reads through a provider-level account (<code>account_scope: provider</code>) and this was the last offering account still reading through it, the provider account completes its own deletion in the same request (see <a href="#departure-and-return">Departure and return</a>).</p>
 <p><strong>409 Conflict:</strong> returned when the account is <code>OK</code> again because the member regained access after the deletion was requested. The deletion no longer stands; re-read the account and keep it enabled.</p>
 <h3 id="service-provider-comment-management">Service Provider Comment Management</h3>
+<p>The comment and its URL explain a pending state to the user, so they are cleared whenever the account moves to <code>OK</code>: through <code>set_validation_complete</code>, <code>set_ok</code>, username assignment, or <code>restore()</code>. To show a comment on an account that is already <code>OK</code>, set it with <code>update_comments</code> after the transition.</p>
 <h4 id="update-comments">Update Comments</h4>
 <p>Service providers can directly update comment fields without changing the user's state:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -20258,7 +20286,7 @@
 <ul>
 <li><code>state</code> (string, read-only): Current lifecycle state of the user account (provisioning/deletion)</li>
 <li><code>runtime_state</code> (string, read-only): Current operational/access state of the user account</li>
-<li><code>service_provider_comment</code> (string, read-only): Comment from service provider for pending states</li>
+<li><code>service_provider_comment</code> (string, read-only): Comment from service provider for pending states; cleared when the account moves to <code>OK</code></li>
 <li><code>service_provider_comment_url</code> (string, read-only): Optional URL link for additional information or actions related to the service provider comment</li>
 </ul>
 <h2 id="runtime-states">Runtime States</h2>
@@ -20322,7 +20350,7 @@
 <p>The system maintains backward compatibility with existing integrations:</p>
 <h3 id="automatic-state-transitions">Automatic State Transitions</h3>
 <ul>
-<li><strong>Username Assignment</strong>: When a username is assigned to an OfferingUser (via API or <code>set_offerings_username</code>), the state automatically transitions to <code>OK</code></li>
+<li><strong>Username Assignment</strong>: When a username is assigned to an OfferingUser (via API or <code>set_offerings_username</code>), the state automatically transitions to <code>OK</code> and the service provider comment fields are cleared</li>
 <li><strong>Creation with Username</strong>: Creating an OfferingUser with a username immediately sets the state to <code>OK</code></li>
 </ul>
 <h3 id="legacy-endpoints">Legacy Endpoints</h3>
