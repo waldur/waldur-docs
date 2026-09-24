@@ -10075,6 +10075,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#upgrade-report-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade report endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19232,6 +19243,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#upgrade-report-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade report endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19681,6 +19703,10 @@
 <td><code>GET /api/changelog-entries/</code></td>
 <td>Flat, paginated, filterable list of entries across all pending versions (table view)</td>
 </tr>
+<tr>
+<td><code>GET /api/changelog-upgrade-report/</code></td>
+<td>Markdown upgrade report, maintenance announcement text and upgrade commands covering every pending entry</td>
+</tr>
 </tbody>
 </table>
 <h3 id="version-endpoint-response">Version endpoint response</h3>
@@ -19716,6 +19742,7 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p><code>latest_version</code> and <code>versions_behind</code> depend on what the deployment runs. A stable deployment is offered the index's <code>latest_stable</code>, and <code>versions_behind</code> counts pending stable releases. A deployment running a release candidate (including a development build of one, such as <code>8.1.3-rc.15+49.gb97210b96</code>) already tracks RCs, so it is offered the newer of <code>latest_stable</code> and <code>latest_rc</code>, and <code>versions_behind</code> counts every pending release. <code>utils.get_latest_version()</code> and <code>utils.count_versions_behind()</code> implement this; the pending and entries endpoints use the same count.</p>
 <h3 id="pending-endpoint-response">Pending endpoint response</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -19848,6 +19875,31 @@
 <span class="w">      </span><span class="nt">"release_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"stable"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="upgrade-report-endpoint">Upgrade report endpoint</h3>
+<p><code>GET /api/changelog-upgrade-report/</code> backs the admin changelog page's "Download report", "Schedule upgrade" and "Upgrade commands" actions. They describe the whole upgrade, so the response is built from every pending entry (selected as for <code>changelog-entries</code>), independent of the table's filters and pagination. <code>report.py</code> builds it:</p>
+<ul>
+<li><code>report</code> — Markdown brief: breaking changes, security fixes, post-upgrade actions, every change, the upgrade commands and a pre-upgrade checklist.</li>
+<li><code>announcement</code> / <code>announcement_type</code> — prefilled maintenance announcement text; <code>warning</code> when the upgrade brings security fixes or breaking changes, otherwise <code>information</code>.</li>
+<li><code>commands</code> — <code>helm</code> and <code>docker_compose</code>, following the waldur-helm and waldur-docker-compose READMEs. The Helm chart version equals the Waldur version and its repository is added as <code>waldur-charts</code>. Docker Compose pins the images in <code>.env</code>, so the commands update <code>WALDUR_MASTERMIND_IMAGE_TAG</code> and <code>WALDUR_HOMEPORT_IMAGE_TAG</code> before <code>pull</code>, <code>down</code> and <code>up -d</code>; migrations then run on start-up in the <code>waldur-mastermind-db-migration</code> service.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"current_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8.1.3-rc.16"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"latest_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8.1.3-rc.17"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"entry_count"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"commands"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"helm"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nt">"docker_compose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"report"</span><span class="p">:</span><span class="w"> </span><span class="s2">"# Waldur Upgrade Report\n..."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"announcement"</span><span class="p">:</span><span class="w"> </span><span class="s2">"## Scheduled Upgrade: 8.1.3-rc.16 → 8.1.3-rc.17\n..."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"announcement_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="relevance-matching">Relevance Matching</h2>

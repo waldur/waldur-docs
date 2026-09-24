@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-24T02:03:57.143506Z
+Generated: 2026-09-24T12:13:25.536908Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6273,6 +6273,7 @@ usage: waldur assemble_changelog --release-version RELEASE_VERSION --date DATE
                                  [--release-type {stable,rc}]
                                  [--base-stable BASE_STABLE]
                                  [--previous PREVIOUS]
+                                 [--previous-release PREVIOUS_RELEASE]
                                  [--stable-target STABLE_TARGET]
                                  [--summary SUMMARY] [--no-clear] [--dry-run]
 
@@ -6285,6 +6286,10 @@ options:
   --base-stable BASE_STABLE
                         Previous stable version (for cumulative entries)
   --previous PREVIOUS   Immediately preceding version (for delta)
+  --previous-release PREVIOUS_RELEASE
+                        Path to the previous version's release file. An RC
+                        carries its entries forward; a stable release uses
+                        them to work out since_previous
   --stable-target STABLE_TARGET
                         Target stable version (for RC releases)
   --summary SUMMARY     Release summary text
@@ -9595,6 +9600,20 @@ Brand color is used for button background.
 **Type:** bool
 
 Toggler to disable dark theme.
+
+### About us page
+
+#### ABOUT_US_PAGE_ENABLED
+
+**Type:** bool
+
+Show the About us page and its link in the footer.
+
+#### ABOUT_US_PAGE_CONTENT
+
+**Type:** markdown_field
+
+Markdown content of the About us page.
 
 ### Login page
 
@@ -15054,7 +15073,7 @@ Notification about a new comment in the issue. The recipient is issue caller.
 
 ```txt
 
-    The issue ({{ issue.key }}) you have created has a new comment
+    The issue you have created has a new comment
 
 ```
 
@@ -15157,7 +15176,7 @@ Notification about an update in the issue comment. The recipient is issue caller
 
 ```txt
 
-    Issue {{ issue.key }}. The comment has been updated
+    The comment has been updated
 
 ```
 
@@ -15306,7 +15325,7 @@ Notification about a feedback related to the issue. The recipient is issue calle
 
 ```txt
 
-    Please share your feedback: {{issue.key}} {{issue.summary}}
+    Please share your feedback: {{ issue.summary }}
 
 ```
 
@@ -15387,7 +15406,7 @@ Notification about an update in the issue. The recipient is issue caller.
 
 ```txt
 
-    Updated issue: {{issue.key}} {{issue.summary}}
+    Updated issue: {{ issue.summary }}
 
 ```
 
@@ -15581,7 +15600,7 @@ Notify a provider helpdesk that a routed ticket has been escalated.
 
 ```txt
 
-    [{{ issue.key }}] ESCALATED: {{ issue.summary }}
+    [{{ child_issue.key }}] ESCALATED: {{ issue.summary }}
 
 ```
 
@@ -15701,7 +15720,7 @@ Notify a provider helpdesk that a ticket previously routed to them was rerouted 
 
 ```txt
 
-    [{{ issue.key }}] Ticket withdrawn: {{ issue.summary }}
+    [{{ child_key|default:issue.key }}] Ticket withdrawn: {{ issue.summary }}
 
 ```
 
@@ -15711,7 +15730,7 @@ Notify a provider helpdesk that a ticket previously routed to them was rerouted 
 
     A support ticket previously routed to your helpdesk has been withdrawn and reassigned to a different provider.
 
-    Ticket: {{ issue.key }}
+    Ticket: {{ child_key|default:issue.key }}
     Summary: {{ issue.summary }}
 
     No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.
@@ -15723,7 +15742,7 @@ Notify a provider helpdesk that a ticket previously routed to them was rerouted 
 ```txt
 
     <p>A support ticket previously routed to your helpdesk has been withdrawn and reassigned to a different provider.</p>
-    <p><strong>Ticket:</strong> {{ issue.key }}<br>
+    <p><strong>Ticket:</strong> {{ child_key|default:issue.key }}<br>
     <strong>Summary:</strong> {{ issue.summary }}</p>
     <p>No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.</p>
 
@@ -23236,7 +23255,7 @@ Description:
 
 ```txt
 
-[{{ issue.key }}] ESCALATED: {{ issue.summary }}
+[{{ child_issue.key }}] ESCALATED: {{ issue.summary }}
 
 ```
 
@@ -23342,7 +23361,7 @@ Comment:
 ```html
 
 <p>A support ticket previously routed to your helpdesk has been withdrawn and reassigned to a different provider.</p>
-<p><strong>Ticket:</strong> {{ issue.key }}<br>
+<p><strong>Ticket:</strong> {{ child_key|default:issue.key }}<br>
 <strong>Summary:</strong> {{ issue.summary }}</p>
 <p>No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.</p>
 
@@ -23449,7 +23468,7 @@ Open the request: {{ issue_url }}
 
 ```txt
 
-[{{ issue.key }}] Ticket withdrawn: {{ issue.summary }}
+[{{ child_key|default:issue.key }}] Ticket withdrawn: {{ issue.summary }}
 
 ```
 
@@ -23459,7 +23478,7 @@ Open the request: {{ issue_url }}
 
 A support ticket previously routed to your helpdesk has been withdrawn and reassigned to a different provider.
 
-Ticket: {{ issue.key }}
+Ticket: {{ child_key|default:issue.key }}
 Summary: {{ issue.summary }}
 
 No further action is required on your side. If you have already opened a corresponding ticket in your system, you may close it.
@@ -23539,7 +23558,7 @@ Please take action to avoid an SLA breach.
 
 ```txt
 
-The issue ({{ issue.key }}) you have created has a new comment
+The issue you have created has a new comment
 
 ```
 
@@ -23547,7 +23566,7 @@ The issue ({{ issue.key }}) you have created has a new comment
 
 ```txt
 
-Issue {{ issue.key }}. The comment has been updated
+The comment has been updated
 
 ```
 
@@ -23573,7 +23592,7 @@ The comment has been updated. Please go to {{issue_url}} to see it.
 
 ```txt
 
-Updated issue: {{issue.key}} {{issue.summary}}
+Updated issue: {{ issue.summary }}
 
 ```
 
@@ -23642,7 +23661,7 @@ Description:
 
 ```txt
 
-Please share your feedback: {{issue.key}} {{issue.summary}}
+Please share your feedback: {{ issue.summary }}
 
 ```
 
@@ -87255,6 +87274,17 @@ On this page, you can:
 * Add comments/replies to communicate with users.
 * Change the ticket's status, when Waldur runs the service desk itself.
 
+## Editing and deleting comments
+
+Staff can edit or delete any comment on a ticket with **Change** and **Delete** next to the comment. Only staff can change whether a comment is public or internal.
+
+Users can edit and delete their own comments too, but only when Waldur runs the service desk itself, while the ticket is open, and as long as the ticket has not been routed to a provider helpdesk. Elsewhere the buttons are shown disabled.
+
+!!! note
+    With the Atlassian, Zammad or Smax backends the comment has already reached the external service desk, so users cannot change it from Waldur. Changes made by staff to a ticket routed to a provider helpdesk stay in Waldur: the provider keeps its copy of the original comment.
+
+When the person who raised a ticket edits one of their comments, the assignee — or every staff and support user while the ticket is unassigned — can be emailed the previous and the edited text. This notification, `support.notification_comment_updated_staff`, is off until an administrator enables it; see [notifications](../../../admin-guide/mastermind-configuration/notifications.md).
+
 ## Changing the status of a ticket
 
 Select **Change status** and pick the new status.
@@ -95398,6 +95428,7 @@ All endpoints require `IsAuthenticated + IsStaffOrSupportUser`.
 | `GET /api/changelog/{version}/delta/` | Only `since_previous` entries |
 | `GET /api/changelog/compare/{from}/{to}/` | Merged deltas between arbitrary versions |
 | `GET /api/changelog-entries/` | Flat, paginated, filterable list of entries across all pending versions (table view) |
+| `GET /api/changelog-upgrade-report/` | Markdown upgrade report, maintenance announcement text and upgrade commands covering every pending entry |
 
 ### Version endpoint response
 
@@ -95419,6 +95450,8 @@ All endpoints require `IsAuthenticated + IsStaffOrSupportUser`.
   }
 }
 ```
+
+`latest_version` and `versions_behind` depend on what the deployment runs. A stable deployment is offered the index's `latest_stable`, and `versions_behind` counts pending stable releases. A deployment running a release candidate (including a development build of one, such as `8.1.3-rc.15+49.gb97210b96`) already tracks RCs, so it is offered the newer of `latest_stable` and `latest_rc`, and `versions_behind` counts every pending release. `utils.get_latest_version()` and `utils.count_versions_behind()` implement this; the pending and entries endpoints use the same count.
 
 ### Pending endpoint response
 
@@ -95486,6 +95519,26 @@ Results are sorted relevant-first, then by risk (high to none). Each entry addit
       "release_type": "stable"
     }
   ]
+}
+```
+
+### Upgrade report endpoint
+
+`GET /api/changelog-upgrade-report/` backs the admin changelog page's "Download report", "Schedule upgrade" and "Upgrade commands" actions. They describe the whole upgrade, so the response is built from every pending entry (selected as for `changelog-entries`), independent of the table's filters and pagination. `report.py` builds it:
+
+- `report` — Markdown brief: breaking changes, security fixes, post-upgrade actions, every change, the upgrade commands and a pre-upgrade checklist.
+- `announcement` / `announcement_type` — prefilled maintenance announcement text; `warning` when the upgrade brings security fixes or breaking changes, otherwise `information`.
+- `commands` — `helm` and `docker_compose`, following the waldur-helm and waldur-docker-compose READMEs. The Helm chart version equals the Waldur version and its repository is added as `waldur-charts`. Docker Compose pins the images in `.env`, so the commands update `WALDUR_MASTERMIND_IMAGE_TAG` and `WALDUR_HOMEPORT_IMAGE_TAG` before `pull`, `down` and `up -d`; migrations then run on start-up in the `waldur-mastermind-db-migration` service.
+
+```json
+{
+  "current_version": "8.1.3-rc.16",
+  "latest_version": "8.1.3-rc.17",
+  "entry_count": 2,
+  "commands": {"helm": "...", "docker_compose": "..."},
+  "report": "# Waldur Upgrade Report\n...",
+  "announcement": "## Scheduled Upgrade: 8.1.3-rc.16 → 8.1.3-rc.17\n...",
+  "announcement_type": "warning"
 }
 ```
 
