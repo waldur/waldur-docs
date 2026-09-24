@@ -1,5 +1,56 @@
 # Changelog
 
+## 8.1.3-rc.17 - 2026-09-25
+
+### Highlights
+
+The changelog system can now list releases, show what each one introduced, and build upgrade reports and announcements. Deployments running a release candidate are also offered newer candidates. Support comments can be edited and deleted by the person who wrote them, and support notification emails now arrive threaded. Keyboard accessibility improved across the interface, and SCIM, OpenStack and course-account integrations are more reliable.
+
+### What's New
+
+- **Changelog browsing**: The changelog API now lists releases and shows what any release introduced. Entries can be filtered by category and sorted by any column. The backend builds the upgrade report, announcement and commands itself, and deployments running a release candidate are now offered newer release candidates.
+- **About us page**: Administrators can set up an About us page in the branding settings using a Markdown editor. The page is linked from the footer.
+- **Editable support comments**: Authors can edit and delete their own support comments, and staff are notified when a comment is updated. The Edit and Delete buttons only appear where the user is allowed to use them.
+- **Call order ownership**: Call managers can choose who a call's resource orders are created by.
+- **Reviews due soon**: The proposal dashboard shows reviews that are due soon instead of the overdue reviews card.
+- **Option validation**: Service providers can set a pattern that free-form offering options are checked against.
+- **Username filter**: Offering users and provider accounts can be filtered by username.
+
+### Improvements
+
+- Support notification emails are threaded, so replies and updates for a ticket stay in one email conversation.
+- Every reviewer invitation now has a working link and sends an email.
+- The service provider comment on an offering user is cleared when the user becomes OK.
+- Course-account API calls have an explicit timeout, and the delete action shows that closing a course account happens in the background.
+- End date change request reasons are shown in an expandable row for resources and projects.
+- Accessibility:
+  - Every focusable element, including tabs, now shows the brand focus ring.
+  - The "Add filter" menu, breadcrumb dropdowns, the marketplace categories panel, search results and other controls that used to need a mouse now work with the keyboard.
+  - The profile View/Edit controls now behave as buttons.
+  - The OpenStack discovery wizard's Continue button now has an accessible name.
+- SCIM accounts are named after the match value exactly as it was sent, so logins can find them. A new management command reports username collisions.
+- The SRAM SCIM profile is advertised on its own discovery endpoints.
+
+### Bug Fixes
+
+- Keyboard navigation in global search works again.
+- The notifications drawer now opens on mobile, and the gap below the navbar is gone.
+- The profile page no longer crashes because of the recalculate user actions button.
+- Closing a dialog for an invitation that is no longer pending now clears the stored invitation token.
+- Parent tabs now link to the first entry their submenu actually shows.
+- The anonymous chat tab is hidden while anonymous chat is disabled.
+- The open calls link on the call management dashboard now applies the correct filter.
+- User avatars load without an authenticated request, and issue template files download using the API token.
+- Polling during OpenStack instance deletion is retried when Nova returns HTTP 429. Celery exception results are converted to text before being saved as error messages.
+- Fixed the offering options editor and number input fields used across several forms.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [20 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.16...8.1.3-rc.17) - Changelog release browsing and reports, support comment editing and threaded emails, SCIM/SRAM fixes, proposal reviewer improvements, OpenStack and course-account reliability.
+- **Waldur Homeport**: [20 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.16...8.1.3-rc.17) - About us page, comment action permissions, call order ownership setting, a broad keyboard accessibility pass and several UI fixes.
+
+---
+
 ## 8.1.3-rc.16 - 2026-09-23
 
 ### Highlights
