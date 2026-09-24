@@ -313,12 +313,21 @@ run `waldur migrate`, enable `SCIM_INBOUND_ENABLED` and `SRAM_INTEGRATION_ENABLE
 and create the service account from
 [Connecting a Waldur deployment](#connecting-a-waldur-deployment).
 
-Check that the SBS container can reach Waldur (replace the port with your
-backend's):
+Check that the SBS container can reach Waldur with the token (replace the port
+with your backend's). Request an empty page of users rather than
+`ServiceProviderConfig`: the discovery endpoints need no token, so they cannot
+tell a working token from a wrong one.
 
 ```bash
-docker exec sbs-server python -c "import requests; print(requests.get('http://host.docker.internal:10780/scim/v2/sram/ServiceProviderConfig', headers={'Authorization': 'Bearer <token>'}).status_code)"
+docker exec sbs-server python -c "import requests; print(requests.get('http://host.docker.internal:10780/scim/v2/sram/Users?count=0', headers={'Authorization': 'Bearer <token>'}).status_code)"
 ```
+
+| Status | Meaning |
+|---|---|
+| 200 | Reachable, token accepted, both switches on |
+| 401 | Token unknown or expired: the service account's `token_lifetime` must be empty |
+| 403 | `SCIM_INBOUND_ENABLED` or `SRAM_INTEGRATION_ENABLED` is off, or the token's user is not staff |
+| 404 | Wrong path, for example a trailing slash in the base URL (`…/sram//Users`) |
 
 ### 4. Point a service at Waldur
 
