@@ -32,6 +32,17 @@ On this page, you can:
 * Add comments/replies to communicate with users.
 * Change the ticket's status, when Waldur runs the service desk itself.
 
+## Editing and deleting comments
+
+Staff can edit or delete any comment on a ticket with **Change** and **Delete** next to the comment. Only staff can change whether a comment is public or internal.
+
+Users can edit and delete their own comments too, but only when Waldur runs the service desk itself, while the ticket is open, and as long as the ticket has not been routed to a provider helpdesk. Elsewhere the buttons are shown disabled.
+
+!!! note
+    With the Atlassian, Zammad or Smax backends the comment has already reached the external service desk, so users cannot change it from Waldur. Changes made by staff to a ticket routed to a provider helpdesk stay in Waldur: the provider keeps its copy of the original comment.
+
+When the person who raised a ticket edits one of their comments, the assignee — or every staff and support user while the ticket is unassigned — can be emailed the previous and the edited text. This notification, `support.notification_comment_updated_staff`, is off until an administrator enables it; see [notifications](../../../admin-guide/mastermind-configuration/notifications.md).
+
 ## Changing the status of a ticket
 
 Select **Change status** and pick the new status.
