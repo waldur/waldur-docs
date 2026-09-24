@@ -19456,13 +19456,16 @@
 <p><strong>Point the IdP at <code>/scim/v2/</code></strong> using the token. The IdP's SCIM connector tester should see <code>GET /scim/v2/ServiceProviderConfig</code> succeed.</p>
 </li>
 <li>
-<p><strong>Smoke test from the shell</strong> before pointing real users at it:</p>
+<p><strong>Smoke test from the shell</strong> before pointing real users at it. Request an empty page of users: the discovery endpoints need no token, so <code>ServiceProviderConfig</code> answers 200 even for a wrong one.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;token&gt;"</span><span class="w"> </span><span class="se">\</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;token&gt;"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">     </span>-H<span class="w"> </span><span class="s2">"Accept: application/scim+json"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">     </span>https://waldur.example.com/scim/v2/ServiceProviderConfig
+<span class="w">     </span><span class="s2">"https://waldur.example.com/scim/v2/Users?count=0"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>200 means the token works; 401 an unknown or expired token (clear the service account's <code>token_lifetime</code>); 403 <code>SCIM_INBOUND_ENABLED</code> off or a non-staff token; a <code>text/html</code> answer means the proxy does not route <code>/scim</code> to the API.</p>
 </li>
 </ol>
 <h2 id="endpoint-reference">Endpoint reference</h2>
