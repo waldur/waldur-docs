@@ -20317,6 +20317,16 @@
 <li>Automatic user information formatting for backends</li>
 <li>Bidirectional synchronization</li>
 </ul>
+<p><strong>Editing and deleting comments:</strong></p>
+<p>Staff can edit and delete any comment. The author of a comment can edit or delete it only when all of the following hold:</p>
+<ul>
+<li>The active backend allows author changes. Only the built-in (basic) backend does. With Atlassian, Zammad and SMAX the comment has already reached the external service desk, where an edit would be recorded under the integration account.</li>
+<li>The ticket is not part of a <a href="../provider-helpdesk/#comment-forwarding">provider routing</a> and the comment is not a forwarded copy. Forwarding copies a comment when it is created, so a later edit or deletion would not reach the provider's copy.</li>
+<li>The backend still accepts changes to the comment. The basic backend accepts them only while the ticket is open.</li>
+</ul>
+<p><code>is_public</code> can only be changed by staff; the field is ignored when an author edits their comment.</p>
+<p>The <code>update_is_available</code> and <code>destroy_is_available</code> fields of a comment tell the requesting user whether they can edit or delete it, taking all of the above into account.</p>
+<p>When the caller of a ticket edits their own public comment, the assignee is notified (or all staff and support users while the ticket is unassigned) through <code>support.notification_comment_updated_staff</code>, with the previous and the edited text. An edit by anyone else notifies the caller through <code>support.notification_comment_updated</code>. Deleting a comment notifies nobody.</p>
 <h3 id="3-attachment-management">3. Attachment Management</h3>
 <p>File attachments for issues and templates:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -20680,7 +20690,11 @@ token (sent as Basic auth) against the same gateway URL works as well.</p>
 <span class="normal">20</span>
 <span class="normal">21</span>
 <span class="normal">22</span>
-<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SupportBackend</span><span class="p">:</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SupportBackend</span><span class="p">:</span>
     <span class="c1"># Issue operations</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_issue</span><span class="p">(</span><span class="n">issue</span><span class="p">:</span> <span class="n">Issue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Issue</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_issue</span><span class="p">(</span><span class="n">issue</span><span class="p">:</span> <span class="n">Issue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Issue</span>
@@ -20691,6 +20705,10 @@ token (sent as Basic auth) against the same gateway URL works as well.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_comment</span><span class="p">(</span><span class="n">comment</span><span class="p">:</span> <span class="n">Comment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Comment</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_comment</span><span class="p">(</span><span class="n">comment</span><span class="p">:</span> <span class="n">Comment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Comment</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">delete_comment</span><span class="p">(</span><span class="n">comment</span><span class="p">:</span> <span class="n">Comment</span><span class="p">)</span>
+
+    <span class="c1"># May the author of a comment change or remove it? Staff always may.</span>
+    <span class="n">comment_author_update_is_supported</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">comment_author_destroy_is_supported</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># Attachment operations</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_attachment</span><span class="p">(</span><span class="n">attachment</span><span class="p">:</span> <span class="n">Attachment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Attachment</span>
@@ -20775,12 +20793,12 @@ token (sent as Basic auth) against the same gateway URL works as well.</p>
 <tr>
 <td><code>/api/support-comments/{uuid}/</code></td>
 <td>PATCH</td>
-<td>Update comment</td>
+<td>Update comment (staff, or the author where <a href="#2-comment-system">allowed</a>)</td>
 </tr>
 <tr>
 <td><code>/api/support-comments/{uuid}/</code></td>
 <td>DELETE</td>
-<td>Delete comment</td>
+<td>Delete comment (staff, or the author where <a href="#2-comment-system">allowed</a>)</td>
 </tr>
 </tbody>
 </table>

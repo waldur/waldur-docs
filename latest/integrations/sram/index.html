@@ -19467,10 +19467,38 @@ development settings do not allow. Add a settings module next to
 run <code>waldur migrate</code>, enable <code>SCIM_INBOUND_ENABLED</code> and <code>SRAM_INTEGRATION_ENABLED</code>,
 and create the service account from
 <a href="#connecting-a-waldur-deployment">Connecting a Waldur deployment</a>.</p>
-<p>Check that the SBS container can reach Waldur (replace the port with your
-backend's):</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>sbs-server<span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import requests; print(requests.get('http://host.docker.internal:10780/scim/v2/sram/ServiceProviderConfig', headers={'Authorization': 'Bearer &lt;token&gt;'}).status_code)"</span>
+<p>Check that the SBS container can reach Waldur with the token (replace the port
+with your backend's). Request an empty page of users rather than
+<code>ServiceProviderConfig</code>: the discovery endpoints need no token, so they cannot
+tell a working token from a wrong one.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>sbs-server<span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import requests; print(requests.get('http://host.docker.internal:10780/scim/v2/sram/Users?count=0', headers={'Authorization': 'Bearer &lt;token&gt;'}).status_code)"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Reachable, token accepted, both switches on</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Token unknown or expired: the service account's <code>token_lifetime</code> must be empty</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>SCIM_INBOUND_ENABLED</code> or <code>SRAM_INTEGRATION_ENABLED</code> is off, or the token's user is not staff</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Wrong path, for example a trailing slash in the base URL (<code>…/sram//Users</code>)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="4-point-a-service-at-waldur">4. Point a service at Waldur</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>

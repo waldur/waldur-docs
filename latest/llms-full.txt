@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-24T14:06:32.760188Z
+Generated: 2026-09-24T15:24:26.064983Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -88395,12 +88395,21 @@ run `waldur migrate`, enable `SCIM_INBOUND_ENABLED` and `SRAM_INTEGRATION_ENABLE
 and create the service account from
 [Connecting a Waldur deployment](#connecting-a-waldur-deployment).
 
-Check that the SBS container can reach Waldur (replace the port with your
-backend's):
+Check that the SBS container can reach Waldur with the token (replace the port
+with your backend's). Request an empty page of users rather than
+`ServiceProviderConfig`: the discovery endpoints need no token, so they cannot
+tell a working token from a wrong one.
 
 ```bash
-docker exec sbs-server python -c "import requests; print(requests.get('http://host.docker.internal:10780/scim/v2/sram/ServiceProviderConfig', headers={'Authorization': 'Bearer <token>'}).status_code)"
+docker exec sbs-server python -c "import requests; print(requests.get('http://host.docker.internal:10780/scim/v2/sram/Users?count=0', headers={'Authorization': 'Bearer <token>'}).status_code)"
 ```
+
+| Status | Meaning |
+|---|---|
+| 200 | Reachable, token accepted, both switches on |
+| 401 | Token unknown or expired: the service account's `token_lifetime` must be empty |
+| 403 | `SCIM_INBOUND_ENABLED` or `SRAM_INTEGRATION_ENABLED` is off, or the token's user is not staff |
+| 404 | Wrong path, for example a trailing slash in the base URL (`…/sram//Users`) |
 
 ### 4. Point a service at Waldur
 
@@ -112140,6 +112149,8 @@ sequenceDiagram
 
 The `is_forwarded` flag prevents infinite loops: forwarded comments are skipped by all signal handlers.
 
+Forwarding happens only when a comment is created, and a copy keeps no link to its original, so editing or deleting a comment does not reach its copies. For that reason the author of a comment cannot edit or delete it once the ticket has a parent or child issue, or when the comment is itself a forwarded copy. Staff still can, but their changes are not forwarded either.
+
 ## Escalation
 
 1. User calls `POST /api/support-issues/{uuid}/escalate/` with `reason`
@@ -113462,6 +113473,20 @@ class Comment:
 - Automatic user information formatting for backends
 - Bidirectional synchronization
 
+**Editing and deleting comments:**
+
+Staff can edit and delete any comment. The author of a comment can edit or delete it only when all of the following hold:
+
+- The active backend allows author changes. Only the built-in (basic) backend does. With Atlassian, Zammad and SMAX the comment has already reached the external service desk, where an edit would be recorded under the integration account.
+- The ticket is not part of a [provider routing](provider-helpdesk.md#comment-forwarding) and the comment is not a forwarded copy. Forwarding copies a comment when it is created, so a later edit or deletion would not reach the provider's copy.
+- The backend still accepts changes to the comment. The basic backend accepts them only while the ticket is open.
+
+`is_public` can only be changed by staff; the field is ignored when an author edits their comment.
+
+The `update_is_available` and `destroy_is_available` fields of a comment tell the requesting user whether they can edit or delete it, taking all of the above into account.
+
+When the caller of a ticket edits their own public comment, the assignee is notified (or all staff and support users while the ticket is unassigned) through `support.notification_comment_updated_staff`, with the previous and the edited text. An edit by anyone else notifies the caller through `support.notification_comment_updated`. Deleting a comment notifies nobody.
+
 ### 3. Attachment Management
 
 File attachments for issues and templates:
@@ -113787,6 +113812,10 @@ class SupportBackend:
     def update_comment(comment: Comment) -> Comment
     def delete_comment(comment: Comment)
 
+    # May the author of a comment change or remove it? Staff always may.
+    comment_author_update_is_supported: bool = False
+    comment_author_destroy_is_supported: bool = False
+
     # Attachment operations
     def create_attachment(attachment: Attachment) -> Attachment
     def delete_attachment(attachment: Attachment)
@@ -113820,8 +113849,8 @@ class SupportBackend:
 |----------|--------|-------------|
 | `/api/support-comments/` | GET | List comments |
 | `/api/support-comments/{uuid}/` | GET | Retrieve comment |
-| `/api/support-comments/{uuid}/` | PATCH | Update comment |
-| `/api/support-comments/{uuid}/` | DELETE | Delete comment |
+| `/api/support-comments/{uuid}/` | PATCH | Update comment (staff, or the author where [allowed](#2-comment-system)) |
+| `/api/support-comments/{uuid}/` | DELETE | Delete comment (staff, or the author where [allowed](#2-comment-system)) |
 
 ### Attachments
 
