@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-24T22:42:00.765167Z
+Generated: 2026-09-25T02:03:55.184470Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6869,6 +6869,10 @@ options:
 
 ```
 
+## find_username_collisions
+
+List accounts whose usernames differ only in case or in characters a username should not hold, so that one person may hold two of them. Writes nothing.
+
 ## generate_appservice_registration
 
 Generate a Matrix Application Service registration YAML for the homeserver.
@@ -10200,6 +10204,14 @@ Shared secret expected in the X-Webhook-Secret header of inbound SMAX webhook de
 **Default value:** 7
 
 Review duration in days.
+
+#### PROPOSAL_DASHBOARD_REVIEWS_DUE_WITHIN_DAYS
+
+**Type:** int
+
+**Default value:** 7
+
+How many days ahead the call manager dashboard looks for review deadlines. Past-due reviews are always included.
 
 #### DEFAULT_PROPOSAL_REQUIRED_FIELDS
 
@@ -15223,6 +15235,62 @@ Notification about an update in the issue comment. The recipient is issue caller
 
 ```
 
+### support.notification_comment_updated_staff
+
+Notification to the assignee, or to all staff and support users when the ticket is unassigned, that the issue caller has edited one of their comments. Sent only by the built-in service desk.
+
+#### Templates
+
+=== "support/notification_comment_updated_staff_subject.txt"
+
+```txt
+
+    [{{ issue.key }}] Comment edited by {{ comment.author.name|default:"the requester" }}: {{ issue.summary.strip }}
+
+```
+
+=== "support/notification_comment_updated_staff_message.txt"
+
+```txt
+
+    {{ comment.author.name|default:"The requester" }} has edited a comment on a support request.
+
+    Request: {{ issue.key }}
+    Summary: {{ issue.summary.strip }}
+    Status: {{ issue.status }}
+    {% if issue.assignee %}Assignee: {{ issue.assignee.name }}
+    {% endif %}{% if issue.customer %}Organization: {{ issue.customer.name }}
+    {% endif %}{% if issue.project %}Project: {{ issue.project.name }}
+    {% endif %}
+    Previous comment:
+    {{ old_description.strip }}
+
+    Edited comment:
+    {{ comment.description.strip }}
+
+    Open the request: {{ issue_url }}
+
+```
+
+=== "support/notification_comment_updated_staff_message.html"
+
+```txt
+
+    <p>{{ comment.author.name|default:"The requester" }} has edited a comment on a support request.</p>
+    <p><strong>Request:</strong> {{ issue.key }}<br>
+    <strong>Summary:</strong> {{ issue.summary.strip }}<br>
+    <strong>Status:</strong> {{ issue.status }}
+    {% if issue.assignee %}<br><strong>Assignee:</strong> {{ issue.assignee.name }}{% endif %}
+    {% if issue.customer %}<br><strong>Organization:</strong> {{ issue.customer.name }}{% endif %}
+    {% if issue.project %}<br><strong>Project:</strong> {{ issue.project.name }}{% endif %}</p>
+    <p><strong>Previous comment:</strong></p>
+    <p>{{ old_description.strip }}</p>
+    <p><strong>Edited comment:</strong></p>
+    <p>{{ comment.description.strip }}</p>
+    <p><a href="{{ issue_url }}">Open the request</a></p>
+
+```
+
 ### support.notification_issue_created
 
 Notification to staff and support users about a newly created support request. Sent only by the built-in service desk — the Atlassian, Zammad and SMAX backends notify their own agents.
@@ -17770,8 +17838,9 @@ A provisioned user must become the same account the person gets at login, or the
 
 - The lookup order is `externalId`, then the configured match, then the primary email when `OIDC_MATCHMAKING_BY_EMAIL` is on.
 - More than one matching account is a 409; resolve the duplicate first.
-- With `username`, new accounts are **named after the matched value** (normalised to `[0-9a-z_.@+-]`), so a login that presents the same value as its username (see `OIDC_USER_FIELD`) finds the account. Changing that value later is rejected with `scimType: mutability`.
-- With `email` or `civil_number`, new accounts are named after `userName` and the matched attribute is set on them.
+- With `username`, new accounts are **named after the matched value exactly as sent** (no lowercasing, no characters dropped), because a login looks the username up exactly as the identity provider presents it (see `OIDC_USER_FIELD`). Matching tries that exact name first, then the lowercased form with characters outside `[0-9a-z_.@+-]` dropped, which is how accounts were named before. Changing the value later is rejected with `scimType: mutability`.
+- With `email` or `civil_number`, new accounts are named after `userName`, lowercased and with other characters dropped, and the matched attribute is set on them.
+- `waldur find_username_collisions` lists existing accounts whose usernames differ only in case or in such characters, which may be one person with two accounts. It changes nothing; merge them by hand.
 - For SRAM, pick the attribute your login uses. If users sign in through SRAM's OIDC with `sub` as username, use `urn:mace:surf.nl:sram:scim:extension:User.eduPersonUniqueId`. SRAM-provisioned accounts keep their username if the settings change later.
 
 ## SCIM-to-Waldur attribute mapping
@@ -23488,6 +23557,37 @@ No further action is required on your side. If you have already opened a corresp
 
 ```
 
+### notification_comment_updated_staff_message.txt (waldur_mastermind.support)
+
+```txt
+
+{{ comment.author.name|default:"The requester" }} has edited a comment on a support request.
+
+Request: {{ issue.key }}
+Summary: {{ issue.summary.strip }}
+Status: {{ issue.status }}
+{% if issue.assignee %}Assignee: {{ issue.assignee.name }}
+{% endif %}{% if issue.customer %}Organization: {{ issue.customer.name }}
+{% endif %}{% if issue.project %}Project: {{ issue.project.name }}
+{% endif %}
+Previous comment:
+{{ old_description.strip }}
+
+Edited comment:
+{{ comment.description.strip }}
+
+Open the request: {{ issue_url }}
+
+```
+
+### notification_comment_updated_staff_subject.txt (waldur_mastermind.support)
+
+```txt
+
+[{{ issue.key }}] Comment edited by {{ comment.author.name|default:"the requester" }}: {{ issue.summary.strip }}
+
+```
+
 ### summary.txt (waldur_mastermind.support)
 
 ```txt
@@ -23628,6 +23728,25 @@ Updated issue: {{ issue.summary }}
 <p>A customer has added a comment to ticket <strong>{{ issue.key }}</strong>.</p>
 <p><strong>Comment:</strong></p>
 <p>{{ comment.description }}</p>
+
+```
+
+### notification_comment_updated_staff_message.html (waldur_mastermind.support)
+
+```html
+
+<p>{{ comment.author.name|default:"The requester" }} has edited a comment on a support request.</p>
+<p><strong>Request:</strong> {{ issue.key }}<br>
+<strong>Summary:</strong> {{ issue.summary.strip }}<br>
+<strong>Status:</strong> {{ issue.status }}
+{% if issue.assignee %}<br><strong>Assignee:</strong> {{ issue.assignee.name }}{% endif %}
+{% if issue.customer %}<br><strong>Organization:</strong> {{ issue.customer.name }}{% endif %}
+{% if issue.project %}<br><strong>Project:</strong> {{ issue.project.name }}{% endif %}</p>
+<p><strong>Previous comment:</strong></p>
+<p>{{ old_description.strip }}</p>
+<p><strong>Edited comment:</strong></p>
+<p>{{ comment.description.strip }}</p>
+<p><a href="{{ issue_url }}">Open the request</a></p>
 
 ```
 

@@ -19746,8 +19746,9 @@
 <ul>
 <li>The lookup order is <code>externalId</code>, then the configured match, then the primary email when <code>OIDC_MATCHMAKING_BY_EMAIL</code> is on.</li>
 <li>More than one matching account is a 409; resolve the duplicate first.</li>
-<li>With <code>username</code>, new accounts are <strong>named after the matched value</strong> (normalised to <code>[0-9a-z_.@+-]</code>), so a login that presents the same value as its username (see <code>OIDC_USER_FIELD</code>) finds the account. Changing that value later is rejected with <code>scimType: mutability</code>.</li>
-<li>With <code>email</code> or <code>civil_number</code>, new accounts are named after <code>userName</code> and the matched attribute is set on them.</li>
+<li>With <code>username</code>, new accounts are <strong>named after the matched value exactly as sent</strong> (no lowercasing, no characters dropped), because a login looks the username up exactly as the identity provider presents it (see <code>OIDC_USER_FIELD</code>). Matching tries that exact name first, then the lowercased form with characters outside <code>[0-9a-z_.@+-]</code> dropped, which is how accounts were named before. Changing the value later is rejected with <code>scimType: mutability</code>.</li>
+<li>With <code>email</code> or <code>civil_number</code>, new accounts are named after <code>userName</code>, lowercased and with other characters dropped, and the matched attribute is set on them.</li>
+<li><code>waldur find_username_collisions</code> lists existing accounts whose usernames differ only in case or in such characters, which may be one person with two accounts. It changes nothing; merge them by hand.</li>
 <li>For SRAM, pick the attribute your login uses. If users sign in through SRAM's OIDC with <code>sub</code> as username, use <code>urn:mace:surf.nl:sram:scim:extension:User.eduPersonUniqueId</code>. SRAM-provisioned accounts keep their username if the settings change later.</li>
 </ul>
 <h2 id="scim-to-waldur-attribute-mapping">SCIM-to-Waldur attribute mapping</h2>
