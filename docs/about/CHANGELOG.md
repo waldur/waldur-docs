@@ -1,5 +1,39 @@
 # Changelog
 
+## 8.1.3-rc.18 - 2026-09-25
+
+### Highlights
+
+Administrators can now follow Waldur releases from inside the portal. A new changelog page shows release notes, a banner flags security releases, and the footer shows a release badge. Team management is safer: the add-user and invitation dialogs now warn when someone already holds the role you're about to grant. The three role administration pages are now one tabbed page, and service providers can mark offerings that use robot-account identities.
+
+### What's New
+
+- **In-portal changelog**: A new administration page lets you browse Waldur release notes, pick a release, schedule an upgrade and view the upgrade commands. A security alert banner and a footer badge point staff to relevant releases.
+- **Robot-account identity flag for offerings**: Service providers can mark an offering as using robot accounts. The setting is in the offering's user management integration section.
+- **Support access to calls**: Support users now have read-only access to call-management data.
+
+### Improvements
+
+- **Duplicate-role warnings**: The add-user and invitation dialogs now warn when a user already holds the selected role. Invitation warnings are checked against each row's own project and shown only once.
+- **Bulk invitation upload**: Roles from a CSV bulk upload are now filled in correctly, even when roles finish loading after the invite dialog opens.
+- **Unified roles administration**: Role management, role availabilities and role hygiene now share one tabbed page instead of three separate pages.
+- **Navigation**: The tab a page opens on by default is now highlighted.
+- **User profile editor**: Removed the redundant nested "Details" card for a cleaner layout.
+- **Cost policy processing**: Cost policies are no longer re-evaluated when a resource save only updates its last-sync time, and their logging is quieter.
+
+### Bug Fixes
+
+- Fixed support order descriptions not rendering when the order has no plan.
+- Fixed scrolling in long dropdown menus in Administration Configuration and table actions.
+- Fixed table filter popovers being clipped by a height limit.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [4 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.17...8.1.3-rc.18) - robot-account offering flag, support read access to calls, cost policy tuning, plan-less support order description fix
+- **Waldur Homeport**: [13 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.17...8.1.3-rc.18) - changelog admin page and security banner, duplicate-role feedback in invitations, tabbed roles page, dropdown and navigation fixes
+
+---
+
 ## 8.1.3-rc.17 - 2026-09-25
 
 ### Highlights
