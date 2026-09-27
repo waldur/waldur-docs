@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-27T02:03:56.795148Z
+Generated: 2026-09-27T14:03:47.491800Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -55127,9 +55127,10 @@ Consumer and provider approval are decided separately, by two independent gates.
 **Consumer approval** is decided by `order_should_not_be_reviewed_by_consumer()`, which applies these rules in order:
 
 1. If the offering sets `require_purchase_order_upload` and no purchase order is attached, manual approval is required — this applies to staff too. Termination orders are exempt
-2. Staff users skip consumer approval. This includes the system robot that drives scheduled sweeps and backend-triggered flows
-3. If `disable_autoapprove` is `true`, manual approval is required. It overrides every consumer-side mechanism below it: private-offering permissions, `auto_approve_in_service_provider_projects`, `auto_approve_for_roles`, project-level auto-approval rules, and the general `ORDER.APPROVE` permission that owners and managers hold by default. Termination orders are exempt: they reduce spend, so they follow the normal termination rules instead
-4. Otherwise the private-offering, same-organization (`auto_approve_in_service_provider_projects`), termination, role-based (`auto_approve_for_roles`) and `ORDER.APPROVE` rules apply, in that order
+2. An order placed automatically (`placed_automatically`) that already carries a consumer review skips consumer approval. The person named in `created_by` is who the order is for and need hold no role to approve with; the review was recorded by whoever decided on the order. Proposal allocation records the call manager who accepted the proposal, and the end-date and cost-policy termination sweeps record the system robot when they attribute a termination to the person an allocated resource's creation order was for
+3. Staff users skip consumer approval. This includes the system robot that drives scheduled sweeps and backend-triggered flows
+4. If `disable_autoapprove` is `true`, manual approval is required. It overrides every consumer-side mechanism below it: private-offering permissions, `auto_approve_in_service_provider_projects`, `auto_approve_for_roles`, project-level auto-approval rules, and the general `ORDER.APPROVE` permission that owners and managers hold by default. Termination orders are exempt: they reduce spend, so they follow the normal termination rules instead
+5. Otherwise the private-offering, same-organization (`auto_approve_in_service_provider_projects`), termination, role-based (`auto_approve_for_roles`) and `ORDER.APPROVE` rules apply, in that order
 
 **Provider approval** is decided by `order_should_not_be_reviewed_by_provider()` and is *not* affected by `disable_autoapprove`. It is governed by the offering type together with `auto_approve_remote_orders` (skips provider approval for orders from external customers) and `auto_approve_marketplace_script`.
 
@@ -58060,23 +58061,26 @@ The author is a name on the order, not an authorisation.
 #### When the author cannot receive a ticket
 
 A helpdesk ticket needs an address. If the order's author has none — an SSO
-account provisioned without an email claim, or one of the automated sweeps that
-still place orders as a robot — the caller falls back through the project's
-manager, administrator and member roles to the organization owner, taking the
-first active user with an address. Only when nobody on the project can be
-reached does the order fail, naming the project.
+account provisioned without an email claim, or an order left to the system
+robot to place — the caller falls back through the project's manager,
+administrator and member roles to the organization owner, taking the first
+active user with an address. Only when nobody on the project can be reached
+does the order fail, naming the project.
 
-Because the name is on the order itself, this keeps working after allocation:
-when the scheduled end-date or cost-policy sweep later terminates a granted
-resource, the termination order it places is a fresh one and follows the
-ordinary rules for the person who triggered it.
+Because the name is on the order itself, this keeps working after allocation.
+When the scheduled end-date sweep or a cost policy terminates a granted
+resource months later, the termination order it places is attributed to the
+author of the resource's own creation order — the contact the call named — so
+its ticket reaches the same desk. The end-date sweep prefers a more specific
+name where there is one: whoever requested the end date, on the resource and
+then on the project. A candidate deactivated since is skipped. Only a creation
+order placed on somebody's behalf — as allocation places them — passes its name
+on: a resource somebody ordered themselves, an imported one, or one reconciled
+from a backend orphan is left to the robot and the fallback above.
 
-!!! note "Known gap: termination tickets do not follow the call's author"
-    Neither sweep carries the call's order author onto the termination order it
-    places, so those orders are attributed to the system robot and their
-    helpdesk tickets fall through the project's roles instead of reaching the
-    configured contact. Tracked in
-    [waldur-mastermind#488](https://code.opennodecloud.com/waldur/waldur-mastermind/-/issues/488).
+Such a termination order is flagged `placed_automatically` and carried out with
+system authority, for the same reason an allocated order is: the contact named
+on it need hold no role on the project.
 
 ## Realistic Usage Examples
 
@@ -90617,29 +90621,94 @@ Waldur can save data about the user in a browser. Data type and policy depends o
 
 ## Telemetry
 
-Waldur can send telemetry metrics to the telemetry server. Metrics are sent only if the feature is enabled and the telemetry server is configured in the Waldur settings.
-To toggle the feature on or off, navigate to `Administration -> Settings -> Features` in HomePort and enable or disable the `Send telemetry metrics` feature.
-[Image: ]
+Waldur sends a small, anonymous usage report to the Waldur team once a day. It
+tells us how many deployments exist, which versions and deployment types are in
+use and which offering types matter, so we know what to support and test.
 
-An **example** of telemetry metrics is shown below:
+**Telemetry is opt-out: it is enabled by default.** Every deployment sends the
+report unless an administrator or operator switches it off, as described in
+[Opting out](#opting-out) below.
 
-```bash
-Deployment ID: 0f115db062b7c0dd030b16878c7
-Deployment type: other
-Helpdesk backend: zammad
-Helpdesk integration status: true
-Number of users: 1555
-Number of offerings: 796
-Types of offering:
-    Waldur.RemoteOffering
-    Marketplace.Booking
-    Marketplace.Rancher
-    OpenStack.Volume
-    VMware.VirtualMachine
-    Marketplace.Basic
-Version: 6.6.5+3.g6491c9dab.dirty
-Installation date: 2022-06-10 11:28:50.585100+0000
+### What is sent
+
+A single JSON document is sent with an HTTP `POST` to
+`https://telemetry.waldur.com/v1/metrics/` once every 24 hours. This is what
+the Celery beat task `send_telemetry` sends, and nothing else:
+
+```json
+{
+  "deployment_id": "6f1c0e4b9a2d4d7e8b3a5c1f2e9d7a60",
+  "deployment_type": "kubernetes",
+  "helpdesk_backend": "zammad",
+  "helpdesk_integration_status": true,
+  "number_of_users": 1555,
+  "number_of_offerings": 796,
+  "types_of_offering": [
+    "Marketplace.Basic",
+    "Marketplace.Slurm",
+    "OpenStack.Tenant",
+    "Waldur.RemoteOffering"
+  ],
+  "version": "8.1.3",
+  "installation_date": "2022-06-10 11:28:50.585100+0000"
+}
 ```
+
+| Field | Meaning |
+|-------|---------|
+| `deployment_id` | Random identifier generated on the first report and stored in the `TELEMETRY_DEPLOYMENT_ID` setting. It is not derived from the hostname or any other property of the deployment. Clear the setting to rotate it. |
+| `deployment_type` | `kubernetes`, `docker compose`, `custom docker environment` or `other`, detected from the runtime environment. |
+| `helpdesk_backend` | The active support backend, e.g. `zammad`, `atlassian`, `smax` or `basic`. |
+| `helpdesk_integration_status` | Whether the helpdesk integration is enabled. |
+| `number_of_users` | Count of active user accounts. |
+| `number_of_offerings` | Count of offerings in the active, paused or unavailable state. |
+| `types_of_offering` | Distinct offering types (plugin names) among those offerings. |
+| `version` | The Waldur version. |
+| `installation_date` | Time of the first recorded event, used as an approximate installation date. Omitted if there are no events. |
+
+**What is never sent:** user names, email addresses or any other data about
+people; organization, project, offering or resource names; hostnames or URLs;
+credentials; usage, billing or accounting data. As with any HTTP request, the
+telemetry server sees the IP address the report comes from.
+
+### Opting out
+
+Any of the following stops the report:
+
+- **Administrators:** go to `Administration -> Settings -> Features` in HomePort
+  and switch off the `Send telemetry metrics` feature (`deployment.send_metrics`).
+  The next daily run sends nothing.
+
+    [Image: Send telemetry metrics feature toggle]
+
+- **Helm operators:** set `waldur.telemetry.enabled: false` in your values. This
+  sets `WALDUR_TELEMETRY_ENABLED=false` in the Mastermind containers and turns
+  the feature flag off, so it takes effect before the first report and cannot
+  be switched back on from the UI.
+
+- **Docker Compose operators:** set `WALDUR_TELEMETRY_ENABLED=false` in `.env`
+  and recreate the containers (`docker compose up -d`).
+
+- **Any other deployment:** set the environment variable
+  `WALDUR_TELEMETRY_ENABLED=false` for the Mastermind processes, or clear the
+  `TELEMETRY_URL` setting under `Administration -> Settings -> Telemetry`.
+
+The environment variable overrides the feature toggle. Use it for air-gapped or
+contractually restricted installations, where nothing may leave the site even
+once.
+
+### Upgrading from an opt-in version
+
+Earlier releases kept telemetry off unless the feature was explicitly enabled.
+After upgrading, telemetry is on **unless the feature was explicitly switched
+off**, including a setting saved under the old `telemetry.send_metrics` key.
+A deployment that never touched the setting starts reporting. If your deployment must not send telemetry, set
+`WALDUR_TELEMETRY_ENABLED=false` (or `waldur.telemetry.enabled: false` in
+Helm) **before** upgrading.
+
+Earlier releases also sent a SHA-256 hash of the HomePort URL as
+`deployment_id`. That hash could be matched against a list of known URLs, so it
+has been replaced with the random identifier described above.
 
 ---
 

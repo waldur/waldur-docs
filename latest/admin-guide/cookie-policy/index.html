@@ -1508,6 +1508,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Telemetry">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-sent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is sent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opting-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Opting out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upgrading-from-an-opt-in-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from an opt-in version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -18791,6 +18830,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Telemetry">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-sent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is sent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opting-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Opting out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upgrading-from-an-opt-in-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from an opt-in version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -18824,10 +18902,16 @@
 <li>Saving authentication token (cookie) when a user logs into /admin management interface.</li>
 </ul>
 <h2 id="telemetry">Telemetry</h2>
-<p>Waldur can send telemetry metrics to the telemetry server. Metrics are sent only if the feature is enabled and the telemetry server is configured in the Waldur settings.
-To toggle the feature on or off, navigate to <code>Administration -&gt; Settings -&gt; Features</code> in HomePort and enable or disable the <code>Send telemetry metrics</code> feature.
-<a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/telemetry-feature.png" data-desc-position="bottom"><img alt="" src="../img/telemetry-feature.png"></a></p>
-<p>An <strong>example</strong> of telemetry metrics is shown below:</p>
+<p>Waldur sends a small, anonymous usage report to the Waldur team once a day. It
+tells us how many deployments exist, which versions and deployment types are in
+use and which offering types matter, so we know what to support and test.</p>
+<p><strong>Telemetry is opt-out: it is enabled by default.</strong> Every deployment sends the
+report unless an administrator or operator switches it off, as described in
+<a href="#opting-out">Opting out</a> below.</p>
+<h3 id="what-is-sent">What is sent</h3>
+<p>A single JSON document is sent with an HTTP <code>POST</code> to
+<code>https://telemetry.waldur.com/v1/metrics/</code> once every 24 hours. This is what
+the Celery beat task <code>send_telemetry</code> sends, and nothing else:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -18842,22 +18926,112 @@ To toggle the feature on or off, navigate to <code>Administration -&gt; Settings
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
-<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code>Deployment<span class="w"> </span>ID:<span class="w"> </span>0f115db062b7c0dd030b16878c7
-Deployment<span class="w"> </span>type:<span class="w"> </span>other
-Helpdesk<span class="w"> </span>backend:<span class="w"> </span>zammad
-Helpdesk<span class="w"> </span>integration<span class="w"> </span>status:<span class="w"> </span><span class="nb">true</span>
-Number<span class="w"> </span>of<span class="w"> </span>users:<span class="w"> </span><span class="m">1555</span>
-Number<span class="w"> </span>of<span class="w"> </span>offerings:<span class="w"> </span><span class="m">796</span>
-Types<span class="w"> </span>of<span class="w"> </span>offering:
-<span class="w">    </span>Waldur.RemoteOffering
-<span class="w">    </span>Marketplace.Booking
-<span class="w">    </span>Marketplace.Rancher
-<span class="w">    </span>OpenStack.Volume
-<span class="w">    </span>VMware.VirtualMachine
-<span class="w">    </span>Marketplace.Basic
-Version:<span class="w"> </span><span class="m">6</span>.6.5+3.g6491c9dab.dirty
-Installation<span class="w"> </span>date:<span class="w"> </span><span class="m">2022</span>-06-10<span class="w"> </span><span class="m">11</span>:28:50.585100+0000
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"deployment_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6f1c0e4b9a2d4d7e8b3a5c1f2e9d7a60"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"deployment_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"kubernetes"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"helpdesk_backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"zammad"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"helpdesk_integration_status"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"number_of_users"</span><span class="p">:</span><span class="w"> </span><span class="mi">1555</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"number_of_offerings"</span><span class="p">:</span><span class="w"> </span><span class="mi">796</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"types_of_offering"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">"Marketplace.Basic"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"Marketplace.Slurm"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"OpenStack.Tenant"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"Waldur.RemoteOffering"</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"8.1.3"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"installation_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2022-06-10 11:28:50.585100+0000"</span>
+<span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deployment_id</code></td>
+<td>Random identifier generated on the first report and stored in the <code>TELEMETRY_DEPLOYMENT_ID</code> setting. It is not derived from the hostname or any other property of the deployment. Clear the setting to rotate it.</td>
+</tr>
+<tr>
+<td><code>deployment_type</code></td>
+<td><code>kubernetes</code>, <code>docker compose</code>, <code>custom docker environment</code> or <code>other</code>, detected from the runtime environment.</td>
+</tr>
+<tr>
+<td><code>helpdesk_backend</code></td>
+<td>The active support backend, e.g. <code>zammad</code>, <code>atlassian</code>, <code>smax</code> or <code>basic</code>.</td>
+</tr>
+<tr>
+<td><code>helpdesk_integration_status</code></td>
+<td>Whether the helpdesk integration is enabled.</td>
+</tr>
+<tr>
+<td><code>number_of_users</code></td>
+<td>Count of active user accounts.</td>
+</tr>
+<tr>
+<td><code>number_of_offerings</code></td>
+<td>Count of offerings in the active, paused or unavailable state.</td>
+</tr>
+<tr>
+<td><code>types_of_offering</code></td>
+<td>Distinct offering types (plugin names) among those offerings.</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>The Waldur version.</td>
+</tr>
+<tr>
+<td><code>installation_date</code></td>
+<td>Time of the first recorded event, used as an approximate installation date. Omitted if there are no events.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What is never sent:</strong> user names, email addresses or any other data about
+people; organization, project, offering or resource names; hostnames or URLs;
+credentials; usage, billing or accounting data. As with any HTTP request, the
+telemetry server sees the IP address the report comes from.</p>
+<h3 id="opting-out">Opting out</h3>
+<p>Any of the following stops the report:</p>
+<ul>
+<li>
+<p><strong>Administrators:</strong> go to <code>Administration -&gt; Settings -&gt; Features</code> in HomePort
+  and switch off the <code>Send telemetry metrics</code> feature (<code>deployment.send_metrics</code>).
+  The next daily run sends nothing.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/telemetry-feature.png" data-desc-position="bottom"><img alt="Send telemetry metrics feature toggle" src="../img/telemetry-feature.png"></a></p>
+</li>
+<li>
+<p><strong>Helm operators:</strong> set <code>waldur.telemetry.enabled: false</code> in your values. This
+  sets <code>WALDUR_TELEMETRY_ENABLED=false</code> in the Mastermind containers and turns
+  the feature flag off, so it takes effect before the first report and cannot
+  be switched back on from the UI.</p>
+</li>
+<li>
+<p><strong>Docker Compose operators:</strong> set <code>WALDUR_TELEMETRY_ENABLED=false</code> in <code>.env</code>
+  and recreate the containers (<code>docker compose up -d</code>).</p>
+</li>
+<li>
+<p><strong>Any other deployment:</strong> set the environment variable
+  <code>WALDUR_TELEMETRY_ENABLED=false</code> for the Mastermind processes, or clear the
+  <code>TELEMETRY_URL</code> setting under <code>Administration -&gt; Settings -&gt; Telemetry</code>.</p>
+</li>
+</ul>
+<p>The environment variable overrides the feature toggle. Use it for air-gapped or
+contractually restricted installations, where nothing may leave the site even
+once.</p>
+<h3 id="upgrading-from-an-opt-in-version">Upgrading from an opt-in version</h3>
+<p>Earlier releases kept telemetry off unless the feature was explicitly enabled.
+After upgrading, telemetry is on <strong>unless the feature was explicitly switched
+off</strong>, including a setting saved under the old <code>telemetry.send_metrics</code> key.
+A deployment that never touched the setting starts reporting. If your deployment must not send telemetry, set
+<code>WALDUR_TELEMETRY_ENABLED=false</code> (or <code>waldur.telemetry.enabled: false</code> in
+Helm) <strong>before</strong> upgrading.</p>
+<p>Earlier releases also sent a SHA-256 hash of the HomePort URL as
+<code>deployment_id</code>. That hash could be matched against a list of known URLs, so it
+has been replaced with the random identifier described above.</p>
 
 
 
