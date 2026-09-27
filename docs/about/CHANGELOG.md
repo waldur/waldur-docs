@@ -1,5 +1,42 @@
 # Changelog
 
+## 8.1.3-rc.19 - 2026-09-27
+
+### Highlights
+
+Telemetry is now on by default and can be turned off. Operators can opt out when deploying with Helm or Docker Compose. Login is more robust: it now authenticates using the credentials the user submits, not an existing session cookie, and the session is renewed once the login method is recorded. Calls and proposals also got several improvements, including new pub/sub events for state changes, clearer order tickets and better access control for protected calls.
+
+### What's New
+
+- Telemetry is now opt-out, and its feature gate has been fixed. Helm deployments can switch it off with the new `waldur.telemetry.enabled` value, and Docker Compose deployments can pass `WALDUR_TELEMETRY_ENABLED` to mastermind.
+- Changes to call and proposal state now emit pub/sub events, so agents and integrations can follow the call and proposal lifecycle.
+
+### Improvements
+
+- Login now authenticates by the submitted credentials and ignores any existing session cookie. The session is renewed when a login records its authentication method, and this applies to local, SAML2, social and passkey logins.
+- Order tickets now name the applicant and the project team.
+- Resources allocated through proposals are now named after their project and offering.
+- Termination orders created automatically are now attributed to the author of the original creation order.
+- Organization owners can now see their organization's protected calls.
+- Users without permission to update a call now see its edit controls disabled. This covers teams, reviewer pools, rounds, offerings, documents, workflow steps, role mappings and matching settings.
+- Submenus under the header tabs can now be opened from the keyboard.
+
+### Bug Fixes
+
+- A role can no longer be granted to a user who already holds the same role, whatever the expiry of the existing role.
+- Role redirect routes no longer show up in the Configuration menu.
+- Long resource names now wrap inside the resource detail header card.
+- The request view switch now keeps the same size in both views.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [10 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.18...8.1.3-rc.19) - Opt-out telemetry, login and session handling, pub/sub events for calls and proposals, proposal and order attribution, permission fixes.
+- **Waldur Homeport**: [5 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.18...8.1.3-rc.19) - Call edit controls tied to permissions, keyboard-accessible header submenus, layout and menu fixes.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.18...8.1.3-rc.19) - Added the `waldur.telemetry.enabled` switch, set at deploy time.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.18...8.1.3-rc.19) - Passes `WALDUR_TELEMETRY_ENABLED` to mastermind.
+
+---
+
 ## 8.1.3-rc.18 - 2026-09-25
 
 ### Highlights
