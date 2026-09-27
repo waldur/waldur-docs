@@ -20335,6 +20335,46 @@ whole scope chain), e.g. a billing or usage exporter for one service:</p>
 <span class="w">    </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"order"</span><span class="p">,</span><span class="w"> </span><span class="s2">"resource"</span><span class="p">,</span><span class="w"> </span><span class="s2">"service_account"</span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p><strong>Call-for-proposals tracking</strong> — state changes of a call and of every proposal
+submitted to it, e.g. to mirror proposal status into an external grant or
+review system. Non-staff: you must hold a role on the call itself (call
+manager, reviewer, panel member) or on its managing organisation (call
+organiser):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">"scopes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"call"</span><span class="p">,</span><span class="w"> </span><span class="nt">"uuid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;call-uuid&gt;"</span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">"object_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"call"</span><span class="p">,</span><span class="w"> </span><span class="s2">"proposal"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Bind to a single <code>proposal</code> instead to follow just that one — its own members
+may, and so may anyone holding a role further up the same chain, such as the
+call's manager. A role on the <em>applicant's</em> project does not qualify: applicants
+cannot see the proposal through the API either, so the event is not scoped to
+them. To follow every call one organisation runs, bind to its <code>call_organizer</code>
+with a role on it.</p>
+<p>A role on the organiser's <strong>customer</strong> (owner, support, reader) admits <code>call</code>
+events only. Those roles cannot list the organisation's proposals through the
+API, so proposal events never reach them — a binding to the <code>customer</code> receives
+the organisation's call state changes, and a <code>proposal</code> binding is refused.</p>
+<p>Both types carry <code>event_type</code> (<code>call_state_changed</code> / <code>proposal_state_changed</code>),
+<code>state</code>, <code>previous_state</code>, names, and uuids for the call, its round and the
+organiser customer — identifiers, names and states only, never proposal content,
+scores or reviewer identities. Only transitions are published: creating a draft
+emits nothing, and rounds have no events of their own. When a round reaches its
+cutoff, every proposal still open in it (<code>draft</code>, <code>submitted</code> or <code>in_review</code>) is
+cancelled and each cancellation is published; closing a round by hand cancels
+only its drafts.</p>
+<p>A <strong>new submission is not a single transition.</strong> On a call without workflow
+steps <code>submit</code> moves <code>draft → submitted</code>; on a call with workflow steps it goes
+straight <code>draft → in_review</code>, and no <code>submitted</code> event is ever sent. To detect
+submissions, match <code>previous_state == "draft"</code> with <code>state</code> in
+(<code>submitted</code>, <code>in_review</code>) — filtering on <code>state == "submitted"</code> alone misses
+every submission to a workflow-enabled call.</p>
+<p>Global consumers (staff/support, empty scope set) receive <code>call</code> and <code>proposal</code>
+events too, exactly as they receive marketplace events; narrow them with
+<code>object_types</code> if they are not wanted.</p>
 <p>Omit <code>object_types</code> (or send <code>[]</code>) in any of these to receive <strong>all</strong> event
 kinds for the chosen scope. Delivery stays dynamic: if the integration's owner
 later loses their role on a bound scope, delivery for that scope stops on the

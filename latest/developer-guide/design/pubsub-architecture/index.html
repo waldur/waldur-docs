@@ -19032,9 +19032,11 @@ in <a href="../../guides/agent-pubsub/">the unified agent queue guide</a>.</p>
     subgraph sources["Event sources (signals)"]
         ev_market["Marketplace: orders, resources, offering users"]
         ev_user["Core: user profile, SSH keys, lifecycle, roles"]
+        ev_proposal["Proposal: call and proposal state changes"]
     end
 
     ev_market --&gt; disp_keys
+    ev_proposal --&gt; disp_keys
     ev_user --&gt; disp_global
 
     subgraph dispatch["Dispatch"]
@@ -19149,12 +19151,33 @@ the offering's customer) plus the consumer-side project chain derived from the
 order or resource. Matching is a set intersection against the indexed
 <code>EventConsumerScope</code> table, so a consumer bound anywhere in that chain matches —
 binding to a <em>customer</em> picks up its projects' events.</p>
+<p>Call and proposal events (<code>proposal/event_publishing.py</code>) carry their own chains
+instead. A call event belongs to the call, its managing organisation and that
+organisation's customer; a proposal event to the proposal, its call and the
+call's managing organisation — <strong>not</strong> the organiser's customer. The API admits
+customer-level roles to proposals only through <code>PROPOSAL.LIST</code>, which no
+customer role carries, while delivery re-checks only that <em>some</em> role exists in
+the chain; a customer key would therefore send proposal names and states to
+organisation owners, support and readers the API hides them from.
+<code>get_scope_ancestors</code> would yield the applicant's project for a proposal, whose
+members cannot see it through the API, so the applicant side is not part of the
+chain either.</p>
+<p>The proposal app registers both chains with
+<code>event_dispatch.register_event_chain</code>, and registration
+(<code>holds_role_on_event_chain</code>) and <code>delivery_blocked_reason</code> resolve <code>call</code> and
+<code>proposal</code> bindings through the registered chain rather than
+<code>get_scope_ancestors</code>, so all three agree. Both directions matter: a call manager may bind to one
+proposal of their call, and a role on the <em>applicant's</em> project does not admit a
+binding to the proposal it applied for. Were the generic walker used, the first
+would be refused and the second accepted and then silently starved — the failure
+the <code>serviceprovider</code> rewrite in the same function already exists to prevent.</p>
 <p>Authorization is enforced <strong>twice</strong>, and stays dynamic:</p>
 <ol>
 <li><strong>At registration</strong> — you may only bind to an entity you hold an active role
-   on, or on one of its ancestors (<code>holds_any_role_on_scope_or_ancestor</code>).
-   Staff/support may bind to anything, and are the only ones allowed to request
-   the empty (global) binding set.</li>
+   on, or on one of its ancestors (<code>holds_any_role_on_scope_or_ancestor</code>; for a
+   call or proposal, on its event chain instead, as above). Staff/support may
+   bind to anything, and are the only ones allowed to request the empty
+   (global) binding set.</li>
 <li><strong>At delivery</strong> — the same rule is re-checked for every matched consumer, in
    <strong>one batched query for the whole fan-out</strong>
    (<code>users_with_role_on_any_scope_key</code>). Global consumers are re-checked for
@@ -19215,6 +19238,16 @@ legacy path dropped. Treated as a bug fix; see <code>_resolve_event_project</cod
 <td>Account lifecycle</td>
 <td>user create, activate, deactivate, delete</td>
 <td><code>user_lifecycle</code></td>
+</tr>
+<tr>
+<td>Call state (draft, active, archived)</td>
+<td><code>Call</code> post_save state diff</td>
+<td><code>call</code></td>
+</tr>
+<tr>
+<td>Proposal state (submitted, in review, accepted, …)</td>
+<td><code>Proposal</code> post_save state diff; drafts cancelled on round close</td>
+<td><code>proposal</code></td>
 </tr>
 </tbody>
 </table>
@@ -19319,14 +19352,18 @@ introducing <code>SUBSCRIBE_*</code> permissions that would have to be kept in s
 <li><strong>Envelope</strong> — marketplace events do not carry <code>event_type</code> (only the core
   dispatcher stamps it); they do carry <code>object_type</code>, <code>offering_uuid</code> and
   <code>schema_version</code>.</li>
-<li><strong><code>call</code> / <code>proposal</code> bindings</strong> are accepted at registration — any
-  <code>TYPE_MAP</code> entity is bindable and <code>scope_keys_for</code> resolves it — but <strong>no
-  event source currently emits an event scoped to a call or proposal</strong>. Every
-  dispatched event is either offering/project/customer-scoped (marketplace) or a
-  user-centric event delivered to globals, so a call/proposal-bound consumer
-  receives nothing today. Effectively inert until a proposal-domain event is
-  wired into the dispatcher (WAL-10155: proposal submission + proposal/call
-  state-change events); untested for the same reason.</li>
+<li><strong>Round open/close</strong> — rounds have no state of their own (open/closed is
+  derived from <code>start_time</code>/<code>cutoff_time</code>), so no <code>round</code> event is emitted when
+  a round opens or ends. The proposal cancellations a round's end causes <em>are</em>
+  published, as <code>proposal</code> events, on two paths:</li>
+<li>at cutoff, the periodic <code>proposals_for_ended_rounds_should_be_cancelled</code>
+    task cancels every proposal not yet accepted, rejected or cancelled —
+    <code>submitted</code> and <code>in_review</code> as well as <code>draft</code> — saving them one at a time,
+    so each goes out through <code>post_save</code> as its own publish task;</li>
+<li>the manual <code>close_round</code> endpoint cancels only the drafts, in one bulk
+    update announced as a single batch.
+  A busy round therefore reaches consumers as a burst of cancellations at
+  cutoff.</li>
 <li><strong><code>AgentIdentity</code> retirement</strong> — the site-agent model still exists alongside
   its consumer; collapsing it is only worthwhile once the legacy path is gone.</li>
 </ul>
