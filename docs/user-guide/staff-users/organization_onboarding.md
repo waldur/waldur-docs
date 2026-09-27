@@ -13,7 +13,16 @@ Before setting up onboarding checklists, configure the global onboarding setting
 ### Required configuration
 
 - **Onboarding validation methods**
-    - Select the automatic validation methods enabled for your portal (for example: `ariregister`, `wirtschaftscompass`, `bolagsverket`).
+    - Select the automatic validation methods enabled for your portal:
+
+        | Method | Registry | Country |
+        |--------|----------|---------|
+        | `ariregister` | Estonian Business Register | EE |
+        | `wirtschaftscompass` | WirtschaftsCompass | AT |
+        | `bolagsverket` | Bolagsverket | SE |
+        | `breg` | Brønnøysundregistrene (Brreg) | NO |
+        | `dnb_se`, `dnb_no`, `dnb_dk`, `dnb_fi` | Dun & Bradstreet | SE, NO, DK, FI |
+
     - These values must match the backend validation method names.
 
 - **Onboarding verification expiry hours**
