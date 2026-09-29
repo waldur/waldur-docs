@@ -79,11 +79,13 @@ call manager's side of it.
 ![Project details step](../img/applicant-project-details.png)
 
 !!! note "Project duration"
-    You are not asked how long the project should run. When a resource you
+    You are not asked how long the project should run. When the call sets a
+    fixed duration, the project lasts exactly that long, and any subscription
+    length you choose must fit inside it. Otherwise, when a resource you
     request is sold by the month, you choose the subscription length on that
     request, and the project lasts as long as the longest subscription. When
-    nothing you request is sold by the month, the project lasts the fixed
-    duration the call sets, if any. The **Project details** card and the
+    the call sets no fixed duration and nothing you request is sold by the
+    month, the project has no end date. The **Project details** card and the
     **Summary** panel state the length this comes to.
 
 ### Resource requests

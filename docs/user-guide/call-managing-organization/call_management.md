@@ -66,12 +66,23 @@ Before activating a call, the Call manager must configure all necessary settings
 
 Under **Configuration → General configuration**, set the basic call parameters:
 
-- **Fixed duration for granted projects (in days)**: how long a granted project runs when the proposal requests no subscription. A requested subscription length takes precedence — the project cannot end before its longest subscription does. Applicants see the resulting length in the submission form; they are not asked for a duration.
+- **Fixed duration for granted projects (in days)**: how long every granted project runs. When it is set, it decides the project's end date, and applicants can only choose subscription lengths that fit inside it. Applicants see the resulting length in the submission form; they are not asked for a duration. See [How long a granted project runs](#how-long-a-granted-project-runs).
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
 
 ![Call general configuration](../img/call_configuration_general.png)
+
+#### How long a granted project runs
+
+When a proposal is granted, the project's end date is decided in this order:
+
+1. **The call's fixed duration**, when it is set. The project ends that many days after it starts. Subscription lengths requested under the call are limited to fit inside it, and a resource never outlasts its project.
+2. **The longest requested subscription**, when the call sets no fixed duration. The project lasts as long as the longest subscription chosen on its resource requests.
+3. **No end date**, when the call sets no fixed duration and nothing requested is sold by the month. The project runs until someone sets an end date on it.
+
+!!! warning "Awards that must expire"
+    If every award from the call must end, set a fixed duration. Without one, a proposal that requests only resources not sold by the month creates a project with no end date.
 
 Further sub-tabs sit alongside it under **Configuration**:
 
@@ -283,7 +294,7 @@ Applicants follow these steps to request resources through an active call:
     ![Call detail with application button](../img/scenario_call_detail.png)
 
 3. Fill in the required fields.
-      -     The project duration is not asked for. It follows from the subscription lengths chosen on the resource requests, or from the fixed duration the Call manager set when nothing sold by the month is requested, and is shown read-only.
+      -     The project duration is not asked for. It is the call's fixed duration when the Call manager set one, otherwise the longest subscription chosen on the resource requests, and is shown read-only (see [How long a granted project runs](#how-long-a-granted-project-runs)).
 4. Select required **offerings and allocations**.
       -     When there is predefined resource templates, proposal creators now select resources based on predefined templates configured by the Call manager. These templates include specific offering and plan combinations, predefined attributes and resource limits.
 5. Add **team members** (optional).
