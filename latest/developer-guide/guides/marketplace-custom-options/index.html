@@ -8573,6 +8573,95 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#component-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Formula
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Component Formula">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formula-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formula language
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-sum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Sum
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Component Sum">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#derived-limit-behaviour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Derived limit behaviour
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changing-the-input-after-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing the input after ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation-when-the-offering-is-saved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation when the offering is saved
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19488,6 +19577,95 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#component-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Formula
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Component Formula">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formula-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formula language
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-sum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Sum
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Component Sum">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#derived-limit-behaviour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Derived limit behaviour
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changing-the-input-after-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing the input after ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation-when-the-offering-is-saved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation when the offering is saved
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -20162,6 +20340,9 @@
 <li><strong>Automatic Limit Setting</strong>: The calculated value (100,000) is automatically set as the limit for the specified component (<code>storage_inodes</code>)</li>
 <li><strong>Validation</strong>: Frontend validates user input against <code>min_limit</code> and <code>max_limit</code> before multiplication</li>
 </ol>
+<p>The multiplication happens in the order form only; the server stores the
+entered value as an attribute and does not recalculate any limit from it. To
+derive limits the server enforces, use <a href="#component-formula">Component Formula</a>.</p>
 <h4 id="requirements">Requirements</h4>
 <ul>
 <li><strong>Component Dependency</strong>: Must reference an existing limit-based component (<code>billing_type: "limit"</code>)</li>
@@ -20172,6 +20353,158 @@
 <ul>
 <li><strong>Configuration</strong>: <code>ComponentMultiplierConfiguration.tsx</code> - Admin interface for setting up the multiplier</li>
 <li><strong>User Field</strong>: <code>ComponentMultiplierField.tsx</code> - User input field that handles multiplication and limit updates</li>
+</ul>
+<h3 id="component-formula">Component Formula</h3>
+<p>The <code>component_formula</code> option type asks the customer for one number and sets
+one or more limit-based components from it. The customer orders in their own
+terms, such as net database capacity, and the offering derives the gross
+quantities it bills for.</p>
+<h4 id="configuration_1">Configuration</h4>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"storage"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"component_formula"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Required database storage (GB)"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"required"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"min"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"max"</span><span class="p">:</span><span class="w"> </span><span class="mi">5000</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"component_formula_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"targets"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"component_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_primary"</span><span class="p">,</span><span class="w"> </span><span class="nt">"formula"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input * 2"</span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"component_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"wal_primary"</span><span class="p">,</span><span class="w"> </span><span class="nt">"formula"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input * 2 * 0.25"</span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"component_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data_replica"</span><span class="p">,</span><span class="w"> </span><span class="nt">"formula"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input * 2"</span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">"component_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"wal_replica"</span><span class="p">,</span><span class="w"> </span><span class="nt">"formula"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input * 2 * 0.25"</span><span class="p">}</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>min</code> and <code>max</code> bound the value the customer enters, not the results.</p>
+<h4 id="formula-language">Formula language</h4>
+<p>A formula may use only <code>input</code> (the entered value), numbers such as <code>2</code> or
+<code>0.25</code>, the operators <code>+ - * /</code>, unary minus and parentheses. There are no
+functions and no other names. Formulas are at most 255 characters long.</p>
+<h3 id="component-sum">Component Sum</h3>
+<p>The <code>component_sum</code> option type sets a limit-based component to the sum of
+other limit-based components. The customer does not fill it in; any value sent
+for it is dropped.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"backup"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"component_sum"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Daily full backup"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"component_sum_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"target_component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"backup"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"data_primary"</span><span class="p">,</span><span class="w"> </span><span class="s2">"wal_primary"</span><span class="p">,</span><span class="w"> </span><span class="s2">"data_replica"</span><span class="p">,</span><span class="w"> </span><span class="s2">"wal_replica"</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The summed components may be formula targets, components the customer enters
+directly, or the targets of other sums.</p>
+<h4 id="derived-limit-behaviour">Derived limit behaviour</h4>
+<ul>
+<li><strong>The server calculates the limits.</strong> When an order is created, Waldur
+  evaluates the formulas and then the sums, and writes the results into the
+  order's limits. It replaces any value the client sent for a derived
+  component, so the price and the provisioned quantity always follow the
+  configuration. Changing the formula input of a pending order recalculates
+  them the same way.</li>
+<li><strong>Rounding</strong>: each result is rounded up to the target component's
+  <code>limit_decimal_places</code>. It then passes the component's usual checks
+  (minimum, maximum, maximum available), and an error names the component.</li>
+<li><strong>No input, no limit</strong>: an optional formula left empty, or hidden by
+  <code>visible_if</code>, derives nothing. A sum is written only when at least one of its
+  components has a value.</li>
+<li><strong>Division by zero or a negative result</strong> is an order validation error.</li>
+<li><strong>Existing resources</strong>: every later change to a resource's limits (limit
+  update, limit change request, renewal, plan switch) recalculates the derived
+  limits from the inputs recorded on the resource. A derived value sent by the
+  client is replaced and one left out is put back, and a sum follows the
+  components it adds up. A resource ordered before the option existed has no
+  recorded input and keeps its current derived values. Derived limits cannot
+  be reallocated between resources.</li>
+<li><strong>Provider approval</strong>: a provider who changes a formula input while
+  approving an order changes its derived limits and price with it.</li>
+<li><strong>Order options only</strong>: <code>component_sum</code> cannot be a resource option;
+  <code>component_formula</code> can only as described below.</li>
+</ul>
+<h4 id="changing-the-input-after-ordering">Changing the input after ordering</h4>
+<p>To let customers change the value after ordering, add a <strong>resource option</strong>
+of type <code>component_formula</code> with the same internal name as the order option:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"resource_options"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"order"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"storage"</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"options"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"storage"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"component_formula"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Required database storage (GB)"</span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<ul>
+<li>It has no formulas of its own: the order option's are used, and its <code>min</code>
+  and <code>max</code> are copied from the order option when the offering is saved. A
+  <code>component_formula</code> resource option without such an order option is
+  refused, and so is removing or retyping an order option that one pairs with.</li>
+<li>The value entered at order time is copied onto the resource, so it shows on
+  the resource's Options tab (resources ordered earlier show the value from
+  their order).</li>
+<li>Changing it through <code>update_options</code> always creates an UPDATE order, whatever
+  <code>create_orders_on_resource_option_change</code> says, carrying the new value
+  (<code>new_options</code>) and the recalculated limits (<code>old_limits</code> and <code>limits</code>), so
+  it is priced, approved and provisioned like any limit change. When
+  completed, the new value and the new limits are applied together.</li>
+<li>A provider who changes the value while approving the order changes the
+  limits and price with it. <code>update_options_direct</code> refuses to change it,
+  since that would bypass the order.</li>
+<li>Later limit changes calculate from the current value: the resource option
+  when set, otherwise the value from the order.</li>
+<li><strong>Defaults and bounds</strong>: a formula option's <code>default</code> is used when the input
+  is omitted, and <code>min</code>/<code>max</code> are enforced on every path that changes the
+  input, not only on order creation.</li>
+</ul>
+<h4 id="validation-when-the-offering-is-saved">Validation when the offering is saved</h4>
+<ul>
+<li>Every formula must parse under the language above.</li>
+<li>Every component a formula or sum names must be a limit-based component of
+  the offering (<code>billing_type: limit</code>; prepaid one-time components are not
+  accepted).</li>
+<li>While an option refers to a component, the component cannot be removed,
+  renamed or switched to another billing type. If a plan's billing mode stops
+  billing it as a limit, orders on that plan are refused with an error naming
+  the option.</li>
+<li>A component may be derived by only one option.</li>
+<li>A sum may not include its own target, and sums may not form a cycle.</li>
 </ul>
 
 

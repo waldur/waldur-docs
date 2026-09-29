@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-29T19:52:28.297210Z
+Generated: 2026-09-29T20:44:51.136736Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -12344,6 +12344,17 @@ Set `TIME_ZONE` setting in `/etc/waldur/override.conf.py` to use local time zone
 
 When a notification is removed from a release, its database row is not deleted automatically. Run `waldur load_notifications <file> --prune` to report and remove notifications whose key is no longer listed below, along with any of their templates that no other notification declares and that have no operator-customised content. Customised template content is never deleted automatically.
 
+## Enabling notifications
+
+A notification that a release adds is registered disabled, unless the release says otherwise, and a disabled notification sends no email. After an upgrade, check this list for new notifications and enable the ones you need. Either list them with the value `true` in the file passed to `waldur load_notifications <file>` (in waldur-helm, `waldur.notifications` in `values.yaml`), or have a staff user enable them in the notifications list of the administration interface (the `enable` action of `/api/notification-messages/`). Keys not listed in the file keep their current state.
+
+The call-management reviewer workflow depends on these notifications, which are disabled until enabled:
+
+- `proposal.reviewer_assignment_invitation` — the email a reviewer receives when an assignment batch is sent to them
+- `proposal.assignment_expiry_reminder` — the reminder before an assignment batch expires
+- `proposal.assignment_batch_expired` — tells call managers that a batch expired without a full response
+- `proposal.reviewer_pool_invitation_expired` — tells the inviting call manager that a reviewer pool invitation expired
+
 ## WALDUR_CORE.STRUCTURE
 
 ### structure.change_email_request
@@ -15838,6 +15849,112 @@ A template used for generating the issue summary field during issue creation.
 
 ## WALDUR_MASTERMIND.PROPOSAL
 
+### proposal.assignment_batch_expired
+
+Notifies call managers that a reviewer's assignment batch expired before they responded to every proposal.
+
+#### Templates
+
+=== "proposal/assignment_batch_expired_subject.txt"
+
+```txt
+
+    Review assignments for "{{ call_name }}" expired without a response from {{ reviewer_name }}
+
+```
+
+=== "proposal/assignment_batch_expired_message.txt"
+
+```txt
+
+    Hello,
+
+    The review assignments sent to {{ reviewer_name }} for the call "{{ call_name }}" on {{ sent_at }} expired on {{ expired_at }} before every proposal was accepted or declined ({{ items_count }} proposal{{ items_count|pluralize }} in the batch).
+
+    You can extend the deadline or reassign the proposals here:
+
+    {{ assignments_url }}
+
+    This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/assignment_batch_expired_message.html"
+
+```txt
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+    <p>Hello,</p>
+
+    <p>The review assignments sent to <strong>{{ reviewer_name }}</strong> for the call "<strong>{{ call_name }}</strong>" on {{ sent_at }} expired on {{ expired_at }} before every proposal was accepted or declined ({{ items_count }} proposal{{ items_count|pluralize }} in the batch).</p>
+
+    <p>You can extend the deadline or reassign the proposals here:</p>
+
+    <p><a href="{{ assignments_url }}">{{ assignments_url }}</a></p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+    </body>
+    </html>
+
+```
+
+### proposal.assignment_expiry_reminder
+
+Reminds a reviewer that their assignment batch expires soon; the lead time is set per call.
+
+#### Templates
+
+=== "proposal/assignment_expiry_reminder_subject.txt"
+
+```txt
+
+    Reminder: your review assignments for "{{ call_name }}" expire soon
+
+```
+
+=== "proposal/assignment_expiry_reminder_message.txt"
+
+```txt
+
+    Dear {{ reviewer_name }},
+
+    You have been asked to review {{ items_count }} proposal{{ items_count|pluralize }} in the call "{{ call_name }}" on {{ site_name }}, and the invitation expires soon.
+
+    Please accept or decline each proposal before {{ expires_at }}:
+
+    {{ link }}
+
+    This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/assignment_expiry_reminder_message.html"
+
+```txt
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+    <p>Dear {{ reviewer_name }},</p>
+
+    <p>You have been asked to review {{ items_count }} proposal{{ items_count|pluralize }} in the call "<strong>{{ call_name }}</strong>" on {{ site_name }}, and the invitation expires soon.</p>
+
+    <p>Please accept or decline each proposal before <strong>{{ expires_at }}</strong>:</p>
+
+    <p><a href="{{ link }}">{{ link }}</a></p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+    </body>
+    </html>
+
+```
+
 ### proposal.new_proposal_submitted
 
 Notifies call managers about a new proposal submission.
@@ -16848,6 +16965,75 @@ A notification to the call managers about a rejected review.
 
 ```
 
+### proposal.reviewer_assignment_invitation
+
+Sent to a reviewer when a call manager sends them a batch of proposals to accept or decline.
+
+#### Templates
+
+=== "proposal/reviewer_assignment_invitation_subject.txt"
+
+```txt
+
+    You have {{ items_count }} proposal{{ items_count|pluralize }} to review for "{{ call_name }}"
+
+```
+
+=== "proposal/reviewer_assignment_invitation_message.txt"
+
+```txt
+
+    Dear {{ reviewer_name }},
+
+    You have been asked to review {{ items_count }} proposal{{ items_count|pluralize }} in the call "{{ call_name }}" on {{ site_name }}:
+    {% for proposal in proposals %}
+    - {{ proposal.name }}{% if proposal.summary %}
+      {{ proposal.summary }}{% endif %}{% endfor %}
+    {% if manager_notes %}
+    Note from the call manager:
+    {{ manager_notes }}
+    {% endif %}
+    Please accept or decline each proposal by {{ expires_at }}:
+
+    {{ link }}
+
+    This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/reviewer_assignment_invitation_message.html"
+
+```txt
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+    <p>Dear {{ reviewer_name }},</p>
+
+    <p>You have been asked to review {{ items_count }} proposal{{ items_count|pluralize }} in the call "<strong>{{ call_name }}</strong>" on {{ site_name }}:</p>
+
+    <ul>
+    {% for proposal in proposals %}
+        <li><strong>{{ proposal.name }}</strong>{% if proposal.summary %}<br>{{ proposal.summary }}{% endif %}</li>
+    {% endfor %}
+    </ul>
+
+    {% if manager_notes %}
+    <p><strong>Note from the call manager:</strong><br>{{ manager_notes|linebreaksbr }}</p>
+    {% endif %}
+
+    <p>Please accept or decline each proposal by <strong>{{ expires_at }}</strong>:</p>
+
+    <p><a href="{{ link }}">{{ link }}</a></p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+    </body>
+    </html>
+
+```
+
 ### proposal.reviewer_invitation
 
 Sent to a person invited to join the reviewer pool for a call.
@@ -16896,6 +17082,66 @@ Sent to a person invited to join the reviewer pool for a call.
     <p>If you do not yet have an account, you will need to register and create a reviewer profile before accepting.</p>
 
     <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+    </body>
+    </html>
+
+```
+
+### proposal.reviewer_pool_invitation_expired
+
+Sent once to the call manager who invited a reviewer to the pool when the invitation expires without an answer.
+
+#### Templates
+
+=== "proposal/reviewer_pool_invitation_expired_subject.txt"
+
+```txt
+
+    Reviewer pool invitation for "{{ call_name }}" has expired
+
+```
+
+=== "proposal/reviewer_pool_invitation_expired_message.txt"
+
+```txt
+
+    Dear call manager,
+
+    The invitation you sent to {{ invitee_name }} to join the reviewer pool for the call "{{ call_name }}" has expired without an answer.
+
+    Invited: {{ invited_at }}
+    Expired: {{ expired_at }}
+
+    The invitation can no longer be accepted or declined. You can send it again from the call's reviewer pool, which gives it a new expiry date:
+
+    {{ reviewer_pool_url }}
+
+    This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/reviewer_pool_invitation_expired_message.html"
+
+```txt
+
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Reviewer pool invitation expired</title>
+    </head>
+    <body>
+        <p>Dear call manager,</p>
+
+        <p>The invitation you sent to <strong>{{ invitee_name }}</strong> to join the reviewer pool for the call "<strong>{{ call_name }}</strong>" has expired without an answer.</p>
+
+        <ul>
+            <li><strong>Invited:</strong> {{ invited_at }}</li>
+            <li><strong>Expired:</strong> {{ expired_at }}</li>
+        </ul>
+
+        <p>The invitation can no longer be accepted or declined. You can send it again from the call's reviewer pool, which gives it a new expiry date: <a href="{{ reviewer_pool_url }}">{{ reviewer_pool_url }}</a></p>
+
+        <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
     </body>
     </html>
 
@@ -17463,6 +17709,7 @@ td:nth-child(4) {
 | `expire-stale-verifications` | `waldur_core.onboarding.expire_stale_verifications` | 1 hour | This task runs hourly to check for verifications that have passed their<br>expiration date while still in PENDING or ESCALATED status. |
 | `expired-reviews-should-be-cancelled` | `waldur_mastermind.proposal.expired_reviews_should_be_cancelled` | 1 hour | Cancel reviews that have expired. |
 | `mark-expired-assignment-batches` | `waldur_mastermind.proposal.mark_expired_assignment_batches` | 15 minutes | Mark assignment batches as EXPIRED when their deadline passes. |
+| `mark-expired-reviewer-pool-invitations` | `waldur_mastermind.proposal.mark_expired_reviewer_pool_invitations` | 1 hour | Expire pending pool invitations past their date and tell who sent them. |
 | `mark-expired-workflow-steps` | `waldur_mastermind.proposal.mark_expired_workflow_steps` | 1 hour | Expire ACTIVE workflow step instances past their deadline and advance the workflow.<br><br>For each overdue active step, marks it EXPIRED and either activates the<br>next enabled step or rejects the proposal when no further step exists.<br>Each transition runs in its own transaction so a single failure does not<br>block other expiries. |
 | `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | No description available |
 | `mark_agent_services_as_inactive` | `waldur_mastermind.marketplace_site_agent.mark_agent_services_as_inactive` | 5 minutes | No description available |
@@ -17492,7 +17739,7 @@ td:nth-child(4) {
 | `process_maintenance_announcement_transitions` | `waldur_mastermind.marketplace.process_maintenance_announcement_transitions` | Cron: `*/5 * * * * (m/h/dM/MY/d)` | Advance scheduled maintenance announcements based on their time window.<br><br>Auto-starts scheduled announcements once their start time has passed and<br>auto-completes in-progress announcements once their end time has passed.<br>Mirrors the manual start/complete actions so the AdminAnnouncement banner is<br>refreshed by the existing post_save handler. |
 | `process_pending_project_orders` | `waldur_mastermind.marketplace.process_pending_project_orders` | 2 hours | Process orders for projects that have become active. |
 | `process_pending_start_date_orders` | `waldur_mastermind.marketplace.process_pending_start_date_orders` | 2 hours | Finds orders that are pending activation due to a future start date<br>and moves them to the EXECUTING state if the start date has been reached. |
-| `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Cancel proposals for rounds that have ended. |
+| `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Cancel draft proposals for rounds that have ended. |
 | `pull-priorities` | `waldur_mastermind.support.pull_priorities` | 1 day | Pull priority levels from the active support backend. |
 | `pull-service-properties` | `waldur_mastermind.marketplace.ServicePropertiesListPullTask` | 1 day | Pull service properties from settings tied to live marketplace offerings. |
 | `pull-service-resources` | `waldur_mastermind.marketplace.ServiceResourcesListPullTask` | Hourly (at minute 0) | Pull resources from settings tied to live marketplace offerings. |
@@ -17514,6 +17761,7 @@ td:nth-child(4) {
 | `send-scheduled-broadcast-notifications` | `waldur_mastermind.notifications.send_scheduled_broadcast_messages` | 12 hours | Send broadcast messages that have been scheduled for delivery. |
 | `send-workflow-step-deadline-reminders` | `waldur_mastermind.proposal.send_workflow_step_deadline_reminders` | 1 day | Fire ``deadline_approaching`` rules for active steps whose lead time is today.<br><br>A reminder is sent when ``(deadline - now).days == days_before`` and is<br>recorded in the instance ledger so the daily beat cannot repeat it. Steps<br>already past their deadline are left to ``mark_expired_workflow_steps``. |
 | `send_telemetry` | `waldur_mastermind.marketplace.send_metrics` | 1 day | Send anonymous usage metrics and telemetry data to the Waldur team. |
+| `start-evaluation-for-closed-rounds` | `waldur_mastermind.proposal.start_evaluation_for_closed_rounds` | 1 hour | Start the evaluation of proposals held for their round's cut-off.<br><br>A call that evaluates at the cut-off leaves each proposal ``submitted``<br>with its steps pending. Once the round's cut-off has passed, this activates<br>the first pending step of every such proposal, one transaction per<br>proposal so a single failure does not hold back the rest of the batch.<br><br>The candidates are not filtered on the call's current setting: only a<br>held submission leaves a proposal ``submitted`` with a pending step, so a<br>proposal held just before a manager switched the call back is still<br>started rather than stranded. Idempotent: a started proposal is<br>``in_review`` and is not picked up again. |
 | `structure-set-erred-stuck-resources` | `waldur_core.structure.SetErredStuckResources` | 1 hour | This task marks all resources which have been provisioning for more than 3 hours as erred. |
 | `sync-arrow-billing` | `waldur_mastermind.waldur_arrow.sync_arrow_billing_scheduled` | 6 hours | Scheduled task to sync Arrow billing for the current month.<br><br>Runs every ARROW_SYNC_INTERVAL_HOURS hours. |
 | `sync-arrow-consumption` | `waldur_mastermind.waldur_arrow.sync_arrow_consumption_scheduled` | 1 hour | Scheduled task to sync real-time consumption data from Arrow.<br><br>Runs every ARROW_CONSUMPTION_SYNC_INTERVAL_HOURS (default: hourly).<br>Updates ArrowConsumptionRecord and ComponentUsage for each resource with<br>an arrow_license_reference attribute. |
@@ -31672,7 +31920,7 @@ Pushing the tag to origin triggers GitLab CI, which:
 | **Publish python module** | Bumps versions, builds, publishes to PyPI |
 | **Publish Helm chart** | Packages chart, pushes to GitHub Pages, refreshes `artifacthub-repo.yml` |
 | **Publish Docker image** | Builds and pushes multiarch images |
-| **Generate SBOM** | Creates CycloneDX SBOM, uploads to docs |
+| **Generate SBOMs** | Creates CycloneDX SBOMs of the image and `uv.lock`, attaches them to the GitHub release |
 | **Announce release on Slack** | Posts the tag's `CHANGELOG.md` entry to Slack, after the jobs above succeed |
 
 ## Running Individual Scripts
@@ -56859,6 +57107,22 @@ no stored row falls back to the Constance setting `DEFAULT_CALL_USER_ATTRIBUTES`
 before applying what was sent, so an unmentioned attribute is not silently exposed by a
 model-level `default=True` (`get_default_exposure_flags`).
 
+### Where the configuration applies
+
+A reviewer who holds only the call's reviewer role sees the configuration applied in two places:
+
+- **The proposal** (`GET /api/proposal-proposals/{uuid}/`): the `applicant_*` and `created_by*`
+  fields of a concealed attribute are left out.
+- **The proposal team** (`GET /api/proposal-proposals/{uuid}/list_users/`): each member row drops
+  the keys of a concealed attribute — `user_email` for `email`; `user_full_name`,
+  `created_by_full_name` and the `user_image` avatar for `full_name`; `user_username`,
+  `user_uuid` and `created_by_uuid` for `username`. A filter, search or ordering that matches
+  on a concealed attribute (`search_string`, `username`, `user_slug`, `user`, `full_name`,
+  `native_name`, or `o` by email, username or name) is refused with HTTP 400.
+
+Both derive what to hide from the same set of concealed attributes, so they cannot disagree.
+Staff, support, call managers, the applicant and the proposal team always get full data.
+
 ### API
 
 There are no dedicated attribute-configuration endpoints. The configuration is a nested object
@@ -57021,7 +57285,7 @@ The eligibility and attribute exposure features build on Waldur's extended user 
 
 # Reviewer-Proposal Matching System
 
-The Waldur proposal module includes an automated reviewer-proposal matching system that computes expertise affinity scores and generates optimal reviewer assignments. This ensures qualified reviewers are matched with proposals in their area of expertise.
+The Waldur proposal module includes an automated reviewer-proposal matching system that computes expertise affinity scores and uses them to suggest reviewers and to generate reviewer assignments. This ensures qualified reviewers are matched with proposals in their area of expertise.
 
 ## Architecture Overview
 
@@ -57075,17 +57339,15 @@ The Waldur proposal module includes an automated reviewer-proposal matching syst
                                                 │
                                                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   ASSIGNMENT ALGORITHMS                                          │
+│                                   ASSIGNMENT (generate-assignments)                             │
 │                                                                                                 │
-│  ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐            │
-│  │      MinMax         │      │     FairFlow        │      │     Hungarian       │            │
-│  │  (balanced load)    │      │ (quality threshold) │      │  (global optimum)   │            │
-│  └─────────────────────┘      └─────────────────────┘      └─────────────────────┘            │
+│  Greedy, per proposal: highest stored affinity first, skipping reviewers with a pending or      │
+│  recused conflict and reviewers already assigned; then accepted pool members in pool order.     │
 │                                          │                                                     │
 │                                          ▼                                                     │
 │                           ┌──────────────────────────────┐                                     │
-│                           │    ProposedAssignment        │                                     │
-│                           │  (reviewer → proposal)       │                                     │
+│                           │  AssignmentBatch (draft)     │                                     │
+│                           │  → AssignmentItem per pair   │                                     │
 │                           └──────────────────────────────┘                                     │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -57181,63 +57443,40 @@ Each call can have its own matching configuration via `MatchingConfiguration`:
 | `max_reviewers_per_proposal` | int | 5 | Maximum reviewers per proposal |
 | `min_proposals_per_reviewer` | int | 3 | Minimum proposals per reviewer |
 | `max_proposals_per_reviewer` | int | 10 | Maximum proposals per reviewer |
-| `algorithm` | choice | `minmax` | Assignment algorithm |
+| `algorithm` | choice | `minmax` | Reserved; not used by assignment today |
 | `min_affinity_threshold` | float | 0.1 | Minimum affinity for suggestions |
-| `use_reviewer_bids` | bool | true | Consider reviewer preferences |
-| `bid_weight` | float | 0.3 | Weight for reviewer bids |
+| `use_reviewer_bids` | bool | true | Reserved; bids are not used today |
+| `bid_weight` | float | 0.3 | Reserved; bids are not used today |
 
 **Validation:** `keyword_weight + text_weight` must equal 1.0
 
-## Assignment Algorithms
+## Assignment
 
-Three algorithms are available for computing optimal reviewer-proposal assignments:
+`POST /api/proposal-protected-calls/{uuid}/generate-assignments/` creates draft
+assignment batches (`AssignmentBatch`, one per reviewer, with an `AssignmentItem`
+per reviewer–proposal pair) that the call manager reviews and sends. For each
+submitted or in-review proposal it picks reviewers in one greedy pass:
 
-### MinMax (Balanced Load)
+1. Accepted pool members ordered by their stored affinity for the proposal,
+   highest first.
+2. Skipped: reviewers with a `pending` or `recused` conflict of interest on the
+   proposal (`dismissed` and `waived` conflicts do not block), and reviewers
+   already assigned to it.
+3. If affinity yields too few reviewers, remaining accepted pool members are
+   added in pool order.
 
-Balances reviewer workload while maximizing total affinity.
-
-**Characteristics:**
-
-- Prioritizes even distribution of reviews
-- Good for calls with many proposals and limited reviewers
-- Prevents reviewer overload
-
-### FairFlow (Quality Threshold)
-
-Ensures minimum quality threshold for all assignments.
-
-**Characteristics:**
-
-- Only assigns pairs above `min_affinity_threshold`
-- Better match quality at cost of some assignments
-- Useful for specialized domains
-
-### Hungarian (Global Optimum)
-
-Finds globally optimal assignment maximizing total affinity.
-
-**Characteristics:**
-
-- Optimal solution for the assignment problem
-- May result in uneven workload distribution
-- Best for small to medium-sized calls
+The number of reviewers per proposal comes from the request or, if absent, the
+call's `min_reviewers_per_proposal` (2 when the call has no matching
+configuration). There is no global optimisation across proposals: the
+`algorithm` setting (`minmax`, `fairflow`, `hungarian`) is stored but not read.
 
 ## Reviewer Bids
 
-Reviewers can express preferences for reviewing specific proposals:
-
-| Bid Value | Weight | Description |
-|-----------|--------|-------------|
-| `eager` | +1.0 | Reviewer wants to review this proposal |
-| `willing` | +0.5 | Reviewer is willing to review |
-| `not_willing` | -0.5 | Reviewer prefers not to review |
-| `conflict` | -1.0 | Reviewer has conflict of interest |
-
-When `use_reviewer_bids` is enabled, bid weights are incorporated into the final affinity score:
-
-```python
-final_score = affinity_score + (bid_weight × bid_value)
-```
+Reviewers can record a preference for each proposal (`eager`, `willing`,
+`not_willing`, `conflict`) through `/api/reviewer-bids/`. Bids are stored and
+listed only: neither affinity scoring nor assignment reads them, and a
+`conflict` bid does not create a conflict-of-interest record. Declare conflicts
+through [COI disclosure](proposals-coi.md) instead.
 
 ## Reviewer Discovery Workflow
 
@@ -57574,7 +57813,9 @@ Algorithm-generated reviewer suggestions.
 
 ### ProposedAssignment
 
-Final reviewer assignments from matching algorithm.
+Reserved for algorithm-proposed assignments. No code path writes it today; the
+`proposed-assignments` endpoint only lists it. Assignments are created as
+`AssignmentBatch` / `AssignmentItem`.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -57604,10 +57845,10 @@ Reviewer preferences for proposals.
 
 The matching system integrates with [Conflict of Interest Detection](proposals-coi.md):
 
-1. Before computing suggestions, COI status is checked
-2. Reviewers with confirmed COIs are excluded from matching
-3. Self-disclosed conflicts (via bids) affect affinity scores
-4. Waived conflicts may still be assigned with oversight
+1. `generate-assignments` skips reviewers with a `pending` or `recused` conflict on the proposal
+2. `dismissed` and `waived` conflicts do not block assignment
+3. Reviewer suggestions do not check conflicts; the affinity matrix reports each pair's conflict status
+4. A `conflict` bid is not a conflict record and is not checked
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -57615,18 +57856,17 @@ The matching system integrates with [Conflict of Interest Detection](proposals-c
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────────────┐ │
-│  │  Affinity   │───▶│ COI Filter  │───▶│ Final Suggestions/Assign.  │ │
-│  │ Computation │    │ (exclude    │    │ (COI-free reviewers only)   │ │
+│  │  Affinity   │───▶│ COI Filter  │───▶│ Assignment batches          │ │
+│  │ Computation │    │ (exclude    │    │ (suggestions not filtered)  │ │
 │  └─────────────┘    │  conflicts) │    └─────────────────────────────┘ │
 │                     └─────────────┘                                     │
 │                                                                          │
-│  Excluded from matching:                                                 │
-│  • CONFIRMED conflicts                                                   │
+│  Excluded from assignment:                                               │
+│  • PENDING conflicts                                                     │
 │  • RECUSED reviewers                                                     │
-│  • Reviewers with bid="conflict"                                         │
 │                                                                          │
-│  May be assigned with oversight:                                         │
-│  • WAIVED conflicts (with management plan)                               │
+│  Not blocking:                                                           │
+│  • WAIVED (with management plan) and DISMISSED conflicts                 │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -57926,8 +58166,8 @@ Key features:
 
 - **Affinity scoring**: Keyword-based and TF-IDF text similarity algorithms
 - **Reviewer discovery**: Algorithm-based suggestions from published profiles
-- **Assignment algorithms**: MinMax, FairFlow, and Hungarian optimization
-- **Bid integration**: Reviewer preferences influence assignments
+- **Assignment**: Greedy per proposal by stored affinity, skipping pending or recused conflicts
+- **Bids**: Reviewers can record preferences; assignment does not use them yet
 
 For complete documentation on the matching system, including configuration options, scoring algorithms, and API endpoints, see [Reviewer-Proposal Matching](proposals-matching.md).
 
@@ -57986,6 +58226,101 @@ Calls can configure review transparency:
 |---------|-------------|--------|
 | **`reviewer_identity_visible_to_submitters`** | Whether submitters see reviewer names | `False`: Shows "Reviewer 1", "Reviewer 2" |
 | **`reviews_visible_to_submitters`** | Whether submitters see review details | `False`: Only final decision visible |
+
+## Exports for Call Managers
+
+Panel meetings, funding-body reporting and archiving work from a spreadsheet of
+proposals plus one document per application. Three exports cover that.
+
+### Proposal and review CSV
+
+Two actions on the protected call stream a CSV:
+
+| Endpoint | Rows |
+|----------|------|
+| `GET /api/proposal-protected-calls/<uuid>/export-proposals/` | One per proposal |
+| `GET /api/proposal-protected-calls/<uuid>/export-reviews/` | One per review |
+
+They take the same filters as the matching lists, so a filtered table exports
+the rows it shows:
+
+| Parameter | Proposals | Reviews | Limits the export to |
+|-----------|:---------:|:-------:|----------------------|
+| `round_uuid` | ✓ | ✓ | One round |
+| `proposal_state` (repeatable) | ✓ | | Proposals in these states |
+| `review_state` (repeatable) | | ✓ | Reviews in these states |
+| `created_by_uuid` | ✓ | | One applicant |
+| `reviewer_uuid` | | ✓ | One reviewer |
+| `proposal_uuid` | | ✓ | One proposal |
+| `proposal_name` | ✓ | ✓ | Proposals whose name contains the text |
+
+The state and name filters are prefixed rather than bare `state` / `name`
+because the call's own list filterset still runs when the endpoint resolves the
+call, and reads a bare `state` or `name` as the *call's*.
+
+An unknown state is refused with a 400 rather than ignored: a silently
+unfiltered file is worse than an error.
+
+The proposal export carries the proposal's identity, its created and submitted
+dates, its applicant and organisation, its state and current workflow step, the
+science sub-domain and the requested duration, **one column per requested
+offering component** with the amount asked for, and the review counts, average
+score and individual scores. Rejected reviews — declined, expired or dropped
+for a conflict of interest — are left out of the counts, so "assigned" minus
+"submitted" is the number still outstanding. The column set is derived from the call, not from
+the proposals that matched the filters, so every row has the same shape and two
+exports of one call line up. An offering gets columns once it is accepted, or
+when proposals already asked for it before it was cancelled; a pending offering
+cannot carry amounts yet and is left out.
+
+The duration is what the proposal asks for, not what was granted: reading the
+grant back costs a query per proposal.
+
+`Proposal.submitted_at` is recorded when the proposal leaves draft. It is empty
+for proposals submitted before that field existed: their submission was never
+stored, and the only proxy — the first workflow step instance — was backfilled
+by migration for the oldest of them, so it would read as the upgrade date. The
+column is left empty rather than filled with a date that reads as fact.
+
+The review export carries the proposal, the round, the proposal's step, the
+reviewer, the state, the score, the public comment and the review deadline.
+
+### Permissions and what is left out
+
+Both exports require `UPDATE_CALL` on the call or its managing organisation —
+staff, support (read-only) and call managers. Reviewers and panel members hold a
+role on the call but not that permission, so they get a 403; an applicant cannot
+see the protected call at all and gets a 404.
+
+- `summary_private_comment` is **never** exported. The review API keeps it from
+  call managers, and the export is open to them.
+- Reviewer identity needs no such treatment: it is already visible to exactly
+  the roles that may run an export (see `ProposalReviewSerializer.get_fields`),
+  so no export can widen it.
+- A step's `blind_review` does not apply. It hides evaluators' assessments from
+  *each other*, not from the people running the call.
+- Text that would start a spreadsheet formula (`=`, `+`, `-`, `@`, tab or
+  carriage return) is written with a leading apostrophe. Proposal names,
+  applicant profiles and review comments come from applicants and reviewers,
+  and the file is opened by call managers. Numbers, negative ones included, are
+  left as they are.
+
+### Scale
+
+The response is streamed row by row, and the queryset costs a fixed number of
+queries regardless of how many proposals a call holds — the per-component
+columns are resolved once from the call, and reviews and requested resources are
+prefetched. A call with several thousand proposals starts sending bytes
+immediately instead of waiting behind a proxy's read timeout.
+
+### Per-proposal PDF
+
+The application as the applicant filled it — fields, requested resources, team
+and the *names* of its attachments — is rendered in the browser from the
+proposal detail page (Homeport's `DownloadProposalPdfAction`). Rendering it
+client-side keeps a PDF toolchain and its system packages out of the image for
+the sake of one document, and the attachment files themselves stay behind the
+media endpoint, which applies its own access rules.
 
 ## Integration with Waldur Marketplace
 
@@ -58826,7 +59161,7 @@ def cleanup_proposal_resources(proposal):
 
 - [Call Eligibility and Applicant Attributes](./proposals-eligibility.md) - AAI-based eligibility restrictions and GDPR-compliant attribute exposure
 - [Conflict of Interest Detection](./proposals-coi.md) - COI management and detection workflows
-- [Reviewer Matching](./proposals-matching.md) - Automated reviewer assignment algorithms
+- [Reviewer Matching](./proposals-matching.md) - Affinity scoring, reviewer suggestions and assignment
 - [User Profile Attributes](../user-profile-attributes.md) - User attribute reference for AAI integration
 
 ---
@@ -63426,6 +63761,10 @@ Perfect for scenarios where users need to specify resources in user-friendly uni
 3. **Automatic Limit Setting**: The calculated value (100,000) is automatically set as the limit for the specified component (`storage_inodes`)
 4. **Validation**: Frontend validates user input against `min_limit` and `max_limit` before multiplication
 
+The multiplication happens in the order form only; the server stores the
+entered value as an attribute and does not recalculate any limit from it. To
+derive limits the server enforces, use [Component Formula](#component-formula).
+
 #### Requirements
 
 - **Component Dependency**: Must reference an existing limit-based component (`billing_type: "limit"`)
@@ -63436,6 +63775,142 @@ Perfect for scenarios where users need to specify resources in user-friendly uni
 
 - **Configuration**: `ComponentMultiplierConfiguration.tsx` - Admin interface for setting up the multiplier
 - **User Field**: `ComponentMultiplierField.tsx` - User input field that handles multiplication and limit updates
+
+### Component Formula
+
+The `component_formula` option type asks the customer for one number and sets
+one or more limit-based components from it. The customer orders in their own
+terms, such as net database capacity, and the offering derives the gross
+quantities it bills for.
+
+#### Configuration
+
+```json
+{
+  "storage": {
+    "type": "component_formula",
+    "label": "Required database storage (GB)",
+    "required": true,
+    "min": 10,
+    "max": 5000,
+    "component_formula_config": {
+      "targets": [
+        {"component_type": "data_primary", "formula": "input * 2"},
+        {"component_type": "wal_primary", "formula": "input * 2 * 0.25"},
+        {"component_type": "data_replica", "formula": "input * 2"},
+        {"component_type": "wal_replica", "formula": "input * 2 * 0.25"}
+      ]
+    }
+  }
+}
+```
+
+`min` and `max` bound the value the customer enters, not the results.
+
+#### Formula language
+
+A formula may use only `input` (the entered value), numbers such as `2` or
+`0.25`, the operators `+ - * /`, unary minus and parentheses. There are no
+functions and no other names. Formulas are at most 255 characters long.
+
+### Component Sum
+
+The `component_sum` option type sets a limit-based component to the sum of
+other limit-based components. The customer does not fill it in; any value sent
+for it is dropped.
+
+```json
+{
+  "backup": {
+    "type": "component_sum",
+    "label": "Daily full backup",
+    "component_sum_config": {
+      "target_component": "backup",
+      "components": ["data_primary", "wal_primary", "data_replica", "wal_replica"]
+    }
+  }
+}
+```
+
+The summed components may be formula targets, components the customer enters
+directly, or the targets of other sums.
+
+#### Derived limit behaviour
+
+- **The server calculates the limits.** When an order is created, Waldur
+  evaluates the formulas and then the sums, and writes the results into the
+  order's limits. It replaces any value the client sent for a derived
+  component, so the price and the provisioned quantity always follow the
+  configuration. Changing the formula input of a pending order recalculates
+  them the same way.
+- **Rounding**: each result is rounded up to the target component's
+  `limit_decimal_places`. It then passes the component's usual checks
+  (minimum, maximum, maximum available), and an error names the component.
+- **No input, no limit**: an optional formula left empty, or hidden by
+  `visible_if`, derives nothing. A sum is written only when at least one of its
+  components has a value.
+- **Division by zero or a negative result** is an order validation error.
+- **Existing resources**: every later change to a resource's limits (limit
+  update, limit change request, renewal, plan switch) recalculates the derived
+  limits from the inputs recorded on the resource. A derived value sent by the
+  client is replaced and one left out is put back, and a sum follows the
+  components it adds up. A resource ordered before the option existed has no
+  recorded input and keeps its current derived values. Derived limits cannot
+  be reallocated between resources.
+- **Provider approval**: a provider who changes a formula input while
+  approving an order changes its derived limits and price with it.
+- **Order options only**: `component_sum` cannot be a resource option;
+  `component_formula` can only as described below.
+
+#### Changing the input after ordering
+
+To let customers change the value after ordering, add a **resource option**
+of type `component_formula` with the same internal name as the order option:
+
+```json
+{
+  "resource_options": {
+    "order": ["storage"],
+    "options": {
+      "storage": {"type": "component_formula", "label": "Required database storage (GB)"}
+    }
+  }
+}
+```
+
+- It has no formulas of its own: the order option's are used, and its `min`
+  and `max` are copied from the order option when the offering is saved. A
+  `component_formula` resource option without such an order option is
+  refused, and so is removing or retyping an order option that one pairs with.
+- The value entered at order time is copied onto the resource, so it shows on
+  the resource's Options tab (resources ordered earlier show the value from
+  their order).
+- Changing it through `update_options` always creates an UPDATE order, whatever
+  `create_orders_on_resource_option_change` says, carrying the new value
+  (`new_options`) and the recalculated limits (`old_limits` and `limits`), so
+  it is priced, approved and provisioned like any limit change. When
+  completed, the new value and the new limits are applied together.
+- A provider who changes the value while approving the order changes the
+  limits and price with it. `update_options_direct` refuses to change it,
+  since that would bypass the order.
+- Later limit changes calculate from the current value: the resource option
+  when set, otherwise the value from the order.
+- **Defaults and bounds**: a formula option's `default` is used when the input
+  is omitted, and `min`/`max` are enforced on every path that changes the
+  input, not only on order creation.
+
+#### Validation when the offering is saved
+
+- Every formula must parse under the language above.
+- Every component a formula or sum names must be a limit-based component of
+  the offering (`billing_type: limit`; prepaid one-time components are not
+  accepted).
+- While an option refers to a component, the component cannot be removed,
+  renamed or switched to another billing type. If a plan's billing mode stops
+  billing it as a limit, orders on that plan are refused with an error naming
+  the option.
+- A component may be derived by only one option.
+- A sum may not include its own target, and sums may not form a cycle.
 
 ---
 
@@ -82281,6 +82756,26 @@ that enable it — see [Requesting resource limit changes](resource-limit-change
 
 [Image: type:video]
 
+## Changing a calculated size
+
+Some offerings calculate several limits from one value you enter when ordering, such as the net storage of a database, from which the provider derives replica, log and backup space. If the provider lets you change that value later, it appears on the resource's **Options** tab:
+
+[Image: Options tab of a database resource showing Database storage (GB) 300]
+
+Click **Edit** next to it and enter the new value. The dialog shows the limits calculated from it, the difference from the current ones and the new monthly price before you submit:
+
+[Image: Update option dialog previewing the limits and price for 300 GB]
+
+**Update** submits an order with the new value and the recalculated limits. It follows the same approval flow as other changes, and its details show both the limit change with its price impact and the changed value:
+
+[Image: Order details with the limit changes, the monthly cost change and the changed option]
+
+When the order is done, the resource has the new value and limits, and billing follows them from that day.
+
+The calculated limits cannot be changed on their own. **Change limits** shows them without an input, and they follow the value on the **Options** tab:
+
+[Image: Change resource limits dialog showing the calculated limits without inputs]
+
 ## Changing the plan of a resource
 
 If the offering has several plans, **Change plan** in the resource actions moves
@@ -83777,6 +84272,56 @@ The **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubern
 - **Customer chooses** — the order form shows a **Cluster topology** selector with both layouts. Switching it keeps the version, access rules, Longhorn and load balancer choices, and resets the per-datacenter infrastructure and node groups.
 
 When **Cluster topology** is left empty, the input type decides: one site for the single-datacenter input, three sites for the multi-datacenter one. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
+
+### Calculating limits from one answer
+
+Some offerings are billed for several limit components that the customer should not have to size one by one. A managed database, for example, may be billed for primary data, primary write-ahead log (WAL), replica data, replica WAL and a daily full backup, while the customer only knows how much data they want to store. Two input types derive such limits from a single answer:
+
+- **Component Formula** asks the customer for one number and sets each chosen limit component to a formula of it.
+- **Component Sum** sets a limit component to the sum of other limit components, for example a backup that covers all storage.
+
+The calculated limits are priced like any other limit: the customer sees the quantities and the price before ordering, and the provider is billed for exactly what the form showed. The customer cannot edit them directly.
+
+[Image: User input tab with a Component Formula and a Component Sum input]
+
+The type picker describes each component type when you add an input:
+
+[Image: Type picker describing Component Multiplier, Component Formula and Component Sum]
+
+#### Setting up a Component Formula
+
+1. On the **User input** tab click **Add**, enter the display name the customer will see (for example *Database storage (GB)*) and pick **Component Formula**.
+2. On the **Settings** step, set the smallest and largest value the customer may enter.
+3. Under **Calculated components**, add a row per limit component and write its formula. A formula may use `input` (the value entered), numbers such as `2` or `0.25`, `+ - * /` and parentheses, for example `input * 2 * 0.25`. Other names and functions are not accepted, and an invalid formula is flagged before you save.
+
+[Image: Settings of a Component Formula with a formula per storage component]
+
+Results are rounded up to the precision of each component, so a whole-number component calculated as 166.5 becomes 167.
+
+#### Setting up a Component Sum
+
+Add an input of type **Component Sum**. On the **Settings** step pick the **Total component** and the **Components to add up**. These can be components the customer enters, components calculated by a formula, or other sums; the total cannot include itself.
+
+[Image: Settings of a Component Sum adding up the four storage components]
+
+#### What the customer sees
+
+The order form shows the calculated quantities under the input, and the plan table and order summary price them as the customer types:
+
+[Image: Order form with 200 GB entered, the calculated storage components and a total of €120 per month]
+
+Only limit-based components can be calculated. While an input refers to a component, the component cannot be removed, renamed or switched to another billing type on the **Accounting** tab.
+
+#### Letting customers change the value later
+
+To let customers change the number after ordering, for example to grow the database, add it as a resource option too. On the **Resource options** tab click **Add**, pick **Component Formula** and, under **Order option**, the order input it belongs to. It has no settings of its own: the formulas and the smallest and largest values of the order input apply.
+
+[Image: Resource option paired with the Database storage order input]
+
+The ordered value is then shown on the resource's **Options** tab, where customers can change it. A change is always submitted as an order carrying the new value and the recalculated limits, so it is priced, approved and provisioned like any limit change — see [Changing a calculated size](../customer-organization/resource_management.md#changing-a-calculated-size). A provider who changes the value while approving the order changes the limits and price with it.
+
+!!! note
+    A Component Sum cannot be a resource option: it follows the components it adds up.
 
 ## Offering management
 
@@ -99813,9 +100358,9 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
   a round opens or ends. The proposal cancellations a round's end causes *are*
   published, as `proposal` events, on two paths:
   - at cutoff, the periodic `proposals_for_ended_rounds_should_be_cancelled`
-    task cancels every proposal not yet accepted, rejected or cancelled —
-    `submitted` and `in_review` as well as `draft` — saving them one at a time,
-    so each goes out through `post_save` as its own publish task;
+    task cancels the round's `draft` proposals — `submitted` and `in_review`
+    ones stay with the review workflow — saving them one at a time, so each
+    goes out through `post_save` as its own publish task;
   - the manual `close_round` endpoint cancels only the drafts, in one bulk
     update announced as a single batch.
   A busy round therefore reaches consumers as a burst of cancellations at

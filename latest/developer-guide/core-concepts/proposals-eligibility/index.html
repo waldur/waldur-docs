@@ -7791,6 +7791,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#where-the-configuration-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the configuration applies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#api" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19180,6 +19191,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#where-the-configuration-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the configuration applies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#api" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19654,6 +19676,20 @@ no stored row falls back to the Constance setting <code>DEFAULT_CALL_USER_ATTRIB
 <code>"is_default": true</code>; and the first write to a call seeds every toggle from that same setting
 before applying what was sent, so an unmentioned attribute is not silently exposed by a
 model-level <code>default=True</code> (<code>get_default_exposure_flags</code>).</p>
+<h3 id="where-the-configuration-applies">Where the configuration applies</h3>
+<p>A reviewer who holds only the call's reviewer role sees the configuration applied in two places:</p>
+<ul>
+<li><strong>The proposal</strong> (<code>GET /api/proposal-proposals/{uuid}/</code>): the <code>applicant_*</code> and <code>created_by*</code>
+  fields of a concealed attribute are left out.</li>
+<li><strong>The proposal team</strong> (<code>GET /api/proposal-proposals/{uuid}/list_users/</code>): each member row drops
+  the keys of a concealed attribute — <code>user_email</code> for <code>email</code>; <code>user_full_name</code>,
+  <code>created_by_full_name</code> and the <code>user_image</code> avatar for <code>full_name</code>; <code>user_username</code>,
+  <code>user_uuid</code> and <code>created_by_uuid</code> for <code>username</code>. A filter, search or ordering that matches
+  on a concealed attribute (<code>search_string</code>, <code>username</code>, <code>user_slug</code>, <code>user</code>, <code>full_name</code>,
+  <code>native_name</code>, or <code>o</code> by email, username or name) is refused with HTTP 400.</li>
+</ul>
+<p>Both derive what to hide from the same set of concealed attributes, so they cannot disagree.
+Staff, support, call managers, the applicant and the proposal team always get full data.</p>
 <h3 id="api">API</h3>
 <p>There are no dedicated attribute-configuration endpoints. The configuration is a nested object
 on the protected call, read with the call and written with it — in the UI, under <strong>Call

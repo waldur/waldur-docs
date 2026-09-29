@@ -7718,52 +7718,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#assignment-algorithms" class="md-nav__link">
+  <a href="#assignment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Assignment Algorithms
+        Assignment
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Assignment Algorithms">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#minmax-balanced-load" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MinMax (Balanced Load)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fairflow-quality-threshold" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        FairFlow (Quality Threshold)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hungarian-global-optimum" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hungarian (Global Optimum)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -19233,52 +19194,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#assignment-algorithms" class="md-nav__link">
+  <a href="#assignment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Assignment Algorithms
+        Assignment
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Assignment Algorithms">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#minmax-balanced-load" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MinMax (Balanced Load)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fairflow-quality-threshold" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        FairFlow (Quality Threshold)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hungarian-global-optimum" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hungarian (Global Optimum)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -19641,7 +19563,7 @@
                   
 
 <h1 id="reviewer-proposal-matching-system">Reviewer-Proposal Matching System</h1>
-<p>The Waldur proposal module includes an automated reviewer-proposal matching system that computes expertise affinity scores and generates optimal reviewer assignments. This ensures qualified reviewers are matched with proposals in their area of expertise.</p>
+<p>The Waldur proposal module includes an automated reviewer-proposal matching system that computes expertise affinity scores and uses them to suggest reviewers and to generate reviewer assignments. This ensures qualified reviewers are matched with proposals in their area of expertise.</p>
 <h2 id="architecture-overview">Architecture Overview</h2>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -19702,9 +19624,7 @@
 <span class="normal">57</span>
 <span class="normal">58</span>
 <span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span></pre></div></td><td class="code"><div><pre><span></span><code>┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+<span class="normal">60</span></pre></div></td><td class="code"><div><pre><span></span><code>┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                           Reviewer-Proposal Matching Architecture                                │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 
@@ -19753,17 +19673,15 @@
                                                 │
                                                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   ASSIGNMENT ALGORITHMS                                          │
+│                                   ASSIGNMENT (generate-assignments)                             │
 │                                                                                                 │
-│  ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐            │
-│  │      MinMax         │      │     FairFlow        │      │     Hungarian       │            │
-│  │  (balanced load)    │      │ (quality threshold) │      │  (global optimum)   │            │
-│  └─────────────────────┘      └─────────────────────┘      └─────────────────────┘            │
+│  Greedy, per proposal: highest stored affinity first, skipping reviewers with a pending or      │
+│  recused conflict and reviewers already assigned; then accepted pool members in pool order.     │
 │                                          │                                                     │
 │                                          ▼                                                     │
 │                           ┌──────────────────────────────┐                                     │
-│                           │    ProposedAssignment        │                                     │
-│                           │  (reviewer → proposal)       │                                     │
+│                           │  AssignmentBatch (draft)     │                                     │
+│                           │  → AssignmentItem per pair   │                                     │
 │                           └──────────────────────────────┘                                     │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 </code></pre></div></td></tr></tbody></table></div>
@@ -19922,7 +19840,7 @@
 <td><code>algorithm</code></td>
 <td>choice</td>
 <td><code>minmax</code></td>
-<td>Assignment algorithm</td>
+<td>Reserved; not used by assignment today</td>
 </tr>
 <tr>
 <td><code>min_affinity_threshold</code></td>
@@ -19934,79 +19852,41 @@
 <td><code>use_reviewer_bids</code></td>
 <td>bool</td>
 <td>true</td>
-<td>Consider reviewer preferences</td>
+<td>Reserved; bids are not used today</td>
 </tr>
 <tr>
 <td><code>bid_weight</code></td>
 <td>float</td>
 <td>0.3</td>
-<td>Weight for reviewer bids</td>
+<td>Reserved; bids are not used today</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Validation:</strong> <code>keyword_weight + text_weight</code> must equal 1.0</p>
-<h2 id="assignment-algorithms">Assignment Algorithms</h2>
-<p>Three algorithms are available for computing optimal reviewer-proposal assignments:</p>
-<h3 id="minmax-balanced-load">MinMax (Balanced Load)</h3>
-<p>Balances reviewer workload while maximizing total affinity.</p>
-<p><strong>Characteristics:</strong></p>
-<ul>
-<li>Prioritizes even distribution of reviews</li>
-<li>Good for calls with many proposals and limited reviewers</li>
-<li>Prevents reviewer overload</li>
-</ul>
-<h3 id="fairflow-quality-threshold">FairFlow (Quality Threshold)</h3>
-<p>Ensures minimum quality threshold for all assignments.</p>
-<p><strong>Characteristics:</strong></p>
-<ul>
-<li>Only assigns pairs above <code>min_affinity_threshold</code></li>
-<li>Better match quality at cost of some assignments</li>
-<li>Useful for specialized domains</li>
-</ul>
-<h3 id="hungarian-global-optimum">Hungarian (Global Optimum)</h3>
-<p>Finds globally optimal assignment maximizing total affinity.</p>
-<p><strong>Characteristics:</strong></p>
-<ul>
-<li>Optimal solution for the assignment problem</li>
-<li>May result in uneven workload distribution</li>
-<li>Best for small to medium-sized calls</li>
-</ul>
+<h2 id="assignment">Assignment</h2>
+<p><code>POST /api/proposal-protected-calls/{uuid}/generate-assignments/</code> creates draft
+assignment batches (<code>AssignmentBatch</code>, one per reviewer, with an <code>AssignmentItem</code>
+per reviewer–proposal pair) that the call manager reviews and sends. For each
+submitted or in-review proposal it picks reviewers in one greedy pass:</p>
+<ol>
+<li>Accepted pool members ordered by their stored affinity for the proposal,
+   highest first.</li>
+<li>Skipped: reviewers with a <code>pending</code> or <code>recused</code> conflict of interest on the
+   proposal (<code>dismissed</code> and <code>waived</code> conflicts do not block), and reviewers
+   already assigned to it.</li>
+<li>If affinity yields too few reviewers, remaining accepted pool members are
+   added in pool order.</li>
+</ol>
+<p>The number of reviewers per proposal comes from the request or, if absent, the
+call's <code>min_reviewers_per_proposal</code> (2 when the call has no matching
+configuration). There is no global optimisation across proposals: the
+<code>algorithm</code> setting (<code>minmax</code>, <code>fairflow</code>, <code>hungarian</code>) is stored but not read.</p>
 <h2 id="reviewer-bids">Reviewer Bids</h2>
-<p>Reviewers can express preferences for reviewing specific proposals:</p>
-<table>
-<thead>
-<tr>
-<th>Bid Value</th>
-<th>Weight</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>eager</code></td>
-<td>+1.0</td>
-<td>Reviewer wants to review this proposal</td>
-</tr>
-<tr>
-<td><code>willing</code></td>
-<td>+0.5</td>
-<td>Reviewer is willing to review</td>
-</tr>
-<tr>
-<td><code>not_willing</code></td>
-<td>-0.5</td>
-<td>Reviewer prefers not to review</td>
-</tr>
-<tr>
-<td><code>conflict</code></td>
-<td>-1.0</td>
-<td>Reviewer has conflict of interest</td>
-</tr>
-</tbody>
-</table>
-<p>When <code>use_reviewer_bids</code> is enabled, bid weights are incorporated into the final affinity score:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">final_score</span> <span class="o">=</span> <span class="n">affinity_score</span> <span class="o">+</span> <span class="p">(</span><span class="n">bid_weight</span> <span class="err">×</span> <span class="n">bid_value</span><span class="p">)</span>
-</code></pre></div></td></tr></tbody></table></div>
+<p>Reviewers can record a preference for each proposal (<code>eager</code>, <code>willing</code>,
+<code>not_willing</code>, <code>conflict</code>) through <code>/api/reviewer-bids/</code>. Bids are stored and
+listed only: neither affinity scoring nor assignment reads them, and a
+<code>conflict</code> bid does not create a conflict-of-interest record. Declare conflicts
+through <a href="../proposals-coi/">COI disclosure</a> instead.</p>
 <h2 id="reviewer-discovery-workflow">Reviewer Discovery Workflow</h2>
 <p>The system supports two paths for finding reviewers:</p>
 <h3 id="path-a-algorithm-based-discovery">Path A: Algorithm-Based Discovery</h3>
@@ -20465,7 +20345,9 @@
 </tbody>
 </table>
 <h3 id="proposedassignment">ProposedAssignment</h3>
-<p>Final reviewer assignments from matching algorithm.</p>
+<p>Reserved for algorithm-proposed assignments. No code path writes it today; the
+<code>proposed-assignments</code> endpoint only lists it. Assignments are created as
+<code>AssignmentBatch</code> / <code>AssignmentItem</code>.</p>
 <table>
 <thead>
 <tr>
@@ -20563,10 +20445,10 @@
 <h2 id="integration-with-coi-detection">Integration with COI Detection</h2>
 <p>The matching system integrates with <a href="../proposals-coi/">Conflict of Interest Detection</a>:</p>
 <ol>
-<li>Before computing suggestions, COI status is checked</li>
-<li>Reviewers with confirmed COIs are excluded from matching</li>
-<li>Self-disclosed conflicts (via bids) affect affinity scores</li>
-<li>Waived conflicts may still be assigned with oversight</li>
+<li><code>generate-assignments</code> skips reviewers with a <code>pending</code> or <code>recused</code> conflict on the proposal</li>
+<li><code>dismissed</code> and <code>waived</code> conflicts do not block assignment</li>
+<li>Reviewer suggestions do not check conflicts; the affinity matrix reports each pair's conflict status</li>
+<li>A <code>conflict</code> bid is not a conflict record and is not checked</li>
 </ol>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -20585,24 +20467,22 @@
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code>┌──────────────────────────────────────────────────────────────────────────┐
+<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code>┌──────────────────────────────────────────────────────────────────────────┐
 │                    Matching + COI Integration                             │
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────────────┐ │
-│  │  Affinity   │───▶│ COI Filter  │───▶│ Final Suggestions/Assign.  │ │
-│  │ Computation │    │ (exclude    │    │ (COI-free reviewers only)   │ │
+│  │  Affinity   │───▶│ COI Filter  │───▶│ Assignment batches          │ │
+│  │ Computation │    │ (exclude    │    │ (suggestions not filtered)  │ │
 │  └─────────────┘    │  conflicts) │    └─────────────────────────────┘ │
 │                     └─────────────┘                                     │
 │                                                                          │
-│  Excluded from matching:                                                 │
-│  • CONFIRMED conflicts                                                   │
+│  Excluded from assignment:                                               │
+│  • PENDING conflicts                                                     │
 │  • RECUSED reviewers                                                     │
-│  • Reviewers with bid="conflict"                                         │
 │                                                                          │
-│  May be assigned with oversight:                                         │
-│  • WAIVED conflicts (with management plan)                               │
+│  Not blocking:                                                           │
+│  • WAIVED (with management plan) and DISMISSED conflicts                 │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 </code></pre></div></td></tr></tbody></table></div>
