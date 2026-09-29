@@ -89,6 +89,8 @@ When an applicant submits a proposal to a call with workflow steps configured:
 3. The first enabled step becomes **Active**. If that step has a duration set, its deadline is calculated from the duration; otherwise it has no deadline
 4. The proposal state changes to **In review**
 
+Steps 3 and 4 happen at once only when the call starts evaluation **on submission**, the default. When the call starts evaluation **at the round cut-off**, the proposal stays **Submitted** with every enabled step **Pending** until its round's cutoff date. An hourly job then activates the first enabled step of each such proposal and moves it to **In review**; the step's deadline counts from that moment, not from submission. See [When evaluation starts](call_management.md#when-evaluation-starts).
+
 !!! note
     A proposal must have a project team before it can be submitted. If the call has no enabled steps at all, the proposal goes to **Submitted** rather than **In review**.
 

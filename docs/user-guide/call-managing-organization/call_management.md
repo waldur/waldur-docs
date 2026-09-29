@@ -42,17 +42,33 @@ This guide walks you through the entire lifecycle of call management in Waldur, 
 
 1. Create a **Round** within the call.
 2. Configure the round settings:
-      - Start and end dates
-      - Review strategy: after round closure or after submission
+      - Start and cutoff dates (or a start date with a repeat cadence to create several rounds at once)
       - Review duration (in days)
-      - Minimum number of reviewers
-      - Minimum average score for auto-approval (optional)
-      - Deciding entity: call manager or automatic
-      - Allocation timing: immediate or fixed date
-      - Define the mappings between proposal roles and project roles
-3. Save and activate the round.
+      - Allocation date, when the call allocates on a fixed date
+3. Save the round.
 
-![Rounds configuration with review strategy and deadlines](../img/scenario_rounds_config.png)
+![Rounds configuration with start and cutoff dates](../img/scenario_rounds_config.png)
+
+A round only schedules submission, review and allocation. How many reviewers a
+proposal needs, the minimum score, who decides and when resources are allocated
+are set on the call's [workflow steps](workflow-configuration.md#per-step-settings).
+
+### When evaluation starts
+
+Each call decides when a submitted proposal's evaluation starts:
+
+- **On submission** (the default) — the first enabled workflow step starts as
+  soon as the applicant submits.
+- **At the round cut-off** — every proposal stays **Submitted** until its
+  round's cutoff date, and the evaluation of all of them starts together after
+  the cut-off, so a panel can assess a round's proposals as one batch. A
+  background job checks for such proposals every hour, so they move to
+  **In review** within about an hour of the cut-off.
+
+The setting is the call's `evaluation_start` field (`on_submission` or
+`at_cutoff`). The call configuration pages do not offer a control for it yet,
+so it is set through the API. It cannot be changed while the call has proposals
+that are submitted or in review.
 
 ## Step 4: Call configuration and activation
 
@@ -341,8 +357,23 @@ Expand a record to see evidence details and management options:
 After matching, create formal assignment batches to assign proposals to reviewers:
 
 1. Go to the **Assignments** tab in the reviewer pool
-2. Create batches grouping proposals per reviewer
-3. Send batches — reviewers receive email notifications
+2. Create batches grouping proposals per reviewer. A reviewer is not given more
+   open assignments than their maximum (see
+   [Managing reviewer capacity](reviewer-management.md#managing-reviewer-capacity)).
+3. Send batches. The reviewer only sees a batch once it is sent, and is emailed
+   the list of proposals and the response deadline when the
+   `proposal.reviewer_assignment_invitation` notification is enabled on the
+   deployment.
+
+A sent batch expires after the call's assignment expiration period (7 days by
+default). Before that, the reviewer gets one reminder (2 days before the
+deadline by default); when a batch expires with proposals still unanswered, the
+call managers are emailed. Both emails, too, are sent only when their
+notifications are enabled. Use **Extend deadline** on a sent or expired batch to
+give the reviewer more time: an expired batch returns to **Sent**, its
+unanswered proposals become pending again, and a new reminder is sent before the
+new deadline. Reviews already accepted from the batch are not due before the
+batch's new deadline.
 
 ![Assignment batches with mixed statuses](../img/scenario_assignments_expanded.png)
 
@@ -371,7 +402,7 @@ Reviewers evaluate proposals using a structured assessment process:
 
 ## Step 7: Decision and allocation
 
-**Performed by:** Call manager (if configured) or Automatic system
+**Performed by:** The responsible role of the **Allocation decision** step (Call manager by default)
 
 The call manager monitors all proposals and their review status:
 
@@ -383,7 +414,7 @@ The reviews list shows every review with its reviewer, round and state:
 
 The final decision process determines which proposals receive resource allocations:
 
-1. Decision entity evaluates reviews.
+1. The responsible user completes the **Allocation decision** step after weighing the reviews.
 2. Proposal is **accepted** or **rejected**.
 3. If accepted:
       - A **new project** is created under the proposing organization.
@@ -443,7 +474,7 @@ A: A Call Organiser is appointed by the Organization Owner to create calls and a
 A: No, Waldur supports multiple rounds within a single call, allowing for different resource types or applicant categories to be handled separately, but they cannot be active at the same time.
 
 **Q: What happens if insufficient reviewers complete their evaluations?**
-A: If the minimum number of reviews is not met by the deadline, the Call manager receives a notification and can either extend the review period or reduce the minimum requirement.
+A: **Minimum reviewers** on a workflow step is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked **Overdue** and the workflow moves on to the next step, or rejects the proposal if it was the last one (see [Deadline handling](workflow-configuration.md#deadline-handling)). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.
 
 **Q: Can applicants edit their proposals after submission?**
 A: By default, proposals cannot be edited after submission. However, if a reviewer or Call manager rejects a proposal with a request for revisions, the applicant can make the requested changes and resubmit.
@@ -455,4 +486,4 @@ A: Resource transfer between projects requires administrative approval. Contact 
 A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is made.
 
 **Q: Can a Call manager override reviewer scores?**  
-A: When configured for Call manager decisions, the manager can approve or reject proposals regardless of review scores, though all reviewer feedback remains visible and documented.
+A: Decisions are always made by a person completing a workflow step; scores never decide on their own. A step can be declined regardless of scores, but approving is blocked while a **Minimum reviewers** or **Minimum score threshold** set on that step is not met. All reviewer feedback remains visible and documented.

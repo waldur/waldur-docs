@@ -35,11 +35,14 @@ Permanently remove the reviewer from the proposal. Any existing reviews are disc
 
 ## Staff override capabilities
 
-When the automated workflow gets stuck — for example, a reviewer's invitation expired or an assignment is blocked by a COI that the manager wants to override — staff and call managers can use manual overrides.
+When the automated workflow gets stuck — for example, a reviewer cannot answer their invitation or an assignment is blocked by a COI that the manager wants to override — staff and call managers can use manual overrides.
 
 ### Force-accepting reviewer pool invitations
 
 If a reviewer's invitation is stuck in **pending**, **declined**, or **expired** status, a call manager can force-accept it.
+
+!!! tip
+    For an invitation that simply expired or went unanswered, resend it instead: the reviewer gets a new link and a new expiry date and accepts it themselves (see [Invitation expiry and resending](reviewer-management.md#invitation-expiry-and-resending)). Keep force-accept for cases where the reviewer has agreed through other channels but cannot answer the invitation.
 
 1. Navigate to the **Reviewer pool** tab
 2. Find the invitation with the stuck status

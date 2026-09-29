@@ -56,6 +56,19 @@ Shows pending assignment batches — proposals you've been asked to accept or de
 
 ![Reviewer assignment batch with items](../img/scenario_reviewer_assignment_detail.png)
 
+When a call manager sends you a batch, you receive an email listing its
+proposals, any note from the call manager and the date by which to respond,
+with a link to this tab. If you have not answered every proposal as the deadline
+approaches, you get one reminder email (by default 2 days before it). After the
+deadline the unanswered proposals expire and can no longer be accepted, unless
+the call manager extends the deadline. Whether these emails are sent depends on
+the notifications the deployment has enabled.
+
+Before you accept, a batch shows each proposal's title, and its summary if the
+call discloses summaries to reviewers. A proposal blocked by a conflict of
+interest is shown by title only and cannot be accepted until the call manager
+resolves the conflict.
+
 For each assignment, you can:
 
 - **Accept** — creates a review in "in review" state; you can begin evaluation
@@ -97,6 +110,12 @@ Each review includes:
 ### Proposal context during review
 
 When reviewing a proposal, you can see the full proposal detail including team composition, resource requests, and any supporting documentation.
+
+Accepting an assignment is enough to open the proposal and its team — you do not
+need a reviewer role on the call. You see the applicant details the call's
+applicant data visibility settings expose to reviewers. Access lasts while your
+review is in review or submitted; if the review is cancelled or expires, the
+proposal is no longer available to you.
 
 ![Proposal review detail](../img/scenario_proposal_reviews_detail.png)
 
@@ -149,7 +168,7 @@ After matching, call managers create formal assignment batches to assign proposa
 
 ### Assignment batches
 
-Each batch groups proposals assigned to a single reviewer. The reviewer receives an email notification and can accept or decline each proposal individually.
+Each batch groups proposals assigned to a single reviewer. Once the batch is sent, the reviewer sees it on their **Assignments** tab, is emailed about it, and can accept or decline each proposal individually.
 
 ![Assignment batches with lifecycle statuses](../img/scenario_assignments_expanded.png)
 
