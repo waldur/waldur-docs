@@ -13,7 +13,7 @@
         <link rel="prev" href="../api-integration/">
       
       
-        <link rel="next" href="../button-variant-linting/">
+        <link rel="next" href="../button-ui-guide/">
       
       
         
@@ -9214,14 +9214,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../button-variant-linting/" class="md-nav__link">
+      <a href="../button-ui-guide/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Button variant linting
+    Button ui guide
   
 
     
@@ -19749,10 +19749,11 @@
 <li><strong>Presentation Components</strong>: Pure UI components with props</li>
 <li><strong>Form Components</strong>: Specialized forms using React Final Form</li>
 <li><strong>Table Components</strong>: Reusable table infrastructure with filtering, sorting, pagination</li>
-<li><strong>Button Components</strong>: Unified button system wrapping Bootstrap for consistent UX</li>
+<li><strong>Button Components</strong>: Unified button system built on Tailwind/shadcn for consistent UX</li>
 </ul>
 <h3 id="button-component-architecture">Button Component Architecture</h3>
-<p>The application uses a unified button system that wraps Bootstrap Button to ensure consistent styling, behavior, and accessibility. <strong>Direct Bootstrap Button imports are forbidden</strong> - use the appropriate Waldur wrapper component instead.</p>
+<p>The application uses a unified button system to ensure consistent styling, behavior, and accessibility. <strong>Direct Bootstrap Button imports and raw Bootstrap button markup are forbidden or deprecated</strong> — use <code>BaseButton</code> (<code>waldur-ui</code>) or the appropriate specialized wrapper component instead.</p>
+<p><code>BaseButton</code> (<code>waldur-ui</code>) is a from-scratch Tailwind/shadcn component, not a Bootstrap wrapper. It natively provides tooltips (with <code>tooltipSide</code>), loading states (<code>pending</code>), icon-only layout/padding resets, responsive sizing (<code>sm</code>, <code>md</code>, <code>lg</code>), and design token variants. The specialized wrappers in <code>src/</code> (<code>SubmitButton</code>, <code>CloseDialogButton</code>, <code>SaveButton</code>, etc.) compose <code>BaseButton</code> directly.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -19766,33 +19767,13 @@
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span></pre></div></td><td class="code"><div><pre><span></span><code>Bootstrap Button (internal only, wrapped by BaseButton)
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code>BaseButton (from 'waldur-ui' — Tailwind/shadcn, general purpose actions, size="sm" | "md" | "lg")
 │
-├── ActionButton (general purpose table/card actions)
-│   ├── RowActionButton (optimized for table rows)
-│   └── CompactActionButton (small variant for inline actions)
+├── SubmitButton (form submission, default size="lg", supports size="sm")
 │
-├── SubmitButton (form submission, large size)
-│   └── CompactSubmitButton (small forms, popovers)
-│
-├── EditButton (edit navigation/dialogs, large size)
-│   └── CompactEditButton (inline field editing)
+├── CompactEditButton (inline field editing)
 │
 ├── CloseDialogButton (modal cancel/close)
-│
-├── IconButton (icon-only with tooltip)
-│
-├── ToolbarButton (table/panel toolbars)
 │
 ├── SaveButton (form save with dirty state tracking)
 │
@@ -19812,19 +19793,15 @@
 <tbody>
 <tr>
 <td>Form submit</td>
-<td><code>SubmitButton</code></td>
-</tr>
-<tr>
-<td>Form submit in popover/compact form</td>
-<td><code>CompactSubmitButton</code></td>
+<td><code>SubmitButton</code> (<code>size="lg"</code> default, <code>size="sm"</code> for compact)</td>
 </tr>
 <tr>
 <td>Table row action</td>
-<td><code>ActionButton</code> or <code>RowActionButton</code></td>
+<td><code>BaseButton</code> (size="lg")</td>
 </tr>
 <tr>
 <td>Inline action (small)</td>
-<td><code>CompactActionButton</code></td>
+<td><code>BaseButton</code> (size="sm")</td>
 </tr>
 <tr>
 <td>Modal cancel/close</td>
@@ -19832,11 +19809,11 @@
 </tr>
 <tr>
 <td>Icon-only button with tooltip</td>
-<td><code>IconButton</code></td>
+<td><code>BaseButton</code> (<code>iconNode</code>, <code>tooltip</code>)</td>
 </tr>
 <tr>
 <td>Table toolbar (refresh, export, filter)</td>
-<td><code>ToolbarButton</code> or <code>IconButton</code></td>
+<td><code>BaseButton</code> (<code>variant="tertiary"</code>, <code>size="lg"</code>)</td>
 </tr>
 <tr>
 <td>Edit field in settings row</td>
@@ -19844,7 +19821,7 @@
 </tr>
 <tr>
 <td>Edit in card header</td>
-<td><code>EditButton</code></td>
+<td><code>BaseButton</code> (<code>iconNode</code>, <code>label</code>)</td>
 </tr>
 <tr>
 <td>Create with dialog</td>
@@ -19857,29 +19834,32 @@
 </tbody>
 </table>
 <h4 id="eslint-enforcement">ESLint Enforcement</h4>
-<p>Two rules cover the two ways a Bootstrap button reaches the tree.</p>
-<p><code>waldur-custom/no-direct-bootstrap-button</code> (<strong>error</strong>) catches the import —
-<code>import { Button } from 'react-bootstrap'</code>.</p>
-<p><code>waldur-custom/no-bootstrap-button-markup</code> (<strong>warning</strong>) catches the hand-rolled
+<p>Two mechanisms cover the two ways Bootstrap button styling reaches the tree.</p>
+<p>A plain <code>no-restricted-imports</code> entry (<strong>error</strong>, <code>eslint.config.js</code>'s
+<code>RESTRICTED_IMPORTS</code> array — the same mechanism already used to ban
+<code>Badge</code>/<code>Tooltip</code>/<code>OverlayTrigger</code>/<code>Popover</code>/<code>Alert</code> from <code>react-bootstrap</code>)
+catches direct imports — <code>import { Button } from 'react-bootstrap'</code> — for
+both <code>Button</code> and <code>DropdownButton</code>. It replaced two near-identical custom
+rules (<code>no-direct-bootstrap-button</code>, <code>no-direct-bootstrap-dropdown-button</code>)
+once their <code>ALLOWED_FILES</code> lists had shrunk to nothing: the migration's
+closing pass converted every remaining real <code>&lt;Button&gt;</code>/<code>&lt;DropdownButton&gt;</code>
+usage in the app, leaving zero call sites for either. A genuinely new
+exception belongs on the offending line as a standard
+<code>// eslint-disable-next-line no-restricted-imports -- &lt;reason&gt;</code>.</p>
+<p><code>waldur-custom/no-bootstrap-button-markup</code> (<strong>error</strong>) catches the hand-rolled
 form — <code>&lt;button className="btn btn-danger"&gt;</code> — which carries no import and so was
-invisible to the rule above. It is a warning rather than an error because the tree
-still holds well over a hundred of these and converting one is a per-screen
-judgement, not a mechanical swap; promote it to <code>error</code> once the count reaches zero.</p>
-<p>Each rule keeps its own <code>ALLOWED_FILES</code> list at the top of
-<code>packages/eslint-plugin-waldur/rules/</code>, and the two lists differ on purpose — the
-import rule additionally exempts files that reference <code>Button</code> only as a type or
-compose it with <code>ButtonGroup</code>/<code>Dropdown</code>, which says nothing about markup. The
-wrappers exempted from both are:</p>
-<ul>
-<li><code>src/core/buttons/BaseButton.tsx</code></li>
-<li><code>src/core/buttons/IconButton.tsx</code></li>
-<li><code>src/core/SaveButton.tsx</code></li>
-<li><code>src/modal/CloseDialogButton.tsx</code></li>
-<li><code>src/table/ToolbarButton.tsx</code></li>
-</ul>
-<p><code>src/core/Link.tsx</code> is exempt from the markup rule only: its <code>buttonVariant</code> prop is
-the sanctioned link-as-button, so the <code>btn</code> class it composes is the abstraction
-rather than an instance of the problem.</p>
+invisible to the import rule. The tree has no remaining instances and the rule
+has no allowlist: <code>Link</code> builds its button classes from <code>buttonVariants()</code> via
+its <code>buttonVariant</code> prop, and <code>LoginButton</code> and <code>AssistantComposer</code>'s Send button
+are plain <code>BaseButton</code>s (<code>BaseButton</code> is forwardRef, so it works under
+<code>assistant-ui</code>'s <code>asChild</code>).
+<code>src/table/ActionsDropdown.tsx</code>/<code>ActionDropdownButton.tsx</code>'s row-action dropdown
+toggles were the last remaining hand-rolled usage in the shared component
+layer (as opposed to the scattered app-level instances above) — Phase F3
+converted their toggle buttons onto <code>buttonVariants()</code> from waldur-ui, so
+they no longer trigger this rule at all. See that file's top-of-file comment
+for why the <em>menu panel</em> (<code>.dropdown-menu</code>/<code>.dropdown-item</code>) stayed on
+Bootstrap classes regardless — a separate axis from the toggle button.</p>
 <h2 id="key-directories">Key Directories</h2>
 <ul>
 <li><code>src/core/</code> - Shared utilities, API clients, and base components</li>
@@ -19945,8 +19925,9 @@ first paint, so the entry graph is kept deliberately small:</p>
   visitor on the application's own login page. Whether a session exists is
   decided from web storage in the script, since only the browser can see it.</li>
 <li><code>yarn build:check</code> (<code>scripts/bundle-budget.mjs</code>, run by the <code>Check cold-path
-  budget</code> CI job on every MR) fails when the entry script plus its <code>modulepreload</code>s exceed the
-  gzip budget, or when echarts, matrix-js-sdk, livekit-client, monaco-editor,
+  budget</code> CI job on every MR) fails when the entry script plus its
+  <code>modulepreload</code>s exceed the gzip budget, or when echarts, matrix-js-sdk,
+  livekit-client, monaco-editor,
   @mdxeditor/editor or mermaid appear in that set. Each of those is loaded
   lazily on purpose: <code>reporting/screens.ts</code> keeps the route flags chart-free,
   <code>MatrixRoot</code> lazy-loads <code>MatrixProviders</code>, <code>MatrixCallHost</code> lazy-loads the

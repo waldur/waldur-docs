@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-29T02:04:02.546084Z
+Generated: 2026-09-29T08:50:53.861786Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -67855,18 +67855,18 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 
 ## UI patterns
 
-| Guide                                                        | Covers                                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| [component-library.md](component-library.md)                 | Reusable UI components: buttons, modals, tables, filters — with prop references |
-| [ui-consistency-guidelines.md](ui-consistency-guidelines.md) | Empty states, buttons, loading indicators, tooltips, null-value display         |
-| [tables.md](tables.md)                                       | `useTable`, columns, filters, row actions, export                               |
-| [forms.md](forms.md)                                         | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection` |
-| [filter-migration-guide.md](table/filter-migration-guide.md)       | Generated table filters from the OpenAPI schema                                 |
-| [button-variant-linting.md](button-variant-linting.md)       | Design-token button variants and the ESLint rule enforcing them                 |
-| [theme.md](theme.md)                                         | Dark mode and theming, including third-party components                         |
-| [design-tokens.md](design-tokens.md)                         | Colour ramps as data: `tokens/colors.json`, the generator, what is and isn't generated |
-| [menu-navigation.md](menu-navigation.md)                     | Sidebar menu structure and state-based routing                                  |
-| [sidebar.md](sidebar.md)                                     | Sidebar navigation architecture, design tokens, components, and recipes        |
+| Guide                                                                    | Covers                                                                                                  |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| [component-library.md](component-library.md)                             | Reusable UI components: buttons, modals, tables, filters — with prop references                         |
+| [button-ui-guide.md](button-ui-guide.md)                                 | Comprehensive button UI guide: BaseButton, tokens, tooltips, toggles, segmented controls                |
+| [ui-consistency-guidelines.md](ui-consistency-guidelines.md)             | Empty states, buttons, loading indicators, tooltips, null-value display                                 |
+| [tables.md](tables.md)                                                   | `useTable`, columns, filters, row actions, export                                                       |
+| [forms.md](forms.md)                                                     | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection`                         |
+| [filter-migration-guide.md](table/filter-migration-guide.md)             | Generated table filters from the OpenAPI schema                                                         |
+| [theme.md](theme.md)                                                     | Dark mode and theming, including third-party components                                                 |
+| [design-tokens.md](design-tokens.md)                                     | Colour ramps as data: `tokens/colors.json`, the generator, what is and isn't generated                  |
+| [menu-navigation.md](menu-navigation.md)                                 | Sidebar menu structure and state-based routing                                                          |
+| [sidebar.md](sidebar.md)                                                 | Sidebar navigation architecture, design tokens, components, and recipes                                 |
 | [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md) | Bootstrap → Tailwind/shadcn migration: cascade layers, token extraction, visual-parity test methodology |
 
 ## API and data
@@ -67883,9 +67883,9 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 
 ## Deployment and infra
 
-| Guide                             | Covers                                                                              |
-| ---------------------------------- | ------------------------------------------------------------------------------------ |
-| [micro-apps.md](micro-apps.md)     | `apps/*` build/serve pipeline, `ASSET_PATH`, `waldur.deploy`, adding a new micro-app |
+| Guide                          | Covers                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------ |
+| [micro-apps.md](micro-apps.md) | `apps/*` build/serve pipeline, `ASSET_PATH`, `waldur.deploy`, adding a new micro-app |
 
 ## Localization and terminology
 
@@ -68336,30 +68336,22 @@ return <Component {...props} />;
 - **Presentation Components**: Pure UI components with props
 - **Form Components**: Specialized forms using React Final Form
 - **Table Components**: Reusable table infrastructure with filtering, sorting, pagination
-- **Button Components**: Unified button system wrapping Bootstrap for consistent UX
+- **Button Components**: Unified button system built on Tailwind/shadcn for consistent UX
 
 ### Button Component Architecture
 
-The application uses a unified button system that wraps Bootstrap Button to ensure consistent styling, behavior, and accessibility. **Direct Bootstrap Button imports are forbidden** - use the appropriate Waldur wrapper component instead.
+The application uses a unified button system to ensure consistent styling, behavior, and accessibility. **Direct Bootstrap Button imports and raw Bootstrap button markup are forbidden or deprecated** — use `BaseButton` (`waldur-ui`) or the appropriate specialized wrapper component instead.
+
+`BaseButton` (`waldur-ui`) is a from-scratch Tailwind/shadcn component, not a Bootstrap wrapper. It natively provides tooltips (with `tooltipSide`), loading states (`pending`), icon-only layout/padding resets, responsive sizing (`sm`, `md`, `lg`), and design token variants. The specialized wrappers in `src/` (`SubmitButton`, `CloseDialogButton`, `SaveButton`, etc.) compose `BaseButton` directly.
 
 ```text
-Bootstrap Button (internal only, wrapped by BaseButton)
+BaseButton (from 'waldur-ui' — Tailwind/shadcn, general purpose actions, size="sm" | "md" | "lg")
 │
-├── ActionButton (general purpose table/card actions)
-│   ├── RowActionButton (optimized for table rows)
-│   └── CompactActionButton (small variant for inline actions)
+├── SubmitButton (form submission, default size="lg", supports size="sm")
 │
-├── SubmitButton (form submission, large size)
-│   └── CompactSubmitButton (small forms, popovers)
-│
-├── EditButton (edit navigation/dialogs, large size)
-│   └── CompactEditButton (inline field editing)
+├── CompactEditButton (inline field editing)
 │
 ├── CloseDialogButton (modal cancel/close)
-│
-├── IconButton (icon-only with tooltip)
-│
-├── ToolbarButton (table/panel toolbars)
 │
 ├── SaveButton (form save with dirty state tracking)
 │
@@ -68371,48 +68363,49 @@ Bootstrap Button (internal only, wrapped by BaseButton)
 
 #### Button Selection Guide
 
-| Use Case | Component |
-|----------|-----------|
-| Form submit | `SubmitButton` |
-| Form submit in popover/compact form | `CompactSubmitButton` |
-| Table row action | `ActionButton` or `RowActionButton` |
-| Inline action (small) | `CompactActionButton` |
-| Modal cancel/close | `CloseDialogButton` |
-| Icon-only button with tooltip | `IconButton` |
-| Table toolbar (refresh, export, filter) | `ToolbarButton` or `IconButton` |
-| Edit field in settings row | `CompactEditButton` |
-| Edit in card header | `EditButton` |
-| Create with dialog | `CreateModalButton` |
-| Delete with confirmation | `DeleteButton` |
+| Use Case                                | Component                                                     |
+| --------------------------------------- | ------------------------------------------------------------- |
+| Form submit                             | `SubmitButton` (`size="lg"` default, `size="sm"` for compact) |
+| Table row action                        | `BaseButton` (size="lg")                                      |
+| Inline action (small)                   | `BaseButton` (size="sm")                                      |
+| Modal cancel/close                      | `CloseDialogButton`                                           |
+| Icon-only button with tooltip           | `BaseButton` (`iconNode`, `tooltip`)                          |
+| Table toolbar (refresh, export, filter) | `BaseButton` (`variant="tertiary"`, `size="lg"`)             |
+| Edit field in settings row              | `CompactEditButton`                                           |
+| Edit in card header                     | `BaseButton` (`iconNode`, `label`)                            |
+| Create with dialog                      | `CreateModalButton`                                           |
+| Delete with confirmation                | `DeleteButton`                                                |
 
 #### ESLint Enforcement
 
-Two rules cover the two ways a Bootstrap button reaches the tree.
+Two mechanisms cover the two ways Bootstrap button styling reaches the tree.
 
-`waldur-custom/no-direct-bootstrap-button` (**error**) catches the import —
-`import { Button } from 'react-bootstrap'`.
+A plain `no-restricted-imports` entry (**error**, `eslint.config.js`'s
+`RESTRICTED_IMPORTS` array — the same mechanism already used to ban
+`Badge`/`Tooltip`/`OverlayTrigger`/`Popover`/`Alert` from `react-bootstrap`)
+catches direct imports — `import { Button } from 'react-bootstrap'` — for
+both `Button` and `DropdownButton`. It replaced two near-identical custom
+rules (`no-direct-bootstrap-button`, `no-direct-bootstrap-dropdown-button`)
+once their `ALLOWED_FILES` lists had shrunk to nothing: the migration's
+closing pass converted every remaining real `<Button>`/`<DropdownButton>`
+usage in the app, leaving zero call sites for either. A genuinely new
+exception belongs on the offending line as a standard
+`// eslint-disable-next-line no-restricted-imports -- <reason>`.
 
-`waldur-custom/no-bootstrap-button-markup` (**warning**) catches the hand-rolled
+`waldur-custom/no-bootstrap-button-markup` (**error**) catches the hand-rolled
 form — `<button className="btn btn-danger">` — which carries no import and so was
-invisible to the rule above. It is a warning rather than an error because the tree
-still holds well over a hundred of these and converting one is a per-screen
-judgement, not a mechanical swap; promote it to `error` once the count reaches zero.
-
-Each rule keeps its own `ALLOWED_FILES` list at the top of
-`packages/eslint-plugin-waldur/rules/`, and the two lists differ on purpose — the
-import rule additionally exempts files that reference `Button` only as a type or
-compose it with `ButtonGroup`/`Dropdown`, which says nothing about markup. The
-wrappers exempted from both are:
-
-- `src/core/buttons/BaseButton.tsx`
-- `src/core/buttons/IconButton.tsx`
-- `src/core/SaveButton.tsx`
-- `src/modal/CloseDialogButton.tsx`
-- `src/table/ToolbarButton.tsx`
-
-`src/core/Link.tsx` is exempt from the markup rule only: its `buttonVariant` prop is
-the sanctioned link-as-button, so the `btn` class it composes is the abstraction
-rather than an instance of the problem.
+invisible to the import rule. The tree has no remaining instances and the rule
+has no allowlist: `Link` builds its button classes from `buttonVariants()` via
+its `buttonVariant` prop, and `LoginButton` and `AssistantComposer`'s Send button
+are plain `BaseButton`s (`BaseButton` is forwardRef, so it works under
+`assistant-ui`'s `asChild`).
+`src/table/ActionsDropdown.tsx`/`ActionDropdownButton.tsx`'s row-action dropdown
+toggles were the last remaining hand-rolled usage in the shared component
+layer (as opposed to the scattered app-level instances above) — Phase F3
+converted their toggle buttons onto `buttonVariants()` from waldur-ui, so
+they no longer trigger this rule at all. See that file's top-of-file comment
+for why the *menu panel* (`.dropdown-menu`/`.dropdown-item`) stayed on
+Bootstrap classes regardless — a separate axis from the toggle button.
 
 ## Key Directories
 
@@ -68490,8 +68483,9 @@ first paint, so the entry graph is kept deliberately small:
   visitor on the application's own login page. Whether a session exists is
   decided from web storage in the script, since only the browser can see it.
 - `yarn build:check` (`scripts/bundle-budget.mjs`, run by the `Check cold-path
-  budget` CI job on every MR) fails when the entry script plus its `modulepreload`s exceed the
-  gzip budget, or when echarts, matrix-js-sdk, livekit-client, monaco-editor,
+  budget` CI job on every MR) fails when the entry script plus its
+  `modulepreload`s exceed the gzip budget, or when echarts, matrix-js-sdk,
+  livekit-client, monaco-editor,
   @mdxeditor/editor or mermaid appear in that set. Each of those is loaded
   lazily on purpose: `reporting/screens.ts` keeps the route flags chart-free,
   `MatrixRoot` lazy-loads `MatrixProviders`, `MatrixCallHost` lazy-loads the
@@ -68519,154 +68513,836 @@ Waldur HomePort is a React-based web frontend for the Waldur MasterMind cloud or
 
 ---
 
-### Button Variant Linting Rule
-<!-- Source: docs/developer-guide/ui/button-variant-linting.md -->
+### Button UI & Design System Guide
+<!-- Source: docs/developer-guide/ui/button-ui-guide.md -->
 
-# Button Variant Linting Rule
+# Button UI & Design System Guide
 
-## Overview
+Comprehensive architectural reference, design system manual, and practical usage guide for all button UI in Waldur HomePort. This guide covers `BaseButton`, `buttonVariants()`, direct tooltip integration, design tokens, links styled as buttons, dropdown toggles, segmented controls, accessibility models, and linting guardrails.
 
-To ensure consistent use of design tokens and prevent regression to deprecated button styles, we've implemented a custom ESLint rule that enforces proper button variant usage throughout the codebase.
+---
 
-## Rule: `waldur-custom/enforce-button-variants`
+## Table of Contents
 
-This rule identifies and flags deprecated button variants and className patterns, suggesting modern design token alternatives.
+1. [Architecture & Design Philosophy](#1-architecture-design-philosophy)
+   - [Unified Button Engine](#unified-button-engine)
+   - [Integer Height System](#integer-height-system)
+   - [Inset Box-Shadow Border Mechanics](#inset-box-shadow-border-mechanics)
+   - [Transitions & Easing](#transitions-easing)
+   - [Focus Ring & Forced-Colors Accessibility](#focus-ring-forced-colors-accessibility)
+   - [Active State Press Dynamics](#active-state-press-dynamics)
+2. [The 12 Button Variants & Design Tokens](#2-the-12-button-variants-design-tokens)
+   - [Solid & Bordered Variants](#solid-bordered-variants)
+   - [Text Variants](#text-variants)
+   - [Design Token Architecture & Dark Theme Inversion](#design-token-architecture-dark-theme-inversion)
+   - [Complete Token Mapping Reference](#complete-token-mapping-reference)
+3. [Tooltips, Disabled States & Direct DOM Integration](#3-tooltips-disabled-states-direct-dom-integration)
+   - [Why `data-disabled` and Direct Tooltips Replace Wrapper Spans](#why-data-disabled-and-direct-tooltips-replace-wrapper-spans)
+   - [The `alwaysMount` Lifecycle Guarantee](#the-alwaysmount-lifecycle-guarantee)
+   - [Explaining Unavailable Actions (`disabledReason` vs `tooltip`)](#explaining-unavailable-actions-disabledreason-vs-tooltip)
+   - [Lint Enforcement: `enforce-disabled-button-tooltip`](#lint-enforcement-enforce-disabled-button-tooltip)
+4. [Icons, Typography & Loading States](#4-icons-typography-loading-states)
+   - [Phosphor Icon Integration](#phosphor-icon-integration)
+   - [Exact SVG Sizing via Standard Tailwind Classes](#exact-svg-sizing-via-standard-tailwind-classes)
+   - [Icon-Only Square Buttons](#icon-only-square-buttons)
+   - [Loading Spinner Mechanics (`pending`)](#loading-spinner-mechanics-pending)
+   - [Prohibition of `.svg-icon` Wrappers](#prohibition-of-svg-icon-wrappers)
+5. [Links Rendered as Buttons](#5-links-rendered-as-buttons)
+   - [Supported Link Props](#supported-link-props)
+   - [Text-Anchor Suppression](#text-anchor-suppression)
+   - [Specialized Entity Link Wrappers](#specialized-entity-link-wrappers)
+   - [Prohibited Link Button Patterns](#prohibited-link-button-patterns)
+6. [Dropdown & Menu Toggles](#6-dropdown-menu-toggles)
+   - [Why Action Toggles Use `buttonVariants()` Instead of `BaseButton`](#why-action-toggles-use-buttonvariants-instead-of-basebutton)
+   - [Caret Rotation Animation (`ButtonCaret`)](#caret-rotation-animation-buttoncaret)
+   - [Required Marker Classes (`dropdown-toggle`, `no-arrow`, `btn-icon`)](#required-marker-classes-dropdown-toggle-no-arrow-btn-icon)
+   - [Centralized Icon Sizing in Toggles](#centralized-icon-sizing-in-toggles)
+7. [Segmented Controls & View Switchers](#7-segmented-controls-view-switchers)
+   - [SegmentedControl vs. BaseButton](#segmentedcontrol-vs-basebutton)
+   - [Keyboard & Focus Model (Radix RadioGroup)](#keyboard-focus-model-radix-radiogroup)
+   - [Variants: `neutral` vs. `brand`](#variants-neutral-vs-brand)
+   - [Flexbox Alignment Safeguard (`self-center`)](#flexbox-alignment-safeguard-self-center)
+   - [Shared Styling with Real Tab Panels (`SigninForm`)](#shared-styling-with-real-tab-panels-signinform)
+8. [Convenience & Specialized Wrappers](#8-convenience-specialized-wrappers)
+   - [`SubmitButton`](#submitbutton)
+   - [`CloseDialogButton`](#closedialogbutton)
+   - [`CompactEditButton`](#compacteditbutton)
+   - [`SaveButton`](#savebutton)
+9. [Component Decision Matrix](#9-component-decision-matrix)
+10. [Linting Rules & Prohibited Anti-Patterns](#10-linting-rules-prohibited-anti-patterns)
+    - [ESLint Rules Matrix](#eslint-rules-matrix)
+    - [Converting Legacy Call Sites](#converting-legacy-call-sites)
+    - [Good vs. Bad Code Comparison](#good-vs-bad-code-comparison)
 
-### What it catches
+---
 
-#### Deprecated Button Variants
+## 1. Architecture & Design Philosophy
 
-- `btn-outline-default` → `tertiary`
-- `outline btn-outline-default` → `tertiary`
-- `outline` → `tertiary`
-- `light` → `tertiary`
-- `light-danger` → `danger`
-- `btn-light-danger` → `danger`
-- `active-light-danger` → `text-danger`
-- `btn-active-light-danger` → `text-danger`
-- `active-light-primary` → `text-secondary`
-- `btn-active-light-primary` → `text-secondary`
-- `active-secondary` → `text-primary`
-- `btn-active-secondary` → `text-primary`
-- `outline-danger` → `danger`
-- `btn-outline-danger` → `danger`
-- `outline-warning` → `warning`
-- `btn-outline-warning` → `warning`
+### Unified Button Engine
 
-#### Deprecated className patterns
+Waldur HomePort's button architecture is built on top of [Tailwind CSS v4](https://tailwindcss.com), [Radix UI primitives](https://www.radix-ui.com), and the design tokens engine. All legacy Bootstrap and Metronic `.btn` CSS rules have been removed from the application bundle.
 
-- `btn-outline-default`
-- `btn-active-light-danger`
-- `btn-active-light-primary`
-- `btn-active-secondary`
-- `btn-light-danger`
-- `btn-outline-danger`
-- `btn-outline-warning`
-- `btn-text-primary` (when used as className)
-- `btn-text-dark`
-- `btn-icon-danger`
-- `btn-icon-primary`
+Every button in the application is rendered either by:
 
-### Example violations
+1. `BaseButton` (`import { BaseButton } from 'waldur-ui'`), or
+2. `buttonVariants()` applied to elements that cannot be a `<button>` (e.g. router `<Link>`, custom Radix triggers).
+
+Both share the exact same [`class-variance-authority`](https://cva.style/docs) (`cva`) definition, ensuring identical typography, heights, paddings, state tokens, focus rings, and transitions across the entire codebase.
+
+### Integer Height System
+
+Buttons are implemented with exact, predictable pixel heights across three standardized tiers:
+
+| Size | Height   | Padding (`px` / `py`) | Typography & Line Height          | Corner Radius      | Icon Size                  | Default Context                                        |
+| :--- | :------- | :-------------------- | :-------------------------------- | :----------------- | :------------------------- | :----------------------------------------------------- |
+| `sm` | **28px** | `px-[8px] py-[4px]`   | `text-sm leading-5` (14px/20px)   | `rounded-md` (6px) | 16px (`size-4` wrapper)    | Table rows, filter bars, inline badges, popovers       |
+| `md` | **36px** | `px-[12px] py-[8px]`  | `text-sm leading-5` (14px/20px)   | `rounded-lg` (8px) | 20px (`size-5` wrapper)    | **Default size**. Page actions, card headers, toolbars |
+| `lg` | **44px** | `px-[16px] py-[10px]` | `text-base leading-6` (16px/24px) | `rounded-lg` (8px) | 20px (`size-5` wrapper)    | Form submissions, dialog footers, primary hero CTAs    |
+
+> [!NOTE]
+> The default size is `md` (36px). `BaseButton` and `buttonVariants()` default to `size="md"` when omitted.
+
+### Inset Box-Shadow Border Mechanics
+
+A standard CSS `border: 1px solid ...` participates in `border-box` layout calculation. Under a 13px root font size and fractional rem cascades, physical borders produced fractional heights (e.g. `43.97px` instead of `44px`), causing subpixel rasterization errors where 1px borders rendered blurry, uneven, or visually thicker depending on scroll position.
+
+To ensure pixel-perfect geometric heights across all operating systems and display densities, `BaseButton` uses an **inset box-shadow border**:
+
+```css
+/* Border rendered as an inner shadow */
+shadow-[inset_0_0_0_1px_var(--btn-<variant>-border)]
+```
+
+- Inset shadows do not expand outer box dimensions.
+- Dimensions remain clean integers (`28px`, `36px`, `44px`).
+- Variants without visible borders declare `shadow-[inset_0_0_0_1px_transparent]` to maintain identical layout geometry without layout shifting.
+
+### Transitions & Easing
+
+Tailwind's standard `transition-colors` utility animates `color`, `background-color`, and `border-color`, but does **not** animate `box-shadow`. Because the border is drawn via an inset box-shadow, standard transitions caused the border color to snap instantly while the background eased.
+
+`BaseButton` explicitly uses:
+
+```css
+transition-[color,background-color,box-shadow]
+```
+
+This guarantees that background colors and border outlines ease synchronously across `:hover`, `:focus-visible`, and `:active` states.
+
+### Focus Ring & Forced-Colors Accessibility
+
+Focus rings are rendered using native CSS outlines rather than outer box-shadows:
+
+```css
+focus-visible:[outline:2px_solid_var(--btn-<variant>-focus-ring)] focus-visible:[outline-offset:0px]
+```
+
+**Why native outline?**
+
+1. **Container resets**: Global reset rules or parent card containers applying `box-shadow: none !important` cannot suppress native outlines.
+2. **Forced-Colors / High-Contrast mode**: Windows High Contrast and assistive technologies honor native `outline` properties while often stripping `box-shadow`.
+3. **Clean mouse interaction**: `:focus-visible` ensures keyboard navigation displays an authoritative 2px focus indicator, while mouse clicks do not leave persistent rings.
+4. **Contrast compliance**: Focus rings for all variants (including `tertiary`) use brand or high-contrast error tokens to achieve a minimum 3:1 contrast ratio against light and dark backgrounds (WCAG 2.1 AA / 1.4.11 Non-text Contrast).
+
+### Active State Press Dynamics
+
+When a user triggers a button via the keyboard (<kbd>Enter</kbd> or <kbd>Space</kbd>), the button matches `:active` and `:focus-visible` simultaneously.
+
+- **`active:shadow-none`**: Clears the inset border shadow during press so it does not bleed through the active background fill.
+- **High-contrast text flip on vivid fills**: For `danger`, `warning`, and `success`, the active press state switches from a subtle tint to a vivid, saturated fill (`--btn-*-bg-pressed`). To preserve readability and contrast, the text color flips to crisp white:
+
+  ```css
+  active: text-[var(--btn-pressed-text-on-vivid)];
+  ```
+
+---
+
+## 2. The 12 Button Variants & Design Tokens
+
+Waldur HomePort defines 12 standard variants across two families:
+
+```typescript
+ButtonVariant =
+  | 'primary' | 'secondary' | 'tertiary' | 'tertiary-ghost'
+  | 'danger' | 'warning' | 'success'
+  | 'text-primary' | 'text-secondary' | 'text-danger' | 'text-warning' | 'text-success'
+```
+
+### Solid & Bordered Variants
+
+| Variant          | Purpose & Hierarchy                                  | Light Mode Appearance                                                                                                             | Active Press Appearance                         |
+| :--------------- | :--------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------- |
+| `primary`        | Main call-to-action on a page or dialog              | Solid brand fill (`brand-600`), white text                                                                                        | Darker brand fill (`brand-800`), shadow cleared |
+| `secondary`      | Supporting action complementary to primary           | Two-tone: brand tint (`brand-50`), brand border (`brand-300`), plum text (`brand-900`), and vibrant magenta icon (`brand-500`)    | Darker brand tint (`brand-300`), brand text     |
+| `tertiary`       | Default neutral button for tables, headers, toolbars | Solid white, subtle gray border (`gray-300`), dark gray text                                                                      | Light gray fill (`gray-100`), shadow cleared    |
+| `tertiary-ghost` | Low-emphasis action with no idle border              | Transparent background, tertiary text                                                                                             | Light gray fill (`gray-100`), shadow cleared    |
+| `danger`         | Destructive actions (Delete, Terminate, Revoke)      | Error tint (`error-50`), red border & text                                                                                        | Vivid red fill (`error-500`), white text        |
+| `warning`        | Cautionary actions requiring warning                 | Warning tint (`warning-50`), amber border & text                                                                                  | Vivid amber fill (`warning-600`), white text    |
+| `success`        | Confirmation / affirmative actions (Approve, Accept) | Success tint (`success-50`), green border & text                                                                                  | Vivid green fill (`success-500`), white text    |
+
+### Text Variants
+
+Text variants render with a transparent background and no border in their idle state. They are ideal for inline table actions, breadcrumb links, card headers, and compact secondary actions:
+
+| Variant          | Idle Styling                               | Hover State                                   | Active Press State                                                       |
+| :--------------- | :----------------------------------------- | :-------------------------------------------- | :----------------------------------------------------------------------- |
+| `text-primary`   | Brand text (`brand-700`), transparent bg   | Brand-tint hover (`brand-50`)                 | In light mode: stays `brand-700`<br>In dark mode: brightens to `gray-50` |
+| `text-secondary` | Gray text (`gray-700`), transparent bg     | Subtle gray hover (`gray-100`)                | Transparent bg, gray text                                                |
+| `text-danger`    | Red text (`error-700`), transparent bg     | Error-tint hover (`error-50`), red text       | Transparent bg, error text                                               |
+| `text-warning`   | Amber text (`warning-600`), transparent bg | Warning-tint hover (`warning-50`), amber text | Transparent bg, warning text                                             |
+| `text-success`   | Green text (`success-700`), transparent bg | Success-tint hover (`success-50`), green text | Transparent bg, success text                                             |
+
+### Design Token Architecture & Dark Theme Inversion
+
+All button colors are defined in `packages/design-tokens/src/buttonColors.css`. Zero button styling relies on Metronic SCSS or runtime Bootstrap mixins.
+
+1. **Brand-Reactive vs. Fixed Ramps**:
+   - `primary`, `secondary`, and `text-primary` derive directly from the runtime `--waldur-brand-*` palette (customizable per tenant/deployment).
+   - `danger`, `warning`, and `success` derive from static error/warning/success ramps.
+   - `tertiary` combines a neutral gray surface with a `--waldur-brand-600` focus ring to ensure WCAG 2.1 compliance on white surfaces.
+2. **Dark Mode Mechanics (`:root[data-theme='dark']`)**:
+   - In dark mode, buttons automatically map to inverted dark surfaces (`--color-gray-dark-*` and dark brand ramps).
+   - Solid buttons (`tertiary`, `secondary`) adopt deep dark surface colors (`gray-dark-950`, `brand-900`) with high-contrast text (`gray-dark-300`, `gray-dark-50`).
+   - Disabled states shift to `var(--color-gray-dark-800)` background with `var(--color-gray-dark-500)` text.
+
+### Complete Token Mapping Reference
+
+```css
+/* Core button token definitions from buttonColors.css */
+:root {
+  --btn-primary-bg: var(--waldur-brand-600);
+  --btn-primary-bg-hover: var(--waldur-brand-700);
+  --btn-primary-bg-pressed: var(--waldur-brand-800);
+  --btn-primary-text: #ffffff;
+  --btn-primary-focus-ring: var(--waldur-brand-600);
+
+  --btn-secondary-bg: var(--waldur-brand-50);
+  --btn-secondary-bg-hover: var(--waldur-brand-200);
+  --btn-secondary-bg-pressed: var(--waldur-brand-300);
+  --btn-secondary-border: var(--waldur-brand-300);
+  --btn-secondary-text: var(--waldur-brand-900);
+  --btn-secondary-icon: var(--waldur-brand-500);
+  --btn-secondary-focus-ring: var(--waldur-brand-600);
+
+  --btn-tertiary-bg: #ffffff;
+  --btn-tertiary-bg-hover: var(--color-gray-50);
+  --btn-tertiary-bg-pressed: var(--color-gray-100);
+  --btn-tertiary-border: var(--color-gray-300);
+  --btn-tertiary-text: var(--color-gray-700);
+  --btn-tertiary-focus-ring: var(--waldur-brand-600);
+
+  --btn-disabled-bg: var(--color-gray-100);
+  --btn-disabled-text: var(--color-gray-400);
+  --btn-pressed-text-on-vivid: #ffffff;
+}
+
+:root[data-theme='dark'] {
+  --btn-primary-focus-ring: var(--waldur-brand-500);
+
+  --btn-secondary-bg: var(--waldur-brand-900);
+  --btn-secondary-bg-hover: var(--waldur-brand-700);
+  --btn-secondary-bg-pressed: var(--waldur-brand-600);
+  --btn-secondary-border: var(--waldur-brand-400);
+  --btn-secondary-text: var(--color-gray-dark-50);
+  --btn-secondary-icon: var(--waldur-brand-400);
+  --btn-secondary-focus-ring: var(--waldur-brand-500);
+
+  --btn-tertiary-bg: var(--color-gray-dark-950);
+  --btn-tertiary-bg-hover: var(--color-gray-dark-900);
+  --btn-tertiary-bg-pressed: var(--color-gray-dark-700);
+  --btn-tertiary-border: var(--color-gray-dark-700);
+  --btn-tertiary-text: var(--color-gray-dark-300);
+  --btn-tertiary-focus-ring: var(--waldur-brand-500);
+
+  --btn-disabled-bg: var(--color-gray-dark-800);
+  --btn-disabled-text: var(--color-gray-dark-500);
+  --btn-pressed-text-on-vivid: var(--color-gray-dark-50);
+}
+```
+
+---
+
+## 3. Tooltips, Disabled States & Direct DOM Integration
+
+### Why `data-disabled` and Direct Tooltips Replace Wrapper Spans
+
+In legacy implementations, Tailwind/shadcn applied `disabled:pointer-events-none` to disabled buttons. However, `pointer-events: none` prevents the browser from firing `mouseenter` and `pointerover` events on `<button disabled>`. To make tooltips work on disabled buttons, libraries commonly introduced a workaround: wrapping the button in an extra `<span className="inline-block">`.
+
+**The wrapper `<span>` created severe architectural problems:**
+
+1. **Broken Flexbox Layouts**: Placing an intermediate `<span>` around the `<button>` intercepts flex parent rules. Classes like `align-self-center`, `self-end`, `w-100`, or `flex-1` applied to the button failed to affect the wrapper, requiring fragile class mirroring hacks.
+2. **DOM Identity & Mount Churn**: When a button toggled between enabled (no tooltip) and disabled (with tooltip), React saw different JSX trees (`<button>` vs `<Tooltip><span><button></span></Tooltip>`). React destroyed the old DOM node and mounted a brand new button, losing keyboard focus and breaking test handles.
+
+**The Modern Waldur Solution:**
+
+1. **Removed `disabled:pointer-events-none`** from `buttonVariants()`.
+2. **Added `disabled:cursor-not-allowed data-disabled:cursor-not-allowed`** to the base variants.
+3. **Added matching `data-disabled:*` styles** across all 12 variants.
+4. **Direct `<Tooltip>` wrapping**: `<BaseButton>` renders `<button>` directly inside `<Tooltip>` with **zero wrapper spans**:
 
 ```tsx
-// ❌ These will trigger linting errors
-<Button variant="btn-outline-default">Click me</Button>
-<Button variant="light-danger">Delete</Button>
-<Button className="btn btn-outline-default">Submit</Button>
-<button className="btn btn-active-light-danger">Remove</button>
+// Inside BaseButton.tsx
+const button = (
+  <button
+    ref={ref}
+    disabled={isDisabled}
+    data-disabled={isDisabled ? '' : undefined}
+    className={cn(buttonVariants({ variant, size, iconOnly }), className)}
+    {...rest}
+  >
+    {/* content */}
+  </button>
+);
 
-// ✅ These are correct
-<Button variant="tertiary">Click me</Button>
-<Button variant="danger">Delete</Button>
-<Button variant="tertiary">Submit</Button>
-<Button variant="text-danger">Remove</Button>
+return (
+  <Tooltip
+    label={effectiveTooltip}
+    side={tooltipSide}
+    alwaysMount={!!tooltip || !!disabledReason}
+  >
+    {button}
+  </Tooltip>
+);
 ```
 
-### Auto-fixing
+Because `pointer-events` remain enabled on `<button disabled>`, the native `<button>` receives hover events directly. Radix Tooltip fires effortlessly while the cursor correctly shows `not-allowed`.
 
-The rule provides automatic fixes for both `variant` props and many `className` patterns:
+### The `alwaysMount` Lifecycle Guarantee
 
-```bash
-yarn lint:fix
+`Tooltip` provides an `alwaysMount` prop (`packages/ui/src/Tooltip.tsx`). When a button specifies `tooltip` or `disabledReason`, `BaseButton` sets `alwaysMount={true}` on the `Tooltip`.
+
+- Even when the button is currently enabled and `effectiveTooltip` is `undefined`, `alwaysMount` ensures the Radix `Tooltip.Root` and `Tooltip.Trigger` remain mounted in the DOM tree.
+- When the button transitions to disabled (triggering `disabledReason`), the JSX tree structure remains 100% identical.
+- **The button is never unmounted or remounted.** Keyboard focus and DOM refs remain rock-solid across state transitions.
+
+### Explaining Unavailable Actions (`disabledReason` vs `tooltip`)
+
+| Prop             | Visibility                                     | Typical Use Case                                                                               |
+| :--------------- | :--------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| `disabledReason` | **Only visible when button is disabled**       | Explaining why an action is blocked (e.g., missing permissions, quota exceeded, invalid state) |
+| `tooltip`        | **Always visible** (both enabled and disabled) | Describing what the button does (standard for icon-only buttons)                               |
+
+```tsx
+// ✅ Explaining why an action is disabled
+<BaseButton
+  label={translate('Terminate resource')}
+  variant="danger"
+  disabled={!canTerminate}
+  disabledReason={translate('Only project administrators can terminate active resources')}
+  onClick={handleTerminate}
+/>
+
+// ✅ Icon-only button with permanent tooltip describing the action
+<BaseButton
+  iconNode={<TrashIcon weight="bold" />}
+  variant="danger"
+  size="sm"
+  tooltip={translate('Delete item')}
+  onClick={handleDelete}
+/>
 ```
 
-This will automatically convert:
+### Lint Enforcement: `enforce-disabled-button-tooltip`
 
-**Variant props:**
+To guarantee outstanding UX, the custom ESLint rule `waldur-custom/enforce-disabled-button-tooltip` runs as an **error** across the repository.
 
-- `variant="btn-outline-default"` → `variant="tertiary"`
-- `variant="light-danger"` → `variant="danger"`
-- And other mappings listed above
+Any `<BaseButton disabled={...}>` without a corresponding `disabledReason` or `tooltip` prop will fail CI linting:
 
-**ClassName props:**
+```tsx
+// ❌ FAILS LINT: User does not know why button is disabled
+<BaseButton disabled={!canEdit} label={translate('Edit')} />
 
-- `className="btn btn-outline-default"` → `className="btn btn-tertiary"`
-- `className="btn btn-active-light-danger"` → `className="btn btn-text-danger"`
-- `className="btn btn-text-primary btn-sm"` → `className="btn btn-sm"` (removes deprecated class)
-- And other simple replacements
-
-### Manual fixes required
-
-Some cases still require manual fixes:
-
-- Complex className expressions with template literals or variables
-- Classes mixed with non-standard button classes (e.g., `btn-outline-dashed`)
-- Conditional className logic
-
-## Design Token Button Variants
-
-### Primary Actions
-
-- `primary` - Main call-to-action buttons
-- `success` - Positive actions (save, submit, confirm)
-- `danger` - Destructive actions (delete, remove)
-- `warning` - Warning actions (pay invoice, etc.)
-
-### Secondary Actions
-
-- `tertiary` - Secondary actions, was `outline` or `btn-outline-default`
-- `text-primary` - Text-only primary actions
-- `text-secondary` - Text-only secondary actions
-- `text-danger` - Text-only destructive actions
-- `text-success` - Text-only positive actions
-
-### Special Purpose
-
-- `icon` - Icon-only buttons
-- `flush` - Buttons with no background/border
-
-## Benefits
-
-1. **Consistency** - Ensures all buttons use standardized design tokens
-2. **Maintainability** - Easier to update button styles globally
-3. **Prevention** - Catches deprecated patterns before they're committed
-4. **Guidance** - Provides clear suggestions for modern alternatives
-5. **Automation** - Auto-fixes 90%+ of violations to reduce manual work
-6. **Migration Support** - Helps transition from old button patterns to design tokens
-
-## Running the linter
-
-```bash
-# Check for violations
-yarn lint:check
-
-# Auto-fix what's possible
-yarn lint:fix
-
-# Check specific file
-yarn lint:check src/path/to/file.tsx
+// ✅ PASSES LINT: Reason clearly provided
+<BaseButton
+  disabled={!canEdit}
+  disabledReason={translate('You need edit permission')}
+  label={translate('Edit')}
+/>
 ```
 
-## Configuration
+---
 
-The rule is configured in `eslint.config.js` and the implementation is in `packages/eslint-plugin-waldur/rules/enforce-button-variants.js`.
+## 4. Icons, Typography & Loading States
 
-To modify the mappings or add new deprecated patterns, edit the constants at the top of the rule file:
+### Phosphor Icon Integration
 
-- `DEPRECATED_BUTTON_VARIANTS` - variant prop values to flag
-- `RECOMMENDED_VARIANTS` - mapping to modern alternatives
-- `DEPRECATED_CLASS_NAMES` - className patterns to flag
+Waldur HomePort uses `@phosphor-icons/react` with `weight="bold"` for button icons:
+
+```tsx
+import { PlusCircleIcon, TrashIcon, ArrowRightIcon } from '@phosphor-icons/react';
+
+// Leading icon (default)
+<BaseButton
+  label={translate('Create project')}
+  iconNode={<PlusCircleIcon weight="bold" />}
+  variant="primary"
+  size="lg"
+/>
+
+// Trailing icon
+<BaseButton
+  label={translate('Continue')}
+  iconNode={<ArrowRightIcon weight="bold" />}
+  iconRight
+  variant="primary"
+/>
+```
+
+### Exact SVG Sizing via Standard Tailwind Classes
+
+Phosphor icons render with `width="1em" height="1em"` by default. In a standard `<button>`, `1em` resolves against the button's font-size (14px on `sm`/`md`, 16px on `lg`), causing icons to look smaller than intended.
+
+`BaseButton` wraps `iconNode` in a dedicated container styled with standard Tailwind utility classes:
+
+```tsx
+// SVG sizing wrapper in BaseButton
+<span
+  className={cn(
+    'inline-flex shrink-0 items-center justify-center text-[var(--btn-icon-color,currentColor)]',
+    size === 'sm' ? 'size-4 [&>svg]:size-4' : 'size-5 [&>svg]:size-5',
+  )}
+>
+  {iconNode}
+</span>
+```
+
+**Why this architecture?**
+
+- Standard Tailwind classes: `size-4 [&>svg]:size-4` (16px) on `sm`, and `size-5 [&>svg]:size-5` (20px) on `md`/`lg`.
+- The child `[&>svg]:size-*` selector forces Phosphor icons past their intrinsic `1em` font-size sizing directly via static Tailwind utilities.
+- Clean DOM without inline `--icon-size` styles or custom CSS variable overhead.
+
+### Icon-Only Square Buttons
+
+When `label` is omitted and `iconNode` is supplied, `BaseButton` automatically activates `iconOnly: true`:
+
+- Padding is reset to `p-0`.
+- Dimensions are pinned to exact squares: `28px × 28px` (`sm`), `36px × 36px` (`md`), and `44px × 44px` (`lg`).
+- `aria-label` is automatically populated from `tooltip` or `disabledReason` if available.
+
+```tsx
+// 28px square icon-only button
+<BaseButton
+  iconNode={<PencilSimpleIcon weight="bold" />}
+  variant="tertiary"
+  size="sm"
+  tooltip={translate('Edit')}
+  onClick={onEdit}
+/>
+```
+
+### Loading Spinner Mechanics (`pending`)
+
+When `pending={true}`:
+
+1. The button is automatically disabled (`isDisabled = disabled || pending`).
+2. The regular icon is swapped for LoadingSpinner.
+3. The spinner applies `-me-[3.25px]` when a label is present to counteract the `gap-2` flex spacing, keeping the spinner positioned at the exact visual offset expected alongside the text.
+4. Button width remains visually balanced without layout jumps.
+
+```tsx
+<BaseButton
+  label={translate('Deploying...')}
+  pending={isDeploying}
+  variant="primary"
+  size="lg"
+/>
+```
+
+### Prohibition of `.svg-icon` Wrappers
+
+> [!CAUTION]
+> **Never wrap button icons in `.svg-icon`**.
+> Legacy Metronic stylesheets define `.svg-icon { fill: #A1A5B7 !important; }`. This rule beats `currentColor` and turns crisp white icons on primary buttons into a muddy gray. Always pass bare Phosphor icons directly to `iconNode`.
+
+---
+
+## 5. Links Rendered as Buttons
+
+When a user action triggers router navigation (changing the URL or transitioning states) rather than invoking a mutation or callback, it must be rendered as an `<a>` element for accessibility and standard browser behaviors (middle click, open in new tab).
+
+The application provides `src/core/Link.tsx`, which accepts button styling props and applies `buttonVariants()` to the underlying anchor:
+
+```tsx
+import { Link } from '@/core/Link';
+
+<Link
+  state="marketplace-offering-details"
+  params={{ uuid: offering.uuid }}
+  buttonVariant="primary"
+  buttonSize="md"
+>
+  {translate('View details')}
+</Link>;
+```
+
+### Supported Link Props
+
+- `buttonVariant`: Any `ButtonVariant` (`'primary'`, `'secondary'`, `'tertiary'`, etc.).
+- `buttonSize`: Any `ButtonSize` (`'sm'`, `'md'`, `'lg'`). Defaults to `'md'`.
+- `buttonIconOnly`: Boolean for square icon-only anchors.
+
+### Text-Anchor Suppression
+
+When `buttonVariant` is omitted, `Link` applies the default `.text-anchor` class (brand-colored underline text link). When `buttonVariant` is present, `Link` automatically suppresses `.text-anchor`, allowing `buttonVariants()` to control all colors.
+
+### Specialized Entity Link Wrappers
+
+All domain link wrappers forward `buttonVariant`, `buttonSize`, and `buttonIconOnly`:
+
+```tsx
+import { OrganizationLink } from '@/customer/OrganizationLink';
+import { ProjectLink } from '@/project/ProjectLink';
+
+<OrganizationLink
+  customer={customer}
+  buttonVariant="tertiary"
+  buttonSize="sm"
+/>;
+```
+
+### Prohibited Link Button Patterns
+
+```tsx
+// ❌ PROHIBITED: Hand-written legacy btn classes on Link
+<Link state="project.details" className="btn btn-primary btn-sm">
+  {translate('View')}
+</Link>
+
+// ❌ PROHIBITED: Native anchor with btn classes
+<a href="/login" className="btn btn-secondary">
+  {translate('Log in')}
+</a>
+
+// ✅ CORRECT: First-class buttonVariant prop
+<Link state="project.details" buttonVariant="primary" buttonSize="sm">
+  {translate('View')}
+</Link>
+```
+
+---
+
+## 6. Dropdown & Menu Toggles
+
+Action dropdown toggles—such as `TableDropdownToggle`, `AddDropdownToggle`, and `ActionDropdownButton.Toggle`—render dropdown triggers inside tables, card headers, and toolbars.
+
+### Why Action Toggles Use `buttonVariants()` Instead of `BaseButton`
+
+Action toggles render a direct `<button>` element styled with `buttonVariants({ variant, size })` rather than wrapping in `BaseButton`:
+
+```tsx
+// TableDropdownToggle renders raw button with buttonVariants()
+<button
+  ref={ref}
+  type="button"
+  className={cn(
+    buttonVariants({ variant, size }),
+    'dropdown-toggle no-arrow',
+    className,
+  )}
+  disabled={disabled}
+  data-disabled={disabled ? '' : undefined}
+  {...rest}
+>
+  {label || translate('Actions')}
+  <ButtonCaret size={size} />
+</button>
+```
+
+**Rationale:**
+
+1. **Direct Child Selector for Caret Animation**: The rotating caret animation is governed by:
+
+   ```css
+   .dropdown-toggle[data-state='open'] > .rotate-toggle-180 {
+     transform: rotate(180deg);
+   }
+   ```
+
+   `BaseButton` wraps its `iconNode` inside an intermediate `<span>` wrapper. That extra wrapper prevents the `> .rotate-toggle-180` child combinator from matching. Rendering a raw `<button>` with `buttonVariants({ variant, size })` and `<ButtonCaret size={size} />` ensures the caret remains a direct child.
+
+2. **Clean Radix Trigger Composition**: `RadixDropdownMenu.Trigger asChild` clones its immediate child, attaching ref and handlers. Rendering `<button>` directly ensures zero intermediate DOM layers.
+
+### Caret Rotation Animation (`ButtonCaret`)
+
+When a Radix dropdown opens, it injects `data-state="open"` onto the trigger button. `<ButtonCaret size={size} />` includes the `.rotate-toggle-180` class, which smoothly rotates the icon 180 degrees using CSS transitions.
+
+### Required Marker Classes (`dropdown-toggle`, `no-arrow`, `btn-icon`)
+
+Toggles retain three specific utility classes:
+
+- **`dropdown-toggle`**: Required for CSS caret rotation and for read-only view hiding rules (`table .dropdown-toggle { display: none !important }`).
+- **`no-arrow`**: Suppresses Bootstrap's legacy CSS `::after` caret pseudo-element, since toggles render an explicit Phosphor `CaretDownIcon`.
+- **`btn-icon`**: An inert marker used by read-only view stylesheets to hide icon-only toggles in panels and cards (`.dropdown-toggle.btn-icon { display: none }`).
+
+### Centralized Icon Sizing in Toggles
+
+Toggle buttons and standalone icons use the centralized sizing helper `getButtonIconSize(size)` and the `<ButtonCaret size={size} />` component from `waldur-ui`:
+
+- `16px` (`BUTTON_ICON_SIZES.sm`) for `size="sm"`
+- `20px` (`BUTTON_ICON_SIZES.lg`) for `size="md"` / `size="lg"`
+  This preserves exact alignment with standard `BaseButton` icons while inheriting the button's `currentColor`.
+
+---
+
+## 7. Segmented Controls & View Switchers
+
+When an interface presents mutually exclusive options that change what a view **shows** (filtering a table, toggling between card/list mode, switching chart date ranges) rather than navigating to a different page, use SegmentedControl (`packages/ui/src/SegmentedControl.tsx`).
+
+### SegmentedControl vs. BaseButton
+
+```tsx
+import { SegmentedControl } from 'waldur-ui';
+
+<SegmentedControl
+  value={viewMode}
+  onValueChange={setViewMode}
+  size="sm"
+  variant="neutral"
+  options={[
+    { value: 'table', label: <TableIcon weight="bold" /> },
+    { value: 'grid', label: <SquaresFourIcon weight="bold" /> },
+  ]}
+/>;
+```
+
+- **Do NOT** use a row of separate `BaseButton` components for view switching.
+- **Do NOT** use legacy `react-bootstrap` `ToggleButtonGroup` or `.btn-group` classes.
+
+### Keyboard & Focus Model (Radix RadioGroup)
+
+`SegmentedControl` is built on `@radix-ui/react-radio-group`:
+
+- Items have `role="radio"`, and the container has `role="radiogroup"`.
+- **Single Tab Stop**: <kbd>Tab</kbd> enters the group directly at the currently selected option and leaves in one step.
+- **Arrow Navigation**: Arrow keys (<kbd>←</kbd> / <kbd>→</kbd>) move focus **and automatically select** the target option.
+- Numeric options round-trip cleanly through Radix strings back to their typed numbers.
+
+### Variants: `neutral` vs. `brand`
+
+| Variant             | Idle Segments                     | Selected Segment                                        | Typical Context                                                  |
+| :------------------ | :-------------------------------- | :------------------------------------------------------ | :--------------------------------------------------------------- |
+| `neutral` (default) | Solid white (`--btn-tertiary-bg`) | Tertiary pressed gray (`--btn-tertiary-bg-pressed`)     | Secondary view switchers in toolbars and table headers           |
+| `brand`             | Light brand tint                  | Primary brand fill (`--btn-primary-bg`) with white text | Primary page-level switchers (e.g. reporting period, chart mode) |
+
+### Flexbox Alignment Safeguard (`self-center`)
+
+In `segmentedStyles.ts`, the control list declares:
+
+```css
+inline-flex self-center
+```
+
+Under flexbox's default `align-items: stretch`, a control placed in a flex row alongside taller siblings (e.g. an input or search field) would stretch vertically, corrupting its intended button height. `self-center` guarantees the control strictly retains its 28px/36px/44px height regardless of surrounding elements.
+
+### Shared Styling with Real Tab Panels (`SigninForm`)
+
+When options own full tab panels, use Radix `Tabs` rather than `SegmentedControl`. However, import `segmentedListClassName` and `segmentedItemClassName` from `waldur-ui` to style the `Tabs.List` and `Tabs.Trigger` elements so they visually match `SegmentedControl` identically.
+
+---
+
+## 8. Convenience & Specialized Wrappers
+
+Waldur provides specialized button wrappers for standard application patterns. All of them internally render `BaseButton`:
+
+### `SubmitButton`
+
+Location: `src/form/SubmitButton.tsx`
+
+Used for submitting forms.
+
+- **Defaults to large size (`size="lg"`, 44px)**. Pass `size="sm"` for compact popovers or inline forms.
+- **Pending state (`submitting`)**: Shows `<LoadingSpinner />` and disables the button.
+- **Form invalidation (`invalid`)**: Disables the button when form validation fails.
+- **`iconNode` & `iconOnLeft`**: Defaults to trailing icon; pass `iconOnLeft={true}` for leading icons.
+- **Associating with external forms**: Supports `form="form-id"` for submission buttons rendered in dialog footers outside the `<form>` DOM tree.
+
+```tsx
+import { SubmitButton } from '@/form';
+
+<SubmitButton
+  submitting={submitting}
+  disabled={invalid || !dirty}
+  label={translate('Save changes')}
+/>;
+```
+
+### `CloseDialogButton`
+
+Location: `src/modal/CloseDialogButton.tsx`
+
+Used as the standard dismiss/cancel button in modal dialog footers.
+
+- **Defaults to `variant="tertiary"` and `size="lg"` (44px)**.
+- Automatically connects to `useModal().closeDialog()`.
+- Default label is `translate('Cancel')`.
+
+```tsx
+import { CloseDialogButton } from '@/modal/CloseDialogButton';
+
+// Standard dialog footer
+<ModalFooter>
+  <CloseDialogButton />
+  <SubmitButton submitting={submitting} label={translate('Create')} />
+</ModalFooter>;
+```
+
+### `CompactEditButton`
+
+Location: `src/form/CompactEditButton.tsx`
+
+Used for inline editing in key-value tables and settings rows.
+
+- **Fixed `size="sm"` (28px)**.
+- Renders `PencilSimpleIcon` with `variant="tertiary"`.
+- Prevents layout bloat in tight table cells.
+
+```tsx
+import { CompactEditButton } from '@/form/CompactEditButton';
+
+<CompactEditButton onClick={() => setEditing(true)} />;
+```
+
+### `SaveButton`
+
+Location: `src/core/SaveButton.tsx`
+
+Used in forms that track dirty/unsaved state.
+
+- Automatically switches to `variant="warning"` and shows an unsaved notification badge when `dirty={true}`.
+- Wraps in a tooltip explaining unsaved changes.
+
+---
+
+## 9. Component Decision Matrix
+
+| Scenario / Use Case              | Component           | Variant                        | Size                       | Notes                                    |
+| :------------------------------- | :------------------ | :----------------------------- | :------------------------- | :--------------------------------------- |
+| **Primary Page Action**          | `BaseButton`        | `primary`                      | `md` (36px) or `lg` (44px) | Top-right page header actions            |
+| **Modal Submission**             | `SubmitButton`      | `primary`                      | `lg` (44px)                | Rightmost button in modal footer         |
+| **Modal Cancel / Dismiss**       | `CloseDialogButton` | `tertiary`                     | `lg` (44px)                | Leftmost button in modal footer          |
+| **Destructive Action**           | `BaseButton`        | `danger`                       | Contextual                 | Use `disabledReason` if deletion blocked |
+| **Table Row Action (Text)**      | `BaseButton`        | `tertiary` or `text-secondary` | `sm` (28px)                | Fits within 36px table row height        |
+| **Table Row Action (Icon)**      | `BaseButton`        | `tertiary` or `text-secondary` | `sm` (28px)                | Provide `tooltip`                        |
+| **Table Actions Dropdown**       | `ActionsDropdown`   | `tertiary`                     | `lg` (44px)                | Uses `TableDropdownToggle` trigger       |
+| **Table Toolbar Filter/Refresh** | `BaseButton`        | `tertiary`                     | `lg` (44px)                | Standard table control height            |
+| **Inline Form / Popover Submit** | `SubmitButton`      | `primary`                      | `sm` (28px)                | Compact form contexts                    |
+| **Key-Value Row Edit**           | `CompactEditButton` | `tertiary`                     | `sm` (28px)                | Inline field editing                     |
+| **Page / State Navigation**      | `Link`              | `buttonVariant="primary"`      | `md` (36px)                | Keeps routing anchor semantics           |
+| **View / Mode Switcher**         | `SegmentedControl`  | `neutral` or `brand`           | `sm` (28px) or `md` (36px) | Mutually exclusive view options          |
+
+---
+
+## 10. Linting Rules & Prohibited Anti-Patterns
+
+### ESLint Rules Matrix
+
+| ESLint Rule                                     | Severity | What It Enforces                                                                                                                                                          |
+| :---------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `no-restricted-imports`                         | `error`  | Blocks importing `Button` or `DropdownButton` from `react-bootstrap`. Directs developers to `BaseButton`, `SubmitButton`, `CloseDialogButton`, or `ActionDropdownButton`. |
+| `waldur-custom/no-bootstrap-button-markup`      | `error`  | Blocks `<button className="btn ...">`, `<a className="btn ...">`, and any hand-rolled Bootstrap button markup.                                                            |
+| `waldur-custom/enforce-disabled-button-tooltip` | `error`  | Enforces that every disabled `<BaseButton>` has a `tooltip` or `disabledReason` explaining why the action is unavailable.                                                 |
+| `waldur-custom/enforce-dialog-button-order`     | `error`  | Enforces standard dialog button order: dismissive buttons (`CloseDialogButton`) on the left, affirmative/submission buttons (`SubmitButton`) on the right.                |
+| `waldur-custom/no-edit-button-size-override`    | `error`  | Blocks overriding `size="sm"` on `EditButton`; requires using `CompactEditButton` instead.                                                                                |
+
+### Converting Legacy Call Sites
+
+| From                                                                | To                                                                                                                                                                      |
+| :------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `react-bootstrap` `Button`, `<button className="btn btn-x btn-sm">` | `<BaseButton variant="…" size="sm" label={…} />`                                                                                                                        |
+| `<a className="btn …">` / `Link` with `btn` classes                 | `<Link buttonVariant="…" buttonSize="…">`                                                                                                                               |
+| `ToggleButtonGroup`, `btn-group` + `btn-check`                      | `SegmentedControl`                                                                                                                                                      |
+| `ButtonGroup` of unrelated actions                                  | `<div className="d-flex gap-2">` of `BaseButton`s                                                                                                                       |
+| Radix `Trigger asChild` around a button                             | `BaseButton` directly (it is `forwardRef`); use a raw element + `buttonVariants()` only when the trigger's child must have a specific DOM shape (see `ActionsDropdown`) |
+| HTML built as a string (chart tooltips)                             | `class="${buttonVariants({ variant, size })}"`                                                                                                                          |
+| `disabled` with no explanation                                      | Add `disabledReason`                                                                                                                                                    |
+| `.svg-icon` / font icon inside the button                           | `iconNode={<PhosphorIcon weight="bold" />}`                                                                                                                             |
+
+**Rules of thumb when converting:**
+
+1. **Do not carry `btn-*` classes across**: Legacy Bootstrap/Metronic CSS rules were compound with `.btn` (`.btn.btn-sm`, `.btn.btn-icon`), so carrying `btn-sm`, `btn-icon`, `btn-active-icon-danger` or similar on an element without the literal `.btn` class never matched anything. Pick first-class `variant` and `size` props instead.
+2. **Verify replacement in place**: Old rules often had container-level minimum heights or widths that stopped applying when converted to `BaseButton`. If a converted button looks smaller than before, set `size` explicitly (`sm`, `md`, `lg`).
+
+### Good vs. Bad Code Comparison
+
+#### 1. Button Imports & Wrappers
+
+```tsx
+// ❌ BAD: Legacy react-bootstrap button
+import { Button } from 'react-bootstrap';
+<Button variant="primary">Submit</Button>
+
+// ❌ BAD: Hand-written Bootstrap classes
+<button className="btn btn-primary btn-sm">Submit</button>
+
+// ✅ GOOD: Standard BaseButton
+import { BaseButton } from 'waldur-ui';
+<BaseButton variant="primary" size="md" label={translate('Submit')} />
+```
+
+#### 2. Disabled State Explanations
+
+```tsx
+// ❌ BAD: Silent disabled state (fails ESLint)
+<BaseButton disabled={!canEdit} label={translate('Edit')} />
+
+// ✅ GOOD: Explanation provided via disabledReason
+<BaseButton
+  disabled={!canEdit}
+  disabledReason={translate('You do not have permission to edit this item')}
+  label={translate('Edit')}
+/>
+```
+
+#### 3. Icons in Buttons
+
+```tsx
+// ❌ BAD: Metronic svg-icon wrapper (ruins icon color contrast)
+<BaseButton
+  label={translate('Delete')}
+  iconNode={<span className="svg-icon"><TrashIcon /></span>}
+/>
+
+// ✅ GOOD: Bare Phosphor icon passed directly
+<BaseButton
+  label={translate('Delete')}
+  iconNode={<TrashIcon weight="bold" />}
+/>
+```
+
+#### 4. Links as Buttons
+
+```tsx
+// ❌ BAD: Anchor with legacy btn class
+<Link state="project.create" className="btn btn-primary">
+  {translate('Create')}
+</Link>
+
+// ✅ GOOD: First-class buttonVariant prop
+<Link state="project.create" buttonVariant="primary" buttonSize="md">
+  {translate('Create')}
+</Link>
+```
+
+#### 5. Mutually Exclusive Switchers
+
+```tsx
+// ❌ BAD: Row of separate BaseButtons as tabs/switchers
+<div className="d-flex">
+  <BaseButton variant={active === 'day' ? 'primary' : 'tertiary'} label="Day" />
+  <BaseButton variant={active === 'week' ? 'primary' : 'tertiary'} label="Week" />
+</div>
+
+// ✅ GOOD: Accessible SegmentedControl with arrow-key navigation
+<SegmentedControl
+  value={period}
+  onValueChange={setPeriod}
+  options={[
+    { value: 'day', label: translate('Day') },
+    { value: 'week', label: translate('Week') },
+  ]}
+/>
+```
 
 ---
 
@@ -68839,66 +69515,77 @@ The application features a comprehensive set of reusable UI components organized
 
 ### Button Components
 
-The application uses a unified button system. **Never import Bootstrap Button directly** - use the appropriate Waldur wrapper component.
+The application uses a unified button system built on Tailwind v4 and Radix UI. **Never import Bootstrap Button directly** - use the appropriate Waldur wrapper component.
+
+> [!TIP]
+> See the authoritative [Button UI Guide](button-ui-guide.md) for full architectural documentation, design token tables, direct tooltip integration, dropdown toggles, and accessibility specifications.
 
 #### Core Button Components
 
-| Component               | Location                            | Description                    | Key Features                                                                   |
-| ----------------------- | ----------------------------------- | ------------------------------ | ------------------------------------------------------------------------------ |
-| **ActionButton**        | `src/table/ActionButton.tsx`        | General purpose action button  | Tooltip, loading state, icon support, multiple variants                        |
-| **RowActionButton**     | `src/table/ActionButton.tsx`        | Optimized for table rows       | Smaller touch target, row context                                              |
-| **CompactActionButton** | `src/table/CompactActionButton.tsx` | Small inline actions           | Compact size for tight spaces                                                  |
-| **SubmitButton**        | `src/form/SubmitButton.tsx`         | Form submission                | Loading spinner, disabled states, large size                                   |
-| **CompactSubmitButton** | `src/form/CompactSubmitButton.tsx`  | Compact form submission        | Small size for popovers/inline forms                                           |
-| **EditButton**          | `src/form/EditButton.tsx`           | Edit navigation/dialogs        | Large size, edit icon                                                          |
-| **CompactEditButton**   | `src/form/CompactEditButton.tsx`    | Edit button for key-value rows | Used in key-value component where label and edit button appear in the same row |
-| **CloseDialogButton**   | `src/modal/CloseDialogButton.tsx`   | Modal cancel/close             | Auto-closes dialog, customizable label                                         |
-| **IconButton**          | `src/core/buttons/IconButton.tsx`   | Icon-only with tooltip         | Required tooltip for accessibility                                             |
-| **ToolbarButton**       | `src/table/ToolbarButton.tsx`       | Table/panel toolbars           | Badge support, consistent toolbar styling                                      |
-| **SaveButton**          | `src/core/SaveButton.tsx`           | Form save with dirty state     | Tracks form changes, conditional visibility                                    |
+| Component             | Location                          | Description                    | Key Features                                                                                   |
+| --------------------- | --------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **BaseButton**        | `waldur-ui`                       | General purpose action button  | Direct Tooltip, loading spinner, icon support, 12 variants, sizes (`sm`, `md` [default], `lg`) |
+| **SubmitButton**      | `src/form/SubmitButton.tsx`       | Form submission                | Loading spinner, disabled states, large size (`lg` default, `sm` for compact)                  |
+| **CompactEditButton** | `src/form/CompactEditButton.tsx`  | Edit button for key-value rows | Used in key-value component where label and edit button appear in the same row                 |
+| **CloseDialogButton** | `src/modal/CloseDialogButton.tsx` | Modal cancel/close             | Auto-closes dialog, customizable label, large size (`lg` default)                              |
+| **SaveButton**        | `src/core/SaveButton.tsx`         | Form save with dirty state     | Tracks form changes, dirty badge indicator, conditional visibility                             |
+| **SegmentedControl**  | `waldur-ui`                       | View switcher (a lens)         | Radix RadioGroup: arrows select, one tab stop; `segmentedItemClassName` styles `Tabs.Trigger`  |
 
 #### Button Selection Guide
 
-| Use Case                               | Component                           | Size |
-| -------------------------------------- | ----------------------------------- | ---- |
-| Form submit                            | `SubmitButton`                      | `lg` |
-| Form submit in popover/inline form     | `CompactSubmitButton`               | `sm` |
-| Table row action                       | `ActionButton` or `RowActionButton` | `lg` |
-| Inline action in tight spaces          | `CompactActionButton`               | `sm` |
-| Modal cancel/close                     | `CloseDialogButton`                 | `lg` |
-| Icon-only button                       | `IconButton`                        | —    |
-| Table toolbar buttons                  | `ToolbarButton` or `IconButton`     | —    |
-| Edit button in key-value component row | `CompactEditButton`                 | `sm` |
-| Edit in card/panel header              | `EditButton`                        | `lg` |
-| Create with dialog                     | `CreateModalButton`                 | `lg` |
+| Use Case                               | Component                            | Size                 |
+| -------------------------------------- | ------------------------------------ | -------------------- |
+| Form submit                            | `SubmitButton`                       | `lg`                 |
+| Form submit in popover/inline form     | `SubmitButton`                       | `sm`                 |
+| Table row action                       | `BaseButton`                         | `sm`                 |
+| Inline action in tight spaces          | `BaseButton`                         | `sm`                 |
+| Modal cancel/close                     | `CloseDialogButton`                  | `lg`                 |
+| Icon-only button with tooltip          | `BaseButton` (`iconNode`, `tooltip`) | `sm` \| `md` \| `lg` |
+| Table toolbar buttons                  | `BaseButton` (`tertiary`)            | `lg`                 |
+| Edit button in key-value component row | `CompactEditButton`                  | `sm`                 |
+| Edit in card/panel header              | `BaseButton` (`iconNode`, `label`)   | `sm` \| `md`         |
+| Create with dialog                     | `CreateModalButton`                  | `lg`                 |
 
-#### ActionButton Usage
+#### BaseButton Usage
 
 ```tsx
-import { ActionButton } from '@/table/ActionButton';
+import { BaseButton } from 'waldur-ui';
 
 // Basic usage
-<ActionButton
-  title={translate('Edit')}
-  action={() => handleEdit()}
+<BaseButton
+  label={translate('Edit')}
+  onClick={() => handleEdit()}
   iconNode={<PencilIcon weight="bold" />}
+  variant="tertiary"
+  size="lg"
 />
 
 // With loading state
-<ActionButton
-  title={translate('Save')}
-  action={handleSave}
+<BaseButton
+  label={translate('Save')}
+  onClick={handleSave}
   pending={isSaving}
   variant="primary"
+  size="lg"
 />
 
 // Disabled with tooltip
-<ActionButton
-  title={translate('Delete')}
-  action={handleDelete}
+<BaseButton
+  label={translate('Delete')}
+  onClick={handleDelete}
   disabled={!canDelete}
   tooltip={!canDelete ? translate('Cannot delete active item') : undefined}
   variant="danger"
+  size="lg"
+/>
+
+// Icon-only button with tooltip (sm, md, or lg)
+<BaseButton
+  iconNode={<TrashIcon weight="bold" />}
+  tooltip={translate('Delete')}
+  onClick={handleDelete}
+  variant="danger"
+  size="sm"
 />
 ```
 
@@ -68942,27 +69629,6 @@ import { CloseDialogButton } from '@/modal/CloseDialogButton';
 
 // With custom handler
 <CloseDialogButton onClick={handleCancel} disabled={submitting} />
-```
-
-#### IconButton Usage
-
-```tsx
-import { IconButton } from '@/core/buttons/IconButton';
-
-// Toolbar refresh button
-<IconButton
-  iconNode={<ArrowsClockwiseIcon weight="bold" />}
-  tooltip={translate('Refresh')}
-  onClick={handleRefresh}
-/>
-
-// With pending state
-<IconButton
-  iconNode={<DownloadIcon weight="bold" />}
-  tooltip={translate('Export')}
-  onClick={handleExport}
-  pending={isExporting}
-/>
 ```
 
 ### Modal and Dialog Components
@@ -69063,7 +69729,7 @@ export const MyEditButton = ({ row, refetch }) => (
 | ------------------------- | ------------------------------------ | ------------------ | ------------------------------- |
 | **CopyToClipboard**       | `src/core/CopyToClipboard.tsx`       | Copy functionality | Click to copy, success feedback |
 | **CopyToClipboardButton** | `src/core/CopyToClipboardButton.tsx` | Copy button        | Icon button, tooltip            |
-| **Tooltip**               | `src/core/Tooltip.tsx`               | Tooltip wrapper    | Help text, positioning          |
+| **Tooltip**               | `packages/ui/src/Tooltip.tsx`        | Tooltip wrapper    | Help text, positioning          |
 | **ProgressSteps**         | `src/wizard/ProgressSteps.tsx`       | Step indicator     | Multi-step processes, progress  |
 
 ## Component Design Principles
@@ -69419,47 +70085,28 @@ Prop tables extracted from TypeScript interfaces. Use these to generate correct 
 
 ### Buttons
 
-#### ActionButton
+#### BaseButton
 
 ```ts
-import { ActionButton } from '@/table/ActionButton';
+import { BaseButton } from 'waldur-ui';
 ```
 
-| Prop          | Type                                       | Required | Default      | Description                                        |
-| ------------- | ------------------------------------------ | -------- | ------------ | -------------------------------------------------- |
-| `action`      | `(event?: any) => void`                    | yes      | —            | Click handler                                      |
-| `title`       | `string`                                   | no       | —            | Button label text                                  |
-| `iconNode`    | `ReactNode`                                | no       | —            | Icon to display                                    |
-| `iconRight`   | `boolean`                                  | no       | `false`      | Place icon on the right instead of left            |
-| `variant`     | `string`                                   | no       | `'tertiary'` | Design token button variant                        |
-| `disabled`    | `boolean`                                  | no       | `false`      | Disabled state                                     |
-| `tooltip`     | `string`                                   | no       | —            | Tooltip text. **REQUIRED when `disabled` is true** |
-| `pending`     | `boolean`                                  | no       | `false`      | Shows spinner and disables button                  |
-| `className`   | `string`                                   | no       | —            | Additional CSS classes                             |
-| `visibility`  | `{ minWidth?: number; maxWidth?: number }` | no       | —            | Responsive visibility constraints                  |
-| `data-testid` | `string`                                   | no       | —            | Test ID attribute                                  |
+General purpose action button supporting direct Tooltip integration, loading state, icons, 12 variants, and integer sizing (`sm`, `md`, or `lg`). See the comprehensive [Button UI Guide](button-ui-guide.md).
 
----
-
-#### CompactActionButton
-
-```ts
-import { CompactActionButton } from '@/table/CompactActionButton';
-```
-
-Same props as `ActionButton` (without `visibility`). Use for tight spaces — renders at `sm` size.
-
-| Prop        | Type                    | Required | Default      | Description                                        |
-| ----------- | ----------------------- | -------- | ------------ | -------------------------------------------------- |
-| `action`    | `(event?: any) => void` | yes      | —            | Click handler                                      |
-| `title`     | `string`                | no       | —            | Button label text                                  |
-| `iconNode`  | `ReactNode`             | no       | —            | Icon to display                                    |
-| `iconRight` | `boolean`               | no       | `false`      | Place icon on the right instead of left            |
-| `variant`   | `string`                | no       | `'tertiary'` | Design token button variant                        |
-| `disabled`  | `boolean`               | no       | `false`      | Disabled state                                     |
-| `tooltip`   | `string`                | no       | —            | Tooltip text. **REQUIRED when `disabled` is true** |
-| `pending`   | `boolean`               | no       | `false`      | Shows spinner and disables button                  |
-| `className` | `string`                | no       | —            | Additional CSS classes                             |
+| Prop             | Type                    | Required | Default | Description                                                                  |
+| ---------------- | ----------------------- | -------- | ------- | ---------------------------------------------------------------------------- |
+| `label`          | `ReactNode`             | no       | —       | Button label text                                                            |
+| `onClick`        | `(event?: any) => void` | no       | —       | Click handler                                                                |
+| `iconNode`       | `ReactNode`             | no       | —       | Icon to display                                                              |
+| `iconRight`      | `boolean`               | no       | `false` | Place icon on the right instead of left                                      |
+| `variant`        | `ButtonVariant`         | no       | —       | Design token button variant (`tertiary`, `primary`, …)                       |
+| `size`           | `'sm' \| 'md' \| 'lg'`  | no       | `'md'`  | Button size: `sm` (28px), `md` (36px, default), or `lg` (44px)               |
+| `disabled`       | `boolean`               | no       | `false` | Disabled state                                                               |
+| `tooltip`        | `ReactNode`             | no       | —       | Tooltip text. **REQUIRED when `disabled` is true** (or use `disabledReason`) |
+| `disabledReason` | `ReactNode`             | no       | —       | Tooltip shown only when button is disabled                                   |
+| `pending`        | `boolean`               | no       | `false` | Shows spinner and disables button                                            |
+| `className`      | `string`                | no       | —       | Additional CSS classes                                                       |
+| `data-testid`    | `string`                | no       | —       | Test ID attribute                                                            |
 
 ---
 
@@ -69469,124 +70116,23 @@ Same props as `ActionButton` (without `visibility`). Use for tight spaces — re
 import { SubmitButton } from '@/form';
 ```
 
-| Prop         | Type                                                   | Required | Default     | Description                                   |
-| ------------ | ------------------------------------------------------ | -------- | ----------- | --------------------------------------------- |
-| `submitting` | `boolean`                                              | yes      | —           | Shows spinner and disables button while true  |
-| `label`      | `ReactNode`                                            | no       | —           | Button label text                             |
-| `children`   | `ReactNode`                                            | no       | —           | Alternative to `label`                        |
-| `variant`    | `string`                                               | no       | `'primary'` | Design token button variant                   |
-| `disabled`   | `boolean`                                              | no       | `false`     | Disabled state independent of `submitting`    |
-| `invalid`    | `boolean`                                              | no       | `false`     | Disables button when form is invalid          |
-| `type`       | `'submit' \| 'button'`                                 | no       | `'submit'`  | Button type                                   |
-| `onClick`    | `(event: React.MouseEvent<HTMLButtonElement>) => void` | no       | —           | Click handler                                 |
-| `iconNode`   | `ReactNode`                                            | no       | —           | Icon to display                               |
-| `iconOnLeft` | `boolean`                                              | no       | `false`     | Place icon on the left (default is right)     |
-| `id`         | `string`                                               | no       | —           | HTML id attribute                             |
-| `form`       | `string`                                               | no       | —           | Associates button with a form by id           |
-| `className`  | `string`                                               | no       | —           | Additional CSS classes                        |
-| `data-*`     | `string`                                               | no       | —           | Any `data-` attribute for testing/integration |
-
----
-
-#### CompactSubmitButton
-
-```ts
-import { CompactSubmitButton } from '@/form';
-```
-
-Same props as `SubmitButton` (without `form`). Renders at `sm` size — use inside popovers and inline forms.
-
-| Prop         | Type                                                   | Required | Default     | Description                                  |
-| ------------ | ------------------------------------------------------ | -------- | ----------- | -------------------------------------------- |
-| `submitting` | `boolean`                                              | yes      | —           | Shows spinner and disables button while true |
-| `label`      | `ReactNode`                                            | no       | —           | Button label text                            |
-| `children`   | `ReactNode`                                            | no       | —           | Alternative to `label`                       |
-| `variant`    | `string`                                               | no       | `'primary'` | Design token button variant                  |
-| `disabled`   | `boolean`                                              | no       | `false`     | Disabled state independent of `submitting`   |
-| `invalid`    | `boolean`                                              | no       | `false`     | Disables button when form is invalid         |
-| `type`       | `'submit' \| 'button'`                                 | no       | `'submit'`  | Button type                                  |
-| `onClick`    | `(event: React.MouseEvent<HTMLButtonElement>) => void` | no       | —           | Click handler                                |
-| `iconNode`   | `ReactNode`                                            | no       | —           | Icon to display                              |
-| `iconOnLeft` | `boolean`                                              | no       | `false`     | Place icon on the left (default is right)    |
-| `id`         | `string`                                               | no       | —           | HTML id attribute                            |
-| `className`  | `string`                                               | no       | —           | Additional CSS classes                       |
-
----
-
-#### IconButton
-
-```ts
-import { IconButton } from '@/core/buttons/IconButton';
-```
-
-| Prop          | Type                                | Required | Default    | Description                                  |
-| ------------- | ----------------------------------- | -------- | ---------- | -------------------------------------------- |
-| `iconNode`    | `ReactNode`                         | yes      | —          | Icon to display                              |
-| `tooltip`     | `string`                            | yes      | —          | Tooltip text. **Required for accessibility** |
-| `onClick`     | `(event: React.MouseEvent) => void` | yes      | —          | Click handler                                |
-| `variant`     | `ButtonVariant`                     | no       | —          | Design token button variant                  |
-| `disabled`    | `boolean`                           | no       | `false`    | Disabled state                               |
-| `pending`     | `boolean`                           | no       | `false`    | Shows spinner while true                     |
-| `type`        | `'button' \| 'submit'`              | no       | `'button'` | Button type                                  |
-| `className`   | `string`                            | no       | —          | Additional CSS classes                       |
-| `data-testid` | `string`                            | no       | —          | Test ID attribute                            |
-
----
-
-#### CompactIconButton
-
-```ts
-import { CompactIconButton } from '@/core/buttons/IconButton';
-```
-
-Identical props to `IconButton`. Renders at `sm` size.
-
----
-
-#### ToolbarButton
-
-```ts
-import { ToolbarButton } from '@/table/ToolbarButton';
-```
-
-| Prop        | Type                                | Required | Default | Description                                       |
-| ----------- | ----------------------------------- | -------- | ------- | ------------------------------------------------- |
-| `iconNode`  | `ReactNode`                         | yes      | —       | Icon to display                                   |
-| `onClick`   | `(event: React.MouseEvent) => void` | yes      | —       | Click handler                                     |
-| `title`     | `string`                            | no       | —       | Button label text (omit for icon-only)            |
-| `tooltip`   | `string`                            | no       | —       | Tooltip text shown on hover                       |
-| `variant`   | `ButtonVariant`                     | no       | —       | Design token button variant                       |
-| `disabled`  | `boolean`                           | no       | `false` | Disabled state                                    |
-| `pending`   | `boolean`                           | no       | `false` | Shows spinner while true                          |
-| `badge`     | `number \| string`                  | no       | —       | Badge count to display (e.g. active filter count) |
-| `className` | `string`                            | no       | —       | Additional CSS classes                            |
-
----
-
-#### BaseButton
-
-```ts
-import { BaseButton } from '@/core/buttons/BaseButton';
-```
-
-**Do not use in feature code.** This is an internal primitive used by the higher-level button components. Feature code must use the specific button components (`ActionButton`, `SubmitButton`, `ToolbarButton`, etc.) which already cover all use cases.
-
-| Prop        | Type                    | Required | Default    | Description                                        |
-| ----------- | ----------------------- | -------- | ---------- | -------------------------------------------------- |
-| `size`      | `'sm' \| 'lg'`          | yes      | —          | Button size                                        |
-| `label`     | `ReactNode`             | no       | —          | Button label text                                  |
-| `onClick`   | `(event?: any) => void` | no       | —          | Click handler                                      |
-| `iconNode`  | `ReactNode`             | no       | —          | Icon to display                                    |
-| `iconRight` | `boolean`               | no       | `false`    | Place icon on the right instead of left            |
-| `variant`   | `ButtonVariant`         | no       | —          | Design token button variant                        |
-| `disabled`  | `boolean`               | no       | `false`    | Disabled state                                     |
-| `tooltip`   | `string`                | no       | —          | Tooltip text. **REQUIRED when `disabled` is true** |
-| `pending`   | `boolean`               | no       | `false`    | Shows spinner and disables button                  |
-| `type`      | `'button' \| 'submit'`  | no       | `'button'` | Button type                                        |
-| `id`        | `string`                | no       | —          | HTML id attribute                                  |
-| `form`      | `string`                | no       | —          | Associates button with a form by id                |
-| `className` | `string`                | no       | —          | Additional CSS classes                             |
-| `data-*`    | `string`                | no       | —          | Any `data-` attribute for testing/integration      |
+| Prop         | Type                                                   | Required | Default     | Description                                    |
+| ------------ | ------------------------------------------------------ | -------- | ----------- | ---------------------------------------------- |
+| `submitting` | `boolean`                                              | yes      | —           | Shows spinner and disables button while true   |
+| `label`      | `ReactNode`                                            | no       | —           | Button label text                              |
+| `children`   | `ReactNode`                                            | no       | —           | Alternative to `label`                         |
+| `variant`    | `string`                                               | no       | `'primary'` | Design token button variant                    |
+| `size`       | `'sm' \| 'lg'`                                         | no       | `'lg'`      | Button size (`'sm'` for compact/popover forms) |
+| `disabled`   | `boolean`                                              | no       | `false`     | Disabled state independent of `submitting`     |
+| `invalid`    | `boolean`                                              | no       | `false`     | Disables button when form is invalid           |
+| `type`       | `'submit' \| 'button'`                                 | no       | `'submit'`  | Button type                                    |
+| `onClick`    | `(event: React.MouseEvent<HTMLButtonElement>) => void` | no       | —           | Click handler                                  |
+| `iconNode`   | `ReactNode`                                            | no       | —           | Icon to display                                |
+| `iconOnLeft` | `boolean`                                              | no       | `false`     | Place icon on the left (default is right)      |
+| `id`         | `string`                                               | no       | —           | HTML id attribute                              |
+| `form`       | `string`                                               | no       | —           | Associates button with a form by id            |
+| `className`  | `string`                                               | no       | —           | Additional CSS classes                         |
+| `data-*`     | `string`                                               | no       | —           | Any `data-` attribute for testing/integration  |
 
 ---
 
@@ -69721,15 +70267,15 @@ import { SelectFilter } from '@/table';
 
 Combines `TableFilterItem` and `Select`.
 
-| Prop             | Type                                   | Required | Default | Description                                            |
-| ---------------- | -------------------------------------- | -------- | ------- | ------------------------------------------------------ |
-| `title`          | `string`                               | yes      | —       | Filter label/title                                     |
-| `name`           | `string`                               | yes      | —       | Field name in form state                               |
-| `options`        | `Array<{ value: any; label: string }>` | yes      | —       | Selectable options                                     |
-| `badgeValue`     | `(value) => string \| number`          | no       | —       | Custom badge value renderer                            |
-| `getValueLabel`  | `(value) => string \| number`          | no       | —       | Custom label for selected value                        |
-| `isMulti`        | `boolean`                              | no       | `false` | Enable multi-value selection                           |
-| `isClearable`    | `boolean`                              | no       | `true`  | Show clear button                                      |
+| Prop            | Type                                   | Required | Default | Description                     |
+| --------------- | -------------------------------------- | -------- | ------- | ------------------------------- |
+| `title`         | `string`                               | yes      | —       | Filter label/title              |
+| `name`          | `string`                               | yes      | —       | Field name in form state        |
+| `options`       | `Array<{ value: any; label: string }>` | yes      | —       | Selectable options              |
+| `badgeValue`    | `(value) => string \| number`          | no       | —       | Custom badge value renderer     |
+| `getValueLabel` | `(value) => string \| number`          | no       | —       | Custom label for selected value |
+| `isMulti`       | `boolean`                              | no       | `false` | Enable multi-value selection    |
+| `isClearable`   | `boolean`                              | no       | `true`  | Show clear button               |
 
 ---
 
@@ -69757,15 +70303,15 @@ Combines `TableFilterItem` and `AsyncSelect`.
 
 Both `SelectFilter` and `AsyncSelectFilter` normalize their form value on mount and on every value change so callers (custom `badgeValue` resolvers, downstream filter→query mappers) can rely on a single shape:
 
-| Filter mode  | Incoming value                                | Becomes                                                  |
-| ------------ | --------------------------------------------- | -------------------------------------------------------- |
-| `isMulti`    | a single option object                        | `[option]`                                               |
-| `isMulti`    | a raw scalar matching one of `options`        | `[matchedOption]`                                        |
-| `isMulti`    | a raw scalar with no match (or no `options`)  | `null`                                                   |
-| not `isMulti`| an array                                      | first element (or `null` if empty)                       |
-| not `isMulti`| a raw scalar matching one of `options`        | `matchedOption`                                          |
-| not `isMulti`| a raw scalar with no match (or no `options`)  | `null`                                                   |
-| any          | shape already matches                         | unchanged                                                |
+| Filter mode   | Incoming value                               | Becomes                            |
+| ------------- | -------------------------------------------- | ---------------------------------- |
+| `isMulti`     | a single option object                       | `[option]`                         |
+| `isMulti`     | a raw scalar matching one of `options`       | `[matchedOption]`                  |
+| `isMulti`     | a raw scalar with no match (or no `options`) | `null`                             |
+| not `isMulti` | an array                                     | first element (or `null` if empty) |
+| not `isMulti` | a raw scalar matching one of `options`       | `matchedOption`                    |
+| not `isMulti` | a raw scalar with no match (or no `options`) | `null`                             |
+| any           | shape already matches                        | unchanged                          |
 
 This guards against three real failure modes that otherwise produce a "ghost" active filter — an incrementing active-filter counter with an empty chip and no API parameter:
 
@@ -69805,9 +70351,9 @@ import { OfferingFilter } from '@/marketplace/offerings/details/OfferingFilter';
 
 A specialized autonomous filter for Marketplace Offerings.
 
-| Prop                | Type      | Required | Default | Description                             |
-| ------------------- | --------- | -------- | ------- | --------------------------------------- |
-| `offeringFilter`    | `object`  | no       | —       | Static filter for the autocomplete API  |
+| Prop                | Type      | Required | Default | Description                                |
+| ------------------- | --------- | -------- | ------- | ------------------------------------------ |
+| `offeringFilter`    | `object`  | no       | —       | Static filter for the autocomplete API     |
 | `providerOfferings` | `boolean` | no       | `true`  | Fetch from provider or public API endpoint |
 
 ---
@@ -69961,15 +70507,15 @@ import { Select } from '@/form/select';
 
 Standard select component based on `react-select`.
 
-| Prop             | Type                                   | Required | Default | Description                                            |
-| ---------------- | -------------------------------------- | -------- | ------- | ------------------------------------------------------ |
-| `options`        | `Array<{ value: any; label: string }>` | yes      | —       | Selectable options                                     |
-| `isMulti`        | `boolean`                              | no       | `false` | Enable multi-value selection                           |
-| `placeholder`    | `string`                               | no       | —       | Placeholder text                                       |
-| `isDisabled`     | `boolean`                              | no       | `false` | Disable the select                                     |
-| `isClearable`    | `boolean`                              | no       | `false` | Show clear button                                      |
-| `size`           | `'sm'`                                 | no       | —       | Small sizing                                           |
-| `variant`        | `'tableFilter'`                        | no       | —       | Style variant for table filters                        |
+| Prop          | Type                                   | Required | Default | Description                     |
+| ------------- | -------------------------------------- | -------- | ------- | ------------------------------- |
+| `options`     | `Array<{ value: any; label: string }>` | yes      | —       | Selectable options              |
+| `isMulti`     | `boolean`                              | no       | `false` | Enable multi-value selection    |
+| `placeholder` | `string`                               | no       | —       | Placeholder text                |
+| `isDisabled`  | `boolean`                              | no       | `false` | Disable the select              |
+| `isClearable` | `boolean`                              | no       | `false` | Show clear button               |
+| `size`        | `'sm'`                                 | no       | —       | Small sizing                    |
+| `variant`     | `'tableFilter'`                        | no       | —       | Style variant for table filters |
 
 ---
 
@@ -69981,12 +70527,12 @@ import { AsyncSelect } from '@/form/select';
 
 Async select component based on `react-select-async-paginate`.
 
-| Prop             | Type                     | Required | Default | Description                                            |
-| ---------------- | ------------------------ | -------- | ------- | ------------------------------------------------------ |
-| `loadOptions`    | `AsyncSelectLoader`      | yes      | —       | Function to load options                               |
-| `isMulti`        | `boolean`                | no       | `false` | Enable multi-value selection                           |
-| `placeholder`    | `string`                 | no       | —       | Placeholder text                                       |
-| `isDisabled`     | `boolean`                | no       | `false` | Disable the select                                     |
+| Prop          | Type                | Required | Default | Description                  |
+| ------------- | ------------------- | -------- | ------- | ---------------------------- |
+| `loadOptions` | `AsyncSelectLoader` | yes      | —       | Function to load options     |
+| `isMulti`     | `boolean`           | no       | `false` | Enable multi-value selection |
+| `placeholder` | `string`            | no       | —       | Placeholder text             |
+| `isDisabled`  | `boolean`           | no       | `false` | Disable the select           |
 
 ---
 
@@ -70020,12 +70566,12 @@ import { AsyncSelectField } from '@/form';
 
 React Final Form async select component.
 
-| Prop             | Type                     | Required | Default | Description                                            |
-| ---------------- | ------------------------ | -------- | ------- | ------------------------------------------------------ |
-| `loadOptions`    | `AsyncSelectLoader`      | yes      | —       | Function to load options                               |
-| `isMulti`        | `boolean`                | no       | `false` | Enable multi-value selection                           |
-| `placeholder`    | `string`                 | no       | —       | Placeholder text                                       |
-| `isDisabled`     | `boolean`                | no       | `false` | Disable the select                                     |
+| Prop          | Type                | Required | Default | Description                  |
+| ------------- | ------------------- | -------- | ------- | ---------------------------- |
+| `loadOptions` | `AsyncSelectLoader` | yes      | —       | Function to load options     |
+| `isMulti`     | `boolean`           | no       | `false` | Enable multi-value selection |
+| `placeholder` | `string`            | no       | —       | Placeholder text             |
+| `isDisabled`  | `boolean`           | no       | `false` | Disable the select           |
 
 ---
 
@@ -70974,9 +71520,9 @@ Avoid creating manual tooltips or extra label wrappers. Use the built-in `help` 
 // ❌ Manual tooltip implementation
 <label>
   {translate('Plan')}
-  <Tip label={translate('Help text')}>
+  <Tooltip label={translate('Help text')}>
     <QuestionIcon />
-  </Tip>
+  </Tooltip>
 </label>
 <Field component={SelectField} name="period" />
 
@@ -72220,7 +72766,7 @@ export const AcceptAction = (props) => {
   if (!isOwnerOrStaff && !isServiceManager) {
     return null;
   } else {
-    return <Button/>;
+    return <BaseButton label={translate('Accept')} />;
   }
 }
 ```
@@ -72235,7 +72781,7 @@ export const AcceptAction = (props) => {
   })) {
     return null;
   } else {
-    return <Button/>;
+    return <BaseButton label={translate('Accept')} />;
   }
 }
 
@@ -73279,7 +73825,7 @@ Set `disabledClick: true` to prevent click actions (such as row selection or row
 ```ts
 {
   title: translate('Actions'),
-  render: ({ row }) => <Button onClick={() => triggerAction(row)} />,
+  render: ({ row }) => <BaseButton onClick={() => triggerAction(row)} label={translate('Action')} />,
   disabledClick: true, // Click event does not bubble up to the row <tr>
 }
 ```
@@ -74257,14 +74803,16 @@ export const RowActions: FC<RowActionsProps> = ({ row, refetch }) => {
 For simple tables with very few actions, you can render buttons directly in the row cells:
 
 ```tsx
-import { CompactActionButton } from '@/table/CompactActionButton';
+import { BaseButton } from 'waldur-ui';
 
 const RowActions = ({ row }) => (
   <div className="d-flex gap-2">
-    <CompactActionButton
-      action={() => handleEdit(row)}
-      title={translate('Edit')}
+    <BaseButton
+      onClick={() => handleEdit(row)}
+      label={translate('Edit')}
       iconNode={<PencilSimple />}
+      variant="tertiary"
+      size="sm"
     />
   </div>
 );
@@ -74658,9 +75206,12 @@ export const ReviewerPoolSection = ({ call }) => {
       filters={<ReviewerPoolFilter />}
       expandableRow={ExpandableRow}
       tableActions={
-        <button className="btn btn-primary btn-sm" onClick={handleInvite}>
-          {translate('Invite reviewer')}
-        </button>
+        <BaseButton
+          variant="primary"
+          size="sm"
+          onClick={handleInvite}
+          label={translate('Invite reviewer')}
+        />
       }
     />
   );
@@ -74674,7 +75225,10 @@ export const ReviewerPoolSection = ({ call }) => {
 
 # Tailwind & shadcn UI Architecture
 
-Architectural reference and design system manual for Tailwind CSS v4, shadcn UI, and Radix UI in Waldur Homeport. Documents runtime framework coexistence, design tokens, component architecture, styling conventions, and linting guardrails.
+Architectural reference and design system manual for Tailwind CSS v4, shadcn UI, and Radix UI in Waldur Homeport. Documents runtime framework coexistence, design tokens, component architecture, styling conventions, the button migration and its aftermath, and linting guardrails.
+
+> [!NOTE]
+> **Status**: every button in the app is rendered by `BaseButton` (or by `buttonVariants()` on an element that cannot be a `BaseButton`), and the legacy Bootstrap/Metronic `.btn` CSS has been deleted. The remaining Bootstrap-backed UI is layout, forms, tables, modals and the dropdown/menu shells listed under [Component Systems Overview](#component-systems-overview). New UI is built on `waldur-ui`.
 
 ---
 
@@ -74696,18 +75250,20 @@ Architectural reference and design system manual for Tailwind CSS v4, shadcn UI,
    - [Badge](#badge)
    - [Tooltip](#tooltip)
    - [Popover](#popover)
-   - [BaseButton](#basebutton)
+   - [Buttons](#buttons)
    - [Sidebar & Mobile Sheet](#sidebar-mobile-sheet)
    - [Content Drawer (`#kt_drawer`)](#content-drawer-kt-drawer)
    - [Dropdown & Menu System Map](#dropdown-menu-system-map)
    - [ActionsDropdown & ActionItem](#actionsdropdown-actionitem)
    - [NavMenu](#navmenu)
-3. [Linting & Guardrails](#linting-guardrails)
+3. [Legacy Button CSS Retirement](#legacy-button-css-retirement)
+4. [Linting & Guardrails](#linting-guardrails)
    - [Restricted Imports](#restricted-imports)
    - [Custom ESLint Rules Matrix](#custom-eslint-rules-matrix)
-4. [Storybook & Testing Toolchain](#storybook-testing-toolchain)
+5. [Storybook & Testing Toolchain](#storybook-testing-toolchain)
    - [Storybook Environment & Vitest](#storybook-environment-vitest)
-   - [Visual Parity Test Suite](#visual-parity-test-suite)
+   - [Visual E2E Specs](#visual-e2e-specs)
+   - [Retired Visual Parity Suite](#retired-visual-parity-suite)
    - [Testing Gotchas & Pitfalls](#testing-gotchas-pitfalls)
 
 ---
@@ -74721,29 +75277,35 @@ Waldur Homeport operates on two active UI component patterns:
 1. **Modern Tailwind / Radix Primitives (`packages/ui`, exported as `waldur-ui`)**
    - Built with pure Tailwind v4 utilities and CSS design tokens from `packages/design-tokens`.
    - Free of all Bootstrap and Metronic classes, SCSS variables, and runtime mixins.
-   - Includes `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `FeaturedIcon`, `StatusPill`, `CopyButton`, `Card`, and `LoadingSpinner`.
+   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `DropdownMenu`, `Switch`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, and `LoadingSpinner`.
+   - Exports `buttonVariants()`, `ButtonVariant` and `ButtonSize` so elements that cannot be a `BaseButton` (links, Radix triggers that need a specific child shape) still get the exact same classes.
 
 2. **Transitional Shells (Radix Engine with Themed Skins)**
    - Used where extensive surface area requires maintaining existing container styling while leveraging accessible Radix primitives:
      - `ActionsDropdown.tsx` / `ActionItem.tsx`: Radix `DropdownMenu` and `Popover` driving standard action menus.
      - `NavMenu.tsx`: Radix `DropdownMenu` driving application chrome (header dropdowns, language picker).
      - `#kt_drawer` (`DrawerRoot.tsx`): Radix `Dialog` driving slide-over content panels.
+   - These still wear Bootstrap/Metronic panel classes (`.dropdown-menu`, `.menu-sub-dropdown`); only their _buttons_ have moved to `waldur-ui`.
 
 ---
 
 ### Component Standards & Usage Guide
 
-| UI Element             | Standard Component          | Package          | Usage & Styling Notes                                  | Prohibited Imports                            |
-| :--------------------- | :-------------------------- | :--------------- | :----------------------------------------------------- | :-------------------------------------------- |
-| **Alert / Banner**     | `AlertItem`                 | `waldur-ui`      | Pure Tailwind, `--surface-card-border`, 5 variants     | `react-bootstrap` `Alert`                     |
-| **Badge / Pill**       | `Badge`                     | `waldur-ui`      | 15 variants × 3 tones, structural `border-[1px]`       | `react-bootstrap` `Badge`                     |
-| **Tooltip**            | `Tooltip`                   | `waldur-ui`      | Radix Tooltip (hover/focus) + Popover (click fallback) | `react-bootstrap` `Tooltip`, `OverlayTrigger` |
-| **Popover**            | `Popover`, `PopoverContent` | `waldur-ui`      | Radix Popover with `--surface-card-*` tokens           | `react-bootstrap` `Popover`                   |
-| **Sidebar Navigation** | `Sidebar`, `Sheet`          | `waldur-ui`      | Collapsible desktop rail + mobile Radix Sheet          | Metronic sidebar JS                           |
-| **Button**             | `BaseButton` / wrappers     | `@/core/buttons` | Inset `box-shadow` border, semantic button tokens      | Direct `react-bootstrap` `Button`             |
-| **Table Actions**      | `ActionsDropdown`           | `@/table`        | Radix DropdownMenu with keyboard navigation            | `react-bootstrap` `DropdownButton`            |
-| **Header Chrome Menu** | `NavMenu`                   | `@/navigation`   | Radix DropdownMenu with responsive hover triggers      | N/A                                           |
-| **Slide-Over Drawer**  | `DrawerRoot`                | `@/drawer`       | Radix Dialog with CSS keyframe transitions             | N/A                                           |
+| UI Element                    | Standard Component          | Package        | Usage & Styling Notes                                                                        | Prohibited                                                  |
+| :---------------------------- | :-------------------------- | :------------- | :------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
+| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`    | Pure Tailwind, `--surface-card-border`, 5 variants                                           | `react-bootstrap` `Alert`                                   |
+| **Badge / Pill**              | `Badge`                     | `waldur-ui`    | 15 variants × 3 tones, structural `border-[1px]`                                             | `react-bootstrap` `Badge`                                   |
+| **Tooltip**                   | `Tooltip`                   | `waldur-ui`    | Radix Tooltip (hover/focus) + Popover (click fallback)                                       | `react-bootstrap` `Tooltip`, `OverlayTrigger`               |
+| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`    | Radix Popover with `--surface-card-*` tokens                                                 | `react-bootstrap` `Popover`                                 |
+| **Button**                    | `BaseButton`                | `waldur-ui`    | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens | `react-bootstrap` `Button`, hand-written `btn` class markup |
+| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link`  | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing      | `<a className="btn …">`                                     |
+| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`    | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                 | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup   |
+| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`    | Collapsible desktop rail + mobile Radix Sheet                                                | Metronic sidebar JS                                         |
+| **Table Actions**             | `ActionsDropdown`           | `@/table`      | Radix DropdownMenu with keyboard navigation                                                  | `react-bootstrap` `DropdownButton`                          |
+| **Header Chrome Menu**        | `NavMenu`                   | `@/navigation` | Radix DropdownMenu with responsive hover triggers                                            | N/A                                                         |
+| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`     | Radix Dialog with CSS keyframe transitions                                                   | N/A                                                         |
+
+The _Prohibited_ column is convention; the subset that lint enforces is listed under [Linting & Guardrails](#linting-guardrails) (`ToggleButtonGroup` and `btn-group` markup are not).
 
 ---
 
@@ -74985,13 +75547,29 @@ Waldur does **not** toggle dark mode via a `.dark` HTML class. Instead:
 
 ---
 
-### BaseButton
+### Buttons
 
-`packages/ui/src/BaseButton.tsx`.
+Three primitives in `waldur-ui` (`packages/ui/src`) and `Link` in `@/core/Link` make up the application's unified button architecture:
 
-- **Inset Box-Shadow Border**: A physical CSS `border` participates in `border-box` layout sizing. At a 13px root font size, fractional padding chains cause subpixel anti-aliasing variations. `BaseButton` uses an inset `box-shadow` for borders (`box-shadow: inset 0 0 0 1px ...`) to preserve pixel-perfect dimensions without shifting layout.
-- **`:focus` vs. `:focus-visible`**: Uses `:focus` to match standard ring behavior (visible on click and keyboard navigation). `active:shadow-none` suppresses the ring while actively pressed.
-- **State Token Matrix**: Focus rings, hover states, and active pressed colors resolve to dedicated tokens in `buttonColors.css`.
+| Primitive                     | Role & Use Case                                                                    | Package / Location |
+| :---------------------------- | :--------------------------------------------------------------------------------- | :----------------- |
+| `BaseButton`                  | Standard action buttons across dialogs, tables, and page headers                   | `waldur-ui`        |
+| `buttonVariants()`            | Shared CVA styling applied to non-button elements (router links, dropdown toggles) | `waldur-ui`        |
+| `SegmentedControl`            | Mutually exclusive view switchers (Radix RadioGroup)                               | `waldur-ui`        |
+| `Link` (with `buttonVariant`) | State-based router navigation styled with button aesthetics                        | `@/core/Link`      |
+
+`ButtonVariant` and `ButtonSize` are derived directly from the `cva` definition (`VariantProps<typeof buttonVariants>`), guaranteeing types stay synchronized with rendered classes.
+
+#### Architectural Highlights
+
+- **Integer Heights & Inset Borders**: Decoupled from physical CSS `border-box` calculations via `shadow-[inset_0_0_0_1px_var(...)]`, guaranteeing exact heights: 28px (`sm`), 36px (`md`, default), and 44px (`lg`).
+- **Direct Tooltip Integration**: `buttonVariants` does not declare `disabled:pointer-events-none`; instead, it pairs `disabled:cursor-not-allowed` with matching `data-disabled:*` styles. `<BaseButton>` passes `data-disabled` and wraps `<button>` inside `<Tooltip>` with **zero wrapper `<span>` elements**, eliminating flexbox alignment bugs (`self-center`, `w-100`).
+- **Outline Focus Rings**: Focus indicators use native CSS `outline` (`focus-visible:[outline:2px_solid_var(...)]`) for forced-colors compatibility and resistance to container resets.
+- **Toggles in `ActionsDropdown`**: Dropdown toggles render a direct `<button>` with `buttonVariants()` (rather than `BaseButton`) so the rotating caret (`rotate-toggle-180`) remains an immediate child for CSS animation.
+- **SegmentedControl**: Built on Radix RadioGroup (<kbd>←</kbd>/<kbd>→</kbd> select, single <kbd>Tab</kbd> stop) with `inline-flex self-center` preventing layout stretching.
+
+> [!TIP]
+> **Authoritative Guide**: For complete variant tokens, full prop specifications, icon sizing rules, dropdown toggle architecture, and the call-site conversion guide, see the dedicated [Button UI Guide](button-ui-guide.md).
 
 ---
 
@@ -75041,6 +75619,9 @@ Radix's `Slot` clones trigger elements and attaches positioning refs and event h
 
 - **Keyboard Highlight Bridge**: Bootstrap targets `.dropdown-item:hover, .dropdown-item:focus`. Radix manages focus and sets `[data-highlighted]`. `_dropdown.scss` maps `[data-highlighted]` onto Bootstrap's hover treatment so arrow-key navigation displays the active highlight.
 - **Isolated Row Testing**: Exported helper `inActionsMenu(children)` wraps action rows in a headless Radix Menu for Vitest unit tests without needing an entire table harness.
+- **Toggle buttons use `buttonVariants()`, not `BaseButton`**: `TableDropdownToggle` / `AddDropdownToggle` in this file and `Toggle` in `ActionDropdownButton.tsx` render a raw `<button>` carrying `buttonVariants()` classes. The caret span (`rotate-toggle-180`) must be a _direct_ child of the button for `_dropdown.scss`'s `.dropdown-toggle[data-state='open'] > .rotate-toggle-180` selector, and `BaseButton` wraps `iconNode` in an extra span. Their icons are sized with the Phosphor `size` prop (16.25px `sm`, 19.5px otherwise) rather than a `.svg-icon` wrapper.
+- **Classes the toggles keep**: `dropdown-toggle` and `no-arrow`, because `.disabled-view` and `custom/_table.scss` still key off the literal `dropdown-toggle` class, and — on the icon-only toggle — a bare `btn-icon` marker, which is inert for styling but is the other half of `.disabled-view`'s `.dropdown-toggle.btn-icon { display: none }` rule.
+- **Panel still on Bootstrap**: the menu panel (`.dropdown-menu` / `.dropdown-item`) is unchanged; only the trigger moved to `waldur-ui` tokens.
 
 ---
 
@@ -75054,90 +75635,105 @@ Radix's `Slot` clones trigger elements and attaches positioning refs and event h
 
 ---
 
+## Legacy Button CSS Retirement
+
+Once no element rendered a literal `.btn` class, the Bootstrap/Metronic button CSS was deleted.
+
+### Removed
+
+- `@import 'bootstrap/scss/buttons'` and Metronic's `core/components/buttons/_theme.scss`.
+- The `.btn` portion of `core/components/buttons/_base.scss`, the button-variant mixins (`mixins/_buttons.scss`), the `$button-variants` map and `$btn-extended-variants`.
+- The `.btn` block of `custom/_buttons.scss`, plus every compound `.btn …` rule in `custom/_base`, `_content`, `_modal`, `_table`, core `_nav` and `_print-mode`, `PageBarTabs.scss`, `PublicOfferingPricing.scss` and the glass/neumorphism layout sheets.
+- Earlier: `.btn-group` (with `@import 'bootstrap/scss/button-group'`), replaced by `SegmentedControl`, and `ToolbarButton`.
+
+**How it was verified**: the compiled stylesheet (light and dark) was diffed before and after. About 9,000 rules disappeared, every one with `.btn` in its selector; nothing else changed, and nothing new appeared. Deleting CSS this way is safe only because the rules were _compound_ with `.btn` — a selector such as `.btn.btn-icon.btn-sm` cannot match an element without the literal class. Repeat the diff (fetch the compiled sheet from the dev server with `?direct`, then compare rules with `postcss`) before deleting more.
+
+### Kept
+
+These do not depend on `.btn`:
+
+| Class                                             | Why it stays                                                                                                                                                                                                                      |
+| :------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.btn-no-focus`                                   | Standalone helper in `core/components/buttons/_base.scss` that callers pass as a plain `className` to a `BaseButton`. Removes the box-shadow glow only; `BaseButton`'s focus ring is an outline, so it survives. |
+| `.btn-nav-item`                                   | Header icon buttons (`custom/_nav.scss`)                                                                                                                                                                                          |
+| `.btn-close`                                      | Bootstrap's modal close control (`bootstrap/scss/close`)                                                                                                                                                                          |
+| `.btn-text-align`                                 | Text alignment helper used on a `div`                                                                                                                                                                                             |
+| `.dropdown-toggle.btn-icon`                       | `.disabled-view` rule that hides row-action toggles (see [`ActionsDropdown`](#actionsdropdown-actionitem))                                                                                                                        |
+| `$btn-*` SCSS variables and `_tokens.scss` values | Still read by AI-assistant and other component styles                                                                                                                                                                             |
+
+**Guardrail**: `no-bootstrap-button-markup` is an error with no allowlist, so hand-written `btn` markup cannot come back unnoticed (see [Custom ESLint Rules Matrix](#custom-eslint-rules-matrix)).
+
+**Known consequence**: the deleted rules also carried some sizes that had already stopped applying to `BaseButton`s (44px modal-footer and toolbar buttons, a 150px footer minimum width). Deleting them changed nothing on screen, but it means a button that should be large must say so with `size="lg"`.
+
+---
+
 ## Linting & Guardrails
 
 ### Restricted Imports
 
-Configured in `eslint.config.js` via `no-restricted-imports`:
+Configured in `eslint.config.js` via `no-restricted-imports` (`RESTRICTED_IMPORTS`). Each entry has a `message` that names the replacement:
 
-```javascript
-const RESTRICTED_IMPORTS = [
-  {
-    name: 'react-bootstrap',
-    importNames: ['Badge'],
-    message: 'Use Badge from "waldur-ui" instead of react-bootstrap.',
-  },
-  {
-    name: 'react-bootstrap/Badge',
-    message: 'Use Badge from "waldur-ui" instead of react-bootstrap/Badge.',
-  },
-  {
-    name: 'react-bootstrap',
-    importNames: ['Tooltip'],
-    message: 'Use Tooltip from "waldur-ui" instead of react-bootstrap.',
-  },
-  {
-    name: 'react-bootstrap/Tooltip',
-    message: 'Use Tooltip from "waldur-ui" instead of react-bootstrap/Tooltip.',
-  },
-  {
-    name: 'react-bootstrap',
-    importNames: ['OverlayTrigger'],
-    message:
-      'Use Tooltip or Popover from "waldur-ui" instead of react-bootstrap/OverlayTrigger.',
-  },
-  {
-    name: 'react-bootstrap/OverlayTrigger',
-    message:
-      'Use Tooltip or Popover from "waldur-ui" instead of react-bootstrap/OverlayTrigger.',
-  },
-  {
-    name: 'react-bootstrap',
-    importNames: ['Popover'],
-    message: 'Use Popover from "waldur-ui" instead of react-bootstrap.',
-  },
-  {
-    name: 'react-bootstrap/Popover',
-    message: 'Use Popover from "waldur-ui" instead of react-bootstrap/Popover.',
-  },
-  {
-    name: 'react-bootstrap',
-    importNames: ['Alert'],
-    message: 'Use AlertItem from "waldur-ui" instead of react-bootstrap.',
-  },
-  {
-    name: 'react-bootstrap/Alert',
-    message: 'Use AlertItem from "waldur-ui" instead of react-bootstrap/Alert.',
-  },
-];
-```
+| `react-bootstrap` import    | Use instead                                                                            |
+| :-------------------------- | :------------------------------------------------------------------------------------- |
+| `Badge`                     | `Badge` from `waldur-ui`                                                               |
+| `Tooltip`, `OverlayTrigger` | `Tooltip` (or `Popover`) from `waldur-ui`                                              |
+| `Popover`                   | `Popover` from `waldur-ui`                                                             |
+| `Alert`                     | `AlertItem` from `waldur-ui`                                                           |
+| `Button`                    | `BaseButton` from `waldur-ui` (or `SubmitButton` / `CloseDialogButton` where they fit) |
+| `DropdownButton`            | `ActionsDropdown`                                                                      |
+
+Each is blocked both as a named import from `react-bootstrap` and as a deep import (`react-bootstrap/Badge`, …). A genuinely new exception belongs on the offending line as `// eslint-disable-next-line no-restricted-imports -- <reason>`.
+
+Import restrictions only see imports. A button hand-written as `<button className="btn btn-danger">` imports nothing, so it is caught by the custom rule `no-bootstrap-button-markup` below.
 
 ---
 
 ### Custom ESLint Rules Matrix
 
-Implemented in `packages/eslint-plugin-waldur`:
+Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` in `eslint.config.js`. Rules marked `warn` steer new code while existing violations (over a hundred hand-rolled tables, for example) are converted one screen at a time; promote them to `error` when the count reaches zero.
 
-| Rule Name                             | Severity | Enforced Pattern                                                                                        |
-| :------------------------------------ | :------- | :------------------------------------------------------------------------------------------------------ |
-| `enforce-badge-icon-patterns`         | `error`  | Enforces 12px icon sizing inside `Badge` components.                                                    |
-| `enforce-badge-props-consistency`     | `error`  | Validates valid combinations of `variant`, `tone`, and `shape` props on `Badge`.                        |
-| `no-manual-icon-colors-in-badges`     | `error`  | Prevents manual color classes on icons rendered inside `Badge`.                                         |
-| `enforce-badge-right-icon-pattern`    | `error`  | Standardizes right-side action icon styling in badges.                                                  |
-| `no-direct-bootstrap-button`          | `error`  | Prohibits importing `Button` directly from `react-bootstrap`.                                           |
-| `enforce-button-variants`             | `error`  | Enforces valid semantic button variants on Waldur button wrappers.                                      |
-| `no-bootstrap-button-markup`          | `warn`   | Flags native `<button className="btn ...">` markup; guides conversion to `BaseButton` wrappers.         |
-| `no-direct-bootstrap-dropdown-button` | `error`  | Prohibits `react-bootstrap/DropdownButton`.                                                             |
-| `enforce-actions-dropdown-in-tables`  | `warn`   | Steers table action buttons toward `ActionsDropdown`.                                                   |
-| `no-hand-rolled-table`                | `warn`   | Flags bare `<table>` elements that should use Waldur Table components.                                  |
-| `no-hand-rolled-modal-footer`         | `error`  | Enforces standard modal footer wrappers instead of custom flex rows.                                    |
-| `enforce-dialog-button-order`         | `error`  | Enforces primary/cancel button order in dialog footers.                                                 |
-| `enforce-featured-icon`               | `error`  | Requires `FeaturedIcon` for highlighted icon emblems.                                                   |
-| `enforce-border-radius-tokens`        | `error`  | Prohibits arbitrary radius classes in favor of design tokens.                                           |
-| `enforce-nav-tabs-pattern`            | `error`  | Standardizes navigation tab markup and active states.                                                   |
-| `enforce-breadcrumb-colors`           | `error`  | Enforces semantic token colors on breadcrumbs.                                                          |
-| `enforce-formcheck-components`        | `error`  | Enforces standard form check wrappers.                                                                  |
-| `enforce-phosphor-icon-weight`        | `error`  | Enforces consistent icon weight across Phosphor icons.                                                  |
+#### Buttons, dialogs and tables
+
+| Rule Name                            | Severity | Enforced Pattern                                                                                                                                    |
+| :----------------------------------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `no-bootstrap-button-markup`         | `error`  | Flags `btn` as a class token on a native `<button>`, `<a>`, `<input>` or `<label>`. No allowlist: use `BaseButton`, or `Link` with `buttonVariant`. |
+| `enforce-disabled-button-tooltip`    | `error`  | A disabled `BaseButton` needs a `tooltip` or `disabledReason` explaining why.                                                                       |
+| `no-edit-button-size-override`       | `error`  | Prevents `size="sm"` on `EditButton`; use `CompactEditButton`.                                                                                      |
+| `enforce-dialog-button-order`        | `error`  | Dismissive actions first, primary submission/approval last (rightmost) in dialog footers.                                                           |
+| `no-hand-rolled-modal-footer`        | `error`  | Prefer `ModalDialog`'s `footer` prop over hand-rolling action buttons inside its children.                                                          |
+| `enforce-actions-dropdown-in-tables` | `warn`   | Steers table row actions toward `ActionsDropdown`.                                                                                                  |
+| `no-hand-rolled-table`               | `warn`   | Prefer `@/table/Table` over `react-bootstrap` `Table` or raw `<table>` markup.                                                                      |
+| `enforce-noresult-with-cta`          | `error`  | `NoResult` empty states need an actionable call-to-action button.                                                                                   |
+| `enforce-render-field-or-dash`       | `error`  | Table cells use `renderFieldOrDash()` for empty values.                                                                                             |
+
+#### Visual patterns
+
+| Rule Name                          | Severity | Enforced Pattern                                                           |
+| :--------------------------------- | :------- | :------------------------------------------------------------------------- |
+| `enforce-badge-icon-patterns`      | `error`  | Enforces 12px icon sizing inside `Badge` components.                       |
+| `enforce-badge-props-consistency`  | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.      |
+| `no-manual-icon-colors-in-badges`  | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.           |
+| `enforce-badge-right-icon-pattern` | `error`  | Standardizes right-side action icon styling in badges.                     |
+| `enforce-featured-icon`            | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems. |
+| `enforce-phosphor-icon-weight`     | `error`  | Consistent `weight` prop on Phosphor icons.                                |
+| `enforce-border-radius-tokens`     | `error`  | Design-token radius classes instead of hard-coded values.                  |
+| `enforce-nav-tabs-pattern`         | `error`  | Navigation tabs use the `nav-line-tabs` class.                             |
+| `enforce-breadcrumb-colors`        | `error`  | Breadcrumb links use the `$text-brand-secondary` token.                    |
+| `enforce-formcheck-components`     | `error`  | React Bootstrap `FormCheck` instead of custom form-control markup.         |
+
+#### Code hygiene
+
+| Rule Name                        | Severity | Enforced Pattern                                                                                                                  |
+| :------------------------------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------- |
+| `no-direct-client-usage`         | `error`  | No direct use of low-level API client methods.                                                                                    |
+| `no-direct-field-adapter`        | `error`  | Adapter components are not passed straight to `Field`'s `component` prop.                                                         |
+| `no-template-in-translate`       | `error`  | No template literals or concatenation inside `translate()` calls.                                                                 |
+| `prefer-classnames-utility`      | `error`  | Use `classNames()` instead of manual `className` string concatenation.                                                            |
+| `no-redundant-vi-mock`           | `error`  | No `vi.mock` for modules that are already mocked globally.                                                                        |
+| `no-undefined-in-mutation-body`  | `warn`   | Do not collapse a request-body field to `undefined`: the key is dropped and clearing the field becomes a silent no-op.            |
+| `prefer-mutate-over-mutateAsync` | `warn`   | Buttons and action items (`BaseButton`, `ActionItem`, …) call `.mutate()`; keep `.mutateAsync()` for forms that need the promise. |
+
+The former `enforce-button-variants` rule was deleted: the variant list lives in the `ButtonVariant` type, so the compiler enforces it.
 
 ---
 
@@ -75154,25 +75750,27 @@ Implemented in `packages/eslint-plugin-waldur`:
   CHOKIDAR_USEPOLLING=1 yarn vitest run --project=storybook
   ```
 
+- **Stories to look at**: `Actions/BaseButton` (`packages/ui/src/BaseButton.stories.tsx`: playground, every state, sizes, icon-only, realistic usage), `Actions/SegmentedControl` (variants, sizes, `BesideTallerSibling`, `AsTabsWithPanels`), and `src/table/ActionsDropdown.stories.tsx`.
+- **Storybook is not the app**: it applies the theme through `storybook-addon-pseudo-states`, which rewrites `:focus-visible` / `:hover` selectors. See the pitfall below before trusting a `:not(:focus-visible)` result there.
+
 ---
 
-### Visual Parity Test Suite
+### Visual E2E Specs
 
-Directly compares legacy and new component implementations side-by-side using Playwright screenshots (`e2e-visual/base-button-parity.spec.ts`):
+`yarn test:e2e:visual` runs `e2e-visual/*.spec.ts` through Playwright (project `visual`, against the app on :8001 and Storybook on :6006).
 
-```bash
-yarn playwright test base-button-parity --project visual --workers=1
-```
+- **`focus-ring.spec.ts`**: asserts that keyboard focus produces a _visible_ indicator with at least 3:1 contrast (WCAG 2.4.7 and 1.4.11), in light and dark. Its fixtures are built from `buttonVariants()` on the `actions-basebutton--playground` story's stylesheet and cover the places a ring was once suppressed: elevation utilities (`shadow-sm`), an unlayered page stylesheet setting a `box-shadow`, `.menu-link` and `nav-line-tabs`. The `primary` case is a recorded contrast gap (`test.fail()`): a brand ring on a brand-filled button is about 1.6:1. `.btn-no-focus` is deliberately not a fixture — see the pseudo-states pitfall.
+- **`stat-card-parity.spec.ts`**, **`charts.spec.ts`**, **`wizards.spec.ts`**: parity and screenshot checks for other components; `visualParityHarness.ts` holds the shared pixel-diff and chromaticity helpers.
 
-Note: `--workers=1` is required to avoid memory exhaustion during parallel canvas rasterization.
+Run one spec with `yarn playwright test focus-ring --project=visual --workers=1` (a filter, not a path; passing a path is read as a project name). Playwright executes specs in Node, so a spec may import `packages/ui/src/BaseButton` directly but not the `waldur-ui` barrel, whose modules touch `document` at import time.
 
-**Coverage**: 12 variants × 2 sizes × 2 themes × 6 interaction states (`enabled`, `disabled`, `hover`, `active`, `.focus()`, `.click()`) = 288 test cases.
+---
 
-**Verification Steps**:
+### Retired Visual Parity Suite
 
-1. **Dimension Parity**: Compares `locator.boundingBox()` with `MAX_DIMENSION_SLACK_PX = 0.5px` (avoids PNG rounding noise).
-2. **Pixelmatch Ratio**: Checks diff pixel ratio with `DIFF_RATIO_THRESHOLD = 0.16` and per-pixel threshold `0.25`.
-3. **Dominant-Color Chromaticity**: Evaluates color hue balance across RGB channels (`CHROMATICITY_TOLERANCE = 10`) to catch tint errors on small text-only buttons where pixel ratios are low.
+`e2e-visual/base-button-parity.spec.ts` compared the legacy Bootstrap `BaseButton` against the new Tailwind/shadcn one side-by-side via Playwright screenshots, pixel-diffing 288 variant/size/theme/state combinations, so the new component could be proven a drop-in replacement before any call site used it. Every call site has migrated and the legacy component is deleted, so the spec, its dedicated CI job and its Storybook story (`BaseButtonParity.stories.tsx`) were removed together.
+
+The techniques it validated remain a useful reference for the next component swap: dimension parity via `boundingBox()`, a pixelmatch ratio, and dominant-colour chromaticity for low-pixel-ratio text-only buttons (implemented in `visualParityHarness.ts`, still used by `stat-card-parity.spec.ts`).
 
 ---
 
@@ -75200,6 +75798,14 @@ Note: `--workers=1` is required to avoid memory exhaustion during parallel canva
      ```
 
 3. **Headless Browser Animation Polling**: CDP/Playwright tabs in automated modes skip compositing animation frames if backgrounded. `setTimeout` polling of `getAnimations()` may read `currentTime: 0`. Trigger a screenshot capture or force a reflow to guarantee paint completion.
+4. **Tailwind only generates classes it can read literally**: Tailwind v4 scans source files for complete class strings. A class assembled at runtime (`` `[&>svg]:h-[${px}]` ``) is never generated, so it silently does nothing. `BaseButton`'s icons rendered at 16px instead of 20px for exactly this reason. Write the class as a literal and pass the varying part through a CSS custom property (`style={{ '--icon-size': px }}` with `[&>svg]:h-[var(--icon-size)]`), or choose between whole literal classes. Classes inside HTML strings (chart tooltips) are scanned too, provided they are literals — `buttonVariants()` returns literals.
+5. **Compound Bootstrap selectors are dead without the parent class**: most Metronic rules are written `.btn.btn-sm { … }` or `.btn { &.btn-icon { … } }`. Adding `btn-sm` to an element that lacks `.btn` does nothing, and a hand-rolled `Link`/`div` that dropped `.btn` loses the rule with no error. Grep the SCSS for the class before relying on it; prefer `variant`/`size` props.
+6. **A different tree shape at the same position remounts**: a component that returns `<Wrapper>{child}</Wrapper>` on one render and bare `child` on the next makes React discard and recreate `child`, losing focus and any ref held on it. The filter button's count badge did this until it got a wrapper that is always mounted; `BaseButton`'s tooltip uses `alwaysMount` for the same reason. If a control's focus is lost when a badge or tooltip appears, look for this.
+7. **A flex row stretches its children**: `align-items: stretch` is the default, so a control with no explicit height grows to the tallest sibling. A `SegmentedControl` measured 36px in isolation and 44px in a toolbar. Give shared controls `self-center` (or an explicit size) instead of relying on the host row.
+8. **Cascade layers invert for `!important`**: in `@layer bootstrap`, an `!important` declaration beats Tailwind utilities (a later layer) because important declarations reverse layer order. That is why `.btn-no-focus { box-shadow: none !important }` removes a `BaseButton`'s inset border, and why an override meant to win over a Tailwind utility from the `bootstrap` layer must itself be `!important`.
+9. **Storybook rewrites pseudo-classes**: `storybook-addon-pseudo-states` turns `:not(:focus-visible)` into `:not(.pseudo-focus-visible)`, which matches every element, so a rule such as `.btn-no-focus:not(:focus-visible) { outline: none !important }` suppresses the outline permanently _in Storybook_ while behaving correctly in the app. Measure focus and hover behaviour against the running app (the dev server on :8001) before changing CSS on the strength of a Storybook or `e2e-visual` result.
+10. **Radix RadioGroup in jsdom**: arrow keys move _and_ select only while the key is held. With `userEvent`, use `keyboard('{ArrowRight>}')` (press without release) followed by `waitFor`, not `keyboard('{ArrowRight}')`. Radix `Tabs` reports `data-state="active"`, a `RadioGroup` item `data-state="checked"`.
+11. **Test conventions**: mock the current user with `vi.mocked(useUser).mockReturnValue(…)` — `@/workspace/hooks` is mocked globally, and a local `vi.mock` of it trips `no-redundant-vi-mock`. Testing Library's `no-node-access` rule forbids `.querySelector`/`.closest` in tests; reach elements by role, label or text. Prove a new regression test by reverting the fix and watching it fail.
 
 ---
 
@@ -76225,7 +76831,7 @@ Use the `pending` prop on buttons:
 
 ```tsx
 import { SubmitButton } from '@/form';
-import { BaseButton } from '@/core/buttons/BaseButton';
+import { BaseButton } from 'waldur-ui';
 
 // Form submit button
 <SubmitButton
@@ -76301,12 +76907,16 @@ if (error) {
   )}
   actions={
     <>
-      <Button variant="tertiary" onClick={clearFilters}>
-        {translate('Clear filters')}
-      </Button>
-      <Button variant="outline" onClick={openFilters}>
-        {translate('View filters')}
-      </Button>
+      <BaseButton
+        variant="tertiary"
+        onClick={clearFilters}
+        label={translate('Clear filters')}
+      />
+      <BaseButton
+        variant="secondary"
+        onClick={openFilters}
+        label={translate('View filters')}
+      />
     </>
   }
 />
@@ -76377,9 +76987,13 @@ export const DeleteProjectButton = ({ project, refetch }) => {
   });
 
   return (
-    <Button variant="danger" onClick={() => mutate()} disabled={isPending}>
-      {translate('Delete')}
-    </Button>
+    <SubmitButton
+      type="button"
+      variant="danger"
+      onClick={() => mutate()}
+      submitting={isPending}
+      label={translate('Delete')}
+    />
   );
 };
 ```
@@ -76418,31 +77032,32 @@ export const BulkDeleteProjectsButton = ({ projects, refetch }) => {
   });
 
   return (
-    <Button variant="danger" onClick={() => mutate()} disabled={isPending}>
-      {translate('Delete selected')}
-    </Button>
+    <SubmitButton
+      type="button"
+      variant="danger"
+      onClick={() => mutate()}
+      submitting={isPending}
+      label={translate('Delete selected')}
+    />
   );
 };
 ```
 
 ### 5.2 Form Dialog Pattern
 
-Use the `useModal` hook to manage dialog state:
+`CloseDialogButton` already closes the dialog via its own internal
+`useModal()` call, so a form dialog's footer rarely needs the hook directly —
+reach for `useModal()` yourself only when you need something beyond closing,
+like a custom `onClick` before closing:
 
 ```tsx
-import { useModal } from '@/modal/actions';
-
 export const MyDialog: FC = () => {
-  const { closeDialog } = useModal();
-
   return (
     <ModalDialog
       title={translate('Title')}
       footer={
         <div className="d-flex gap-2 justify-content-end">
-          <Button variant="tertiary" onClick={closeDialog}>
-            {translate('Cancel')}
-          </Button>
+          <CloseDialogButton />
           <SubmitButton
             label={translate('Save changes')}
             submitting={isSubmitting}
@@ -76476,9 +77091,12 @@ export const ApproveButton = ({ resource }) => {
   });
 
   return (
-    <Button onClick={() => mutate()} disabled={isPending}>
-      {translate('Approve')}
-    </Button>
+    <SubmitButton
+      type="button"
+      onClick={() => mutate()}
+      submitting={isPending}
+      label={translate('Approve')}
+    />
   );
 };
 ```
@@ -76562,6 +77180,15 @@ import { StateIndicator } from '@/core/StateIndicator';
 ---
 
 ## 8. Tooltips
+
+> **Stale examples below**: `@/core/Tooltip` and its `Tip` export no longer
+> exist — the current component is `Tooltip` from `waldur-ui`, and its
+> actual prop API (`label`, `side`, `alwaysMount`, `trigger`, wrapping the
+> triggering element as `children`) differs from the `id`/`body`/`theme`
+> props shown in 8.1 and 8.2 below. For a disabled button specifically,
+> prefer `BaseButton`'s own `disabledReason` prop (see 2.2) over wrapping it
+> in a separate `Tooltip` — it already handles the disabled-only visibility
+> and keeps the DOM structure stable across enabled/disabled toggles.
 
 ### 8.1 Usage Guidelines
 
@@ -76651,8 +77278,8 @@ translate('Hello, {name}!', { name: user.name });
 translate('{count} item', '{count} items', { count });
 
 // Never hard-code strings
-// ❌ <Button>Submit</Button>
-// ✅ <Button>{translate('Submit')}</Button>
+// ❌ <BaseButton label="Submit" />
+// ✅ <BaseButton label={translate('Submit')} />
 ```
 
 ---
@@ -76740,12 +77367,14 @@ const filterPosition =
 
 ```tsx
 // Button sizes
-<Button size="lg">Large (44px)</Button>
-<Button>Default (36px)</Button>
-<Button size="sm">Small (28px)</Button>
+<BaseButton size="lg" label="Large (44px)" />
+<BaseButton label="Default (36px)" />
+<BaseButton size="sm" label="Small (28px)" />
 ```
 
 > **Note:** The 44px minimum touch target (WCAG) is primarily for mobile/touch interfaces. Desktop applications can use smaller interactive elements.
+>
+> For complete component specifications, variant tokens, and the decision matrix, see the [Button UI Guide](button-ui-guide.md).
 
 ---
 
@@ -76865,12 +77494,15 @@ When cards are displayed in a row (carousel, grid), ensure they all have equal h
 
 ```tsx
 // ❌ BAD: Disabled without explanation
-<Button disabled={!canEdit}>Edit</Button>
+<BaseButton disabled={!canEdit} label="Edit" />
 
-// ✅ GOOD: Disabled with tooltip
-<Tip label={canEdit ? null : translate('You need edit permission')}>
-  <Button disabled={!canEdit}>Edit</Button>
-</Tip>
+// ✅ GOOD: Disabled with reason -- BaseButton's own disabledReason prop
+// shows the tooltip only while the button is actually disabled
+<BaseButton
+  disabled={!canEdit}
+  disabledReason={translate('You need edit permission')}
+  label="Edit"
+/>
 ```
 
 ```tsx
@@ -76918,7 +77550,9 @@ import {
 } from '@/table/utils';
 
 // Buttons & Actions
-import { BaseButton } from '@/core/buttons/BaseButton';
+import { BaseButton } from 'waldur-ui';
+import { SubmitButton } from '@/form';
+import { CloseDialogButton } from '@/modal/CloseDialogButton';
 import { ActionItem } from '@/resource/actions/ActionItem';
 import { useValidators } from '@/resource/actions/useValidators';
 
@@ -76931,7 +77565,7 @@ import { StateIndicator } from '@/core/StateIndicator';
 import { Badge } from 'waldur-ui';
 
 // Tooltips
-import { Tip } from '@/core/Tooltip';
+import { Tooltip } from 'waldur-ui';
 
 // Permissions
 import { hasPermission } from '@/permissions/hasPermission';
@@ -77708,11 +78342,13 @@ call manager's side of it.
 [Image: Project details step]
 
 !!! note "Project duration"
-    You are not asked how long the project should run. When a resource you
+    You are not asked how long the project should run. When the call sets a
+    fixed duration, the project lasts exactly that long, and any subscription
+    length you choose must fit inside it. Otherwise, when a resource you
     request is sold by the month, you choose the subscription length on that
     request, and the project lasts as long as the longest subscription. When
-    nothing you request is sold by the month, the project lasts the fixed
-    duration the call sets, if any. The **Project details** card and the
+    the call sets no fixed duration and nothing you request is sold by the
+    month, the project has no end date. The **Project details** card and the
     **Summary** panel state the length this comes to.
 
 ### Resource requests
@@ -78232,12 +78868,23 @@ Before activating a call, the Call manager must configure all necessary settings
 
 Under **Configuration → General configuration**, set the basic call parameters:
 
-- **Fixed duration for granted projects (in days)**: how long a granted project runs when the proposal requests no subscription. A requested subscription length takes precedence — the project cannot end before its longest subscription does. Applicants see the resulting length in the submission form; they are not asked for a duration.
+- **Fixed duration for granted projects (in days)**: how long every granted project runs. When it is set, it decides the project's end date, and applicants can only choose subscription lengths that fit inside it. Applicants see the resulting length in the submission form; they are not asked for a duration. See [How long a granted project runs](#how-long-a-granted-project-runs).
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
 
 [Image: Call general configuration]
+
+#### How long a granted project runs
+
+When a proposal is granted, the project's end date is decided in this order:
+
+1. **The call's fixed duration**, when it is set. The project ends that many days after it starts. Subscription lengths requested under the call are limited to fit inside it, and a resource never outlasts its project.
+2. **The longest requested subscription**, when the call sets no fixed duration. The project lasts as long as the longest subscription chosen on its resource requests.
+3. **No end date**, when the call sets no fixed duration and nothing requested is sold by the month. The project runs until someone sets an end date on it.
+
+!!! warning "Awards that must expire"
+    If every award from the call must end, set a fixed duration. Without one, a proposal that requests only resources not sold by the month creates a project with no end date.
 
 Further sub-tabs sit alongside it under **Configuration**:
 
@@ -78449,7 +79096,7 @@ Applicants follow these steps to request resources through an active call:
     [Image: Call detail with application button]
 
 3. Fill in the required fields.
-      -     The project duration is not asked for. It follows from the subscription lengths chosen on the resource requests, or from the fixed duration the Call manager set when nothing sold by the month is requested, and is shown read-only.
+      -     The project duration is not asked for. It is the call's fixed duration when the Call manager set one, otherwise the longest subscription chosen on the resource requests, and is shown read-only (see [How long a granted project runs](#how-long-a-granted-project-runs)).
 4. Select required **offerings and allocations**.
       -     When there is predefined resource templates, proposal creators now select resources based on predefined templates configured by the Call manager. These templates include specific offering and plan combinations, predefined attributes and resource limits.
 5. Add **team members** (optional).
