@@ -16270,6 +16270,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Step 3: Configure call rounds">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-evaluation-starts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When evaluation starts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19130,6 +19147,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Step 3: Configure call rounds">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-evaluation-starts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When evaluation starts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19546,19 +19580,32 @@
 <ol>
 <li>Create a <strong>Round</strong> within the call.</li>
 <li>Configure the round settings:<ul>
-<li>Start and end dates</li>
-<li>Review strategy: after round closure or after submission</li>
+<li>Start and cutoff dates (or a start date with a repeat cadence to create several rounds at once)</li>
 <li>Review duration (in days)</li>
-<li>Minimum number of reviewers</li>
-<li>Minimum average score for auto-approval (optional)</li>
-<li>Deciding entity: call manager or automatic</li>
-<li>Allocation timing: immediate or fixed date</li>
-<li>Define the mappings between proposal roles and project roles</li>
+<li>Allocation date, when the call allocates on a fixed date</li>
 </ul>
 </li>
-<li>Save and activate the round.</li>
+<li>Save the round.</li>
 </ol>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_rounds_config.png" data-desc-position="bottom"><img alt="Rounds configuration with review strategy and deadlines" src="../../img/scenario_rounds_config.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_rounds_config.png" data-desc-position="bottom"><img alt="Rounds configuration with start and cutoff dates" src="../../img/scenario_rounds_config.png"></a></p>
+<p>A round only schedules submission, review and allocation. How many reviewers a
+proposal needs, the minimum score, who decides and when resources are allocated
+are set on the call's <a href="../workflow-configuration/#per-step-settings">workflow steps</a>.</p>
+<h3 id="when-evaluation-starts">When evaluation starts</h3>
+<p>Each call decides when a submitted proposal's evaluation starts:</p>
+<ul>
+<li><strong>On submission</strong> (the default) — the first enabled workflow step starts as
+  soon as the applicant submits.</li>
+<li><strong>At the round cut-off</strong> — every proposal stays <strong>Submitted</strong> until its
+  round's cutoff date, and the evaluation of all of them starts together after
+  the cut-off, so a panel can assess a round's proposals as one batch. A
+  background job checks for such proposals every hour, so they move to
+  <strong>In review</strong> within about an hour of the cut-off.</li>
+</ul>
+<p>The setting is the call's <code>evaluation_start</code> field (<code>on_submission</code> or
+<code>at_cutoff</code>). The call configuration pages do not offer a control for it yet,
+so it is set through the API. It cannot be changed while the call has proposals
+that are submitted or in review.</p>
 <h2 id="step-4-call-configuration-and-activation">Step 4: Call configuration and activation</h2>
 <p><strong>Performed by:</strong> Call manager</p>
 <p>Before activating a call, the Call manager must configure all necessary settings:</p>
@@ -19858,9 +19905,23 @@ external URL, so nobody writes a proposal they cannot submit.</p>
 <p>After matching, create formal assignment batches to assign proposals to reviewers:</p>
 <ol>
 <li>Go to the <strong>Assignments</strong> tab in the reviewer pool</li>
-<li>Create batches grouping proposals per reviewer</li>
-<li>Send batches — reviewers receive email notifications</li>
+<li>Create batches grouping proposals per reviewer. A reviewer is not given more
+   open assignments than their maximum (see
+   <a href="../reviewer-management/#managing-reviewer-capacity">Managing reviewer capacity</a>).</li>
+<li>Send batches. The reviewer only sees a batch once it is sent, and is emailed
+   the list of proposals and the response deadline when the
+   <code>proposal.reviewer_assignment_invitation</code> notification is enabled on the
+   deployment.</li>
 </ol>
+<p>A sent batch expires after the call's assignment expiration period (7 days by
+default). Before that, the reviewer gets one reminder (2 days before the
+deadline by default); when a batch expires with proposals still unanswered, the
+call managers are emailed. Both emails, too, are sent only when their
+notifications are enabled. Use <strong>Extend deadline</strong> on a sent or expired batch to
+give the reviewer more time: an expired batch returns to <strong>Sent</strong>, its
+unanswered proposals become pending again, and a new reminder is sent before the
+new deadline. Reviews already accepted from the batch are not due before the
+batch's new deadline.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_assignments_expanded.png" data-desc-position="bottom"><img alt="Assignment batches with mixed statuses" src="../../img/scenario_assignments_expanded.png"></a></p>
 <p>Reviewers can accept or decline each proposal. Expanded batches show individual item responses:</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_assignments_mixed.png" data-desc-position="bottom"><img alt="Batch with accepted and declined items" src="../../img/scenario_assignments_mixed.png"></a></p>
@@ -19878,14 +19939,14 @@ external URL, so nobody writes a proposal they cannot submit.</p>
 <li>Submit the review</li>
 </ol>
 <h2 id="step-7-decision-and-allocation">Step 7: Decision and allocation</h2>
-<p><strong>Performed by:</strong> Call manager (if configured) or Automatic system</p>
+<p><strong>Performed by:</strong> The responsible role of the <strong>Allocation decision</strong> step (Call manager by default)</p>
 <p>The call manager monitors all proposals and their review status:</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_proposals_mixed_states.png" data-desc-position="bottom"><img alt="Proposals with mixed states: submitted, in review, accepted, rejected" src="../../img/scenario_proposals_mixed_states.png"></a></p>
 <p>The reviews list shows every review with its reviewer, round and state:</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_reviews_expanded.png" data-desc-position="bottom"><img alt="Reviews list with reviewers, rounds and states" src="../../img/scenario_reviews_expanded.png"></a></p>
 <p>The final decision process determines which proposals receive resource allocations:</p>
 <ol>
-<li>Decision entity evaluates reviews.</li>
+<li>The responsible user completes the <strong>Allocation decision</strong> step after weighing the reviews.</li>
 <li>Proposal is <strong>accepted</strong> or <strong>rejected</strong>.</li>
 <li>If accepted:<ul>
 <li>A <strong>new project</strong> is created under the proposing organization.</li>
@@ -19968,7 +20029,7 @@ A: A Call Organiser is appointed by the Organization Owner to create calls and a
 <p><strong>Q: Can a call have multiple rounds running simultaneously?</strong>
 A: No, Waldur supports multiple rounds within a single call, allowing for different resource types or applicant categories to be handled separately, but they cannot be active at the same time.</p>
 <p><strong>Q: What happens if insufficient reviewers complete their evaluations?</strong>
-A: If the minimum number of reviews is not met by the deadline, the Call manager receives a notification and can either extend the review period or reduce the minimum requirement.</p>
+A: <strong>Minimum reviewers</strong> on a workflow step is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked <strong>Overdue</strong> and the workflow moves on to the next step, or rejects the proposal if it was the last one (see <a href="../workflow-configuration/#deadline-handling">Deadline handling</a>). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.</p>
 <p><strong>Q: Can applicants edit their proposals after submission?</strong>
 A: By default, proposals cannot be edited after submission. However, if a reviewer or Call manager rejects a proposal with a request for revisions, the applicant can make the requested changes and resubmit.</p>
 <p><strong>Q: Is it possible to transfer allocated resources between approved projects?</strong>
@@ -19976,7 +20037,7 @@ A: Resource transfer between projects requires administrative approval. Contact 
 <p><strong>Q: How are applicants notified about proposal decisions?</strong>
 A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is made.</p>
 <p><strong>Q: Can a Call manager override reviewer scores?</strong><br>
-A: When configured for Call manager decisions, the manager can approve or reject proposals regardless of review scores, though all reviewer feedback remains visible and documented.</p>
+A: Decisions are always made by a person completing a workflow step; scores never decide on their own. A step can be declined regardless of scores, but approving is blocked while a <strong>Minimum reviewers</strong> or <strong>Minimum score threshold</strong> set on that step is not met. All reviewer feedback remains visible and documented.</p>
 
 
 

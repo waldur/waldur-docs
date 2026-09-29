@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-29T08:50:53.861786Z
+Generated: 2026-09-29T19:52:28.297210Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -57706,7 +57706,8 @@ graph TB
 
 - **`CallManagingOrganisation`**: Organizations that create and manage calls for proposals
 - **`Call`**: Main entity representing calls with configuration for review settings and duration
-- **`Round`**: Time-bounded submission periods with configurable review and allocation strategies
+- **`Round`**: Time-bounded submission periods; a round holds scheduling only
+- **`CallWorkflowStep`**: Per-call evaluation policy — which steps run and how each is gated
 - **`Proposal`**: Individual proposals with project details and resource requests
 - **`RequestedResource`**: Specific resource requests within proposals linked to marketplace
 - **`Review`**: Peer review system with scoring, comments, and field-specific feedback
@@ -57786,44 +57787,72 @@ stateDiagram-v2
     REJECTED --> [*] : Assignment ended
 ```
 
-## Round Management and Strategies
+## Rounds and Evaluation Policy
 
-### Review Strategies
+### What a round holds
 
-Rounds can be configured with different review timing approaches:
+A round is a submission window and nothing more. Its fields are scheduling only:
 
-| Strategy | Description | Use Case | Workflow |
-|----------|-------------|----------|----------|
-| **AFTER_ROUND** | Reviews start after submission deadline | Large competitive calls | All proposals collected → batch review assignment |
-| **AFTER_PROPOSAL** | Reviews start immediately upon submission | Rolling submissions | Individual proposal → immediate review assignment |
+| Field | Meaning |
+| --- | --- |
+| `start_time` | Submissions open |
+| `cutoff_time` | Submissions close |
+| `review_duration_in_days` | How long an individual review may stay open before it expires |
+| `allocation_date` | The date granted projects start when the allocation decision uses a fixed date |
 
-### Allocation Strategies
+A round's status (`scheduled`, `open`, `ended`) is derived from `start_time` and
+`cutoff_time`; it is not stored. Proposals can be created and submitted only while
+their round is open.
 
-Resource allocation can be automated or manual:
+Evaluation starts **per proposal, at submission**: submitting creates the
+proposal's workflow step instances and activates the first enabled step. There is
+no batch evaluation of a round after its cut-off.
 
-| Strategy | Description | Decision Maker | Allocation Logic |
-|----------|-------------|---------------|------------------|
-| **BY_CALL_MANAGER** | Manual allocation by call administrators | Human reviewers | Call manager reviews scores and allocates |
-| **AUTOMATIC** | Automated based on review scores | System algorithm | Automatic allocation above score threshold |
+### Where evaluation policy lives
 
-### Round Configuration
+Review and allocation policy is configured per call, on its workflow steps
+(`CallWorkflowStep`, one row per catalogue step, seeded when the call is created):
+
+| Setting | Meaning |
+| --- | --- |
+| `is_enabled` | Whether the step runs; `allocation_decision` is mandatory |
+| `duration_in_days` | Step deadline, counted from when the step starts |
+| `responsible_role` | Who acts on the step (call manager, offering manager, reviewer, panel member, applicant) |
+| `checklist`, `checklist_required` | Evaluation form for the step, and whether it must be answered |
+| `min_reviewers`, `min_score_threshold` | Completion gates: the step cannot be completed until enough reviews are in and their average reaches the threshold. They never decide on their own |
+| `blind_review`, `requires_coi_confirmation` | Evaluator isolation and conflict-of-interest attestation |
+| `applicant_visible` | Whether the applicant sees the step |
+| `transition_mode` | `automatic_on_completion` advances to the next step when this one is completed; `manual` waits for a separate advance |
+| `include_award_response`, `allocation_time` | On `allocation_decision` only: whether the applicant must accept the award, and whether allocation happens `on_decision` or on the round's `allocation_date` (`fixed_date`) |
+
+The step catalogue, in order: `administrative_check`, `technical_assessment`,
+`expert_review`, `panel_review`, `allocation_decision`, `award_response`.
 
 ```mermaid
 graph LR
-    subgraph "Round Configuration"
+    subgraph "Round (scheduling)"
         ST[Start Time] --> CT[Cutoff Time]
-        CT --> RD[Review Duration]
-        RD --> MR[Min Reviewers]
-        MR --> MS[Min Score]
-        MS --> AD[Allocation Date]
+        RD[Review Duration]
+        AD[Allocation Date]
     end
 
-    subgraph "Strategies"
-        RS[Review Strategy:<br/>AFTER_ROUND/<br/>AFTER_PROPOSAL]
-        AS[Allocation Strategy:<br/>BY_CALL_MANAGER/<br/>AUTOMATIC]
-        AT[Allocation Time:<br/>ON_DECISION/<br/>FIXED_DATE]
+    subgraph "CallWorkflowStep (policy, per call)"
+        EN[Enabled / Duration] --> GT[Min Reviewers / Min Score]
+        GT --> TM[Transition Mode]
+        TM --> AT[Allocation Time:<br/>on_decision / fixed_date]
     end
 ```
+
+### How long a granted project runs
+
+When a proposal is allocated, the project's end date is decided in this order:
+
+1. **The call's fixed duration** (`Call.fixed_duration_in_days`), whenever it is set.
+   Prepaid subscription lengths requested under the call are capped to fit inside
+   it, and resource end dates are clamped to the project's.
+2. **The longest requested prepaid subscription**, when the call sets no fixed
+   duration.
+3. **No end date**, when neither applies: the project runs until someone sets one.
 
 ## Resource Template System
 
@@ -57904,30 +57933,25 @@ For complete documentation on the matching system, including configuration optio
 
 ### Review Assignment
 
-The system supports flexible reviewer assignment strategies:
+Reviewers are assigned while a proposal's `expert_review` step is active. The
+step starts when the proposal reaches it in its workflow, which begins at
+submission; the call manager then assigns reviewers manually or generates
+assignment batches from the reviewer pool:
 
 ```mermaid
 sequenceDiagram
-    participant R as Round
     participant P as Proposal
-    participant RM as ReviewManager
+    participant WF as Workflow steps
+    participant CM as Call manager
     participant Rev as Reviewer
     participant N as NotificationSystem
 
-    Note over R: Review Strategy Check
-
-    alt After Round Strategy
-        R->>R: Cutoff time reached
-        R->>RM: Assign reviewers to all proposals
-    else After Proposal Strategy
-        P->>P: State changed to SUBMITTED
-        P->>RM: Assign reviewers immediately
-    end
-
-    RM->>Rev: Create review assignments
-    RM->>N: Notify assigned reviewers
+    P->>WF: Submitted, first enabled step starts
+    WF->>WF: Earlier steps completed, expert_review starts
+    CM->>Rev: Assign reviewers (manual or assignment batch)
+    WF->>N: Notify assigned reviewers
     Rev->>Rev: Complete reviews
-    RM->>RM: Aggregate review results
+    CM->>WF: Complete step once min reviewers and min score are met
 ```
 
 ### Review Scoring System
@@ -57945,7 +57969,6 @@ class Review:
     comment_project_title: str
     comment_project_summary: str
     comment_project_description: str
-    comment_project_duration: str
     comment_resource_requests: str
     comment_team: str
 
@@ -58124,15 +58147,18 @@ call = Call.objects.create(
     fixed_duration_in_days=365  # 1-year allocations
 )
 
-# Round with automatic allocation
+# Round: scheduling only
 round = Round.objects.create(
     call=call,
     start_time=datetime(2024, 1, 1),
     cutoff_time=datetime(2024, 2, 15),
-    review_strategy=Round.ReviewStrategies.AFTER_ROUND,
-    deciding_entity=Round.AllocationStrategies.AUTOMATIC,
-    minimal_average_scoring=7.0,  # Require 7/10 average
-    minimum_number_of_reviewers=3
+)
+
+# Evaluation policy: expert review with three reviewers and a 7.0 average
+CallWorkflowStep.objects.filter(call=call, step="expert_review").update(
+    is_enabled=True,
+    min_reviewers=3,
+    min_score_threshold=7.0,
 )
 
 # Resource template
@@ -58157,7 +58183,7 @@ template = CallResourceTemplate.objects.create(
 
 1. Researchers submit proposals with resource requests
 2. Expert reviewers evaluate scientific merit
-3. Proposals scoring ≥7.0 automatically receive allocations
+3. Once three reviews averaging at least 7.0 are in, the call manager completes the review step and decides the allocation
 4. HPC accounts created with specified limits
 5. Usage tracked through marketplace billing
 
@@ -58174,15 +58200,19 @@ call = Call.objects.create(
     reviews_visible_to_submitters=True
 )
 
-# Quarterly rounds with manual allocation
+# Quarterly rounds; granted projects start on the round's allocation date
 round_q1 = Round.objects.create(
     call=call,
     start_time=datetime(2024, 1, 1),
     cutoff_time=datetime(2024, 3, 15),
-    review_strategy=Round.ReviewStrategies.AFTER_ROUND,
-    deciding_entity=Round.AllocationStrategies.BY_CALL_MANAGER,
-    allocation_time=Round.AllocationTimes.FIXED_DATE,
     allocation_date=datetime(2024, 4, 1)
+)
+
+CallWorkflowStep.objects.filter(call=call, step="panel_review").update(
+    is_enabled=True
+)
+CallWorkflowStep.objects.filter(call=call, step="allocation_decision").update(
+    allocation_time=AllocationTimes.FIXED_DATE
 )
 
 # Multiple resource options
@@ -58229,14 +58259,16 @@ call = Call.objects.create(
     reviews_visible_to_submitters=False  # Confidential evaluation
 )
 
-# Continuous rolling rounds
+# One year-long round; each proposal is reviewed as soon as it is submitted
 rolling_round = Round.objects.create(
     call=call,
     start_time=datetime(2024, 1, 1),
     cutoff_time=datetime(2024, 12, 31),
-    review_strategy=Round.ReviewStrategies.AFTER_PROPOSAL,  # Immediate review
-    deciding_entity=Round.AllocationStrategies.BY_CALL_MANAGER,
     review_duration_in_days=14  # Fast turnaround
+)
+
+CallWorkflowStep.objects.filter(call=call, step="expert_review").update(
+    is_enabled=True, duration_in_days=14
 )
 
 # Startup development package
@@ -78400,6 +78432,14 @@ the call team can now see it.
     Submit before the round **deadline**. Once the round closes you can no longer
     submit, and a proposal left in **Draft** is not evaluated.
 
+!!! note "Waiting for the round cut-off"
+    Some calls evaluate all proposals of a round together. On such a call your
+    proposal stays **Submitted** after you submit it, and nothing happens to it
+    until the round's cutoff date has passed. Evaluation then starts for every
+    proposal of the round at once, and yours moves to **In review**, usually
+    within an hour of the cut-off. Waiting as **Submitted** until then is
+    expected, not a sign that something is wrong.
+
 ## Your proposals
 
 Open **Calls → My proposals** to see everything you have created, across all
@@ -78413,7 +78453,7 @@ Proposal states an applicant sees:
 | State | Meaning |
 |---|---|
 | **Draft** | Not yet submitted — only you can see it |
-| **Submitted** | Submitted and awaiting evaluation |
+| **Submitted** | Submitted and awaiting evaluation — on calls that evaluate at the round cut-off, until the cut-off has passed |
 | **In review** | Moving through the evaluation workflow |
 | **Accepted** | Approved — a project and resources have been (or are being) provisioned |
 | **Rejected** | Not funded |
@@ -78844,17 +78884,33 @@ This guide walks you through the entire lifecycle of call management in Waldur, 
 
 1. Create a **Round** within the call.
 2. Configure the round settings:
-      - Start and end dates
-      - Review strategy: after round closure or after submission
+      - Start and cutoff dates (or a start date with a repeat cadence to create several rounds at once)
       - Review duration (in days)
-      - Minimum number of reviewers
-      - Minimum average score for auto-approval (optional)
-      - Deciding entity: call manager or automatic
-      - Allocation timing: immediate or fixed date
-      - Define the mappings between proposal roles and project roles
-3. Save and activate the round.
+      - Allocation date, when the call allocates on a fixed date
+3. Save the round.
 
-[Image: Rounds configuration with review strategy and deadlines]
+[Image: Rounds configuration with start and cutoff dates]
+
+A round only schedules submission, review and allocation. How many reviewers a
+proposal needs, the minimum score, who decides and when resources are allocated
+are set on the call's [workflow steps](workflow-configuration.md#per-step-settings).
+
+### When evaluation starts
+
+Each call decides when a submitted proposal's evaluation starts:
+
+- **On submission** (the default) — the first enabled workflow step starts as
+  soon as the applicant submits.
+- **At the round cut-off** — every proposal stays **Submitted** until its
+  round's cutoff date, and the evaluation of all of them starts together after
+  the cut-off, so a panel can assess a round's proposals as one batch. A
+  background job checks for such proposals every hour, so they move to
+  **In review** within about an hour of the cut-off.
+
+The setting is the call's `evaluation_start` field (`on_submission` or
+`at_cutoff`). The call configuration pages do not offer a control for it yet,
+so it is set through the API. It cannot be changed while the call has proposals
+that are submitted or in review.
 
 ## Step 4: Call configuration and activation
 
@@ -79143,8 +79199,23 @@ Expand a record to see evidence details and management options:
 After matching, create formal assignment batches to assign proposals to reviewers:
 
 1. Go to the **Assignments** tab in the reviewer pool
-2. Create batches grouping proposals per reviewer
-3. Send batches — reviewers receive email notifications
+2. Create batches grouping proposals per reviewer. A reviewer is not given more
+   open assignments than their maximum (see
+   [Managing reviewer capacity](reviewer-management.md#managing-reviewer-capacity)).
+3. Send batches. The reviewer only sees a batch once it is sent, and is emailed
+   the list of proposals and the response deadline when the
+   `proposal.reviewer_assignment_invitation` notification is enabled on the
+   deployment.
+
+A sent batch expires after the call's assignment expiration period (7 days by
+default). Before that, the reviewer gets one reminder (2 days before the
+deadline by default); when a batch expires with proposals still unanswered, the
+call managers are emailed. Both emails, too, are sent only when their
+notifications are enabled. Use **Extend deadline** on a sent or expired batch to
+give the reviewer more time: an expired batch returns to **Sent**, its
+unanswered proposals become pending again, and a new reminder is sent before the
+new deadline. Reviews already accepted from the batch are not due before the
+batch's new deadline.
 
 [Image: Assignment batches with mixed statuses]
 
@@ -79173,7 +79244,7 @@ Reviewers evaluate proposals using a structured assessment process:
 
 ## Step 7: Decision and allocation
 
-**Performed by:** Call manager (if configured) or Automatic system
+**Performed by:** The responsible role of the **Allocation decision** step (Call manager by default)
 
 The call manager monitors all proposals and their review status:
 
@@ -79185,7 +79256,7 @@ The reviews list shows every review with its reviewer, round and state:
 
 The final decision process determines which proposals receive resource allocations:
 
-1. Decision entity evaluates reviews.
+1. The responsible user completes the **Allocation decision** step after weighing the reviews.
 2. Proposal is **accepted** or **rejected**.
 3. If accepted:
       - A **new project** is created under the proposing organization.
@@ -79245,7 +79316,7 @@ A: A Call Organiser is appointed by the Organization Owner to create calls and a
 A: No, Waldur supports multiple rounds within a single call, allowing for different resource types or applicant categories to be handled separately, but they cannot be active at the same time.
 
 **Q: What happens if insufficient reviewers complete their evaluations?**
-A: If the minimum number of reviews is not met by the deadline, the Call manager receives a notification and can either extend the review period or reduce the minimum requirement.
+A: **Minimum reviewers** on a workflow step is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked **Overdue** and the workflow moves on to the next step, or rejects the proposal if it was the last one (see [Deadline handling](workflow-configuration.md#deadline-handling)). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.
 
 **Q: Can applicants edit their proposals after submission?**
 A: By default, proposals cannot be edited after submission. However, if a reviewer or Call manager rejects a proposal with a request for revisions, the applicant can make the requested changes and resubmit.
@@ -79257,7 +79328,7 @@ A: Resource transfer between projects requires administrative approval. Contact 
 A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is made.
 
 **Q: Can a Call manager override reviewer scores?**  
-A: When configured for Call manager decisions, the manager can approve or reject proposals regardless of review scores, though all reviewer feedback remains visible and documented.
+A: Decisions are always made by a person completing a workflow step; scores never decide on their own. A step can be declined regardless of scores, but approving is blocked while a **Minimum reviewers** or **Minimum score threshold** set on that step is not met. All reviewer feedback remains visible and documented.
 
 ---
 
@@ -79433,11 +79504,14 @@ Permanently remove the reviewer from the proposal. Any existing reviews are disc
 
 ## Staff override capabilities
 
-When the automated workflow gets stuck — for example, a reviewer's invitation expired or an assignment is blocked by a COI that the manager wants to override — staff and call managers can use manual overrides.
+When the automated workflow gets stuck — for example, a reviewer cannot answer their invitation or an assignment is blocked by a COI that the manager wants to override — staff and call managers can use manual overrides.
 
 ### Force-accepting reviewer pool invitations
 
 If a reviewer's invitation is stuck in **pending**, **declined**, or **expired** status, a call manager can force-accept it.
+
+!!! tip
+    For an invitation that simply expired or went unanswered, resend it instead: the reviewer gets a new link and a new expiry date and accepts it themselves (see [Invitation expiry and resending](reviewer-management.md#invitation-expiry-and-resending)). Keep force-accept for cases where the reviewer has agreed through other channels but cannot answer the invitation.
 
 1. Navigate to the **Reviewer pool** tab
 2. Find the invitation with the stuck status
@@ -79758,6 +79832,19 @@ Shows pending assignment batches — proposals you've been asked to accept or de
 
 [Image: Reviewer assignment batch with items]
 
+When a call manager sends you a batch, you receive an email listing its
+proposals, any note from the call manager and the date by which to respond,
+with a link to this tab. If you have not answered every proposal as the deadline
+approaches, you get one reminder email (by default 2 days before it). After the
+deadline the unanswered proposals expire and can no longer be accepted, unless
+the call manager extends the deadline. Whether these emails are sent depends on
+the notifications the deployment has enabled.
+
+Before you accept, a batch shows each proposal's title, and its summary if the
+call discloses summaries to reviewers. A proposal blocked by a conflict of
+interest is shown by title only and cannot be accepted until the call manager
+resolves the conflict.
+
 For each assignment, you can:
 
 - **Accept** — creates a review in "in review" state; you can begin evaluation
@@ -79799,6 +79886,12 @@ Each review includes:
 ### Proposal context during review
 
 When reviewing a proposal, you can see the full proposal detail including team composition, resource requests, and any supporting documentation.
+
+Accepting an assignment is enough to open the proposal and its team — you do not
+need a reviewer role on the call. You see the applicant details the call's
+applicant data visibility settings expose to reviewers. Access lasts while your
+review is in review or submitted; if the review is cancelled or expires, the
+proposal is no longer available to you.
 
 [Image: Proposal review detail]
 
@@ -79851,7 +79944,7 @@ After matching, call managers create formal assignment batches to assign proposa
 
 ### Assignment batches
 
-Each batch groups proposals assigned to a single reviewer. The reviewer receives an email notification and can accept or decline each proposal individually.
+Each batch groups proposals assigned to a single reviewer. Once the batch is sent, the reviewer sees it on their **Assignments** tab, is emailed about it, and can accept or decline each proposal individually.
 
 [Image: Assignment batches with lifecycle statuses]
 
@@ -79999,12 +80092,28 @@ Call managers build a curated pool of reviewers for each call.
 
 When a reviewer is added to a pool:
 
-1. An email invitation is sent with a unique acceptance token
-2. The reviewer can **accept** or **decline** the invitation without logging in
-3. On acceptance, the reviewer must have a published profile (they are prompted to create or publish one if they do not)
+1. An email invitation is sent with a personal invitation link
+2. The reviewer opens the link and signs in — the invitation page requires it — then **accepts** or **declines**
+3. To accept, the reviewer must have a published profile (they are prompted to create or publish one if they do not); an invitation addressed to a specific reviewer can only be accepted by that reviewer's account
 4. The call's COI policy is shown on the acceptance page
 
 Invitation statuses: **Pending** | **Accepted** | **Declined** | **Expired**
+
+### Invitation expiry and resending
+
+A pool invitation can be answered for the call's **assignment expiration** period
+(7 days by default) — the same response window the call gives reviewers for
+assignment batches. After that it can no longer be accepted or declined. An
+hourly job marks such invitations **Expired** and emails the call manager who
+sent the invitation (or the call's managers, if the sender has no email), when
+the `proposal.reviewer_pool_invitation_expired` notification is enabled.
+
+A pending or expired invitation can be sent again. Resending returns it to
+**Pending** with a new expiry date and emails the invitee a new link; the link
+from the earlier email stops working. The reviewer pool does not yet have a
+button for this — it is the `resend-invitation` action of the call reviewer pool
+API (`POST /api/call-reviewer-pools/<uuid>/resend-invitation/`), available to
+call managers. A declined invitation cannot be resent.
 
 !!! note
     Invitation tokens are generated using secure random bytes and do not require the reviewer to have an existing Waldur account to respond.
@@ -80054,7 +80163,7 @@ The COI configuration is organised into four tabs:
 | **Detection** | Lookback periods (co-authorship, institutional), shared-publication thresholds, "same department" / "same institution" toggles |
 | **Automation** | Auto-detect toggles per source (co-authorship search, institutional matching, declared conflicts) — determines what runs without manual triggering |
 | **Type handling** | For each conflict type, choose whether it triggers **recusal**, requires a **management plan**, or is **disclosure only** — used by the detector when assigning severities |
-| **Invitations** | Disclosure level shown to reviewers when they accept a pool invitation — controls how much of the proposal team and contents is exposed |
+| **Invitations** | How much of each proposal a reviewer sees in an assignment batch before accepting it — in the assignment invitation email and on their **Assignments** tab: **Titles only** (the default), **Titles and summaries**, or **Full proposal details**, which currently shows the same as titles and summaries. A proposal blocked by a conflict of interest is always shown by title only. After accepting, the reviewer reads the full proposal through their review. |
 
 A summary dialog (from the section header) lists every setting at a glance, and inline tooltips explain each COI concept.
 
@@ -80172,7 +80281,7 @@ The header buttons on **Assignment batches** are:
 **Performed by:** Call manager
 
 1. Click **Manual assignment** on the **Assignment batches** tab.
-2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`) so you can avoid over-allocating.
+2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`). An assignment that would take the reviewer above their maximum is refused (see [Managing reviewer capacity](#managing-reviewer-capacity)).
 3. Pick one or more **proposals**. The selector keeps a single chip visible with a `+N more` indicator so the dialog stays compact when many proposals are added.
 4. Optionally add **manager notes** — internal context visible to other managers but not to the reviewer.
 5. Click **Create assignment**. A draft batch is created. The reviewer is **not** notified yet.
@@ -80184,7 +80293,7 @@ The header buttons on **Assignment batches** are:
 Drafts give you a final review checkpoint before reviewers see the assignment.
 
 1. Tick the checkbox next to one or more **Draft** batches. The toolbar shows `(N) Selected` and a **Send drafts (N)** button.
-2. Click **Send drafts (N)** to dispatch the selected batches. Reviewers receive the invitation email with a unique token; the batch status moves from **Draft** to **Sent**.
+2. Click **Send drafts (N)** to dispatch the selected batches. The batch status moves from **Draft** to **Sent**, the batch appears on the reviewer's **Assignments** tab, and the reviewer is emailed the list of proposals, any manager notes, the response deadline and a link to that tab — provided the `proposal.reviewer_assignment_invitation` notification is enabled. Until a batch is sent the reviewer does not see it at all.
 3. Non-draft batches in the selection are ignored automatically.
 
 [Image: Bulk send draft batches]
@@ -80204,9 +80313,22 @@ DRAFT → SENT → RESPONDED / EXPIRED / CANCELLED
 ```
 
 - **Draft**: Manager is preparing the batch
-- **Sent**: Invitation sent to reviewer (email with unique token)
+- **Sent**: Invitation sent to reviewer
 - **Responded**: Reviewer has accepted or declined all items
-- **Expired**: Batch expired without full response (configurable expiration days)
+- **Expired**: Batch expired without full response (the call's assignment expiration days, 7 by default); its unanswered items expire with it
+- **Cancelled**: Withdrawn by the call manager; the reviewer no longer sees it
+
+Before a sent batch expires, the reviewer is sent one reminder, by default 2 days
+before the deadline. When a batch expires, the call managers are emailed so they
+can extend the deadline or reassign the proposals. Both emails depend on the
+`proposal.assignment_expiry_reminder` and `proposal.assignment_batch_expired`
+notifications being enabled.
+
+**Extend deadline** in the row menu of a sent or expired batch sets a new
+deadline in the future. An expired batch goes back to **Sent** and its expired
+items to pending, and the reviewer gets a new reminder before the new deadline.
+Reviews the reviewer already accepted from the batch are not due before the
+batch's deadline, so extending it gives them more time as well.
 
 ### Assignment item responses
 
@@ -80221,11 +80343,31 @@ If configured in the **Assignment Configuration**:
 
 - When a reviewer declines, the system automatically finds the next-best reviewer
 - Maximum auto-reassignment attempts are configurable (default: 3)
-- Reminder emails sent before assignment expiry (configurable days before)
+- Reminder emails sent before assignment expiry (configurable days before, 2 by default)
 
 ### Managing reviewer capacity
 
 The **Reviewer capacity** tab lists every pool member and their current load. Use it to adjust the **Maximum assignments** per reviewer when workload, sabbaticals, or expertise concentration change during a call.
+
+The maximum is enforced. A reviewer's current load is counted live from their
+open assignments in the call:
+
+- proposals in their draft or sent batches that are still pending;
+- accepted assignments whose review is not yet submitted or rejected;
+- reviews in progress that were created directly rather than from an assignment.
+
+Declined, expired, reassigned and COI-blocked items do not count, nor do items
+of cancelled or expired batches.
+
+- **Generate assignments** skips reviewers who have reached their maximum, also
+  counting the assignments it creates in the same run.
+- A **manual assignment**, or a review created directly, that would take the
+  reviewer above the maximum is refused with a message giving the reviewer's
+  open assignments and limit. A call manager can assign anyway by setting
+  `override_workload_limit` in the API request (`create-manual-assignment` on
+  the call, or review creation); the override is recorded as a
+  `reviewer_workload_limit_overridden` event on the call. The manual assignment
+  dialog does not offer this override yet.
 
 [Image: Reviewer capacity table]
 
@@ -80236,7 +80378,7 @@ The **Reviewer capacity** tab lists every pool member and their current load. Us
 [Image: Edit reviewer capacity dialog]
 
 !!! tip
-    Lowering the maximum below a reviewer's current count won't unassign existing work — it just prevents new assignments until the load drops back below the cap.
+    Lowering the maximum below a reviewer's current count won't unassign existing work — it just refuses new assignments until the load drops back below the maximum.
 
 ---
 
@@ -80529,6 +80671,8 @@ When an applicant submits a proposal to a call with workflow steps configured:
 2. Instances for enabled steps start as **Pending**; instances for disabled steps are marked **Skipped**
 3. The first enabled step becomes **Active**. If that step has a duration set, its deadline is calculated from the duration; otherwise it has no deadline
 4. The proposal state changes to **In review**
+
+Steps 3 and 4 happen at once only when the call starts evaluation **on submission**, the default. When the call starts evaluation **at the round cut-off**, the proposal stays **Submitted** with every enabled step **Pending** until its round's cutoff date. An hourly job then activates the first enabled step of each such proposal and moves it to **In review**; the step's deadline counts from that moment, not from submission. See [When evaluation starts](call_management.md#when-evaluation-starts).
 
 !!! note
     A proposal must have a project team before it can be submitted. If the call has no enabled steps at all, the proposal goes to **Submitted** rather than **In review**.

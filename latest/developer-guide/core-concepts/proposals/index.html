@@ -7786,22 +7786,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#round-management-and-strategies" class="md-nav__link">
+  <a href="#rounds-and-evaluation-policy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Round Management and Strategies
+        Rounds and Evaluation Policy
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Round Management and Strategies">
+    <nav class="md-nav" aria-label="Rounds and Evaluation Policy">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#review-strategies" class="md-nav__link">
+  <a href="#what-a-round-holds" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Review Strategies
+        What a round holds
       
     </span>
   </a>
@@ -7809,10 +7809,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#allocation-strategies" class="md-nav__link">
+  <a href="#where-evaluation-policy-lives" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Allocation Strategies
+        Where evaluation policy lives
       
     </span>
   </a>
@@ -7820,10 +7820,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#round-configuration" class="md-nav__link">
+  <a href="#how-long-a-granted-project-runs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Round Configuration
+        How long a granted project runs
       
     </span>
   </a>
@@ -19614,22 +19614,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#round-management-and-strategies" class="md-nav__link">
+  <a href="#rounds-and-evaluation-policy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Round Management and Strategies
+        Rounds and Evaluation Policy
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Round Management and Strategies">
+    <nav class="md-nav" aria-label="Rounds and Evaluation Policy">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#review-strategies" class="md-nav__link">
+  <a href="#what-a-round-holds" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Review Strategies
+        What a round holds
       
     </span>
   </a>
@@ -19637,10 +19637,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#allocation-strategies" class="md-nav__link">
+  <a href="#where-evaluation-policy-lives" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Allocation Strategies
+        Where evaluation policy lives
       
     </span>
   </a>
@@ -19648,10 +19648,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#round-configuration" class="md-nav__link">
+  <a href="#how-long-a-granted-project-runs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Round Configuration
+        How long a granted project runs
       
     </span>
   </a>
@@ -20358,7 +20358,8 @@
 <ul>
 <li><strong><code>CallManagingOrganisation</code></strong>: Organizations that create and manage calls for proposals</li>
 <li><strong><code>Call</code></strong>: Main entity representing calls with configuration for review settings and duration</li>
-<li><strong><code>Round</code></strong>: Time-bounded submission periods with configurable review and allocation strategies</li>
+<li><strong><code>Round</code></strong>: Time-bounded submission periods; a round holds scheduling only</li>
+<li><strong><code>CallWorkflowStep</code></strong>: Per-call evaluation policy — which steps run and how each is gated</li>
 <li><strong><code>Proposal</code></strong>: Individual proposals with project details and resource requests</li>
 <li><strong><code>RequestedResource</code></strong>: Specific resource requests within proposals linked to marketplace</li>
 <li><strong><code>Review</code></strong>: Peer review system with scoring, comments, and field-specific feedback</li>
@@ -20479,74 +20480,114 @@
 
     SUBMITTED --&gt; [*] : Review processed
     REJECTED --&gt; [*] : Assignment ended</code></pre>
-<h2 id="round-management-and-strategies">Round Management and Strategies</h2>
-<h3 id="review-strategies">Review Strategies</h3>
-<p>Rounds can be configured with different review timing approaches:</p>
+<h2 id="rounds-and-evaluation-policy">Rounds and Evaluation Policy</h2>
+<h3 id="what-a-round-holds">What a round holds</h3>
+<p>A round is a submission window and nothing more. Its fields are scheduling only:</p>
 <table>
 <thead>
 <tr>
-<th>Strategy</th>
-<th>Description</th>
-<th>Use Case</th>
-<th>Workflow</th>
+<th>Field</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>AFTER_ROUND</strong></td>
-<td>Reviews start after submission deadline</td>
-<td>Large competitive calls</td>
-<td>All proposals collected → batch review assignment</td>
+<td><code>start_time</code></td>
+<td>Submissions open</td>
 </tr>
 <tr>
-<td><strong>AFTER_PROPOSAL</strong></td>
-<td>Reviews start immediately upon submission</td>
-<td>Rolling submissions</td>
-<td>Individual proposal → immediate review assignment</td>
+<td><code>cutoff_time</code></td>
+<td>Submissions close</td>
+</tr>
+<tr>
+<td><code>review_duration_in_days</code></td>
+<td>How long an individual review may stay open before it expires</td>
+</tr>
+<tr>
+<td><code>allocation_date</code></td>
+<td>The date granted projects start when the allocation decision uses a fixed date</td>
 </tr>
 </tbody>
 </table>
-<h3 id="allocation-strategies">Allocation Strategies</h3>
-<p>Resource allocation can be automated or manual:</p>
+<p>A round's status (<code>scheduled</code>, <code>open</code>, <code>ended</code>) is derived from <code>start_time</code> and
+<code>cutoff_time</code>; it is not stored. Proposals can be created and submitted only while
+their round is open.</p>
+<p>Evaluation starts <strong>per proposal, at submission</strong>: submitting creates the
+proposal's workflow step instances and activates the first enabled step. There is
+no batch evaluation of a round after its cut-off.</p>
+<h3 id="where-evaluation-policy-lives">Where evaluation policy lives</h3>
+<p>Review and allocation policy is configured per call, on its workflow steps
+(<code>CallWorkflowStep</code>, one row per catalogue step, seeded when the call is created):</p>
 <table>
 <thead>
 <tr>
-<th>Strategy</th>
-<th>Description</th>
-<th>Decision Maker</th>
-<th>Allocation Logic</th>
+<th>Setting</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>BY_CALL_MANAGER</strong></td>
-<td>Manual allocation by call administrators</td>
-<td>Human reviewers</td>
-<td>Call manager reviews scores and allocates</td>
+<td><code>is_enabled</code></td>
+<td>Whether the step runs; <code>allocation_decision</code> is mandatory</td>
 </tr>
 <tr>
-<td><strong>AUTOMATIC</strong></td>
-<td>Automated based on review scores</td>
-<td>System algorithm</td>
-<td>Automatic allocation above score threshold</td>
+<td><code>duration_in_days</code></td>
+<td>Step deadline, counted from when the step starts</td>
+</tr>
+<tr>
+<td><code>responsible_role</code></td>
+<td>Who acts on the step (call manager, offering manager, reviewer, panel member, applicant)</td>
+</tr>
+<tr>
+<td><code>checklist</code>, <code>checklist_required</code></td>
+<td>Evaluation form for the step, and whether it must be answered</td>
+</tr>
+<tr>
+<td><code>min_reviewers</code>, <code>min_score_threshold</code></td>
+<td>Completion gates: the step cannot be completed until enough reviews are in and their average reaches the threshold. They never decide on their own</td>
+</tr>
+<tr>
+<td><code>blind_review</code>, <code>requires_coi_confirmation</code></td>
+<td>Evaluator isolation and conflict-of-interest attestation</td>
+</tr>
+<tr>
+<td><code>applicant_visible</code></td>
+<td>Whether the applicant sees the step</td>
+</tr>
+<tr>
+<td><code>transition_mode</code></td>
+<td><code>automatic_on_completion</code> advances to the next step when this one is completed; <code>manual</code> waits for a separate advance</td>
+</tr>
+<tr>
+<td><code>include_award_response</code>, <code>allocation_time</code></td>
+<td>On <code>allocation_decision</code> only: whether the applicant must accept the award, and whether allocation happens <code>on_decision</code> or on the round's <code>allocation_date</code> (<code>fixed_date</code>)</td>
 </tr>
 </tbody>
 </table>
-<h3 id="round-configuration">Round Configuration</h3>
+<p>The step catalogue, in order: <code>administrative_check</code>, <code>technical_assessment</code>,
+<code>expert_review</code>, <code>panel_review</code>, <code>allocation_decision</code>, <code>award_response</code>.</p>
 <pre class="mermaid"><code>graph LR
-    subgraph "Round Configuration"
+    subgraph "Round (scheduling)"
         ST[Start Time] --&gt; CT[Cutoff Time]
-        CT --&gt; RD[Review Duration]
-        RD --&gt; MR[Min Reviewers]
-        MR --&gt; MS[Min Score]
-        MS --&gt; AD[Allocation Date]
+        RD[Review Duration]
+        AD[Allocation Date]
     end
 
-    subgraph "Strategies"
-        RS[Review Strategy:&lt;br/&gt;AFTER_ROUND/&lt;br/&gt;AFTER_PROPOSAL]
-        AS[Allocation Strategy:&lt;br/&gt;BY_CALL_MANAGER/&lt;br/&gt;AUTOMATIC]
-        AT[Allocation Time:&lt;br/&gt;ON_DECISION/&lt;br/&gt;FIXED_DATE]
+    subgraph "CallWorkflowStep (policy, per call)"
+        EN[Enabled / Duration] --&gt; GT[Min Reviewers / Min Score]
+        GT --&gt; TM[Transition Mode]
+        TM --&gt; AT[Allocation Time:&lt;br/&gt;on_decision / fixed_date]
     end</code></pre>
+<h3 id="how-long-a-granted-project-runs">How long a granted project runs</h3>
+<p>When a proposal is allocated, the project's end date is decided in this order:</p>
+<ol>
+<li><strong>The call's fixed duration</strong> (<code>Call.fixed_duration_in_days</code>), whenever it is set.
+   Prepaid subscription lengths requested under the call are capped to fit inside
+   it, and resource end dates are clamped to the project's.</li>
+<li><strong>The longest requested prepaid subscription</strong>, when the call sets no fixed
+   duration.</li>
+<li><strong>No end date</strong>, when neither applies: the project runs until someone sets one.</li>
+</ol>
 <h2 id="resource-template-system">Resource Template System</h2>
 <h3 id="template-architecture">Template Architecture</h3>
 <p>Call resource templates standardize resource requests across proposals:</p>
@@ -20623,28 +20664,23 @@
 </ul>
 <p>For complete documentation on the matching system, including configuration options, scoring algorithms, and API endpoints, see <a href="../proposals-matching/">Reviewer-Proposal Matching</a>.</p>
 <h3 id="review-assignment">Review Assignment</h3>
-<p>The system supports flexible reviewer assignment strategies:</p>
+<p>Reviewers are assigned while a proposal's <code>expert_review</code> step is active. The
+step starts when the proposal reaches it in its workflow, which begins at
+submission; the call manager then assigns reviewers manually or generates
+assignment batches from the reviewer pool:</p>
 <pre class="mermaid"><code>sequenceDiagram
-    participant R as Round
     participant P as Proposal
-    participant RM as ReviewManager
+    participant WF as Workflow steps
+    participant CM as Call manager
     participant Rev as Reviewer
     participant N as NotificationSystem
 
-    Note over R: Review Strategy Check
-
-    alt After Round Strategy
-        R-&gt;&gt;R: Cutoff time reached
-        R-&gt;&gt;RM: Assign reviewers to all proposals
-    else After Proposal Strategy
-        P-&gt;&gt;P: State changed to SUBMITTED
-        P-&gt;&gt;RM: Assign reviewers immediately
-    end
-
-    RM-&gt;&gt;Rev: Create review assignments
-    RM-&gt;&gt;N: Notify assigned reviewers
+    P-&gt;&gt;WF: Submitted, first enabled step starts
+    WF-&gt;&gt;WF: Earlier steps completed, expert_review starts
+    CM-&gt;&gt;Rev: Assign reviewers (manual or assignment batch)
+    WF-&gt;&gt;N: Notify assigned reviewers
     Rev-&gt;&gt;Rev: Complete reviews
-    RM-&gt;&gt;RM: Aggregate review results</code></pre>
+    CM-&gt;&gt;WF: Complete step once min reviewers and min score are met</code></pre>
 <h3 id="review-scoring-system">Review Scoring System</h3>
 <p>Reviews include comprehensive scoring and feedback:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -20663,8 +20699,7 @@
 <span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Review</span><span class="p">:</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Review</span><span class="p">:</span>
     <span class="c1"># Overall assessment</span>
     <span class="n">summary_score</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 1-10 scale</span>
     <span class="n">summary_public_comment</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Visible to submitters</span>
@@ -20674,7 +20709,6 @@
     <span class="n">comment_project_title</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">comment_project_summary</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">comment_project_description</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">comment_project_duration</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">comment_resource_requests</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">comment_team</span><span class="p">:</span> <span class="nb">str</span>
 
@@ -20891,7 +20925,10 @@ on it need hold no role on the project.</p>
 <span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
-<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Call configuration</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Call configuration</span>
 <span class="n">call</span> <span class="o">=</span> <span class="n">Call</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"2024 Spring HPC Allocation"</span><span class="p">,</span>
     <span class="n">manager</span><span class="o">=</span><span class="n">university_hpc_center</span><span class="p">,</span>
@@ -20901,15 +20938,18 @@ on it need hold no role on the project.</p>
     <span class="n">fixed_duration_in_days</span><span class="o">=</span><span class="mi">365</span>  <span class="c1"># 1-year allocations</span>
 <span class="p">)</span>
 
-<span class="c1"># Round with automatic allocation</span>
+<span class="c1"># Round: scheduling only</span>
 <span class="nb">round</span> <span class="o">=</span> <span class="n">Round</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span>
     <span class="n">start_time</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
     <span class="n">cutoff_time</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>
-    <span class="n">review_strategy</span><span class="o">=</span><span class="n">Round</span><span class="o">.</span><span class="n">ReviewStrategies</span><span class="o">.</span><span class="n">AFTER_ROUND</span><span class="p">,</span>
-    <span class="n">deciding_entity</span><span class="o">=</span><span class="n">Round</span><span class="o">.</span><span class="n">AllocationStrategies</span><span class="o">.</span><span class="n">AUTOMATIC</span><span class="p">,</span>
-    <span class="n">minimal_average_scoring</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span>  <span class="c1"># Require 7/10 average</span>
-    <span class="n">minimum_number_of_reviewers</span><span class="o">=</span><span class="mi">3</span>
+<span class="p">)</span>
+
+<span class="c1"># Evaluation policy: expert review with three reviewers and a 7.0 average</span>
+<span class="n">CallWorkflowStep</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="s2">"expert_review"</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">is_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">min_reviewers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">min_score_threshold</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># Resource template</span>
@@ -20933,7 +20973,7 @@ on it need hold no role on the project.</p>
 <ol>
 <li>Researchers submit proposals with resource requests</li>
 <li>Expert reviewers evaluate scientific merit</li>
-<li>Proposals scoring ≥7.0 automatically receive allocations</li>
+<li>Once three reviews averaging at least 7.0 are in, the call manager completes the review step and decides the allocation</li>
 <li>HPC accounts created with specified limits</li>
 <li>Usage tracked through marketplace billing</li>
 </ol>
@@ -20978,7 +21018,11 @@ on it need hold no role on the project.</p>
 <span class="normal">37</span>
 <span class="normal">38</span>
 <span class="normal">39</span>
-<span class="normal">40</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Multi-round competitive program</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Multi-round competitive program</span>
 <span class="n">call</span> <span class="o">=</span> <span class="n">Call</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"National Cloud Research Initiative"</span><span class="p">,</span>
     <span class="n">manager</span><span class="o">=</span><span class="n">government_agency</span><span class="p">,</span>
@@ -20986,15 +21030,19 @@ on it need hold no role on the project.</p>
     <span class="n">reviews_visible_to_submitters</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 
-<span class="c1"># Quarterly rounds with manual allocation</span>
+<span class="c1"># Quarterly rounds; granted projects start on the round's allocation date</span>
 <span class="n">round_q1</span> <span class="o">=</span> <span class="n">Round</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span>
     <span class="n">start_time</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
     <span class="n">cutoff_time</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>
-    <span class="n">review_strategy</span><span class="o">=</span><span class="n">Round</span><span class="o">.</span><span class="n">ReviewStrategies</span><span class="o">.</span><span class="n">AFTER_ROUND</span><span class="p">,</span>
-    <span class="n">deciding_entity</span><span class="o">=</span><span class="n">Round</span><span class="o">.</span><span class="n">AllocationStrategies</span><span class="o">.</span><span class="n">BY_CALL_MANAGER</span><span class="p">,</span>
-    <span class="n">allocation_time</span><span class="o">=</span><span class="n">Round</span><span class="o">.</span><span class="n">AllocationTimes</span><span class="o">.</span><span class="n">FIXED_DATE</span><span class="p">,</span>
     <span class="n">allocation_date</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">CallWorkflowStep</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="s2">"panel_review"</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">is_enabled</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">CallWorkflowStep</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="s2">"allocation_decision"</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">allocation_time</span><span class="o">=</span><span class="n">AllocationTimes</span><span class="o">.</span><span class="n">FIXED_DATE</span>
 <span class="p">)</span>
 
 <span class="c1"># Multiple resource options</span>
@@ -21063,7 +21111,9 @@ on it need hold no role on the project.</p>
 <span class="normal">32</span>
 <span class="normal">33</span>
 <span class="normal">34</span>
-<span class="normal">35</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Rolling admission program</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Rolling admission program</span>
 <span class="n">call</span> <span class="o">=</span> <span class="n">Call</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"TechHub Startup Resources 2024"</span><span class="p">,</span>
     <span class="n">manager</span><span class="o">=</span><span class="n">tech_incubator</span><span class="p">,</span>
@@ -21071,14 +21121,16 @@ on it need hold no role on the project.</p>
     <span class="n">reviews_visible_to_submitters</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Confidential evaluation</span>
 <span class="p">)</span>
 
-<span class="c1"># Continuous rolling rounds</span>
+<span class="c1"># One year-long round; each proposal is reviewed as soon as it is submitted</span>
 <span class="n">rolling_round</span> <span class="o">=</span> <span class="n">Round</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span>
     <span class="n">start_time</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
     <span class="n">cutoff_time</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">),</span>
-    <span class="n">review_strategy</span><span class="o">=</span><span class="n">Round</span><span class="o">.</span><span class="n">ReviewStrategies</span><span class="o">.</span><span class="n">AFTER_PROPOSAL</span><span class="p">,</span>  <span class="c1"># Immediate review</span>
-    <span class="n">deciding_entity</span><span class="o">=</span><span class="n">Round</span><span class="o">.</span><span class="n">AllocationStrategies</span><span class="o">.</span><span class="n">BY_CALL_MANAGER</span><span class="p">,</span>
     <span class="n">review_duration_in_days</span><span class="o">=</span><span class="mi">14</span>  <span class="c1"># Fast turnaround</span>
+<span class="p">)</span>
+
+<span class="n">CallWorkflowStep</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="s2">"expert_review"</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">is_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">duration_in_days</span><span class="o">=</span><span class="mi">14</span>
 <span class="p">)</span>
 
 <span class="c1"># Startup development package</span>
