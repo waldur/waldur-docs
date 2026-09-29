@@ -65,10 +65,9 @@ Each call decides when a submitted proposal's evaluation starts:
   background job checks for such proposals every hour, so they move to
   **In review** within about an hour of the cut-off.
 
-The setting is the call's `evaluation_start` field (`on_submission` or
-`at_cutoff`). The call configuration pages do not offer a control for it yet,
-so it is set through the API. It cannot be changed while the call has proposals
-that are submitted or in review.
+Choose it with **Evaluation starts** under **Configuration → General
+configuration** (the call's `evaluation_start` field in the API). It cannot be
+changed while the call has proposals that are submitted or in review.
 
 ## Step 4: Call configuration and activation
 
@@ -83,6 +82,7 @@ Before activating a call, the Call manager must configure all necessary settings
 Under **Configuration → General configuration**, set the basic call parameters:
 
 - **Fixed duration for granted projects (in days)**: how long every granted project runs. When it is set, it decides the project's end date, and applicants can only choose subscription lengths that fit inside it. Applicants see the resulting length in the submission form; they are not asked for a duration. See [How long a granted project runs](#how-long-a-granted-project-runs).
+- **Evaluation starts**: **On submission** or **At the round cut-off** — when a submitted proposal's evaluation starts. It cannot be changed while the call has submitted or in-review proposals. See [When evaluation starts](#when-evaluation-starts).
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
