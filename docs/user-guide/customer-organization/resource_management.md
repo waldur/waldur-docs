@@ -141,6 +141,26 @@ that enable it — see [Requesting resource limit changes](resource-limit-change
 
 ![type:video](../img/allocation_update.mp4)
 
+## Changing a calculated size
+
+Some offerings calculate several limits from one value you enter when ordering, such as the net storage of a database, from which the provider derives replica, log and backup space. If the provider lets you change that value later, it appears on the resource's **Options** tab:
+
+![Options tab of a database resource showing Database storage (GB) 300](../img/resource-options-formula-value.png)
+
+Click **Edit** next to it and enter the new value. The dialog shows the limits calculated from it, the difference from the current ones and the new monthly price before you submit:
+
+![Update option dialog previewing the limits and price for 300 GB](../img/resource-option-formula-change.png)
+
+**Update** submits an order with the new value and the recalculated limits. It follows the same approval flow as other changes, and its details show both the limit change with its price impact and the changed value:
+
+![Order details with the limit changes, the monthly cost change and the changed option](../img/order-details-formula-change.png)
+
+When the order is done, the resource has the new value and limits, and billing follows them from that day.
+
+The calculated limits cannot be changed on their own. **Change limits** shows them without an input, and they follow the value on the **Options** tab:
+
+![Change resource limits dialog showing the calculated limits without inputs](../img/change-limits-calculated.png)
+
 ## Changing the plan of a resource
 
 If the offering has several plans, **Change plan** in the resource actions moves

@@ -452,6 +452,56 @@ The **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubern
 
 When **Cluster topology** is left empty, the input type decides: one site for the single-datacenter input, three sites for the multi-datacenter one. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
 
+### Calculating limits from one answer
+
+Some offerings are billed for several limit components that the customer should not have to size one by one. A managed database, for example, may be billed for primary data, primary write-ahead log (WAL), replica data, replica WAL and a daily full backup, while the customer only knows how much data they want to store. Two input types derive such limits from a single answer:
+
+- **Component Formula** asks the customer for one number and sets each chosen limit component to a formula of it.
+- **Component Sum** sets a limit component to the sum of other limit components, for example a backup that covers all storage.
+
+The calculated limits are priced like any other limit: the customer sees the quantities and the price before ordering, and the provider is billed for exactly what the form showed. The customer cannot edit them directly.
+
+![User input tab with a Component Formula and a Component Sum input](../img/offering-formula-user-input.png)
+
+The type picker describes each component type when you add an input:
+
+![Type picker describing Component Multiplier, Component Formula and Component Sum](../img/offering-option-type-picker.png)
+
+#### Setting up a Component Formula
+
+1. On the **User input** tab click **Add**, enter the display name the customer will see (for example *Database storage (GB)*) and pick **Component Formula**.
+2. On the **Settings** step, set the smallest and largest value the customer may enter.
+3. Under **Calculated components**, add a row per limit component and write its formula. A formula may use `input` (the value entered), numbers such as `2` or `0.25`, `+ - * /` and parentheses, for example `input * 2 * 0.25`. Other names and functions are not accepted, and an invalid formula is flagged before you save.
+
+![Settings of a Component Formula with a formula per storage component](../img/offering-component-formula-settings.png)
+
+Results are rounded up to the precision of each component, so a whole-number component calculated as 166.5 becomes 167.
+
+#### Setting up a Component Sum
+
+Add an input of type **Component Sum**. On the **Settings** step pick the **Total component** and the **Components to add up**. These can be components the customer enters, components calculated by a formula, or other sums; the total cannot include itself.
+
+![Settings of a Component Sum adding up the four storage components](../img/offering-component-sum-settings.png)
+
+#### What the customer sees
+
+The order form shows the calculated quantities under the input, and the plan table and order summary price them as the customer types:
+
+![Order form with 200 GB entered, the calculated storage components and a total of €120 per month](../img/order-form-component-formula.png)
+
+Only limit-based components can be calculated. While an input refers to a component, the component cannot be removed, renamed or switched to another billing type on the **Accounting** tab.
+
+#### Letting customers change the value later
+
+To let customers change the number after ordering, for example to grow the database, add it as a resource option too. On the **Resource options** tab click **Add**, pick **Component Formula** and, under **Order option**, the order input it belongs to. It has no settings of its own: the formulas and the smallest and largest values of the order input apply.
+
+![Resource option paired with the Database storage order input](../img/offering-formula-resource-option.png)
+
+The ordered value is then shown on the resource's **Options** tab, where customers can change it. A change is always submitted as an order carrying the new value and the recalculated limits, so it is priced, approved and provisioned like any limit change — see [Changing a calculated size](../customer-organization/resource_management.md#changing-a-calculated-size). A provider who changes the value while approving the order changes the limits and price with it.
+
+!!! note
+    A Component Sum cannot be a resource option: it follows the components it adds up.
+
 ## Offering management
 
 The offering's state is changed from its **Edit** tab. The button in the top-right corner shows the next step for the current state:
