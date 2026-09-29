@@ -142,7 +142,9 @@ the call team can now see it.
     proposal stays **Submitted** after you submit it, and nothing happens to it
     until the round's cutoff date has passed. Evaluation then starts for every
     proposal of the round at once, and yours moves to **In review**, usually
-    within an hour of the cut-off. Waiting as **Submitted** until then is
+    within an hour of the cut-off. Until then the proposal's stepper shows
+    *Submitted — evaluation starts after the round cut-off.* under
+    **Submission**, with no later step highlighted. Waiting as **Submitted** is
     expected, not a sign that something is wrong.
 
 ## Your proposals

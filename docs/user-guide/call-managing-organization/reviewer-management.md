@@ -68,12 +68,13 @@ hourly job marks such invitations **Expired** and emails the call manager who
 sent the invitation (or the call's managers, if the sender has no email), when
 the `proposal.reviewer_pool_invitation_expired` notification is enabled.
 
-A pending or expired invitation can be sent again. Resending returns it to
-**Pending** with a new expiry date and emails the invitee a new link; the link
-from the earlier email stops working. The reviewer pool does not yet have a
-button for this — it is the `resend-invitation` action of the call reviewer pool
-API (`POST /api/call-reviewer-pools/<uuid>/resend-invitation/`), available to
-call managers. A declined invitation cannot be resent.
+A pending or expired invitation can be sent again. In the **Reviewer pool**,
+open the invitation's row 3-dot menu, choose **Resend invitation** and confirm
+with **Resend**. The action is offered to call managers, and only on **Pending**
+and **Expired** rows. Resending returns the invitation to **Pending** with a new
+expiry date and emails the invitee a new link; the link from the earlier email
+stops working. A declined invitation cannot be resent. (API: the
+`resend-invitation` action of the call reviewer pool.)
 
 !!! note
     Invitation tokens are generated using secure random bytes and do not require the reviewer to have an existing Waldur account to respond.
@@ -241,7 +242,7 @@ The header buttons on **Assignment batches** are:
 **Performed by:** Call manager
 
 1. Click **Manual assignment** on the **Assignment batches** tab.
-2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`). An assignment that would take the reviewer above their maximum is refused (see [Managing reviewer capacity](#managing-reviewer-capacity)).
+2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`). An assignment that would take the reviewer above their maximum is refused (see [Managing reviewer capacity](#managing-reviewer-capacity)); the dialog then offers **Assign anyway**.
 3. Pick one or more **proposals**. The selector keeps a single chip visible with a `+N more` indicator so the dialog stays compact when many proposals are added.
 4. Optionally add **manager notes** — internal context visible to other managers but not to the reviewer.
 5. Click **Create assignment**. A draft batch is created. The reviewer is **not** notified yet.
@@ -323,11 +324,14 @@ of cancelled or expired batches.
   counting the assignments it creates in the same run.
 - A **manual assignment**, or a review created directly, that would take the
   reviewer above the maximum is refused with a message giving the reviewer's
-  open assignments and limit. A call manager can assign anyway by setting
-  `override_workload_limit` in the API request (`create-manual-assignment` on
-  the call, or review creation); the override is recorded as a
-  `reviewer_workload_limit_overridden` event on the call. The manual assignment
-  dialog does not offer this override yet.
+  open assignments and limit. In the **Manual assignment** dialog the refusal
+  appears as a **Reviewer workload limit exceeded** warning, and the submit
+  button becomes **Assign anyway**; clicking it creates the assignment above
+  the limit. Changing the reviewer or the proposals clears the warning, so a
+  different choice is checked again. The override is recorded as a
+  `reviewer_workload_limit_overridden` event on the call. (API:
+  `override_workload_limit` on `create-manual-assignment`; a review created
+  directly is overridden the same way, through the API only.)
 
 ![Reviewer capacity table](../img/reviewer_capacity_table.png)
 
