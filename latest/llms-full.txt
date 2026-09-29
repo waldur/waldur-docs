@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-29T20:44:51.136736Z
+Generated: 2026-09-29T22:00:48.340855Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -62025,32 +62025,6 @@ SUBSCRIPTION_QUEUE_ARGUMENTS = {
 
 ---
 
-### Add a new language for translatable models
-<!-- Source: docs/developer-guide/guides/how-to-add-new-language.md -->
-
-# Add a new language for translatable models
-
-For translating fields of some models we use
-[django modeltranslation](https://django-modeltranslation.readthedocs.io/en/latest/).
-
-## First run
-
-To setup the database environment, after completing all migrations, execute in a console:
-
-```bash
-waldur update_translation_fields
-```
-
-## Add a new language
-
-To populate the generated language tables with initial content, run
-
-```bash
-waldur sync_translation_fields
-```
-
----
-
 ### How to Reconcile a Long-Diverged Fork
 <!-- Source: docs/developer-guide/guides/how-to-reconcile-a-fork.md -->
 
@@ -63882,6 +63856,10 @@ of type `component_formula` with the same internal name as the order option:
   and `max` are copied from the order option when the offering is saved. A
   `component_formula` resource option without such an order option is
   refused, and so is removing or retyping an order option that one pairs with.
+  The resource option itself cannot be removed, or re-paired under another
+  name, while a resource of the offering holds a value changed since
+  ordering: without the pairing, that resource's limits would fall back to
+  the ordered value on their next change.
 - The value entered at order time is copied onto the resource, so it shows on
   the resource's Options tab (resources ordered earlier show the value from
   their order).
@@ -78912,7 +78890,9 @@ the call team can now see it.
     proposal stays **Submitted** after you submit it, and nothing happens to it
     until the round's cutoff date has passed. Evaluation then starts for every
     proposal of the round at once, and yours moves to **In review**, usually
-    within an hour of the cut-off. Waiting as **Submitted** until then is
+    within an hour of the cut-off. Until then the proposal's stepper shows
+    *Submitted — evaluation starts after the round cut-off.* under
+    **Submission**, with no later step highlighted. Waiting as **Submitted** is
     expected, not a sign that something is wrong.
 
 ## Your proposals
@@ -79382,10 +79362,9 @@ Each call decides when a submitted proposal's evaluation starts:
   background job checks for such proposals every hour, so they move to
   **In review** within about an hour of the cut-off.
 
-The setting is the call's `evaluation_start` field (`on_submission` or
-`at_cutoff`). The call configuration pages do not offer a control for it yet,
-so it is set through the API. It cannot be changed while the call has proposals
-that are submitted or in review.
+Choose it with **Evaluation starts** under **Configuration → General
+configuration** (the call's `evaluation_start` field in the API). It cannot be
+changed while the call has proposals that are submitted or in review.
 
 ## Step 4: Call configuration and activation
 
@@ -79400,6 +79379,7 @@ Before activating a call, the Call manager must configure all necessary settings
 Under **Configuration → General configuration**, set the basic call parameters:
 
 - **Fixed duration for granted projects (in days)**: how long every granted project runs. When it is set, it decides the project's end date, and applicants can only choose subscription lengths that fit inside it. Applicants see the resulting length in the submission form; they are not asked for a duration. See [How long a granted project runs](#how-long-a-granted-project-runs).
+- **Evaluation starts**: **On submission** or **At the round cut-off** — when a submitted proposal's evaluation starts. It cannot be changed while the call has submitted or in-review proposals. See [When evaluation starts](#when-evaluation-starts).
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
@@ -80583,12 +80563,13 @@ hourly job marks such invitations **Expired** and emails the call manager who
 sent the invitation (or the call's managers, if the sender has no email), when
 the `proposal.reviewer_pool_invitation_expired` notification is enabled.
 
-A pending or expired invitation can be sent again. Resending returns it to
-**Pending** with a new expiry date and emails the invitee a new link; the link
-from the earlier email stops working. The reviewer pool does not yet have a
-button for this — it is the `resend-invitation` action of the call reviewer pool
-API (`POST /api/call-reviewer-pools/<uuid>/resend-invitation/`), available to
-call managers. A declined invitation cannot be resent.
+A pending or expired invitation can be sent again. In the **Reviewer pool**,
+open the invitation's row 3-dot menu, choose **Resend invitation** and confirm
+with **Resend**. The action is offered to call managers, and only on **Pending**
+and **Expired** rows. Resending returns the invitation to **Pending** with a new
+expiry date and emails the invitee a new link; the link from the earlier email
+stops working. A declined invitation cannot be resent. (API: the
+`resend-invitation` action of the call reviewer pool.)
 
 !!! note
     Invitation tokens are generated using secure random bytes and do not require the reviewer to have an existing Waldur account to respond.
@@ -80756,7 +80737,7 @@ The header buttons on **Assignment batches** are:
 **Performed by:** Call manager
 
 1. Click **Manual assignment** on the **Assignment batches** tab.
-2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`). An assignment that would take the reviewer above their maximum is refused (see [Managing reviewer capacity](#managing-reviewer-capacity)).
+2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`). An assignment that would take the reviewer above their maximum is refused (see [Managing reviewer capacity](#managing-reviewer-capacity)); the dialog then offers **Assign anyway**.
 3. Pick one or more **proposals**. The selector keeps a single chip visible with a `+N more` indicator so the dialog stays compact when many proposals are added.
 4. Optionally add **manager notes** — internal context visible to other managers but not to the reviewer.
 5. Click **Create assignment**. A draft batch is created. The reviewer is **not** notified yet.
@@ -80838,11 +80819,14 @@ of cancelled or expired batches.
   counting the assignments it creates in the same run.
 - A **manual assignment**, or a review created directly, that would take the
   reviewer above the maximum is refused with a message giving the reviewer's
-  open assignments and limit. A call manager can assign anyway by setting
-  `override_workload_limit` in the API request (`create-manual-assignment` on
-  the call, or review creation); the override is recorded as a
-  `reviewer_workload_limit_overridden` event on the call. The manual assignment
-  dialog does not offer this override yet.
+  open assignments and limit. In the **Manual assignment** dialog the refusal
+  appears as a **Reviewer workload limit exceeded** warning, and the submit
+  button becomes **Assign anyway**; clicking it creates the assignment above
+  the limit. Changing the reviewer or the proposals clears the warning, so a
+  different choice is checked again. The override is recorded as a
+  `reviewer_workload_limit_overridden` event on the call. (API:
+  `override_workload_limit` on `create-manual-assignment`; a review created
+  directly is overridden the same way, through the API only.)
 
 [Image: Reviewer capacity table]
 
@@ -101974,43 +101958,67 @@ In particular, the following is followed:
 
 ---
 
-### Internationalization
+### Backend internationalization (i18n)
 <!-- Source: docs/developer-guide/i18n.md -->
 
-# Internationalization
+# Backend internationalization (i18n)
 
-Per-request internationalization is enabled by default for the following languages:
+Backend internationalization covers a few translated database fields. All interface text is translated in
+the frontend: to fix or add a translation of anything shown in the UI, see the
+[HomePort i18n guide](https://docs.waldur.com/latest/developer-guide/ui/i18n/).
 
-- English (en)
-- Estonian (et)
-- Lithuanian (lt)
+Waldur's own backend messages (API errors, notifications) are not translated and are returned in English.
+Messages that come from Django and Django REST framework themselves, such as `This field is required.`, use
+the translations bundled with those libraries and follow the request language.
 
-Client requests will respect the `Accept-Language` header.
+## Translated fields
 
-## Translation String Guidelines
+These fields are stored once per language with
+[django-modeltranslation](https://django-modeltranslation.readthedocs.io/en/latest/):
 
-When marking strings for translation, follow these guidelines:
+| Model | Fields | Registered in |
+| ----- | ------ | ------------- |
+| `Role` | `description` | `waldur_core/permissions/translation.py` |
+| `Category` | `title`, `description` | `waldur_mastermind/marketplace/translation.py` |
+| `CategoryGroup` | `title`, `description` | `waldur_mastermind/marketplace/translation.py` |
 
-- Build a proper sentence: start with a capital letter, end with a period.
+The `translation.py` files are the source of truth if this table falls behind.
 
-  **Right:** `_('Deletion was scheduled.')`
+Each translated field gets one database column per language in `LANGUAGES`: `description_en`,
+`description_et` and so on. Reading `description` returns the column for the language of the current request,
+which `LocaleMiddleware` takes from the `Accept-Language` header. An empty column falls back to English.
 
-  **Wrong:** `_('deletion was scheduled')`
+Translations are entered by staff:
 
-- Use named-string interpolation instead of positional interpolation if message has several parameters.
+- **Role descriptions** — in the role description dialog of the roles administration, or through the
+  `update_descriptions` action of the roles API, which accepts one `description_<lang>` field per language.
+- **Categories and category groups** — in the Django admin, which shows one input per language.
 
-  **Right:** `_('Operation was successfully scheduled for %(count)d instances: %(names)s.')`
+## Making another field translatable
 
-  **Wrong:** `_('Operation was successfully scheduled for %s instances: %s.')`
+1. Register the field in the app's `translation.py`:
 
-- Mark the following for translation: `help_text`, `verbose_name`, exception messages, and response messages.
-- Do NOT mark message templates for event or alert loggers.
+    ```python
+    class CategoryTranslationOptions(TranslationOptions):
+        fields = ("title", "description")
+    ```
 
-## Adding New Languages
+2. Run `makemigrations` for the app. The migration adds one column per language.
+3. To accept the per-language values through the API, use `TranslatedModelSerializerMixin` from
+   `waldur_core.core.serializers`. It adds a `<field>_<lang>` serializer field for each language.
 
-For translating fields of some models, Waldur uses [django-modeltranslation](https://django-modeltranslation.readthedocs.io/en/latest/).
+## Adding a language
 
-See the [How to Add New Language](guides/how-to-add-new-language.md) guide for details on adding support for additional languages.
+1. Add the language to `LANGUAGES` in `waldur_core/server/base_settings.py`.
+2. Add its code to `LANGUAGE_CHOICES` in `waldur_core/server/constance_settings.py`, the default list of
+   languages users can choose from.
+3. Run `makemigrations` for `permissions` and `marketplace`. The migrations add the new language's column to
+   every translated field.
+4. In HomePort, add `locales/<code>.json`, and map the language code to the country whose flag the language
+   selector shows in `LanguageCountry` (`src/navigation/header/LanguageSelectorDropdown.tsx`).
+
+Do not use modeltranslation's `sync_translation_fields` command: it adds the columns directly to the database,
+outside the migration history.
 
 ---
 

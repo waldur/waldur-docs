@@ -7945,34 +7945,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/guides/how-to-add-new-language/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    How to add new language
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../developer-guide/guides/how-to-reconcile-a-fork/" class="md-nav__link">
         
   
@@ -19466,12 +19438,13 @@ assignment batches. After that it can no longer be accepted or declined. An
 hourly job marks such invitations <strong>Expired</strong> and emails the call manager who
 sent the invitation (or the call's managers, if the sender has no email), when
 the <code>proposal.reviewer_pool_invitation_expired</code> notification is enabled.</p>
-<p>A pending or expired invitation can be sent again. Resending returns it to
-<strong>Pending</strong> with a new expiry date and emails the invitee a new link; the link
-from the earlier email stops working. The reviewer pool does not yet have a
-button for this — it is the <code>resend-invitation</code> action of the call reviewer pool
-API (<code>POST /api/call-reviewer-pools/&lt;uuid&gt;/resend-invitation/</code>), available to
-call managers. A declined invitation cannot be resent.</p>
+<p>A pending or expired invitation can be sent again. In the <strong>Reviewer pool</strong>,
+open the invitation's row 3-dot menu, choose <strong>Resend invitation</strong> and confirm
+with <strong>Resend</strong>. The action is offered to call managers, and only on <strong>Pending</strong>
+and <strong>Expired</strong> rows. Resending returns the invitation to <strong>Pending</strong> with a new
+expiry date and emails the invitee a new link; the link from the earlier email
+stops working. A declined invitation cannot be resent. (API: the
+<code>resend-invitation</code> action of the call reviewer pool.)</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Invitation tokens are generated using secure random bytes and do not require the reviewer to have an existing Waldur account to respond.</p>
@@ -19674,7 +19647,7 @@ call managers. A declined invitation cannot be resent.</p>
 <p><strong>Performed by:</strong> Call manager</p>
 <ol>
 <li>Click <strong>Manual assignment</strong> on the <strong>Assignment batches</strong> tab.</li>
-<li>Pick a <strong>reviewer</strong> from the pool. The dropdown shows each reviewer's email and current load (e.g. <code>2/5 assigned</code>). An assignment that would take the reviewer above their maximum is refused (see <a href="#managing-reviewer-capacity">Managing reviewer capacity</a>).</li>
+<li>Pick a <strong>reviewer</strong> from the pool. The dropdown shows each reviewer's email and current load (e.g. <code>2/5 assigned</code>). An assignment that would take the reviewer above their maximum is refused (see <a href="#managing-reviewer-capacity">Managing reviewer capacity</a>); the dialog then offers <strong>Assign anyway</strong>.</li>
 <li>Pick one or more <strong>proposals</strong>. The selector keeps a single chip visible with a <code>+N more</code> indicator so the dialog stays compact when many proposals are added.</li>
 <li>Optionally add <strong>manager notes</strong> — internal context visible to other managers but not to the reviewer.</li>
 <li>Click <strong>Create assignment</strong>. A draft batch is created. The reviewer is <strong>not</strong> notified yet.</li>
@@ -19741,11 +19714,14 @@ of cancelled or expired batches.</p>
   counting the assignments it creates in the same run.</li>
 <li>A <strong>manual assignment</strong>, or a review created directly, that would take the
   reviewer above the maximum is refused with a message giving the reviewer's
-  open assignments and limit. A call manager can assign anyway by setting
-  <code>override_workload_limit</code> in the API request (<code>create-manual-assignment</code> on
-  the call, or review creation); the override is recorded as a
-  <code>reviewer_workload_limit_overridden</code> event on the call. The manual assignment
-  dialog does not offer this override yet.</li>
+  open assignments and limit. In the <strong>Manual assignment</strong> dialog the refusal
+  appears as a <strong>Reviewer workload limit exceeded</strong> warning, and the submit
+  button becomes <strong>Assign anyway</strong>; clicking it creates the assignment above
+  the limit. Changing the reviewer or the proposals clears the warning, so a
+  different choice is checked again. The override is recorded as a
+  <code>reviewer_workload_limit_overridden</code> event on the call. (API:
+  <code>override_workload_limit</code> on <code>create-manual-assignment</code>; a review created
+  directly is overridden the same way, through the API only.)</li>
 </ul>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/reviewer_capacity_table.png" data-desc-position="bottom"><img alt="Reviewer capacity table" src="../../img/reviewer_capacity_table.png"></a></p>
 <ol>

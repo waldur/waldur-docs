@@ -107,7 +107,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#internationalization" class="md-skip">
+        <a href="#backend-internationalization-i18n" class="md-skip">
           Skip to content
         </a>
       
@@ -7950,34 +7950,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/how-to-add-new-language/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    How to add new language
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../guides/how-to-reconcile-a-fork/" class="md-nav__link">
         
   
@@ -10178,10 +10150,10 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
-  <a href="#translation-string-guidelines" class="md-nav__link">
+  <a href="#translated-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Translation String Guidelines
+        Translated fields
       
     </span>
   </a>
@@ -10189,10 +10161,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-new-languages" class="md-nav__link">
+  <a href="#making-another-field-translatable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding New Languages
+        Making another field translatable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a language
       
     </span>
   </a>
@@ -18716,10 +18699,10 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
-  <a href="#translation-string-guidelines" class="md-nav__link">
+  <a href="#translated-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Translation String Guidelines
+        Translated fields
       
     </span>
   </a>
@@ -18727,10 +18710,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-new-languages" class="md-nav__link">
+  <a href="#making-another-field-translatable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding New Languages
+        Making another field translatable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a language
       
     </span>
   </a>
@@ -18752,33 +18746,79 @@
                 
                   
 
-<h1 id="internationalization">Internationalization</h1>
-<p>Per-request internationalization is enabled by default for the following languages:</p>
+<h1 id="backend-internationalization-i18n">Backend internationalization (i18n)</h1>
+<p>Backend internationalization covers a few translated database fields. All interface text is translated in
+the frontend: to fix or add a translation of anything shown in the UI, see the
+<a href="https://docs.waldur.com/latest/developer-guide/ui/i18n/">HomePort i18n guide</a>.</p>
+<p>Waldur's own backend messages (API errors, notifications) are not translated and are returned in English.
+Messages that come from Django and Django REST framework themselves, such as <code>This field is required.</code>, use
+the translations bundled with those libraries and follow the request language.</p>
+<h2 id="translated-fields">Translated fields</h2>
+<p>These fields are stored once per language with
+<a href="https://django-modeltranslation.readthedocs.io/en/latest/">django-modeltranslation</a>:</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Fields</th>
+<th>Registered in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Role</code></td>
+<td><code>description</code></td>
+<td><code>waldur_core/permissions/translation.py</code></td>
+</tr>
+<tr>
+<td><code>Category</code></td>
+<td><code>title</code>, <code>description</code></td>
+<td><code>waldur_mastermind/marketplace/translation.py</code></td>
+</tr>
+<tr>
+<td><code>CategoryGroup</code></td>
+<td><code>title</code>, <code>description</code></td>
+<td><code>waldur_mastermind/marketplace/translation.py</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>translation.py</code> files are the source of truth if this table falls behind.</p>
+<p>Each translated field gets one database column per language in <code>LANGUAGES</code>: <code>description_en</code>,
+<code>description_et</code> and so on. Reading <code>description</code> returns the column for the language of the current request,
+which <code>LocaleMiddleware</code> takes from the <code>Accept-Language</code> header. An empty column falls back to English.</p>
+<p>Translations are entered by staff:</p>
 <ul>
-<li>English (en)</li>
-<li>Estonian (et)</li>
-<li>Lithuanian (lt)</li>
+<li><strong>Role descriptions</strong> — in the role description dialog of the roles administration, or through the
+  <code>update_descriptions</code> action of the roles API, which accepts one <code>description_&lt;lang&gt;</code> field per language.</li>
+<li><strong>Categories and category groups</strong> — in the Django admin, which shows one input per language.</li>
 </ul>
-<p>Client requests will respect the <code>Accept-Language</code> header.</p>
-<h2 id="translation-string-guidelines">Translation String Guidelines</h2>
-<p>When marking strings for translation, follow these guidelines:</p>
-<ul>
-<li>Build a proper sentence: start with a capital letter, end with a period.</li>
-</ul>
-<p><strong>Right:</strong> <code>_('Deletion was scheduled.')</code></p>
-<p><strong>Wrong:</strong> <code>_('deletion was scheduled')</code></p>
-<ul>
-<li>Use named-string interpolation instead of positional interpolation if message has several parameters.</li>
-</ul>
-<p><strong>Right:</strong> <code>_('Operation was successfully scheduled for %(count)d instances: %(names)s.')</code></p>
-<p><strong>Wrong:</strong> <code>_('Operation was successfully scheduled for %s instances: %s.')</code></p>
-<ul>
-<li>Mark the following for translation: <code>help_text</code>, <code>verbose_name</code>, exception messages, and response messages.</li>
-<li>Do NOT mark message templates for event or alert loggers.</li>
-</ul>
-<h2 id="adding-new-languages">Adding New Languages</h2>
-<p>For translating fields of some models, Waldur uses <a href="https://django-modeltranslation.readthedocs.io/en/latest/">django-modeltranslation</a>.</p>
-<p>See the <a href="../guides/how-to-add-new-language/">How to Add New Language</a> guide for details on adding support for additional languages.</p>
+<h2 id="making-another-field-translatable">Making another field translatable</h2>
+<ol>
+<li>
+<p>Register the field in the app's <code>translation.py</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CategoryTranslationOptions</span><span class="p">(</span><span class="n">TranslationOptions</span><span class="p">):</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+</li>
+<li>
+<p>Run <code>makemigrations</code> for the app. The migration adds one column per language.</p>
+</li>
+<li>To accept the per-language values through the API, use <code>TranslatedModelSerializerMixin</code> from
+   <code>waldur_core.core.serializers</code>. It adds a <code>&lt;field&gt;_&lt;lang&gt;</code> serializer field for each language.</li>
+</ol>
+<h2 id="adding-a-language">Adding a language</h2>
+<ol>
+<li>Add the language to <code>LANGUAGES</code> in <code>waldur_core/server/base_settings.py</code>.</li>
+<li>Add its code to <code>LANGUAGE_CHOICES</code> in <code>waldur_core/server/constance_settings.py</code>, the default list of
+   languages users can choose from.</li>
+<li>Run <code>makemigrations</code> for <code>permissions</code> and <code>marketplace</code>. The migrations add the new language's column to
+   every translated field.</li>
+<li>In HomePort, add <code>locales/&lt;code&gt;.json</code>, and map the language code to the country whose flag the language
+   selector shows in <code>LanguageCountry</code> (<code>src/navigation/header/LanguageSelectorDropdown.tsx</code>).</li>
+</ol>
+<p>Do not use modeltranslation's <code>sync_translation_fields</code> command: it adds the columns directly to the database,
+outside the migration history.</p>
 
 
 
