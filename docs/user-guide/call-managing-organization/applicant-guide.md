@@ -137,6 +137,14 @@ the call team can now see it.
     Submit before the round **deadline**. Once the round closes you can no longer
     submit, and a proposal left in **Draft** is not evaluated.
 
+!!! note "Waiting for the round cut-off"
+    Some calls evaluate all proposals of a round together. On such a call your
+    proposal stays **Submitted** after you submit it, and nothing happens to it
+    until the round's cutoff date has passed. Evaluation then starts for every
+    proposal of the round at once, and yours moves to **In review**, usually
+    within an hour of the cut-off. Waiting as **Submitted** until then is
+    expected, not a sign that something is wrong.
+
 ## Your proposals
 
 Open **Calls → My proposals** to see everything you have created, across all
@@ -150,7 +158,7 @@ Proposal states an applicant sees:
 | State | Meaning |
 |---|---|
 | **Draft** | Not yet submitted — only you can see it |
-| **Submitted** | Submitted and awaiting evaluation |
+| **Submitted** | Submitted and awaiting evaluation — on calls that evaluate at the round cut-off, until the cut-off has passed |
 | **In review** | Moving through the evaluation workflow |
 | **Accepted** | Approved — a project and resources have been (or are being) provisioned |
 | **Rejected** | Not funded |

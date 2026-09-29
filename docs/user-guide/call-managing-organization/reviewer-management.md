@@ -52,12 +52,28 @@ Call managers build a curated pool of reviewers for each call.
 
 When a reviewer is added to a pool:
 
-1. An email invitation is sent with a unique acceptance token
-2. The reviewer can **accept** or **decline** the invitation without logging in
-3. On acceptance, the reviewer must have a published profile (they are prompted to create or publish one if they do not)
+1. An email invitation is sent with a personal invitation link
+2. The reviewer opens the link and signs in — the invitation page requires it — then **accepts** or **declines**
+3. To accept, the reviewer must have a published profile (they are prompted to create or publish one if they do not); an invitation addressed to a specific reviewer can only be accepted by that reviewer's account
 4. The call's COI policy is shown on the acceptance page
 
 Invitation statuses: **Pending** | **Accepted** | **Declined** | **Expired**
+
+### Invitation expiry and resending
+
+A pool invitation can be answered for the call's **assignment expiration** period
+(7 days by default) — the same response window the call gives reviewers for
+assignment batches. After that it can no longer be accepted or declined. An
+hourly job marks such invitations **Expired** and emails the call manager who
+sent the invitation (or the call's managers, if the sender has no email), when
+the `proposal.reviewer_pool_invitation_expired` notification is enabled.
+
+A pending or expired invitation can be sent again. Resending returns it to
+**Pending** with a new expiry date and emails the invitee a new link; the link
+from the earlier email stops working. The reviewer pool does not yet have a
+button for this — it is the `resend-invitation` action of the call reviewer pool
+API (`POST /api/call-reviewer-pools/<uuid>/resend-invitation/`), available to
+call managers. A declined invitation cannot be resent.
 
 !!! note
     Invitation tokens are generated using secure random bytes and do not require the reviewer to have an existing Waldur account to respond.
@@ -107,7 +123,7 @@ The COI configuration is organised into four tabs:
 | **Detection** | Lookback periods (co-authorship, institutional), shared-publication thresholds, "same department" / "same institution" toggles |
 | **Automation** | Auto-detect toggles per source (co-authorship search, institutional matching, declared conflicts) — determines what runs without manual triggering |
 | **Type handling** | For each conflict type, choose whether it triggers **recusal**, requires a **management plan**, or is **disclosure only** — used by the detector when assigning severities |
-| **Invitations** | Disclosure level shown to reviewers when they accept a pool invitation — controls how much of the proposal team and contents is exposed |
+| **Invitations** | How much of each proposal a reviewer sees in an assignment batch before accepting it — in the assignment invitation email and on their **Assignments** tab: **Titles only** (the default), **Titles and summaries**, or **Full proposal details**, which currently shows the same as titles and summaries. A proposal blocked by a conflict of interest is always shown by title only. After accepting, the reviewer reads the full proposal through their review. |
 
 A summary dialog (from the section header) lists every setting at a glance, and inline tooltips explain each COI concept.
 
@@ -225,7 +241,7 @@ The header buttons on **Assignment batches** are:
 **Performed by:** Call manager
 
 1. Click **Manual assignment** on the **Assignment batches** tab.
-2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`) so you can avoid over-allocating.
+2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`). An assignment that would take the reviewer above their maximum is refused (see [Managing reviewer capacity](#managing-reviewer-capacity)).
 3. Pick one or more **proposals**. The selector keeps a single chip visible with a `+N more` indicator so the dialog stays compact when many proposals are added.
 4. Optionally add **manager notes** — internal context visible to other managers but not to the reviewer.
 5. Click **Create assignment**. A draft batch is created. The reviewer is **not** notified yet.
@@ -237,7 +253,7 @@ The header buttons on **Assignment batches** are:
 Drafts give you a final review checkpoint before reviewers see the assignment.
 
 1. Tick the checkbox next to one or more **Draft** batches. The toolbar shows `(N) Selected` and a **Send drafts (N)** button.
-2. Click **Send drafts (N)** to dispatch the selected batches. Reviewers receive the invitation email with a unique token; the batch status moves from **Draft** to **Sent**.
+2. Click **Send drafts (N)** to dispatch the selected batches. The batch status moves from **Draft** to **Sent**, the batch appears on the reviewer's **Assignments** tab, and the reviewer is emailed the list of proposals, any manager notes, the response deadline and a link to that tab — provided the `proposal.reviewer_assignment_invitation` notification is enabled. Until a batch is sent the reviewer does not see it at all.
 3. Non-draft batches in the selection are ignored automatically.
 
 ![Bulk send draft batches](../img/assignment_bulk_send.png)
@@ -257,9 +273,22 @@ DRAFT → SENT → RESPONDED / EXPIRED / CANCELLED
 ```
 
 - **Draft**: Manager is preparing the batch
-- **Sent**: Invitation sent to reviewer (email with unique token)
+- **Sent**: Invitation sent to reviewer
 - **Responded**: Reviewer has accepted or declined all items
-- **Expired**: Batch expired without full response (configurable expiration days)
+- **Expired**: Batch expired without full response (the call's assignment expiration days, 7 by default); its unanswered items expire with it
+- **Cancelled**: Withdrawn by the call manager; the reviewer no longer sees it
+
+Before a sent batch expires, the reviewer is sent one reminder, by default 2 days
+before the deadline. When a batch expires, the call managers are emailed so they
+can extend the deadline or reassign the proposals. Both emails depend on the
+`proposal.assignment_expiry_reminder` and `proposal.assignment_batch_expired`
+notifications being enabled.
+
+**Extend deadline** in the row menu of a sent or expired batch sets a new
+deadline in the future. An expired batch goes back to **Sent** and its expired
+items to pending, and the reviewer gets a new reminder before the new deadline.
+Reviews the reviewer already accepted from the batch are not due before the
+batch's deadline, so extending it gives them more time as well.
 
 ### Assignment item responses
 
@@ -274,11 +303,31 @@ If configured in the **Assignment Configuration**:
 
 - When a reviewer declines, the system automatically finds the next-best reviewer
 - Maximum auto-reassignment attempts are configurable (default: 3)
-- Reminder emails sent before assignment expiry (configurable days before)
+- Reminder emails sent before assignment expiry (configurable days before, 2 by default)
 
 ### Managing reviewer capacity
 
 The **Reviewer capacity** tab lists every pool member and their current load. Use it to adjust the **Maximum assignments** per reviewer when workload, sabbaticals, or expertise concentration change during a call.
+
+The maximum is enforced. A reviewer's current load is counted live from their
+open assignments in the call:
+
+- proposals in their draft or sent batches that are still pending;
+- accepted assignments whose review is not yet submitted or rejected;
+- reviews in progress that were created directly rather than from an assignment.
+
+Declined, expired, reassigned and COI-blocked items do not count, nor do items
+of cancelled or expired batches.
+
+- **Generate assignments** skips reviewers who have reached their maximum, also
+  counting the assignments it creates in the same run.
+- A **manual assignment**, or a review created directly, that would take the
+  reviewer above the maximum is refused with a message giving the reviewer's
+  open assignments and limit. A call manager can assign anyway by setting
+  `override_workload_limit` in the API request (`create-manual-assignment` on
+  the call, or review creation); the override is recorded as a
+  `reviewer_workload_limit_overridden` event on the call. The manual assignment
+  dialog does not offer this override yet.
 
 ![Reviewer capacity table](../img/reviewer_capacity_table.png)
 
@@ -289,4 +338,4 @@ The **Reviewer capacity** tab lists every pool member and their current load. Us
 ![Edit reviewer capacity dialog](../img/edit_reviewer_capacity.png)
 
 !!! tip
-    Lowering the maximum below a reviewer's current count won't unassign existing work — it just prevents new assignments until the load drops back below the cap.
+    Lowering the maximum below a reviewer's current count won't unassign existing work — it just refuses new assignments until the load drops back below the maximum.
