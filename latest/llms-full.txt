@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-09-29T22:00:48.340855Z
+Generated: 2026-09-30T02:04:04.404610Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -14108,6 +14108,151 @@ Notifies organization owners about active resources that have not generated cost
 
 ```
 
+### marketplace.notification_resource_end_date_change_request_approved
+
+Notifies the requester when their resource end date change request is approved.
+
+#### Templates
+
+=== "marketplace/notification_resource_end_date_change_request_approved_subject.txt"
+
+```txt
+
+    End date change request approved for resource {{ resource_end_date_change_request.resource.name }}
+
+```
+
+=== "marketplace/notification_resource_end_date_change_request_approved_message.txt"
+
+```txt
+
+    {% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}Hello!
+
+    Your request to change the end date of resource {{ resource.name }} in project {{ resource.project.name }} has been approved{% if request.reviewed_by %} by {{ request.reviewed_by.full_name|default:request.reviewed_by.username }}{% endif %}.
+
+    The new end date is {{ request.requested_end_date|date:"Y-m-d" }}.
+    {% if request.review_comment %}Review comment: {{ request.review_comment }}
+    {% endif %}
+    You can view the resource here:
+    {{ resource_url }}
+
+    Thank you!{% endwith %}
+
+```
+
+=== "marketplace/notification_resource_end_date_change_request_approved_message.html"
+
+```txt
+
+    {% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}<p>Hello!</p>
+    <p>Your request to change the end date of resource <strong>{{ resource.name }}</strong> in project <strong>{{ resource.project.name }}</strong> has been approved{% if request.reviewed_by %} by {{ request.reviewed_by.full_name|default:request.reviewed_by.username }}{% endif %}.</p>
+    <p>The new end date is <strong>{{ request.requested_end_date|date:"Y-m-d" }}</strong>.</p>
+    {% if request.review_comment %}<p>Review comment: {{ request.review_comment }}</p>{% endif %}
+    <p>You can <a href="{{ resource_url }}">view the resource here</a>.</p>
+    <p>Thank you!</p>{% endwith %}
+
+```
+
+### marketplace.notification_resource_end_date_change_request_created
+
+Notifies users who may set the resource end date when someone requests to change it.
+
+#### Templates
+
+=== "marketplace/notification_resource_end_date_change_request_created_subject.txt"
+
+```txt
+
+    End date change request for resource {{ resource_end_date_change_request.resource.name }}
+
+```
+
+=== "marketplace/notification_resource_end_date_change_request_created_message.txt"
+
+```txt
+
+    {% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}Hello!
+
+    {% if request.created_by %}{{ request.created_by.full_name|default:request.created_by.username }}{% if request.created_by.email %} ({{ request.created_by.email }}){% endif %}{% else %}A project member{% endif %} has requested to change the end date of a resource.
+
+    Resource: {{ resource.name }}
+    Project: {{ resource.project.name }}
+    Organization: {{ resource.project.customer.name }}
+    Current end date: {{ resource.end_date|date:"Y-m-d"|default:"not set" }}
+    Requested end date: {{ request.requested_end_date|date:"Y-m-d" }}
+    {% if request.comment %}Comment: {{ request.comment }}
+    {% endif %}
+    Please review and approve or reject the request:
+    {{ resource_url }}
+
+    Thank you!{% endwith %}
+
+```
+
+=== "marketplace/notification_resource_end_date_change_request_created_message.html"
+
+```txt
+
+    {% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}<p>Hello!</p>
+    <p>{% if request.created_by %}{{ request.created_by.full_name|default:request.created_by.username }}{% if request.created_by.email %} ({{ request.created_by.email }}){% endif %}{% else %}A project member{% endif %} has requested to change the end date of a resource.</p>
+    <table>
+        <tr><td>Resource:</td><td><strong>{{ resource.name }}</strong></td></tr>
+        <tr><td>Project:</td><td>{{ resource.project.name }}</td></tr>
+        <tr><td>Organization:</td><td>{{ resource.project.customer.name }}</td></tr>
+        <tr><td>Current end date:</td><td>{{ resource.end_date|date:"Y-m-d"|default:"not set" }}</td></tr>
+        <tr><td>Requested end date:</td><td><strong>{{ request.requested_end_date|date:"Y-m-d" }}</strong></td></tr>
+        {% if request.comment %}<tr><td>Comment:</td><td>{{ request.comment }}</td></tr>{% endif %}
+    </table>
+    <p>Please <a href="{{ resource_url }}">review and approve or reject the request</a>.</p>
+    <p>Thank you!</p>{% endwith %}
+
+```
+
+### marketplace.notification_resource_end_date_change_request_rejected
+
+Notifies the requester when their resource end date change request is rejected.
+
+#### Templates
+
+=== "marketplace/notification_resource_end_date_change_request_rejected_subject.txt"
+
+```txt
+
+    End date change request rejected for resource {{ resource_end_date_change_request.resource.name }}
+
+```
+
+=== "marketplace/notification_resource_end_date_change_request_rejected_message.txt"
+
+```txt
+
+    {% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}Hello!
+
+    Your request to change the end date of resource {{ resource.name }} in project {{ resource.project.name }} to {{ request.requested_end_date|date:"Y-m-d" }} has been rejected{% if request.reviewed_by %} by {{ request.reviewed_by.full_name|default:request.reviewed_by.username }}{% endif %}.
+
+    The end date remains {{ resource.end_date|date:"Y-m-d"|default:"not set" }}.
+    {% if request.review_comment %}Review comment: {{ request.review_comment }}
+    {% endif %}
+    You can view the resource here:
+    {{ resource_url }}
+
+    Thank you!{% endwith %}
+
+```
+
+=== "marketplace/notification_resource_end_date_change_request_rejected_message.html"
+
+```txt
+
+    {% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}<p>Hello!</p>
+    <p>Your request to change the end date of resource <strong>{{ resource.name }}</strong> in project <strong>{{ resource.project.name }}</strong> to <strong>{{ request.requested_end_date|date:"Y-m-d" }}</strong> has been rejected{% if request.reviewed_by %} by {{ request.reviewed_by.full_name|default:request.reviewed_by.username }}{% endif %}.</p>
+    <p>The end date remains <strong>{{ resource.end_date|date:"Y-m-d"|default:"not set" }}</strong>.</p>
+    {% if request.review_comment %}<p>Review comment: {{ request.review_comment }}</p>{% endif %}
+    <p>You can <a href="{{ resource_url }}">view the resource here</a>.</p>
+    <p>Thank you!</p>{% endwith %}
+
+```
+
 ### marketplace.notification_resource_limit_change_request_approved
 
 Notifies the requester when their resource limit change request is approved.
@@ -20466,6 +20611,25 @@ Resource {{ resource_name }} deletion has failed.
 
 ```
 
+### notification_resource_end_date_change_request_created_message.html (waldur_mastermind.marketplace)
+
+```html
+
+{% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}<p>Hello!</p>
+<p>{% if request.created_by %}{{ request.created_by.full_name|default:request.created_by.username }}{% if request.created_by.email %} ({{ request.created_by.email }}){% endif %}{% else %}A project member{% endif %} has requested to change the end date of a resource.</p>
+<table>
+    <tr><td>Resource:</td><td><strong>{{ resource.name }}</strong></td></tr>
+    <tr><td>Project:</td><td>{{ resource.project.name }}</td></tr>
+    <tr><td>Organization:</td><td>{{ resource.project.customer.name }}</td></tr>
+    <tr><td>Current end date:</td><td>{{ resource.end_date|date:"Y-m-d"|default:"not set" }}</td></tr>
+    <tr><td>Requested end date:</td><td><strong>{{ request.requested_end_date|date:"Y-m-d" }}</strong></td></tr>
+    {% if request.comment %}<tr><td>Comment:</td><td>{{ request.comment }}</td></tr>{% endif %}
+</table>
+<p>Please <a href="{{ resource_url }}">review and approve or reject the request</a>.</p>
+<p>Thank you!</p>{% endwith %}
+
+```
+
 ### notify_consumer_about_provider_info_subject.txt (waldur_mastermind.marketplace)
 
 ```txt
@@ -20705,6 +20869,24 @@ Thank you!
     </p>
 </body>
 </html>
+
+```
+
+### notification_resource_end_date_change_request_approved_message.txt (waldur_mastermind.marketplace)
+
+```txt
+
+{% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}Hello!
+
+Your request to change the end date of resource {{ resource.name }} in project {{ resource.project.name }} has been approved{% if request.reviewed_by %} by {{ request.reviewed_by.full_name|default:request.reviewed_by.username }}{% endif %}.
+
+The new end date is {{ request.requested_end_date|date:"Y-m-d" }}.
+{% if request.review_comment %}Review comment: {{ request.review_comment }}
+{% endif %}
+You can view the resource here:
+{{ resource_url }}
+
+Thank you!{% endwith %}
 
 ```
 
@@ -21014,6 +21196,14 @@ Reminder about stale resources.
 
 ```
 
+### notification_resource_end_date_change_request_rejected_subject.txt (waldur_mastermind.marketplace)
+
+```txt
+
+End date change request rejected for resource {{ resource_end_date_change_request.resource.name }}
+
+```
+
 ### notification_resource_limit_change_request_created_subject.txt (waldur_mastermind.marketplace)
 
 ```txt
@@ -21142,6 +21332,14 @@ Resource {{ resource.name }} termination has been scheduled.
   <p>{% blocktrans with days=days_remaining %}{{ days }} days remaining{% endblocktrans %}</p>
 {% endif %}
 <p>{% trans "End date" %}: {{ end_date }}</p>
+
+```
+
+### notification_resource_end_date_change_request_created_subject.txt (waldur_mastermind.marketplace)
+
+```txt
+
+End date change request for resource {{ resource_end_date_change_request.resource.name }}
 
 ```
 
@@ -21283,6 +21481,19 @@ Resource limit change request rejected for {{ resource_limit_change_request.reso
 
 ```
 
+### notification_resource_end_date_change_request_approved_message.html (waldur_mastermind.marketplace)
+
+```html
+
+{% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}<p>Hello!</p>
+<p>Your request to change the end date of resource <strong>{{ resource.name }}</strong> in project <strong>{{ resource.project.name }}</strong> has been approved{% if request.reviewed_by %} by {{ request.reviewed_by.full_name|default:request.reviewed_by.username }}{% endif %}.</p>
+<p>The new end date is <strong>{{ request.requested_end_date|date:"Y-m-d" }}</strong>.</p>
+{% if request.review_comment %}<p>Review comment: {{ request.review_comment }}</p>{% endif %}
+<p>You can <a href="{{ resource_url }}">view the resource here</a>.</p>
+<p>Thank you!</p>{% endwith %}
+
+```
+
 ### marketplace_resource_update_succeeded_subject.txt (waldur_mastermind.marketplace)
 
 ```txt
@@ -21345,6 +21556,14 @@ Requested limits:
 {% for label, value in order_limits %}* {{ label }}: {{ value }}
 {% endfor %}{% endif %}
 Please visit {{ order_url }} to find out more details.
+
+```
+
+### notification_resource_end_date_change_request_approved_subject.txt (waldur_mastermind.marketplace)
+
+```txt
+
+End date change request approved for resource {{ resource_end_date_change_request.resource.name }}
 
 ```
 
@@ -21553,6 +21772,24 @@ The resource you have - {{ resource.name }} has not been used for the past 3 mon
 
 ```
 
+### notification_resource_end_date_change_request_rejected_message.txt (waldur_mastermind.marketplace)
+
+```txt
+
+{% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}Hello!
+
+Your request to change the end date of resource {{ resource.name }} in project {{ resource.project.name }} to {{ request.requested_end_date|date:"Y-m-d" }} has been rejected{% if request.reviewed_by %} by {{ request.reviewed_by.full_name|default:request.reviewed_by.username }}{% endif %}.
+
+The end date remains {{ resource.end_date|date:"Y-m-d"|default:"not set" }}.
+{% if request.review_comment %}Review comment: {{ request.review_comment }}
+{% endif %}
+You can view the resource here:
+{{ resource_url }}
+
+Thank you!{% endwith %}
+
+```
+
 ### marketplace_resource_terminate_failed_message.txt (waldur_mastermind.marketplace)
 
 ```txt
@@ -21563,11 +21800,46 @@ Resource {{ resource_name }} deletion has failed.
 
 ```
 
+### notification_resource_end_date_change_request_created_message.txt (waldur_mastermind.marketplace)
+
+```txt
+
+{% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}Hello!
+
+{% if request.created_by %}{{ request.created_by.full_name|default:request.created_by.username }}{% if request.created_by.email %} ({{ request.created_by.email }}){% endif %}{% else %}A project member{% endif %} has requested to change the end date of a resource.
+
+Resource: {{ resource.name }}
+Project: {{ resource.project.name }}
+Organization: {{ resource.project.customer.name }}
+Current end date: {{ resource.end_date|date:"Y-m-d"|default:"not set" }}
+Requested end date: {{ request.requested_end_date|date:"Y-m-d" }}
+{% if request.comment %}Comment: {{ request.comment }}
+{% endif %}
+Please review and approve or reject the request:
+{{ resource_url }}
+
+Thank you!{% endwith %}
+
+```
+
 ### notification_about_resource_ending_subject.txt (waldur_mastermind.marketplace)
 
 ```txt
 
 Resource {{ resource.name }} will be deleted.
+
+```
+
+### notification_resource_end_date_change_request_rejected_message.html (waldur_mastermind.marketplace)
+
+```html
+
+{% with request=resource_end_date_change_request resource=resource_end_date_change_request.resource %}<p>Hello!</p>
+<p>Your request to change the end date of resource <strong>{{ resource.name }}</strong> in project <strong>{{ resource.project.name }}</strong> to <strong>{{ request.requested_end_date|date:"Y-m-d" }}</strong> has been rejected{% if request.reviewed_by %} by {{ request.reviewed_by.full_name|default:request.reviewed_by.username }}{% endif %}.</p>
+<p>The end date remains <strong>{{ resource.end_date|date:"Y-m-d"|default:"not set" }}</strong>.</p>
+{% if request.review_comment %}<p>Review comment: {{ request.review_comment }}</p>{% endif %}
+<p>You can <a href="{{ resource_url }}">view the resource here</a>.</p>
+<p>Thank you!</p>{% endwith %}
 
 ```
 
@@ -22186,6 +22458,14 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 
 ```
 
+### reviewer_assignment_invitation_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+You have {{ items_count }} proposal{{ items_count|pluralize }} to review for "{{ call_name }}"
+
+```
+
 ### proposal_submission_deadline_approaching_message.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -22384,6 +22664,30 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 
 ```
 
+### assignment_expiry_reminder_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Dear {{ reviewer_name }},
+
+You have been asked to review {{ items_count }} proposal{{ items_count|pluralize }} in the call "{{ call_name }}" on {{ site_name }}, and the invitation expires soon.
+
+Please accept or decline each proposal before {{ expires_at }}:
+
+{{ link }}
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+### assignment_batch_expired_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+Review assignments for "{{ call_name }}" expired without a response from {{ reviewer_name }}
+
+```
+
 ### proposal_decision_for_reviewer_subject.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -22470,6 +22774,33 @@ Decision made: Proposal {{ proposal_state }} - {{ proposal_name }}
     <p>
         This is an automated message from the {{ site_name }}. Please do not reply to this email.
     </p>
+</body>
+</html>
+
+```
+
+### reviewer_pool_invitation_expired_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Reviewer pool invitation expired</title>
+</head>
+<body>
+    <p>Dear call manager,</p>
+
+    <p>The invitation you sent to <strong>{{ invitee_name }}</strong> to join the reviewer pool for the call "<strong>{{ call_name }}</strong>" has expired without an answer.</p>
+
+    <ul>
+        <li><strong>Invited:</strong> {{ invited_at }}</li>
+        <li><strong>Expired:</strong> {{ expired_at }}</li>
+    </ul>
+
+    <p>The invitation can no longer be accepted or declined. You can send it again from the call's reviewer pool, which gives it a new expiry date: <a href="{{ reviewer_pool_url }}">{{ reviewer_pool_url }}</a></p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
 </body>
 </html>
 
@@ -22641,6 +22972,28 @@ If you anticipate any conflicts or periods of unavailability during this time, p
 View call details: {{ call_url }}
 
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+### reviewer_assignment_invitation_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Dear {{ reviewer_name }},
+
+You have been asked to review {{ items_count }} proposal{{ items_count|pluralize }} in the call "{{ call_name }}" on {{ site_name }}:
+{% for proposal in proposals %}
+- {{ proposal.name }}{% if proposal.summary %}
+  {{ proposal.summary }}{% endif %}{% endfor %}
+{% if manager_notes %}
+Note from the call manager:
+{{ manager_notes }}
+{% endif %}
+Please accept or decline each proposal by {{ expires_at }}:
+
+{{ link }}
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
 
 ```
 
@@ -22872,6 +23225,29 @@ Round closed: {{ round_name }} - {{ call_name }}
 
 ```
 
+### assignment_batch_expired_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<p>Hello,</p>
+
+<p>The review assignments sent to <strong>{{ reviewer_name }}</strong> for the call "<strong>{{ call_name }}</strong>" on {{ sent_at }} expired on {{ expired_at }} before every proposal was accepted or declined ({{ items_count }} proposal{{ items_count|pluralize }} in the batch).</p>
+
+<p>You can extend the deadline or reassign the proposals here:</p>
+
+<p><a href="{{ assignments_url }}">{{ assignments_url }}</a></p>
+
+<p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+</body>
+</html>
+
+```
+
 ### workflow_step_event_message.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -23011,6 +23387,33 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 
 ```
 
+### reviewer_pool_invitation_expired_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Dear call manager,
+
+The invitation you sent to {{ invitee_name }} to join the reviewer pool for the call "{{ call_name }}" has expired without an answer.
+
+Invited: {{ invited_at }}
+Expired: {{ expired_at }}
+
+The invitation can no longer be accepted or declined. You can send it again from the call's reviewer pool, which gives it a new expiry date:
+
+{{ reviewer_pool_url }}
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+### assignment_expiry_reminder_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+Reminder: your review assignments for "{{ call_name }}" expire soon
+
+```
+
 ### reviewer_invitation_message.html (waldur_mastermind.proposal)
 
 ```html
@@ -23047,6 +23450,29 @@ Alert: review assignment rejected for {{ proposal_name }}
 ```txt
 
 Offering request {{ decision }}: {{ offering_name }}
+
+```
+
+### assignment_expiry_reminder_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<p>Dear {{ reviewer_name }},</p>
+
+<p>You have been asked to review {{ items_count }} proposal{{ items_count|pluralize }} in the call "<strong>{{ call_name }}</strong>" on {{ site_name }}, and the invitation expires soon.</p>
+
+<p>Please accept or decline each proposal before <strong>{{ expires_at }}</strong>:</p>
+
+<p><a href="{{ link }}">{{ link }}</a></p>
+
+<p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+</body>
+</html>
 
 ```
 
@@ -23096,6 +23522,39 @@ Please log in to the platform to complete and submit your review as soon as poss
 Continue review: {{ review_url }}
 
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+### reviewer_assignment_invitation_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<p>Dear {{ reviewer_name }},</p>
+
+<p>You have been asked to review {{ items_count }} proposal{{ items_count|pluralize }} in the call "<strong>{{ call_name }}</strong>" on {{ site_name }}:</p>
+
+<ul>
+{% for proposal in proposals %}
+    <li><strong>{{ proposal.name }}</strong>{% if proposal.summary %}<br>{{ proposal.summary }}{% endif %}</li>
+{% endfor %}
+</ul>
+
+{% if manager_notes %}
+<p><strong>Note from the call manager:</strong><br>{{ manager_notes|linebreaksbr }}</p>
+{% endif %}
+
+<p>Please accept or decline each proposal by <strong>{{ expires_at }}</strong>:</p>
+
+<p><a href="{{ link }}">{{ link }}</a></p>
+
+<p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+</body>
+</html>
 
 ```
 
@@ -23380,6 +23839,14 @@ Reminder: Proposal {{ proposal_name }} submission deadline approaching for {{ ca
 
 ```
 
+### reviewer_pool_invitation_expired_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+Reviewer pool invitation for "{{ call_name }}" has expired
+
+```
+
 ### review_assigned_message.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -23399,6 +23866,22 @@ Please log in to the platform to review the proposal. You can accept or reject t
 {{ link_to_reviews_list }}
 
 If you accept this assignment, you'll be able to access the full proposal content and submit your review.
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+### assignment_batch_expired_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Hello,
+
+The review assignments sent to {{ reviewer_name }} for the call "{{ call_name }}" on {{ sent_at }} expired on {{ expired_at }} before every proposal was accepted or declined ({{ items_count }} proposal{{ items_count|pluralize }} in the batch).
+
+You can extend the deadline or reassign the proposals here:
+
+{{ assignments_url }}
 
 This is an automated message from {{ site_name }}. Please do not reply to this email.
 
@@ -100409,6 +100892,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 
 - call_document_added
 - call_document_removed
+- reviewer_workload_limit_overridden
 
 ## Chat
 
@@ -101671,6 +102155,7 @@ td:nth-child(4) {
 | `maybe_auto_approve_order_for_project` | `Django Signal (post_save)` | `marketplace.Order` | Auto-approve a newly created PENDING_CONSUMER order if the project has |
 | `notify_about_project_details_update` | `Django Signal (post_save)` | `marketplace_remote.ProjectUpdateRequest` | No description |
 | `notify_about_request_based_item_creation` | `Django Signal (post_save)` | `support.Issue` | No description |
+| `notify_about_resource_end_date_change_request` | `Django Signal (post_save)` | `marketplace.ResourceEndDateChangeRequest` | Email approvers about a new request, and the requester about the verdict. |
 | `notify_approvers_when_order_is_created` | `Django Signal (post_save)` | `marketplace.Order` | Notify approvers when an order is created. |
 | `notify_offering_user_about_tos_requirement` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Notify user about ToS requirement when OfferingUser is created. |
 | `notify_recipients_when_order_is_created` | `Django Signal (post_save)` | `marketplace.Order` | Notify the recipients configured on the offering about a new order. |
@@ -101897,14 +102382,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 732
+Total unique handlers found: 733
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 345 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 327 handlers
+- **waldur_mastermind**: 328 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -103793,6 +104278,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ResourceDetailsMixin`](#resourcedetailsmixin) | `waldur_mastermind.marketplace.models` | Mixin combining resource details with cost estimation |
 | [`SafeAttributesMixin`](#safeattributesmixin) | `waldur_mastermind.marketplace.models` | Mixin for safe attribute handling |
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
+| [`DerivedLimitsOrderMixin`](#derivedlimitsordermixin) | `waldur_mastermind.marketplace.tests.test_derived_limits` | No description available |
 | [`LimitActionPermissionMixin`](#limitactionpermissionmixin) | `waldur_mastermind.marketplace.tests.test_order_creation_permission` | No description available |
 | [`ConnectedOfferingDetailsMixin`](#connectedofferingdetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide offering details action for connected resources |
 | [`ConnectedResourceDetailsMixin`](#connectedresourcedetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide resource details action for connected resources |
@@ -103805,6 +104291,8 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
 | [`CallNotArchivedCreateMixin`](#callnotarchivedcreatemixin) | `waldur_mastermind.proposal.serializers` | Provide the ``validate_call_not_archived`` hook used by ``ActionMethodMixin |
+| [`AssignmentBatchTestMixin`](#assignmentbatchtestmixin) | `waldur_mastermind.proposal.tests.test_assignment_batch_notifications` | No description available |
+| [`ManagerSetupMixin`](#managersetupmixin) | `waldur_mastermind.proposal.tests.test_pool_invitation_expiry` | No description available |
 | [`ProposalComplianceTestMixin`](#proposalcompliancetestmixin) | `waldur_mastermind.proposal.tests.test_proposal_compliance` | Common setup for proposal compliance tests |
 | [`InvitationAcceptanceMixin`](#invitationacceptancemixin) | `waldur_mastermind.proposal.views` | Mixin providing common logic for accepting/declining reviewer pool invitations |
 | [`BackendNameMixin`](#backendnamemixin) | `waldur_mastermind.support.models` | Make subclasses preserve the alters_data attribute on overridden methods |
@@ -105101,6 +105589,12 @@ which is distinct from any real state.
 
 **Base classes:** `Serializer`
 
+### DerivedLimitsOrderMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_derived_limits`
+
+**Description:** No description available.
+
 ### LimitActionPermissionMixin
 
 **Module:** `waldur_mastermind.marketplace.tests.test_order_creation_permission`
@@ -105309,6 +105803,18 @@ Provide the ``validate_call_not_archived`` hook used by
 The hook is looked up by name on the serializer and called with the parent
 Call. It keeps archived calls read-only across their nested-create surface
 (offerings / resource templates / workflow steps).
+
+### AssignmentBatchTestMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_assignment_batch_notifications`
+
+**Description:** No description available.
+
+### ManagerSetupMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_pool_invitation_expiry`
+
+**Description:** No description available.
 
 ### ProposalComplianceTestMixin
 
