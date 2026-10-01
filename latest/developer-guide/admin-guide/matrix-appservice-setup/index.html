@@ -11075,6 +11075,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#creating-project-rooms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating project rooms
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#room-aliases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19151,6 +19162,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#creating-project-rooms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating project rooms
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#room-aliases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19610,6 +19632,41 @@ leaving every room stuck in <code>creating</code>. <code>--dry-run</code> works 
 counts can be checked before the new homeserver is switched on.</p>
 <p>Room creation happens in the background, so the command returns before the
 rooms exist. Watch the room states to confirm they leave <code>creating</code>.</p>
+<h3 id="creating-project-rooms">Creating project rooms</h3>
+<p>Anyone holding the <code>MATRIX_ROOM.CREATE</code> permission on a project or its
+organization can create the project's room from its Chat tab. Organization
+owners hold it by default. Staff can create any room from the Chat tab;
+support can create one from the Matrix admin rooms page or through
+<code>POST /api/matrix/rooms/</code>.
+Disabling and deleting a room stay with staff and support.</p>
+<p>To let project managers create rooms too, grant them the permission in
+<code>permissions-override.yaml</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT.MANAGER</span>
+<span class="w">  </span><span class="nt">add_permissions</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MATRIX_ROOM.CREATE</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>If you replaced <code>CUSTOMER.OWNER</code> wholesale in <code>custom-roles.yaml</code>, add
+<code>MATRIX_ROOM.CREATE</code> to that list yourself, or owners lose room creation.</p>
+<p>To give every project a room without anyone asking for one:</p>
+<ul>
+<li><strong>New projects:</strong> turn on <code>MATRIX_AUTO_CREATE_PROJECT_ROOMS</code> (off by default).
+  It applies to every project created from then on, including projects
+  created by loading a demo preset.</li>
+<li><strong>Existing projects:</strong> run the backfill.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>provision_matrix_rooms<span class="w"> </span>--dry-run<span class="w">                 </span><span class="c1"># list the projects, create nothing</span>
+waldur<span class="w"> </span>provision_matrix_rooms<span class="w"> </span>--customer<span class="w"> </span>&lt;uuid&gt;<span class="w">         </span><span class="c1"># one organization only</span>
+waldur<span class="w"> </span>provision_matrix_rooms<span class="w"> </span>--limit<span class="w"> </span><span class="m">50</span><span class="w">                </span><span class="c1"># at most 50 rooms this run</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The backfill skips projects that already have a room, including an archived
+one, so it is safe to re-run. Each room provisions a Matrix account for, and
+invites, every member of its project and of its organization. <code>--limit</code> only caps how many rooms one
+run queues; on a large deployment, wait for a batch to leave <code>creating</code> before
+running the next.</p>
 <h3 id="room-aliases">Room aliases</h3>
 <p>The registration claims an alias namespace of <code>#waldur-&lt;project&gt;:&lt;your domain&gt;</code>,
 which is what the appservice needs in order to give each project room a readable

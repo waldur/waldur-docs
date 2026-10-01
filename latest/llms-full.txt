@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-01T12:18:38.030385Z
+Generated: 2026-10-01T19:47:44.119540Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -9264,12 +9264,6 @@ How users reach services. 'calls': only through calls for proposals, no marketpl
 **Type:** bool
 
 Show offering cover image as a banner above the name on the offering page.
-
-#### ENABLE_MARKDOWN_IMAGE_UPLOAD
-
-**Type:** bool
-
-Allow uploading images for embedding in offering markdown descriptions.
 
 #### ENFORCE_USER_CONSENT_FOR_OFFERINGS
 
@@ -70658,12 +70652,12 @@ export const MyEditButton = ({ row, refetch }) => (
 
 ### Cards and Layout Components
 
-| Component          | Location                       | Description        | Key Features                         |
-| ------------------ | ------------------------------ | ------------------ | ------------------------------------ |
-| **Panel**          | `src/core/Panel.tsx`           | Basic card panel   | Header, actions, flexible content    |
-| **AccordionCard**  | `src/core/AccordionCard.tsx`   | Collapsible card   | Toggle functionality, custom styling |
-| **WidgetCard**     | `src/dashboard/WidgetCard.tsx` | Dashboard widget   | Flexible layout, action dropdown     |
-| **StatisticsCard** | `src/core/StatisticsCard.tsx`  | Statistics display | Large value display, "View all" link |
+| Component          | Location                                          | Description        | Key Features                         |
+| ------------------ | ------------------------------------------------- | ------------------ | ------------------------------------ |
+| **Panel**          | `src/core/Panel.tsx`                              | Basic card panel   | Header, actions, flexible content    |
+| **AccordionCard**  | `waldur-ui` (`packages/ui/src/AccordionCard.tsx`) | Collapsible card   | Toggle functionality, custom styling |
+| **WidgetCard**     | `src/dashboard/WidgetCard.tsx`                    | Dashboard widget   | Flexible layout, action dropdown     |
+| **StatisticsCard** | `src/core/StatisticsCard.tsx`                     | Statistics display | Large value display, "View all" link |
 
 ### Data Display Components
 
@@ -73028,6 +73022,71 @@ This project uses a **local-first approach** to translation management. All tran
 2. Run `yarn i18n:extract` to add to `template.json` with rich context
 3. Translator adds translation to relevant locale files (e.g., `/locales/nb.json`)
 4. Use `yarn i18n:check:locales` to verify completeness
+
+### Fixing and adding translations
+
+Most translations were machine-produced, and many strings have none yet. If you see a wrong translation, or
+English text in a translated interface, this is how to fix it. The examples use Estonian (`et`); other
+languages work the same way with their own code.
+
+`locales/et.json` holds the translations as `"English text": "Estonian text"` pairs, and `template.json` lists
+every translatable English string (generated from the code, do not edit it). The English text is the key: when
+`locales/et.json` has no entry for it, the interface shows the English text instead.
+
+#### Fixing a wrong translation
+
+1. Copy a distinctive part of the wrong text as it appears on screen.
+2. Find its entry in `locales/et.json`, with your editor's search or (after `yarn install`):
+
+    ```bash
+    yarn i18n:search search-pattern et "Tutvu pakkumiste" values
+    ```
+
+    ```json
+    {
+      "Explore marketplace": "Tutvu pakkumiste kataloogiga"
+    }
+    ```
+
+3. Change the value on the right. Leave the English key on the left exactly as it is.
+
+#### Adding a missing translation
+
+1. Find the exact English key in `template.json`. Search for a fragment rather than the whole sentence, because
+   names and numbers on screen are variables in the key: the screen shows `Invitation sent to mari@example.com.`
+   while the key is `Invitation sent to {email}.`
+
+    ```bash
+    grep -n '^  "Invitation sent to ' template.json
+    ```
+
+2. Add the pair to `locales/et.json`, with the key copied character for character. Its position in the file
+   does not matter.
+
+    ```json
+    "Invitation sent to {email}.": "Kutse saadeti aadressile {email}.",
+    ```
+
+`yarn i18n:check:lang et --locales-only` shows how much of a language is still missing.
+
+If the text is not in `template.json`, it is not a frontend string and no change to `locales/et.json` can fix
+it: it is a backend message, content an administrator entered (such as an offering or category name), or
+interface text not yet wrapped in `translate()`. Report it instead.
+
+#### Rules
+
+- **Never change the key.** A key that no longer matches the code is silently ignored.
+- **Keep `{placeholders}` exactly.** Translate around them; you may move them within the sentence.
+- **Keep markup tags.** In `<Link>Terms of Service</Link> have been accepted on <Date></Date>`, translate the
+  words and keep `<Link>`, `</Link>` and `<Date></Date>` as they are.
+- **Use the established terms.** Check the [glossary](https://docs.waldur.com/latest/about/terminology/glossary/)
+  for what a Waldur term means, and search `locales/et.json` for how it is already translated before
+  introducing a new word for it.
+- **Match the interface.** Button labels are short commands (`Salvesta`, not `Salvestamine`); titles use
+  sentence case.
+- **Keep the file valid JSON.** Every entry but the last ends with a comma, and quotes inside a translation are
+  written as `\"`. Check with
+  `node -e "JSON.parse(require('fs').readFileSync('locales/et.json', 'utf8'))"`.
 
 ### Quality Assurance
 
@@ -76294,7 +76353,7 @@ Waldur Homeport operates on two active UI component patterns:
 1. **Modern Tailwind / Radix Primitives (`packages/ui`, exported as `waldur-ui`)**
    - Built with pure Tailwind v4 utilities and CSS design tokens from `packages/design-tokens`.
    - Free of all Bootstrap and Metronic classes, SCSS variables, and runtime mixins.
-   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `DropdownMenu`, `Switch`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, and `LoadingSpinner`.
+   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `DropdownMenu`, `Switch`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, and `Collapsible`.
    - Exports `buttonVariants()`, `ButtonVariant` and `ButtonSize` so elements that cannot be a `BaseButton` (links, Radix triggers that need a specific child shape) still get the exact same classes.
 
 2. **Transitional Shells (Radix Engine with Themed Skins)**
@@ -76308,19 +76367,21 @@ Waldur Homeport operates on two active UI component patterns:
 
 ### Component Standards & Usage Guide
 
-| UI Element                    | Standard Component          | Package        | Usage & Styling Notes                                                                        | Prohibited                                                  |
-| :---------------------------- | :-------------------------- | :------------- | :------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
-| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`    | Pure Tailwind, `--surface-card-border`, 5 variants                                           | `react-bootstrap` `Alert`                                   |
-| **Badge / Pill**              | `Badge`                     | `waldur-ui`    | 15 variants × 3 tones, structural `border-[1px]`                                             | `react-bootstrap` `Badge`                                   |
-| **Tooltip**                   | `Tooltip`                   | `waldur-ui`    | Radix Tooltip (hover/focus) + Popover (click fallback)                                       | `react-bootstrap` `Tooltip`, `OverlayTrigger`               |
-| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`    | Radix Popover with `--surface-card-*` tokens                                                 | `react-bootstrap` `Popover`                                 |
-| **Button**                    | `BaseButton`                | `waldur-ui`    | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens | `react-bootstrap` `Button`, hand-written `btn` class markup |
-| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link`  | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing      | `<a className="btn …">`                                     |
-| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`    | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                 | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup   |
-| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`    | Collapsible desktop rail + mobile Radix Sheet                                                | Metronic sidebar JS                                         |
-| **Table Actions**             | `ActionsDropdown`           | `@/table`      | Radix DropdownMenu with keyboard navigation                                                  | `react-bootstrap` `DropdownButton`                          |
-| **Header Chrome Menu**        | `NavMenu`                   | `@/navigation` | Radix DropdownMenu with responsive hover triggers                                            | N/A                                                         |
-| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`     | Radix Dialog with CSS keyframe transitions                                                   | N/A                                                         |
+| UI Element                    | Standard Component          | Package        | Usage & Styling Notes                                                                              | Prohibited                                                  |
+| :---------------------------- | :-------------------------- | :------------- | :------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
+| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`    | Pure Tailwind, `--surface-card-border`, 5 variants                                                 | `react-bootstrap` `Alert`                                   |
+| **Badge / Pill**              | `Badge`                     | `waldur-ui`    | 15 variants × 3 tones, structural `border-[1px]`                                                   | `react-bootstrap` `Badge`                                   |
+| **Tooltip**                   | `Tooltip`                   | `waldur-ui`    | Radix Tooltip (hover/focus) + Popover (click fallback)                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`               |
+| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`    | Radix Popover with `--surface-card-*` tokens                                                       | `react-bootstrap` `Popover`                                 |
+| **Button**                    | `BaseButton`                | `waldur-ui`    | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens       | `react-bootstrap` `Button`, hand-written `btn` class markup |
+| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link`  | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing            | `<a className="btn …">`                                     |
+| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`    | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup   |
+| **Expandable panel group**    | `Accordion`                 | `waldur-ui`    | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount | `react-bootstrap` `Accordion`                               |
+| **Single expandable panel**   | `Collapsible`               | `waldur-ui`    | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                  | `react-bootstrap` `Collapse`, `useAccordionButton`          |
+| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`    | Collapsible desktop rail + mobile Radix Sheet                                                      | Metronic sidebar JS                                         |
+| **Table Actions**             | `ActionsDropdown`           | `@/table`      | Radix DropdownMenu with keyboard navigation                                                        | `react-bootstrap` `DropdownButton`                          |
+| **Header Chrome Menu**        | `NavMenu`                   | `@/navigation` | Radix DropdownMenu with responsive hover triggers                                                  | N/A                                                         |
+| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`     | Radix Dialog with CSS keyframe transitions                                                         | N/A                                                         |
 
 The _Prohibited_ column is convention; the subset that lint enforces is listed under [Linting & Guardrails](#linting-guardrails) (`ToggleButtonGroup` and `btn-group` markup are not).
 
@@ -76564,6 +76625,21 @@ Waldur does **not** toggle dark mode via a `.dark` HTML class. Instead:
 
 ---
 
+### Accordion & Collapsible
+
+`packages/ui/src/Accordion.tsx` and `packages/ui/src/Collapsible.tsx` (exported from `waldur-ui`).
+
+- **Accordion** is the shadcn recipe on Radix Accordion: each trigger is a real `<button>` inside an `<h3>` (Bootstrap/Metronic heading margin and type reset), with `aria-expanded`/`aria-controls` and arrow/Home/End keys between headers. Use `type="multiple"` where several panels stay open (table filters sidebar).
+- **Brand colour**: the open header is `text-brand-700` / `dark:text-brand-200`, the runtime tenant ramp. The chevron is a Phosphor icon in `currentColor`, so it always matches — react-bootstrap's version baked the build-time default green into a data-URI SVG.
+- **Motion**: 250ms ease-out slide. Accordion and plain Collapsible use `waldur-collapsible-down/-up` in `waldur-design-tokens/animations.css`, driven by Radix's `--radix-collapsible-content-height`; `overflow: hidden` lives in the keyframes so an open panel lets inline select menus overflow it. `Collapsible keepMounted` (its children stay mounted, so Radix's Presence can't drive keyframes) transitions grid rows 0fr ↔ 1fr instead, clipping only mid-slide and applying `hidden` once closed. Both respect `prefers-reduced-motion`.
+- **Unmount vs. `keepMounted`**:
+  > [!WARNING]
+  > Radix renders `isOpen && children` inside its Content, so a closed panel's children are **unmounted even with `forceMount`**. react-final-form fields inside it unregister and lose their values and validation. For panels holding form fields, use `<Collapsible keepMounted>`: children stay mounted and are only `hidden` while closed. `Accordion` has no such option — none of its intended users hold form fields.
+- **Call sites**: the table filters sidebar (`Accordion type="multiple"`), `AccordionCard` (now in `waldur-ui`; `Collapsible keepMounted`, same props as before; pure Tailwind with rem spacing ported from Metronic's card, and `--card-header-text` / `--card-title-text` / `--card-title-secondary-text` / `--card-header-solid-bg` tokens in `surfaceColors.css` — measured identical to the Metronic card in light and dark), `CategoriesPanel` (`Collapsible`) and a handful of standalone accordions, which add an outer border via `className` (`rounded-md border-[1px] border-solid border-[var(--surface-card-border)]`) — the component itself draws only separators between items.
+- **Enforcement**: `Accordion`, `AccordionContext` and `useAccordionButton` from `react-bootstrap` (and `react-bootstrap/Accordion`) are prohibited in `RESTRICTED_IMPORTS`.
+
+---
+
 ### Buttons
 
 Three primitives in `waldur-ui` (`packages/ui/src`) and `Link` in `@/core/Link` make up the application's unified button architecture:
@@ -76669,14 +76745,14 @@ Once no element rendered a literal `.btn` class, the Bootstrap/Metronic button C
 
 These do not depend on `.btn`:
 
-| Class                                             | Why it stays                                                                                                                                                                                                                      |
-| :------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Class                                             | Why it stays                                                                                                                                                                                                     |
+| :------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `.btn-no-focus`                                   | Standalone helper in `core/components/buttons/_base.scss` that callers pass as a plain `className` to a `BaseButton`. Removes the box-shadow glow only; `BaseButton`'s focus ring is an outline, so it survives. |
-| `.btn-nav-item`                                   | Header icon buttons (`custom/_nav.scss`)                                                                                                                                                                                          |
-| `.btn-close`                                      | Bootstrap's modal close control (`bootstrap/scss/close`)                                                                                                                                                                          |
-| `.btn-text-align`                                 | Text alignment helper used on a `div`                                                                                                                                                                                             |
-| `.dropdown-toggle.btn-icon`                       | `.disabled-view` rule that hides row-action toggles (see [`ActionsDropdown`](#actionsdropdown-actionitem))                                                                                                                        |
-| `$btn-*` SCSS variables and `_tokens.scss` values | Still read by AI-assistant and other component styles                                                                                                                                                                             |
+| `.btn-nav-item`                                   | Header icon buttons (`custom/_nav.scss`)                                                                                                                                                                         |
+| `.btn-close`                                      | Bootstrap's modal close control (`bootstrap/scss/close`)                                                                                                                                                         |
+| `.btn-text-align`                                 | Text alignment helper used on a `div`                                                                                                                                                                            |
+| `.dropdown-toggle.btn-icon`                       | `.disabled-view` rule that hides row-action toggles (see [`ActionsDropdown`](#actionsdropdown-actionitem))                                                                                                       |
+| `$btn-*` SCSS variables and `_tokens.scss` values | Still read by AI-assistant and other component styles                                                                                                                                                            |
 
 **Guardrail**: `no-bootstrap-button-markup` is an error with no allowlist, so hand-written `btn` markup cannot come back unnoticed (see [Custom ESLint Rules Matrix](#custom-eslint-rules-matrix)).
 
@@ -76690,14 +76766,15 @@ These do not depend on `.btn`:
 
 Configured in `eslint.config.js` via `no-restricted-imports` (`RESTRICTED_IMPORTS`). Each entry has a `message` that names the replacement:
 
-| `react-bootstrap` import    | Use instead                                                                            |
-| :-------------------------- | :------------------------------------------------------------------------------------- |
-| `Badge`                     | `Badge` from `waldur-ui`                                                               |
-| `Tooltip`, `OverlayTrigger` | `Tooltip` (or `Popover`) from `waldur-ui`                                              |
-| `Popover`                   | `Popover` from `waldur-ui`                                                             |
-| `Alert`                     | `AlertItem` from `waldur-ui`                                                           |
-| `Button`                    | `BaseButton` from `waldur-ui` (or `SubmitButton` / `CloseDialogButton` where they fit) |
-| `DropdownButton`            | `ActionsDropdown`                                                                      |
+| `react-bootstrap` import                              | Use instead                                                                            |
+| :---------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| `Badge`                                               | `Badge` from `waldur-ui`                                                               |
+| `Tooltip`, `OverlayTrigger`                           | `Tooltip` (or `Popover`) from `waldur-ui`                                              |
+| `Popover`                                             | `Popover` from `waldur-ui`                                                             |
+| `Alert`                                               | `AlertItem` from `waldur-ui`                                                           |
+| `Button`                                              | `BaseButton` from `waldur-ui` (or `SubmitButton` / `CloseDialogButton` where they fit) |
+| `DropdownButton`                                      | `ActionsDropdown`                                                                      |
+| `Accordion`, `AccordionContext`, `useAccordionButton` | `Accordion` or `Collapsible` from `waldur-ui`                                          |
 
 Each is blocked both as a named import from `react-bootstrap` and as a deep import (`react-bootstrap/Badge`, …). A genuinely new exception belongs on the offending line as `// eslint-disable-next-line no-restricted-imports -- <reason>`.
 
@@ -96267,6 +96344,46 @@ counts can be checked before the new homeserver is switched on.
 
 Room creation happens in the background, so the command returns before the
 rooms exist. Watch the room states to confirm they leave `creating`.
+
+### Creating project rooms
+
+Anyone holding the `MATRIX_ROOM.CREATE` permission on a project or its
+organization can create the project's room from its Chat tab. Organization
+owners hold it by default. Staff can create any room from the Chat tab;
+support can create one from the Matrix admin rooms page or through
+`POST /api/matrix/rooms/`.
+Disabling and deleting a room stay with staff and support.
+
+To let project managers create rooms too, grant them the permission in
+`permissions-override.yaml`:
+
+```yaml
+- role: PROJECT.MANAGER
+  add_permissions:
+    - MATRIX_ROOM.CREATE
+```
+
+If you replaced `CUSTOMER.OWNER` wholesale in `custom-roles.yaml`, add
+`MATRIX_ROOM.CREATE` to that list yourself, or owners lose room creation.
+
+To give every project a room without anyone asking for one:
+
+- **New projects:** turn on `MATRIX_AUTO_CREATE_PROJECT_ROOMS` (off by default).
+  It applies to every project created from then on, including projects
+  created by loading a demo preset.
+- **Existing projects:** run the backfill.
+
+```bash
+waldur provision_matrix_rooms --dry-run                 # list the projects, create nothing
+waldur provision_matrix_rooms --customer <uuid>         # one organization only
+waldur provision_matrix_rooms --limit 50                # at most 50 rooms this run
+```
+
+The backfill skips projects that already have a room, including an archived
+one, so it is safe to re-run. Each room provisions a Matrix account for, and
+invites, every member of its project and of its organization. `--limit` only caps how many rooms one
+run queues; on a large deployment, wait for a batch to leave `creating` before
+running the next.
 
 ### Room aliases
 

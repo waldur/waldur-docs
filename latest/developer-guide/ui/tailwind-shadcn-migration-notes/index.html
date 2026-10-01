@@ -9524,6 +9524,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#accordion-collapsible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accordion &amp; Collapsible
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#buttons" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19451,6 +19462,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#accordion-collapsible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accordion &amp; Collapsible
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#buttons" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19797,7 +19819,7 @@
 <li><strong>Modern Tailwind / Radix Primitives (<code>packages/ui</code>, exported as <code>waldur-ui</code>)</strong></li>
 <li>Built with pure Tailwind v4 utilities and CSS design tokens from <code>packages/design-tokens</code>.</li>
 <li>Free of all Bootstrap and Metronic classes, SCSS variables, and runtime mixins.</li>
-<li>Includes <code>BaseButton</code>, <code>SegmentedControl</code>, <code>AlertItem</code>, <code>Badge</code>, <code>Tooltip</code>, <code>Popover</code>, <code>Sidebar</code>, <code>Sheet</code>, <code>Dialog</code>, <code>DropdownMenu</code>, <code>Switch</code>, <code>Tag</code>, <code>Card</code>, <code>Avatar</code>, <code>Toast</code>, <code>FeaturedIcon</code>, <code>StatusPill</code>, <code>StatCard</code>, <code>CopyButton</code>, and <code>LoadingSpinner</code>.</li>
+<li>Includes <code>BaseButton</code>, <code>SegmentedControl</code>, <code>AlertItem</code>, <code>Badge</code>, <code>Tooltip</code>, <code>Popover</code>, <code>Sidebar</code>, <code>Sheet</code>, <code>Dialog</code>, <code>DropdownMenu</code>, <code>Switch</code>, <code>Tag</code>, <code>Card</code>, <code>Avatar</code>, <code>Toast</code>, <code>FeaturedIcon</code>, <code>StatusPill</code>, <code>StatCard</code>, <code>CopyButton</code>, <code>LoadingSpinner</code>, <code>Accordion</code>, <code>AccordionCard</code>, and <code>Collapsible</code>.</li>
 <li>
 <p>Exports <code>buttonVariants()</code>, <code>ButtonVariant</code> and <code>ButtonSize</code> so elements that cannot be a <code>BaseButton</code> (links, Radix triggers that need a specific child shape) still get the exact same classes.</p>
 </li>
@@ -19873,6 +19895,20 @@
 <td style="text-align: left;"><code>waldur-ui</code></td>
 <td style="text-align: left;">Radix RadioGroup, <code>neutral</code> / <code>brand</code> variants, button sizes</td>
 <td style="text-align: left;"><code>react-bootstrap</code> <code>ToggleButtonGroup</code>, <code>btn-group</code> markup</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Expandable panel group</strong></td>
+<td style="text-align: left;"><code>Accordion</code></td>
+<td style="text-align: left;"><code>waldur-ui</code></td>
+<td style="text-align: left;">Radix Accordion, <code>single</code> / <code>multiple</code>, open header in runtime brand colour; closed panels unmount</td>
+<td style="text-align: left;"><code>react-bootstrap</code> <code>Accordion</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Single expandable panel</strong></td>
+<td style="text-align: left;"><code>Collapsible</code></td>
+<td style="text-align: left;"><code>waldur-ui</code></td>
+<td style="text-align: left;">Radix Collapsible, unstyled; <code>keepMounted</code> keeps form fields mounted while closed</td>
+<td style="text-align: left;"><code>react-bootstrap</code> <code>Collapse</code>, <code>useAccordionButton</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Sidebar Navigation</strong></td>
@@ -20161,6 +20197,21 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
 <li><strong>Enforcement</strong>: <code>react-bootstrap/Popover</code> is prohibited in <code>RESTRICTED_IMPORTS</code>.</li>
 </ul>
 <hr>
+<h3 id="accordion-collapsible">Accordion &amp; Collapsible</h3>
+<p><code>packages/ui/src/Accordion.tsx</code> and <code>packages/ui/src/Collapsible.tsx</code> (exported from <code>waldur-ui</code>).</p>
+<ul>
+<li><strong>Accordion</strong> is the shadcn recipe on Radix Accordion: each trigger is a real <code>&lt;button&gt;</code> inside an <code>&lt;h3&gt;</code> (Bootstrap/Metronic heading margin and type reset), with <code>aria-expanded</code>/<code>aria-controls</code> and arrow/Home/End keys between headers. Use <code>type="multiple"</code> where several panels stay open (table filters sidebar).</li>
+<li><strong>Brand colour</strong>: the open header is <code>text-brand-700</code> / <code>dark:text-brand-200</code>, the runtime tenant ramp. The chevron is a Phosphor icon in <code>currentColor</code>, so it always matches — react-bootstrap's version baked the build-time default green into a data-URI SVG.</li>
+<li><strong>Motion</strong>: 250ms ease-out slide. Accordion and plain Collapsible use <code>waldur-collapsible-down/-up</code> in <code>waldur-design-tokens/animations.css</code>, driven by Radix's <code>--radix-collapsible-content-height</code>; <code>overflow: hidden</code> lives in the keyframes so an open panel lets inline select menus overflow it. <code>Collapsible keepMounted</code> (its children stay mounted, so Radix's Presence can't drive keyframes) transitions grid rows 0fr ↔ 1fr instead, clipping only mid-slide and applying <code>hidden</code> once closed. Both respect <code>prefers-reduced-motion</code>.</li>
+<li><strong>Unmount vs. <code>keepMounted</code></strong>:<blockquote>
+<p>[!WARNING]
+Radix renders <code>isOpen &amp;&amp; children</code> inside its Content, so a closed panel's children are <strong>unmounted even with <code>forceMount</code></strong>. react-final-form fields inside it unregister and lose their values and validation. For panels holding form fields, use <code>&lt;Collapsible keepMounted&gt;</code>: children stay mounted and are only <code>hidden</code> while closed. <code>Accordion</code> has no such option — none of its intended users hold form fields.</p>
+</blockquote>
+</li>
+<li><strong>Call sites</strong>: the table filters sidebar (<code>Accordion type="multiple"</code>), <code>AccordionCard</code> (now in <code>waldur-ui</code>; <code>Collapsible keepMounted</code>, same props as before; pure Tailwind with rem spacing ported from Metronic's card, and <code>--card-header-text</code> / <code>--card-title-text</code> / <code>--card-title-secondary-text</code> / <code>--card-header-solid-bg</code> tokens in <code>surfaceColors.css</code> — measured identical to the Metronic card in light and dark), <code>CategoriesPanel</code> (<code>Collapsible</code>) and a handful of standalone accordions, which add an outer border via <code>className</code> (<code>rounded-md border-[1px] border-solid border-[var(--surface-card-border)]</code>) — the component itself draws only separators between items.</li>
+<li><strong>Enforcement</strong>: <code>Accordion</code>, <code>AccordionContext</code> and <code>useAccordionButton</code> from <code>react-bootstrap</code> (and <code>react-bootstrap/Accordion</code>) are prohibited in <code>RESTRICTED_IMPORTS</code>.</li>
+</ul>
+<hr>
 <h3 id="buttons">Buttons</h3>
 <p>Three primitives in <code>waldur-ui</code> (<code>packages/ui/src</code>) and <code>Link</code> in <code>@/core/Link</code> make up the application's unified button architecture:</p>
 <table>
@@ -20343,6 +20394,10 @@ Instead, the Sheet uses Tailwind v4's <code>starting:</code> variant (<code>@sta
 <tr>
 <td style="text-align: left;"><code>DropdownButton</code></td>
 <td style="text-align: left;"><code>ActionsDropdown</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>Accordion</code>, <code>AccordionContext</code>, <code>useAccordionButton</code></td>
+<td style="text-align: left;"><code>Accordion</code> or <code>Collapsible</code> from <code>waldur-ui</code></td>
 </tr>
 </tbody>
 </table>

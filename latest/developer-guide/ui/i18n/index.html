@@ -9301,6 +9301,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#fixing-and-adding-translations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixing and adding translations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fixing and adding translations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixing-a-wrong-translation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixing a wrong translation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-missing-translation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a missing translation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#quality-assurance" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19553,6 +19603,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#fixing-and-adding-translations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixing and adding translations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fixing and adding translations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixing-a-wrong-translation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixing a wrong translation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-missing-translation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a missing translation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#quality-assurance" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20272,6 +20372,66 @@ yarn<span class="w"> </span>i18n:validate<span class="w"> </span>--warn-only
 <li>Translator adds translation to relevant locale files (e.g., <code>/locales/nb.json</code>)</li>
 <li>Use <code>yarn i18n:check:locales</code> to verify completeness</li>
 </ol>
+<h3 id="fixing-and-adding-translations">Fixing and adding translations</h3>
+<p>Most translations were machine-produced, and many strings have none yet. If you see a wrong translation, or
+English text in a translated interface, this is how to fix it. The examples use Estonian (<code>et</code>); other
+languages work the same way with their own code.</p>
+<p><code>locales/et.json</code> holds the translations as <code>"English text": "Estonian text"</code> pairs, and <code>template.json</code> lists
+every translatable English string (generated from the code, do not edit it). The English text is the key: when
+<code>locales/et.json</code> has no entry for it, the interface shows the English text instead.</p>
+<h4 id="fixing-a-wrong-translation">Fixing a wrong translation</h4>
+<ol>
+<li>Copy a distinctive part of the wrong text as it appears on screen.</li>
+<li>
+<p>Find its entry in <code>locales/et.json</code>, with your editor's search or (after <code>yarn install</code>):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>yarn<span class="w"> </span>i18n:search<span class="w"> </span>search-pattern<span class="w"> </span>et<span class="w"> </span><span class="s2">"Tutvu pakkumiste"</span><span class="w"> </span>values
+</code></pre></div></td></tr></tbody></table></div>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"Explore marketplace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tutvu pakkumiste kataloogiga"</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+</li>
+<li>
+<p>Change the value on the right. Leave the English key on the left exactly as it is.</p>
+</li>
+</ol>
+<h4 id="adding-a-missing-translation">Adding a missing translation</h4>
+<ol>
+<li>
+<p>Find the exact English key in <code>template.json</code>. Search for a fragment rather than the whole sentence, because
+   names and numbers on screen are variables in the key: the screen shows <code>Invitation sent to mari@example.com.</code>
+   while the key is <code>Invitation sent to {email}.</code></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>grep<span class="w"> </span>-n<span class="w"> </span><span class="s1">'^  "Invitation sent to '</span><span class="w"> </span>template.json
+</code></pre></div></td></tr></tbody></table></div>
+</li>
+<li>
+<p>Add the pair to <code>locales/et.json</code>, with the key copied character for character. Its position in the file
+   does not matter.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">"Invitation sent to {email}."</span><span class="p">:</span><span class="w"> </span><span class="s2">"Kutse saadeti aadressile {email}."</span><span class="p">,</span>
+</code></pre></div></td></tr></tbody></table></div>
+</li>
+</ol>
+<p><code>yarn i18n:check:lang et --locales-only</code> shows how much of a language is still missing.</p>
+<p>If the text is not in <code>template.json</code>, it is not a frontend string and no change to <code>locales/et.json</code> can fix
+it: it is a backend message, content an administrator entered (such as an offering or category name), or
+interface text not yet wrapped in <code>translate()</code>. Report it instead.</p>
+<h4 id="rules">Rules</h4>
+<ul>
+<li><strong>Never change the key.</strong> A key that no longer matches the code is silently ignored.</li>
+<li><strong>Keep <code>{placeholders}</code> exactly.</strong> Translate around them; you may move them within the sentence.</li>
+<li><strong>Keep markup tags.</strong> In <code>&lt;Link&gt;Terms of Service&lt;/Link&gt; have been accepted on &lt;Date&gt;&lt;/Date&gt;</code>, translate the
+  words and keep <code>&lt;Link&gt;</code>, <code>&lt;/Link&gt;</code> and <code>&lt;Date&gt;&lt;/Date&gt;</code> as they are.</li>
+<li><strong>Use the established terms.</strong> Check the <a href="https://docs.waldur.com/latest/about/terminology/glossary/">glossary</a>
+  for what a Waldur term means, and search <code>locales/et.json</code> for how it is already translated before
+  introducing a new word for it.</li>
+<li><strong>Match the interface.</strong> Button labels are short commands (<code>Salvesta</code>, not <code>Salvestamine</code>); titles use
+  sentence case.</li>
+<li><strong>Keep the file valid JSON.</strong> Every entry but the last ends with a comma, and quotes inside a translation are
+  written as <code>\"</code>. Check with
+  <code>node -e "JSON.parse(require('fs').readFileSync('locales/et.json', 'utf8'))"</code>.</li>
+</ul>
 <h3 id="quality-assurance">Quality Assurance</h3>
 <ol>
 <li><strong>Regular cleanup</strong>: Monthly <code>yarn i18n:clean</code> to remove deprecated translations from locale files</li>
