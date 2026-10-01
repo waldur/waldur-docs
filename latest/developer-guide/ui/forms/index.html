@@ -9188,6 +9188,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#date-time-pickers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Date &amp; Time Pickers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#autonomous-table-filters-filter-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19245,6 +19256,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#date-time-pickers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Date &amp; Time Pickers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#autonomous-table-filters-filter-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19879,6 +19901,89 @@
 <li><code>src/openstack/OpenStackCredentialsSection.tsx</code> — <code>BaseCredentialsSection</code> with <code>Select</code>/<code>Boolean</code>/<code>Secret</code> edit fields.</li>
 <li><code>src/marketplace/offerings/update/integration/LifecyclePolicySection.tsx</code> — search-enabled tabs with flat field lists.</li>
 </ul>
+<h2 id="date-time-pickers">Date &amp; Time Pickers</h2>
+<p>All date controls are built on <code>Calendar</code>, <code>DatePicker</code> and <code>DateRangePicker</code>
+from <code>waldur-ui</code>
+(shadcn's recipe over <a href="https://daypicker.dev">react-day-picker</a>, opened in a
+Radix popover); <code>waldur-ui</code> also exports the pieces for custom pickers
+(<code>DatePickerPopover</code>, <code>TimeInput</code>, the <code>dateBounds</code> helpers,
+<code>useCalendarLocale</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Stores in form state</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DateField</code></td>
+<td>ISO date <code>yyyy-MM-dd</code></td>
+<td><code>DateGroup</code>, <code>DateEditField</code>, <code>DateFilter</code></td>
+</tr>
+<tr>
+<td><code>DateTimeField</code></td>
+<td>ISO datetime with offset</td>
+<td><code>DateTimeGroup</code>; shown as <code>yyyy-MM-dd HH:mm</code></td>
+</tr>
+<tr>
+<td><code>DateTimeRangeField</code></td>
+<td><code>[Date, Date]</code></td>
+<td>Floors at now unless <code>minDate={null}</code>; ref exposes <code>open()</code></td>
+</tr>
+<tr>
+<td><code>RangeDateField</code></td>
+<td><code>{ min, max }</code> ISO dates</td>
+<td><code>DateRangeFilter</code>; date-only, no floor</td>
+</tr>
+<tr>
+<td><code>DatePicker</code></td>
+<td>— (plain <code>value</code>/<code>onChange</code> <code>Date</code>)</td>
+<td>For non-form UI; from <code>waldur-ui</code></td>
+</tr>
+<tr>
+<td><code>DateRangePicker</code></td>
+<td>— (plain <code>[Date, Date]</code>)</td>
+<td>For non-form UI; from <code>waldur-ui</code></td>
+</tr>
+<tr>
+<td><code>MonthPicker</code></td>
+<td>— (plain <code>Date</code>, first of month)</td>
+<td>Billing/usage periods; from <code>waldur-ui</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>minDate</code>/<code>maxDate</code> accept a <code>Date</code>, an ISO date or datetime string, a luxon
+  <code>DateTime</code> or <code>'today'</code>. They are inclusive and day-granular in the
+  calendar; a datetime bound also clamps the picked time.</li>
+<li><code>enable</code> takes predicates a day must match (e.g. first of the month only);
+  <code>inline</code> renders the calendar without a popup.</li>
+<li>Closing the popup calls <code>input.onBlur</code>, so validation shows without a submit.</li>
+<li><code>DateFilter</code>, <code>DateTimeFilter</code> and <code>DateRangeFilter</code> open their calendar as
+  soon as the filter is picked (<code>autoOpen</code>), as select filters show their menu.</li>
+<li>Popups use <code>--z-index-picker-popover</code>, above modals and filter dropdowns.</li>
+<li>Never use native <code>&lt;input type="date|datetime-local|time|month|week"&gt;</code> — the
+  <code>waldur-custom/no-native-date-input</code> lint rule rejects it. For state kept as
+  strings, read with <code>parseDateValue</code> and write with <code>toIsoDate</code> /
+  <code>toIsoMonth</code> (all from <code>waldur-ui</code>).</li>
+</ul>
+<p><strong>Behaviour is specified by stories</strong>, each rule in one place, under
+<em>Forms/Date &amp; time</em> in Storybook: <code>DatePicker</code> and <code>DateRangePicker</code>
+(<code>packages/ui/src/DatePicker/</code>) specify the pickers; <code>Form
+fields</code> (<code>src/form/dateFields.stories.tsx</code>) covers only what the adapters
+add — stored shape, touched-on-close, the maintenance floor; <code>Calendar</code>
+shows the primitive. Screens built on the pickers keep their stories under
+their own domain (<code>Maintenance/…</code>, <code>Booking/…</code>, <code>Reporting/…</code>). All of them
+drive the pickers through <code>waldur-ui/src/DatePicker/testing</code> (imported by
+path, never from the package index) and assert only on what the user or form
+sees, so a markup change is fixed in the driver, not the stories. Use the
+toolbar's theme switch for dark mode rather than adding dark copies. Unit
+tests only cover what a story can't: <code>TimeInput</code>'s editing rules, anything
+that needs a frozen clock (the maintenance floor), and crash safety on
+malformed data — don't repeat a story's assertion in a test. Run
+them with <code>yarn test:storybook packages/ui/src/DatePicker src/form</code>.</p>
 <h2 id="autonomous-table-filters-filter-pattern">Autonomous Table Filters (*Filter Pattern)</h2>
 <p>Similar to the <code>*Group</code> pattern, Waldur provides autonomous components for table filters. These components combine <code>TableFilterItem</code>, React Final Form's <code>Field</code>, and an input component.</p>
 <p>They are created using the <code>withTableFilter</code> HOC and handle the toggle button, menu/sidebar layout, and form state binding autonomously.</p>
