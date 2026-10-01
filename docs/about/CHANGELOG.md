@@ -1,5 +1,77 @@
 # Changelog
 
+## 8.1.3-rc.20 - 2026-10-01
+
+### Highlights
+
+This release mostly improves calls for proposals. Call managers can copy a call's configuration to another portal, export proposals and reviews as CSV or PDF, and have evaluation start automatically when a round closes. Reviewer workload limits, invitation expiry and assignment emails now behave more predictably. Offerings can now calculate component limits from order-form formulas and show their price at order time, and three areas of the admin menu are reorganised into tabbed pages.
+
+### What's New
+
+- **Call transfer:** Call managers can export a call's configuration, including its reference code, and import it on another portal from the call management page.
+- **Call exports:** The proposal and review lists support the standard table export, with an option to download a full CSV report of every proposal and review. Individual proposals can be downloaded as PDF, and compliance status is exported as readable text.
+- **Automatic evaluation start:** A call can start its evaluation at the round cut-off. Call managers also get controls to resend reviewer invitations and to override a reviewer's workload limit.
+- **Derived component limits:** Offering options can derive component limits from formulas and sums of order-form values. The order form shows the derived limits and their price. A paired formula option is kept while resources still hold changed values.
+- **Unique option values:** An offering option can require its value to be unique across all of the offering's resources. The order form also checks values against the pattern the provider configured.
+- **Matrix rooms:** Organization owners can create Matrix chat rooms, and rooms can be created for existing projects in bulk. The chat members list now appears above the chat drawer.
+- **End date change emails:** Approvers and requesters now get emails when a resource end date change request is created, approved or rejected.
+- **Brreg onboarding:** Brreg can now be used as an onboarding validation method.
+- **Public-sector demo preset:** A new public-sector accounting demo preset is available.
+
+### Improvements
+
+- **Reviewer workload:** Reviewers' assignment limits are now enforced based on their open assignments.
+- **Reviewer invitations:** Reviewer pool invitations now expire no matter how they were sent, and invitees get an email when that happens.
+- **Reviewer privacy:**
+  - Reviewers see less of assignments that haven't been sent yet or that have a conflict of interest.
+  - The proposal team list follows the call's applicant visibility setting.
+- **Notifications and prompts:**
+  - Only the managers of the offerings a proposal requests are notified about it.
+  - Only the applicant sees the award confirmation prompt.
+- **Call import/export:** Command-line structure import and export now include a call's disclosure level and assignment configuration.
+- **Removed fields:** The project duration field and its review comment have been removed from proposals.
+- **Admin menu:**
+  - The System management, Marketplace, and Organizations & compliance menus are now grouped into tabbed pages.
+  - Telemetry can be switched off from the Telemetry admin page.
+- **Provider access:**
+  - Service providers can see the compliance checklist assigned to their offering.
+  - The global support role can view service provider statistics and revenue.
+- **Order tickets:** Order tickets show OpenStack instance and tenant names next to their UUIDs.
+- **VMware orders:** The networks and folder chosen in a VMware order are now applied to the VM. A powered-off VM is shown as stopped.
+- **Quota analytics:** Quota analytics can be filtered by organization.
+- **Role names:** Roles that share a name now show readable qualifiers instead of internal machine names.
+- **Maintenance times:** Maintenance dates and times now include the timezone.
+- **Interface components:**
+  - Date pickers have been replaced with a new calendar component.
+  - Accordions and buttons have moved to the new UI component library.
+  - Dashboard chart legends and reference lines follow the current theme.
+- **Dependencies:** Backend and frontend dependencies were updated to fix issues flagged by security scans, including urllib3, oauthlib, pyjwt and undici.
+
+### Bug Fixes
+
+- **Impersonation:** The impersonated user's token is shown on the user profile again.
+- **Rounds:** When a round ends, only draft proposals are cancelled. Closing a round now saves it correctly, and closing a round that has already ended is refused.
+- **Reviewer emails:** Fixed reviewer assignment batch emails, expiry reminders and deadline extensions.
+- **Resource limits:** Values set through the set-limits action are now kept within the offering's bounds.
+- **FreeIPA:** Fixed a server error when a FreeIPA username is already taken.
+- **Zammad:** Comment sync no longer breaks when Zammad has duplicate support user records.
+- **Usage display:**
+  - Resource usage rows now appear in their billing month.
+  - Fixed the usage history filters.
+  - Usage report tabs can be switched from the overflow menu.
+- **OECD chart:** The OECD project-count chart now groups by the correct field.
+- **Layout:**
+  - Tab toolbar controls stay visible when the open tab is clicked again.
+  - The sidebar now sits below the impersonation bar.
+  - Custom select options are full width again.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [44 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.19...8.1.3-rc.20) - Call transfer and CSV exports, automatic evaluation start, reviewer workload and invitation rules, derived component limits, unique option values, Matrix room creation for owners, and end date change emails.
+- **Waldur Homeport**: [45 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.19...8.1.3-rc.20) - Call import/export and PDF exports, call-manager controls, derived limits in the order form, tabbed admin pages, a new date picker, and moving buttons and accordions to the new UI library.
+
+---
+
 ## 8.1.3-rc.19 - 2026-09-27
 
 ### Highlights
