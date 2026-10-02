@@ -51,6 +51,7 @@ accounts before it is saved.
 | Anonymized username prefix | e.g. `hpc_` | Shown once the policy is *Anonymized*. Left empty, the default `waldur_` applies |
 | Home directory prefix | empty, or e.g. `/home/` | Empty lets each offering decide; the default is `/home/` |
 | Login shell | empty, or e.g. `/bin/bash` | Empty lets each offering decide; the default is `/bin/bash` |
+| Create project groups | optional | One POSIX group per project, with a GID from the pool — enable it last, after setting the pool's project group range and adopting the groups your directory already holds; see [Project groups](project-groups.md#rolling-out-project-groups) |
 
 ![The service provider's Account settings page: Account scope set to Per service provider, with the home directory prefix and login shell left unset so the offerings fall back to the defaults](../img/posix-provider-accounts.png)
 

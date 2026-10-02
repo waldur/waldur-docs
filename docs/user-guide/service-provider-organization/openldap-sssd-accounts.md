@@ -74,6 +74,7 @@ offerings:
         account_source: "waldur"
         on_missing_posix_ids: "error"
         on_posix_mismatch: "report"
+        waldur_username_attribute: "employeeNumber"   # rename key, see "Renames"
 
         # Still used for project groups, which the resource backend allocates.
         gid_range_start: 1200
@@ -92,6 +93,10 @@ ignored with a warning for the same reason.
     primary group — and files end up ambiguously owned. Keep the two ranges
     disjoint. The agent cannot check this for you, but it logs the configured
     range at start-up so the overlap is at least visible.
+
+    These are the resource backend's own groups. Groups kept *per project*, with
+    GIDs Waldur allocates, are a separate feature:
+    see [Project groups in the directory](#project-groups-in-the-directory).
 
 ## Naming the accounts
 
@@ -157,6 +162,68 @@ $ getent passwd hpc_9001
 hpc_9001:*:9001:9001:Jane Smith:/home/hpc_9001:/bin/bash
 ```
 
+### Renames
+
+A Linux username can change while the person stays the same — the username
+generation policy changes, say, or the identity provider sends another name.
+Waldur decides the new name; the agent has to recognise which directory entry
+it belongs to. It does that with a stable key stored on the entry: the person's
+**Waldur username**, in the attribute named by `waldur_username_attribute`.
+`employeeNumber` is the recommended attribute.
+
+```yaml
+backend_settings:
+  ldap:
+    account_source: "waldur"
+    waldur_username_attribute: "employeeNumber"
+```
+
+- **Stamping.** The agent writes the key when it creates an entry, and on an
+  existing entry whose `uid` and `uidNumber` already match Waldur. Entries that
+  exist when you turn the setting on are therefore stamped on the first cycle.
+- **Renaming.** When Waldur reports a new Linux username, the agent looks up the
+  entry carrying that person's Waldur username and, if its `uidNumber` matches,
+  renames it in place (`modrdn uid=<old>` to `uid=<new>`). `uidNumber` stays;
+  the home directory and profile follow Waldur, the personal group is renamed
+  with it, access-group memberships are rewritten, and project groups follow
+  from Waldur's member lists.
+- **A changed Waldur username.** If the Waldur username changes while the Linux
+  name and `uidNumber` stay the same, the agent rewrites the stored key, but
+  only on the entry whose `uid` and `uidNumber` both match the account, and logs
+  the old and new value. It never overwrites a key that belongs to another
+  account.
+- **Group memberships during a rename.** While it moves the renamed user's
+  group memberships, the agent may leave a temporary `description` value
+  `waldur-site-agent:renamed-from=<old>` on the entry, so that an interrupted
+  rename is finished on the next cycle. The agent removes the value itself once
+  every membership has moved; do not edit or remove it by hand.
+
+The agent refuses, logs the reason and leaves the entry alone when two entries
+carry the same key, when the entry carrying the key has another `uidNumber`,
+or when the wanted UID is held by an entry whose key is missing or different.
+It also refuses when the **Linux username and the Waldur username change at
+once**: neither the old key nor the old name then points at the entry. Rename
+such an entry by hand — set its `uid` to the new name and the key to the new
+Waldur username — and the next cycle picks it up.
+
+Without `waldur_username_attribute` the agent never renames: a renamed account
+is reported as a UID collision until the entry is renamed by hand.
+
+Renames also need the offering to expose Waldur usernames to the service
+provider: **Username** under **User attribute exposure** in the offering's
+integration settings, on by default. Without it the agent cannot see the key it compares,
+logs once that renames cannot be recognised, and treats a renamed account as a
+UID collision.
+
+!!! warning "Reserve the attribute for the agent"
+    The agent owns the attribute it stores the key in. Choose one that nothing
+    else in your directory writes — if `employeeNumber` already holds HR data,
+    pick another attribute your schema allows on the user entries — and do not
+    edit its values by hand except to repair a refused rename.
+
+The agent does not move files: a home directory path that embeds the old name
+needs moving by the site.
+
 ### When an account cannot be written
 
 | Situation | What the agent does |
@@ -180,6 +247,154 @@ error for the offering rather than one per user.
 nothing. That default is deliberate — rewriting a live account's `uidNumber`
 orphans every file that user owns. Set it to `adopt` for a one-shot migration once
 you are ready to follow up with `chown -R`, or `fail` to stop the cycle outright.
+
+## Project groups in the directory
+
+Waldur keeps one [project group](project-groups.md) per project at each service
+provider: a name, a GID from the provider's POSIX ID pool, and the usernames of
+the project's members who hold an account at the provider. With
+`project_groups.enabled` the agent writes those groups into the directory and
+lists them in the entries that grant access to a cluster, so a new project's
+members can use the cluster without anyone editing the directory.
+
+### Example layout
+
+A classic RFC 2307 (nis schema) directory, in which `posixGroup` is structural
+and allows `memberUid` only:
+
+```text
+dc=example,dc=org
+  ou=users       uid=<name>     inetOrgPerson + posixAccount, gidNumber = primary GID
+  ou=projects    cn=<group>     top + posixGroup, gidNumber = Waldur's GID, memberUid = members
+  ou=clusters    cn=<cluster>   groupOfNames, member = DN of each project group in use on the offering
+  ou=bind_users  service binds
+```
+
+For example, with the project groups shown on the
+[Project groups page](project-groups.md#the-project-groups-page):
+
+```ldif
+dn: cn=genomics,ou=projects,dc=example,dc=org
+objectClass: top
+objectClass: posixGroup
+cn: genomics
+gidNumber: 20001
+memberUid: demo-member
+memberUid: demo-user1
+description: waldur-managed
+
+dn: cn=hpc-cluster,ou=clusters,dc=example,dc=org
+objectClass: groupOfNames
+cn: hpc-cluster
+member: cn=genomics,ou=projects,dc=example,dc=org
+member: cn=climate-models,ou=projects,dc=example,dc=org
+member: cn=physics,ou=projects,dc=example,dc=org
+```
+
+### Agent settings
+
+```yaml
+backend_settings:
+  ldap:
+    uri: "ldaps://ldap.example.org"
+    bind_dn: "cn=waldur-agent,ou=bind_users,dc=example,dc=org"
+    bind_password: "<password>"
+    base_dn: "dc=example,dc=org"
+    people_ou: "ou=users"
+    account_source: "waldur"
+    waldur_username_attribute: "employeeNumber"   # key for renames, see "Renames"
+    personal_groups: false          # primary GIDs come from Waldur, no personal group entries
+    project_groups:
+      enabled: true
+      ou: "ou=projects"
+      member_attribute: "memberUid"   # or "member" for rfc2307bis directories
+      membership: "sync"              # or "add_only"
+      on_gid_mismatch: "report"       # or "adopt"
+      parents:
+        - dn: "cn=hpc-cluster,ou=clusters,dc=example,dc=org"
+          attribute: "member"
+```
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `waldur_username_attribute` | — | Attribute holding each person's Waldur username, the key renames are recognised by; recommended `employeeNumber`, reserved for the agent. Unset: no renames (see [Renames](#renames)) |
+| `personal_groups` | `true` | `true` gives every account a group `cn=<username>` in `groups_ou` with its primary GID. `false` writes accounts with the primary GID from Waldur and no group entry; it requires `account_source: waldur` |
+| `project_groups.enabled` | `false` | Write the project groups |
+| `project_groups.ou` | `ou=projects` | OU, relative to `base_dn`, the groups are written under; it must exist |
+| `project_groups.object_classes` | `["top", "posixGroup"]` | Object classes of a new group entry |
+| `project_groups.member_attribute` | `memberUid` | `memberUid` writes usernames; `member` writes user DNs (`uid=<name>,<people_ou>,<base_dn>`) |
+| `project_groups.membership` | `sync` | `sync` adds and removes members to match Waldur; `add_only` never removes one |
+| `project_groups.on_gid_mismatch` | `report` | A same-named entry with another GID: `report` keeps the directory's GID and logs it every cycle; `adopt` rewrites it to Waldur's |
+| `project_groups.managed_marker` | `waldur-managed` | Extra `description` value on every group the agent creates or adopts |
+| `project_groups.parents` | `[]` | Entries that list the DN of each group whose project has a resource on the offering |
+| `parents[].dn` | — | Full DN of the entry |
+| `parents[].attribute` | `member` | Attribute that holds the group DNs |
+| `parents[].offering_uuids` | the agent's offering | Offerings whose projects the entry lists, for an entry shared by several offerings |
+
+The project-group pass runs on the agent's periodic reconcile, after the
+accounts, and also when the offering has no accounts left, so cluster entries
+are still cleaned up.
+
+### What the agent writes
+
+For each group Waldur lists:
+
+- **No entry yet** — the agent creates it with Waldur's name, GID, members and
+  the marker, unless the GID is already used anywhere under `base_dn` (users'
+  primary GIDs included) or a `posixGroup` of the same name exists outside the
+  project OU. Such a group is reported every cycle and not written; fix it in
+  Waldur with [Change GID](project-groups.md#changing-a-gid) or by adopting the
+  directory's GID.
+- **An entry with the same name and GID** — the agent adopts it: it adds the
+  marker and reconciles the members and cluster entries.
+- **An entry with the same name and another GID** — under `report` the GID is
+  left alone and logged every cycle, while members and cluster entries are
+  still reconciled. Under `adopt` the agent rewrites `gidNumber` to Waldur's.
+- **No GID in Waldur yet** — the group is skipped and logged.
+
+!!! warning "Use `on_gid_mismatch: adopt` only after `chgrp`"
+    Renumbering a group orphans every file owned by its old GID. Switch to
+    `adopt` only once those files have been `chgrp`-ed to Waldur's GID, which is
+    why `report` is the default.
+
+Group entries are never deleted: their GIDs stay reserved in Waldur. A user is
+named in a group only once their account entry exists under `people_ou`.
+
+### The waldur-managed marker and cluster entries
+
+Every group the agent creates or adopts gets one extra `description` value,
+`waldur-managed` (the `managed_marker` setting). Your own description values
+stay.
+
+The agent makes each cluster entry in `parents` list the DNs of the groups
+whose project has a resource on the entry's offerings. It only ever removes a DN
+that lies **under the project OU**, and then only:
+
+- for a group Waldur lists, when its project no longer has a resource on those
+  offerings, or the group could not be written;
+- for a group Waldur no longer lists (an offering moved to another provider,
+  say), when its entry carries the marker.
+
+A hand-made group under the project OU without the marker, and any DN outside
+the project OU, is never removed. The directory is left untouched for the
+cycle when Waldur cannot be read or returns no groups at all.
+
+!!! tip "One cluster entry, several offerings"
+    Two offerings of one provider on one directory see the same groups with the
+    same GIDs: the first agent creates a group and the second adopts it. If they
+    share a cluster entry, list both offerings in `parents[].offering_uuids` on
+    both; otherwise each removes the groups the other adds. The agent warns at
+    start-up when two offerings in its configuration point at one entry without
+    `offering_uuids`.
+
+### Members and renames
+
+With `membership: sync` the members follow Waldur: a user who leaves the
+project, or whose account is removed or restricted, is taken out. When Waldur
+renames an account and the entry carries the person's key, the agent renames
+the entry in place and the groups pick up the new username
+(see [Renames](#renames)). With `membership: add_only` the old username stays in
+the group next to the new one, since that mode never removes members.
 
 ## Connecting SSSD
 
@@ -208,6 +423,18 @@ ldap_schema = rfc2307
 ldap_default_bind_dn = cn=readonly,dc=example,dc=com
 ldap_default_authtok = <service-account-password>
 ```
+
+SSSD must read group membership the way the groups are written:
+
+| `project_groups.member_attribute` | Members stored as | `sssd.conf` |
+|---|---|---|
+| `memberUid` (default) | Usernames | `ldap_schema = rfc2307` |
+| `member` | User DNs | `ldap_schema = rfc2307bis` |
+
+With the wrong schema the groups still resolve by name and GID, but `id` and
+`getent group` show them without members, so access through them fails. With
+project groups under their own OU, point `ldap_group_search_base` at it (or at
+the base, to see personal and project groups together).
 
 Bind with a dedicated **read-only** service account rather than the directory
 admin. Add `sss` to the `passwd`, `group` and `shadow` databases in

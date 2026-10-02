@@ -77,6 +77,37 @@ output until a pool is configured.
     (for example provider UIDs `100000–199999`, an isolated offering's UIDs
     `300000–399999`).
 
+## Project group GIDs
+
+A service-provider pool can reserve a third range, for
+[project groups](project-groups.md) — the one POSIX group each project gets at
+your service provider. Set it in the pool form under **Project group GIDs**
+(**Minimum project group GID** and **Maximum project group GID**, both
+inclusive; set both or neither). The form shows the next GID the range will hand
+out.
+
+![The project group GID range in the pool form](../img/posix-pool-project-group-range.png)
+
+- **Set it before enabling project groups.** Without a project group range,
+  groups take their GIDs from the pool's GID range, which they then share with
+  users' primary groups. See [rolling out project groups](project-groups.md#rolling-out-project-groups).
+- **It must not overlap any GID range.** The range holds GIDs too, so it may not
+  overlap the pool's own GID range, nor the GID or project group range of any
+  other pool of the provider. Waldur rejects an overlapping pool and names the
+  conflict.
+- **Only the service-provider pool is used.** A project group belongs to the
+  whole provider, so its GID always comes from the provider-level pool;
+  offering-override pools are never consulted. If the provider has only
+  offering-override pools, groups are created without a GID and get one as soon
+  as a provider pool can supply it.
+- **Adding or widening the range catches up.** Groups still waiting for a GID get
+  one when the pool is created, and whenever its project group or GID range is
+  added or widened.
+
+A pool cannot be deleted while project groups hold GIDs from it, and a newly
+created provider pool reserves the GIDs the provider's groups already carry, so
+they are never handed out again.
+
 ## Which pool applies to an offering
 
 Resolution is simple: an offering uses its **own** pool if it has one, otherwise
@@ -99,6 +130,12 @@ The utilisation bar turns amber as a namespace fills and red once it crosses the
 threshold (90% by default), so you can widen the range before it runs out. An
 exhausted namespace stops account creation with a clear error until more numbers
 are available.
+
+A pool with a project group range shows it in the **Project group GID range**
+column, and the expanded row adds a **Project group GID** bar with the same
+threshold. A GID counts against the range it lies in.
+
+![Project group GID utilisation of a pool](../img/posix-pool-project-group-utilization.png)
 
 ## How identifiers are assigned
 
@@ -140,7 +177,9 @@ When an offering user or group is deleted, its identifiers are **released** and
 recycled automatically: the next account created from the same pool reuses the
 lowest released value before the high-water mark advances further. Released
 records are kept as an audit trail and are visible in a pool's **identities**
-view.
+view. Project group GIDs are the exception: a GID a project group gave up is
+never handed out again automatically, because files on shared storage may
+still carry it.
 
 ## Where an identifier came from
 

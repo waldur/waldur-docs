@@ -12,6 +12,34 @@ quotas and job scheduling. You normally never type them yourself: you log in
 with your username and SSH key, and the cluster maps you to your UID and GID
 behind the scenes.
 
+## Your project's POSIX groups
+
+Besides your personal identifiers, a service provider may give each project one
+**project group**: a POSIX group, named after the project's short name, whose
+members are the accounts that the project's members hold at that provider.
+Clusters grant access through it, and files the project shares on storage are
+owned by its GID. Your account becomes a member when you join the project and
+leaves the group when you leave it.
+
+The project overview shows the groups in a **POSIX groups** panel: one line per
+service provider, with the group name and GID.
+
+![The POSIX groups panel on the project overview](../img/project-posix-groups-panel.png)
+
+**Show details** opens the project's **Settings → POSIX identities** tab with
+the full list. **Groups at service providers** lists the project's
+group at each provider with its GID, the offerings the project uses there, the
+number of members and whether the group is in use. Expand a row to see the
+members' usernames.
+
+![Project groups on the POSIX identities tab](../img/project-posix-identities-groups.png)
+
+The group's name and GID do not change when the project is renamed. A group is
+marked **Not in use** when the project no longer has resources at that
+provider; it keeps its GID, so files owned by it stay readable to the project
+when it comes back. Every project member and the organization's owners can see
+these groups; only the service provider manages them.
+
 ## What to expect
 
 - **They are stable.** Your UID and primary GID stay the same for the lifetime
