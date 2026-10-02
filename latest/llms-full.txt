@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-02T14:39:58.703655Z
+Generated: 2026-10-02T15:18:48.268565Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -2076,6 +2076,33 @@ ingress.
   on a restored snapshot first, bump both paths together.
 - No fixed release yet: `matrixChat.enabled=false` removes the homeserver, its
   ingress and the chat UI. The PVC and its history are kept.
+
+## Token lifetimes
+
+Waldur's chat drawer signs in with a refresh token, so its access tokens
+expire and are renewed in the background:
+
+| Tuwunel key | Helm value | Default |
+| --- | --- | --- |
+| `access_token_ttl` | `homeserver.accessTokenTtl` | `300` (5 min) |
+| `refresh_token_ttl` | `homeserver.refreshTokenTtl` | `86400` (24 h) |
+
+Docker Compose sets the same values in `config/matrix/tuwunel.toml.template`.
+
+The refresh lifetime is an idle timeout: each refresh moves the deadline
+forward, so a drawer in use never expires, and a page left silent for a day
+(e.g. on a suspended laptop) starts a new session through Waldur. `0` means the
+refresh token never expires; the access token lifetime must be positive, as
+Tuwunel reads `0` as "expire immediately". When a user starts a session, Waldur
+also signs out that user's chat devices idle for more than 24 hours, so a
+longer refresh lifetime, or `0`, only keeps the devices of users who start no
+other session.
+
+Clients that sign in without a refresh token, such as Element with a password,
+get non-expiring tokens and are unaffected.
+
+Tuwunel reads its configuration only at startup, so restart it after changing
+either value: `kubectl rollout restart statefulset/matrix-homeserver`.
 
 ## Required runtime steps (not automated by the chart)
 
@@ -5468,6 +5495,17 @@ docker compose --profile matrix --profile matrix-rtc up -d
 ```
 
 On re-up, `waldur-matrix-init` generates fresh tokens, re-renders the descriptor, and re-seeds Constance. **Re-run the one-time appservice registration step** above — Tuwunel still holds the old descriptor until you re-register, and the bot will fail with `M_UNKNOWN_TOKEN` in the meantime. The room database in `tuwunel_data` is untouched, so existing rooms survive.
+
+## Token lifetimes
+
+Waldur's chat drawer signs in with a refresh token, so its access tokens expire after `access_token_ttl` (300 seconds) and are renewed in the background; a page left silent for `refresh_token_ttl` (86400 seconds, idle), e.g. on a suspended laptop, starts a new session through Waldur. Clients that sign in without a refresh token, such as Element with a password, keep non-expiring tokens. To change the lifetimes, edit `config/matrix/tuwunel.toml.template`; `access_token_ttl` must be positive, as Tuwunel reads `0` as "expire immediately".
+
+Tuwunel reads its configuration only at startup, and `tuwunel.toml` is rendered from the template only when `waldur-matrix-init` runs, on `up`. After upgrading or editing the template, re-render it and restart Tuwunel, which an `up` leaves running with the old values:
+
+```bash
+docker compose --profile matrix up -d
+docker compose restart tuwunel
+```
 
 ## LiveKit / voice & video notes
 
@@ -38566,7 +38604,7 @@ offerings:
 | `base_dn` | Yes | -- | Base DN for the directory |
 | `use_starttls` | No | `false` | Use STARTTLS for connection security |
 | `people_ou` | No | `ou=People` | OU for user entries |
-| `groups_ou` | No | `ou=Groups` | OU for group entries |
+| `groups_ou` | No | `ou=Groups` | OU for personal and access groups; unused without either |
 | `uid_range_start` | No | `10000` | Start of UID allocation range |
 | `uid_range_end` | No | `65000` | End of UID allocation range |
 | `gid_range_start` | No | `10000` | Start of GID allocation range |
@@ -38577,11 +38615,13 @@ offerings:
 | `on_missing_posix_ids` | No | `error` | `error` or `skip` when Waldur holds no ids (waldur mode) |
 | `on_posix_mismatch` | No | `report` | `report`, `adopt` or `fail` on an id disagreement (waldur mode) |
 | `username_format` | No | `first_initial_lastname` | Username strategy (see below); rejected in waldur mode |
-| `waldur_username_attribute` | No | -- | LDAP attribute to store the Waldur username (e.g. a CUID) in |
+| `waldur_username_attribute` | No | -- | Attribute for the Waldur username; the rename key (`employeeNumber`) |
 | `remove_user_on_deactivate` | No | per `account_source` | Release the entry once no live account remains; see below |
 | `on_departure` | No | per `account_source` | `disable` (park, keep ids) or `delete`; see below |
 | `generate_vpn_password` | No | `false` | Generate random VPN password on creation |
 | `access_groups` | No | `[]` | LDAP groups to add new users to |
+| `personal_groups` | No | `true` | Personal group per account; `false` needs waldur mode |
+| `project_groups` | No | -- | Write Waldur's project groups ([below](#project-groups-from-waldur)) |
 | `welcome_email` | No | -- | SMTP settings for welcome email (disabled when absent) |
 
 ## Waldur-authoritative mode
@@ -38631,8 +38671,78 @@ deleted or edited out of band is repaired on the next pass.
 | Entry matches Waldur | Nothing |
 | Home directory, shell, name or mail differ | Rewritten to match Waldur |
 | `uidNumber` or `gidNumber` differ | Governed by `on_posix_mismatch` |
+| The entry carries another person's key (see below) | Error, the entry is left alone — always |
+| The wanted UID is held by the same account under its old name | Renamed (see below) |
 | The wanted UID is held by a *different* entry | Error, the account is left alone — always |
 | Another entry shares the email address | Warning, and the account is created anyway |
+
+**The key.** The agent ties an entry to its Waldur account by a stable key: the
+person's Waldur username, written to `waldur_username_attribute`.
+
+> **The attribute is reserved for the agent.** It writes and rewrites it, so it
+> must hold nothing else. `employeeNumber` (an `inetOrgPerson` attribute, no
+> schema change) is the usual choice; a site that keeps HR data in
+> `employeeNumber` must pick another attribute.
+
+The key comes from the offering user's `user_username`, which Waldur returns
+only when the offering exposes usernames (its user attribute configuration; on
+by default). If it does not, the agent writes no keys, recognises no renames,
+and says so once per offering.
+
+- **Stamping.** The key is written when the agent creates an entry, and onto an
+  existing entry only when its `uid` and `uidNumber` match the account (so a
+  directory adopted from before gets its keys on the first cycle). On that same
+  id match a different value is **rewritten** -- the person's Waldur username
+  changed -- unless the old value is another current account's Waldur username;
+  each rewrite is logged with the old and new value. On every other path (drift,
+  a held UID, a name match without the `uidNumber`, the rename lookup) a
+  different value is a collision: logged, nothing written. The key is never
+  written as a second copy of a key another entry carries.
+- **Gating.** An entry carrying a key that is not this account's is never
+  updated, re-enabled, adopted or renumbered for it, whatever its ids say.
+
+**Renames.** When Waldur's POSIX username for an account has no entry yet, the
+agent looks for the entry carrying the account's key. If there is exactly one,
+under another `uid`, with this account's `uidNumber`, it is moved in place
+(`modrdn uid=<old>` to `uid=<new>`): `uidNumber` stays, `homeDirectory` and the
+profile follow Waldur, the personal group is renamed with it, access-group
+memberships move, and project groups follow from Waldur's member lists, all in
+the same cycle. Renames run before the other accounts of the batch, and the old
+entry is re-read just before the move.
+
+The steps are ordered so that a failure at any point is finished by a later
+cycle and leaves nothing behind:
+
+1. the old name is recorded on the entry (a `description` value
+   `waldur-site-agent:renamed-from=<old>`), the new name is added to every
+   group in `groups_ou` that lists the old one, and the personal group is
+   renamed -- nobody has lost access yet;
+2. `modrdn uid=<old>` to `uid=<new>`;
+3. the old name's memberships are removed, then the record.
+
+A failure before step 2 is retried as a rename next cycle (the entry still
+carries the key under the old name); a failure in step 3 leaves the record,
+and the next cycle finishes the cleanup from it. If the old name has meanwhile
+been given to another entry, its memberships are left to that entry.
+
+**Refusals** (reported as a collision with the reason, nothing written): two
+entries carry the key; the key's entry has another `uidNumber`; the UID is held
+by an entry with a missing or different key (another person, even one with the
+same mail); the POSIX name and the Waldur username changed at once, so nothing
+ties the old entry to the account.
+
+Without `waldur_username_attribute`, renames are never followed: the agent says
+so once, and a renamed account is reported as a collision until its entry is
+renamed by hand. The decision is the same on the periodic pass and on a single
+STOMP account event; when both race, the one that loses accepts the other's
+rename only if the new entry carries the account's `uidNumber` and key.
+
+The agent does not move files: a home directory path that embeds the old name
+needs moving by the site.
+
+With `stomp_enabled: true` and no membership backend (an LDAP-only offering),
+the agent subscribes to offering-user events for the LDAP backend, so account
+changes reach the directory without waiting for the periodic reconcile.
 
 `on_posix_mismatch` decides only the id-disagreement row:
 
@@ -38655,6 +38765,16 @@ POSIX ID pool to the service provider, or turn POSIX accounts off for the
 offering.
 
 ### When a user leaves
+
+> **Upgrading: the departure sweep now runs every period, for every offering.**
+> In `event_process` mode the periodic reconcile hands every offering user Waldur
+> has put in a deletion state to the teardown on each cycle -- also on
+> offerings with a membership backend (SLURM, say), where it previously ran
+> only on cycles that also retried a stuck username. On the first cycle after
+> the upgrade it therefore tears down, at once, every deletion Waldur queued up
+> in the meantime; the log line `Departure sweep for <offering>: N offering
+> user(s) in a deletion state` says how many. Review the pending deletions in
+> Waldur before upgrading if that matters.
 
 Dropping the SLURM association is the resource backend's job. Releasing the
 directory entry is this plugin's, and in this mode it is **on by default**:
@@ -38854,8 +38974,10 @@ accounts in OpenLDAP*. What follows is the agent and cluster side.
 ### Project group GIDs are still allocated locally
 
 Only *user* accounts and their personal groups come from Waldur. Project and role
-group GIDs are still allocated by the resource backend from
-`gid_range_start`..`gid_range_end`.
+group GIDs written by the resource backend (the SLURM plugin's per-resource
+groups) are still allocated from `gid_range_start`..`gid_range_end`. Project
+groups kept per project, with GIDs Waldur allocates, are a separate feature:
+see [Project groups from Waldur](#project-groups-from-waldur).
 
 > **These ranges must not overlap the offering's POSIX ID pool.** LDAP does not
 > enforce `gidNumber` uniqueness, so an overlap silently produces two groups
@@ -38944,6 +39066,168 @@ Defaults:
   `organizationalPerson`, `person`, `posixAccount`, `top`
 - **user_group_object_classes**: `groupOfNames`, `nsMemberOf`,
   `organizationalUnit`, `posixGroup`, `top`
+
+`nsMemberOf` is a 389 Directory Server class. On OpenLDAP, set
+`user_group_object_classes` (for example `["top", "posixGroup"]`), or turn
+`personal_groups` off: with the default, every personal group, and so every new
+account, is rejected.
+
+## Project groups from Waldur
+
+Waldur keeps one group per project at each service provider: a name (the
+project slug at creation, never renamed), a GID from the provider's POSIX ID
+pools, and the usernames of the project's members who hold an account at the
+provider. With `project_groups.enabled` the agent writes those groups into the
+directory and lists them in the entries that grant cluster access, so a new
+project's members can use a cluster without anyone editing the directory.
+
+### Example layout
+
+A classic RFC 2307 (nis schema) directory, where `posixGroup` is structural and
+allows `memberUid` only:
+
+```text
+dc=example,dc=org
+  ou=users       uid=<name>     inetOrgPerson + posixAccount, gidNumber = primary GID
+  ou=projects    cn=<group>     top + posixGroup, gidNumber = Waldur's GID, memberUid = members
+  ou=clusters    cn=<cluster>   groupOfNames, member = DN of each project group in use on the offering
+  ou=bind_users  service binds
+```
+
+```yaml
+backend_settings:
+  ldap:
+    uri: "ldaps://ldap.example.org"
+    bind_dn: "cn=waldur-agent,ou=bind_users,dc=example,dc=org"
+    bind_password: "secret"
+    base_dn: "dc=example,dc=org"
+    people_ou: "ou=users"
+    account_source: "waldur"
+    personal_groups: false          # primary GIDs come from Waldur, no ou=Groups needed
+    project_groups:
+      enabled: true
+      ou: "ou=projects"
+      object_classes: ["top", "posixGroup"]
+      member_attribute: "memberUid"   # or "member": user DNs, for rfc2307bis directories
+      membership: "sync"              # or "add_only"
+      on_gid_mismatch: "report"       # or "adopt"
+      parents:
+        - dn: "cn=alps,ou=clusters,dc=example,dc=org"
+          attribute: "member"
+```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `enabled` | `false` | Write the project groups |
+| `ou` | `ou=projects` | OU, relative to `base_dn`, the groups are written under; it must exist |
+| `object_classes` | `["top", "posixGroup"]` | Classes of a new group; a memberless `groupOfNames` gets the stand-in |
+| `member_attribute` | `memberUid` | `memberUid` writes usernames; `member` writes `uid=<name>,<people_ou>,<base_dn>` |
+| `membership` | `sync` | `sync` adds and removes members to match Waldur; `add_only` never removes one |
+| `on_gid_mismatch` | `report` | Same-named entry with another GID: `report` keeps the GID, `adopt` renumbers |
+| `managed_marker` | `waldur-managed` | Extra `description` value on every group the agent creates or adopts |
+| `parents` | `[]` | Entries that list the DN of each group whose project has a resource on the offering |
+| `parents[].dn` | -- | Full DN of the entry |
+| `parents[].attribute` | `member` | Attribute that holds the group DNs |
+| `parents[].offering_uuids` | this offering | Offerings whose projects the entry lists (for a shared entry) |
+
+### What one cycle does
+
+The pass runs on the agent's periodic cycle, after the account reconcile: the
+periodic reconcile of `event_process` mode (every
+`WALDUR_SITE_AGENT_RECONCILIATION_PERIOD_MINUTES`, also with STOMP off) and each
+`membership_sync` pass. It runs even when the offering has no offering users
+left, so parent entries are still cleaned up. Single-user events do not run it.
+
+It reads the provider's groups from Waldur
+(`GET /api/marketplace-service-provider-project-groups/?provider_offering_uuid=<offering>`,
+all pages, oldest first, following next-page links only to the configured
+Waldur server). From the directory it reads, in one paged search each, the
+project OU, every `gidNumber` under `base_dn`, every `posixGroup` under
+`base_dn`, and the people OU (with `account_source: waldur`, or with
+`member_attribute: member`). A search that ends in anything but success -- a
+size, time or administrative limit -- aborts the pass rather than shrinking it.
+Then, for each group:
+
+| Directory state | Action |
+|-----------------|--------|
+| No entry, GID and name free | Create it with Waldur's name, GID, members and the marker |
+| No entry, GID or name held (see below) | Report every cycle; nothing written, not added to parents |
+| Entry with the same name and GID | Adopt it: add the marker, reconcile members and parents |
+| Same name, another GID, `report` | Report every cycle; the GID stays, members and parents are reconciled |
+| Same name, another GID, `adopt` | Rewrite `gidNumber` to Waldur's, unless it is held (then as `report`) |
+| Waldur has no GID for the group | Skip it and log; its DN in a parent is left as it is |
+
+A GID is **held** when any entry under `base_dn` carries it as `gidNumber`,
+users' primary GIDs included. A name is **held** when a `posixGroup` of that
+`cn` exists outside the project OU (a personal group, say), since NSS would
+then see two groups of one name. The fix for either is in Waldur: `set_gid` to
+a free value, or adopt the directory's GID -- adopting works only when the
+group's name in Waldur equals the directory entry's `cn`, since that is what the
+agent matches on.
+
+`adopt` is for one moment only: after the files owned by the old GID have been
+`chgrp`-ed to Waldur's. Renumbering a group any earlier orphans them, which is
+why `report` is the default.
+
+Every group the agent creates or adopts gets one extra `description` value,
+`managed_marker` (`waldur-managed` by default). The operator's own description
+values stay; `description` is multi-valued and allowed on `posixGroup`.
+
+Each parent is made to list the DNs of the groups whose project has a resource
+on the parent's offerings. A DN is only ever removed when it lies under the
+project OU, and then:
+
+- for a group Waldur lists, when its project has no resource on the parent's
+  offerings, or the group could not be written because its GID or name is held
+  (a write that fails for any other reason this cycle leaves the DN as it is);
+- for a group Waldur no longer lists (an offering moved to another provider,
+  say), only when its entry carries the marker.
+
+An unmarked group under the project OU that Waldur does not list (a hand-made
+`benchmarking` group, say) is never removed, nor is any DN from outside the
+project OU. A `groupOfNames` that would lose its
+last member gets `empty_group_member_dn` in the same modify.
+
+Group entries are never deleted: their GIDs stay reserved in Waldur.
+
+The directory is left untouched for the cycle when Waldur cannot be read (an
+HTTP error, an unreachable server, a failure on any page), when it lists no
+groups at all (the endpoint lists every group the provider ever had, so an
+empty answer is treated as broken), or when the listing changed while it was
+being paged through.
+
+Members:
+
+- With `account_source: waldur`, a member is listed only once their account has
+  an entry under `people_ou` that the account pass matched to it: with
+  `waldur_username_attribute` set, the entry must carry a key, and an account
+  that pass could not reconcile cleanly (a UID or key collision, drift left
+  under `report`, a failed write) is not named in any group. Without the key
+  attribute, only the last part applies.
+- With `membership: add_only`, a user who is renamed in Waldur keeps the old
+  username in the group alongside the new one; only `sync` swaps them.
+- With `member_attribute: member`, the same holds in either mode: a DN must name
+  an entry.
+
+Two offerings of one provider on one directory see the same groups with the
+same GIDs and members: the first agent creates a group, the second adopts it.
+If they share a parent entry, list both offerings in `parents[].offering_uuids`
+on both; otherwise each would take out the groups the other adds, and the
+entry flaps every cycle. The agent warns once when offerings in its
+configuration point at one parent DN with different effective sets (both
+unset, or only one of them set).
+
+The agent never allocates a project group GID; to pin or move one, use Waldur's
+adopt and `set_gid` actions on the provider project group.
+
+### Personal groups
+
+`personal_groups: true` (the default) keeps the historical layout: every account
+gets `cn=<username>` in `groups_ou` with the account's primary GID. With `false`,
+accounts are created and renumbered with the primary GID from Waldur and no
+group entry, deletion leaves any group of the same name alone, and `groups_ou`
+is only consulted for `access_groups` and the departure sweep, which skips it
+when the OU does not exist. It requires `account_source: waldur`.
 
 ## Plugin Structure
 
@@ -65069,6 +65353,32 @@ Example response:
 
 This endpoint makes lightweight HTTP calls to the upstream sources (EESSI API, Spack repology) to detect the latest version. It does not download package data or modify the database. Requires staff permissions.
 
+### CPU targets for an offering
+
+`GET /api/marketplace-software-catalogs/{uuid}/cpu_targets/` returns the CPU choices for **that catalog's version**. It reads `metadata.architectures_map` and does not scan package targets.
+
+Use the response when linking a catalog to an offering. Store `cpu_family` in `enabled_cpu_family` and `cpu_microarchitecture` in `enabled_cpu_microarchitectures`. The microarchitecture value is `SoftwareTarget.target_subtype` (for example `intel/sapphirerapids`, `amd/zen3`, `generic`), which is also the `cpu_microarchitecture` list filter.
+
+`full_arch` is the hardware path from the map (for example `x86_64/intel/graniterapids`). When a map value points at a different build, `cpu_microarchitecture` follows that build so package filters still match imported targets.
+
+Catalogs without an architectures map, including Spack, return `[]`. The same empty list is returned when `catalog.version` is not a key in `architectures_map`.
+
+`supports_cpu_target_restrictions` on the catalog (list, retrieve, and the nested catalog inside an offering) is `true` only for `binary_runtime`. Spack (`source_package`) is `false`. Use that flag to show or hide the CPU fields. An empty `cpu_targets` list on a catalog where the flag is `true` means this version has no map entries, not that CPU restrictions do not apply.
+
+```bash
+curl "https://your-waldur.example.com/api/marketplace-software-catalogs/<catalog_uuid>/cpu_targets/"
+```
+
+```json
+[
+  {
+    "cpu_family": "x86_64",
+    "cpu_microarchitecture": "intel/sapphirerapids",
+    "full_arch": "x86_64/intel/sapphirerapids"
+  }
+]
+```
+
 ### Software Catalog Management Actions
 
 Offering-software catalog associations are managed through offering actions:
@@ -65261,7 +65571,12 @@ curl "https://your-waldur.example.com/api/marketplace-software-targets/?cpu_fami
 
 # Filter by CPU microarchitecture
 curl "https://your-waldur.example.com/api/marketplace-software-targets/?cpu_microarchitecture=generic"
+
+# Repeat a CPU filter to match any of several values
+curl "https://your-waldur.example.com/api/marketplace-software-targets/?cpu_microarchitecture=amd/zen3&cpu_microarchitecture=intel/sapphirerapids"
 ```
+
+`cpu_family` and `cpu_microarchitecture` take several values on the package, version and target lists; a row matches if it has a target for any of them.
 
 ### GPU Architecture Filtering
 
@@ -65355,7 +65670,7 @@ curl -X PATCH "https://your-waldur.example.com/api/marketplace-provider-offering
   -d '{
     "offering_catalog_uuid": "offering-catalog-uuid",
     "enabled_cpu_family": ["x86_64", "aarch64"],
-    "enabled_cpu_microarchitectures": ["generic", "zen3"]
+    "enabled_cpu_microarchitectures": ["generic", "amd/zen3"]
   }'
 ```
 
@@ -101888,6 +102203,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - maintenance_announcement_started
 - maintenance_announcement_unscheduled
 - maintenance_announcement_updated
+- marketplace_provider_project_group_gid_updated
 - marketplace_resource_create_canceled
 - marketplace_resource_create_failed
 - marketplace_resource_create_requested
@@ -113879,6 +114195,165 @@ Two things stay where they are, and both are reported:
 `GET /api/marketplace-posix-id-pools/{uuid}/stats/` reports capacity, used count
 and utilization per namespace. `used` counts **principals**: a user with accounts
 on five offerings of the provider consumes one UID, not five.
+
+## Provider project groups
+
+A provider that runs its own directory can give every project that uses its
+services one POSIX group. Set `project_groups_enabled` in the service
+provider's `account_options` (`PATCH /api/marketplace-service-providers/{uuid}/`).
+Set the pool's group range first: the `account_options_preview` action returns
+a warning when the provider pool has no group range (groups would then share
+the GID range with users' primary GIDs) or no GID range at all.
+
+### Group GID range
+
+A pool may reserve a separate range for project groups with `min_group_gid` and
+`max_group_gid` (all-or-nothing, like the UID and GID ranges; `next_group_gid`
+is the read-only high-water mark). The group range must not overlap the pool's
+GID range, nor any GID or group GID range of another pool of the provider; such
+a pool is refused with 400. Without a group range, project groups draw from the
+GID range. Group GIDs always come from the provider's own pool: offering-level
+override pools are not consulted, because a project group belongs to the whole
+provider. With offering-level pools only, groups exist but have `gid: null`.
+
+The pool reports the group range like the other ranges: `group_gid_used` and
+`group_gid_utilization` on the pool, and a `group_gid` entry in its `stats`,
+with the same utilization threshold. A GID counts against the range it lies in.
+
+A pool cannot be deleted on its own while project groups hold GIDs from it,
+through the API or the admin: the groups would keep their GIDs and a new pool
+could hand them out again. Deleting the service provider (or its organization)
+deletes its pool and its project groups together. A newly created provider pool
+reserves the GIDs the provider's groups already carry, and refuses a range that
+holds a value another pool of the provider has handed out. Only a provider's
+pool may have a group range.
+
+Project group GIDs are never recycled: a released GID may be a departed user's
+primary group still present on files. Nor is any value that was ever released
+as withheld (an override or a re-point moved off it), even if an earlier
+release of the same value was recyclable.
+
+### When a project uses the provider
+
+A project uses the provider while it has a resource on one of its offerings
+that
+
+- is of a type with offering users (Basic, Script, site agent) and does not set
+  `enable_posix_account: false`;
+- is not terminated — creating, updating, terminating and erred resources all
+  count;
+- is past approval: while its create order waits for the consumer, the
+  provider, the project or a start date, or once it was rejected or cancelled,
+  the resource does not count, so it never takes a GID;
+
+and the project is not deleted. `in_use` and `offerings` in the listing follow
+the same rule.
+
+The project's first such resource creates its group and gives it the next free
+GID; the group is also created when a resource is moved into the project, when
+an offering moves to the provider, and when an order is approved. Further
+resources, on the same or another offering of the provider, reuse that group.
+
+When the project stops using the provider — its last resource terminates, or
+the project is deleted — the group stays with `in_use: false` and keeps its
+GID: files may still carry it. A new resource in the project reuses the same
+group and GID. A GID is never handed to another project; deleting a group
+releases its GID without making it recyclable. Groups are not deleted with
+their project: a hard-deleted project leaves its group with `project_uuid:
+null`.
+
+### Group names
+
+A name matches `^[a-z_][a-z0-9_-]{0,31}$` and is unique per provider ignoring
+case. The automatic name is the project slug, lowercased, with other characters
+replaced by `-`, cut to 32 characters; when it is taken, `-2`, `-3`, … is
+appended (cutting the slug further to stay within 32). When the slug is empty
+or does not start with a letter — non-ASCII project names, for instance — the
+name is `p` followed by the first eight hex digits of the project UUID. The name
+is fixed at creation, so a later slug change does not rename the group.
+
+### Catching up
+
+Groups without a GID get one as soon as a range can supply one. The catch-up
+runs when the switch is turned on, when the provider's pool is created, and
+whenever it is updated (e.g. a group range added or its maximum raised). It is
+also available as a management command, which a second run leaves unchanged:
+
+```bash
+waldur backfill_provider_project_groups [--provider <uuid>] [--dry-run]
+```
+
+While the switch is off nothing new is created, but existing groups stay listed.
+
+### Pinning
+
+Provider owners (and staff) can set a group's GID:
+
+- `POST /api/marketplace-service-provider-project-groups/` with
+  `{"service_provider", "project", "gid", "name"?, "allow_outside_range"?}`
+  **adopts** a group the directory already holds — also for a project with no
+  resource yet. The allocator skips the pinned GID, so pinning 20001-20003 and
+  then creating a group yields 20004. A project that already has a group is
+  refused (use `set_gid`), and so is a name already used at the provider.
+- `POST .../{uuid}/set_gid/` with `{"gid", "allow_outside_range"?}`
+  **overrides** a group's GID. The previous GID is released but never handed
+  out again automatically; renumbering files is the operator's job.
+- `POST .../import_groups/` with `{"service_provider", "groups": [{"project",
+  "gid", "name"?}], "allow_outside_range"?}` adopts several groups at once, all
+  or nothing.
+
+`project` takes the project UUID, or its slug when exactly one project with
+that slug qualifies. Provider owners may adopt only for projects with a
+resource or an order, in any state, on one of the provider's offerings —
+`GET .../adoptable_projects/?service_provider_uuid=&query=` lists them, with
+the group each already has; staff may adopt for any project.
+
+A pin is refused with 400, changing nothing, when another consumer holds the
+GID in any of the provider's pools, when it lies inside a GID range of another
+pool of the provider, or when it lies outside the range project groups draw
+from and `allow_outside_range` is not set. A released GID may be pinned again.
+Every pin and override is logged as a
+`marketplace_provider_project_group_gid_updated` event carrying `old_gid` and
+`new_gid`. A GID pinned outside every range does not block later pool updates.
+
+### Reading the groups
+
+`GET /api/marketplace-service-provider-project-groups/` lists every group of
+the provider — in use or not, whether or not the switch is on — with `name`,
+`gid`, `in_use`, the project and its organization, `offerings` (the provider's
+offerings the project uses) and `members`. Filters: `service_provider_uuid`,
+`provider_offering_uuid` (every group of the provider owning that offering),
+`offering_uuid` (groups of projects using that offering), `project_uuid` and
+`in_use`.
+
+`members` are the sorted usernames of the accounts at the provider of the
+project's members: users that are active and hold an unexpired role in the
+project, with an offering account at the provider that is live (requested,
+being created, pending, OK or erred on creation) and has a username. A
+username whose every account at the provider is restricted is left out. Robot
+and service accounts are not members.
+
+A directory writer such as the site agent recognises a person across renames by
+their Waldur username (`user_username` on the offering-user listing), which it
+stores in the directory entry. Waldur shows `user_username` to the provider only
+while the offering exposes usernames (`expose_username` in the offering's user
+attribute settings, on by default); an offering that turns it off leaves the
+agent without a stable key, so renames there appear as a new account.
+
+Staff and support, owners and service managers (organization role) of the
+provider's organization,
+and managers of any of its offerings can read the groups; the last is how a
+site agent's token lists the groups of its provider.
+
+Anyone who can see a project also sees its groups at every provider in the
+project's POSIX group rollup (`GET /api/marketplace-project-posix-groups/?project_uuid=`,
+kind `provider_project_group`, with GID, name, provider, `in_use`, `offerings`
+and `members`), and an account's `posix_groups` action lists the provider
+project groups that account is a member of.
+
+The GLAuth output of an offering includes the provider project groups of the
+projects using it (kind `provider_project`), and adds their GIDs to the
+members' `otherGroups`. Providers without project groups render as before.
 
 ---
 

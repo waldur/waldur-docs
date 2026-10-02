@@ -10590,6 +10590,89 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#provider-project-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider project groups
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider project groups">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#group-gid-range" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Group GID range
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-a-project-uses-the-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a project uses the provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Group names
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catching-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catching up
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pinning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pinning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-the-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -18847,6 +18930,89 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#provider-project-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider project groups
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider project groups">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#group-gid-range" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Group GID range
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-a-project-uses-the-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a project uses the provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Group names
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catching-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catching up
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pinning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pinning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-the-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -18986,6 +19152,137 @@ the values freed in the previously resolved pool from recycling.</p>
 <p><code>GET /api/marketplace-posix-id-pools/{uuid}/stats/</code> reports capacity, used count
 and utilization per namespace. <code>used</code> counts <strong>principals</strong>: a user with accounts
 on five offerings of the provider consumes one UID, not five.</p>
+<h2 id="provider-project-groups">Provider project groups</h2>
+<p>A provider that runs its own directory can give every project that uses its
+services one POSIX group. Set <code>project_groups_enabled</code> in the service
+provider's <code>account_options</code> (<code>PATCH /api/marketplace-service-providers/{uuid}/</code>).
+Set the pool's group range first: the <code>account_options_preview</code> action returns
+a warning when the provider pool has no group range (groups would then share
+the GID range with users' primary GIDs) or no GID range at all.</p>
+<h3 id="group-gid-range">Group GID range</h3>
+<p>A pool may reserve a separate range for project groups with <code>min_group_gid</code> and
+<code>max_group_gid</code> (all-or-nothing, like the UID and GID ranges; <code>next_group_gid</code>
+is the read-only high-water mark). The group range must not overlap the pool's
+GID range, nor any GID or group GID range of another pool of the provider; such
+a pool is refused with 400. Without a group range, project groups draw from the
+GID range. Group GIDs always come from the provider's own pool: offering-level
+override pools are not consulted, because a project group belongs to the whole
+provider. With offering-level pools only, groups exist but have <code>gid: null</code>.</p>
+<p>The pool reports the group range like the other ranges: <code>group_gid_used</code> and
+<code>group_gid_utilization</code> on the pool, and a <code>group_gid</code> entry in its <code>stats</code>,
+with the same utilization threshold. A GID counts against the range it lies in.</p>
+<p>A pool cannot be deleted on its own while project groups hold GIDs from it,
+through the API or the admin: the groups would keep their GIDs and a new pool
+could hand them out again. Deleting the service provider (or its organization)
+deletes its pool and its project groups together. A newly created provider pool
+reserves the GIDs the provider's groups already carry, and refuses a range that
+holds a value another pool of the provider has handed out. Only a provider's
+pool may have a group range.</p>
+<p>Project group GIDs are never recycled: a released GID may be a departed user's
+primary group still present on files. Nor is any value that was ever released
+as withheld (an override or a re-point moved off it), even if an earlier
+release of the same value was recyclable.</p>
+<h3 id="when-a-project-uses-the-provider">When a project uses the provider</h3>
+<p>A project uses the provider while it has a resource on one of its offerings
+that</p>
+<ul>
+<li>is of a type with offering users (Basic, Script, site agent) and does not set
+  <code>enable_posix_account: false</code>;</li>
+<li>is not terminated — creating, updating, terminating and erred resources all
+  count;</li>
+<li>is past approval: while its create order waits for the consumer, the
+  provider, the project or a start date, or once it was rejected or cancelled,
+  the resource does not count, so it never takes a GID;</li>
+</ul>
+<p>and the project is not deleted. <code>in_use</code> and <code>offerings</code> in the listing follow
+the same rule.</p>
+<p>The project's first such resource creates its group and gives it the next free
+GID; the group is also created when a resource is moved into the project, when
+an offering moves to the provider, and when an order is approved. Further
+resources, on the same or another offering of the provider, reuse that group.</p>
+<p>When the project stops using the provider — its last resource terminates, or
+the project is deleted — the group stays with <code>in_use: false</code> and keeps its
+GID: files may still carry it. A new resource in the project reuses the same
+group and GID. A GID is never handed to another project; deleting a group
+releases its GID without making it recyclable. Groups are not deleted with
+their project: a hard-deleted project leaves its group with <code>project_uuid:
+null</code>.</p>
+<h3 id="group-names">Group names</h3>
+<p>A name matches <code>^[a-z_][a-z0-9_-]{0,31}$</code> and is unique per provider ignoring
+case. The automatic name is the project slug, lowercased, with other characters
+replaced by <code>-</code>, cut to 32 characters; when it is taken, <code>-2</code>, <code>-3</code>, … is
+appended (cutting the slug further to stay within 32). When the slug is empty
+or does not start with a letter — non-ASCII project names, for instance — the
+name is <code>p</code> followed by the first eight hex digits of the project UUID. The name
+is fixed at creation, so a later slug change does not rename the group.</p>
+<h3 id="catching-up">Catching up</h3>
+<p>Groups without a GID get one as soon as a range can supply one. The catch-up
+runs when the switch is turned on, when the provider's pool is created, and
+whenever it is updated (e.g. a group range added or its maximum raised). It is
+also available as a management command, which a second run leaves unchanged:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>backfill_provider_project_groups<span class="w"> </span><span class="o">[</span>--provider<span class="w"> </span>&lt;uuid&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>While the switch is off nothing new is created, but existing groups stay listed.</p>
+<h3 id="pinning">Pinning</h3>
+<p>Provider owners (and staff) can set a group's GID:</p>
+<ul>
+<li><code>POST /api/marketplace-service-provider-project-groups/</code> with
+  <code>{"service_provider", "project", "gid", "name"?, "allow_outside_range"?}</code>
+  <strong>adopts</strong> a group the directory already holds — also for a project with no
+  resource yet. The allocator skips the pinned GID, so pinning 20001-20003 and
+  then creating a group yields 20004. A project that already has a group is
+  refused (use <code>set_gid</code>), and so is a name already used at the provider.</li>
+<li><code>POST .../{uuid}/set_gid/</code> with <code>{"gid", "allow_outside_range"?}</code>
+  <strong>overrides</strong> a group's GID. The previous GID is released but never handed
+  out again automatically; renumbering files is the operator's job.</li>
+<li><code>POST .../import_groups/</code> with <code>{"service_provider", "groups": [{"project",
+  "gid", "name"?}], "allow_outside_range"?}</code> adopts several groups at once, all
+  or nothing.</li>
+</ul>
+<p><code>project</code> takes the project UUID, or its slug when exactly one project with
+that slug qualifies. Provider owners may adopt only for projects with a
+resource or an order, in any state, on one of the provider's offerings —
+<code>GET .../adoptable_projects/?service_provider_uuid=&amp;query=</code> lists them, with
+the group each already has; staff may adopt for any project.</p>
+<p>A pin is refused with 400, changing nothing, when another consumer holds the
+GID in any of the provider's pools, when it lies inside a GID range of another
+pool of the provider, or when it lies outside the range project groups draw
+from and <code>allow_outside_range</code> is not set. A released GID may be pinned again.
+Every pin and override is logged as a
+<code>marketplace_provider_project_group_gid_updated</code> event carrying <code>old_gid</code> and
+<code>new_gid</code>. A GID pinned outside every range does not block later pool updates.</p>
+<h3 id="reading-the-groups">Reading the groups</h3>
+<p><code>GET /api/marketplace-service-provider-project-groups/</code> lists every group of
+the provider — in use or not, whether or not the switch is on — with <code>name</code>,
+<code>gid</code>, <code>in_use</code>, the project and its organization, <code>offerings</code> (the provider's
+offerings the project uses) and <code>members</code>. Filters: <code>service_provider_uuid</code>,
+<code>provider_offering_uuid</code> (every group of the provider owning that offering),
+<code>offering_uuid</code> (groups of projects using that offering), <code>project_uuid</code> and
+<code>in_use</code>.</p>
+<p><code>members</code> are the sorted usernames of the accounts at the provider of the
+project's members: users that are active and hold an unexpired role in the
+project, with an offering account at the provider that is live (requested,
+being created, pending, OK or erred on creation) and has a username. A
+username whose every account at the provider is restricted is left out. Robot
+and service accounts are not members.</p>
+<p>A directory writer such as the site agent recognises a person across renames by
+their Waldur username (<code>user_username</code> on the offering-user listing), which it
+stores in the directory entry. Waldur shows <code>user_username</code> to the provider only
+while the offering exposes usernames (<code>expose_username</code> in the offering's user
+attribute settings, on by default); an offering that turns it off leaves the
+agent without a stable key, so renames there appear as a new account.</p>
+<p>Staff and support, owners and service managers (organization role) of the
+provider's organization,
+and managers of any of its offerings can read the groups; the last is how a
+site agent's token lists the groups of its provider.</p>
+<p>Anyone who can see a project also sees its groups at every provider in the
+project's POSIX group rollup (<code>GET /api/marketplace-project-posix-groups/?project_uuid=</code>,
+kind <code>provider_project_group</code>, with GID, name, provider, <code>in_use</code>, <code>offerings</code>
+and <code>members</code>), and an account's <code>posix_groups</code> action lists the provider
+project groups that account is a member of.</p>
+<p>The GLAuth output of an offering includes the provider project groups of the
+projects using it (kind <code>provider_project</code>), and adds their GIDs to the
+members' <code>otherGroups</code>. Providers without project groups render as before.</p>
 
 
 

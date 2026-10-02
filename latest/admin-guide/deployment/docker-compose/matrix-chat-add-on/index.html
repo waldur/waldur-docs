@@ -1958,6 +1958,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#token-lifetimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token lifetimes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#livekit-voice-video-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18869,6 +18880,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#token-lifetimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token lifetimes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#livekit-voice-video-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19085,6 +19107,13 @@ docker<span class="w"> </span>volume<span class="w"> </span>rm<span class="w"> <
 docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>matrix<span class="w"> </span>--profile<span class="w"> </span>matrix-rtc<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div></td></tr></tbody></table></div>
 <p>On re-up, <code>waldur-matrix-init</code> generates fresh tokens, re-renders the descriptor, and re-seeds Constance. <strong>Re-run the one-time appservice registration step</strong> above — Tuwunel still holds the old descriptor until you re-register, and the bot will fail with <code>M_UNKNOWN_TOKEN</code> in the meantime. The room database in <code>tuwunel_data</code> is untouched, so existing rooms survive.</p>
+<h2 id="token-lifetimes">Token lifetimes</h2>
+<p>Waldur's chat drawer signs in with a refresh token, so its access tokens expire after <code>access_token_ttl</code> (300 seconds) and are renewed in the background; a page left silent for <code>refresh_token_ttl</code> (86400 seconds, idle), e.g. on a suspended laptop, starts a new session through Waldur. Clients that sign in without a refresh token, such as Element with a password, keep non-expiring tokens. To change the lifetimes, edit <code>config/matrix/tuwunel.toml.template</code>; <code>access_token_ttl</code> must be positive, as Tuwunel reads <code>0</code> as "expire immediately".</p>
+<p>Tuwunel reads its configuration only at startup, and <code>tuwunel.toml</code> is rendered from the template only when <code>waldur-matrix-init</code> runs, on <code>up</code>. After upgrading or editing the template, re-render it and restart Tuwunel, which an <code>up</code> leaves running with the old values:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>matrix<span class="w"> </span>up<span class="w"> </span>-d
+docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>tuwunel
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="livekit-voice-video-notes">LiveKit / voice &amp; video notes</h2>
 <p><code>WALDUR_LIVEKIT_NODE_IP</code> advertises the host's RTC media address to clients. The default <code>127.0.0.1</code> is correct for a local demo only — for any reachable deployment, set this to the host's external IP or DNS name so remote clients can connect. The RTC media ports (<code>WALDUR_MATRIX_RTC_TCP_PORT</code>/<code>UDP_PORT</code>, default 7881/7882) must also be reachable from clients.</p>
 <p><code>WALDUR_LIVEKIT_KEY</code> / <code>WALDUR_LIVEKIT_SECRET</code> default to development values. <strong>Override both</strong> for anything beyond a localhost demo. Use a secret of at least 32 characters; LiveKit logs an error at startup for anything shorter.</p>

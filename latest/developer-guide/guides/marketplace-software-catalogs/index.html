@@ -8604,6 +8604,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cpu-targets-for-an-offering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU targets for an offering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#software-catalog-management-actions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19776,6 +19787,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cpu-targets-for-an-offering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU targets for an offering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#software-catalog-management-actions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20404,6 +20426,28 @@ curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </spa
 </tbody>
 </table>
 <p>This endpoint makes lightweight HTTP calls to the upstream sources (EESSI API, Spack repology) to detect the latest version. It does not download package data or modify the database. Requires staff permissions.</p>
+<h3 id="cpu-targets-for-an-offering">CPU targets for an offering</h3>
+<p><code>GET /api/marketplace-software-catalogs/{uuid}/cpu_targets/</code> returns the CPU choices for <strong>that catalog's version</strong>. It reads <code>metadata.architectures_map</code> and does not scan package targets.</p>
+<p>Use the response when linking a catalog to an offering. Store <code>cpu_family</code> in <code>enabled_cpu_family</code> and <code>cpu_microarchitecture</code> in <code>enabled_cpu_microarchitectures</code>. The microarchitecture value is <code>SoftwareTarget.target_subtype</code> (for example <code>intel/sapphirerapids</code>, <code>amd/zen3</code>, <code>generic</code>), which is also the <code>cpu_microarchitecture</code> list filter.</p>
+<p><code>full_arch</code> is the hardware path from the map (for example <code>x86_64/intel/graniterapids</code>). When a map value points at a different build, <code>cpu_microarchitecture</code> follows that build so package filters still match imported targets.</p>
+<p>Catalogs without an architectures map, including Spack, return <code>[]</code>. The same empty list is returned when <code>catalog.version</code> is not a key in <code>architectures_map</code>.</p>
+<p><code>supports_cpu_target_restrictions</code> on the catalog (list, retrieve, and the nested catalog inside an offering) is <code>true</code> only for <code>binary_runtime</code>. Spack (<code>source_package</code>) is <code>false</code>. Use that flag to show or hide the CPU fields. An empty <code>cpu_targets</code> list on a catalog where the flag is <code>true</code> means this version has no map entries, not that CPU restrictions do not apply.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-catalogs/&lt;catalog_uuid&gt;/cpu_targets/"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"cpu_family"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x86_64"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"cpu_microarchitecture"</span><span class="p">:</span><span class="w"> </span><span class="s2">"intel/sapphirerapids"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"full_arch"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x86_64/intel/sapphirerapids"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div></td></tr></tbody></table></div>
 <h3 id="software-catalog-management-actions">Software Catalog Management Actions</h3>
 <p>Offering-software catalog associations are managed through offering actions:</p>
 <ul>
@@ -20706,14 +20750,17 @@ curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/ap
 curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-versions/?package_uuid=package-uuid&amp;cpu_family=x86_64"</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="browse-installation-targets">Browse Installation Targets</h3>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Get available targets for a version</span>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Get available targets for a version</span>
 curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-targets/?version_uuid=version-uuid"</span>
 
 <span class="c1"># Filter by CPU family</span>
@@ -20721,7 +20768,11 @@ curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/ap
 
 <span class="c1"># Filter by CPU microarchitecture</span>
 curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-targets/?cpu_microarchitecture=generic"</span>
+
+<span class="c1"># Repeat a CPU filter to match any of several values</span>
+curl<span class="w"> </span><span class="s2">"https://your-waldur.example.com/api/marketplace-software-targets/?cpu_microarchitecture=amd/zen3&amp;cpu_microarchitecture=intel/sapphirerapids"</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p><code>cpu_family</code> and <code>cpu_microarchitecture</code> take several values on the package, version and target lists; a row matches if it has a target for any of them.</p>
 <h3 id="gpu-architecture-filtering">GPU Architecture Filtering</h3>
 <p>Software targets include a <code>gpu_architectures</code> field — a flat list of GPU architectures the target supports (e.g., <code>["nvidia/cc70", "nvidia/cc80", "nvidia/cc90"]</code>). This field is extracted from the nested <code>metadata["gpu_arch"]</code> structure for efficient filtering.</p>
 <h4 id="filter-packages-by-gpu-support">Filter Packages by GPU Support</h4>
@@ -20856,7 +20907,7 @@ curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </sp
 <span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
 <span class="s1">    "offering_catalog_uuid": "offering-catalog-uuid",</span>
 <span class="s1">    "enabled_cpu_family": ["x86_64", "aarch64"],</span>
-<span class="s1">    "enabled_cpu_microarchitectures": ["generic", "zen3"]</span>
+<span class="s1">    "enabled_cpu_microarchitectures": ["generic", "amd/zen3"]</span>
 <span class="s1">  }'</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="remove-software-catalog-from-offering">Remove Software Catalog from Offering</h3>

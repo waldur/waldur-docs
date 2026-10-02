@@ -2494,6 +2494,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#token-lifetimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token lifetimes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#required-runtime-steps-not-automated-by-the-chart" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18888,6 +18899,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#token-lifetimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token lifetimes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#required-runtime-steps-not-automated-by-the-chart" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19090,6 +19112,43 @@ ingress.</p>
 <li>No fixed release yet: <code>matrixChat.enabled=false</code> removes the homeserver, its
   ingress and the chat UI. The PVC and its history are kept.</li>
 </ul>
+<h2 id="token-lifetimes">Token lifetimes</h2>
+<p>Waldur's chat drawer signs in with a refresh token, so its access tokens
+expire and are renewed in the background:</p>
+<table>
+<thead>
+<tr>
+<th>Tuwunel key</th>
+<th>Helm value</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>access_token_ttl</code></td>
+<td><code>homeserver.accessTokenTtl</code></td>
+<td><code>300</code> (5 min)</td>
+</tr>
+<tr>
+<td><code>refresh_token_ttl</code></td>
+<td><code>homeserver.refreshTokenTtl</code></td>
+<td><code>86400</code> (24 h)</td>
+</tr>
+</tbody>
+</table>
+<p>Docker Compose sets the same values in <code>config/matrix/tuwunel.toml.template</code>.</p>
+<p>The refresh lifetime is an idle timeout: each refresh moves the deadline
+forward, so a drawer in use never expires, and a page left silent for a day
+(e.g. on a suspended laptop) starts a new session through Waldur. <code>0</code> means the
+refresh token never expires; the access token lifetime must be positive, as
+Tuwunel reads <code>0</code> as "expire immediately". When a user starts a session, Waldur
+also signs out that user's chat devices idle for more than 24 hours, so a
+longer refresh lifetime, or <code>0</code>, only keeps the devices of users who start no
+other session.</p>
+<p>Clients that sign in without a refresh token, such as Element with a password,
+get non-expiring tokens and are unaffected.</p>
+<p>Tuwunel reads its configuration only at startup, so restart it after changing
+either value: <code>kubectl rollout restart statefulset/matrix-homeserver</code>.</p>
 <h2 id="required-runtime-steps-not-automated-by-the-chart">Required runtime steps (not automated by the chart)</h2>
 <ol>
 <li><strong>Backend token match.</strong> <code>homeserver.registrationToken</code> must equal the
