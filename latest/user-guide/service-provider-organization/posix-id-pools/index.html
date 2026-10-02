@@ -17685,6 +17685,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#project-group-gids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project group GIDs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#which-pool-applies-to-an-offering" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -17813,6 +17824,34 @@
     
   
     Shared POSIX identity, step by step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project groups
   
 
     
@@ -18817,6 +18856,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#project-group-gids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project group GIDs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#which-pool-applies-to-an-offering" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19024,6 +19074,34 @@ offering override must use a number band disjoint from the provider default
 (for example provider UIDs <code>100000–199999</code>, an isolated offering's UIDs
 <code>300000–399999</code>).</p>
 </div>
+<h2 id="project-group-gids">Project group GIDs</h2>
+<p>A service-provider pool can reserve a third range, for
+<a href="../project-groups/">project groups</a> — the one POSIX group each project gets at
+your service provider. Set it in the pool form under <strong>Project group GIDs</strong>
+(<strong>Minimum project group GID</strong> and <strong>Maximum project group GID</strong>, both
+inclusive; set both or neither). The form shows the next GID the range will hand
+out.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-pool-project-group-range.png" data-desc-position="bottom"><img alt="The project group GID range in the pool form" src="../../img/posix-pool-project-group-range.png"></a></p>
+<ul>
+<li><strong>Set it before enabling project groups.</strong> Without a project group range,
+  groups take their GIDs from the pool's GID range, which they then share with
+  users' primary groups. See <a href="../project-groups/#rolling-out-project-groups">rolling out project groups</a>.</li>
+<li><strong>It must not overlap any GID range.</strong> The range holds GIDs too, so it may not
+  overlap the pool's own GID range, nor the GID or project group range of any
+  other pool of the provider. Waldur rejects an overlapping pool and names the
+  conflict.</li>
+<li><strong>Only the service-provider pool is used.</strong> A project group belongs to the
+  whole provider, so its GID always comes from the provider-level pool;
+  offering-override pools are never consulted. If the provider has only
+  offering-override pools, groups are created without a GID and get one as soon
+  as a provider pool can supply it.</li>
+<li><strong>Adding or widening the range catches up.</strong> Groups still waiting for a GID get
+  one when the pool is created, and whenever its project group or GID range is
+  added or widened.</li>
+</ul>
+<p>A pool cannot be deleted while project groups hold GIDs from it, and a newly
+created provider pool reserves the GIDs the provider's groups already carry, so
+they are never handed out again.</p>
 <h2 id="which-pool-applies-to-an-offering">Which pool applies to an offering</h2>
 <p>Resolution is simple: an offering uses its <strong>own</strong> pool if it has one, otherwise
 the <strong>service-provider</strong> pool. To check, open the offering and go to <strong>Edit →
@@ -19041,6 +19119,10 @@ bar.</p>
 threshold (90% by default), so you can widen the range before it runs out. An
 exhausted namespace stops account creation with a clear error until more numbers
 are available.</p>
+<p>A pool with a project group range shows it in the <strong>Project group GID range</strong>
+column, and the expanded row adds a <strong>Project group GID</strong> bar with the same
+threshold. A GID counts against the range it lies in.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-pool-project-group-utilization.png" data-desc-position="bottom"><img alt="Project group GID utilisation of a pool" src="../../img/posix-pool-project-group-utilization.png"></a></p>
 <h2 id="how-identifiers-are-assigned">How identifiers are assigned</h2>
 <p>Identifiers are handed out sequentially from the resolved pool as offering
 users, robot accounts and groups are created — a high-water mark advances per
@@ -19074,7 +19156,9 @@ users are created.</p>
 recycled automatically: the next account created from the same pool reuses the
 lowest released value before the high-water mark advances further. Released
 records are kept as an audit trail and are visible in a pool's <strong>identities</strong>
-view.</p>
+view. Project group GIDs are the exception: a GID a project group gave up is
+never handed out again automatically, because files on shared storage may
+still carry it.</p>
 <h2 id="where-an-identifier-came-from">Where an identifier came from</h2>
 <p>Expanding an offering user shows a <strong>POSIX identifiers</strong> table listing each of
 that account's identifiers together with the <strong>pool scope</strong> it was allocated

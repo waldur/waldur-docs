@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-02T02:03:57.866782Z
+Generated: 2026-10-02T14:39:58.703655Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -7527,6 +7527,23 @@ options:
 
 ```
 
+## provision_matrix_rooms
+
+Create Matrix rooms for existing projects that do not have one yet. Provisioning itself runs asynchronously via Celery, and each room invites every project member, so on large deployments run it in batches with --limit to avoid homeserver rate limits.
+
+```bash
+
+usage: waldur provision_matrix_rooms [--customer CUSTOMER] [--limit LIMIT]
+                                     [--dry-run]
+
+options:
+  --customer CUSTOMER  Limit to projects of a single customer, given by UUID.
+  --limit LIMIT        Stop after provisioning this many rooms (0 = no limit).
+  --dry-run            List the projects that would get a room, without
+                       creating any.
+
+```
+
 ## pull_openstack_usage
 
 Trigger OpenStack usage billing poll synchronously.
@@ -11430,6 +11447,12 @@ Enable the affiliate program: staff-configured affiliate links, fee accrual from
 **Type:** bool
 
 Enable Matrix chat integration.
+
+#### MATRIX_AUTO_CREATE_PROJECT_ROOMS
+
+**Type:** bool
+
+Automatically create a Matrix room for every newly created project. Off by default; existing projects are backfilled with the provision_matrix_rooms management command.
 
 #### MATRIX_HOMESERVER_URL
 
@@ -84231,6 +84254,34 @@ quotas and job scheduling. You normally never type them yourself: you log in
 with your username and SSH key, and the cluster maps you to your UID and GID
 behind the scenes.
 
+## Your project's POSIX groups
+
+Besides your personal identifiers, a service provider may give each project one
+**project group**: a POSIX group, named after the project's short name, whose
+members are the accounts that the project's members hold at that provider.
+Clusters grant access through it, and files the project shares on storage are
+owned by its GID. Your account becomes a member when you join the project and
+leaves the group when you leave it.
+
+The project overview shows the groups in a **POSIX groups** panel: one line per
+service provider, with the group name and GID.
+
+[Image: The POSIX groups panel on the project overview]
+
+**Show details** opens the project's **Settings → POSIX identities** tab with
+the full list. **Groups at service providers** lists the project's
+group at each provider with its GID, the offerings the project uses there, the
+number of members and whether the group is in use. Expand a row to see the
+members' usernames.
+
+[Image: Project groups on the POSIX identities tab]
+
+The group's name and GID do not change when the project is renamed. A group is
+marked **Not in use** when the project no longer has resources at that
+provider; it keeps its GID, so files owned by it stay readable to the project
+when it comes back. Every project member and the organization's owners can see
+these groups; only the service provider manages them.
+
 ## What to expect
 
 - **They are stable.** Your UID and primary GID stay the same for the lifetime
@@ -86102,6 +86153,7 @@ offerings:
         account_source: "waldur"
         on_missing_posix_ids: "error"
         on_posix_mismatch: "report"
+        waldur_username_attribute: "employeeNumber"   # rename key, see "Renames"
 
         # Still used for project groups, which the resource backend allocates.
         gid_range_start: 1200
@@ -86120,6 +86172,10 @@ ignored with a warning for the same reason.
     primary group — and files end up ambiguously owned. Keep the two ranges
     disjoint. The agent cannot check this for you, but it logs the configured
     range at start-up so the overlap is at least visible.
+
+    These are the resource backend's own groups. Groups kept *per project*, with
+    GIDs Waldur allocates, are a separate feature:
+    see [Project groups in the directory](#project-groups-in-the-directory).
 
 ## Naming the accounts
 
@@ -86185,6 +86241,68 @@ $ getent passwd hpc_9001
 hpc_9001:*:9001:9001:Jane Smith:/home/hpc_9001:/bin/bash
 ```
 
+### Renames
+
+A Linux username can change while the person stays the same — the username
+generation policy changes, say, or the identity provider sends another name.
+Waldur decides the new name; the agent has to recognise which directory entry
+it belongs to. It does that with a stable key stored on the entry: the person's
+**Waldur username**, in the attribute named by `waldur_username_attribute`.
+`employeeNumber` is the recommended attribute.
+
+```yaml
+backend_settings:
+  ldap:
+    account_source: "waldur"
+    waldur_username_attribute: "employeeNumber"
+```
+
+- **Stamping.** The agent writes the key when it creates an entry, and on an
+  existing entry whose `uid` and `uidNumber` already match Waldur. Entries that
+  exist when you turn the setting on are therefore stamped on the first cycle.
+- **Renaming.** When Waldur reports a new Linux username, the agent looks up the
+  entry carrying that person's Waldur username and, if its `uidNumber` matches,
+  renames it in place (`modrdn uid=<old>` to `uid=<new>`). `uidNumber` stays;
+  the home directory and profile follow Waldur, the personal group is renamed
+  with it, access-group memberships are rewritten, and project groups follow
+  from Waldur's member lists.
+- **A changed Waldur username.** If the Waldur username changes while the Linux
+  name and `uidNumber` stay the same, the agent rewrites the stored key, but
+  only on the entry whose `uid` and `uidNumber` both match the account, and logs
+  the old and new value. It never overwrites a key that belongs to another
+  account.
+- **Group memberships during a rename.** While it moves the renamed user's
+  group memberships, the agent may leave a temporary `description` value
+  `waldur-site-agent:renamed-from=<old>` on the entry, so that an interrupted
+  rename is finished on the next cycle. The agent removes the value itself once
+  every membership has moved; do not edit or remove it by hand.
+
+The agent refuses, logs the reason and leaves the entry alone when two entries
+carry the same key, when the entry carrying the key has another `uidNumber`,
+or when the wanted UID is held by an entry whose key is missing or different.
+It also refuses when the **Linux username and the Waldur username change at
+once**: neither the old key nor the old name then points at the entry. Rename
+such an entry by hand — set its `uid` to the new name and the key to the new
+Waldur username — and the next cycle picks it up.
+
+Without `waldur_username_attribute` the agent never renames: a renamed account
+is reported as a UID collision until the entry is renamed by hand.
+
+Renames also need the offering to expose Waldur usernames to the service
+provider: **Username** under **User attribute exposure** in the offering's
+integration settings, on by default. Without it the agent cannot see the key it compares,
+logs once that renames cannot be recognised, and treats a renamed account as a
+UID collision.
+
+!!! warning "Reserve the attribute for the agent"
+    The agent owns the attribute it stores the key in. Choose one that nothing
+    else in your directory writes — if `employeeNumber` already holds HR data,
+    pick another attribute your schema allows on the user entries — and do not
+    edit its values by hand except to repair a refused rename.
+
+The agent does not move files: a home directory path that embeds the old name
+needs moving by the site.
+
 ### When an account cannot be written
 
 | Situation | What the agent does |
@@ -86208,6 +86326,154 @@ error for the offering rather than one per user.
 nothing. That default is deliberate — rewriting a live account's `uidNumber`
 orphans every file that user owns. Set it to `adopt` for a one-shot migration once
 you are ready to follow up with `chown -R`, or `fail` to stop the cycle outright.
+
+## Project groups in the directory
+
+Waldur keeps one [project group](project-groups.md) per project at each service
+provider: a name, a GID from the provider's POSIX ID pool, and the usernames of
+the project's members who hold an account at the provider. With
+`project_groups.enabled` the agent writes those groups into the directory and
+lists them in the entries that grant access to a cluster, so a new project's
+members can use the cluster without anyone editing the directory.
+
+### Example layout
+
+A classic RFC 2307 (nis schema) directory, in which `posixGroup` is structural
+and allows `memberUid` only:
+
+```text
+dc=example,dc=org
+  ou=users       uid=<name>     inetOrgPerson + posixAccount, gidNumber = primary GID
+  ou=projects    cn=<group>     top + posixGroup, gidNumber = Waldur's GID, memberUid = members
+  ou=clusters    cn=<cluster>   groupOfNames, member = DN of each project group in use on the offering
+  ou=bind_users  service binds
+```
+
+For example, with the project groups shown on the
+[Project groups page](project-groups.md#the-project-groups-page):
+
+```ldif
+dn: cn=genomics,ou=projects,dc=example,dc=org
+objectClass: top
+objectClass: posixGroup
+cn: genomics
+gidNumber: 20001
+memberUid: demo-member
+memberUid: demo-user1
+description: waldur-managed
+
+dn: cn=hpc-cluster,ou=clusters,dc=example,dc=org
+objectClass: groupOfNames
+cn: hpc-cluster
+member: cn=genomics,ou=projects,dc=example,dc=org
+member: cn=climate-models,ou=projects,dc=example,dc=org
+member: cn=physics,ou=projects,dc=example,dc=org
+```
+
+### Agent settings
+
+```yaml
+backend_settings:
+  ldap:
+    uri: "ldaps://ldap.example.org"
+    bind_dn: "cn=waldur-agent,ou=bind_users,dc=example,dc=org"
+    bind_password: "<password>"
+    base_dn: "dc=example,dc=org"
+    people_ou: "ou=users"
+    account_source: "waldur"
+    waldur_username_attribute: "employeeNumber"   # key for renames, see "Renames"
+    personal_groups: false          # primary GIDs come from Waldur, no personal group entries
+    project_groups:
+      enabled: true
+      ou: "ou=projects"
+      member_attribute: "memberUid"   # or "member" for rfc2307bis directories
+      membership: "sync"              # or "add_only"
+      on_gid_mismatch: "report"       # or "adopt"
+      parents:
+        - dn: "cn=hpc-cluster,ou=clusters,dc=example,dc=org"
+          attribute: "member"
+```
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `waldur_username_attribute` | — | Attribute holding each person's Waldur username, the key renames are recognised by; recommended `employeeNumber`, reserved for the agent. Unset: no renames (see [Renames](#renames)) |
+| `personal_groups` | `true` | `true` gives every account a group `cn=<username>` in `groups_ou` with its primary GID. `false` writes accounts with the primary GID from Waldur and no group entry; it requires `account_source: waldur` |
+| `project_groups.enabled` | `false` | Write the project groups |
+| `project_groups.ou` | `ou=projects` | OU, relative to `base_dn`, the groups are written under; it must exist |
+| `project_groups.object_classes` | `["top", "posixGroup"]` | Object classes of a new group entry |
+| `project_groups.member_attribute` | `memberUid` | `memberUid` writes usernames; `member` writes user DNs (`uid=<name>,<people_ou>,<base_dn>`) |
+| `project_groups.membership` | `sync` | `sync` adds and removes members to match Waldur; `add_only` never removes one |
+| `project_groups.on_gid_mismatch` | `report` | A same-named entry with another GID: `report` keeps the directory's GID and logs it every cycle; `adopt` rewrites it to Waldur's |
+| `project_groups.managed_marker` | `waldur-managed` | Extra `description` value on every group the agent creates or adopts |
+| `project_groups.parents` | `[]` | Entries that list the DN of each group whose project has a resource on the offering |
+| `parents[].dn` | — | Full DN of the entry |
+| `parents[].attribute` | `member` | Attribute that holds the group DNs |
+| `parents[].offering_uuids` | the agent's offering | Offerings whose projects the entry lists, for an entry shared by several offerings |
+
+The project-group pass runs on the agent's periodic reconcile, after the
+accounts, and also when the offering has no accounts left, so cluster entries
+are still cleaned up.
+
+### What the agent writes
+
+For each group Waldur lists:
+
+- **No entry yet** — the agent creates it with Waldur's name, GID, members and
+  the marker, unless the GID is already used anywhere under `base_dn` (users'
+  primary GIDs included) or a `posixGroup` of the same name exists outside the
+  project OU. Such a group is reported every cycle and not written; fix it in
+  Waldur with [Change GID](project-groups.md#changing-a-gid) or by adopting the
+  directory's GID.
+- **An entry with the same name and GID** — the agent adopts it: it adds the
+  marker and reconciles the members and cluster entries.
+- **An entry with the same name and another GID** — under `report` the GID is
+  left alone and logged every cycle, while members and cluster entries are
+  still reconciled. Under `adopt` the agent rewrites `gidNumber` to Waldur's.
+- **No GID in Waldur yet** — the group is skipped and logged.
+
+!!! warning "Use `on_gid_mismatch: adopt` only after `chgrp`"
+    Renumbering a group orphans every file owned by its old GID. Switch to
+    `adopt` only once those files have been `chgrp`-ed to Waldur's GID, which is
+    why `report` is the default.
+
+Group entries are never deleted: their GIDs stay reserved in Waldur. A user is
+named in a group only once their account entry exists under `people_ou`.
+
+### The waldur-managed marker and cluster entries
+
+Every group the agent creates or adopts gets one extra `description` value,
+`waldur-managed` (the `managed_marker` setting). Your own description values
+stay.
+
+The agent makes each cluster entry in `parents` list the DNs of the groups
+whose project has a resource on the entry's offerings. It only ever removes a DN
+that lies **under the project OU**, and then only:
+
+- for a group Waldur lists, when its project no longer has a resource on those
+  offerings, or the group could not be written;
+- for a group Waldur no longer lists (an offering moved to another provider,
+  say), when its entry carries the marker.
+
+A hand-made group under the project OU without the marker, and any DN outside
+the project OU, is never removed. The directory is left untouched for the
+cycle when Waldur cannot be read or returns no groups at all.
+
+!!! tip "One cluster entry, several offerings"
+    Two offerings of one provider on one directory see the same groups with the
+    same GIDs: the first agent creates a group and the second adopts it. If they
+    share a cluster entry, list both offerings in `parents[].offering_uuids` on
+    both; otherwise each removes the groups the other adds. The agent warns at
+    start-up when two offerings in its configuration point at one entry without
+    `offering_uuids`.
+
+### Members and renames
+
+With `membership: sync` the members follow Waldur: a user who leaves the
+project, or whose account is removed or restricted, is taken out. When Waldur
+renames an account and the entry carries the person's key, the agent renames
+the entry in place and the groups pick up the new username
+(see [Renames](#renames)). With `membership: add_only` the old username stays in
+the group next to the new one, since that mode never removes members.
 
 ## Connecting SSSD
 
@@ -86236,6 +86502,18 @@ ldap_schema = rfc2307
 ldap_default_bind_dn = cn=readonly,dc=example,dc=com
 ldap_default_authtok = <service-account-password>
 ```
+
+SSSD must read group membership the way the groups are written:
+
+| `project_groups.member_attribute` | Members stored as | `sssd.conf` |
+|---|---|---|
+| `memberUid` (default) | Usernames | `ldap_schema = rfc2307` |
+| `member` | User DNs | `ldap_schema = rfc2307bis` |
+
+With the wrong schema the groups still resolve by name and GID, but `id` and
+`getent group` show them without members, so access through them fails. With
+project groups under their own OU, point `ldap_group_search_base` at it (or at
+the base, to see personal and project groups together).
 
 Bind with a dedicated **read-only** service account rather than the directory
 admin. Add `sss` to the `passwd`, `group` and `shadow` databases in
@@ -86732,6 +87010,37 @@ output until a pool is configured.
     (for example provider UIDs `100000–199999`, an isolated offering's UIDs
     `300000–399999`).
 
+## Project group GIDs
+
+A service-provider pool can reserve a third range, for
+[project groups](project-groups.md) — the one POSIX group each project gets at
+your service provider. Set it in the pool form under **Project group GIDs**
+(**Minimum project group GID** and **Maximum project group GID**, both
+inclusive; set both or neither). The form shows the next GID the range will hand
+out.
+
+[Image: The project group GID range in the pool form]
+
+- **Set it before enabling project groups.** Without a project group range,
+  groups take their GIDs from the pool's GID range, which they then share with
+  users' primary groups. See [rolling out project groups](project-groups.md#rolling-out-project-groups).
+- **It must not overlap any GID range.** The range holds GIDs too, so it may not
+  overlap the pool's own GID range, nor the GID or project group range of any
+  other pool of the provider. Waldur rejects an overlapping pool and names the
+  conflict.
+- **Only the service-provider pool is used.** A project group belongs to the
+  whole provider, so its GID always comes from the provider-level pool;
+  offering-override pools are never consulted. If the provider has only
+  offering-override pools, groups are created without a GID and get one as soon
+  as a provider pool can supply it.
+- **Adding or widening the range catches up.** Groups still waiting for a GID get
+  one when the pool is created, and whenever its project group or GID range is
+  added or widened.
+
+A pool cannot be deleted while project groups hold GIDs from it, and a newly
+created provider pool reserves the GIDs the provider's groups already carry, so
+they are never handed out again.
+
 ## Which pool applies to an offering
 
 Resolution is simple: an offering uses its **own** pool if it has one, otherwise
@@ -86754,6 +87063,12 @@ The utilisation bar turns amber as a namespace fills and red once it crosses the
 threshold (90% by default), so you can widen the range before it runs out. An
 exhausted namespace stops account creation with a clear error until more numbers
 are available.
+
+A pool with a project group range shows it in the **Project group GID range**
+column, and the expanded row adds a **Project group GID** bar with the same
+threshold. A GID counts against the range it lies in.
+
+[Image: Project group GID utilisation of a pool]
 
 ## How identifiers are assigned
 
@@ -86795,7 +87110,9 @@ When an offering user or group is deleted, its identifiers are **released** and
 recycled automatically: the next account created from the same pool reuses the
 lowest released value before the high-water mark advances further. Released
 records are kept as an audit trail and are visible in a pool's **identities**
-view.
+view. Project group GIDs are the exception: a GID a project group gave up is
+never handed out again automatically, because files on shared storage may
+still carry it.
 
 ## Where an identifier came from
 
@@ -86951,6 +87268,7 @@ accounts before it is saved.
 | Anonymized username prefix | e.g. `hpc_` | Shown once the policy is *Anonymized*. Left empty, the default `waldur_` applies |
 | Home directory prefix | empty, or e.g. `/home/` | Empty lets each offering decide; the default is `/home/` |
 | Login shell | empty, or e.g. `/bin/bash` | Empty lets each offering decide; the default is `/bin/bash` |
+| Create project groups | optional | One POSIX group per project, with a GID from the pool — enable it last, after setting the pool's project group range and adopting the groups your directory already holds; see [Project groups](project-groups.md#rolling-out-project-groups) |
 
 [Image: The service provider's Account settings page: Account scope set to Per service provider, with the home directory prefix and login shell left unset so the offerings fall back to the defaults]
 
@@ -87049,6 +87367,233 @@ the default: [When a user leaves](openldap-sssd-accounts.md#when-a-user-leaves).
     Without **Enable automatic deletion of offering users** nothing above
     happens: the offering user stays *OK* and the entry is kept. The agent only
     ever acts on Waldur's own deletion request.
+
+---
+
+### Project groups
+<!-- Source: docs/user-guide/service-provider-organization/project-groups.md -->
+
+# Project groups
+
+A **project group** is the one POSIX group a project gets at your service
+provider. It has a name and a GID that stay the same for the life of the
+project, and its members are the accounts that the project's members hold on
+your offerings. Clusters grant access through it, and files on shared storage
+are owned by it.
+
+Waldur keeps the groups; a directory writer such as the
+[site agent's LDAP plugin](openldap-sssd-accounts.md#project-groups-in-the-directory)
+or [GLAuth](glauth-user-accounts.md) puts them into the directory your hosts
+read.
+
+!!! note
+    Project groups appear under **Accounts → Project groups** in your provider
+    workspace, next to **POSIX ID pools**. Both are shown only when the platform
+    operator has enabled the `marketplace.show_posix_id_pools` feature flag.
+
+## How a project group works
+
+- **One group per project and service provider.** Every offering of the
+  provider that the project uses shares the same group. A project that uses two
+  providers has one group at each, with GIDs that each provider numbers on its
+  own.
+- **The name is the project's short name.** The group is named after the
+  project's short name (slug) when it is created: lowercased, with characters
+  other than letters, digits, `-` and `_` replaced by `-`, at most 32
+  characters. If the name is taken, `-2`, `-3`, … is added. A short name that is
+  empty or does not start with a letter gives `p` followed by the first eight
+  characters of the project's UUID. Names are unique per provider, ignoring
+  case.
+- **The name never changes.** Renaming the project or changing its short name
+  later does not rename the group, so directory entries and scripts that refer
+  to it keep working.
+- **The GID is never reused.** The GID comes from the provider's
+  [POSIX ID pool](posix-id-pools.md#project-group-gids) and is never handed to
+  another project, not even after the group's GID was changed or its project
+  deleted. Files may still carry it.
+
+### When a group is created
+
+A project gets its group when its **first resource at your service provider is
+approved**: the first resource on any of your offerings whose create order has
+left the approval steps. A resource that is still waiting for approval by the
+consumer, by you, by the project or for its start date does not create a group,
+and a rejected or cancelled order never takes a GID. Moving a resource into a
+project, or an offering to your provider, creates the groups that are then
+needed.
+
+Only offerings that create accounts for their users count: Basic, Script and
+site agent offerings, unless the offering turns POSIX accounts off.
+
+Further resources, on the same or another of your offerings, reuse the group.
+When the project's last resource at your provider is terminated, or the
+project is deleted, the group stays, marked **Not in use**, and keeps its GID.
+A new resource later picks up the same group and GID.
+
+## Rolling out project groups
+
+Your directory may already hold groups for some projects, with GIDs that files
+on your storage carry. To keep those GIDs, enable project groups in this order:
+
+1. **Set the project group GID range** on the service provider's POSIX ID pool
+   (see [project group GIDs](posix-id-pools.md#project-group-gids)).
+2. **Adopt the groups your directory already holds** under **Accounts → Project
+   groups**, one by one with [Adopt existing group](#adopting-an-existing-group)
+   or many at once with [Import groups](#importing-many-groups).
+3. **Enable "Create project groups"** on **Accounts → Account settings**. Every
+   project with a resource on your offerings then gets a group, with the next
+   free GID from the range.
+
+[Image: Create project groups on the Account settings page]
+
+The setting is changed in the account settings preview: click the edit button
+on the **Create project groups** row, turn the switch on, then **Preview** and
+**Apply**. The preview warns when the provider's pool has no project group
+range, because the groups would then share the GID range with users' primary
+groups.
+
+[Image: Turning on Create project groups in the preview]
+
+!!! tip
+    Turning the setting on also creates the groups of projects that already use
+    your offerings. Groups that could not get a GID yet, because no range had
+    one free, get it as soon as a range can supply one: when the pool is
+    created, when a range is added or widened, or when the setting is turned on.
+
+Turning the setting off stops new groups from being created. Existing groups
+stay listed and keep their GIDs.
+
+## The Project groups page
+
+Open your provider workspace and go to **Accounts → Project groups**.
+
+[Image: The Project groups page]
+
+| Column | Meaning |
+|--------|---------|
+| **Name** | The group name in the directory |
+| **GID** | The group's GID, or **Not assigned** while no range could supply one |
+| **Project** | The project the group belongs to; **Deleted project** once the project has been removed |
+| **Organization** | The project's organization |
+| **Offerings** | Your offerings on which the project currently has a resource |
+| **Members** | The number of members; expand the row to see their usernames |
+| **Status** | **In use** while the project has a resource on one of your offerings, **Not in use** otherwise |
+| **Created** | When the group was created |
+
+Search matches the group name, the project name or short name, the
+organization name, and the exact GID. The filter offers **Usage** (in use or not
+in use) and **Offering** (groups of projects that use that offering).
+
+Expand a row to see the group's members: the usernames of the accounts that
+the project's members hold at your provider.
+
+[Image: A project group expanded to show its members]
+
+A user is a member while their account is active, they hold a project role
+that has not expired, and their account at your provider is live (requested,
+being created, pending, active, or failed on creation) and has a username. A
+username is left out when every account carrying it at your provider is
+restricted. Robot and service accounts are not members.
+
+## Adopting an existing group
+
+Adopt a group your directory already holds so that the project keeps its GID
+and Waldur never hands that GID to anything else. The project does not need a
+resource yet.
+
+1. Click **Adopt existing group**.
+2. Select the **Project**. The list shows projects that have a resource or an
+   order on your offerings; a project that already has a group shows it and
+   cannot be selected — use [Change GID](#changing-a-gid) for it instead.
+3. Enter the **GID** the group has in the directory.
+4. Optionally enter the **Group name** it has in the directory. Leave it empty
+   to use the project's short name.
+5. Click **Adopt**.
+
+[Image: The Adopt existing group dialog]
+
+[Image: Projects that already have a group point to Change GID]
+
+The GID must lie inside the project group range of the provider's pool. Turn on
+**Allow a GID outside the project group range** for a GID that your directory
+assigned before Waldur managed it. Either way, Waldur refuses a GID that is
+already held at your provider — by an account, another group, or another
+consumer of the pools — or that lies inside the GID range of another of your
+pools. A name must start with a letter or `_`, contain only lowercase letters,
+digits, `-` and `_`, be at most 32 characters long, and not be used by another
+group of your provider in any case.
+
+!!! note "Who may adopt"
+    Organization owners of the service provider and staff. An owner may adopt
+    only for projects that have a resource or an order, in any state, on one of
+    the provider's offerings. Staff may adopt for any project, which covers
+    recording a group before the project's first order.
+
+## Importing many groups
+
+To adopt many groups at once, click **Import groups** and enter one group per
+line: the project's UUID or short name, the GID and, optionally, the group
+name, separated by commas.
+
+```text
+bioinformatics,20030
+materials-lab,20031,matlab
+0b4a1c2d3e4f5a6b7c8d9e0f1a2b3c4d,20032
+```
+
+[Image: The Import groups dialog]
+
+A short name works when exactly one eligible project has it. The import is
+**all or nothing**: if any line is refused, nothing is imported and the dialog
+lists the lines that were refused and why. The same rules as for a single adopt
+apply to every line, including who may import and
+**Allow a GID outside the project group range**.
+
+## Changing a GID
+
+Use **Change GID** in a row's actions menu to give a group another GID, for
+example when its GID clashes with one that something outside Waldur already
+uses. For a group without a GID the action is called **Set GID**.
+
+[Image: The Change GID dialog]
+
+!!! warning
+    Changing a GID does not touch your files. Files on shared storage keep the
+    old GID until they are changed with `chgrp`; renumbering them is up to you.
+    The old GID stays reserved: Waldur does not hand it to another project.
+
+The new GID follows the same rules as an adopted one. Every change is recorded
+in the audit log with the old and the new GID. Only organization owners of the
+service provider and staff can change a GID.
+
+## Who sees what
+
+| Who | What they can do |
+|-----|------------------|
+| Staff | See and manage all project groups |
+| Support users | See all project groups |
+| Organization owners of the service provider | See the provider's groups, adopt, import, change GIDs, and enable project groups |
+| Service managers of the service provider | See the provider's groups |
+| Offering managers of any of the provider's offerings | See the provider's groups — this is how the site agent reads them |
+| Project members and organization owners of the project | See the project's groups at every provider on the project page (see [your POSIX identity](../end-users/posix-identity.md#your-projects-posix-groups)) |
+
+## When an account is renamed
+
+A username can change after a group already lists it, for example when the
+username generation policy changes or a user's identity provider name changes.
+Project group members always carry the current username.
+
+A directory writer has to recognise that the new name belongs to an existing
+entry. The site agent's LDAP plugin does this with a key it keeps in the
+directory: with `waldur_username_attribute` set (`employeeNumber` is the
+recommended attribute), it stores each person's Waldur username on their entry.
+When Waldur reports a new Linux username, the agent renames the entry carrying
+that key in place, provided its UID still matches, and replaces the old username
+in the groups. Without the setting the agent never renames an entry. See
+[renames in the directory](openldap-sssd-accounts.md#renames) for the details.
+
+With the plugin's `membership: add_only` setting the old username stays in the
+group next to the new one, because that mode never removes members.
 
 ---
 
@@ -102331,6 +102876,7 @@ td:nth-child(4) {
 | `offering_component_has_been_deleted` | `Django Signal (post_delete)` | `marketplace.OfferingComponent` | Log offering component deletion. |
 | `offering_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Offering` | Log offering creation and updates. |
 | `on_order_state_changed` | `Django Signal (post_save)` | `marketplace.Order` | Notify the project's Matrix room when an order is approved, completed, or rejected. |
+| `on_project_created` | `Django Signal (post_save)` | `structure.Project` | Provision a Matrix room for a newly created project, when opted in. |
 | `on_project_pre_delete` | `Django Signal (pre_delete)` | `structure.Project` | When a project is about to be deleted, disable room (kick members, export, archive). |
 | `plan_component_has_been_updated` | `Django Signal (post_save)` | `marketplace.PlanComponent` | Log plan component updates. |
 | `plan_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Plan` | Log plan creation, update, and archiving events. |
@@ -102548,14 +103094,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 733
+Total unique handlers found: 734
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 345 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 328 handlers
+- **waldur_mastermind**: 329 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
