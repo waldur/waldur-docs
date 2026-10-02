@@ -1,5 +1,48 @@
 # Changelog
 
+## 8.1.3-rc.21 - 2026-10-02
+
+### Highlights
+
+Service providers can now give each project its own POSIX group, managed by Waldur, at their site. Custom provider roles now work across the provider workspace: what a role can see and do depends on the permissions it has, not on organization ownership. Matrix chat sessions are more reliable now that operators can set token lifetimes and Waldur joins and leaves rooms through the appservice. Reviewers also get a redesigned invitation page.
+
+### What's New
+
+- **Provider project groups**: Waldur can now allocate one POSIX group for each project at a service provider. Group IDs come from the provider's POSIX ID pools. A management command backfills groups for existing projects, and structure export and import include these groups.
+- **Software catalog CPU targets**: Providers can set CPU targets for each software catalog attached to an offering, such as EESSI. The offering's software catalog view and its configuration dialog both use the new CPU target settings.
+- **Robot account user linking**: The provider resource now lists the users that a robot account is allowed to link.
+- **Proposal role filter**: The proposal list can be narrowed to one of the reader's roles.
+- **Matrix rooms for organization owners**: Organization owners can now create the Matrix room for a project.
+
+### Improvements
+
+- **Permission-based provider access**: Custom provider roles are now granted access by permission across the provider workspace:
+    - Provider views: dashboard, organizations, projects, users and resource options.
+    - Invoice items and consumer user lists.
+    - Offering reports. Offering statistics cards are hidden from roles that lack the provider statistics permission.
+- **Provider and consumer separation**: Service provider roles no longer see order actions meant for consumers, such as consumer approval and rejection. Resource details opened from the provider workspace now load through provider endpoints.
+- **User consent**: Users who have not given consent are hidden from service providers in robot account and provider team role lists.
+- **Matrix chat**: Waldur now joins and leaves Matrix rooms through the appservice. Helm and Docker Compose deployments can configure Matrix access and refresh token lifetimes.
+- **Matrix UI**: Popovers now appear above the chat drawer and modals, and the call settings menu stays usable during calls.
+- **Reviewer invitations**: The reviewer invitation page has been redesigned, with sections on invitation details, the conflict of interest (COI) policy, the two-stage workflow and an FAQ.
+- **Call setup**: Call managers now see a warning when a call has no role mappings.
+- **Offering users list**: Secondary toolbar actions, such as user import and terms of service reporting, have moved into the Actions dropdown.
+
+### Bug Fixes
+
+- **Security**: Resources can no longer be created with private service settings that belong to another organization.
+- **OIDC login**: OIDC users are now matched by email regardless of letter case.
+- **Remote offering sync**: Pagination of category mapping rules in the remote sync dialog has been fixed.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [12 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.20...8.1.3-rc.21) - Provider project groups, permission-based provider access, software catalog CPU targets, Matrix appservice rooms, OIDC and resource security fixes.
+- **Waldur Homeport**: [14 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.20...8.1.3-rc.21) - Provider workspace access for custom roles, software catalog CPU target UI, reviewer invitation redesign, Matrix UI fixes, dead CSS cleanup.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.20...8.1.3-rc.21) - Configurable Matrix access and refresh token lifetimes.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.20...8.1.3-rc.21) - Configurable Matrix access and refresh token lifetimes.
+
+---
+
 ## 8.1.3-rc.20 - 2026-10-01
 
 ### Highlights
