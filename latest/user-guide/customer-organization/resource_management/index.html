@@ -17027,6 +17027,56 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#system-and-data-volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System and data volumes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="System and data volumes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sizes-are-checked-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sizes are checked together
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-data-volume" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional data volume
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#volume-types-with-no-quota-left" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volume types with no quota left
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#config-drive" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -18886,6 +18936,56 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#system-and-data-volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System and data volumes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="System and data volumes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sizes-are-checked-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sizes are checked together
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-data-volume" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional data volume
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#volume-types-with-no-quota-left" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volume types with no quota left
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#config-drive" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19040,7 +19140,7 @@ You need to provision at least one VPC package from a suitable provider in order
 <p>VM images contain their minimum requirements information, and non-matching VM flavors are disabled automatically.</p>
 </div>
 <ul>
-<li>Selecting VM flavor will also update ’System volume size’ with the option to override it manually (to a higher custom value). The size of ’Data Volume’ can be customized and incremented in 1 GB steps. ’System volume’ must be at least 10 GB, whereas ’System volume’ and ’Data volume’ must be equal to or less than VPC’s total Storage.</li>
+<li>Selecting VM flavor will also update ’System volume size’ with the option to override it manually (to a higher custom value). The size of ’Data Volume’ can be customized and incremented in 1 GB steps. ’System volume’ must be at least 10 GB, and together the two volumes must fit the VPC’s remaining storage quota — see <a href="#system-and-data-volumes">System and data volumes</a>.</li>
 </ul>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/VM_addition2.jpg" data-desc-position="bottom"><img alt="VM addition 2" src="../../img/VM_addition2.jpg"></a></p>
 <ul>
@@ -19083,6 +19183,42 @@ You need to provision at least one VPC package from a suitable provider in order
 <p class="admonition-title">Info</p>
 <p>On the right pane, there will be a ’Checkout summary’ with the purchase overview and indicative VM cost (as part of the VPC package cost).</p>
 </div>
+<h3 id="system-and-data-volumes">System and data volumes</h3>
+<p>The <strong>Hardware configuration</strong> step has a <strong>system volume</strong> (the boot disk,
+always created) and an optional <strong>data volume</strong>. For each one, pick a
+<strong>volume type</strong> and a <strong>size</strong>. Next to each size, a bar shows the quota the
+volume draws from and how much of it this order would use.</p>
+<p>Which quota the bar shows depends on how the VPC tracks storage:</p>
+<ul>
+<li><strong>A single storage quota</strong> — the bar reads <strong>Storage</strong> and stays in place
+  whatever volume type you pick, because every type draws from it.</li>
+<li><strong>A quota per volume type</strong> — the bar reads <strong>Gigabytes &lt;type&gt;</strong>
+  (for example <em>Gigabytes ssd</em>) and follows the selected type.</li>
+</ul>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/vm-volumes-storage-quota.png" data-desc-position="bottom"><img alt="System and data volume drawing from the common storage quota" src="../../img/vm-volumes-storage-quota.png"></a></p>
+<h4 id="sizes-are-checked-together">Sizes are checked together</h4>
+<p>Both volumes of the order count against the VPC's storage quota at the same
+time, and volumes of the same type also count against that type's quota. Each
+size may fit on its own while the two together do not; both size fields then
+show <strong>Quota usage exceeds available limit.</strong> Reduce either size, or choose a
+type with room left, to continue.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/vm-volumes-quota-exceeded.png" data-desc-position="bottom"><img alt="Two volumes that together exceed the remaining storage quota" src="../../img/vm-volumes-quota-exceeded.png"></a></p>
+<h4 id="optional-data-volume">Optional data volume</h4>
+<p>The data volume is switched off by default. Use the toggle next to
+<strong>Data volume type</strong> to add one. Switching it off again clears its size, so
+the data volume is no longer part of the order.</p>
+<h4 id="volume-types-with-no-quota-left">Volume types with no quota left</h4>
+<p>When a volume type has its own quota and that quota is used up, the type stays
+in the list but is greyed out and marked <strong>(quota exhausted)</strong>. It cannot be
+selected, and the form preselects the first type that still has room.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/vm-volume-type-quota-exhausted.png" data-desc-position="bottom"><img alt="A volume type whose quota is used up, marked as exhausted" src="../../img/vm-volume-type-quota-exhausted.png"></a></p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If every volume type is used up, no type is preselected and the order
+cannot be submitted. Ask the VPC's service provider to raise the quota —
+see <a href="../../service-provider-organization/openstack-tenant-quotas/">OpenStack tenant quotas</a>.</p>
+</div>
+<p>The same quota display and checks apply when ordering a standalone volume.</p>
 <h3 id="config-drive">Config drive</h3>
 <p>The Automation step has an <strong>Enable config drive</strong> toggle next to the start script field. A config drive is a small read-only disk attached to the instance at boot. Cloud-init reads metadata, the SSH key and the start script from it without going through the OpenStack metadata service on the network (<code>http://169.254.169.254</code>).</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/openstack-config-drive-instance.png" data-desc-position="bottom"><img alt="OpenStack instance Automation step with the Enable config drive toggle" src="../../img/openstack-config-drive-instance.png"></a></p>

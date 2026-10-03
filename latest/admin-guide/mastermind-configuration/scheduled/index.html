@@ -19236,7 +19236,7 @@ td:nth-child(4) {
 <td><code>send-workflow-step-deadline-reminders</code></td>
 <td><code>waldur_mastermind.proposal.send_workflow_step_deadline_reminders</code></td>
 <td>1 day</td>
-<td>Fire <code>deadline_approaching</code> rules for active steps whose lead time is today.<br><br>A reminder is sent when <code>(deadline - now).days == days_before</code> and is<br>recorded in the instance ledger so the daily beat cannot repeat it. Steps<br>already past their deadline are left to <code>mark_expired_workflow_steps</code>.</td>
+<td>Fire <code>deadline_approaching</code> rules for active steps whose lead time is today.<br><br>A reminder is sent when the deadline falls <code>days_before</code> calendar days<br>after today (<code>deadline.date() - now.date()</code>) and is recorded in the<br>instance ledger so the daily beat cannot repeat it. Steps<br>already past their deadline are left to <code>mark_expired_workflow_steps</code>.</td>
 </tr>
 <tr>
 <td><code>send_telemetry</code></td>
@@ -19441,6 +19441,12 @@ td:nth-child(4) {
 <td><code>waldur_mastermind.marketplace.re_evaluate_usage_limit_restrictions</code></td>
 <td>1 hour</td>
 <td>Lift usage-limit restrictions when a new period resets reported usage.<br><br>A restriction applied by <code>evaluate_usage_limit_restriction</code> is normally<br>lifted on the next usage report. When a new billing period begins and no new<br>usage is reported, this periodic task re-evaluates every currently restricted<br>resource so month/quarter/annual restrictions clear on rollover. <code>total</code><br>restrictions never roll over and are only lifted when the limit is raised.</td>
+</tr>
+<tr>
+<td><code>waldur-marketplace-resume-api-keys-under-limit</code></td>
+<td><code>waldur_mastermind.marketplace.resume_api_keys_under_limit</code></td>
+<td>1 hour</td>
+<td>Resume the API keys Waldur paused for a limit once a new month resets it.<br><br>The per-key counterpart of <code>re_evaluate_usage_limit_restrictions</code>: a usage<br>report resumes such a key on its own, but a new month may begin without one.</td>
 </tr>
 <tr>
 <td><code>waldur-marketplace-script-cleanup-orphaned-k8s-resources</code></td>

@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-03T02:03:54.290179Z
+Generated: 2026-10-03T20:50:42.793496Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -6479,6 +6479,22 @@ options:
   --end-date END_DATE   Only backfill ComponentUsage records whose
                         billing_period is on or before this date (format:
                         YYYY-MM-DD).
+
+```
+
+## backfill_provider_project_groups
+
+Create POSIX project groups for projects that already have resources at a service provider with project groups enabled, and allocate missing GIDs.
+
+```bash
+
+usage: waldur backfill_provider_project_groups [--provider PROVIDER]
+                                               [--dry-run]
+
+options:
+  --provider PROVIDER  Limit the run to the service provider with the given
+                       UUID. May be given multiple times.
+  --dry-run            Report what would be done without writing anything.
 
 ```
 
@@ -17959,7 +17975,7 @@ td:nth-child(4) {
 | `send-project-digest-notifications` | `waldur_core.structure.send_project_digest_notifications` | Cron: `0 8 * * * (m/h/dM/MY/d)` | Daily task. For each org with an enabled digest config,<br>check if it's time to send based on frequency + last_sent_at,<br>then dispatch per-customer subtasks. |
 | `send-reminder-for-pending-invitations` | `waldur_core.users.send_reminder_for_pending_invitations` | 1 day | Send reminder emails for pending invitations that are about to expire. |
 | `send-scheduled-broadcast-notifications` | `waldur_mastermind.notifications.send_scheduled_broadcast_messages` | 12 hours | Send broadcast messages that have been scheduled for delivery. |
-| `send-workflow-step-deadline-reminders` | `waldur_mastermind.proposal.send_workflow_step_deadline_reminders` | 1 day | Fire ``deadline_approaching`` rules for active steps whose lead time is today.<br><br>A reminder is sent when ``(deadline - now).days == days_before`` and is<br>recorded in the instance ledger so the daily beat cannot repeat it. Steps<br>already past their deadline are left to ``mark_expired_workflow_steps``. |
+| `send-workflow-step-deadline-reminders` | `waldur_mastermind.proposal.send_workflow_step_deadline_reminders` | 1 day | Fire ``deadline_approaching`` rules for active steps whose lead time is today.<br><br>A reminder is sent when the deadline falls ``days_before`` calendar days<br>after today (``deadline.date() - now.date()``) and is recorded in the<br>instance ledger so the daily beat cannot repeat it. Steps<br>already past their deadline are left to ``mark_expired_workflow_steps``. |
 | `send_telemetry` | `waldur_mastermind.marketplace.send_metrics` | 1 day | Send anonymous usage metrics and telemetry data to the Waldur team. |
 | `start-evaluation-for-closed-rounds` | `waldur_mastermind.proposal.start_evaluation_for_closed_rounds` | 1 hour | Start the evaluation of proposals held for their round's cut-off.<br><br>A call that evaluates at the cut-off leaves each proposal ``submitted``<br>with its steps pending. Once the round's cut-off has passed, this activates<br>the first pending step of every such proposal, one transaction per<br>proposal so a single failure does not hold back the rest of the batch.<br><br>The candidates are not filtered on the call's current setting: only a<br>held submission leaves a proposal ``submitted`` with a pending step, so a<br>proposal held just before a manager switched the call back is still<br>started rather than stranded. Idempotent: a started proposal is<br>``in_review`` and is not picked up again. |
 | `structure-set-erred-stuck-resources` | `waldur_core.structure.SetErredStuckResources` | 1 hour | This task marks all resources which have been provisioning for more than 3 hours as erred. |
@@ -17994,6 +18010,7 @@ td:nth-child(4) {
 | `waldur-freeipa-sync-names` | `waldur_freeipa.sync_names` | 1 day | Synchronize user names between Waldur and FreeIPA backend. |
 | `waldur-marketplace-calculate-usage` | `waldur_mastermind.marketplace.calculate_usage_for_current_month` | 1 hour | Calculate marketplace resource usage for the current month across all customers and projects. |
 | `waldur-marketplace-re-evaluate-usage-limit-restrictions` | `waldur_mastermind.marketplace.re_evaluate_usage_limit_restrictions` | 1 hour | Lift usage-limit restrictions when a new period resets reported usage.<br><br>A restriction applied by ``evaluate_usage_limit_restriction`` is normally<br>lifted on the next usage report. When a new billing period begins and no new<br>usage is reported, this periodic task re-evaluates every currently restricted<br>resource so month/quarter/annual restrictions clear on rollover. ``total``<br>restrictions never roll over and are only lifted when the limit is raised. |
+| `waldur-marketplace-resume-api-keys-under-limit` | `waldur_mastermind.marketplace.resume_api_keys_under_limit` | 1 hour | Resume the API keys Waldur paused for a limit once a new month resets it.<br><br>The per-key counterpart of ``re_evaluate_usage_limit_restrictions``: a usage<br>report resumes such a key on its own, but a new month may begin without one. |
 | `waldur-marketplace-script-cleanup-orphaned-k8s-resources` | `waldur_marketplace_script.cleanup_orphaned_k8s_resources` | 1 hour | Remove orphaned Kubernetes Jobs and ConfigMaps created by Waldur that are older than 1 hour. |
 | `waldur-marketplace-script-pull-resources` | `waldur_marketplace_script.pull_resources` | 1 hour | Pull resources from marketplace script offerings by executing configured pull scripts. |
 | `waldur-marketplace-script-remove-old-dry-runs` | `waldur_marketplace_script.remove_old_dry_runs` | 1 day | Remove old dry run records that are older than one day. |
@@ -83989,7 +84006,7 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 !!! Warning
     VM images contain their minimum requirements information, and non-matching VM flavors are disabled automatically.
 
-- Selecting VM flavor will also update ’System volume size’ with the option to override it manually (to a higher custom value). The size of ’Data Volume’ can be customized and incremented in 1 GB steps. ’System volume’ must be at least 10 GB, whereas ’System volume’ and ’Data volume’ must be equal to or less than VPC’s total Storage.
+- Selecting VM flavor will also update ’System volume size’ with the option to override it manually (to a higher custom value). The size of ’Data Volume’ can be customized and incremented in 1 GB steps. ’System volume’ must be at least 10 GB, and together the two volumes must fit the VPC’s remaining storage quota — see [System and data volumes](#system-and-data-volumes).
 
 [Image: VM addition 2]
 
@@ -84026,6 +84043,53 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 
 !!! Info
     On the right pane, there will be a ’Checkout summary’ with the purchase overview and indicative VM cost (as part of the VPC package cost).
+
+### System and data volumes
+
+The **Hardware configuration** step has a **system volume** (the boot disk,
+always created) and an optional **data volume**. For each one, pick a
+**volume type** and a **size**. Next to each size, a bar shows the quota the
+volume draws from and how much of it this order would use.
+
+Which quota the bar shows depends on how the VPC tracks storage:
+
+- **A single storage quota** — the bar reads **Storage** and stays in place
+  whatever volume type you pick, because every type draws from it.
+- **A quota per volume type** — the bar reads **Gigabytes &lt;type&gt;**
+  (for example *Gigabytes ssd*) and follows the selected type.
+
+[Image: System and data volume drawing from the common storage quota]
+
+#### Sizes are checked together
+
+Both volumes of the order count against the VPC's storage quota at the same
+time, and volumes of the same type also count against that type's quota. Each
+size may fit on its own while the two together do not; both size fields then
+show **Quota usage exceeds available limit.** Reduce either size, or choose a
+type with room left, to continue.
+
+[Image: Two volumes that together exceed the remaining storage quota]
+
+#### Optional data volume
+
+The data volume is switched off by default. Use the toggle next to
+**Data volume type** to add one. Switching it off again clears its size, so
+the data volume is no longer part of the order.
+
+#### Volume types with no quota left
+
+When a volume type has its own quota and that quota is used up, the type stays
+in the list but is greyed out and marked **(quota exhausted)**. It cannot be
+selected, and the form preselects the first type that still has room.
+
+[Image: A volume type whose quota is used up, marked as exhausted]
+
+!!! tip
+    If every volume type is used up, no type is preselected and the order
+    cannot be submitted. Ask the VPC's service provider to raise the quota —
+    see [OpenStack tenant quotas](../service-provider-organization/openstack-tenant-quotas.md).
+
+The same quota display and checks apply when ordering a standalone volume.
 
 ### Config drive
 
@@ -103453,6 +103517,8 @@ td:nth-child(4) {
 | `add_service_provider_uuid` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a service provider UUID field to the serializer. |
 | `apply_campaign_to_pending_invoices` | `Django Signal (post_save)` | `promotions.Campaign` | Apply campaign discounts to pending invoices and create discounted resources. |
 | `archive_offering` | `Django Signal (pre_delete)` | `openstack.Tenant` | Archive marketplace offerings when OpenStack tenant is deleted. |
+| `backfill_project_groups_when_enabled` | `Django Signal (post_save)` | `marketplace.ServiceProvider` | Create the groups of projects already using the provider when switched on. |
+| `backfill_project_groups_when_pool_saved` | `Django Signal (post_save)` | `marketplace.PosixIdPool` | Number the provider's groups whenever the pool may be able to. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_openportal.Allocation` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `waldur_openportal.RemoteAllocation` | Change the state of an order based on resource state changes. |
 | `change_order_state` | `Django Signal (post_save)` | `openstack.Instance` | Change the state of an order based on resource state changes. |
@@ -103490,6 +103556,8 @@ td:nth-child(4) {
 | `create_offering_users_when_project_role_granted` | `Custom Signal (role_granted)` | `—` | Schedule task to create or restore offering users when project role is granted. |
 | `create_price_estimate` | `Django Signal (post_save)` | `structure.Project` | Create price estimate when customer or project is created. |
 | `create_price_estimate` | `Django Signal (post_save)` | `structure.Customer` | Create price estimate when customer or project is created. |
+| `create_provider_project_group_for_resource` | `Django Signal (post_save)` | `marketplace.Resource` | Give the resource's project its POSIX group at the provider on first use. |
+| `create_provider_project_group_on_order_approval` | `Django Signal (post_save)` | `marketplace.Order` | A resource starts to count once its create order has been approved. |
 | `create_public_cluster_ip_for_floating_ip` | `Django Signal (post_save)` | `openstack.FloatingIP` | No description |
 | `create_request_when_project_is_updated` | `Django Signal (post_save)` | `structure.Project` | No description |
 | `create_resource_of_volume_if_instance_created` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
@@ -103583,6 +103651,8 @@ td:nth-child(4) {
 | `on_order_state_changed` | `Django Signal (post_save)` | `marketplace.Order` | Notify the project's Matrix room when an order is approved, completed, or rejected. |
 | `on_project_created` | `Django Signal (post_save)` | `structure.Project` | Provision a Matrix room for a newly created project, when opted in. |
 | `on_project_pre_delete` | `Django Signal (pre_delete)` | `structure.Project` | When a project is about to be deleted, disable room (kick members, export, archive). |
+| `on_user_deactivated` | `Django Signal (post_save)` | `core.User` | End the user's web chat sessions so an open drawer loses access. |
+| `on_user_pre_delete` | `Django Signal (pre_delete)` | `core.User` | End a deleted user's web chat sessions. |
 | `plan_component_has_been_updated` | `Django Signal (post_save)` | `marketplace.PlanComponent` | Log plan component updates. |
 | `plan_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Plan` | Log plan creation, update, and archiving events. |
 | `populate_volume_metadata_on_resource_creation` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
@@ -103593,6 +103663,7 @@ td:nth-child(4) {
 | `project_credit_changed_handler` | `Django Signal (post_save)` | `invoices.ProjectCredit` | No description |
 | `project_estimated_cost_policy_trigger_handler` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Evaluate project cost policies when invoice items are updated. |
 | `propagate_comment_to_parent` | `Django Signal (post_save)` | `support.Comment` | Propagate new public comments from child issues back to parent issues. |
+| `protect_pool_holding_project_group_gids` | `Django Signal (pre_delete)` | `marketplace.PosixIdPool` | Refuse to delete a pool on its own while project groups hold GIDs from it. |
 | `purge_offering_role_groups_on_scope_delete` | `Django Signal (post_delete)` | `marketplace.Resource` | Drop OfferingRoleGroup rows that pointed at a now-deleted scope. |
 | `purge_offering_role_groups_on_scope_delete` | `Django Signal (post_delete)` | `marketplace.ResourceProject` | Drop OfferingRoleGroup rows that pointed at a now-deleted scope. |
 | `reconcile_offering_profile_on_offering_changed` | `Django Signal (post_save)` | `marketplace.Offering` | When an Offering is saved, schedule a reconciliation task. Cheap |
@@ -103605,6 +103676,7 @@ td:nth-child(4) {
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.RobotAccount` | Mark the deleted POSIX id consumer's identity as released. |
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.OfferingUserGroup` | Mark the deleted POSIX id consumer's identity as released. |
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.OfferingRoleGroup` | Mark the deleted POSIX id consumer's identity as released. |
+| `release_provider_project_group_gid` | `Django Signal (post_delete)` | `marketplace.ServiceProviderProjectGroup` | Release a deleted project group's GID, never to be recycled. |
 | `request_offering_user_deletion_when_project_access_lost` | `Custom Signal (role_revoked)` | `—` | Schedule task to request offering user deletion when project access is lost. |
 | `resource_has_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Log resource changes. |
 | `resource_options_have_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Handle script execution when marketplace resource options are changed. |
@@ -103799,14 +103871,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 734
+Total unique handlers found: 742
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 345 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 329 handlers
+- **waldur_mastermind**: 337 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
