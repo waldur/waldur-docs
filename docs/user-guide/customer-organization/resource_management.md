@@ -60,7 +60,7 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 !!! Warning
     VM images contain their minimum requirements information, and non-matching VM flavors are disabled automatically.
 
-- Selecting VM flavor will also update ’System volume size’ with the option to override it manually (to a higher custom value). The size of ’Data Volume’ can be customized and incremented in 1 GB steps. ’System volume’ must be at least 10 GB, whereas ’System volume’ and ’Data volume’ must be equal to or less than VPC’s total Storage.
+- Selecting VM flavor will also update ’System volume size’ with the option to override it manually (to a higher custom value). The size of ’Data Volume’ can be customized and incremented in 1 GB steps. ’System volume’ must be at least 10 GB, and together the two volumes must fit the VPC’s remaining storage quota — see [System and data volumes](#system-and-data-volumes).
 
 ![VM addition 2](../img/VM_addition2.jpg)
 
@@ -97,6 +97,53 @@ b) If your role is ´Organization Owner´ you are able to complete the purchase 
 
 !!! Info
     On the right pane, there will be a ’Checkout summary’ with the purchase overview and indicative VM cost (as part of the VPC package cost).
+
+### System and data volumes
+
+The **Hardware configuration** step has a **system volume** (the boot disk,
+always created) and an optional **data volume**. For each one, pick a
+**volume type** and a **size**. Next to each size, a bar shows the quota the
+volume draws from and how much of it this order would use.
+
+Which quota the bar shows depends on how the VPC tracks storage:
+
+- **A single storage quota** — the bar reads **Storage** and stays in place
+  whatever volume type you pick, because every type draws from it.
+- **A quota per volume type** — the bar reads **Gigabytes &lt;type&gt;**
+  (for example *Gigabytes ssd*) and follows the selected type.
+
+![System and data volume drawing from the common storage quota](../img/vm-volumes-storage-quota.png)
+
+#### Sizes are checked together
+
+Both volumes of the order count against the VPC's storage quota at the same
+time, and volumes of the same type also count against that type's quota. Each
+size may fit on its own while the two together do not; both size fields then
+show **Quota usage exceeds available limit.** Reduce either size, or choose a
+type with room left, to continue.
+
+![Two volumes that together exceed the remaining storage quota](../img/vm-volumes-quota-exceeded.png)
+
+#### Optional data volume
+
+The data volume is switched off by default. Use the toggle next to
+**Data volume type** to add one. Switching it off again clears its size, so
+the data volume is no longer part of the order.
+
+#### Volume types with no quota left
+
+When a volume type has its own quota and that quota is used up, the type stays
+in the list but is greyed out and marked **(quota exhausted)**. It cannot be
+selected, and the form preselects the first type that still has room.
+
+![A volume type whose quota is used up, marked as exhausted](../img/vm-volume-type-quota-exhausted.png)
+
+!!! tip
+    If every volume type is used up, no type is preselected and the order
+    cannot be submitted. Ask the VPC's service provider to raise the quota —
+    see [OpenStack tenant quotas](../service-provider-organization/openstack-tenant-quotas.md).
+
+The same quota display and checks apply when ordering a standalone volume.
 
 ### Config drive
 
