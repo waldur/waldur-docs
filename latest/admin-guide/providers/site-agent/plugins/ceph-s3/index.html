@@ -20402,6 +20402,13 @@ plugin applies the ordered limits as RadosGW quotas:</p>
 <li><strong>Options</strong>: <code>max_storage_limit</code> and <code>max_object_limit</code> for user input (safety limits)</li>
 <li><strong>Pricing</strong>: €0.0010 per GB-day for storage; objects are not billed</li>
 </ul>
+<p>Leave <code>plugin_options.enable_api_key_provisioning</code> <strong>off</strong> on a Ceph S3
+offering. It turns on per-key governance — request, assign, per-key limits,
+pause, resume, delete — which this plugin does not support: it does not set
+<code>supports_resource_api_key_lifecycle</code>, so the agent answers every such command
+with <code>set_erred</code> and the key ends up Erred in the portal. Waldur cannot check
+the option against the backend, so nothing stops it being turned on. Reveal and
+rotate work without it.</p>
 <h3 id="order-payload-example">Order Payload Example</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>

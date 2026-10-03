@@ -5520,6 +5520,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How keys are identified">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-the-backend_id-comes-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the backend_id comes from
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -19173,6 +19190,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How keys are identified">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-the-backend_id-comes-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the backend_id comes from
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -19625,9 +19659,29 @@ holds the only copy (encrypted) — the plugin keeps nothing.</p>
 </tr>
 </tbody>
 </table>
-<p>The resource's <code>backend_id</code> is its UUID hex, and each key is a numbered slot beneath it. Keys are
-minted <strong>non-expiring</strong> (no <code>duration</code>): Waldur owns the resource lifecycle, and an expiry it does
-not know about would revoke access behind its back.</p>
+<p>Each key is a numbered slot beneath the resource's <code>backend_id</code>. Keys are minted
+<strong>non-expiring</strong> (no <code>duration</code>): Waldur owns the resource lifecycle, and an expiry it does not
+know about would revoke access behind its back.</p>
+<h4 id="where-the-backend_id-comes-from">Where the <code>backend_id</code> comes from</h4>
+<p><code>resource_backend_id_source</code> picks what a new resource's <code>backend_id</code> is derived from:</p>
+<ul>
+<li><strong><code>slug</code></strong> (default): <code>allocation_prefix</code> + the resource slug, as the order processor derives
+  it for every plugin. The slug comes from a name the ordering user picks.</li>
+<li><strong><code>uuid</code></strong>: the resource UUID hex, e.g. <code>3f2c…9a1e-1</code>, <code>3f2c…9a1e-2</code>.</li>
+</ul>
+<p><strong>Use <code>uuid</code> on any proxy that also holds keys Waldur did not create.</strong> Key aliases live in the
+proxy's single global namespace, and the plugin claims every key matching
+<code>^&lt;backend_id&gt;-\d+$</code> as a slot of the resource. Under <code>slug</code>, a resource whose slug happens to
+be <code>rkd43-opencode</code> adopts a hand-made key <code>rkd43-opencode-2</code>: the key is metered against the
+Waldur project, has its budget rewritten, is blocked when the resource pauses and is deleted
+with it. Any user with order rights can pick the name, so this can be done on purpose. The slug's
+own dedupe suffix (<code>test-alloc-2</code>) is also indistinguishable from a slot number. Under <code>uuid</code>,
+no alias outside the agent's own has that shape.</p>
+<p><strong>Migrating.</strong> Switching to <code>uuid</code> affects only resources provisioned afterwards. Existing
+resources keep the slug-based <code>backend_id</code> they were created with, including when they are
+restored, so their keys stay reachable and nothing needs rewriting on the proxy. To move an
+existing resource to a UUID alias, terminate it and order it again. To find the resources that
+are still slug-based, list the aliases that aren't <code>&lt;32 hex&gt;-&lt;n&gt;</code>.</p>
 <h3 id="limit-enforcement">Limit enforcement</h3>
 <p>Primary path — Waldur is the authority:</p>
 <ol>
@@ -20159,6 +20213,12 @@ block.</p>
 <td>Per-request timeout in seconds</td>
 </tr>
 <tr>
+<td><code>resource_backend_id_source</code></td>
+<td>no</td>
+<td><code>slug</code></td>
+<td><code>slug</code> or <code>uuid</code>; see <a href="#where-the-backend_id-comes-from">below</a></td>
+</tr>
+<tr>
 <td><code>openwebui</code></td>
 <td>no</td>
 <td>—</td>
@@ -20242,7 +20302,8 @@ block.</p>
 <span class="normal">30</span>
 <span class="normal">31</span>
 <span class="normal">32</span>
-<span class="normal">33</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
+<span class="normal">33</span>
+<span class="normal">34</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"LLM</span><span class="nv"> </span><span class="s">Inference"</span>
 <span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"litellm"</span>
 <span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"litellm"</span><span class="w">     </span><span class="c1"># required — pause/restore blocks the keys</span>
@@ -20256,6 +20317,7 @@ block.</p>
 <span class="w">      </span><span class="nt">tpm_limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">      </span><span class="nt">rpm_limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">      </span><span class="nt">verify_ssl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">resource_backend_id_source</span><span class="p">:</span><span class="w"> </span><span class="s">"uuid"</span><span class="w">    </span><span class="c1"># key aliases &lt;resource-uuid&gt;-&lt;n&gt;; default "slug"</span>
 
 <span class="w">      </span><span class="c1"># Optional chat surface. Omit the whole block for an API-only offering.</span>
 <span class="w">      </span><span class="nt">openwebui</span><span class="p">:</span>

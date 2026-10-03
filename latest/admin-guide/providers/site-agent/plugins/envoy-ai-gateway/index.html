@@ -5134,6 +5134,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#per-key-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-key usage
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5213,10 +5224,54 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#one-key-is-rejected-while-the-resources-other-keys-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One key is rejected while the resource's other keys work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-new-key-is-blocked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A new key is blocked
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-per-key-command-stays-pending-in-waldur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A per-key command stays pending in Waldur
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#usage-reports-are-empty-or-zero" class="md-nav__link">
     <span class="md-ellipsis">
       
         Usage reports are empty or zero
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-key-usage-is-not-reported" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-key usage is not reported
       
     </span>
   </a>
@@ -19219,6 +19274,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#per-key-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-key usage
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19298,10 +19364,54 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#one-key-is-rejected-while-the-resources-other-keys-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One key is rejected while the resource's other keys work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-new-key-is-blocked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A new key is blocked
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-per-key-command-stays-pending-in-waldur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A per-key command stays pending in Waldur
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#usage-reports-are-empty-or-zero" class="md-nav__link">
     <span class="md-ellipsis">
       
         Usage reports are empty or zero
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-key-usage-is-not-reported" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-key usage is not reported
       
     </span>
   </a>
@@ -19405,31 +19515,35 @@
 LLM inference access can be sold, provisioned, metered, and billed through the Waldur marketplace.
 It provisions per-customer API keys from marketplace orders and reports usage back to Waldur for
 metering and billing. Token/cost budgets are enforced by Waldur (report usage -&gt; mastermind pauses
-the resource when a limit is reached -&gt; the agent blocks the key), not by the gateway.</p>
+the resource, or a single key, when a limit is reached -&gt; the agent blocks the keys), not by
+the gateway.</p>
 <p>The plugin is Kubernetes-native: API keys live in Kubernetes Secrets that the Envoy Gateway
 <code>SecurityPolicy</code> reads.</p>
 <h2 id="features">Features</h2>
 <ul>
 <li><strong>API key lifecycle</strong>: provision, pause, restore, and terminate gateway API keys directly from
   Waldur marketplace orders</li>
+<li><strong>Per-key governance</strong>: request, rotate, pause, resume and delete one key at a time from the
+  portal. The resource's other keys keep serving</li>
 <li><strong>Two-secret pause model</strong>: suspend access at the authentication layer by moving a key between
   an <em>active</em> and a <em>blocked</em> Secret — no key regeneration on restore</li>
-<li><strong>Usage reporting</strong>: report per-key token usage from a pluggable usage warehouse back to Waldur
-  for metering and billing</li>
+<li><strong>Usage reporting</strong>: report token usage from a pluggable usage warehouse back to Waldur for
+  metering and billing, per resource and, where the usage shipper records it, per key</li>
 <li><strong>In-cluster or external</strong>: run inside the cluster (in-cluster config) or against a kubeconfig
   context for local development</li>
 </ul>
 <h2 id="overview">Overview</h2>
 <p>The plugin exposes two backends that are normally paired on a single composed offering:</p>
 <ul>
-<li><strong>Management backend</strong> (<code>envoy</code>): the <code>order_processing_backend</code>. Owns the API key lifecycle
-  (provision, pause, restore, terminate).</li>
-<li><strong>Usage reporting backend</strong> (<code>envoy-usage</code>): the <code>reporting_backend</code>. Reads per-key token usage
-  from a usage warehouse and submits it to Waldur.</li>
+<li><strong>Management backend</strong> (<code>envoy</code>): the <code>order_processing_backend</code>. Owns the API key lifecycle:
+  provision, pause, restore and terminate for the whole resource, and Waldur's per-key commands.</li>
+<li><strong>Usage reporting backend</strong> (<code>envoy-usage</code>): the <code>reporting_backend</code>. Reads token usage from a
+  usage warehouse and submits it to Waldur, per resource and, where the rows name a key, per key.</li>
 </ul>
 <p>Token pricing itself lives in Waldur: the reporting backend submits raw token counts, and the
-offering plan prices them (e.g. €/token). Keys and usage are keyed off a single
-<code>client_id</code> (the resource's <code>backend_id</code>) — provision it once and everything else follows.</p>
+offering plan prices them (e.g. €/token). Everything is keyed off the resource's <code>backend_id</code>:
+its keys are the Secret entries <code>&lt;backend_id&gt;-&lt;n&gt;</code>, and its usage is recorded under the
+<code>backend_id</code> itself.</p>
 <p>For deployments that price usage upstream instead (per-model rates, discounts), the sibling
 <code>cscs-dwdi-inference</code> reporting backend is the cost-model alternative: it reports a pre-priced
 <code>token_cost</code> component that Waldur records as-is rather than raw token counts. Pair it in place of
@@ -19438,30 +19552,126 @@ offering plan prices them (e.g. €/token). Keys and usage are keyed off a singl
 <h3 id="management-backend-envoy">Management Backend (<code>envoy</code>)</h3>
 <p>Envoy Gateway's <code>SecurityPolicy</code> authenticates requests against API keys stored as <code>clientID: key</code>
 entries in a Kubernetes Secret. This backend manages those entries.</p>
-<p><strong>Key lifecycle</strong> — to support pause/restore using only the <code>client_id</code>, two Secrets are kept and
+<p><strong>Key lifecycle</strong> — to pause and restore a key without regenerating it, two Secrets are kept and
 entries move between them:</p>
 <ul>
-<li><strong>create (order)</strong>: generate a <code>client_id</code> + random key, add <code>client_id: key</code> to the <strong>active</strong>
-  Secret, and return <code>client_id</code> as the <code>backend_id</code> (surfacing the key + endpoint on the
-  resource).</li>
-<li><strong>pause</strong>: move the entry <strong>active → blocked</strong> — authentication now fails with 401.</li>
-<li><strong>restore</strong>: move the entry <strong>blocked → active</strong>.</li>
-<li><strong>terminate</strong>: remove the entry from both Secrets.</li>
+<li><strong>create (order)</strong>: register the resource with its UUID as the <code>backend_id</code> and surface the
+  gateway endpoint on it. The agent then generates the resource's keys, adds each as a
+  <code>&lt;backend_id&gt;-&lt;n&gt;: key</code> entry to the <strong>active</strong> Secret, and reports it to Waldur.</li>
+<li><strong>pause</strong>: move every key of the resource <strong>active → blocked</strong> — authentication now fails
+  with 401.</li>
+<li><strong>restore</strong>: move the resource's keys <strong>blocked → active</strong>, except keys paused on their own.</li>
+<li><strong>terminate</strong>: remove every key of the resource from both Secrets.</li>
 </ul>
+<p><strong>Per-key lifecycle.</strong> Each key is one Secret entry, <code>&lt;backend_id&gt;-&lt;n&gt;</code>, so the backend declares
+<code>supports_resource_api_key_lifecycle</code> and carries out Waldur's commands for a single key. The agent
+applies each command to the Secrets first and then acknowledges it to Waldur:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Acknowledgement</th>
+<th>What happens in the Secrets</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>create</td>
+<td><code>set_key</code></td>
+<td>A new entry under the next free <code>&lt;backend_id&gt;-&lt;n&gt;</code>; blocked on a paused resource</td>
+</tr>
+<tr>
+<td>rotate</td>
+<td><code>set_key</code></td>
+<td>The value is overwritten in place; a key left paused by an erred pause serves again</td>
+</tr>
+<tr>
+<td>pause</td>
+<td><code>set_paused</code></td>
+<td>The entry moves to the blocked Secret as <code>&lt;client_id&gt;.paused</code></td>
+</tr>
+<tr>
+<td>resume</td>
+<td><code>set_ok</code></td>
+<td>The entry moves back to the active Secret, or to a plain blocked entry on a paused resource</td>
+</tr>
+<tr>
+<td>update</td>
+<td><code>set_ok</code></td>
+<td>Nothing, as Waldur enforces limits; a key left paused by an erred pause serves again</td>
+</tr>
+<tr>
+<td>delete</td>
+<td><code>set_deleted</code></td>
+<td>The entry is removed from both Secrets</td>
+</tr>
+</tbody>
+</table>
+<p>A new key never reuses a client_id Waldur has held for the resource, including a deleted key's,
+because Waldur attributes usage by client_id. A key resumed on a paused resource comes back with
+the other keys when the resource is restored.</p>
+<p>Waldur accepts these commands only on an offering with the <code>enable_api_key_provisioning</code> plugin
+option set; without it, keys can still be rotated. A key command is not an order, but the agent
+picks it up alongside the orders:</p>
+<ul>
+<li>In <code>order_process</code> mode, on the next cycle, after the orders (every
+  <code>WALDUR_SITE_AGENT_ORDER_PROCESS_PERIOD_MINUTES</code>, 5 by default), however recently Waldur issued it.</li>
+<li>In <code>event_process</code> mode with <code>stomp_enabled: true</code>, as soon as Waldur sends it. If the message is
+  lost, the reconciliation sweep applies the command once it has been pending for 30 minutes, on
+  the sweep's next run (every <code>WALDUR_SITE_AGENT_RECONCILIATION_PERIOD_MINUTES</code>, 60 by default).</li>
+</ul>
+<p>As with orders, <code>order_process</code> skips an offering with <code>stomp_enabled: true</code>.</p>
+<p><strong>Resource pause and key pause.</strong> Pausing a whole resource and pausing one key are independent,
+and the name of an entry in the blocked Secret records which one holds it back. The gateway only
+reads the active Secret; the blocked Secret is where a switched-off key's value waits, so it can
+serve again without being regenerated. Take a resource <code>abc</code> with the keys <code>abc-1</code>, <code>abc-2</code> and
+<code>abc-3</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>                               active Secret         blocked Secret
+consumer pauses abc-2          abc-1, abc-3          abc-2.paused
+Waldur pauses the resource     (empty)               abc-1, abc-3, abc-2.paused, abc.resource-paused
+Waldur unpauses the resource   abc-1, abc-3          abc-2.paused
+</code></pre></div></td></tr></tbody></table></div>
+<ul>
+<li><strong><code>&lt;client_id&gt;.paused</code></strong> — the key is paused on its own. Only a resume, rotate or update brings
+  it back.</li>
+<li><strong><code>&lt;client_id&gt;</code></strong> — the key is held back because its resource is paused. Restoring the resource
+  moves these entries, and only these, back to the active Secret. This matters because the
+  membership sync restores every resource that is not paused on every cycle: without the suffix,
+  a key paused on its own would serve again within one cycle.</li>
+<li><strong><code>&lt;backend_id&gt;.resource-paused</code></strong> — records the resource pause itself; it is a flag, not a
+  key. A key added to the resource checks it to decide whether it lands active or blocked. The
+  keys alone cannot answer that when the resource has no keys left, or when every key left is
+  paused on its own.</li>
+</ul>
+<p>No additional Secret is needed.</p>
+<p>Rotate and update settle a key as OK in Waldur, so after either one the key serves, unless its
+resource is paused. Waldur allows both on an Erred key, and an Erred key can still be held by its own
+pause when the pause was applied but its acknowledgement failed.</p>
+<p><strong>Limits and models.</strong> A key's limits work like the resource's limits. The plugin stores and enforces
+nothing: the reporting backend reports each key's usage, and Waldur pauses the key once its usage
+reaches a limit. The gateway has no per-key model rule, so a command that would restrict a key to
+some models fails with an error rather than leaving an unrestricted key that Waldur shows as
+restricted. Leave a key's model list empty on this backend.</p>
 <p><strong>Kubernetes objects touched:</strong> Secrets (<code>get</code>/<code>patch</code>) in the configured namespace.</p>
 <p><strong>Limit enforcement</strong> — the gateway does not cap usage. The reporting backend submits usage to
 Waldur; when a <code>LIMIT</code> component's reported usage reaches its limit and the offering sets
 <code>plugin_options.action_on_usage_limit: pause</code>, mastermind pauses the resource and the agent blocks
-the key (active -&gt; blocked Secret). When usage drops back below the limit, the resource is unpaused
-and the key is restored.</p>
+its keys (active -&gt; blocked Secret). When usage drops back below the limit, the resource is
+unpaused and the keys are restored. A key's own limit works the same way for that key alone (see
+<a href="#management-backend-envoy">Limits and models</a> above).</p>
 <h3 id="usage-reporting-backend-envoy-usage">Usage Reporting Backend (<code>envoy-usage</code>)</h3>
-<p>A read-only backend that reports per-key token usage from a usage warehouse — any HTTP service
-that exposes the endpoints below (for example a small collector that aggregates the gateway's
-per-request usage metrics).</p>
+<p>A read-only backend that reports token usage from a usage warehouse — any HTTP service that
+exposes the endpoints below (for example a small collector that aggregates the gateway's
+per-request usage metrics). Usage is reported per resource and, when the rows name the key they
+came through, per key as well (see <a href="#per-key-usage">Per-key usage</a>).</p>
 <p><strong>API endpoints used:</strong></p>
 <ul>
 <li><code>GET /usage-month?from=YYYY-MM&amp;to=YYYY-MM&amp;client_id=...</code> — per-<code>client_id</code> usage rows for a
-  month range; response shape <code>{"usage": [{"client_id": "...", "input_tokens": N, "output_tokens": N}]}</code></li>
+  month range; response shape <code>{"usage": [{"client_id": "...", "input_tokens": N, "output_tokens": N}]}</code>,
+  where a row may also carry <code>key_client_id</code></li>
 <li><code>GET /health</code> — liveness check used by <code>ping()</code></li>
 </ul>
 <p>The backend maps the warehouse's token fields onto the offering's components, reporting only the
@@ -19504,7 +19714,7 @@ combined example.</p>
 <td><code>blocked_secret</code></td>
 <td>no</td>
 <td><code>&lt;apikey_secret&gt;-blocked</code></td>
-<td>Secret holding paused keys</td>
+<td>Secret holding paused keys (resource or key paused)</td>
 </tr>
 <tr>
 <td><code>kubeconfig_path</code></td>
@@ -19571,11 +19781,13 @@ combined example.</p>
 <span class="normal">23</span>
 <span class="normal">24</span>
 <span class="normal">25</span>
-<span class="normal">26</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">offerings</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"LLM</span><span class="nv"> </span><span class="s">Inference"</span>
 <span class="w">    </span><span class="nt">order_processing_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"envoy"</span>
 <span class="w">    </span><span class="nt">membership_sync_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"envoy"</span><span class="w">     </span><span class="c1"># required for pause/restore (key blocking)</span>
 <span class="w">    </span><span class="nt">reporting_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"envoy-usage"</span>
+<span class="w">    </span><span class="nt">stomp_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                  </span><span class="c1"># apply API key commands (rotate, per-key) immediately</span>
 
 <span class="w">    </span><span class="nt">backend_settings</span><span class="p">:</span>
 <span class="w">      </span><span class="c1"># --- management backend (envoy) ---</span>
@@ -19603,9 +19815,9 @@ in; <code>accounting_type: usage</code> here is the agent-side metering type. En
 Waldur <strong>offering</strong>, not in this file: for a resource to auto-pause, the matching offering
 component must be <code>billing_type: LIMIT</code> and the offering must set
 <code>plugin_options.action_on_usage_limit: pause</code> — only <code>LIMIT</code> components are checked against their
-limit. When reported usage reaches the limit, Waldur pauses the resource and the agent blocks the
-key. Blocking runs in the membership-sync loop, so <code>membership_sync_backend: envoy</code> must be set
-(as above) — without it the agent never blocks the key and the limit is not enforced.</p>
+limit. When reported usage reaches the limit, Waldur pauses the resource and the agent blocks its
+keys. Blocking runs in the membership-sync loop, so <code>membership_sync_backend: envoy</code> must be set
+(as above) — without it the agent never blocks the keys and the limit is not enforced.</p>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
 <li><strong>Both Secrets must pre-exist.</strong> Create empty <code>apikey_secret</code> and <code>&lt;apikey_secret&gt;-blocked</code>
@@ -19648,8 +19860,35 @@ happens at the <strong>usage-shipper</strong> (a Vector pipeline): its <code>rem
 <span class="nv">cid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">replace</span><span class="p">(</span><span class="nx">cid</span><span class="p">,</span><span class="w"> </span><span class="nx">r</span><span class="s">'-\d+$'</span><span class="p">,</span><span class="w"> </span><span class="s">""</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p><code>envoy-usage</code> then queries the warehouse by <code>resource_backend_id</code> unchanged — no key
-enumeration. Pause, restore and terminate are the opposite: they act on the gateway Secret
-rather than on usage, so they fan out to <strong>every</strong> client-id the resource owns.</p>
+enumeration. Pausing, restoring and terminating the resource are the opposite: they act on the
+gateway Secret rather than on usage, so they fan out to <strong>every</strong> client-id the resource owns.
+Waldur's per-key commands act on the one client-id they name.</p>
+<h3 id="per-key-usage">Per-key usage</h3>
+<p>Waldur enforces a key's limits against the usage reported for that key. The shipper supplies it by
+keeping the unstripped client-id on each row as <code>key_client_id</code>, beside the stripped
+<code>client_id</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># usage-shipper (Vector) remap transform</span>
+<span class="p">.</span><span class="nv">key_client_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">cid</span>
+<span class="nv">cid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">replace</span><span class="p">(</span><span class="nx">cid</span><span class="p">,</span><span class="w"> </span><span class="nx">r</span><span class="s">'-\d+$'</span><span class="p">,</span><span class="w"> </span><span class="s">""</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="nt">"usage"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"client_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;backend_id&gt;"</span><span class="p">,</span><span class="w"> </span><span class="nt">"key_client_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;backend_id&gt;-1"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"input_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">120</span><span class="p">,</span><span class="w"> </span><span class="nt">"output_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">}]}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Billing does not change. The resource total is still the sum of every row for the resource's
+<code>client_id</code>, whether or not the row names a key. Rows that name one of the resource's keys are also
+summed per key, so the per-key figures add up to that total. The agent reports every key's
+current-month usage with <code>report_usage</code>, including deleted keys, in the same <code>report</code> cycle
+that submits the resource total. A key with no rows this month is
+reported as zero, so last month's figure does not keep it over its limit. Rows naming a key Waldur
+does not hold are logged and not reported, so the per-key figures then add up to less than the
+total.</p>
+<p>A resource that has non-zero usage on a row naming none of its keys is not reported per key for
+that month. Splitting only part of the total across keys would under-count against their limits.
+This happens with rows shipped before the shipper recorded keys. It is also skipped for an
+offering that does not have Waldur's <code>enable_api_key_provisioning</code> plugin option set.</p>
 <h2 id="installation">Installation</h2>
 <p>The plugin is discovered automatically once <code>waldur-site-agent-envoy-ai-gateway</code> is installed
 alongside <code>waldur-site-agent</code>.</p>
@@ -19664,25 +19903,54 @@ uv<span class="w"> </span>sync<span class="w"> </span>--all-packages
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>plugins/envoy-ai-gateway/
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="testing">Testing</h2>
+<p>Run the tests from inside the plugin directory; the plugin's entry points only resolve there.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Run all plugin tests</span>
-uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>plugins/envoy-ai-gateway/tests/
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>plugins/envoy-ai-gateway
+
+<span class="c1"># Run all plugin tests</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/
 
 <span class="c1"># Run with coverage</span>
-uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>plugins/envoy-ai-gateway/tests/<span class="w"> </span>--cov<span class="o">=</span>waldur_site_agent_envoy_ai_gateway
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>waldur_site_agent_envoy_ai_gateway
 </code></pre></div></td></tr></tbody></table></div>
-<p>The suite covers key lifecycle (provision/pause/restore/terminate), the usage warehouse client, and
-usage report mapping — all with the Kubernetes and HTTP clients mocked, so no live cluster or
-warehouse is required.</p>
+<p>The suite covers the resource-level key lifecycle (provision/pause/restore/terminate), each
+per-key command and how it interacts with a resource pause, the usage warehouse client, and usage
+report mapping, per resource and per key. The Kubernetes and HTTP clients are mocked or replaced
+by an in-memory Secret store, so no live cluster or warehouse is required.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="keys-are-provisioned-but-requests-are-rejected">Keys are provisioned but requests are rejected</h3>
 <ul>
 <li>Confirm the <code>SecurityPolicy</code> reads the Secret named by <code>apikey_secret</code>.</li>
 <li>Check the key landed in the <strong>active</strong> Secret, not the blocked one (<code>kubectl get secret ...</code>).</li>
 <li>Verify the request sends the API key the order surfaced.</li>
+</ul>
+<h3 id="one-key-is-rejected-while-the-resources-other-keys-work">One key is rejected while the resource's other keys work</h3>
+<ul>
+<li>The key is paused on its own: the blocked Secret holds it as <code>&lt;client_id&gt;.paused</code>. Resume it
+  from Waldur; restoring the resource does not bring it back.</li>
+<li>The key is deleted, or its entry was never written. Check the key's state in Waldur: a command
+  that failed leaves the key Erred with the error attached.</li>
+</ul>
+<h3 id="a-new-key-is-blocked">A new key is blocked</h3>
+<ul>
+<li>The resource is paused in Waldur, or the blocked Secret still holds its
+  <code>&lt;backend_id&gt;.resource-paused</code> marker. A resource that is not paused has the marker cleared on
+  the next membership-sync cycle.</li>
+</ul>
+<h3 id="a-per-key-command-stays-pending-in-waldur">A per-key command stays pending in Waldur</h3>
+<ul>
+<li>Confirm the agent runs in <code>order_process</code> or <code>event_process</code> mode; <code>report</code> and
+  <code>membership_sync</code> do not carry out key commands.</li>
+<li>In <code>order_process</code> mode, the command is applied on the next cycle (5 minutes by default). That
+  mode skips an offering with <code>stomp_enabled: true</code>, so such an offering needs <code>event_process</code>.</li>
+<li>In <code>event_process</code> mode, a command whose STOMP message was lost waits for the reconciliation
+  sweep: 30 minutes pending, then the sweep's next run (hourly by default).</li>
+<li>The agent log names each command it applies: <code>Applying API key &lt;action&gt; to key &lt;uuid&gt;</code>.</li>
 </ul>
 <h3 id="usage-reports-are-empty-or-zero">Usage reports are empty or zero</h3>
 <ul>
@@ -19691,6 +19959,13 @@ warehouse is required.</p>
   (the resource <code>backend_id</code>).</li>
 <li>Confirm the offering's <code>backend_components</code> are named to match the warehouse fields
   (<code>input_tokens</code>, <code>output_tokens</code>).</li>
+</ul>
+<h3 id="per-key-usage-is-not-reported">Per-key usage is not reported</h3>
+<ul>
+<li>The Waldur offering must set the <code>enable_api_key_provisioning</code> plugin option.</li>
+<li>The warehouse rows must carry <code>key_client_id</code> (see <a href="#per-key-usage">Per-key usage</a>). A resource
+  with non-zero usage on a row that names none of its keys is reported only as a total; the agent
+  logs <code>Usage of &lt;backend_id&gt; is not attributed to its keys</code>.</li>
 </ul>
 <h3 id="rbac-errors-on-secrets">RBAC errors on Secrets</h3>
 <ul>
@@ -19713,27 +19988,31 @@ warehouse is required.</p>
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
-<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code>plugins/envoy-ai-gateway/
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code>plugins/envoy-ai-gateway/
 ├── pyproject.toml
 ├── README.md
 ├── waldur_site_agent_envoy_ai_gateway/
 │   ├── __init__.py
-│   ├── backend.py          # EnvoyAIGatewayBackend — key lifecycle (management)
-│   ├── client.py           # EnvoyAIGatewayClient — K8s Secrets
-│   ├── reporting.py        # EnvoyUsageReportingBackend — token usage reporting
+│   ├── backend.py          # EnvoyAIGatewayBackend — resource and per-key lifecycle (management)
+│   ├── client.py           # EnvoyAIGatewayClient — K8s Secrets (active, blocked, paused entries)
+│   ├── reporting.py        # EnvoyUsageReportingBackend — token usage, per resource and per key
 │   ├── usage_client.py     # EnvoyUsageClient — usage warehouse HTTP client
 │   └── schemas.py          # Pydantic configuration schemas
 └── tests/
     ├── test_envoy_backend.py
     ├── test_envoy_client.py
+    ├── test_envoy_key_lifecycle.py
     ├── test_envoy_usage_backend.py
     └── test_envoy_usage_client.py
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="key-classes">Key Classes</h3>
 <ul>
-<li><strong><code>EnvoyAIGatewayBackend</code></strong> (<code>envoy</code>): management backend — provisions and blocks/unblocks keys</li>
+<li><strong><code>EnvoyAIGatewayBackend</code></strong> (<code>envoy</code>): management backend — provisions and blocks/unblocks a
+  resource's keys, and mints, pauses, resumes, updates and deletes a single key</li>
 <li><strong><code>EnvoyAIGatewayClient</code></strong>: Kubernetes client for api-key Secrets</li>
-<li><strong><code>EnvoyUsageReportingBackend</code></strong> (<code>envoy-usage</code>): reports token usage to Waldur</li>
+<li><strong><code>EnvoyUsageReportingBackend</code></strong> (<code>envoy-usage</code>): reports token usage to Waldur, per resource
+  and per key</li>
 <li><strong><code>EnvoyUsageClient</code></strong>: HTTP client for the usage warehouse</li>
 </ul>
 <h3 id="registered-entry-points">Registered Entry Points</h3>
