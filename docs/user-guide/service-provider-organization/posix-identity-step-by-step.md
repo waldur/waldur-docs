@@ -59,12 +59,30 @@ How the names are formed: [Usernames derived from the pool](posix-id-pools.md#us
 Why one account per person matters for a shared directory:
 [One person, one entry](openldap-sssd-accounts.md#one-person-one-entry).
 
-!!! note "Switching an existing provider"
-    Changing **Account scope** to *Per service provider* on a provider that
-    already has offering users links their existing accounts to one account per
-    person. It is refused while a person has different usernames on different
-    offerings; make those consistent first. An offering that runs its own
-    separate directory can still override the scope back to per offering.
+### Switching an existing provider
+
+Changing **Account scope** to *Per service provider* on a provider that already
+has offering users links their existing accounts to one account per person.
+When every person has the same username on every offering, the switch is saved
+at once.
+
+When some people have different usernames on different offerings, the switch
+cannot be saved yet: one of their usernames has to be kept. Waldur shows those
+people instead of saving, and applies the switch once each of them is resolved.
+For each person, choose the username to keep. Each candidate says how many
+offerings use it, whether it has active resources and whether a home directory
+is recorded for it — renaming a live account changes who owns its files, so
+prefer the name that is in use.
+
+![Resolve username conflicts: Dave Demo has two usernames, each used on one offering, with no active resources and no home directory; the switch to per service provider accounts is applied once the conflict is resolved](../img/posix-resolve-username-conflicts.png)
+
+In **Preview changes**, **Apply** stays disabled while the preview reports
+conflicts for the switch; **Resolve conflicts** opens the same choice and
+applies the switch afterwards. The full list is also on
+**Accounts → Username conflicts**.
+
+An offering that runs its own separate directory can still override the scope
+back to per offering.
 
 ## 2. Set up each offering's user management
 
@@ -125,9 +143,33 @@ whole provider, and expanding a row names the offerings using it:
 
 ![Offering users with UID and GID columns](../img/posix-offering-users-uid-gid.png)
 
+An offering user that reads through a provider account shows **Provider
+account** next to its username. The link opens that provider account; expanding
+the row, or opening **Details** from its actions, says the same:
+
+![Offering users reading through provider accounts: each row shows a Provider account link, and the expanded row names the provider account](../img/posix-offering-users-provider-account.png)
+
+The username and POSIX attributes of such an account belong to the provider
+account, so its actions offer **Provider account** instead of editing the
+username or the POSIX attributes; change those on the provider account, and
+every offering using it follows. What stays per offering — the comment, the
+account state, restricting or deleting the account — is still edited on the row.
+
+![The details of an offering user that reads through a provider account](../img/posix-offering-user-details-provider-account.png)
+
+On the *Provider accounts* tab, expanding an account lists its offering
+accounts: **Shared** marks those that read through it, and **Own account** an
+offering that keeps an account of its own, for example one that overrides the
+scope back to per offering.
+
 The same person must show the **same** username and UID on every sharing
 offering. Where that is not yet true, **Accounts → Username conflicts** lists
-the people affected and lets you choose the username each of them keeps. The pool's utilisation and the list of identities drawn from it are on
+the people affected and lets you choose the username each of them keeps.
+
+!!! tip "Adding accounts by hand"
+    On an offering that shares provider accounts, **Create** and **Bulk import**
+    ask for no username: the account reads it from the person's provider
+    account, which Waldur creates if the person has none yet. The pool's utilisation and the list of identities drawn from it are on
 the pool page: [Monitoring utilisation](posix-id-pools.md#monitoring-utilisation).
 
 ## 5. Know what a departure looks like
