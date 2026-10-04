@@ -335,6 +335,17 @@ The project-group pass runs on the agent's periodic reconcile, after the
 accounts, and also when the offering has no accounts left, so cluster entries
 are still cleaned up.
 
+With event processing (STOMP) enabled, the offering also subscribes to Waldur's
+project-group events — a group numbered, renumbered or deleted, or project
+groups switched on or off for the provider — and the same pass runs a few
+seconds after one arrives, so a new project's group reaches the directory
+without waiting for the periodic reconcile. Events arriving close together,
+such as an import or the backfill when project groups are switched on, share
+one pass. The pass always covers every group, since which groups a cluster
+entry lists is decided across all of them, and it never runs at the same time
+as the periodic one. An agent waits for its first periodic reconcile before
+acting on events.
+
 ### What the agent writes
 
 For each group Waldur lists:

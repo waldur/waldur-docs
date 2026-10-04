@@ -50,6 +50,11 @@ needed.
 Only offerings that create accounts for their users count: Basic, Script and
 site agent offerings, unless the offering turns POSIX accounts off.
 
+The site agent writes a new group to the directory within seconds when it
+runs with event processing (STOMP) enabled, and otherwise on its next periodic
+reconcile. See
+[Project groups in the directory](openldap-sssd-accounts.md#project-groups-in-the-directory).
+
 Further resources, on the same or another of your offerings, reuse the group.
 When the project's last resource at your provider is terminated, or the
 project is deleted, the group stays, marked **Not in use**, and keeps its GID.
