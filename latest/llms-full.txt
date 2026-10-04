@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-04T02:04:03.973602Z
+Generated: 2026-10-04T10:22:34.112051Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -39357,6 +39357,17 @@ periodic reconcile of `event_process` mode (every
 `WALDUR_SITE_AGENT_RECONCILIATION_PERIOD_MINUTES`, also with STOMP off) and each
 `membership_sync` pass. It runs even when the offering has no offering users
 left, so parent entries are still cleaned up. Single-user events do not run it.
+
+With STOMP on, the offering also subscribes to Waldur's
+`service_provider_project_group` events: a group numbered, renumbered or
+deleted, or project groups switched on or off for the provider. An event runs
+the same pass a few seconds later, so a project's new group reaches the
+directory without waiting for the periodic cycle. Events arriving close
+together -- an import, a backfill numbering every group -- share one pass. The
+pass always covers every group, never just the one an event names, since which
+groups a parent lists is decided across all of them; and it never overlaps the
+periodic pass on the same offering. Opting out with
+`stomp_membership_sync_enabled: false` also drops this subscription.
 
 It reads the provider's groups from Waldur
 (`GET /api/marketplace-service-provider-project-groups/?provider_offering_uuid=<offering>`,
@@ -87176,6 +87187,17 @@ The project-group pass runs on the agent's periodic reconcile, after the
 accounts, and also when the offering has no accounts left, so cluster entries
 are still cleaned up.
 
+With event processing (STOMP) enabled, the offering also subscribes to Waldur's
+project-group events — a group numbered, renumbered or deleted, or project
+groups switched on or off for the provider — and the same pass runs a few
+seconds after one arrives, so a new project's group reaches the directory
+without waiting for the periodic reconcile. Events arriving close together,
+such as an import or the backfill when project groups are switched on, share
+one pass. The pass always covers every group, since which groups a cluster
+entry lists is decided across all of them, and it never runs at the same time
+as the periodic one. An agent waits for its first periodic reconcile before
+acting on events.
+
 ### What the agent writes
 
 For each group Waldur lists:
@@ -88038,12 +88060,30 @@ How the names are formed: [Usernames derived from the pool](posix-id-pools.md#us
 Why one account per person matters for a shared directory:
 [One person, one entry](openldap-sssd-accounts.md#one-person-one-entry).
 
-!!! note "Switching an existing provider"
-    Changing **Account scope** to *Per service provider* on a provider that
-    already has offering users links their existing accounts to one account per
-    person. It is refused while a person has different usernames on different
-    offerings; make those consistent first. An offering that runs its own
-    separate directory can still override the scope back to per offering.
+### Switching an existing provider
+
+Changing **Account scope** to *Per service provider* on a provider that already
+has offering users links their existing accounts to one account per person.
+When every person has the same username on every offering, the switch is saved
+at once.
+
+When some people have different usernames on different offerings, the switch
+cannot be saved yet: one of their usernames has to be kept. Waldur shows those
+people instead of saving, and applies the switch once each of them is resolved.
+For each person, choose the username to keep. Each candidate says how many
+offerings use it, whether it has active resources and whether a home directory
+is recorded for it — renaming a live account changes who owns its files, so
+prefer the name that is in use.
+
+[Image: Resolve username conflicts: Dave Demo has two usernames, each used on one offering, with no active resources and no home directory; the switch to per service provider accounts is applied once the conflict is resolved]
+
+In **Preview changes**, **Apply** stays disabled while the preview reports
+conflicts for the switch; **Resolve conflicts** opens the same choice and
+applies the switch afterwards. The full list is also on
+**Accounts → Username conflicts**.
+
+An offering that runs its own separate directory can still override the scope
+back to per offering.
 
 ## 2. Set up each offering's user management
 
@@ -88104,9 +88144,33 @@ whole provider, and expanding a row names the offerings using it:
 
 [Image: Offering users with UID and GID columns]
 
+An offering user that reads through a provider account shows **Provider
+account** next to its username. The link opens that provider account; expanding
+the row, or opening **Details** from its actions, says the same:
+
+[Image: Offering users reading through provider accounts: each row shows a Provider account link, and the expanded row names the provider account]
+
+The username and POSIX attributes of such an account belong to the provider
+account, so its actions offer **Provider account** instead of editing the
+username or the POSIX attributes; change those on the provider account, and
+every offering using it follows. What stays per offering — the comment, the
+account state, restricting or deleting the account — is still edited on the row.
+
+[Image: The details of an offering user that reads through a provider account]
+
+On the *Provider accounts* tab, expanding an account lists its offering
+accounts: **Shared** marks those that read through it, and **Own account** an
+offering that keeps an account of its own, for example one that overrides the
+scope back to per offering.
+
 The same person must show the **same** username and UID on every sharing
 offering. Where that is not yet true, **Accounts → Username conflicts** lists
-the people affected and lets you choose the username each of them keeps. The pool's utilisation and the list of identities drawn from it are on
+the people affected and lets you choose the username each of them keeps.
+
+!!! tip "Adding accounts by hand"
+    On an offering that shares provider accounts, **Create** and **Bulk import**
+    ask for no username: the account reads it from the person's provider
+    account, which Waldur creates if the person has none yet. The pool's utilisation and the list of identities drawn from it are on
 the pool page: [Monitoring utilisation](posix-id-pools.md#monitoring-utilisation).
 
 ## 5. Know what a departure looks like
@@ -88186,6 +88250,11 @@ needed.
 
 Only offerings that create accounts for their users count: Basic, Script and
 site agent offerings, unless the offering turns POSIX accounts off.
+
+The site agent writes a new group to the directory within seconds when it
+runs with event processing (STOMP) enabled, and otherwise on its next periodic
+reconcile. See
+[Project groups in the directory](openldap-sssd-accounts.md#project-groups-in-the-directory).
 
 Further resources, on the same or another of your offerings, reuse the group.
 When the project's last resource at your provider is terminated, or the
@@ -103697,6 +103766,9 @@ td:nth-child(4) {
 | `send_offering_user_updated_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Send OfferingUser update message to message queue for external systems. |
 | `send_offering_user_username_message` | `Django Signal (post_save)` | `marketplace.OfferingUser` | No description |
 | `send_order_state_change_to_message_queue` | `Django Signal (post_save)` | `marketplace.Order` | Emit an order event on every state transition, for any offering type. |
+| `send_project_group_deleted_message` | `Django Signal (post_delete)` | `marketplace.ServiceProviderProjectGroup` | Announce a deleted project group that a directory could have written. |
+| `send_project_group_saved_message` | `Django Signal (post_save)` | `marketplace.ServiceProviderProjectGroup` | Announce a project group a directory can write, or a change to one. |
+| `send_project_groups_switch_message` | `Django Signal (post_save)` | `marketplace.ServiceProvider` | Announce project groups being switched on or off for the provider. |
 | `send_project_service_account_deletion_info` | `Django Signal (post_save)` | `marketplace.ProjectServiceAccount` | No description |
 | `send_project_service_account_info` | `Django Signal (post_save)` | `marketplace.ProjectServiceAccount` | No description |
 | `send_provider_account_created_message` | `Django Signal (post_save)` | `marketplace.ServiceProviderAccount` | Announce a new provider-level account. |
@@ -103871,14 +103943,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 742
+Total unique handlers found: 745
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 345 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 337 handlers
+- **waldur_mastermind**: 340 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers

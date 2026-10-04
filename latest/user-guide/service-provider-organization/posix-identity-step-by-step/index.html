@@ -17763,6 +17763,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#switching-an-existing-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching an existing provider
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -18862,6 +18873,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#switching-an-existing-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching an existing provider
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19006,14 +19028,25 @@ accounts before it is saved.</p>
 <p>How the names are formed: <a href="../posix-id-pools/#usernames-derived-from-the-pool">Usernames derived from the pool</a>.
 Why one account per person matters for a shared directory:
 <a href="../openldap-sssd-accounts/#one-person-one-entry">One person, one entry</a>.</p>
-<div class="admonition note">
-<p class="admonition-title">Switching an existing provider</p>
-<p>Changing <strong>Account scope</strong> to <em>Per service provider</em> on a provider that
-already has offering users links their existing accounts to one account per
-person. It is refused while a person has different usernames on different
-offerings; make those consistent first. An offering that runs its own
-separate directory can still override the scope back to per offering.</p>
-</div>
+<h3 id="switching-an-existing-provider">Switching an existing provider</h3>
+<p>Changing <strong>Account scope</strong> to <em>Per service provider</em> on a provider that already
+has offering users links their existing accounts to one account per person.
+When every person has the same username on every offering, the switch is saved
+at once.</p>
+<p>When some people have different usernames on different offerings, the switch
+cannot be saved yet: one of their usernames has to be kept. Waldur shows those
+people instead of saving, and applies the switch once each of them is resolved.
+For each person, choose the username to keep. Each candidate says how many
+offerings use it, whether it has active resources and whether a home directory
+is recorded for it — renaming a live account changes who owns its files, so
+prefer the name that is in use.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-resolve-username-conflicts.png" data-desc-position="bottom"><img alt="Resolve username conflicts: Dave Demo has two usernames, each used on one offering, with no active resources and no home directory; the switch to per service provider accounts is applied once the conflict is resolved" src="../../img/posix-resolve-username-conflicts.png"></a></p>
+<p>In <strong>Preview changes</strong>, <strong>Apply</strong> stays disabled while the preview reports
+conflicts for the switch; <strong>Resolve conflicts</strong> opens the same choice and
+applies the switch afterwards. The full list is also on
+<strong>Accounts → Username conflicts</strong>.</p>
+<p>An offering that runs its own separate directory can still override the scope
+back to per offering.</p>
 <h2 id="2-set-up-each-offerings-user-management">2. Set up each offering's user management</h2>
 <p>Open the offering, then <strong>Edit → Integration → User management</strong>. Its settings
 are grouped in tabs — <strong>Offering users</strong>, <strong>Accounts</strong>, <strong>POSIX</strong> and
@@ -19088,10 +19121,30 @@ writes into the directory. Its <em>Offering users</em> tab lists one row per off
 the <em>Provider accounts</em> tab lists the single account each person holds for the
 whole provider, and expanding a row names the offerings using it:</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-offering-users-uid-gid.png" data-desc-position="bottom"><img alt="Offering users with UID and GID columns" src="../../img/posix-offering-users-uid-gid.png"></a></p>
+<p>An offering user that reads through a provider account shows <strong>Provider
+account</strong> next to its username. The link opens that provider account; expanding
+the row, or opening <strong>Details</strong> from its actions, says the same:</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-offering-users-provider-account.png" data-desc-position="bottom"><img alt="Offering users reading through provider accounts: each row shows a Provider account link, and the expanded row names the provider account" src="../../img/posix-offering-users-provider-account.png"></a></p>
+<p>The username and POSIX attributes of such an account belong to the provider
+account, so its actions offer <strong>Provider account</strong> instead of editing the
+username or the POSIX attributes; change those on the provider account, and
+every offering using it follows. What stays per offering — the comment, the
+account state, restricting or deleting the account — is still edited on the row.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/posix-offering-user-details-provider-account.png" data-desc-position="bottom"><img alt="The details of an offering user that reads through a provider account" src="../../img/posix-offering-user-details-provider-account.png"></a></p>
+<p>On the <em>Provider accounts</em> tab, expanding an account lists its offering
+accounts: <strong>Shared</strong> marks those that read through it, and <strong>Own account</strong> an
+offering that keeps an account of its own, for example one that overrides the
+scope back to per offering.</p>
 <p>The same person must show the <strong>same</strong> username and UID on every sharing
 offering. Where that is not yet true, <strong>Accounts → Username conflicts</strong> lists
-the people affected and lets you choose the username each of them keeps. The pool's utilisation and the list of identities drawn from it are on
-the pool page: <a href="../posix-id-pools/#monitoring-utilisation">Monitoring utilisation</a>.</p>
+the people affected and lets you choose the username each of them keeps.</p>
+<div class="admonition tip">
+<p class="admonition-title">Adding accounts by hand</p>
+<p>On an offering that shares provider accounts, <strong>Create</strong> and <strong>Bulk import</strong>
+ask for no username: the account reads it from the person's provider
+account, which Waldur creates if the person has none yet. The pool's utilisation and the list of identities drawn from it are on</p>
+</div>
+<p>the pool page: <a href="../posix-id-pools/#monitoring-utilisation">Monitoring utilisation</a>.</p>
 <h2 id="5-know-what-a-departure-looks-like">5. Know what a departure looks like</h2>
 <p>When a member loses their last project role on an offering:</p>
 <ol>

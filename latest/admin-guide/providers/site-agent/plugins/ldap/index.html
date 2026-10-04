@@ -20753,6 +20753,16 @@ periodic reconcile of <code>event_process</code> mode (every
 <code>WALDUR_SITE_AGENT_RECONCILIATION_PERIOD_MINUTES</code>, also with STOMP off) and each
 <code>membership_sync</code> pass. It runs even when the offering has no offering users
 left, so parent entries are still cleaned up. Single-user events do not run it.</p>
+<p>With STOMP on, the offering also subscribes to Waldur's
+<code>service_provider_project_group</code> events: a group numbered, renumbered or
+deleted, or project groups switched on or off for the provider. An event runs
+the same pass a few seconds later, so a project's new group reaches the
+directory without waiting for the periodic cycle. Events arriving close
+together -- an import, a backfill numbering every group -- share one pass. The
+pass always covers every group, never just the one an event names, since which
+groups a parent lists is decided across all of them; and it never overlaps the
+periodic pass on the same offering. Opting out with
+<code>stomp_membership_sync_enabled: false</code> also drops this subscription.</p>
 <p>It reads the provider's groups from Waldur
 (<code>GET /api/marketplace-service-provider-project-groups/?provider_offering_uuid=&lt;offering&gt;</code>,
 all pages, oldest first, following next-page links only to the configured
