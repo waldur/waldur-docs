@@ -16791,6 +16791,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../user-guide/customer-organization/project-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../user-guide/customer-organization/project_membership_management/" class="md-nav__link">
         
   
@@ -17419,6 +17447,34 @@
     
   
     Backend ID rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../user-guide/service-provider-organization/custom-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom metrics
   
 
     
@@ -18113,6 +18169,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../user-guide/staff-users/custom-metrics-catalogue/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom metrics catalogue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../user-guide/staff-users/impersonation/" class="md-nav__link">
         
   
@@ -18488,10 +18572,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6_22">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6_23">
         
           
-          <label class="md-nav__link" for="__nav_6_6_22" id="__nav_6_6_22_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_6_23" id="__nav_6_6_23_label" tabindex="0">
             
   
   
@@ -18509,8 +18593,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_6_22_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6_22">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_6_23_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6_23">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -18730,6 +18814,17 @@
     <span class="md-ellipsis">
       
         Periodic reconciliation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stomp-connection-watchdog-and-liveness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STOMP connection watchdog and liveness
       
     </span>
   </a>
@@ -19116,6 +19211,31 @@ The main loop includes a periodic reconciliation timer (default: 60 minutes, con
 <code>sync_offering_user_usernames()</code> for all STOMP-enabled offerings with a membership sync backend.</p>
 <p>This reconciliation is lightweight — it only syncs usernames, not a full membership sync — and is
 idempotent, so running it has no side effects when data is already consistent.</p>
+<h3 id="stomp-connection-watchdog-and-liveness">STOMP connection watchdog and liveness</h3>
+<p>No STOMP connect is unbounded outside a listener's own reconnect loop: at startup each
+offering gets three attempts (each limited to 30 s for the WebSocket handshake and the
+broker's CONNECTED frame), and a queue that registered but could not connect is kept, so the
+main loop always starts and later only reconnects it.</p>
+<p>Each listener reconnects on its own after a disconnect, but gives up after ten attempts
+(roughly ten minutes of exponential backoff). On every tick (60 s) the main loop's watchdog
+makes one bounded attempt for any consumer still disconnected, and retries each missing
+consumer of a STOMP-enabled offering separately — the offering's own queue and, for
+federation, the target subscription — with backoff up to 15 minutes. A consumer only counts
+as recovered after two consecutive ticks connected, so a queue the broker closes right after
+connecting does not look healthy. When the broker reports the queue is gone (<code>NOT_FOUND</code>),
+the listener registers it again before reconnecting.</p>
+<p>While everything is connected the loop touches the liveness heartbeat as usual. Once the
+offering's own consumer, or a transiently failing setup, has stayed down longer than
+<code>WALDUR_SITE_AGENT_STOMP_UNHEALTHY_AFTER_MINUTES</code> (default 15, above the listener's own retry
+window), the loop stops touching the heartbeat and an orchestrator restarts the agent. The
+probe fails only once the heartbeat is older than its own maximum age
+(<code>waldur_site_healthz --max-age</code>, default 300 s), so the time from the outage to a failed
+probe is roughly the threshold plus five minutes, plus the probe's period × failure
+threshold before the restart. The watchdog keeps retrying meanwhile; the heartbeat resumes
+the tick the connection comes back.</p>
+<p>What a restart cannot fix only logs at ERROR and never withholds the heartbeat: a federation
+target's consumer (another Waldur's broker), and a setup refused with a 4xx other than 408/429
+(for example a queue held by another user, 409), which is retried every 15 minutes.</p>
 <h3 id="stomp-subscription-types">STOMP subscription types</h3>
 <p>Each offering can subscribe to multiple object types depending on configuration:</p>
 <ul>

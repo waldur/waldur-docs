@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-04T10:22:34.112051Z
+Generated: 2026-10-04T12:55:49.775106Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -27119,6 +27119,36 @@ The main loop includes a periodic reconciliation timer (default: 60 minutes, con
 This reconciliation is lightweight — it only syncs usernames, not a full membership sync — and is
 idempotent, so running it has no side effects when data is already consistent.
 
+### STOMP connection watchdog and liveness
+
+No STOMP connect is unbounded outside a listener's own reconnect loop: at startup each
+offering gets three attempts (each limited to 30 s for the WebSocket handshake and the
+broker's CONNECTED frame), and a queue that registered but could not connect is kept, so the
+main loop always starts and later only reconnects it.
+
+Each listener reconnects on its own after a disconnect, but gives up after ten attempts
+(roughly ten minutes of exponential backoff). On every tick (60 s) the main loop's watchdog
+makes one bounded attempt for any consumer still disconnected, and retries each missing
+consumer of a STOMP-enabled offering separately — the offering's own queue and, for
+federation, the target subscription — with backoff up to 15 minutes. A consumer only counts
+as recovered after two consecutive ticks connected, so a queue the broker closes right after
+connecting does not look healthy. When the broker reports the queue is gone (`NOT_FOUND`),
+the listener registers it again before reconnecting.
+
+While everything is connected the loop touches the liveness heartbeat as usual. Once the
+offering's own consumer, or a transiently failing setup, has stayed down longer than
+`WALDUR_SITE_AGENT_STOMP_UNHEALTHY_AFTER_MINUTES` (default 15, above the listener's own retry
+window), the loop stops touching the heartbeat and an orchestrator restarts the agent. The
+probe fails only once the heartbeat is older than its own maximum age
+(`waldur_site_healthz --max-age`, default 300 s), so the time from the outage to a failed
+probe is roughly the threshold plus five minutes, plus the probe's period × failure
+threshold before the restart. The watchdog keeps retrying meanwhile; the heartbeat resumes
+the tick the connection comes back.
+
+What a restart cannot fix only logs at ERROR and never withholds the heartbeat: a federation
+target's consumer (another Waldur's broker), and a setup refused with a 4xx other than 408/429
+(for example a queue held by another user, 409), which is retried every 15 minutes.
+
 ### STOMP subscription types
 
 Each offering can subscribe to multiple object types depending on configuration:
@@ -27784,7 +27814,11 @@ username_management_backend: "base"  # Backend for username management
   the service provider added locally because Waldur validation blocked their
   offering user — are kept. Applies to every local-username backend
   (SLURM, MOAB, MUP, OKD, Harbor, …). Ignored for identity-bridge /
-  Waldur-to-Waldur federation.
+  Waldur-to-Waldur federation. If the unfiltered offering-user list cannot
+  be fetched, sync falls back to removing only users still present in the
+  filtered offering-user list for that pass; departed or restricted users
+  stay on the backend until the unfiltered list is reachable again, and the
+  agent logs which removals were deferred.
 
 ## Common Backend Settings
 
@@ -28380,6 +28414,25 @@ systemctl enable waldur-agent-event-process.service
 systemctl start waldur-agent-report.service
 systemctl enable waldur-agent-report.service
 ```
+
+### Heartbeat file per service
+
+Each agent process writes a liveness heartbeat file, checked by
+`waldur_site_healthz --liveness-only`. The default path is
+`/tmp/waldur-site-agent-heartbeat`; several services on one host must not share
+it, or any of them touching it keeps a stalled one looking alive. Give each unit
+its own path with `WALDUR_SITE_AGENT_HEARTBEAT_PATH` (a drop-in, e.g.
+`systemctl edit waldur-agent-event-process.service`):
+
+```ini
+[Service]
+Environment=WALDUR_SITE_AGENT_HEARTBEAT_PATH=/run/waldur-agent/event-process.heartbeat
+RuntimeDirectory=waldur-agent
+```
+
+and point the check at the same file:
+`waldur_site_healthz --liveness-only --heartbeat-path /run/waldur-agent/event-process.heartbeat`
+(the flag overrides the variable).
 
 ## Service Management
 
@@ -83261,6 +83314,108 @@ The Order approval tab is visible to:
 
 ---
 
+### Project metrics
+<!-- Source: docs/user-guide/customer-organization/project-metrics.md -->
+
+# Project metrics
+
+Some services report metrics about what they do for your project — how many
+learners completed a course, how many tickets were resolved, how fast support
+answered. When a resource in your project comes from such a service, the
+project gets a **Metrics** tab.
+
+## The Metrics tab
+
+Open the project and select **Metrics**. The tab appears when one of the
+project's resources comes from a service that has adopted metrics — even before
+the service has reported anything.
+
+[Image: The Metrics tab of a project]
+
+Each card is one metric:
+
+- **The figure** — for a count (completions, tickets), the total for the
+  current period; for a level (active learners, response time), the latest
+  value. When several resources report the same metric, their figures are
+  added up or averaged, as the service decided.
+- **The change** — compared with the previous period. For a metric where
+  higher is better a rise is green; where lower is better, such as a response
+  time, a rise is red. Metrics with no preferred direction show a rise in green.
+  The badge appears only when both periods have a figure.
+- **The goal**, if one is set — green when the figure meets it.
+- **The chart** — one point per day (in UTC), from the first day with data, up
+  to 90 days back. Counts are bars; levels are a line, with the goal drawn across
+  it. Days without data are left empty.
+
+The question mark next to a metric's name says which service reports it and
+how the figure is computed. A metric the service has adopted but not reported
+yet says **No data reported yet**.
+
+Figures are recomputed every 15 minutes, so a fresh report can take that long
+to appear.
+
+## Resources report, the project sees the total
+
+A service reports a metric for each of its resources: the course environment,
+the support desk, the cluster allocation. The project's card combines the
+resources of that service in the project into one figure, the way the
+service decided: added up (three course environments with 10, 15 and 12
+active learners show 37) or averaged (two support desks with median response
+times of 4 and 6 hours show 5). Goals apply to that combined figure, so a
+project has one goal per metric, whatever number of resources it has.
+
+Each card belongs to one service. If two services in the project report the
+same metric, the tab shows two cards, each with its own figure and goal.
+
+## Breaking a figure down
+
+When a metric carries attributes, such as the course or the support queue,
+choose **Breakdown by …** in the card's menu.
+
+[Image: A metric broken down by course]
+
+Each value is computed the same way as the card. For metrics the service adds
+up across resources, the values add up to the card's figure; for metrics it
+averages, each value is the average of its own resources.
+
+## Looking at one resource
+
+To see which resource drives a figure, choose **Breakdown by resource** in
+the card's menu. It lists the project's resources of that service with their
+figure for the card's period. For metrics the service adds up, the figures
+add up to the card's; for metrics it averages, each is that resource's own
+average.
+
+Select a resource to open its **Metrics** tab. It shows the resource's own
+figures for the current month, the change from last month, the daily chart
+and the breakdown by attribute. A resource has no goal of its own: goals
+apply to the project's combined figure.
+
+## Setting the project's goal
+
+The service may set a default goal for every project. Users who may edit the
+project, such as project managers and organization owners, can set the
+project's own goal instead: choose **Set project goal** (or
+**Edit project goal**) in the card's menu.
+
+[Image: Setting a project's goal]
+
+- **The figure should be** — **At least** for metrics where more is better,
+  **At most** for metrics where less is better.
+- **Value** — in the metric's unit.
+- **Over** — a calendar month, a calendar quarter, or the last 30 days. The
+  card's figure and change are computed over this period.
+
+**Remove goal** asks for confirmation and goes back to the service's default
+goal, if there is one.
+
+## Related pages
+
+- [Custom metrics for service providers](../service-provider-organization/custom-metrics.md)
+- [Custom metrics catalogue](../staff-users/custom-metrics-catalogue.md)
+
+---
+
 ### Project membership management
 <!-- Source: docs/user-guide/customer-organization/project_membership_management.md -->
 
@@ -85967,6 +86122,193 @@ When enabled, terminated resources are included in the uniqueness check. Disable
 
 !!! tip
     You can also validate a backend ID against these rules before assigning it, using the offering's backend ID check — helpful for catching duplicates or malformed identifiers early.
+
+---
+
+### Custom metrics
+<!-- Source: docs/user-guide/service-provider-organization/custom-metrics.md -->
+
+# Custom metrics
+
+A service can report its own metrics for the resources it provides — courses
+completed, learners active, tickets resolved, a median response time — and the
+projects using those resources see them on their **Metrics** tab, with a trend,
+a breakdown and a goal.
+
+As a service provider you choose which metrics an offering reports, and your
+service (or its site agent, or an OpenTelemetry Collector) sends the numbers.
+
+## Where to find it
+
+Open the offering, switch to **Edit**, and choose **Integration → Metrics**.
+
+[Image: The Metrics entry in the Integration menu]
+
+The table lists the metrics the offering reports.
+
+[Image: Metrics an offering reports]
+
+- **Kind** — a **Gauge** is a level read at a moment; a **Counter** counts
+  things that happened. The unit follows.
+- **Across a project** — how the figures of a project's resources combine:
+  added up, or averaged. Counted amounts are always added up. An average is
+  unweighted: every resource counts once.
+- **State** — **Active**, **Paused** or **Archived**.
+
+## Adopting a metric
+
+Metrics come from the [catalogue](../staff-users/custom-metrics-catalogue.md),
+so the same metric means the same thing on every offering. Choose
+**Adopt metric**, pick the metric, and optionally give it a display name of
+your own.
+
+[Image: Adopting a metric from the catalogue]
+
+A service can only report metrics its offering has adopted. If the catalogue
+lacks a metric you need, ask staff to add it, or add a private definition for
+your organization through the API (`POST /api/marketplace-metric-definitions/`
+with `owner_customer` set to your organization).
+
+## Managing a metric
+
+The actions menu at the end of each row:
+
+[Image: Actions on an adopted metric]
+
+- **Edit** — change the display name or how resources combine.
+- **Default goal** — the target every project using the offering aims for,
+  unless it sets its own.
+- **Pause** — refuse new points; what was reported stays visible.
+- **Archive** — stop collecting and hide the metric from projects. The data is
+  kept for a grace period (30 days by default) and then purged.
+- **Resume** — make a paused or archived metric active again.
+- **Purge data** — on an archived metric, delete everything it collected
+  straight away, then the metric itself.
+- **Remove** — only for a metric that never received data.
+
+### Default goals
+
+[Image: Setting the default goal]
+
+A goal says what the figure should be — **at least** or **at most** a value —
+over a calendar month, a calendar quarter or the last 30 days. Projects see
+whether they meet it, and a project manager can set a project's own goal
+instead.
+
+## Reporting data
+
+Below the table, the **Reporting** card shows where and how to send points,
+with examples built from the offering's metrics.
+
+[Image: How a service reports points]
+
+The caller authenticates with a Waldur API token of a user who may report
+usage for the offering — an organization owner or an offering manager with
+that permission, as for [usage reporting](reporting-usage.md). Every resource
+in a request must be one the caller may report for, or nothing is recorded and
+the request fails with 403.
+
+Requests to both endpoints together are limited to 600 a minute per
+reporting user. Above that Waldur answers 429 with a `Retry-After` header,
+which OpenTelemetry exporters honour; send points in batches rather than one
+request per point.
+
+### Native endpoint
+
+`POST /api/marketplace-metric-points/` takes one point or a list:
+
+```json
+[
+  {
+    "resource": "<resource UUID>",
+    "metric": "education.course.completions",
+    "timestamp": "2026-10-03T08:00:00Z",
+    "value": 14,
+    "attributes": {"course": "intro-to-linux"}
+  }
+]
+```
+
+The response says how many points were accepted and which were refused, and
+why:
+
+```json
+{"accepted": 1, "rejected": []}
+```
+
+- A point is identified by resource, metric, attributes and timestamp.
+  Sending it again replaces the value, so retries never count twice and a
+  corrected value can be sent. Running totals are the exception: a total at
+  the same or an earlier time than the last one is refused, unless it repeats
+  that last total exactly.
+- A **counter** is reported either as the amount since the previous point, or
+  as a running total with `start_time` — when the total started counting.
+  Running totals are turned into increments; a new `start_time` or a smaller
+  total is read as a restart. The first total of a counter that started more
+  than the late-data window ago is taken as a baseline, not counted, so adopting
+  a metric for a long-running service does not credit months of activity to one
+  moment.
+- A point is refused when:
+    - its metric is not adopted by the resource's offering, or is paused or
+      archived;
+    - the resource is not in a working state (OK, Updating or Terminating);
+    - an attribute is not declared by the metric, or its value is not a finite
+      number, a boolean or a text without NUL characters;
+    - it would exceed the attribute or series caps;
+    - its timestamp is more than an hour ahead or older than the late-data
+      window (7 days by default).
+
+!!! tip
+    A median, percentile or average cannot be rebuilt from summed data.
+    Compute it in the service and report it as a gauge — for example
+    `support.response_time.median` — rather than sending individual
+    response times.
+
+### OpenTelemetry
+
+Services that already emit OpenTelemetry metrics can export them to
+`POST /api/otlp/v1/metrics` (OTLP over HTTP, JSON or protobuf, optionally
+gzip-compressed). Each OpenTelemetry resource must carry the attribute
+`waldur.resource.uuid`, and a metric's name must be its catalogue key. Gauge
+and Sum (delta or cumulative) are accepted; histograms, summaries and data
+points without a value are counted as rejected data points in the response's
+partial-success field. A body larger than 20 MB after decompression is refused
+with 413.
+
+An OpenTelemetry Collector configuration that adds the resource attribute and
+exports to Waldur:
+
+```yaml
+exporters:
+  otlphttp/waldur:
+    metrics_endpoint: https://waldur.example.com/api/otlp/v1/metrics
+    headers:
+      Authorization: Token <Waldur API token>
+
+processors:
+  resource/waldur:
+    attributes:
+      - key: waldur.resource.uuid
+        value: <resource UUID>
+        action: upsert
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [resource/waldur]
+      exporters: [otlphttp/waldur]
+```
+
+!!! note
+    Offerings whose source has reported metric data or goals cannot be merged
+    into another offering yet.
+
+## Related pages
+
+- [Custom metrics catalogue](../staff-users/custom-metrics-catalogue.md)
+- [Project metrics](../customer-organization/project-metrics.md)
+- [Reporting usage](reporting-usage.md)
 
 ---
 
@@ -89186,6 +89528,120 @@ This page provides an overview of already assigned credit policies. To create a 
     credit simply never covers them. Because that cost is never compensated, it counts
     towards [cost policies](../customer-organization/cost-and-usage-policies.md)
     immediately, while the credit balance still looks untouched.
+
+---
+
+### Custom metrics catalogue
+<!-- Source: docs/user-guide/staff-users/custom-metrics-catalogue.md -->
+
+# Custom metrics catalogue
+
+Services can report their own metrics to Waldur — course completions, active
+learners, tickets resolved, response times — and projects see them next to
+their resources. Every metric a service reports must first exist in the
+**metric catalogue**, so a typo in a service never creates a new metric and the
+amount of stored data stays bounded.
+
+Staff curate the global catalogue that every offering can adopt. A service
+provider can add private definitions for its own offerings through the API.
+
+!!! note
+    The feature is behind the **Show custom metrics** feature flag
+    (`project.show_custom_metrics`). Turn it on under
+    **Administration → User interface → Features** before the metrics tabs
+    appear.
+
+## The catalogue
+
+Open **Administration → Service Catalog → Custom metrics**.
+
+[Image: Metric catalogue and retention policies]
+
+Each definition has:
+
+- **Key** — the name services report against, written as lowercase dotted
+  words, for example `education.course.completions`. It never changes once
+  created.
+- **Kind** — what a reported number is, and the unit it is measured in:
+    - a **Gauge** is a level read at a moment, such as active learners or a
+      median response time;
+    - a **Counter** counts things that happened, such as courses completed.
+- **Attributes** — the names a point may carry to break a figure down, for
+  example `course` or `queue`. A point with any other attribute is refused.
+- **Owner** — **Global**, or the service provider a private definition belongs
+  to.
+- **State** — **Active**, or **Deprecated** when offerings may no longer adopt
+  it.
+
+## Adding or editing a definition
+
+Choose **Add metric**, or **Edit** in a row's actions menu.
+
+[Image: Editing a metric definition]
+
+- **Unit** uses [UCUM](https://ucum.org/) notation: `h`, `%`, or an
+  annotation in braces for counted things, such as `{learners}`. Waldur shows
+  annotations without the braces.
+- **Good direction** tells the dashboard whether a rising figure is good news
+  (completions) or bad news (response time), and colours the change badge
+  accordingly.
+- **Distinct values per attribute** caps how many different values one
+  attribute may take for one resource. Together with the series cap below it
+  keeps a misbehaving service from flooding the database.
+- **Retention policy** decides how long the metric's data is kept; empty uses
+  the default policy.
+
+!!! warning
+    Once any data has been reported, a definition's **kind** and **unit** can
+    no longer change and attributes can only be added, because the stored
+    history was reported under those rules. Deprecate a definition instead of
+    deleting it: a definition that offerings have adopted cannot be removed.
+
+## Retention policies
+
+Waldur keeps three tiers of data for every metric:
+
+| Tier | Detail | Used for |
+|------|--------|----------|
+| Raw points | Every point a service sent | Short ranges, up to two days |
+| Hourly roll-ups | Count, sum, minimum, maximum and latest value per hour | Ranges up to two months, period figures |
+| Daily roll-ups | The same per day | Long-range trends |
+
+A **retention policy** says how many days each tier is kept. The `standard`
+policy, created on installation, keeps raw points for 90 days, hourly roll-ups
+for 400 days and daily roll-ups forever. Add a policy with **Add policy**:
+
+[Image: Adding a retention policy]
+
+Each tier must be kept at least as long as the finer one before it, and raw
+points longer than the late-data window. Policy names are unique. The default
+policy (named by `METRICS_DEFAULT_RETENTION_POLICY`) cannot be removed or
+renamed.
+
+Roll-ups are recomputed every 15 minutes, so a figure on the dashboard can lag
+a fresh report by up to a quarter of an hour. Expired data is deleted once a
+day.
+
+## Limits
+
+These settings live under **Administration → Service Catalog → Settings**, on
+the **Custom metrics** tab:
+
+[Image: Custom metrics settings]
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `METRICS_LATE_DATA_DAYS` | 7 | How far back a point's timestamp may be. Older points are refused. |
+| `METRICS_MAX_SERIES_PER_RESOURCE_METRIC` | 500 | Most attribute combinations one resource may report for one metric. |
+| `METRICS_MAX_POINTS_PER_REQUEST` | 10000 | Most points accepted in one request. |
+| `METRICS_MAX_OTLP_BODY_BYTES` | 20 MB | Largest OpenTelemetry body accepted, after decompression. |
+| `METRICS_DEFAULT_RETENTION_POLICY` | `standard` | Policy used by definitions that set none. |
+| `METRICS_ARCHIVE_GRACE_DAYS` | 30 | How long an archived offering metric keeps its data before it is purged. |
+
+## Related pages
+
+- [Custom metrics for service providers](../service-provider-organization/custom-metrics.md)
+- [Project metrics](../customer-organization/project-metrics.md)
 
 ---
 

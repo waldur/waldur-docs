@@ -4359,6 +4359,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#heartbeat-file-per-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heartbeat file per service
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -17361,6 +17372,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../user-guide/customer-organization/project-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../user-guide/customer-organization/project_membership_management/" class="md-nav__link">
         
   
@@ -17989,6 +18028,34 @@
     
   
     Backend ID rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../user-guide/service-provider-organization/custom-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom metrics
   
 
     
@@ -18683,6 +18750,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../user-guide/staff-users/custom-metrics-catalogue/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom metrics catalogue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../user-guide/staff-users/impersonation/" class="md-nav__link">
         
   
@@ -19058,10 +19153,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6_22">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6_23">
         
           
-          <label class="md-nav__link" for="__nav_6_6_22" id="__nav_6_6_22_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_6_23" id="__nav_6_6_23_label" tabindex="0">
             
   
   
@@ -19079,8 +19174,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_6_22_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6_22">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_6_23_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6_23">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -19342,6 +19437,17 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#heartbeat-file-per-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heartbeat file per service
+      
+    </span>
+  </a>
   
 </li>
         
@@ -19919,6 +20025,22 @@ systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> 
 systemctl<span class="w"> </span>start<span class="w"> </span>waldur-agent-report.service
 systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>waldur-agent-report.service
 </code></pre></div></td></tr></tbody></table></div>
+<h3 id="heartbeat-file-per-service">Heartbeat file per service</h3>
+<p>Each agent process writes a liveness heartbeat file, checked by
+<code>waldur_site_healthz --liveness-only</code>. The default path is
+<code>/tmp/waldur-site-agent-heartbeat</code>; several services on one host must not share
+it, or any of them touching it keeps a stalled one looking alive. Give each unit
+its own path with <code>WALDUR_SITE_AGENT_HEARTBEAT_PATH</code> (a drop-in, e.g.
+<code>systemctl edit waldur-agent-event-process.service</code>):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">[Service]</span>
+<span class="na">Environment</span><span class="o">=</span><span class="s">WALDUR_SITE_AGENT_HEARTBEAT_PATH=/run/waldur-agent/event-process.heartbeat</span>
+<span class="na">RuntimeDirectory</span><span class="o">=</span><span class="s">waldur-agent</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>and point the check at the same file:
+<code>waldur_site_healthz --liveness-only --heartbeat-path /run/waldur-agent/event-process.heartbeat</code>
+(the flag overrides the variable).</p>
 <h2 id="service-management">Service Management</h2>
 <h3 id="check-service-status">Check Service Status</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
