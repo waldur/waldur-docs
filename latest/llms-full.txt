@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-05T08:07:27.617274Z
+Generated: 2026-10-05T08:11:09.123348Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -12171,11 +12171,11 @@ Allow display of images in markdown format.
 
 ## marketplace.call_only
 
-Allow marketplace to serve only as aggregator of call info.
+List calls that are run outside Waldur: each call links to an external URL where applications are made, and rounds, proposals and reviews are hidden.
 
 ## marketplace.catalogue_only
 
-Allow marketplace to function as a catalogue only.
+Run the marketplace as a catalogue: offerings can be browsed but not ordered, order lists and pricing are hidden, and anonymous visitors land on the marketplace instead of the login page.
 
 ## marketplace.conceal_audit_log_from_end_users
 
@@ -12235,7 +12235,7 @@ Enable push-driven UI updates over the event-consumer WebSocket (experimental). 
 
 ## marketplace.show_call_management_functionality
 
-Enabled display of call management functionality.
+Show call management: the call-managing organization's workspace, providers' requests for offerings, and proposal reports. Independent of SERVICE_ACCESS_MODE, which governs how applicants reach services.
 
 ## marketplace.show_experimental_ui_components
 
@@ -80922,14 +80922,22 @@ Each card is one metric:
   current period; for a level (active learners, response time), the latest
   value. When several resources report the same metric, their figures are
   added up or averaged, as the service decided.
-- **The change** — compared with the previous period. For a metric where
+- **The change** — compared with the same stretch of the previous period:
+  five days into October are measured against the first five days of
+  September, not against all of it. A goal over the last 30 days is compared
+  with the 30 days before. For a metric where
   higher is better a rise is green; where lower is better, such as a response
   time, a rise is red. Metrics with no preferred direction show a rise in green.
   The badge appears only when both periods have a figure.
 - **The goal**, if one is set — green when the figure meets it.
 - **The chart** — one point per day (in UTC), from the first day with data, up
   to 90 days back. Counts are bars; levels are a line, with the goal drawn across
-  it. Days without data are left empty.
+  it. Days without data are left empty. When the metric carries attributes, the
+  chart is split by the first one — per user, per software, per course — with
+  the five largest values named and the rest shown as **Other**. A value keeps
+  its colour on every card. **Split chart by …** in the card's menu picks
+  another attribute, and **Show total only** returns to one series; the full
+  list is in the breakdown.
 
 The question mark next to a metric's name says which service reports it and
 how the figure is computed. A metric the service has adopted but not reported
@@ -80958,6 +80966,11 @@ choose **Breakdown by …** in the card's menu.
 
 [Image: A metric broken down by course]
 
+The dialog says which period it covers, the same as the card's: for a
+calendar month or quarter, from its first day up to now (for example
+*October 2026, so far*), so a breakdown early in a month is not a complete
+one.
+
 Each value is computed the same way as the card. For metrics the service adds
 up across resources, the values add up to the card's figure; for metrics it
 averages, each value is the average of its own resources.
@@ -80971,16 +80984,26 @@ add up to the card's; for metrics it averages, each is that resource's own
 average.
 
 Select a resource to open its **Metrics** tab. It shows the resource's own
-figures for the current month, the change from last month, the daily chart
-and the breakdown by attribute. A resource has no goal of its own: goals
+figures for the current month, the change from the same days of last month,
+the daily chart and the breakdown by attribute. A resource has no goal of its own: goals
 apply to the project's combined figure.
 
 ## Setting the project's goal
 
+Goals are set on the project's **Metrics** tab, where they apply to the
+project's combined figure. A resource's own Metrics tab has no goals.
+
 The service may set a default goal for every project. Users who may edit the
 project, such as project managers and organization owners, can set the
-project's own goal instead: choose **Set project goal** (or
-**Edit project goal**) in the card's menu.
+project's own goal instead: choose **Set goal** under the card's figure, or
+click the goal badge to change it. **Set project goal** (or
+**Edit project goal**) is also the first item of the card's menu.
+
+!!! tip "Where are goals set?"
+    - **A project's goal** — on the project's **Metrics** tab, from the card.
+    - **The default goal for every project using a service** — by the service
+      provider, on the offering under **Integration → Metrics**, with
+      **Default goal** in the metric's actions menu.
 
 [Image: Setting a project's goal]
 
@@ -83743,6 +83766,9 @@ The table lists the metrics the offering reports.
 
 ## Adopting a metric
 
+Organization owners, service provider managers and offering managers can
+adopt and manage an offering's metrics.
+
 Metrics come from the [catalogue](../staff-users/custom-metrics-catalogue.md),
 so the same metric means the same thing on every offering. Choose
 **Adopt metric**, pick the metric, and optionally give it a display name of
@@ -83789,8 +83815,8 @@ with examples built from the offering's metrics.
 [Image: How a service reports points]
 
 The caller authenticates with a Waldur API token of a user who may report
-usage for the offering — an organization owner or an offering manager with
-that permission, as for [usage reporting](reporting-usage.md). Every resource
+usage for the offering — an organization owner, a service provider manager or
+an offering manager, as for [usage reporting](reporting-usage.md). Every resource
 in a request must be one the caller may report for, or nothing is recorded and
 the request fails with 403.
 
@@ -86363,6 +86389,9 @@ group next to the new one, because that mode never removes members.
 
 Offerings billed by usage need a usage report for each billing period. Reports normally arrive
 automatically from a site agent, but a service provider can also submit them by hand from Waldur.
+
+Organization owners, service provider managers and offering managers of the providing organization
+can report usage, by hand or through the API (a site agent uses the token of such a user).
 
 ## Submitting a report
 
