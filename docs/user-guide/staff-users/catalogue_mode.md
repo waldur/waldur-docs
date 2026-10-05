@@ -13,7 +13,7 @@ Open **Administration → User interface → Features**.
 ### Step 2: Enable the feature
 
 1. Select the **Marketplace offerings and resources** tab.
-2. Find **Allow marketplace to function as a catalogue only**.
+2. Find **Run the marketplace as a catalogue** (*Allow marketplace to function as a catalogue only* in older versions).
 3. Toggle the switch on and click **Save**.
 
 ![Catalogue Mode Setting](../img/catalogue-mode-setting.png)
@@ -40,6 +40,12 @@ When enabled, Catalogue mode introduces the following changes:
 - Focus shifts to informational display of services
 - Maintains full visibility of offering details and specifications
 - Preserves organization and category browsing capabilities
+
+### Combining with calls
+
+Catalogue mode disables ordering only. An offering that is open for proposals still offers **Apply for
+access**, so a catalogue can grant services through review. See
+[Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md).
 
 ## Note
 

@@ -104,6 +104,7 @@ Orders and resources have their own state machines — see the dedicated [Lifecy
 
 - [Platform](platform.md) — users, organizations, projects.
 - [Call management](call-management.md) — proposal-driven allocation that ends in marketplace orders.
+- [Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md) — marketplace, calls, or both as the way users reach services.
 - [Lifecycle](lifecycle.md) — order and resource state machines.
 
 ## Examples

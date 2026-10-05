@@ -17,6 +17,11 @@ the [Reviewer workflow](reviewer-workflow.md).
     checklists and reviewers, and the steps you see depend on how the call
     manager configured the call.
 
+!!! tip "Service access modes"
+    How applicants reach calls depends on the deployment's service access mode. In a marketplace-only
+    deployment they apply from an offering and see *access requests* instead of proposals — see
+    [How you reach services](../end-users/service-access-modes.md).
+
 ## Finding an open call
 
 Open **Calls → Calls for proposals** from the sidebar. The dashboard lists
