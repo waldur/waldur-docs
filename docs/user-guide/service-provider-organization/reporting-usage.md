@@ -3,6 +3,9 @@
 Offerings billed by usage need a usage report for each billing period. Reports normally arrive
 automatically from a site agent, but a service provider can also submit them by hand from Waldur.
 
+Organization owners, service provider managers and offering managers of the providing organization
+can report usage, by hand or through the API (a site agent uses the token of such a user).
+
 ## Submitting a report
 
 1. Open your organization, switch to the **Service provider** tab and select **Resources**.
