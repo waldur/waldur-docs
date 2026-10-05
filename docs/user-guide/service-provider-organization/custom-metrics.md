@@ -27,6 +27,9 @@ The table lists the metrics the offering reports.
 
 ## Adopting a metric
 
+Organization owners, service provider managers and offering managers can
+adopt and manage an offering's metrics.
+
 Metrics come from the [catalogue](../staff-users/custom-metrics-catalogue.md),
 so the same metric means the same thing on every offering. Choose
 **Adopt metric**, pick the metric, and optionally give it a display name of
@@ -73,8 +76,8 @@ with examples built from the offering's metrics.
 ![How a service reports points](../img/custom-metrics-reporting.png)
 
 The caller authenticates with a Waldur API token of a user who may report
-usage for the offering — an organization owner or an offering manager with
-that permission, as for [usage reporting](reporting-usage.md). Every resource
+usage for the offering — an organization owner, a service provider manager or
+an offering manager, as for [usage reporting](reporting-usage.md). Every resource
 in a request must be one the caller may report for, or nothing is recorded and
 the request fails with 403.
 
