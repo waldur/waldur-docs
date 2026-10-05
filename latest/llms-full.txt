@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-05T02:04:00.773383Z
+Generated: 2026-10-05T06:37:49.319656Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -300,6 +300,9 @@ worker -> queue: pull
 worker -> db: write results
 beat -> queue: enqueue periodic
 ```
+
+For how the service desk fits into this topology — webhooks, periodic sync and provider helpdesks — see
+[Service Desk integrations](../integrations/service-desk/service-desk-integrations.md).
 
 ---
 
@@ -11398,6 +11401,56 @@ Number of days to retain SLURM policy evaluation log entries before automatic cl
 
 Number of months to retain usage poll records before automatic cleanup.
 
+### Custom Metrics
+
+#### METRICS_LATE_DATA_DAYS
+
+**Type:** int
+
+**Default value:** 7
+
+How many days back a reported metric point may be timestamped.
+
+#### METRICS_MAX_SERIES_PER_RESOURCE_METRIC
+
+**Type:** int
+
+**Default value:** 500
+
+Most attribute combinations one resource may report for one metric.
+
+#### METRICS_MAX_POINTS_PER_REQUEST
+
+**Type:** int
+
+**Default value:** 10000
+
+Most metric points accepted in a single report request.
+
+#### METRICS_MAX_OTLP_BODY_BYTES
+
+**Type:** int
+
+**Default value:** 20971520
+
+Largest OTLP metrics body accepted, after decompression, in bytes.
+
+#### METRICS_DEFAULT_RETENTION_POLICY
+
+**Type:** str
+
+**Default value:** standard
+
+Name of the retention policy used by metric definitions that set none.
+
+#### METRICS_ARCHIVE_GRACE_DAYS
+
+**Type:** int
+
+**Default value:** 30
+
+Days an archived offering metric keeps its data before it is purged.
+
 ### Identity Bridge
 
 #### FEDERATED_IDENTITY_SYNC_ENABLED
@@ -12231,6 +12284,10 @@ Enable science domain/sub-domain selection for projects.
 ## project.show_credit_in_create_dialog
 
 Show credit field in project create dialog.
+
+## project.show_custom_metrics
+
+Show custom metrics: the project Metrics tab and the offering metrics a provider adopts.
 
 ## project.show_description_in_create_dialog
 
@@ -17924,6 +17981,9 @@ td:nth-child(4) {
 | `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | No description available |
 | `mark_agent_services_as_inactive` | `waldur_mastermind.marketplace_site_agent.mark_agent_services_as_inactive` | 5 minutes | No description available |
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
+| `marketplace-metrics-enforce-retention` | `waldur_mastermind.marketplace_metrics.enforce_retention` | 1 day | No description available |
+| `marketplace-metrics-purge-archived` | `waldur_mastermind.marketplace_metrics.purge_archived` | 1 day | No description available |
+| `marketplace-metrics-roll-up` | `waldur_mastermind.marketplace_metrics.roll_up` | 15 minutes | No description available |
 | `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Heal marketplace state for every tenant that has orphan OpenStack<br>instances or volumes.<br><br>Previously this task called create_marketplace_resource_for_imported_resources<br>directly, which silently no-ops when the per-tenant Instance/Volume offering<br>is missing. That left orphan VMs invisible in the marketplace UI even after<br>the periodic task ran. Routing through self_heal_tenant_marketplace_model<br>recreates archived/missing per-tenant offerings first, then backfills the<br>orphan resources — so tenants no longer need a manual "Synchronise" click<br>after the offering-side state drifts. |
 | `marketplace-openstack.refresh-instance-backend-metadata` | `waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata` | 1 day | Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information. |
 | `marketplace-openstack.terminate-child-resources-of-terminated-tenants` | `waldur_mastermind.marketplace_openstack.terminate_child_resources_of_terminated_tenants` | 1 day | Reconcile Instance/Volume marketplace resources orphaned under a terminated tenant.<br><br>When a tenant's marketplace Resource is force-terminated without the backend<br>teardown completing (e.g. a staff ``force_destroy`` on an unreachable/erred<br>site, ``marketplace/utils.py`` ``process_order``), the per-tenant<br>Instance/Volume child resources are left non-terminated even though their<br>parent tenant is gone. A terminated tenant can never legitimately have live<br>instances or volumes, so this task marks those child resources TERMINATED to<br>keep the marketplace state consistent.<br><br>Mark-only by design: it does NOT delete plugin rows, release quota, or call<br>the OpenStack backend (which may be unreachable). The child offerings are<br>non-billable, so no invoicing is affected.<br><br>Traceability: for each reconciled resource it records a completed TERMINATE<br>``Order`` (created directly in the DONE state, so no processing/executor and<br>no backend call is triggered) carrying a ``reason`` in its attributes, and<br>routes the state change through ``callbacks.resource_deletion_succeeded`` so<br>the standard ``MARKETPLACE_RESOURCE_TERMINATE_SUCCEEDED`` event appears in the<br>resource's audit log. |
@@ -54032,8 +54092,10 @@ The proposal team follows a few rules:
   `PROPOSAL.MANAGER`.
 - Once the proposal leaves draft, its team is frozen: the applicant can no
   longer change it. Staff, call managers and call organisers may still change
-  any role, and every such change is recorded as a
-  `proposal_team_changed_after_submission` event on the proposal.
+  any role. Every team change is recorded once, as the generic `role_granted`,
+  `role_updated` or `role_revoked` event, whose context on a proposal also
+  carries `proposal_state` and `after_submission`; a change made after
+  submission says so in the message.
 
 ### Role Features
 
@@ -88430,6 +88492,10 @@ attempt).
 
 Waldur can either run its own built-in service desk, or integrate with an external one like Atlassian, Zammad, or Smax. Either way you manage tickets directly within Waldur.
 
+For how the service desk is wired into Waldur, and which events open tickets automatically, see
+[Service Desk integrations](../../../integrations/service-desk/service-desk-integrations.md) and
+[Service Desk offerings](../../../integrations/service-desk/service-desk-offerings.md).
+
 To set up the configuration, navigate to the Service Desk configuration page by going to **Administration** -> **Service Desk**.
 
 * **Waldur support enabled** - Toggle **Yes** if you want to use support plugin.
@@ -89512,6 +89578,206 @@ Currently supported service desk solutions:
 - [Atlassian ServiceDesk](https://www.atlassian.com/software/jira/service-management) (on-prem and cloud);
 - [Zammad](https://zammad.com/en);
 - [Microfocus SMAX](https://www.microfocus.com/en-us/smax/predictable-it-service-management).
+
+Without an external system, Waldur's **built-in** service desk ("Basic") keeps tickets in its own database and
+lets support staff handle them in the Waldur UI.
+
+## Architecture
+
+A deployment has one **operator service desk** — the built-in one or one of the external systems above. In
+addition, each service provider can register its own **provider helpdesk**, to which tickets about that
+provider's offerings are routed.
+
+```d2
+direction: right
+classes: {
+  frontend: { style: { fill: "#d5e8d4"; stroke: "#82b366" } }
+  backend:  { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
+  infra:    { style: { fill: "#fff2cc"; stroke: "#d6b656" } }
+  external: { style: { fill: "#f8cecc"; stroke: "#b85450" } }
+}
+
+user: User { class: frontend; shape: person }
+homeport: Homeport\n(Support pages) { class: frontend }
+
+waldur: Waldur {
+  api: Mastermind API\n(support module) { class: backend }
+  worker: Celery worker { class: backend }
+  beat: Celery beat { class: backend }
+  db: PostgreSQL { class: infra; shape: cylinder }
+}
+
+desk: Operator service desk\nJira SM | Zammad | SMAX\n(or built-in) { class: external }
+agent: Support agent { class: external; shape: person }
+provider: Provider helpdesk\nJira SM | Zammad | SMAX | email { class: external }
+smtp: SMTP { class: infra }
+
+user -> homeport
+homeport -> waldur.api: issues, comments,\nattachments
+waldur.api -> waldur.db
+waldur.beat -> waldur.worker: periodic sync,\nSLA checks
+waldur.worker -> desk: create issue,\nadd comment
+desk -> waldur.api: webhook
+agent -> desk
+waldur.worker -> provider: route child issue
+provider -> waldur.api: provider webhook
+waldur.worker -> smtp: notifications
+smtp -> user
+```
+
+- **Outbound.** Creating an issue, a comment or an attachment in Waldur is pushed to the service desk by a
+  Celery worker. Users never talk to the service desk directly.
+- **Inbound.** The service desk calls a Waldur webhook when an agent changes an issue, so status changes
+  and replies show up in Waldur. See
+  [Synchronising changes back to Waldur](../../user-guide/staff-users/service-desk/service-desk-config.md#synchronising-changes-back-to-waldur-webhooks).
+- **Periodic.** Celery beat refreshes reference data from the service desk and evaluates SLAs.
+- **Notifications.** Waldur emails the reporter about status changes and replies, and asks for feedback once
+  an issue is resolved.
+- **Provider routing.** An issue about an offering, or about a resource of one, is copied as a child issue
+  to the provider helpdesk of that offering's service provider; comments are forwarded between the two. See
+  [Provider Helpdesk System](../../developer-guide/provider-helpdesk.md).
+
+## What is synchronised
+
+| Direction | Mechanism | What |
+|---|---|---|
+| Waldur → service desk | Celery task on change | Issues, comments, attachments, feedback |
+| Service desk → Waldur | Webhook (`/api/support-jira-webhook/`, `/api/support-zammad-webhook/`, `/api/support-smax-webhook/`) | Status, assignee, comments, attachments |
+| Provider helpdesk → Waldur | Webhook (`/api/support-provider-webhook/<provider>/<backend>/`) | Same, for the child issue |
+| Service desk → Waldur | Every 6 hours | Support users |
+| Service desk → Waldur | Daily | Priorities, request types |
+| Service desk → Waldur | On demand by staff (`/api/sync-issues/`; Jira SM and SMAX) | All issues — recovers updates missed while webhooks were down |
+| Within Waldur | Every 15 and 30 minutes | SLA breaches and warnings |
+
+The built-in service desk needs no synchronisation: Waldur is the system of record.
+
+## When issues are created
+
+Most issues are opened by users in the **Support** section of Waldur. Waldur also opens issues on its own:
+
+| Trigger | Condition | Details |
+|---|---|---|
+| A user creates an issue | Support is enabled | — |
+| An order for a Service Desk offering is created, updated, terminated or restored | Always for that offering type | [Service Desk offerings](service-desk-offerings.md#orders) |
+| A Service Desk order waits for its start date or for the project | Always for that offering type | [Service Desk offerings](service-desk-offerings.md#orders) |
+| A user is added to or removed from a project or resource | The project has a Service Desk resource whose offering enables membership issues | [Service Desk offerings](service-desk-offerings.md#membership-changes) |
+| A user adds or removes an SSH key | `ENABLE_ISSUES_FOR_USER_SSH_KEY_CHANGES` | [Service Desk offerings](service-desk-offerings.md#ssh-key-changes) |
+| An issue refers to an offering whose provider has a helpdesk | An active provider helpdesk | [Provider Helpdesk System](../../developer-guide/provider-helpdesk.md#ticket-routing) |
+
+## Related
+
+- [Support concepts](../../about/concepts/support.md) — issues, comments, backends at a glance.
+- [Service desk configuration](../../user-guide/staff-users/service-desk/service-desk-config.md) — choosing
+  and configuring a backend, status mapping, webhooks.
+- [Service Desk offerings](service-desk-offerings.md) — marketplace offerings fulfilled through the service
+  desk.
+- [Provider Helpdesk System](../../developer-guide/provider-helpdesk.md) — routing, escalation, SLA.
+
+---
+
+### Service Desk offerings
+<!-- Source: docs/integrations/service-desk/service-desk-offerings.md -->
+
+# Service Desk offerings
+
+A **Service Desk** offering (type `Support.OfferingTemplate`) is a marketplace offering that has no
+automated backend: every order becomes an issue in the operator service desk, and a person fulfils it.
+Resolving the issue completes the order. Use it for services that are provisioned by hand — consulting,
+hardware, accounts in systems Waldur cannot drive.
+
+For the service desk itself, see [Service Desk integrations](service-desk-integrations.md).
+
+## Orders
+
+```d2
+direction: right
+classes: {
+  frontend: { style: { fill: "#d5e8d4"; stroke: "#82b366" } }
+  backend:  { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
+  external: { style: { fill: "#f8cecc"; stroke: "#b85450" } }
+}
+
+user: User { class: frontend; shape: person }
+order: Order\n(executing) { class: backend }
+issue: Issue\n(linked to the order) { class: backend }
+desk: Service desk { class: external }
+agent: Support agent { class: external; shape: person }
+result: Order done or failed,\nresource state updated { class: backend }
+
+user -> order: create / update /\nterminate / restore
+order -> issue: open issue
+issue -> desk: push
+agent -> desk: fulfil, then resolve\nor reject the issue
+desk -> issue: webhook: status
+issue -> result: status mapped to\nresolved or canceled
+```
+
+Each order opens one issue, raised on behalf of the user who created the order. If that user is inactive or
+has no email address, the first project manager, administrator or member with one is used, then an
+organization owner. Issues of earlier orders for the same resource are linked
+to it, and the order's attachment (for example a purchase order) is attached.
+
+| Order | Issue summary |
+|---|---|
+| Create | Request for *offering* |
+| Update — plan switch | Request to switch plan for *resource* |
+| Update — limits | Request to update limits for *resource* |
+| Update — renewal | Renewal request for *resource* |
+| Terminate | Request to terminate resource *resource* |
+| Restore | Request to restore resource *resource* |
+
+An order that waits for its start date or for its project to start gets its issue straight away, so the
+provider can prepare in advance.
+
+### How the issue completes the order
+
+The order stays *executing* until the issue reaches a status that the service desk configuration maps to
+**resolved** or **canceled** — see
+[which statuses close a ticket](../../user-guide/staff-users/service-desk/service-desk-config.md#which-statuses-close-a-ticket).
+
+| Order | Issue resolved | Issue canceled |
+|---|---|---|
+| Create | Resource becomes OK | Order canceled, resource terminated |
+| Update | Change is applied | Order and resource erred |
+| Terminate | Resource is terminated | Order erred, resource back to OK |
+| Restore | Resource is restored | Order canceled, resource stays terminated |
+
+!!! warning
+    A status that is mapped to neither outcome leaves the order unchanged. If an order is stuck in
+    *executing* although its issue is closed in the service desk, check the status mapping first.
+
+If the issue cannot be created — no project member with an email address, the caller is inactive in the
+service desk, or the service desk returns an error — the resource is marked *erred*.
+
+## Membership changes
+
+When **Enable issues for membership changes** is set on the offering, Waldur opens an issue whenever a
+user is added to or removed from:
+
+- a project that has an active resource of the offering, or
+- a resource of the offering (or one of its resource projects).
+
+The issue names the user, the role, the affected resources and the user's offering username, so the
+provider can grant or revoke access in its own systems. One issue is opened per change, raised on behalf of
+the affected user. Terminated resources are ignored.
+
+## SSH key changes
+
+When the `ENABLE_ISSUES_FOR_USER_SSH_KEY_CHANGES` setting is on, Waldur opens an issue whenever a user adds
+or removes an SSH public key. The issue lists the user's active Service Desk resources, so the provider
+can update the key on them. This is a deployment-wide setting, not an offering option.
+
+## Offering options
+
+Set in the offering's **Integration** tab, under **Provisioning configuration**:
+
+| Option | API field | Effect |
+|---|---|---|
+| Confirmation notification template | `secret_options.template_confirmation_comment` | Posted as the first comment on the issue of a create order |
+| Enable issues for membership changes | `plugin_options.enable_issues_for_membership_changes` | See [Membership changes](#membership-changes) |
+
+All automatic issues go to the operator service desk. Provider routing applies to them only as described
+in [Provider Helpdesk System](../../developer-guide/provider-helpdesk.md#ticket-routing).
 
 ---
 
@@ -100643,7 +100909,6 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - proposal_canceled
 - proposal_document_added
 - proposal_document_removed
-- proposal_team_changed_after_submission
 - proposal_workflow_advanced
 
 ## Providers
@@ -101472,6 +101737,7 @@ td:nth-child(4) {
 | `add_google_calendar_link` | `Custom Signal (pre_serializer_fields)` | `PublicOfferingDetailsSerializer` | Add a Google Calendar link field to the serializer. |
 | `add_has_active_helpdesk` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a flag telling whether the customer's provider has an active helpdesk. |
 | `add_has_affiliate_links` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a flag telling whether the organization is an affiliate on any link. |
+| `add_has_metrics` | `Custom Signal (pre_serializer_fields)` | `ProjectSerializer` | The project Metrics tab is shown only where this is true. |
 | `add_integration_status` | `Custom Signal (pre_serializer_fields)` | `ProviderOfferingDetailsSerializer` | Add an integration status field to the serializer. |
 | `add_issue` | `Custom Signal (pre_serializer_fields)` | `OrderDetailsSerializer` | Add an issue field to the serializer. |
 | `add_maintenance_fields_to_admin_announcement_serializer` | `Custom Signal (pre_serializer_fields)` | `AdminAnnouncementSerializer` | Add maintenance-related fields to AdminAnnouncementSerializer when maintenance is scheduled. |
@@ -101542,6 +101808,7 @@ td:nth-child(4) {
 | `create_carried_over_usage_if_invoice_has_been_created` | `Django Signal (post_save)` | `invoices.Invoice` | Materialize usage for the new billing period from the previous one. |
 | `create_checklist_completion` | `Django Signal (post_save)` | `proposal.Proposal` | Create checklist completion tracking when proposal is created. |
 | `create_checklist_completions_for_existing_users` | `Django Signal (post_save)` | `marketplace.Offering` | Manage checklist completions for existing OfferingUsers when compliance changes. |
+| `create_default_retention_policy` | `Unknown Signal` | `—` | The policy definitions without one fall back to. |
 | `create_feedback_if_issue_has_been_resolved` | `Django Signal (post_save)` | `support.Issue` | Create feedback request when support issue transitions to resolved state. |
 | `create_issue_for_pending_support_order` | `Django Signal (post_save)` | `marketplace.Order` | Create a support ticket in the background when a support offering order |
 | `create_issue_if_membership_changed` | `Django Signal (post_save)` | `permissions.UserRole` | Create support issue when user role membership changes in organization. |
@@ -101690,6 +101957,7 @@ td:nth-child(4) {
 | `revoke_roles_on_offering_deletion` | `Django Signal (pre_delete)` | `marketplace.Offering` | Revoke active user roles bound to an offering before it is deleted. |
 | `run_reset_actions_upon_cost_policy_deletion` | `Django Signal (pre_delete)` | `policy.ProjectEstimatedCostPolicy` | Execute reset actions when a cost policy is deleted. |
 | `schedule_component_usage_billing` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Thin post_save handler — schedules the async billing+policy task on commit. |
+| `seed_project_role_mappings` | `Django Signal (post_save)` | `proposal.Call` | Give a new call the default proposal-to-project role mappings. |
 | `seed_proposal_field_config` | `Django Signal (post_save)` | `proposal.Call` | Materialise a call's Project details field configuration at creation. |
 | `seed_workflow_steps` | `Django Signal (post_save)` | `proposal.Call` | Seed catalog workflow steps on call creation. |
 | `send_comment_added_notification` | `Django Signal (post_save)` | `support.Comment` | No description |
@@ -101880,14 +102148,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 745
+Total unique handlers found: 748
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 345 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 340 handlers
+- **waldur_mastermind**: 343 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 13 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -103790,8 +104058,11 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
 | [`CallNotArchivedCreateMixin`](#callnotarchivedcreatemixin) | `waldur_mastermind.proposal.serializers` | Provide the ``validate_call_not_archived`` hook used by ``ActionMethodMixin |
 | [`AssignmentBatchTestMixin`](#assignmentbatchtestmixin) | `waldur_mastermind.proposal.tests.test_assignment_batch_notifications` | No description available |
+| [`ApplicantRolesMixin`](#applicantrolesmixin) | `waldur_mastermind.proposal.tests.test_notification_roles` | No description available |
 | [`ManagerSetupMixin`](#managersetupmixin) | `waldur_mastermind.proposal.tests.test_pool_invitation_expiry` | No description available |
+| [`ProposalAdminMixin`](#proposaladminmixin) | `waldur_mastermind.proposal.tests.test_proposal_admin` | No description available |
 | [`ProposalComplianceTestMixin`](#proposalcompliancetestmixin) | `waldur_mastermind.proposal.tests.test_proposal_compliance` | Common setup for proposal compliance tests |
+| [`ProposalTeamMixin`](#proposalteammixin) | `waldur_mastermind.proposal.tests.test_proposal_team` | No description available |
 | [`InvitationAcceptanceMixin`](#invitationacceptancemixin) | `waldur_mastermind.proposal.views` | Mixin providing common logic for accepting/declining reviewer pool invitations |
 | [`BackendNameMixin`](#backendnamemixin) | `waldur_mastermind.support.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`FileMixin`](#filemixin) | `waldur_mastermind.support.models` | Mixin to provide file-related functionality and properties |
@@ -105308,9 +105579,21 @@ Call. It keeps archived calls read-only across their nested-create surface
 
 **Description:** No description available.
 
+### ApplicantRolesMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_notification_roles`
+
+**Description:** No description available.
+
 ### ManagerSetupMixin
 
 **Module:** `waldur_mastermind.proposal.tests.test_pool_invitation_expiry`
+
+**Description:** No description available.
+
+### ProposalAdminMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_proposal_admin`
 
 **Description:** No description available.
 
@@ -105321,6 +105604,12 @@ Call. It keeps archived calls read-only across their nested-create surface
 **Description:**
 
 Common setup for proposal compliance tests.
+
+### ProposalTeamMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_proposal_team`
+
+**Description:** No description available.
 
 ### InvitationAcceptanceMixin
 
