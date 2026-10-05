@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-05T06:37:49.319656Z
+Generated: 2026-10-05T06:57:15.867091Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -18944,6 +18944,79 @@ Entitlements use `OfferingUser.username` (not Waldur usernames).
 ### Error Handling
 
 SCIM operations use graceful error handling: errors are logged as warnings, failed operations don't block other users, missing configuration causes tasks to skip silently.
+
+---
+
+### Service access modes
+<!-- Source: docs/admin-guide/mastermind-configuration/service-access-modes.md -->
+
+# Service access modes
+
+Waldur hands out services in two ways: users **order** offerings from the marketplace, or they **apply**
+through calls for proposals, where a proposal is reviewed and, once accepted, turned into orders. How users
+reach either is set by one deployment-wide setting, `SERVICE_ACCESS_MODE`. Three feature flags then decide
+what each of those paths can do.
+
+For what users see in each mode, see [How you reach services](../../user-guide/end-users/service-access-modes.md).
+
+## The setting
+
+`SERVICE_ACCESS_MODE` is a runtime setting under **Marketplace visibility & access**. In Helm deployments set
+it in `waldur.settingsOverrides` — see [Configuration overrides](../deployment/helm/docs/configuration-overrides.md).
+
+| Value | Marketplace in navigation | Calls section in navigation | Apply through an offering | Applicant wording |
+|---|---|---|---|---|
+| `both` (default) | Yes | Yes | Yes | Calls, rounds, proposals |
+| `calls` | No | Yes | No | Calls, rounds, proposals |
+| `marketplace` | Yes | Operators only | Yes | Access requests, submission deadlines |
+
+- **Apply through an offering** — an offering that is open for proposals shows **Apply for access** next to
+  **Order now**. In `calls` mode there is no offering page to apply from.
+- In `marketplace` mode applicants never meet a call: their proposals are listed as access requests in their
+  profile, and the proposal notifications are sent with the `access_request_*` templates instead — see
+  [Notifications](notifications.md). Reviewers, call managers and service providers keep the call vocabulary
+  and, if call management is on, a sidebar section to work from.
+
+The setting changes navigation and wording only. The API serves the same data in every mode, and a proposal
+submitted in one mode keeps working after the mode changes.
+
+## Feature flags that combine with it
+
+These are toggled under **Administration → User interface → Features**, and are independent of the mode.
+
+| Flag | What it does |
+|---|---|
+| `marketplace.show_call_management_functionality` | Turns on call management: the call-managing organization's workspace, service providers' requests for offerings, and proposal reports. Without it those screens are hidden, whatever the mode. |
+| `marketplace.call_only` | The calls are run **outside** Waldur. Each call requires an external URL, and **Apply** sends the user there. The rounds tab, the call managers' proposal and review lists, the reviewers tab and **My proposals** are hidden. A call without an external URL offers no way to apply. |
+| `marketplace.catalogue_only` | Offerings can be browsed but not ordered; order lists and the pricing tab are hidden, and anonymous visitors land on the marketplace instead of the login page. See [Catalogue mode](../../user-guide/staff-users/catalogue_mode.md). |
+
+### Typical setups
+
+| Deployment | Mode | Call management | `call_only` | `catalogue_only` |
+|---|---|---|---|---|
+| Self-service cloud, no calls | `marketplace` | Off | Off | Off |
+| Marketplace plus calls for proposals | `both` | On | Off | Off |
+| Allocation portal, all access through calls | `calls` | On | Off | Off |
+| Offerings granted only after review, without exposing calls | `marketplace` | On | Off | On |
+| Directory of services and of calls run elsewhere | `calls` or `both` | On | On | On |
+
+In the fourth row, ordering is disabled but the offering page still offers **Apply for access** when the
+offering is open for proposals, so review is the only way in.
+
+## Upgrading from the feature flags
+
+Before `SERVICE_ACCESS_MODE` existed, the same choice was spread over feature flags. On upgrade a migration
+derives the mode from what the deployment was showing:
+
+| Before the upgrade | Mode after the upgrade |
+|---|---|
+| `call_only` on | `calls` |
+| `call_only` off, call management on | `both` |
+| Both off | `marketplace` |
+
+The flags themselves are kept and keep the meaning described above. Check the derived value after
+upgrading: a deployment that had neither flag on is now in `marketplace` mode, so any proposals its applicants
+made are shown to them as access requests.
 
 ---
 
@@ -77527,6 +77600,11 @@ the [Reviewer workflow](reviewer-workflow.md).
     checklists and reviewers, and the steps you see depend on how the call
     manager configured the call.
 
+!!! tip "Service access modes"
+    How applicants reach calls depends on the deployment's service access mode. In a marketplace-only
+    deployment they apply from an offering and see *access requests* instead of proposals — see
+    [How you reach services](../end-users/service-access-modes.md).
+
 ## Finding an open call
 
 Open **Calls → Calls for proposals** from the sidebar. The dashboard lists
@@ -82755,6 +82833,8 @@ you are looking at.
 Your deployment administrator chooses this with the **SERVICE_ACCESS_MODE** setting. You cannot
 change it yourself, and there is no switch in the interface to tell you which is active. The
 quickest way to tell is the sidebar: if it has a **Calls** section, calls are browsable.
+Administrators: see [Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md)
+for how the setting combines with the call and catalogue feature flags.
 
 | Mode | How you get a service |
 |---|---|
@@ -86917,7 +86997,7 @@ Open **Administration → User interface → Features**.
 ### Step 2: Enable the feature
 
 1. Select the **Marketplace offerings and resources** tab.
-2. Find **Allow marketplace to function as a catalogue only**.
+2. Find **Run the marketplace as a catalogue** (*Allow marketplace to function as a catalogue only* in older versions).
 3. Toggle the switch on and click **Save**.
 
 [Image: Catalogue Mode Setting]
@@ -86944,6 +87024,12 @@ When enabled, Catalogue mode introduces the following changes:
 - Focus shifts to informational display of services
 - Maintains full visibility of offering details and specifications
 - Preserves organization and category browsing capabilities
+
+### Combining with calls
+
+Catalogue mode disables ordering only. An offering that is open for proposals still offers **Apply for
+access**, so a catalogue can grant services through review. See
+[Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md).
 
 ## Note
 
@@ -90561,6 +90647,9 @@ Call management in Waldur enables organizations to manage resource allocation th
 
 Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the proposing organization that initiated the call. Allocations are granted to this project, and team members who submitted the proposal are added to the project, ensuring the resources are immediately ready for use.
 
+Whether applicants reach calls directly, through offerings, or both is a deployment setting — see
+[Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md).
+
 ## Who does what
 
 For role definitions and the per-role permission matrix, see
@@ -90938,6 +91027,7 @@ Orders and resources have their own state machines — see the dedicated [Lifecy
 
 - [Platform](platform.md) — users, organizations, projects.
 - [Call management](call-management.md) — proposal-driven allocation that ends in marketplace orders.
+- [Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md) — marketplace, calls, or both as the way users reach services.
 - [Lifecycle](lifecycle.md) — order and resource state machines.
 
 ## Examples
