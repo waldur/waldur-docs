@@ -8,6 +8,8 @@ you are looking at.
 Your deployment administrator chooses this with the **SERVICE_ACCESS_MODE** setting. You cannot
 change it yourself, and there is no switch in the interface to tell you which is active. The
 quickest way to tell is the sidebar: if it has a **Calls** section, calls are browsable.
+Administrators: see [Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md)
+for how the setting combines with the call and catalogue feature flags.
 
 | Mode | How you get a service |
 |---|---|
