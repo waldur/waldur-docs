@@ -2,6 +2,10 @@
 
 Waldur can either run its own built-in service desk, or integrate with an external one like Atlassian, Zammad, or Smax. Either way you manage tickets directly within Waldur.
 
+For how the service desk is wired into Waldur, and which events open tickets automatically, see
+[Service Desk integrations](../../../integrations/service-desk/service-desk-integrations.md) and
+[Service Desk offerings](../../../integrations/service-desk/service-desk-offerings.md).
+
 To set up the configuration, navigate to the Service Desk configuration page by going to **Administration** -> **Service Desk**.
 
 * **Waldur support enabled** - Toggle **Yes** if you want to use support plugin.

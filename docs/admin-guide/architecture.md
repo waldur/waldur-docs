@@ -45,3 +45,6 @@ worker -> queue: pull
 worker -> db: write results
 beat -> queue: enqueue periodic
 ```
+
+For how the service desk fits into this topology — webhooks, periodic sync and provider helpdesks — see
+[Service Desk integrations](../integrations/service-desk/service-desk-integrations.md).
