@@ -20746,6 +20746,14 @@ no batch evaluation of a round after its cut-off.</p>
 </table>
 <p>The step catalogue, in order: <code>administrative_check</code>, <code>technical_assessment</code>,
 <code>expert_review</code>, <code>panel_review</code>, <code>allocation_decision</code>, <code>award_response</code>.</p>
+<p>Each step also carries notification rules (<code>CallWorkflowStepNotificationRule</code>):
+on a trigger (<code>step_started</code>, <code>step_completed</code>, <code>step_rejected</code>,
+<code>step_expired</code>, <code>deadline_approaching</code>) mail an audience. A rule addressed to
+the applicant (or to the responsible role of a step the applicant is
+responsible for) lists in <code>notified_proposal_roles</code> the proposal roles whose
+holders are told, for example only <code>PROPOSAL.MANAGER</code>. Left empty, it reaches
+the proposal's creator and its whole team. The applicant side gets one message
+with every recipient in To; other audiences get a private copy each.</p>
 <pre class="mermaid"><code>graph LR
     subgraph "Round (scheduling)"
         ST[Start Time] --&gt; CT[Cutoff Time]
@@ -21075,19 +21083,32 @@ media endpoint, which applies its own access rules.</p>
     Note over Proj: Automatic role mapping
     RA-&gt;&gt;Proj: Apply ProposalProjectRoleMapping</code></pre>
 <h3 id="role-mapping-system">Role Mapping System</h3>
-<p>The <code>ProposalProjectRoleMapping</code> enables automatic role assignment:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Example: Map proposal PI to project manager</span>
-<span class="n">ProposalProjectRoleMapping</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-    <span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span>
-    <span class="n">proposal_role</span><span class="o">=</span><span class="n">Role</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Principal Investigator"</span><span class="p">),</span>
-    <span class="n">project_role</span><span class="o">=</span><span class="n">Role</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Project Manager"</span><span class="p">)</span>
-<span class="p">)</span>
-</code></pre></div></td></tr></tbody></table></div>
+<p>The <code>ProposalProjectRoleMapping</code> enables automatic role assignment. A new
+call starts with these mappings, which its call manager can change:</p>
+<table>
+<thead>
+<tr>
+<th>Proposal role</th>
+<th>Project role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PROPOSAL.MANAGER</code></td>
+<td><code>PROJECT.MANAGER</code></td>
+</tr>
+<tr>
+<td><code>PROPOSAL.ADMIN</code></td>
+<td><code>PROJECT.ADMIN</code></td>
+</tr>
+<tr>
+<td><code>PROPOSAL.MEMBER</code></td>
+<td><code>PROJECT.MEMBER</code></td>
+</tr>
+</tbody>
+</table>
+<p>A duplicated or imported call takes the source's mappings instead, when they
+are copied.</p>
 <p>When proposals are accepted:</p>
 <ol>
 <li>System identifies users with proposal roles</li>

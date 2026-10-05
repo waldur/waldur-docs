@@ -20390,8 +20390,35 @@ Consider these models as authorization aggregates. Other models, such as resourc
 <ul>
 <li><code>CALL.REVIEWER</code> - Review proposals in calls</li>
 <li><code>CALL.MANAGER</code> - Manage calls for proposals</li>
-<li><code>PROPOSAL.MEMBER</code> - Proposal team member</li>
-<li><code>PROPOSAL.MANAGER</code> - Proposal management</li>
+<li><code>PROPOSAL.MANAGER</code> - Proposal manager: the principal investigator. Edits,
+  submits and deletes the proposal and adds, re-roles and removes its team
+  members (<code>PROPOSAL.MANAGE</code>, <code>PROPOSAL.UPDATE</code>, <code>PROPOSAL.UPDATE_PERMISSION</code>,
+  <code>PROPOSAL.DELETE_PERMISSION</code>)</li>
+<li><code>PROPOSAL.ADMIN</code> - Proposal administrator: a co-investigator who edits the
+  proposal (details, requested resources, documents, checklist answers) but
+  neither submits it nor changes its team (<code>PROPOSAL.UPDATE</code>)</li>
+<li><code>PROPOSAL.MEMBER</code> - Proposal team member, read-only</li>
+</ul>
+<p>The proposal team follows a few rules:</p>
+<ul>
+<li>A proposal needs at least one active <code>PROPOSAL.MANAGER</code> to be submitted, and
+  the last one cannot be revoked. Nor does it expire: the expiry sweep keeps
+  the grant and logs a warning.</li>
+<li>Those who may update the proposal's call (<code>CALL.MANAGER</code> on the call,
+  <code>CUSTOMER.CALL_ORGANIZER</code> on its managing organisation) manage the proposal
+  team without a role on it, as an organisation owner manages a project team.
+  This includes inviting people to the proposal by email.</li>
+<li><code>PROPOSAL.MANAGER</code> and <code>PROPOSAL.ADMIN</code> are granted and revoked (directly,
+  by invitation or through a permission request) only by the proposal's
+  managers, by call managers and organisers, and by staff. A custom role
+  carrying the team permissions may manage the other roles only.</li>
+<li>Nobody changes their own proposal role, staff included (on other scopes staff
+  and organisation owners may). Creating a proposal still makes its author a
+  <code>PROPOSAL.MANAGER</code>.</li>
+<li>Once the proposal leaves draft, its team is frozen: the applicant can no
+  longer change it. Staff, call managers and call organisers may still change
+  any role, and every such change is recorded as a
+  <code>proposal_team_changed_after_submission</code> event on the proposal.</li>
 </ul>
 <h3 id="role-features">Role Features</h3>
 <h4 id="time-based-roles">Time-based Roles</h4>

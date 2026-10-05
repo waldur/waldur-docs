@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-04T18:59:50.525308Z
+Generated: 2026-10-05T02:04:00.773383Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -7725,7 +7725,7 @@ Remove Django event log records with stale content types.
 
 ## reprovision_matrix_rooms
 
-Reset every active Matrix room and provisioned user profile so the homeserver rebuilds them. Use after moving to a new homeserver, whose room ids and user tokens are different from the old one's. Do not run it against the homeserver the rooms already live on: old rooms are not deleted, so each one keeps its history while Waldur replaces it with an empty room. Equivalent to POST /api/admin/matrix/reprovision/, for deployments where reaching the API as staff is harder than reaching a shell.
+Reset every active Matrix room and provisioned user profile so the homeserver rebuilds them. Use after moving to a new homeserver, whose room ids and user accounts are different from the old one's. Do not run it against the homeserver the rooms already live on: old rooms are not deleted, so each one keeps its history while Waldur replaces it with an empty room. Equivalent to POST /api/admin/matrix/reprovision/, for deployments where reaching the API as staff is harder than reaching a shell.
 
 ```bash
 
@@ -11572,19 +11572,13 @@ Shared secret for Matrix user registration.
 
 Format for generating Matrix user IDs: username, uuid, or email_local.
 
-#### MATRIX_LOGIN_METHOD
+#### MATRIX_EXTERNAL_LOGIN_METHOD
 
-**Type:** str
+**Type:** choice_field
 
-**Default value:** token
+**Default value:** none
 
-Login method for Matrix credentials: password, token, or oidc.
-
-#### MATRIX_OIDC_PROVIDER_URL
-
-**Type:** url_field
-
-OIDC provider URL for Matrix SSO login.
+How users sign in to an external Matrix client such as Element: 'none' (Waldur offers no external sign-in), 'password' (a password Waldur derives for each user), or 'oidc' (single sign-on configured on the homeserver). Switching away from 'password' does not revoke passwords already shown or sign out external clients.
 
 #### MATRIX_LIVEKIT_KEY
 
@@ -27624,6 +27618,21 @@ offerings:
 
 ## Global Settings
 
+Top-level keys of the configuration file.
+Generated from the code by `scripts/generate_reference_docs.py`; each key has its own
+section below.
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| [`sentry_dsn`](#sentry_dsn) | `str` | no | — | Sentry DSN for error reporting (URL) |
+| [`elastic_apm_server_url`](#elastic_apm_server_url) | `str` | no | — | Elastic APM server URL (enables APM when set) |
+| [`timezone`](#timezone) | `str` | no | `UTC` | Timezone for billing calculations |
+| [`global_proxy`](#global_proxy) | `str` | no | `""` | Global proxy URL for API connections |
+| [`log_level`](#log_level) | `str` | no | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) |
+| [`reporting_periods`](#reporting_periods) | `int` | no | `2` | Number of billing periods to report (1=current, 2=current+previous) |
+| [`expose_backend_error_details`](#expose_backend_error_details) | `bool` | no | `true` | If True (default), the agent forwards exception messages and tracebacks to Waldur error details when marking objects as ERRED (current behaviour). If False, only BackendError messages are exposed and tracebacks are kept in site-agent logs. |
+| [`log_shipping`](#log_shipping) | `LogShippingConfig` | no | see below | Configuration for shipping agent logs to Waldur |
+
 ### `sentry_dsn`
 
 - **Type**: String
@@ -27687,6 +27696,15 @@ log_shipping:
   log_level: "WARNING"       # minimum level shipped
 ```
 
+Keys of `log_shipping` (generated from the code):
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `enabled` | `bool` | no | `false` | Enable log shipping to Waldur |
+| `ship_interval_seconds` | `int` | no | `60` | Interval between shipments in seconds |
+| `buffer_size_mb` | `int` | no | `1` | Maximum in-memory buffer size in megabytes |
+| `log_level` | `str` | no | `WARNING` | Minimum log level to ship (DEBUG, INFO, WARNING, ERROR, CRITICAL) |
+
 Entries below `log_level` are not shipped, so with the default `WARNING` a quiet agent ships
 nothing. Shipping uses the same credentials as the offering (static token or OIDC).
 
@@ -27711,6 +27729,38 @@ as before.
 ## Offering Configuration
 
 Each offering in the `offerings` array represents a separate service offering.
+
+Keys of an offering.
+Generated from the code by `scripts/generate_reference_docs.py`; each key has its own
+section below.
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| [`name`](#name) | `str` | yes | — | Human-readable name for the offering |
+| [`waldur_api_url`](#waldur_api_url) | `str` | yes | — | Base URL for the Waldur API endpoint |
+| [`waldur_api_token`](#waldur_api_token) | `str` | no | `""` | Authentication token for Waldur API |
+| [`waldur_offering_uuid`](#waldur_offering_uuid) | `str` | yes | — | UUID of the offering in Waldur |
+| [`oidc_token_url`](#oidc-client-credentials-oidc_token_url-oidc_client_id-oidc_client_secret) | `str` | no | — | OIDC token endpoint URL |
+| [`oidc_client_id`](#oidc-client-credentials-oidc_token_url-oidc_client_id-oidc_client_secret) | `str` | no | — | OIDC client ID for token requests |
+| [`oidc_client_secret`](#oidc-client-credentials-oidc_token_url-oidc_client_id-oidc_client_secret) | `str` | no | — | OIDC client secret for obtaining access tokens |
+| [`backend_type`](#backend_type) | `str` | yes | — | Backend type identifier |
+| [`backend_settings`](#backend-specific-settings) | `dict[str, Any]` | no | `{}` | Backend-specific settings |
+| [`backend_components`](#backend-components) | `dict[str, BackendComponent]` | no | `{}` | Component definitions |
+| [`websocket_use_tls`](#websocket_use_tls) | `bool` | no | `true` | Use TLS for websocket connections |
+| [`stomp_enabled`](#stomp_enabled) | `bool` | no | `false` | Enable STOMP event processing |
+| [`stomp_membership_sync_enabled`](#stomp_membership_sync_enabled) | `bool` | no | — | Use STOMP for membership sync; defaults to stomp_enabled. Set to false to keep HTTP polling for membership sync even when stomp_enabled=true. |
+| [`stomp_ws_host`](#stomp_ws_host-stomp_ws_port-stomp_ws_path) | `str` | no | — | STOMP WebSocket host |
+| [`stomp_ws_port`](#stomp_ws_host-stomp_ws_port-stomp_ws_path) | `int` | no | — | STOMP WebSocket port |
+| [`stomp_ws_path`](#stomp_ws_host-stomp_ws_port-stomp_ws_path) | `str` | no | — | STOMP WebSocket path |
+| [`order_processing_backend`](#backend-selection) | `str` | no | `""` | Backend for order processing |
+| [`membership_sync_backend`](#backend-selection) | `str` | no | `""` | Backend for membership sync |
+| [`reporting_backend`](#backend-selection) | `str` | no | `""` | Backend for usage reporting |
+| [`username_management_backend`](#backend-selection) | `str` | no | `base` | Backend for username management |
+| [`resource_import_enabled`](#resource_import_enabled) | `bool` | no | `false` | Enable resource import |
+| [`username_reconciliation_enabled`](#username_reconciliation_enabled) | `bool` | no | `false` | Enable periodic username reconciliation from target backend |
+| [`preserve_unmanaged_backend_users`](#preserve_unmanaged_backend_users) | `bool` | no | `false` | If False (default), membership sync removes any backend user who is not on the Waldur resource team. If True, users Waldur has ever known as offering users of this offering (any state, including DELETED and restricted) are removed once they leave the team; accounts Waldur has never seen are kept. Applies to local-username backends; ignored for identity-bridge / federation. |
+| [`verify_ssl`](#verify_ssl) | `bool` | no | `true` | Verify SSL certificates |
+| [`omit_anomalous_usage_components`](#omit_anomalous_usage_components) | `bool` | no | `false` | If False (default), a decreasing component blocks the whole set_usage payload. If True, only the decreasing components are omitted and the rest are still reported. Use True for backends whose meters are independent (e.g. Waldur-to-Waldur). |
 
 ### Basic Settings
 
@@ -27879,7 +27929,7 @@ for <offering>` for it, and `report` stops the whole process with the same error
 #### `stomp_ws_host`, `stomp_ws_port`, `stomp_ws_path`
 
 - **Type**: String / Integer / String
-- **Defaults**: the host of `waldur_api_url`; port `443` when `verify_ssl` is true, otherwise `80`;
+- **Defaults**: the host of `waldur_api_url`; port `443` when `websocket_use_tls` is true, otherwise `80`;
   path `/rmqws-stomp`
 - **Description**: Where the agent opens the STOMP WebSocket. Override them when RabbitMQ's
   web-STOMP endpoint is not served behind the Waldur API host — for example a development broker
@@ -28100,6 +28150,34 @@ backend_components:
 
 ### Component Settings
 
+Keys of a component under `backend_components`.
+Generated from the code by `scripts/generate_reference_docs.py`; each key has its own
+section below.
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| [`measured_unit`](#measured_unit) | `str` | yes | — | Unit of measurement (e.g., 'Hours', 'GB') |
+| [`unit_factor`](#unit_factor) | `float` | no | `1.0` | Factor for conversion to backend units |
+| [`unit_factor_reporting`](#unit_factor_reporting) | `float` | no | — | Factor for unit conversion in reporting mode. Falls back to unit_factor if not set. |
+| [`accounting_type`](#accounting_type) | `usage \| limit \| one` | yes | — | Component accounting type |
+| [`label`](#label) | `str` | yes | — | Human-readable label for display |
+| [`limit`](#limit) | `float` | no | — | Component limit value |
+| [`description`](#description) | `str` | no | — | Description of the component |
+| [`min_value`](#min_value) | `int` | no | — | Minimum allowed value |
+| [`max_value`](#max_value) | `int` | no | — | Maximum allowed value |
+| [`max_available_limit`](#max_available_limit) | `int` | no | — | Maximum available limit |
+| [`default_limit`](#default_limit) | `int` | no | — | Default limit value |
+| [`limit_period`](#limit_period) | `str` | no | — | Limit period: annual, month, quarterly, total |
+| [`article_code`](#article_code) | `str` | no | — | Article code for billing |
+| [`is_boolean`](#is_boolean) | `bool` | no | — | Whether the component is boolean |
+| [`is_prepaid`](#is_prepaid) | `bool` | no | — | Whether the component is prepaid |
+| [`min_prepaid_duration`](#min_prepaid_duration) | `int` | no | — | Minimum prepaid duration in months |
+| [`max_prepaid_duration`](#max_prepaid_duration) | `int` | no | — | Maximum prepaid duration in months |
+| [`prepaid_duration_step`](#prepaid_duration_step) | `int` | no | — | Step size in months for initial prepaid duration |
+| [`min_renewal_duration`](#min_renewal_duration) | `int` | no | — | Minimum renewal duration in months |
+| [`max_renewal_duration`](#max_renewal_duration) | `int` | no | — | Maximum renewal duration in months |
+| [`renewal_duration_step`](#renewal_duration_step) | `int` | no | — | Step size in months for renewal duration |
+
 #### `measured_unit`
 
 - **Type**: String
@@ -28297,6 +28375,8 @@ These are read from the environment, not from the configuration file. All are op
 | `WALDUR_SITE_AGENT_REPORT_PERIOD_MINUTES` | `30` | `report` | Minutes between reporting cycles. Whole number. |
 | `WALDUR_SITE_AGENT_RECONCILIATION_PERIOD_MINUTES` | `60` | `event_process` | Minutes between the periodic reconciliation passes (see [Architecture](architecture.md#periodic-reconciliation)). Whole number. |
 | `WALDUR_SITE_AGENT_STOMP_UNHEALTHY_AFTER_MINUTES` | `15` | `event_process` | How long a STOMP consumer may stay down before the agent stops touching its liveness heartbeat (see [Architecture](architecture.md#stomp-connection-watchdog-and-liveness)). Accepts a fraction. |
+| `WALDUR_SITE_AGENT_STOMP_HANDLER_STUCK_AFTER_MINUTES` | `30` | `event_process` | A message handler running longer than this counts as a stuck queue and, past the STOMP unhealthy threshold, withholds the liveness heartbeat (see [Architecture](architecture.md#message-handling-and-acknowledgement)). Accepts a fraction. |
+| `WALDUR_SITE_AGENT_RESOURCE_STATUS_RECONCILIATION_MINUTES` | `60` | `event_process` | Minutes between passes that re-apply every resource's paused/downscaled status (see [Architecture](architecture.md#resource-status-reconciliation)). `0` disables it. Accepts a fraction. |
 | `WALDUR_SITE_AGENT_HEARTBEAT_PATH` | `/tmp/waldur-site-agent-heartbeat` | all modes, `waldur_site_healthz` | File the agent touches as its liveness heartbeat and the probe reads. Give each agent process sharing a `/tmp` its own path. |
 | `SENTRY_ENVIRONMENT` | — | Sentry SDK | Environment tag on Sentry events; read by the Sentry SDK itself when `sentry_dsn` is set. |
 
@@ -28368,7 +28448,6 @@ offerings:
       customer_prefix: "c_"
       project_prefix: "p_"
       allocation_prefix: "a_"
-      enable_user_homedir_account_creation: true
 
     backend_components:
       deposit:
@@ -28714,7 +28793,7 @@ offerings:
     stomp_enabled: true
     websocket_use_tls: true
     # Optional overrides; by default the agent connects to the host of waldur_api_url,
-    # path /rmqws-stomp, port 443 (80 when verify_ssl is false)
+    # path /rmqws-stomp, port 443 (80 when websocket_use_tls is false)
     # stomp_ws_host: "waldur.example.com"
     # stomp_ws_port: 443
     # stomp_ws_path: "/rmqws-stomp"
@@ -30936,8 +31015,23 @@ If your backend does not support a certain operation, use these return values:
 
 ## Annotated YAML configuration
 
+Every ```yaml block that contains `offerings:` in the repository's Markdown, and every file
+under `examples/` and `plugins/*/examples/`, is loaded by `tests/test_docs_config_examples.py`
+in the core test job. A block fails when it does not load through the real configuration
+loader, uses a key the configuration model does not define (the loader would ignore it
+silently), names a backend that is not a registered entry point, sets no `*_backend` at all,
+or produces a settings-schema warning. A deliberately partial snippet opts out with a comment
+on the line before its opening fence (a blank line in between is fine):
+
+```markdown
+
+```
+
+A top-level key starting with `.` (for example `.ldap: &ldap_settings`) is accepted as a YAML
+anchor holder.
+
 The `mycustom` entry point below is the template plugin's; it resolves only
-once you register your own.
+once you register your own, so the block is marked to be skipped.
 
 ```yaml
 offerings:
@@ -31449,9 +31543,11 @@ Rules that apply to every section:
 - **No hard-coded test counts or file trees.** They are out of date the next
   time someone adds a test. Name the test directory and the command instead.
 - **Every complete configuration example must load.** A YAML block that
-  contains `offerings:` must load with the real configuration loader (checked
-  in CI once #48 lands); a deliberately partial snippet is marked with ``
-  on its own line before the opening fence (a blank line in between is fine).
+  contains `offerings:` must load with the real configuration loader, use only
+  keys the agent reads and registered backend names (checked in CI by
+  `tests/test_docs_config_examples.py`); a deliberately partial snippet is marked with
+  `` on its own line before the opening fence (a blank line in
+  between is fine).
 - **No-ops are named.** If a backend method does nothing (for example
   `pause_resource` returns `True` without touching the backend), the operations
   table says so rather than leaving the reader to assume it works.
@@ -31485,7 +31581,9 @@ namespace, ...).
 
 ## Configuration
 
-A complete offering that loads as written:
+A complete offering that loads as written. The `<name>` placeholders below are not real
+backends, so this template's copy is marked to be skipped; drop the marker in the plugin
+README, where CI loads the block through the real configuration loader.
 
 ```yaml
 offerings:
@@ -33973,7 +34071,7 @@ For contributors:
 | [envoy-ai-gateway](plugins/envoy-ai-gateway/README.md) | [`waldur-site-agent-envoy-ai-gateway`](https://pypi.org/project/waldur-site-agent-envoy-ai-gateway/) | Envoy AI Gateway (API keys + usage reporting) plugin |
 | [harbor](plugins/harbor/README.md) | [`waldur-site-agent-harbor`](https://pypi.org/project/waldur-site-agent-harbor/) | Harbor container registry plugin |
 | [k8s-ut-namespace](plugins/k8s-ut-namespace/README.md) | [`waldur-site-agent-k8s-ut-namespace`](https://pypi.org/project/waldur-site-agent-k8s-ut-namespace/) | Kubernetes UT ManagedNamespace plugin |
-| [keycloak-client](plugins/keycloak-client/) | [`waldur-site-agent-keycloak-client`](https://pypi.org/project/waldur-site-agent-keycloak-client/) | Shared Keycloak client for Waldur Site Agent plugins |
+| [keycloak-client](plugins/keycloak-client/README.md) | [`waldur-site-agent-keycloak-client`](https://pypi.org/project/waldur-site-agent-keycloak-client/) | Shared Keycloak client for Waldur Site Agent plugins |
 | [ldap](plugins/ldap/README.md) | [`waldur-site-agent-ldap`](https://pypi.org/project/waldur-site-agent-ldap/) | LDAP plugin |
 | [ldap-client](plugins/ldap-client/README.md) | [`waldur-site-agent-ldap-client`](https://pypi.org/project/waldur-site-agent-ldap-client/) | Shared LDAP client for Waldur Site Agent plugins |
 | [ldap-roles](plugins/ldap-roles/README.md) | [`waldur-site-agent-ldap-roles`](https://pypi.org/project/waldur-site-agent-ldap-roles/) | LDAP role-driven group membership sync plugin |
@@ -49260,8 +49358,8 @@ class Proposal(models.Model):
 # proposals/views.py
 class ProposalViewSet(UserChecklistMixin, ReviewerChecklistMixin, ActionsViewSet):
     # User permissions
-    checklist_permissions = [permission_factory(PermissionEnum.MANAGE_PROPOSAL)]
-    submit_answers_permissions = [permission_factory(PermissionEnum.MANAGE_PROPOSAL)]
+    checklist_permissions = [permission_factory(PermissionEnum.UPDATE_PROPOSAL)]
+    submit_answers_permissions = [permission_factory(PermissionEnum.UPDATE_PROPOSAL)]
 
     # Reviewer permissions
     checklist_review_permissions = [permission_factory(PermissionEnum.REVIEW_PROPOSALS)]
@@ -53907,8 +54005,35 @@ The platform includes several predefined system roles:
 
 - `CALL.REVIEWER` - Review proposals in calls
 - `CALL.MANAGER` - Manage calls for proposals
-- `PROPOSAL.MEMBER` - Proposal team member
-- `PROPOSAL.MANAGER` - Proposal management
+- `PROPOSAL.MANAGER` - Proposal manager: the principal investigator. Edits,
+  submits and deletes the proposal and adds, re-roles and removes its team
+  members (`PROPOSAL.MANAGE`, `PROPOSAL.UPDATE`, `PROPOSAL.UPDATE_PERMISSION`,
+  `PROPOSAL.DELETE_PERMISSION`)
+- `PROPOSAL.ADMIN` - Proposal administrator: a co-investigator who edits the
+  proposal (details, requested resources, documents, checklist answers) but
+  neither submits it nor changes its team (`PROPOSAL.UPDATE`)
+- `PROPOSAL.MEMBER` - Proposal team member, read-only
+
+The proposal team follows a few rules:
+
+- A proposal needs at least one active `PROPOSAL.MANAGER` to be submitted, and
+  the last one cannot be revoked. Nor does it expire: the expiry sweep keeps
+  the grant and logs a warning.
+- Those who may update the proposal's call (`CALL.MANAGER` on the call,
+  `CUSTOMER.CALL_ORGANIZER` on its managing organisation) manage the proposal
+  team without a role on it, as an organisation owner manages a project team.
+  This includes inviting people to the proposal by email.
+- `PROPOSAL.MANAGER` and `PROPOSAL.ADMIN` are granted and revoked (directly,
+  by invitation or through a permission request) only by the proposal's
+  managers, by call managers and organisers, and by staff. A custom role
+  carrying the team permissions may manage the other roles only.
+- Nobody changes their own proposal role, staff included (on other scopes staff
+  and organisation owners may). Creating a proposal still makes its author a
+  `PROPOSAL.MANAGER`.
+- Once the proposal leaves draft, its team is frozen: the applicant can no
+  longer change it. Staff, call managers and call organisers may still change
+  any role, and every such change is recorded as a
+  `proposal_team_changed_after_submission` event on the proposal.
 
 ### Role Features
 
@@ -56470,6 +56595,15 @@ Review and allocation policy is configured per call, on its workflow steps
 The step catalogue, in order: `administrative_check`, `technical_assessment`,
 `expert_review`, `panel_review`, `allocation_decision`, `award_response`.
 
+Each step also carries notification rules (`CallWorkflowStepNotificationRule`):
+on a trigger (`step_started`, `step_completed`, `step_rejected`,
+`step_expired`, `deadline_approaching`) mail an audience. A rule addressed to
+the applicant (or to the responsible role of a step the applicant is
+responsible for) lists in `notified_proposal_roles` the proposal roles whose
+holders are told, for example only `PROPOSAL.MANAGER`. Left empty, it reaches
+the proposal's creator and its whole team. The applicant side gets one message
+with every recipient in To; other audiences get a private copy each.
+
 ```mermaid
 graph LR
     subgraph "Round (scheduling)"
@@ -56750,16 +56884,17 @@ sequenceDiagram
 
 ### Role Mapping System
 
-The `ProposalProjectRoleMapping` enables automatic role assignment:
+The `ProposalProjectRoleMapping` enables automatic role assignment. A new
+call starts with these mappings, which its call manager can change:
 
-```python
-# Example: Map proposal PI to project manager
-ProposalProjectRoleMapping.objects.create(
-    call=call,
-    proposal_role=Role.objects.get(name="Principal Investigator"),
-    project_role=Role.objects.get(name="Project Manager")
-)
-```
+| Proposal role | Project role |
+| --- | --- |
+| `PROPOSAL.MANAGER` | `PROJECT.MANAGER` |
+| `PROPOSAL.ADMIN` | `PROJECT.ADMIN` |
+| `PROPOSAL.MEMBER` | `PROJECT.MEMBER` |
+
+A duplicated or imported call takes the source's mappings instead, when they
+are copied.
 
 When proposals are accepted:
 
@@ -95323,7 +95458,8 @@ Waldur integrates with the [Matrix](https://matrix.org/) open communication prot
 - **Automatic member sync** — project members are invited to rooms based on their roles
 - **Bot commands** — operational queries (resource status, orders, members) from within the chat
 - **History export** — manual, scheduled, or on-deletion export of chat messages and media
-- **User credentials** — authenticated users can retrieve their Matrix login details
+- **Web chat sessions** — Waldur's chat drawer gets short-lived Matrix tokens that live only in the browser's memory
+- **External clients** — optionally, users can sign in to Element or another Matrix client
 - **Room lifecycle** — disable, reactivate, and reprovision rooms
 
 The integration works with any Matrix homeserver that supports the Application Service API (Synapse, Dendrite, Conduit/Tuwunel, etc.).
@@ -95475,8 +95611,9 @@ waldur reprovision_matrix_rooms             # prompts before writing
 waldur reprovision_matrix_rooms -y          # no prompt, for scripts
 ```
 
-It prompts by default because it discards every stored room id, room alias and
-user access token, and only a working homeserver can issue replacements. With no
+It prompts by default because it discards every stored room id and room alias and
+resets every user's provisioning state, and only a working homeserver can issue
+replacements. With no
 terminal attached, as in a Kubernetes Job or a cron run, it refuses and tells you
 to pass `-y`. It refuses to run when Matrix chat is disabled or the homeserver is
 unconfigured: the room-creation tasks it queues would have nothing to talk to,
@@ -95612,6 +95749,7 @@ Permissions vary per action (demo policy: owners manage day-to-day membership an
 | --- | --- |
 | `sync_members`, `export_history`, `retry`, `reactivate` | Customer owner (`is_owner`) |
 | `disable`, `DELETE`, `join`, `leave` | Staff or support (`is_staff_or_support`) |
+| `open` | A current member of the room (`invited` or `joined`) |
 
 **POST /api/matrix/rooms/{uuid}/sync_members/**
 
@@ -95643,6 +95781,10 @@ Re-enables an archived room. Sets the room back to `active` state and triggers a
 
 Lets a staff or support user join or leave a room they are not a project member of (e.g. to moderate). On join, the user is added with a moderator power level (50). Returns `202 Accepted`.
 
+**POST /api/matrix/rooms/{uuid}/open/**
+
+Returns `{"room_id": ...}` to a member whose membership is `invited` or `joined`, and accepts a pending invite on the way; if accepting fails, the room ID is still returned and the invite stays pending. Everyone else who can see the room — staff, support, a customer owner who is not a project member — gets `403`: managing a room does not grant reading its conversation. Callers who cannot see the room get `404`, a room that is not active gets `409`, and with Matrix chat disabled the action answers `400`. The chat drawer calls this when it opens a room.
+
 **DELETE /api/matrix/rooms/{uuid}/**
 
 Deletes a room record. Only rooms in `error`, `creating`, or `archived` state can be deleted. Returns `204 No Content` or `409 Conflict`.
@@ -95658,13 +95800,15 @@ When a room is created or a manual sync is triggered:
 1. All active project members (direct and via customer) are enumerated
 2. Each user is provisioned on the homeserver if needed (via `MatrixUserProfile`)
 3. Display names are set to the user's full name
-4. Users are invited to the room
+4. Users are invited to the room, and the invite is accepted on their behalf
 5. Power levels are set based on roles:
    - Project admin or customer owner: power level 50
    - Regular member: power level 0
    - The bot account: power level 100
 
 Member records are stored in `MatrixRoomMember` with membership states: `invited`, `joined`, `left`, `banned`.
+
+Joins and leaves act as the user through the appservice token with `?user_id=`. They never log in as the user, so they create no Matrix device or access token.
 
 ### Automatic member management
 
@@ -95674,6 +95818,7 @@ The integration automatically responds to role changes:
 - **Role revoked** — if the user has no remaining roles in the project or its customer, they are kicked from the room; a notification is posted regardless
 - **Project deleted** — the room is disabled (members kicked, history exported, room archived)
 - **Order state changed** — notifications are posted when orders are approved, completed, rejected, canceled, or errored
+- **User deactivated or deleted** — every `WALDUR_WEB_` device of the user is signed out by a background task, which revokes those devices' access and refresh tokens. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. Devices are signed out even while chat is switched off (`MATRIX_ENABLED`): switching chat off does not end drawers that are already open, because they renew their tokens with the homeserver directly. A user reactivated before the task runs keeps their new sessions. Other Matrix devices, such as Element, are left alone; in `password` mode the derived password keeps working, so deactivate the account on the homeserver to cut external access
 
 ## History Exports
 
@@ -95714,31 +95859,58 @@ Returns exports accessible to the user based on room access. Staff and support s
 | `state` | string | Filter by export state |
 | `export_type` | string | Filter by type: `manual`, `periodic`, `on_deletion` |
 
-## User Credentials
+## Web Chat Sessions
+
+**POST /api/matrix/session/**
+
+Starts a Matrix session for Waldur's chat drawer. Waldur signs the user in through the appservice on a new device, `WALDUR_WEB_` followed by 12 hexadecimal characters and named "<site name> web chat", asking for a refresh token. It returns the tokens without storing them:
+
+| Field | Description |
+| --- | --- |
+| `homeserver_url` | Public homeserver URL (`MATRIX_HOMESERVER_PUBLIC_URL`, falling back to `MATRIX_HOMESERVER_URL`) |
+| `matrix_user_id` | The user's Matrix ID |
+| `device_id` | The session's device |
+| `access_token` | Expires after the homeserver's `access_token_ttl` |
+| `refresh_token` | Renews the access token through Matrix `/refresh`; idle-expires after `refresh_token_ttl`. `null` if the homeserver issues no refresh tokens, and then the access token does not expire |
+| `expires_in_ms` | Lifetime of `access_token`; `null` without refresh tokens |
+
+| Status | When |
+| --- | --- |
+| `200` | Session started |
+| `403` | The account was deactivated while the session was being started; the new device is signed out again |
+| `404` | Matrix chat is disabled |
+| `429` | The per-user `matrix_session` rate limit (default 120/hour) is exhausted |
+| `503` | The homeserver failed or Matrix is misconfigured; the details are logged, not returned |
+
+The drawer keeps both tokens in memory only. It renews the access token through Matrix `/refresh`, and asks Waldur for a new session when a refresh is rejected or when the homeserver signs its device out, for example from Element's session list or through the device cleanup described below. Waldur is therefore consulted when the drawer connects, when a refresh is rejected and when the device is signed out, not while refreshes succeed: switching chat off or signing out of Waldur in another tab does not cut an open drawer, which keeps working until it next needs a new session. Whether the user may still chat is decided then: a deactivated, deleted or signed-out user gets no new session and is returned to the login page. The drawer shows that the chat session has ended when chat was switched off, or when the new session is signed out again within a minute. A rate-limited connect asks the user to try again later.
+
+Every session has its own device. Tuwunel keeps one refresh token per device, so two browser tabs sharing a device would invalidate each other's refresh token. A session starts on every page load for a room member, because the drawer connects in the background for unread counts, so each load is one device and one call against the rate limit. After each new session Waldur signs out the user's web devices not seen for 24 hours, a window fixed in Waldur that matches the default `refresh_token_ttl`. Beyond the 10 most recently seen devices it signs out the rest, except devices seen in the last ten minutes: those belong to open tabs. It never signs out the session that triggered the cleanup.
+
+The homeserver sets the lifetimes. The Helm chart and docker-compose configure Tuwunel with `access_token_ttl = 300` (5 minutes) and `refresh_token_ttl = 86400` (24 hours, idle); another homeserver needs its own equivalent settings. Logins without a refresh token, such as Element with a password, keep non-expiring tokens and are unaffected.
+
+## External Clients
+
+`MATRIX_EXTERNAL_LOGIN_METHOD` decides whether users can open their rooms in Element or another Matrix client:
+
+| Method | What the user gets |
+| --- | --- |
+| `none` (default) | Waldur offers no external sign-in: "Open in external Matrix client" and "Connect to Matrix…" are hidden. This hides the password; it does not disable password login on the homeserver |
+| `password` | The room, the homeserver, their Matrix user ID and a password Waldur derives for them. Needs `MATRIX_USER_REGISTRATION_SECRET` |
+| `oidc` | The room, the homeserver and an instruction to sign in with single sign-on, which must be configured on the homeserver |
+
+Switching away from `password` does not revoke passwords users have already seen or sign out their external clients; reset those passwords on the homeserver to cut that access.
 
 **GET /api/matrix/credentials/**
 
-Returns Matrix login credentials for the authenticated user. If the user has not been provisioned on the homeserver yet, provisioning happens on-demand.
-
-The response varies based on the configured `MATRIX_LOGIN_METHOD`:
+Returns what the external client dialog shows. If the user has not been provisioned on the homeserver yet, provisioning happens on demand.
 
 | Method | Response fields |
 | --- | --- |
-| `password` | `matrix_user_id`, `homeserver_url`, `password` |
-| `token` | `matrix_user_id`, `homeserver_url`, `login_token` |
-| `oidc` | `matrix_user_id`, `homeserver_url`, `oidc_provider_url` |
+| `none` | `method`, `matrix_user_id`, `homeserver_url` |
+| `password` | `method`, `matrix_user_id`, `homeserver_url`, `password` |
+| `oidc` | `method`, `matrix_user_id`, `homeserver_url` |
 
-**Optional query parameter:**
-
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `room_uuid` | UUID | Auto-invite and join the user into this room. The user must have access to the room's project. Returns additional `room_id` and `access_token` fields for embedded chat. |
-
-When `room_uuid` is provided:
-
-- The user is invited to the Matrix room and automatically joined
-- An `access_token` is returned for direct homeserver communication (embedded chat)
-- If the user does not have access to the room's project, the room parameters are silently ignored
+The endpoint never returns an access token. Waldur's chat drawer gets its tokens from `POST /api/matrix/session/`. It answers `400` with the reason when Matrix is misconfigured for the chosen method, and `503` when provisioning the user on the homeserver fails; the details are logged, not returned.
 
 ## Webhook
 
@@ -95775,8 +95947,7 @@ These Constance settings control the integration:
 | `MATRIX_EXPORT_MEDIA` | `False` | Download media files during export |
 | `MATRIX_USER_REGISTRATION_SECRET` | `""` | Shared secret for registering users on the homeserver |
 | `MATRIX_USER_ID_FORMAT` | `username` | Format for generating Matrix user IDs: `username`, `uuid`, or `email_local` |
-| `MATRIX_LOGIN_METHOD` | `token` | User login method: `password`, `token`, or `oidc` |
-| `MATRIX_OIDC_PROVIDER_URL` | `""` | OIDC provider URL (fallback when multiple active IDPs exist) |
+| `MATRIX_EXTERNAL_LOGIN_METHOD` | `none` | How users sign in to an external Matrix client: `none`, `password`, or `oidc`. See [External clients](#external-clients) |
 
 ## Feature Flag
 
@@ -95786,7 +95957,7 @@ The Matrix chat UI is gated on the project feature flag `project.show_matrix_cha
 
 | Model | Description |
 | --- | --- |
-| `MatrixUserProfile` | Links a Waldur user to their Matrix user ID. Tracks provisioning state and access token. |
+| `MatrixUserProfile` | Links a Waldur user to their Matrix user ID and tracks provisioning state. It stores no Matrix token. |
 | `MatrixRoom` | A Matrix room linked to a project via generic FK. One room per project. Manages state via FSM transitions. |
 | `MatrixRoomMember` | Tracks room membership, power levels, and membership state per user. |
 | `MatrixHistoryExport` | A chat history export with state, message/media counts, and file references. |
@@ -100472,6 +100643,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - proposal_canceled
 - proposal_document_added
 - proposal_document_removed
+- proposal_team_changed_after_submission
 - proposal_workflow_advanced
 
 ## Providers

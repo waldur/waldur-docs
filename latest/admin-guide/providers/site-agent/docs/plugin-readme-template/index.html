@@ -18747,9 +18747,11 @@ from its <code>schemas.py</code>, the operations from its backend class.</p>
 <li><strong>No hard-coded test counts or file trees.</strong> They are out of date the next
   time someone adds a test. Name the test directory and the command instead.</li>
 <li><strong>Every complete configuration example must load.</strong> A YAML block that
-  contains <code>offerings:</code> must load with the real configuration loader (checked
-  in CI once #48 lands); a deliberately partial snippet is marked with <code>&lt;!-- docs-check: skip --&gt;</code>
-  on its own line before the opening fence (a blank line in between is fine).</li>
+  contains <code>offerings:</code> must load with the real configuration loader, use only
+  keys the agent reads and registered backend names (checked in CI by
+  <code>tests/test_docs_config_examples.py</code>); a deliberately partial snippet is marked with
+  <code>&lt;!-- docs-check: skip --&gt;</code> on its own line before the opening fence (a blank line in
+  between is fine).</li>
 <li><strong>No-ops are named.</strong> If a backend method does nothing (for example
   <code>pause_resource</code> returns <code>True</code> without touching the backend), the operations
   table says so rather than leaving the reader to assume it works.</li>
@@ -18816,7 +18818,11 @@ from its <code>schemas.py</code>, the operations from its backend class.</p>
 <span class="normal">59</span>
 <span class="normal">60</span>
 <span class="normal">61</span>
-<span class="normal">62</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gh"># &lt;Plugin name&gt; plugin for Waldur Site Agent</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="gh"># &lt;Plugin name&gt; plugin for Waldur Site Agent</span>
 
 One paragraph: what the plugin manages on the backend, and what a Waldur
 resource becomes there (a SLURM account, a Harbor project, a Kubernetes
@@ -18842,7 +18848,11 @@ namespace, ...).
 
 <span class="gu">## Configuration</span>
 
-A complete offering that loads as written:
+A complete offering that loads as written. The <span class="sb">`&lt;name&gt;`</span> placeholders below are not real
+backends, so this template's copy is marked to be skipped; drop the marker in the plugin
+README, where CI loads the block through the real configuration loader.
+
+&lt;!-- docs-check: skip --&gt;
 
 <span class="sb">```yaml</span>
 <span class="nt">offerings</span><span class="p">:</span>
