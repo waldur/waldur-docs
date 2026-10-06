@@ -59,6 +59,15 @@ When a project has a grace period configured:
 
 - Notification emails about project ending include grace period details when applicable.
 
+### Resources during the grace period
+
+From the first day after the project's end date, resources of offerings that support pausing are **paused** for the rest of the grace period. The pause is applied by a daily task that runs early in the morning (server time), so it takes effect on that first day. For providers that enforce the paused state, such as SLURM through the site agent, the paused resources no longer accept new work. Their data is kept until the grace period expires.
+
+- The pause stays in place for the whole grace period, even if the resource's usage is within its limits.
+- **Extending the project end date** (or removing it) lifts the pause automatically, unless the resource must stay paused for another reason, for example because its usage is over a limit or a cost policy requires it.
+- Extending the end date does not lift a pause that staff set manually. On offerings with a SLURM usage policy, however, the policy lifts a manual pause once the resource's usage is below its limit.
+- Offerings that disable the grace period are not paused: their resources are scheduled for termination on the project end date.
+
 !!! warning
     Once the grace period expires (i.e., the resource termination date is reached), all project resources will be scheduled for termination, just as they would on the regular end date.
 
