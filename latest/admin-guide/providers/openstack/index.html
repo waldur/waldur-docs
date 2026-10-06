@@ -4002,6 +4002,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#networks-shared-by-projects-waldur-does-not-manage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Networks shared by projects Waldur does not manage
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -19111,6 +19122,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#networks-shared-by-projects-waldur-does-not-manage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Networks shared by projects Waldur does not manage
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -19267,6 +19289,49 @@ network to connect to in the following order:</p>
 </ol>
 <p>The tenant's default router is then connected to the resolved external network, and the
 tenant's external network reference is recorded for floating IP allocation.</p>
+<h2 id="networks-shared-by-projects-waldur-does-not-manage">Networks shared by projects Waldur does not manage</h2>
+<p>Providers often keep shared networks — a provider LAN, a storage network — in the cloud's
+<code>admin</code> project or a service project, and hand them to customer tenants with a Neutron RBAC
+policy:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>openstack<span class="w"> </span>network<span class="w"> </span>rbac<span class="w"> </span>create<span class="w"> </span>--type<span class="w"> </span>network<span class="w"> </span>--action<span class="w"> </span>access_as_shared<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--target-project<span class="w"> </span>&lt;tenant<span class="w"> </span>project<span class="w"> </span>id&gt;<span class="w"> </span>&lt;network&gt;
+</code></pre></div></td></tr></tbody></table></div>
+<p>Waldur picks such a share up on the tenant's next pull, even though the owning project is not
+a Waldur tenant. The share is discovered from the RBAC policy itself — Neutron does not return
+networks shared with a project when an admin lists that project's networks.</p>
+<p><strong>How it appears.</strong> Waldur records the owning project as an <em>unmanaged</em> tenant
+(<code>is_managed: false</code>) in a project named <code>&lt;provider&gt; provider networks</code>, under the provider's
+organization. Waldur only reads it: it holds no credentials for it, never provisions, bills,
+pulls with tenant credentials or deletes it, and refuses every change to it, its networks and
+their subnets through the API. Only the networks it shares with Waldur tenants are imported,
+together with their subnets.</p>
+<p><strong>What the tenant can do.</strong> The shared network and its subnets are listed in the tenant's
+Networks and Subnets tabs and can be used like the tenant's own:</p>
+<ul>
+<li>VMs can be ordered on the shared subnet, and ports created on the shared network; both belong
+  to the tenant.</li>
+<li>The shared subnet can be attached to the tenant's router, which also lets a VM on it get a
+  floating IP through that router.</li>
+<li>Security groups can be set on the tenant's ports on the network.</li>
+</ul>
+<p>Two things stay with the network's owner:</p>
+<ul>
+<li><strong>Sharing.</strong> The share can be created, changed or revoked only in OpenStack, not from Waldur.</li>
+<li><strong>Allowed address pairs.</strong> Neutron's default policy lets only the network's owner or an
+  administrator set allowed address pairs on a network, so a tenant's request for a port on a
+  shared network is refused, and Waldur reports that refusal.</li>
+</ul>
+<p><strong>When the share ends.</strong> Revoking the policy (Neutron refuses while the tenant still has ports on
+the network) removes the network from Waldur on the tenant's next pull; deleting the tenant does
+the same at once. Once a project shares nothing with any Waldur tenant, its unmanaged tenant is
+removed as well. Only Waldur's records are removed — the network stays in the cloud.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Wildcard shares (<code>--target-project '*'</code>, i.e. networks created with <code>--share</code>) and
+<code>access_as_external</code> policies targeted at single projects are not imported this way. External
+networks are configured on the offering instead (see above).</p>
+</div>
 
 
 

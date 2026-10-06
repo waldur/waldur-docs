@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-06T12:00:41.013809Z
+Generated: 2026-10-06T13:30:40.451176Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -27298,6 +27298,54 @@ network to connect to in the following order:
 
 The tenant's default router is then connected to the resolved external network, and the
 tenant's external network reference is recorded for floating IP allocation.
+
+## Networks shared by projects Waldur does not manage
+
+Providers often keep shared networks — a provider LAN, a storage network — in the cloud's
+`admin` project or a service project, and hand them to customer tenants with a Neutron RBAC
+policy:
+
+```bash
+openstack network rbac create --type network --action access_as_shared \
+  --target-project <tenant project id> <network>
+```
+
+Waldur picks such a share up on the tenant's next pull, even though the owning project is not
+a Waldur tenant. The share is discovered from the RBAC policy itself — Neutron does not return
+networks shared with a project when an admin lists that project's networks.
+
+**How it appears.** Waldur records the owning project as an *unmanaged* tenant
+(`is_managed: false`) in a project named `<provider> provider networks`, under the provider's
+organization. Waldur only reads it: it holds no credentials for it, never provisions, bills,
+pulls with tenant credentials or deletes it, and refuses every change to it, its networks and
+their subnets through the API. Only the networks it shares with Waldur tenants are imported,
+together with their subnets.
+
+**What the tenant can do.** The shared network and its subnets are listed in the tenant's
+Networks and Subnets tabs and can be used like the tenant's own:
+
+- VMs can be ordered on the shared subnet, and ports created on the shared network; both belong
+  to the tenant.
+- The shared subnet can be attached to the tenant's router, which also lets a VM on it get a
+  floating IP through that router.
+- Security groups can be set on the tenant's ports on the network.
+
+Two things stay with the network's owner:
+
+- **Sharing.** The share can be created, changed or revoked only in OpenStack, not from Waldur.
+- **Allowed address pairs.** Neutron's default policy lets only the network's owner or an
+  administrator set allowed address pairs on a network, so a tenant's request for a port on a
+  shared network is refused, and Waldur reports that refusal.
+
+**When the share ends.** Revoking the policy (Neutron refuses while the tenant still has ports on
+the network) removes the network from Waldur on the tenant's next pull; deleting the tenant does
+the same at once. Once a project shares nothing with any Waldur tenant, its unmanaged tenant is
+removed as well. Only Waldur's records are removed — the network stays in the cloud.
+
+!!! note
+    Wildcard shares (`--target-project '*'`, i.e. networks created with `--share`) and
+    `access_as_external` policies targeted at single projects are not imported this way. External
+    networks are configured on the offering instead (see above).
 
 ---
 
@@ -83018,7 +83066,11 @@ clean `25 instances` boxes — not 100 separate instance nodes.
 - **Debugging connectivity** — confirm at a glance that a subnet is attached
   to a router and that the router has an external gateway.
 - **Reviewing inbound shares** — RBAC shares from other tenants appear
-  explicitly as their own node and are linked into your tenant.
+  explicitly as their own node and are linked into your tenant. This
+  includes networks your provider shares from its own OpenStack projects;
+  those can be used for VMs, ports and your router, but only the provider
+  can change or revoke them, and setting allowed address pairs on ports
+  in them is usually refused by OpenStack.
 - **Documenting your VPC** — the diagram is a deterministic snapshot you
   can screenshot for handovers or change reviews.
 
