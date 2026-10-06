@@ -8912,6 +8912,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../developer-guide/ui/e2e-locators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E2e locators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../developer-guide/ui/forms/" class="md-nav__link">
         
   
@@ -9004,6 +9032,34 @@
     
   
     Menu navigation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../developer-guide/ui/menus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Menus
   
 
     
@@ -9371,10 +9427,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_27">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_29">
         
           
-          <label class="md-nav__link" for="__nav_3_4_27" id="__nav_3_4_27_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4_29" id="__nav_3_4_29_label" tabindex="0">
             
   
   
@@ -9392,8 +9448,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_27_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_4_27">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_29_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4_29">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -19204,6 +19260,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Agent mode method matrix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reporting-user-addremove-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting user add/remove failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -20683,6 +20756,22 @@ stub returns <code>None</code> when called. The core and <code>BaseBackend</code
 </tbody>
 </table>
 <p>¹ Only for backends with <code>supports_cycle_preflight = True</code>.</p>
+<h3 id="reporting-user-addremove-failures">Reporting user add/remove failures</h3>
+<p><code>add_user</code> and <code>remove_user</code> share one contract: return <code>True</code> when the user is
+associated (or removed) afterwards, <code>False</code> only when there was nothing to do
+(blank username, feature disabled), and <strong>raise</strong> <code>BackendError</code> when the backend
+refused. A failure folded into <code>False</code> reads as a skip and is never reported, so
+nobody learns the user is missing.</p>
+<p>Raise <code>UserNotProvisionedError</code> (a <code>BackendError</code> subclass) when the user does not
+exist in the identity provider yet, e.g. no first Keycloak sign-in. The base
+<code>add_users_to_resource</code> skips such users and retries them on the next pass.</p>
+<p>The base <code>add_users_to_resource</code> / <code>remove_users_from_resource</code> try every user
+and record each failure with its cause. Membership sync logs them at ERROR (the
+users, capped at ten, and the first cause) and retries them on the next pass.
+The resource state is not changed and <code>last_sync</code> is still refreshed: one
+member's problem is not a failure of an allocation that works for everyone else.
+A backend that overrides these bulk methods reports nothing unless it returns
+<code>AddedUsers</code> / <code>RemovedUsers</code> with <code>failed</code> filled in.</p>
 <h2 id="usage-report-format-specification">Usage report format specification</h2>
 <p>The <code>_get_usage_report</code> method must return data in this exact structure:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>

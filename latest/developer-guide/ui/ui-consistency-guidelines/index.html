@@ -8908,6 +8908,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../e2e-locators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E2e locators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../forms/" class="md-nav__link">
         
   
@@ -9000,6 +9028,34 @@
     
   
     Menu navigation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../menus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Menus
   
 
     
@@ -10457,10 +10513,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_27">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_29">
         
           
-          <label class="md-nav__link" for="__nav_3_4_27" id="__nav_3_4_27_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4_29" id="__nav_3_4_29_label" tabindex="0">
             
   
   
@@ -10478,8 +10534,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_27_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_4_27">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_29_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4_29">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -21664,20 +21720,28 @@ Cells read against the ones beside them before they read against the app.</p>
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
-<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">PAGE_SIZE_COMPACT</span><span class="p">,</span><span class="w"> </span><span class="nx">PAGE_SIZE_FULL</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table/constants'</span><span class="p">;</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">TablePagination</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-ui'</span><span class="p">;</span>
+
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">PAGE_SIZE_COMPACT</span><span class="p">,</span><span class="w"> </span><span class="nx">PAGE_SIZE_FULL</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/table/constants'</span><span class="p">;</span>
 
 <span class="c1">// PAGE_SIZE_COMPACT = 5 (for embedded/secondary tables)</span>
 <span class="c1">// PAGE_SIZE_FULL = 10 (for primary tables)</span>
 
-<span class="c1">// Hide pagination when items ≤ PAGE_SIZE_COMPACT</span>
-<span class="p">{</span>
-<span class="w">  </span><span class="nx">pagination</span><span class="p">.</span><span class="nx">resultCount</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="nx">PAGE_SIZE_COMPACT</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span>
-<span class="w">    </span><span class="p">&lt;</span><span class="nt">TablePagination</span><span class="w"> </span><span class="p">{</span><span class="na">...pagination</span><span class="p">}</span><span class="w"> </span><span class="p">/&gt;</span>
-<span class="w">  </span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="c1">// Show item count</span>
-<span class="c1">// Format: "Showing 1-10 of 100"</span>
+<span class="c1">// TablePagination hides itself when items ≤ PAGE_SIZE_COMPACT, and shows</span>
+<span class="c1">// the item count ("11-20 of 42 items"). &lt;Table&gt; renders it for you; render</span>
+<span class="c1">// it yourself only for a paged list that is not a &lt;Table&gt;, such as a list</span>
+<span class="c1">// of form fields — there, drop the table's top border:</span>
+<span class="p">&lt;</span><span class="nt">TablePagination</span>
+<span class="w">  </span><span class="p">{</span><span class="na">...pagination</span><span class="p">}</span>
+<span class="w">  </span><span class="na">hasRows</span><span class="o">=</span><span class="p">{</span><span class="nx">rows</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="p">}</span>
+<span class="w">  </span><span class="na">gotoPage</span><span class="o">=</span><span class="p">{</span><span class="nx">setPage</span><span class="p">}</span>
+<span class="w">  </span><span class="na">updatePageSize</span><span class="o">=</span><span class="p">{</span><span class="nx">setPageSize</span><span class="p">}</span>
+<span class="w">  </span><span class="na">bordered</span><span class="o">=</span><span class="p">{</span><span class="kc">false</span><span class="p">}</span>
+<span class="p">/&gt;;</span>
 </code></pre></div></td></tr></tbody></table></div>
 <hr>
 <h2 id="5-dialogs-and-confirmations">5. Dialogs and Confirmations</h2>

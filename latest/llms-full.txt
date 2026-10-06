@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-05T21:41:56.895715Z
+Generated: 2026-10-06T02:03:51.616653Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -30855,6 +30855,26 @@ This table shows which `BaseBackend` methods are called by each agent mode.
 | `process_existing_users` | - | - | user sync | - |
 
 ¹ Only for backends with `supports_cycle_preflight = True`.
+
+### Reporting user add/remove failures
+
+`add_user` and `remove_user` share one contract: return `True` when the user is
+associated (or removed) afterwards, `False` only when there was nothing to do
+(blank username, feature disabled), and **raise** `BackendError` when the backend
+refused. A failure folded into `False` reads as a skip and is never reported, so
+nobody learns the user is missing.
+
+Raise `UserNotProvisionedError` (a `BackendError` subclass) when the user does not
+exist in the identity provider yet, e.g. no first Keycloak sign-in. The base
+`add_users_to_resource` skips such users and retries them on the next pass.
+
+The base `add_users_to_resource` / `remove_users_from_resource` try every user
+and record each failure with its cause. Membership sync logs them at ERROR (the
+users, capped at ten, and the first cause) and retries them on the next pass.
+The resource state is not changed and `last_sync` is still refreshed: one
+member's problem is not a failure of an allocation that works for everyone else.
+A backend that overrides these bulk methods reports nothing unless it returns
+`AddedUsers` / `RemovedUsers` with `failed` filled in.
 
 ## Usage report format specification
 
@@ -67043,19 +67063,21 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 
 ## UI patterns
 
-| Guide                                                                    | Covers                                                                                                  |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| [component-library.md](component-library.md)                             | Reusable UI components: buttons, modals, tables, filters — with prop references                         |
-| [button-ui-guide.md](button-ui-guide.md)                                 | Comprehensive button UI guide: BaseButton, tokens, tooltips, toggles, segmented controls                |
-| [ui-consistency-guidelines.md](ui-consistency-guidelines.md)             | Empty states, buttons, loading indicators, tooltips, null-value display                                 |
-| [tables.md](tables.md)                                                   | `useTable`, columns, filters, row actions, export                                                       |
-| [forms.md](forms.md)                                                     | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection`                         |
-| [filter-migration-guide.md](table/filter-migration-guide.md)             | Generated table filters from the OpenAPI schema                                                         |
-| [theme.md](theme.md)                                                     | Dark mode and theming, including third-party components                                                 |
-| [design-tokens.md](design-tokens.md)                                     | Colour ramps as data: `tokens/colors.json`, the generator, what is and isn't generated                  |
-| [menu-navigation.md](menu-navigation.md)                                 | Sidebar menu structure and state-based routing                                                          |
-| [sidebar.md](sidebar.md)                                                 | Sidebar navigation architecture, design tokens, components, and recipes                                 |
-| [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md) | Bootstrap → Tailwind/shadcn migration: cascade layers, token extraction, visual-parity test methodology |
+| Guide                                                                    | Covers                                                                                                                     |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| [component-library.md](component-library.md)                             | Reusable UI components: buttons, modals, tables, filters — with prop references                                            |
+| [button-ui-guide.md](button-ui-guide.md)                                 | Comprehensive button UI guide: BaseButton, tokens, tooltips, toggles, segmented controls                                   |
+| [ui-consistency-guidelines.md](ui-consistency-guidelines.md)             | Empty states, buttons, loading indicators, tooltips, null-value display                                                    |
+| [tables.md](tables.md)                                                   | `useTable`, columns, filters, row actions, export                                                                          |
+| [forms.md](forms.md)                                                     | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection`                                            |
+| [filter-migration-guide.md](table/filter-migration-guide.md)             | Generated table filters from the OpenAPI schema                                                                            |
+| [theme.md](theme.md)                                                     | Dark mode and theming, including third-party components                                                                    |
+| [design-tokens.md](design-tokens.md)                                     | Colour ramps as data: `tokens/colors.json`, the generator, what is and isn't generated                                     |
+| [menu-navigation.md](menu-navigation.md)                                 | Sidebar menu structure and state-based routing                                                                             |
+| [sidebar.md](sidebar.md)                                                 | Sidebar navigation architecture, design tokens, components, and recipes                                                    |
+| [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md) | Bootstrap → Tailwind/shadcn migration: cascade layers, token extraction, visual-parity test methodology                    |
+| [e2e-locators.md](e2e-locators.md)                                       | How waldur-integration-testing locates menus, tabs and filters (roles and test ids), and what replaced the old class names |
+| [menus.md](menus.md)                                                     | Menus, dropdowns and popovers: which component to use, recipes, rules, how the looks work, testing                         |
 
 ## API and data
 
@@ -67558,7 +67580,7 @@ BaseButton (from 'waldur-ui' — Tailwind/shadcn, general purpose actions, size=
 | Inline action (small)                   | `BaseButton` (size="sm")                                      |
 | Modal cancel/close                      | `CloseDialogButton`                                           |
 | Icon-only button with tooltip           | `BaseButton` (`iconNode`, `tooltip`)                          |
-| Table toolbar (refresh, export, filter) | `BaseButton` (`variant="tertiary"`, `size="lg"`)             |
+| Table toolbar (refresh, export, filter) | `BaseButton` (`variant="tertiary"`, `size="lg"`)              |
 | Edit field in settings row              | `CompactEditButton`                                           |
 | Edit in card header                     | `BaseButton` (`iconNode`, `label`)                            |
 | Create with dialog                      | `CreateModalButton`                                           |
@@ -67587,13 +67609,13 @@ has no allowlist: `Link` builds its button classes from `buttonVariants()` via
 its `buttonVariant` prop, and `LoginButton` and `AssistantComposer`'s Send button
 are plain `BaseButton`s (`BaseButton` is forwardRef, so it works under
 `assistant-ui`'s `asChild`).
-`src/table/ActionsDropdown.tsx`/`ActionDropdownButton.tsx`'s row-action dropdown
+`src/table/ActionsDropdown.tsx`'s row-action dropdown
 toggles were the last remaining hand-rolled usage in the shared component
 layer (as opposed to the scattered app-level instances above) — Phase F3
 converted their toggle buttons onto `buttonVariants()` from waldur-ui, so
-they no longer trigger this rule at all. See that file's top-of-file comment
-for why the *menu panel* (`.dropdown-menu`/`.dropdown-item`) stayed on
-Bootstrap classes regardless — a separate axis from the toggle button.
+they no longer trigger this rule at all. The menu panel and rows have since
+moved off Bootstrap's `.dropdown-*` classes too, onto waldur-ui's `Menu` in
+the actions look (`ActionsMenu`).
 
 ## Key Directories
 
@@ -67743,7 +67765,7 @@ Comprehensive architectural reference, design system manual, and practical usage
 6. [Dropdown & Menu Toggles](#6-dropdown-menu-toggles)
    - [Why Action Toggles Use `buttonVariants()` Instead of `BaseButton`](#why-action-toggles-use-buttonvariants-instead-of-basebutton)
    - [Caret Rotation Animation (`ButtonCaret`)](#caret-rotation-animation-buttoncaret)
-   - [Required Marker Classes (`dropdown-toggle`, `no-arrow`, `btn-icon`)](#required-marker-classes-dropdown-toggle-no-arrow-btn-icon)
+   - [Unavailable Actions](#unavailable-actions)
    - [Centralized Icon Sizing in Toggles](#centralized-icon-sizing-in-toggles)
 7. [Segmented Controls & View Switchers](#7-segmented-controls-view-switchers)
    - [SegmentedControl vs. BaseButton](#segmentedcontrol-vs-basebutton)
@@ -67781,11 +67803,11 @@ Both share the exact same [`class-variance-authority`](https://cva.style/docs) (
 
 Buttons are implemented with exact, predictable pixel heights across three standardized tiers:
 
-| Size | Height   | Padding (`px` / `py`) | Typography & Line Height          | Corner Radius      | Icon Size                  | Default Context                                        |
-| :--- | :------- | :-------------------- | :-------------------------------- | :----------------- | :------------------------- | :----------------------------------------------------- |
-| `sm` | **28px** | `px-[8px] py-[4px]`   | `text-sm leading-5` (14px/20px)   | `rounded-md` (6px) | 16px (`size-4` wrapper)    | Table rows, filter bars, inline badges, popovers       |
-| `md` | **36px** | `px-[12px] py-[8px]`  | `text-sm leading-5` (14px/20px)   | `rounded-lg` (8px) | 20px (`size-5` wrapper)    | **Default size**. Page actions, card headers, toolbars |
-| `lg` | **44px** | `px-[16px] py-[10px]` | `text-base leading-6` (16px/24px) | `rounded-lg` (8px) | 20px (`size-5` wrapper)    | Form submissions, dialog footers, primary hero CTAs    |
+| Size | Height   | Padding (`px` / `py`) | Typography & Line Height          | Corner Radius      | Icon Size               | Default Context                                        |
+| :--- | :------- | :-------------------- | :-------------------------------- | :----------------- | :---------------------- | :----------------------------------------------------- |
+| `sm` | **28px** | `px-[8px] py-[4px]`   | `text-sm leading-5` (14px/20px)   | `rounded-md` (6px) | 16px (`size-4` wrapper) | Table rows, filter bars, inline badges, popovers       |
+| `md` | **36px** | `px-[12px] py-[8px]`  | `text-sm leading-5` (14px/20px)   | `rounded-lg` (8px) | 20px (`size-5` wrapper) | **Default size**. Page actions, card headers, toolbars |
+| `lg` | **44px** | `px-[16px] py-[10px]` | `text-base leading-6` (16px/24px) | `rounded-lg` (8px) | 20px (`size-5` wrapper) | Form submissions, dialog footers, primary hero CTAs    |
 
 > [!NOTE]
 > The default size is `md` (36px). `BaseButton` and `buttonVariants()` default to `size="md"` when omitted.
@@ -67858,15 +67880,15 @@ ButtonVariant =
 
 ### Solid & Bordered Variants
 
-| Variant          | Purpose & Hierarchy                                  | Light Mode Appearance                                                                                                             | Active Press Appearance                         |
-| :--------------- | :--------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------- |
-| `primary`        | Main call-to-action on a page or dialog              | Solid brand fill (`brand-600`), white text                                                                                        | Darker brand fill (`brand-800`), shadow cleared |
-| `secondary`      | Supporting action complementary to primary           | Two-tone: brand tint (`brand-50`), brand border (`brand-300`), plum text (`brand-900`), and vibrant magenta icon (`brand-500`)    | Darker brand tint (`brand-300`), brand text     |
-| `tertiary`       | Default neutral button for tables, headers, toolbars | Solid white, subtle gray border (`gray-300`), dark gray text                                                                      | Light gray fill (`gray-100`), shadow cleared    |
-| `tertiary-ghost` | Low-emphasis action with no idle border              | Transparent background, tertiary text                                                                                             | Light gray fill (`gray-100`), shadow cleared    |
-| `danger`         | Destructive actions (Delete, Terminate, Revoke)      | Error tint (`error-50`), red border & text                                                                                        | Vivid red fill (`error-500`), white text        |
-| `warning`        | Cautionary actions requiring warning                 | Warning tint (`warning-50`), amber border & text                                                                                  | Vivid amber fill (`warning-600`), white text    |
-| `success`        | Confirmation / affirmative actions (Approve, Accept) | Success tint (`success-50`), green border & text                                                                                  | Vivid green fill (`success-500`), white text    |
+| Variant          | Purpose & Hierarchy                                  | Light Mode Appearance                                                                                                          | Active Press Appearance                         |
+| :--------------- | :--------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------- |
+| `primary`        | Main call-to-action on a page or dialog              | Solid brand fill (`brand-600`), white text                                                                                     | Darker brand fill (`brand-800`), shadow cleared |
+| `secondary`      | Supporting action complementary to primary           | Two-tone: brand tint (`brand-50`), brand border (`brand-300`), plum text (`brand-900`), and vibrant magenta icon (`brand-500`) | Darker brand tint (`brand-300`), brand text     |
+| `tertiary`       | Default neutral button for tables, headers, toolbars | Solid white, subtle gray border (`gray-300`), dark gray text                                                                   | Light gray fill (`gray-100`), shadow cleared    |
+| `tertiary-ghost` | Low-emphasis action with no idle border              | Transparent background, tertiary text                                                                                          | Light gray fill (`gray-100`), shadow cleared    |
+| `danger`         | Destructive actions (Delete, Terminate, Revoke)      | Error tint (`error-50`), red border & text                                                                                     | Vivid red fill (`error-500`), white text        |
+| `warning`        | Cautionary actions requiring warning                 | Warning tint (`warning-50`), amber border & text                                                                               | Vivid amber fill (`warning-600`), white text    |
+| `success`        | Confirmation / affirmative actions (Approve, Accept) | Success tint (`success-50`), green border & text                                                                               | Vivid green fill (`success-500`), white text    |
 
 ### Text Variants
 
@@ -68212,7 +68234,7 @@ import { ProjectLink } from '@/project/ProjectLink';
 
 ## 6. Dropdown & Menu Toggles
 
-Action dropdown toggles—such as `TableDropdownToggle`, `AddDropdownToggle`, and `ActionDropdownButton.Toggle`—render dropdown triggers inside tables, card headers, and toolbars.
+Action dropdown toggles—such as `TableDropdownToggle` and `AddDropdownToggle`—render dropdown triggers inside tables and toolbars. For standalone dropdown buttons, use `Menu.TriggerButton` (which wraps `BaseButton` with `ButtonCaret`).
 
 ### Why Action Toggles Use `buttonVariants()` Instead of `BaseButton`
 
@@ -68223,11 +68245,8 @@ Action toggles render a direct `<button>` element styled with `buttonVariants({ 
 <button
   ref={ref}
   type="button"
-  className={cn(
-    buttonVariants({ variant, size }),
-    'dropdown-toggle no-arrow',
-    className,
-  )}
+  className={cn('group/toggle', buttonVariants({ variant, size }), className)}
+  data-testid="actions-toggle"
   disabled={disabled}
   data-disabled={disabled ? '' : undefined}
   {...rest}
@@ -68237,31 +68256,17 @@ Action toggles render a direct `<button>` element styled with `buttonVariants({ 
 </button>
 ```
 
-**Rationale:**
-
-1. **Direct Child Selector for Caret Animation**: The rotating caret animation is governed by:
-
-   ```css
-   .dropdown-toggle[data-state='open'] > .rotate-toggle-180 {
-     transform: rotate(180deg);
-   }
-   ```
-
-   `BaseButton` wraps its `iconNode` inside an intermediate `<span>` wrapper. That extra wrapper prevents the `> .rotate-toggle-180` child combinator from matching. Rendering a raw `<button>` with `buttonVariants({ variant, size })` and `<ButtonCaret size={size} />` ensures the caret remains a direct child.
-
-2. **Clean Radix Trigger Composition**: `RadixDropdownMenu.Trigger asChild` clones its immediate child, attaching ref and handlers. Rendering `<button>` directly ensures zero intermediate DOM layers.
+A Radix `Trigger asChild` (`Menu.Trigger`, `MenuPopover.Trigger`) clones its immediate child, attaching ref and handlers, so the toggle is the element Radix marks open.
 
 ### Caret Rotation Animation (`ButtonCaret`)
 
-When a Radix dropdown opens, it injects `data-state="open"` onto the trigger button. `<ButtonCaret size={size} />` includes the `.rotate-toggle-180` class, which smoothly rotates the icon 180 degrees using CSS transitions.
+When a Radix menu opens, it sets `data-state="open"` on its trigger. A toggle marks itself `group/toggle`, and `<ButtonCaret />` carries `group-data-[state=open]/toggle:rotate-180` with a 0.3s transition, so the caret flips while its own toggle is open, at any depth inside it. A toggle that isn't a Radix trigger passes `isOpen` instead.
 
-### Required Marker Classes (`dropdown-toggle`, `no-arrow`, `btn-icon`)
+### Unavailable Actions
 
-Toggles retain three specific utility classes:
+On an unavailable offering, the page wraps itself in `<ActionsUnavailable reason={…}>` (`src/table/ActionsDropdown.tsx`). Every action menu inside renders its toggle disabled, with the reason in a tooltip, and doesn't open, as the [UI guidelines](ui-consistency-guidelines.md) ask of a control that is temporarily unavailable. The tooltip sits on a focusable wrapper, because a disabled button gets no pointer events.
 
-- **`dropdown-toggle`**: Required for CSS caret rotation and for read-only view hiding rules (`table .dropdown-toggle { display: none !important }`).
-- **`no-arrow`**: Suppresses Bootstrap's legacy CSS `::after` caret pseudo-element, since toggles render an explicit Phosphor `CaretDownIcon`.
-- **`btn-icon`**: An inert marker used by read-only view stylesheets to hide icon-only toggles in panels and cards (`.dropdown-toggle.btn-icon { display: none }`).
+Tests find a toggle by `data-testid="actions-toggle"`, or the icon-only kebab by its accessible name, "Actions".
 
 ### Centralized Icon Sizing in Toggles
 
@@ -68427,7 +68432,7 @@ Used in forms that track dirty/unsaved state.
 
 | ESLint Rule                                     | Severity | What It Enforces                                                                                                                                                          |
 | :---------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `no-restricted-imports`                         | `error`  | Blocks importing `Button` or `DropdownButton` from `react-bootstrap`. Directs developers to `BaseButton`, `SubmitButton`, `CloseDialogButton`, or `ActionDropdownButton`. |
+| `no-restricted-imports`                         | `error`  | Blocks importing `Button` or `DropdownButton` from `react-bootstrap`. Directs developers to `BaseButton`, `SubmitButton`, `CloseDialogButton`, or `Menu.TriggerButton`. |
 | `waldur-custom/no-bootstrap-button-markup`      | `error`  | Blocks `<button className="btn ...">`, `<a className="btn ...">`, and any hand-rolled Bootstrap button markup.                                                            |
 | `waldur-custom/enforce-disabled-button-tooltip` | `error`  | Enforces that every disabled `<BaseButton>` has a `tooltip` or `disabledReason` explaining why the action is unavailable.                                                 |
 | `waldur-custom/enforce-dialog-button-order`     | `error`  | Enforces standard dialog button order: dismissive buttons (`CloseDialogButton`) on the left, affirmative/submission buttons (`SubmitButton`) on the right.                |
@@ -68679,12 +68684,24 @@ The application features a comprehensive set of reusable UI components organized
 
 ### Tables and Data Display
 
-| Component               | Location                            | Description                | Key Features                                              |
-| ----------------------- | ----------------------------------- | -------------------------- | --------------------------------------------------------- |
-| **Table**               | `src/table/Table.tsx`               | Main table component       | Filtering, sorting, pagination, column visibility, export |
-| **ActionsDropdown**     | `src/table/ActionsDropdown.tsx`     | Dropdown for table actions | Bulk operations, contextual actions                       |
-| **ExpandableContainer** | `src/table/ExpandableContainer.tsx` | Collapsible row details    | Table row expansion, detail views                         |
-| **TablePagination**     | `src/table/TablePagination.tsx`     | Pagination controls        | Page navigation, size selection                           |
+| Component               | Location                            | Description                | Key Features                                                |
+| ----------------------- | ----------------------------------- | -------------------------- | ----------------------------------------------------------- |
+| **Table**               | `src/table/Table.tsx`               | Main table component       | Filtering, sorting, pagination, column visibility, export   |
+| **ActionsDropdown**     | `src/table/ActionsDropdown.tsx`     | Dropdown for table actions | Row actions with `ActionItem`; a wrapper over `ActionsMenu` |
+| **ExpandableContainer** | `src/table/ExpandableContainer.tsx` | Collapsible row details    | Table row expansion, detail views                           |
+| **TablePagination**     | `waldur-ui`                         | Pagination controls        | Page navigation, size selection                             |
+
+### Menus and Popovers
+
+| Component       | Location                              | Description                          | Key Features                                                                                    |
+| --------------- | ------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| **Menu**        | `packages/ui/src/Menu/` (`waldur-ui`) | Every dropdown menu                  | `nav` and `actions` looks, `density` / `tone` on the panel, submenus, radio rows, `openOnHover` |
+| **MenuPopover** | `packages/ui/src/Menu/` (`waldur-ui`) | Menu surface for panels with inputs  | Filter and picker popovers with menu rows, `forceMount`; panels with no rows use `Popover`      |
+| **ActionsMenu** | `src/table/ActionsDropdown.tsx`       | Action menu with its trigger         | Kebab, labeled, "Add" or custom toggle; `actions-menu` / `action-item` test ids                 |
+| **ActionItem**  | `src/resource/actions/ActionItem.tsx` | An action row                        | Icon, tooltip, staff indicator; filtered by `ActionList`                                        |
+| **NavMenuLink** | `src/navigation/NavMenu.tsx`          | A nav menu row that is a router link | ui-router `state`/`params`                                                                      |
+
+See the [menus guide](menus.md) for when to use which, recipes and how the looks work.
 
 ### Forms and Input Components
 
@@ -70379,6 +70396,46 @@ When multiple valid approaches exist, choose based on:
 
 ---
 
+### E2E Locators
+<!-- Source: docs/developer-guide/ui/e2e-locators.md -->
+
+# E2E Locators
+
+How the waldur-integration-testing Playwright suite finds HomePort's menus, tabs and filters: by roles, accessible names and `data-testid`, not by CSS classes.
+
+## History
+
+The suite used to locate these by Metronic menu and Bootstrap dropdown class names. When that CSS was deleted (see the Legacy Menu CSS Retirement section in [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md)), HomePort kept rendering the class names, unstyled, while the suite moved over:
+
+1. HomePort rendered both the legacy classes and the new hooks (waldur/waldur-homeport!7711).
+2. The suite switched to the new hooks with the legacy class as a fallback (waldur/waldur-integration-testing!172).
+3. HomePort stopped rendering the legacy classes.
+
+Left to do: the suite can drop the legacy half of each selector in `tests/components/homeport_hooks.py`, plus the two page-tab fallbacks (`SecondaryToolbar.tab_items()` and `BaseResourcePage`'s toolbar), once the HomePort image it runs against includes step 3. Until then the fallbacks are harmless: they match nothing on new builds and still match older ones.
+
+Removing a hook below breaks that suite without failing anything in HomePort, as removing the legacy classes too early did in integration pipeline 138738.
+
+## Mapping
+
+| Old selector                                           | New hook                                                                                                     | Before !7711?           |
+| :----------------------------------------------------- | :----------------------------------------------------------------------------------------------------------- | :---------------------- |
+| `.dropdown-menu:visible`, `.dropdown-menu.show`        | `[data-testid="actions-menu"]`, or `get_by_role("menu")`                                                     | role yes, test id no    |
+| `.dropdown-item`                                       | `[data-testid="action-item"]` (also `get_by_role("menuitem")`: every row has the role, inside a menu or not) | role partly, test id no |
+| `.dropdown-toggle`                                     | `[data-testid="actions-toggle"]`; the icon-only kebab is also `get_by_role("button", name="Actions")`        | no                      |
+| `.menu.menu-row` (page tab row)                        | `get_by_role("navigation", name="Page tabs")`                                                                | no                      |
+| `.toolbar .menu-item` (a page tab)                     | `get_by_role("link", name=…)` or `get_by_role("button", name=…)` inside `.toolbar`                           | yes                     |
+| `.menu-arrow` (tab with a submenu)                     | the tab's button has `aria-haspopup="menu"`                                                                  | yes                     |
+| `.menu-sub:visible` (tab submenu)                      | `get_by_role("menu")`                                                                                        | yes                     |
+| `.footer .menu-title`                                  | `get_by_role("link", name=…)` inside `.footer`                                                               | yes                     |
+| `.table-filters-menu:not(.column-filter)`              | `get_by_role("dialog", name="Add filter")`                                                                   | yes                     |
+| `#filter-item-<name> .menu-link`                       | `get_by_role("button", name=<filter title>)` inside that dialog                                              | yes                     |
+| `.menu-content.filter-field`                           | `.filter-field`                                                                                              | yes                     |
+| `[data-kt-menu-trigger='click']` (role picker trigger) | `[data-testid="role-project-select"]`                                                                        | no                      |
+| `.role-project-select-popup`                           | `[data-testid="role-project-select-popup"]`                                                                  | no                      |
+| `.role-project-select-popup .menu-item`                | `[data-testid="role-project-select-option"]`                                                                 | no                      |
+
+---
+
 ### Forms Guide
 <!-- Source: docs/developer-guide/ui/forms.md -->
 
@@ -70999,7 +71056,7 @@ yarn i18n:extract
 
 **Features:**
 
-- Scans all `.ts` and `.tsx` files in `src/`
+- Scans all `.ts` and `.tsx` files in `src/`, then in each `packages/*/src/` (skipping package unit tests), since `waldur-ui` and the other workspace packages translate through the same `locales/*.json`
 - Finds `translate()` function calls and extracts string literals
 - Updates `template.json` with rich context information
 - **UI Element Detection**: Identifies buttons, forms, titles, error messages
@@ -71816,6 +71873,430 @@ When asking an LLM to modify navigation:
 2. **Specify breadcrumbs**: "The breadcrumb should be 'Invoices'."
 3. **Reference workspace**: "The user is currently in the 'Organization' workspace."
 4. **Check visibility**: "This item should only be visible if `isStaff` is true."
+
+---
+
+### Menus, Dropdowns and Popovers
+<!-- Source: docs/developer-guide/ui/menus.md -->
+
+# Menus, Dropdowns and Popovers
+
+How to build any menu or menu-like popover in HomePort: row actions, "Add" menus, the header and footer menus, page-tab submenus, filter and picker popovers. Every one of them is built from the same few parts in `waldur-ui`.
+
+> [!TIP]
+> In a hurry? Find your case in [Choosing a component](#choosing-a-component), copy the matching [recipe](#recipes), and check the [rules](#rules).
+
+---
+
+## Choosing a component
+
+| You are building                                                  | Use                                                     | Recipe                                                    |
+| :---------------------------------------------------------------- | :------------------------------------------------------ | :-------------------------------------------------------- |
+| Actions for a table row (the 3-dots menu)                         | `ActionsDropdown` + `ActionItem`                        | [Row actions](#row-actions)                               |
+| A toolbar menu with a caption ("Actions", "Export")               | `ActionsMenu toggle="labeled"`                          | [Toolbar and "Add" menus](#toolbar-and-add-menus)         |
+| An "Add" menu (invite, add member, create organization)           | `ActionsMenu toggle="add"`                              | [Toolbar and "Add" menus](#toolbar-and-add-menus)         |
+| An action menu opened by your own button                          | `ActionsMenu toggle={<YourButton />}`                   | [Custom trigger](#custom-trigger)                         |
+| An action menu whose trigger sits elsewhere in the markup         | `Menu` + `Menu.Trigger` + `Menu.Content look="actions"` | [Trigger elsewhere](#trigger-elsewhere)                   |
+| An action menu with a search box or other input                   | `MenuPopover` with `look="actions"`                     | [Menu with a search box](#menu-with-a-search-box)         |
+| Header, user, language, page-tab or footer menu                   | `Menu` (nav look), `NavMenuLink` for router links       | [Nav menus](#nav-menus)                                   |
+| A filter list or picker holding inputs                            | `MenuPopover` (nav look)                                | [Filter and picker popovers](#filter-and-picker-popovers) |
+| A panel with no menu rows (column picker, search results, a form) | `Popover` + `PopoverContent`                            | [Plain popovers](#plain-popovers)                         |
+| Resource actions filtered by importance or a search query         | `ActionList` around `ActionItem`s                       | [Filtering resource actions](#filtering-resource-actions) |
+
+**Menu or popover?** If every child is a command row, it is a menu. If the panel holds an input, a select, a date picker or a search field, it is a popover: a menu's typeahead takes the keystrokes typed into an input. A popover is a `MenuPopover` only when it holds menu rows (`Menu.Item`, `MenuPopover.Item`, rows styled with `useMenuItemClassName`); anything else is a plain `Popover`.
+
+---
+
+## Rules
+
+- **ALWAYS** build menus from `Menu` / `MenuPopover` (`waldur-ui`) or the app components on top of them (`ActionsMenu`, `ActionsDropdown`, `ActionItem`, `NavMenuLink`). **NEVER** import `@radix-ui/react-dropdown-menu` or `@radix-ui/react-popover` outside `packages/ui` (ESLint rejects it).
+- **NEVER** hand-roll a menu with `react-bootstrap` `Dropdown`, `DropdownButton` or Bootstrap/Metronic classes (`dropdown-menu`, `dropdown-item`, `menu-sub-dropdown`, `menu-link`, …). That CSS has been deleted.
+- **Row actions** use the 3-dots pattern: `ActionsDropdown` with `ActionItem` children (see CLAUDE.md). No standalone buttons in `rowActions`.
+- **Rows** are `Menu.Item` (or `ActionItem` in action menus). React to them with `onSelect`, not `onClick`: it fires for pointer and keyboard, and the panel closes afterwards unless the handler calls `event.preventDefault()`.
+- **A custom trigger** must `forwardRef` to a real `<button>` and spread `...props` onto it, or the menu won't open or position.
+- **Placement** is Radix `side` / `align`. `Menu.Content`'s default `align` is `center`; say `align="start"` for a menu that opens from its trigger's start edge.
+- **Row options** (`density`, `tone`) go on the panel, never on rows and never as `menu-gray-*`/`menu-state-*` classes.
+- **Test hooks** (`data-testid="actions-menu"`, `"action-item"`, `"actions-toggle"`, roles and accessible names) are used by waldur-integration-testing. Don't remove or rename them; see [E2E Locators](e2e-locators.md).
+
+---
+
+## The parts
+
+| Part                         | Where                                  | What it is                                                                                                     |
+| :--------------------------- | :------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| `Menu`                       | `packages/ui/src/Menu/` (`waldur-ui`)  | Radix DropdownMenu with the app's defaults and looks built in                                                  |
+| `Menu.TriggerButton`         | same                                   | Dropdown button trigger wrapping BaseButton and rotating ButtonCaret                                           |
+| `MenuPopover`                | same                                   | The same surfaces on a Radix Popover, for panels with inputs                                                   |
+| `menuSurface`, `menuItem`, … | `packages/ui/src/Menu/` (collocated)   | The looks, as cva recipes collocated with each component (`MenuContent.tsx`, `MenuItem.tsx`, …)                |
+| `MenuLookProvider`, hooks    | `packages/ui/src/Menu/menuContext.tsx` | The look and container kind a panel hands to its rows; `useMenuItemClassName()` for an element styled as a row |
+| `ActionsMenu`                | `src/table/ActionsDropdown.tsx`        | An action menu with its trigger (kebab, labeled, "Add" or custom)                                              |
+| `ActionsDropdown`            | same                                   | Row-actions facade over `ActionsMenu`                                                                          |
+| `ActionItem`                 | `src/resource/actions/ActionItem.tsx`  | An action row with icon, tooltip and staff indicator, hidden when `ActionList`'s filter rejects it             |
+| `ActionList`, `ActionGroup`  | `src/marketplace/resources/actions/`   | A filter for the `ActionItem`s inside it; a captioned group of actions                                         |
+| `NavMenuLink`                | `src/navigation/NavMenu.tsx`           | A nav row that is a ui-router link                                                                             |
+
+Stories: `Overlays/Menu`, `Overlays/MenuPopover` and `Actions/ActionsMenu` in Storybook (`yarn storybook`) show every look, option and behaviour, open.
+
+---
+
+## Recipes
+
+### Row actions
+
+```tsx
+import { ActionsDropdown } from '@/table/ActionsDropdown';
+import { ActionItem } from '@/resource/actions/ActionItem';
+import { TrashIcon } from '@phosphor-icons/react';
+
+rowActions={({ row }) => (
+  <ActionsDropdown row={row} refetch={tableProps.fetch}>
+    <ActionItem
+      title={translate('Delete')}
+      action={() => openDeleteDialog(row)}
+      iconNode={<TrashIcon weight="bold" />}
+      className="text-danger"
+    />
+  </ActionsDropdown>
+)}
+```
+
+- Instead of children, `actions={[EditAction, DeleteAction]}` renders each component with `row`, `refetch` and the `data` object's fields as props.
+- `loading` and `error` show a disabled "Loading actions" / "Unable to load actions" row; with no children and no actions it shows "There are no actions."
+- The panel opens to the left of the kebab (row actions sit at a table's right edge). `side="bottom"` changes that.
+- On an unavailable offering, the page wraps itself in `<ActionsUnavailable reason={…}>`: every action menu inside shows its toggle disabled, with the reason in a tooltip, and doesn't open.
+- `ActionItem` props: `title` (or `label`), `action`, `iconNode`, `iconColor`, `disabled` with `tooltip` (the reason), `staff` (staff-only indicator), `important`, `className`; `actionId` + `resource` hide the action when the resource's offering lists it in `disabled_resource_actions`.
+
+### Toolbar and "Add" menus
+
+```tsx
+import { Menu } from 'waldur-ui';
+import { ActionsMenu } from '@/table/ActionsDropdown';
+
+<ActionsMenu toggle="labeled" label={translate('Export')} side="bottom" align="end">
+  <Menu.Item onSelect={exportCsv}>CSV</Menu.Item>
+  <Menu.Item onSelect={exportPdf}>PDF</Menu.Item>
+</ActionsMenu>
+
+<ActionsMenu toggle="add" size="lg" side="bottom" align="start">
+  <InvitationCreateButton refetch={refetch} />
+  <UserAddButton refetch={refetch} />
+</ActionsMenu>
+```
+
+`ActionsMenu` props: `toggle` (`"kebab"` default, `"labeled"`, `"add"`, or an element), `label`, `variant`, `size`, `toggleClassName`, `disabled`, `tooltip` (shown on a disabled toggle), `onOpenChange`, `defaultOpen`; everything else (`side`, `align`, `className`, `style`, `collisionPadding`, `container`, …) goes to the panel. It opens to the left of the toggle, aligned to its start (row actions sit at a table's right edge); "Add" and toolbar menus pass `side="bottom"`.
+
+For toolbar menus without `ActionsMenu` facades, compose `waldur-ui`'s `Menu` directly with `Menu.TriggerButton`:
+
+```tsx
+<Menu>
+  <Menu.TriggerButton variant="tertiary" size="lg">
+    {translate('Export')}
+  </Menu.TriggerButton>
+  <Menu.Content look="actions" side="bottom" align="end">
+    <Menu.Item onSelect={exportCsv}>CSV</Menu.Item>
+    <Menu.Item onSelect={exportPdf}>PDF</Menu.Item>
+  </Menu.Content>
+</Menu>
+```
+
+Rows inside can be `Menu.Item`, `ActionItem`, or components that render one (`InvitationCreateButton` renders an `ActionItem`).
+
+### Custom trigger
+
+```tsx
+const ThreadMenuToggle = forwardRef<HTMLButtonElement>((props, ref) => (
+  <button
+    ref={ref}
+    type="button"
+    aria-label={translate('Thread actions')}
+    {...props}
+  >
+    <DotsThreeIcon weight="bold" />
+  </button>
+));
+
+<ActionsMenu toggle={<ThreadMenuToggle />} side="bottom" align="end">
+  …
+</ActionsMenu>;
+```
+
+`BaseButton` already forwards its ref, so `toggle={<BaseButton … />}` works too (`ResourceAccessButton.tsx`, `WidgetCard.tsx`).
+
+### Trigger elsewhere
+
+When the trigger is rendered inside another component (a header slot, a wrapper with a badge), use the parts:
+
+```tsx
+import { Menu } from 'waldur-ui';
+
+<Menu>
+  <SidebarBrand
+    shortcutsButton={
+      <Menu.Trigger asChild>
+        <IconButton
+          icon={<SquaresFourIcon />}
+          label={translate('Quick shortcuts')}
+        />
+      </Menu.Trigger>
+    }
+  />
+  <Menu.Content look="actions" align="start">
+    <Menu.Item asChild>
+      <a href={link} target="_blank" rel="noopener noreferrer">
+        {name}
+      </a>
+    </Menu.Item>
+  </Menu.Content>
+</Menu>;
+```
+
+See `WaldurSidebarBrand.tsx` and `ResourceUsageForm.tsx`.
+
+### Menu with a search box
+
+When an action-styled panel holds an input (such as a search box), use `MenuPopover` with `look="actions"` instead of `ActionsMenu`, because a menu's typeahead would intercept keystrokes:
+
+```tsx
+<MenuPopover>
+  <MenuPopover.Trigger asChild>
+    <TableDropdownToggle labeled label={translate('Variables')} />
+  </MenuPopover.Trigger>
+  <MenuPopover.Content
+    look="actions"
+    side="bottom"
+    align="start"
+    className="max-h-(--radix-popover-content-available-height) overflow-y-auto"
+  >
+    <FilterBox
+      type="search"
+      onChange={(e) => setQuery(e.target.value)}
+      autoFocus
+    />
+    {filtered.map((item) => (
+      <Menu.Item key={item.name} onSelect={() => insert(item)}>
+        {item.name}
+      </Menu.Item>
+    ))}
+  </MenuPopover.Content>
+</MenuPopover>
+```
+
+The input keeps every keystroke, and choosing a `Menu.Item` row still closes the panel (`ScriptEditorHeader.tsx`).
+
+### Nav menus
+
+The header user menu, the language submenu, page-tab submenus and the footer menus use `Menu` in its default `nav` look:
+
+```tsx
+import { Menu } from 'waldur-ui';
+import { NavMenuLink } from '@/navigation/NavMenu';
+
+<Menu>
+  <Menu.Trigger asChild>
+    <UserMenuToggle />
+  </Menu.Trigger>
+  <Menu.Content align="end" className="fw-bold py-4 fs-6 w-275px">
+    <UISrefActive class="active">
+      <NavMenuLink state="profile.details" label={translate('Profile')} />
+    </UISrefActive>
+    <Menu.Sub>
+      <Menu.SubTrigger>{translate('Language')}</Menu.SubTrigger>
+      <Menu.SubContent className="fw-bold w-175px py-4">
+        <Menu.RadioGroup value={current} onValueChange={setLanguage}>
+          <Menu.RadioItem value="en">English</Menu.RadioItem>
+          <Menu.RadioItem value="et">Eesti</Menu.RadioItem>
+        </Menu.RadioGroup>
+      </Menu.SubContent>
+    </Menu.Sub>
+    <Menu.Separator />
+    <Menu.CheckboxItem checked={dark} onCheckedChange={toggleTheme}>
+      {translate('Dark theme')}
+    </Menu.CheckboxItem>
+    <Menu.CopyItem
+      value={user.ip_address}
+      label={translate('IP address')}
+      detail={user.ip_address}
+      copiedLabel={translate('Copied')}
+    />
+    <Menu.Item onSelect={logout}>{translate('Log out')}</Menu.Item>
+  </Menu.Content>
+</Menu>;
+```
+
+- `NavMenuLink` composes the app's `Link` as the row; `UISrefActive` adds `.active` on the current page, which highlights the row.
+- `Menu.RadioItem`: the checked row is highlighted like the current page, with no check mark; Radix gives it `role="menuitemradio"` and `aria-checked`.
+- **Only menu items in a menu.** A menu (`role="menu"`) may hold items, groups and separators, nothing else: no inputs, links or buttons that arrow keys can't reach. A setting is `Menu.CheckboxItem` (`role="menuitemcheckbox"`, shown as a switch, keeps the menu open); a value to copy is `Menu.CopyItem` (copies and confirms in place); a link is `Menu.Item asChild` or `NavMenuLink`. Anything else belongs in a `MenuPopover`.
+- `Menu.Group` with a `Menu.Label` (linked by `aria-labelledby`) names a group of rows; `ActionGroup` does this for actions.
+- `Menu.Label` and `Menu.Separator` are a section caption and a divider in the panel's look.
+- Typography (`fw-bold`, `fs-6`) is set per panel. In `packages/shell` and the micro-app, which have no Bootstrap, write it in Tailwind (`py-[12px] text-[14px] font-medium`).
+
+**Hover to open** (page tabs, footer): `<Menu openOnHover="desktop">` opens on hover at the `lg` breakpoint and up, and on click below it, with a 200ms close delay. `openOnHover` (or `={true}`) hovers at every width. `open`/`onOpenChange` may still be controlled, e.g. to close the menu on Tab (`TabsList.tsx`).
+
+### Filter and picker popovers
+
+```tsx
+import { MenuPopover } from 'waldur-ui';
+
+<MenuPopover>
+  <MenuPopover.Trigger asChild>
+    <BaseButton label={translate('Add filter')} />
+  </MenuPopover.Trigger>
+  <MenuPopover.Content align="start" className="w-250px py-3">
+    {filters.map((filter) => (
+      <MenuPopover key={filter.name}>
+        <MenuPopover.Trigger asChild>
+          <MenuPopover.Item>{filter.title}</MenuPopover.Item>
+        </MenuPopover.Trigger>
+        <MenuPopover.Content side="right" align="start">
+          {filter.component}
+        </MenuPopover.Content>
+      </MenuPopover>
+    ))}
+  </MenuPopover.Content>
+</MenuPopover>;
+```
+
+- `MenuPopover.Content` defaults to the nav look with the filter rows' options (Metronic's base padding, gray-700). Nav-look popovers are not height-capped, so a select inside has room for its option list.
+- `MenuPopover.Item` is a button row that does **not** close the panel, so it can be a nested popover's trigger. A `Menu.Item` inside a popover is a button that **does** close it.
+- `forceMount` keeps a closed panel in the DOM, hidden (the table filter panels need it; `TableBody.tsx` looks for their closed markup). `container` picks where the panel is portaled.
+- `MenuPopover.Anchor` (or `PopoverAnchor`) positions a panel against an element that isn't the trigger (`AsyncSearchBox.tsx`).
+
+### Plain popovers
+
+A panel with no menu rows (a column picker, search results, call settings, a breadcrumb switcher, a small form) is a plain `Popover` from `waldur-ui`:
+
+```tsx
+import { Popover, PopoverContent, PopoverTrigger } from 'waldur-ui';
+
+<Popover>
+  <PopoverTrigger asChild>
+    <BaseButton iconNode={<GearIcon />} tooltip={translate('Toggle visible columns')} />
+  </PopoverTrigger>
+  <PopoverContent side="bottom" align="end" sideOffset={2} className="table-columns-popover">
+    <ColumnsPopover … />
+  </PopoverContent>
+</Popover>
+```
+
+- `PopoverContent` is a bordered card with the dropdown shadow and an 8px radius on Bootstrap's popover layer (`z-popover`, 1070), and nothing else: no width, padding, height cap or motion, since every panel lays out its own content. Add them as classes, e.g. `max-h-(--radix-popover-content-available-height) overflow-y-auto` for a panel that may outgrow the screen, or `animate-[waldur-menu-enter-up_0.3s_ease]` for the menus' entrance.
+- Another layer is a `z-*` class: `z-header-popover` for panels opened from the header (`SearchToggle.tsx`, `DropdownBreadcrumbItem.tsx`), `z-dropdown-menu` to stack like the action menus.
+- `container` picks where the panel is portaled (`CallSettingsMenu.tsx`); `PopoverAnchor` positions it against an element that isn't the trigger (`AsyncSearchBox.tsx`, `SearchToggle.tsx`).
+- A searchable list of links inside a popover (the breadcrumb switchers) is a `cmdk` combobox: the search box keeps focus while the arrow keys highlight the rows, which are `Command.Item asChild` around their `Link`, and Enter opens one. Reuse `BreadcrumbDropdown`, mapping each result to the page it opens with `getItem`, rather than a list of links you Tab through; the `Navigation/BreadcrumbDropdown` stories show every state and key.
+- The panel closes on any click or focus outside it. The `waldur-ui` selects inside need no special case, although they portal their option lists to `document.body`: Radix counts events from React portals opened inside the panel as inside it.
+
+A form with a react-bootstrap `Card` of its own lets the `Card` draw the panel (`MarketplaceLandingFilter.tsx`):
+
+```tsx
+<PopoverContent
+  align="end"
+  sideOffset={2}
+  aria-labelledby="my-filter-toggle"
+  className="z-dropdown-menu min-w-400px border-0"
+>
+  <Card>…</Card>
+</PopoverContent>
+```
+
+### Filtering resource actions
+
+```tsx
+import { ActionList } from '@/marketplace/resources/actions/ActionList';
+
+<ActionList hideNonImportant hideGroupName>
+  <ActionsList {...resource} refetch={refetch} />
+</ActionList>;
+```
+
+`ActionList` takes `query` (label substring, case-insensitive), `hideDisabled`, `hideNonImportant` and `hideGroupName` (hides `ActionGroup` captions). Each `ActionItem` inside checks itself with `isActionVisible`, because the actions are components that only know their label and state when rendered. Used by the resource quick actions (`ActionsPopover.tsx`) and the "show all actions" dialog (`ActionDialogBody.tsx`), where the rows render as plain buttons since there is no menu around them.
+
+---
+
+## How it works
+
+### Built-in defaults
+
+`Menu` and `MenuPopover` set these, so call sites don't:
+
+- `modal={false}`: a click on another trigger opens that menu directly, and the page keeps scrolling.
+- A Portal to `document.body` (or `container`), with the look's z-index layer (`z-nav-menu`, `z-dropdown-menu`).
+- Scrolling inside the space Radix measures between the trigger and the viewport edge, instead of running off-screen.
+- `sideOffset={2}`, and Metronic's entrance (fade and slide, 0.3s) on nav panels, off under `prefers-reduced-motion`.
+
+### Looks
+
+| Look      | Where                                                 | Panel                                                                    | Rows                                                      |
+| :-------- | :---------------------------------------------------- | :----------------------------------------------------------------------- | :-------------------------------------------------------- |
+| `nav`     | header, page tabs, footer, filter and picker popovers | no border, page background, 8px radius, dropdown shadow                  | gray-600, 10×16px, highlight on gray-50                   |
+| `actions` | row actions, "Add" and toolbar menus                  | page background, 8px radius, 6.5px vertical padding, 130px minimum width | gray-700, 14px, weight 500, 10×16px, highlight on gray-50 |
+| `card`    | popovers with their own layout (`MenuPopover` only)   | 1px border, card background, dropdown shadow, no padding                 | none: the content lays itself out                         |
+
+The looks were measured against the Metronic and Bootstrap menus they replaced. Colours come from the `--menu-*` tokens in `packages/design-tokens/src/surfaceColors.css` (light and dark), the shadow from `--dropdown-shadow`. `packages/ui/src/Menu/menuLooks.test.ts` snapshots every class set, so a change there is a visible change: update the snapshot only on purpose.
+
+### Row options (nav look)
+
+| Option    | Values                                                                                                 |
+| :-------- | :----------------------------------------------------------------------------------------------------- |
+| `density` | `default` (10×16px), `compact` (8×9.75px: the footer, BoxRadioField), `base` (8×12px: filter popovers) |
+| `tone`    | `default` (gray-600), `strong` (gray-700)                                                              |
+
+Set them on the panel: `<Menu.Content density="compact">`, `<MenuPopover.Content tone="strong">`. They are plain CSS: the panel is a `group/menu` carrying `data-density` / `data-tone`, and the row classes include group variants for them. A submenu is portaled out of its parent panel, so it doesn't inherit them; give `Menu.SubContent` its own.
+
+A row is highlighted, gray-700 on gray-50 (the `menu-row-active:` variant in `packages/design-tokens/src/variants.css`), when it is hovered, keyboard-highlighted (`[data-highlighted]`), an open submenu's trigger (`[data-state=open]`), the checked radio row (`[data-state=checked]`) or the current page (`.active`). Disabled rows never are.
+
+### Look and kind travel through context
+
+Radix portals every panel and submenu to `document.body`, so CSS inheritance never reaches a submenu's rows. Each panel therefore puts two things into React context (`MenuLookProvider`), and rows read them:
+
+- the **look** (`nav` or `actions`),
+- the **kind** of container: `menu` (`Menu.Content`, `Menu.SubContent`), `popover` (`MenuPopover.Content`), or `plain` when there is no panel at all.
+
+`Menu.Item` renders for its kind:
+
+| Kind      | Renders                                         | Closes on select?                       |
+| :-------- | :---------------------------------------------- | :-------------------------------------- |
+| `menu`    | a Radix menu item (`<div role="menuitem">`)     | yes, unless `onSelect` prevents default |
+| `popover` | a `<button role="menuitem">` in `Popover.Close` | yes, unless `onSelect` prevents default |
+| `plain`   | a plain `<button>` (no menu, so no menu item)   | nothing to close                        |
+
+That is why one row component works in a menu, a popover and a dialog list. A Radix menu item outside a menu would throw.
+
+For an element that must look like a row without being one (a custom picker row), take the classes from the context: `const className = useMenuItemClassName();` (`SupportMenu.tsx`, `RoleAndProjectSelectField.tsx`).
+
+---
+
+## Pitfalls
+
+- **Default alignment.** Radix's `align` defaults to `center`. Menus that grew from a trigger's start edge must say `align="start"`.
+- **Which side.** `ActionsMenu` (and `ActionsDropdown`) open to the left, aligned to the start; pass `side="bottom"` for a menu under a toolbar or "Add" button. `Menu` panels default to `side="bottom"`. A submenu's side is chosen by Radix (right, flipping left near the edge); only its `align` is yours.
+- **Bootstrap `!important` utilities.** In the main app, Bootstrap spacing classes (`py-4`, `p-0`, `mb-2`) are `!important` and beat Tailwind spacing. The menu surfaces reset their own spacing with `m-[0px] p-[0px]`, not `m-0`/`p-0`, for that reason. Prefer one system per property on a panel.
+- **tailwind-merge and `text-anchor`.** `cn()` reads `text-anchor` and `text-primary` as two colours and drops the first. Put such classes on the `asChild` child, where Radix's Slot joins class names without merging (`ResourceAccessButton.tsx`).
+- **`Link` and plain strings.** The app's `Link` gives a bare string child the `text-anchor` link style, which replaces the row colour. `NavMenuLink` wraps the label in a `<span>` for this reason; do the same if you compose `Link` yourself.
+- **Hover-opened menus and clicks.** A click on a trigger that hover already opened would close it twice over (trigger toggle, outside press). `openOnHover` handles this; don't wire hover by hand.
+- **Disabled rows** take no pointer events, so a tooltip explaining why goes next to the row (`ActionItem`'s `tooltip` renders a question icon beside it), not on it.
+
+---
+
+## Testing
+
+- **Unit tests (jsdom).** Render menus open by clicking their trigger with `userEvent`, then query `screen` (panels are portaled). `inActionsMenu(children)` from `src/test/harness.tsx` wraps action rows in an open `<Menu.Content look="actions">`, so they render as real menu items without a table. The test setup provides `window.matchMedia` (no query matches, i.e. desktop); stub it with `vi.stubGlobal('matchMedia', …)` to test `openOnHover="desktop"` below `lg`. jsdom can't check positioning, hover or computed colours.
+- **Story tests (Chromium).** `npx vitest run --project storybook <file>` runs a story's `play` function in a real browser: use it for hover, keyboard navigation, focus return and computed styles. Rows fade their colours over 200ms and panels fade in, so wrap style and visibility checks in `waitFor`. A story that shows several panels open at once passes `onOpenAutoFocus` and `onInteractOutside` handlers that `preventDefault()`, or each panel closes the others (see `STAY_OPEN` in `Menu.stories.tsx`).
+- **E2E hooks.** Panels and rows carry roles (`menu`, `menuitem`, `menuitemradio`); action menus add `data-testid="actions-menu"`, `"action-item"` and `"actions-toggle"`; the kebab's accessible name is "Actions". The full mapping is in [E2E Locators](e2e-locators.md).
+
+---
+
+## Changing the system
+
+- **A new option or look** belongs in the cva recipes collocated with its component in `packages/ui/src/Menu/` (with a snapshot update in `menuLooks.test.ts`) and, if rows need it, in `MenuRowOptions` in `packages/ui/src/Menu/menuContext.tsx`. Measure it in the running app in light and dark mode, and add it to the `Overlays/Menu` stories.
+- **A new part** belongs in `packages/ui/src/Menu/Menu.tsx` as a member of `Menu` or `MenuPopover`, reading the look and kind from context like the existing ones, with a test in `packages/ui/src/Menu/Menu.test.tsx` or `MenuPanels.test.tsx`.
+- **App-specific behaviour** (translations, router links, toggles with app icons) stays in `src/`, on top of the `waldur-ui` parts.
+
+---
+
+## Background
+
+HomePort used to have three menu systems: Metronic `menu-*` classes for the header, tabs and footer; Bootstrap `dropdown-*` classes for action menus; and a shadcn-style `DropdownMenu` in `packages/shell`. Each wrapped Radix on its own (five panel wrappers, three placement APIs, four row components chosen by a `notInMenu` flag). The Metronic and Bootstrap CSS was ported to Tailwind and deleted (see the Legacy Menu CSS Retirement and Legacy Dropdown CSS Retirement sections in [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md)), and then the components were consolidated into the parts above (waldur/waldur-homeport!7711). The git history of this file holds the step-by-step migration plan.
+
+The [rule](#rules) against importing Radix directly is enforced: `no-restricted-imports` in `eslint.config.js` rejects `@radix-ui/react-dropdown-menu` and `@radix-ui/react-popover` outside `packages/ui`. The one exception is `src/form/InsertLinkPopover.tsx`, a port of MDXEditor's own link dialog (styled by MDXEditor's CSS, with a popover arrow), marked with an `eslint-disable-next-line` comment that gives the reason.
 
 ---
 
@@ -74040,7 +74521,7 @@ Use the `rowActions` prop to render action menus on each row.
 
 ### 1. Dropdown Action Menu (Recommended)
 
-For a clean and consistent UI, group row-level actions into a 3-dots dropdown menu using `ActionsDropdownComponent` and `ActionItem`:
+For a clean and consistent UI, group row-level actions into a 3-dots dropdown menu using `ActionsDropdown` (or `ActionsMenu`) and `ActionItem`:
 
 ```tsx
 import { FC } from 'react';
@@ -74048,7 +74529,7 @@ import { PencilSimple, Trash } from '@phosphor-icons/react';
 
 import { translate } from '@/i18n';
 import { ActionItem } from '@/resource/actions/ActionItem';
-import { ActionsDropdownComponent } from '@/table/ActionsDropdown';
+import { ActionsDropdown } from '@/table/ActionsDropdown';
 
 interface RowActionsProps {
   row: MyRowType;
@@ -74064,7 +74545,7 @@ export const RowActions: FC<RowActionsProps> = ({ row, refetch }) => {
   }
 
   return (
-    <ActionsDropdownComponent>
+    <ActionsDropdown>
       <ActionItem
         title={translate('Edit')}
         action={() => handleEdit(row)}
@@ -74077,7 +74558,7 @@ export const RowActions: FC<RowActionsProps> = ({ row, refetch }) => {
         className="text-danger"
         iconColor="danger"
       />
-    </ActionsDropdownComponent>
+    </ActionsDropdown>
   );
 };
 
@@ -74086,19 +74567,19 @@ export const RowActions: FC<RowActionsProps> = ({ row, refetch }) => {
   {...tableProps}
   columns={columns}
   rowActions={({ row }) => <RowActions row={row} refetch={tableProps.fetch} />}
-/>
+/>;
 ```
 
 #### ActionItem Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `title` | `string` | Action label text. |
-| `action` | `() => void` | Click handler callback. |
-| `iconNode` | `ReactNode` | Icon element (use Phosphor icons with `weight="bold"`). |
-| `disabled` | `boolean` | Disables the menu item. |
-| `className` | `string` | Custom CSS class string (e.g. `'text-danger'`). |
-| `iconColor` | `string` | Visual variant color theme (e.g. `'danger'`, `'success'`). |
+| Property    | Type         | Description                                                |
+| ----------- | ------------ | ---------------------------------------------------------- |
+| `title`     | `string`     | Action label text.                                         |
+| `action`    | `() => void` | Click handler callback.                                    |
+| `iconNode`  | `ReactNode`  | Icon element (use Phosphor icons with `weight="bold"`).    |
+| `disabled`  | `boolean`    | Disables the menu item.                                    |
+| `className` | `string`     | Custom CSS class string (e.g. `'text-danger'`).            |
+| `iconColor` | `string`     | Visual variant color theme (e.g. `'danger'`, `'success'`). |
 
 ### 2. Inline Row Action Buttons
 
@@ -74119,7 +74600,7 @@ const RowActions = ({ row }) => (
   </div>
 );
 
-<Table {...tableProps} columns={columns} rowActions={RowActions} />
+<Table {...tableProps} columns={columns} rowActions={RowActions} />;
 ```
 
 ---
@@ -74140,7 +74621,7 @@ const ExpandableRowContent = ({ row }) => (
   {...tableProps}
   columns={columns}
   expandableRow={ExpandableRowContent}
-/>
+/>;
 ```
 
 ### Conditional Expandability (`isRowExpandable`)
@@ -74172,13 +74653,15 @@ import { useManagedMutation } from '@/modal/useManagedMutation';
 
 const BulkDeleteButton = ({ rows, refetch }) => {
   const { mutate, isPending } = useManagedMutation({
-    mutationFn: () => deleteMultipleItems(rows.map(r => r.uuid)),
+    mutationFn: () => deleteMultipleItems(rows.map((r) => r.uuid)),
     successMessage: translate('Selected items deleted.'),
     refetch,
     confirmation: {
       title: translate('Delete selected items'),
-      body: translate('Are you sure you want to delete {count} items?', { count: rows.length }),
-    }
+      body: translate('Are you sure you want to delete {count} items?', {
+        count: rows.length,
+      }),
+    },
   });
 
   return (
@@ -74196,7 +74679,7 @@ const BulkDeleteButton = ({ rows, refetch }) => {
   columns={columns}
   enableMultiSelect
   multiSelectActions={BulkDeleteButton}
-/>
+/>;
 ```
 
 ---
@@ -74527,10 +75010,10 @@ export const ReviewerPoolSection = ({ call }) => {
 
 # Tailwind & shadcn UI Architecture
 
-Architectural reference and design system manual for Tailwind CSS v4, shadcn UI, and Radix UI in Waldur Homeport. Documents runtime framework coexistence, design tokens, component architecture, styling conventions, the button migration and its aftermath, and linting guardrails.
+Current architecture and implementation guidance for Tailwind CSS v4, shadcn UI, and Radix UI in Waldur Homeport. Covers framework coexistence, design tokens, component standards, styling conventions, linting guardrails, and testing.
 
 > [!NOTE]
-> **Status**: every button in the app is rendered by `BaseButton` (or by `buttonVariants()` on an element that cannot be a `BaseButton`), and the legacy Bootstrap/Metronic `.btn` CSS has been deleted. The remaining Bootstrap-backed UI is layout, forms, tables, modals and the dropdown/menu shells listed under [Component Systems Overview](#component-systems-overview). New UI is built on `waldur-ui`.
+> **Status**: every button in the app is rendered by `BaseButton` (or by `buttonVariants()` on an element that cannot be a `BaseButton`), and the legacy Bootstrap/Metronic `.btn` CSS has been deleted. Every menu and menu-like popover is built from `waldur-ui`'s `Menu` / `MenuPopover`. The remaining Bootstrap-backed UI is layout, forms, tables, modals and the shells listed under [Component Systems Overview](#component-systems-overview). New UI is built on `waldur-ui`.
 
 ---
 
@@ -74556,16 +75039,14 @@ Architectural reference and design system manual for Tailwind CSS v4, shadcn UI,
    - [Sidebar & Mobile Sheet](#sidebar-mobile-sheet)
    - [Content Drawer (`#kt_drawer`)](#content-drawer-kt-drawer)
    - [Dropdown & Menu System Map](#dropdown-menu-system-map)
-   - [ActionsDropdown & ActionItem](#actionsdropdown-actionitem)
-   - [NavMenu](#navmenu)
-3. [Legacy Button CSS Retirement](#legacy-button-css-retirement)
-4. [Linting & Guardrails](#linting-guardrails)
+   - [ActionsMenu & ActionItem](#actionsmenu-actionitem)
+   - [Nav menus](#nav-menus)
+3. [Linting & Guardrails](#linting-guardrails)
    - [Restricted Imports](#restricted-imports)
    - [Custom ESLint Rules Matrix](#custom-eslint-rules-matrix)
-5. [Storybook & Testing Toolchain](#storybook-testing-toolchain)
+4. [Storybook & Testing Toolchain](#storybook-testing-toolchain)
    - [Storybook Environment & Vitest](#storybook-environment-vitest)
    - [Visual E2E Specs](#visual-e2e-specs)
-   - [Retired Visual Parity Suite](#retired-visual-parity-suite)
    - [Testing Gotchas & Pitfalls](#testing-gotchas-pitfalls)
 
 ---
@@ -74579,35 +75060,35 @@ Waldur Homeport operates on two active UI component patterns:
 1. **Modern Tailwind / Radix Primitives (`packages/ui`, exported as `waldur-ui`)**
    - Built with pure Tailwind v4 utilities and CSS design tokens from `packages/design-tokens`.
    - Free of all Bootstrap and Metronic classes, SCSS variables, and runtime mixins.
-   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `DropdownMenu`, `Switch`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, and `Collapsible`.
+   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `Menu`, `MenuPopover`, `Switch`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, `Collapsible`, and `TablePagination` (with `Pagination` and `PageSizeSelect`).
    - Exports `buttonVariants()`, `ButtonVariant` and `ButtonSize` so elements that cannot be a `BaseButton` (links, Radix triggers that need a specific child shape) still get the exact same classes.
 
 2. **Transitional Shells (Radix Engine with Themed Skins)**
    - Used where extensive surface area requires maintaining existing container styling while leveraging accessible Radix primitives:
-     - `ActionsDropdown.tsx` / `ActionItem.tsx`: Radix `DropdownMenu` and `Popover` driving standard action menus.
-     - `NavMenu.tsx`: Radix `DropdownMenu` driving application chrome (header dropdowns, language picker).
      - `#kt_drawer` (`DrawerRoot.tsx`): Radix `Dialog` driving slide-over content panels.
-   - These still wear Bootstrap/Metronic panel classes (`.dropdown-menu`, `.menu-sub-dropdown`); only their _buttons_ have moved to `waldur-ui`.
+   - These still wear Bootstrap/Metronic panel classes; only their _buttons_ have moved to `waldur-ui`.
+   - The header, page-tab and footer menus, the table filter popovers and the action menus used to be shells too. They are now `waldur-ui`'s `Menu` / `MenuPopover`, whose looks keep the Metronic and Bootstrap originals; see [Dropdown & Menu System Map](#dropdown-menu-system-map).
 
 ---
 
 ### Component Standards & Usage Guide
 
-| UI Element                    | Standard Component          | Package        | Usage & Styling Notes                                                                              | Prohibited                                                  |
-| :---------------------------- | :-------------------------- | :------------- | :------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
-| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`    | Pure Tailwind, `--surface-card-border`, 5 variants                                                 | `react-bootstrap` `Alert`                                   |
-| **Badge / Pill**              | `Badge`                     | `waldur-ui`    | 15 variants × 3 tones, structural `border-[1px]`                                                   | `react-bootstrap` `Badge`                                   |
-| **Tooltip**                   | `Tooltip`                   | `waldur-ui`    | Radix Tooltip (hover/focus) + Popover (click fallback)                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`               |
-| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`    | Radix Popover with `--surface-card-*` tokens                                                       | `react-bootstrap` `Popover`                                 |
-| **Button**                    | `BaseButton`                | `waldur-ui`    | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens       | `react-bootstrap` `Button`, hand-written `btn` class markup |
-| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link`  | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing            | `<a className="btn …">`                                     |
-| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`    | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup   |
-| **Expandable panel group**    | `Accordion`                 | `waldur-ui`    | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount | `react-bootstrap` `Accordion`                               |
-| **Single expandable panel**   | `Collapsible`               | `waldur-ui`    | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                  | `react-bootstrap` `Collapse`, `useAccordionButton`          |
-| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`    | Collapsible desktop rail + mobile Radix Sheet                                                      | Metronic sidebar JS                                         |
-| **Table Actions**             | `ActionsDropdown`           | `@/table`      | Radix DropdownMenu with keyboard navigation                                                        | `react-bootstrap` `DropdownButton`                          |
-| **Header Chrome Menu**        | `NavMenu`                   | `@/navigation` | Radix DropdownMenu with responsive hover triggers                                                  | N/A                                                         |
-| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`     | Radix Dialog with CSS keyframe transitions                                                         | N/A                                                         |
+| UI Element                    | Standard Component          | Package       | Usage & Styling Notes                                                                              | Prohibited                                                  |
+| :---------------------------- | :-------------------------- | :------------ | :------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
+| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`   | Pure Tailwind, `--surface-card-border`, 5 variants                                                 | `react-bootstrap` `Alert`                                   |
+| **Badge / Pill**              | `Badge`                     | `waldur-ui`   | 15 variants × 3 tones, structural `border-[1px]`                                                   | `react-bootstrap` `Badge`                                   |
+| **Tooltip**                   | `Tooltip`                   | `waldur-ui`   | Radix Tooltip (hover/focus) + Popover (click fallback)                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`               |
+| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`   | Radix Popover with `--surface-card-*` tokens                                                       | `react-bootstrap` `Popover`                                 |
+| **Button**                    | `BaseButton`                | `waldur-ui`   | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens       | `react-bootstrap` `Button`, hand-written `btn` class markup |
+| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link` | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing            | `<a className="btn …">`                                     |
+| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`   | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup   |
+| **Expandable panel group**    | `Accordion`                 | `waldur-ui`   | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount | `react-bootstrap` `Accordion`                               |
+| **Single expandable panel**   | `Collapsible`               | `waldur-ui`   | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                  | `react-bootstrap` `Collapse`, `useAccordionButton`          |
+| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`   | Collapsible desktop rail + mobile Radix Sheet                                                      | Metronic sidebar JS                                         |
+| **Table pagination**          | `TablePagination`           | `waldur-ui`   | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts         | `react-bootstrap` `Pagination`, `page-link` markup          |
+| **Table Actions**             | `ActionsMenu`               | `@/table`     | `Menu` in the actions look, with the kebab / labeled / Add toggles                                 | `react-bootstrap` `DropdownButton`                          |
+| **Header Chrome Menu**        | `Menu`                      | `waldur-ui`   | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                 | N/A                                                         |
+| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`    | Radix Dialog with CSS keyframe transitions                                                         | N/A                                                         |
 
 The _Prohibited_ column is convention; the subset that lint enforces is listed under [Linting & Guardrails](#linting-guardrails) (`ToggleButtonGroup` and `btn-group` markup are not).
 
@@ -74838,15 +75319,15 @@ Waldur does **not** toggle dark mode via a `.dark` HTML class. Instead:
 
   ```tsx
   className =
-    'rounded-md border border-[var(--surface-card-border)] bg-[var(--surface-card-bg)] shadow-[var(--dropdown-shadow)] text-[var(--surface-text-primary)] outline-hidden';
+    'rounded-lg border border-[var(--surface-card-border)] bg-[var(--surface-card-bg)] shadow-[var(--dropdown-shadow)] text-[var(--surface-text-primary)] outline-hidden';
   ```
 
-- **Popover vs. DropdownMenu Principle**:
+- **Menu vs. Popover**:
   > [!TIP]
-  > **When to use Popover vs. DropdownMenu**:
+  > **When to use `Menu` vs. a popover**:
   >
-  > - **DropdownMenu**: Use when _every child is a command row_. A DropdownMenu owns focus with a roving tabindex and treats keystrokes as item typeahead.
-  > - **Popover**: Use if the panel contains _form inputs, filters, date pickers, or interactive search fields_. DropdownMenu will intercept keystrokes typed into a nested input if they match a menu item!
+  > - **`Menu`**: Use when _every child is a command row_. A Radix DropdownMenu owns focus with a roving tabindex and treats keystrokes as item typeahead.
+  > - **`MenuPopover`** (or `Popover`): Use if the panel contains _form inputs, filters, date pickers, or interactive search fields_. A menu will intercept keystrokes typed into a nested input if they match a menu item!
 - **Enforcement**: `react-bootstrap/Popover` is prohibited in `RESTRICTED_IMPORTS`.
 
 ---
@@ -74920,69 +75401,52 @@ Three primitives in `waldur-ui` (`packages/ui/src`) and `Link` in `@/core/Link` 
 
 ### Dropdown & Menu System Map
 
-Three systems coexist in Homeport:
+Every menu and menu-like popover is built from one set of parts in `waldur-ui` (see the [Menus guide](menus.md) for which part to use, recipes and rules):
 
-1. **`src/navigation/NavMenu.tsx`**: Use for Metronic chrome (topbar user dropdown, language picker, header menus). Runs on Radix DropdownMenu/Popover wearing `.menu-sub-dropdown`.
-2. **`src/table/ActionsDropdown.tsx`**: Use for table row actions and standard action menus. Runs on Radix DropdownMenu wearing `.dropdown-menu`.
-3. **`packages/ui/src/DropdownMenu.tsx` & `Popover.tsx`**: Pure Tailwind/shadcn components. Use for newly built features or components migrated onto design tokens.
+1. **`Menu`** (`packages/ui/src/Menu/`): Radix DropdownMenu with the defaults built in: `modal={false}`, a Portal (with an optional `container`), the look's z-index layer, scrolling inside the space Radix measures, `sideOffset={2}` and the keyframe entrance. Parts: `Menu.Trigger`, `Menu.Content`, `Menu.Item`, `Menu.Group`, `Menu.RadioGroup`/`Menu.RadioItem`, `Menu.Sub`/`Menu.SubTrigger`/`Menu.SubContent`, `Menu.Label`, `Menu.Separator`, `Menu.CheckboxItem` (a setting, shown as a switch) and `Menu.CopyItem` (copies a value).
+2. **`MenuPopover`**: the same surfaces on a Radix Popover, for panels holding inputs. Parts: `Trigger`, `Anchor`, `Close`, `Content` (with `forceMount` and `container` for the table filter panels) and `Item` (a button row that does _not_ close the panel, since the filter menus use it as a nested popover's trigger).
+3. **App components** in `src/table/ActionsDropdown.tsx`: `ActionsMenu` and its rows (below), and `NavMenuLink` in `src/navigation/NavMenu.tsx`, a nav row that is a ui-router link.
+
+- **Looks**: `Menu.Content look="nav"` (the default; header, page tabs, footer, filter popovers) or `look="actions"` (row actions, "Add" menus). Popovers with a layout of their own (the column picker, search, breadcrumb, call settings) are plain `Popover`s, whose `PopoverContent` is a bordered card on `z-popover`. The looks are cva recipes collocated with each component in `packages/ui/src/Menu/` (`menuSurface` in `MenuContent.tsx`, `menuItem` in `MenuItem.tsx`, `menuText` in `MenuStatic.tsx`, `menuLabel` in `MenuLabel.tsx`, `menuSeparator` in `MenuSeparator.tsx`), measured against the original Metronic and Bootstrap menus and pinned by `menuLooks.test.ts`.
+- **Look and kind in context**: a panel provides its look and its kind (`menu`, `popover` or, with no panel, `plain`) through React context (`packages/ui/src/Menu/menuContext.tsx`), so rows in a portaled submenu still inherit them. `Menu.Item` renders for its kind: a Radix item in a menu, a button that closes the panel in a popover, a plain `<button role="menuitem">` anywhere else. `onSelect` works the same in all three; calling `event.preventDefault()` keeps the panel open.
+- **Placement**: Radix `side` and `align` only. Radix's default `align` is `center`, so menus that open from the start edge say `align="start"`.
+- **Hover to open**: `<Menu openOnHover="desktop">` opens on hover at `lg`+ (clicking below it) with Metronic's 200ms close delay (`TabsList.tsx`, `FooterDropdown.tsx`).
+- **Shell**: `packages/shell` and the micro-app use the same parts in the nav look. They have no Bootstrap, so their panels set their typography with Tailwind (`py-[12px] text-[14px] font-medium`, as the main app's `fw-bold fs-6 py-4`).
 
 #### `asChild` and `forwardRef` Requirement
 
 Radix's `Slot` clones trigger elements and attaches positioning refs and event handlers. **Every intermediate trigger component in an `asChild` hierarchy must be wrapped in `forwardRef` and spread `...props`**, or clicks will silently fail.
 
+#### Bootstrap utilities on panels
+
+Bootstrap's spacing utilities are `!important`, so a Bootstrap class on a panel (`py-4`, `p-0`) beats any Tailwind spacing. The surfaces reset their own margin and padding with arbitrary values (`m-[0px] p-[0px]`) rather than `m-0`/`p-0` for that reason: Bootstrap's `.p-0` would otherwise cancel a caller's Tailwind `py-*`. Tailwind-merge also reads `text-anchor` and `text-primary` as two colours and drops the first; put such classes on the `asChild` child (Slot joins class names without merging them) rather than on the row (see `ResourceAccessButton.tsx`).
+
 ---
 
-### `ActionsDropdown` & `ActionItem`
+### `ActionsMenu` & `ActionItem`
 
 `src/table/ActionsDropdown.tsx` / `src/resource/actions/ActionItem.tsx`.
 
-- **Keyboard Highlight Bridge**: Bootstrap targets `.dropdown-item:hover, .dropdown-item:focus`. Radix manages focus and sets `[data-highlighted]`. `_dropdown.scss` maps `[data-highlighted]` onto Bootstrap's hover treatment so arrow-key navigation displays the active highlight.
-- **Isolated Row Testing**: Exported helper `inActionsMenu(children)` wraps action rows in a headless Radix Menu for Vitest unit tests without needing an entire table harness.
-- **Toggle buttons use `buttonVariants()`, not `BaseButton`**: `TableDropdownToggle` / `AddDropdownToggle` in this file and `Toggle` in `ActionDropdownButton.tsx` render a raw `<button>` carrying `buttonVariants()` classes. The caret span (`rotate-toggle-180`) must be a _direct_ child of the button for `_dropdown.scss`'s `.dropdown-toggle[data-state='open'] > .rotate-toggle-180` selector, and `BaseButton` wraps `iconNode` in an extra span. Their icons are sized with the Phosphor `size` prop (16.25px `sm`, 19.5px otherwise) rather than a `.svg-icon` wrapper.
-- **Classes the toggles keep**: `dropdown-toggle` and `no-arrow`, because `.disabled-view` and `custom/_table.scss` still key off the literal `dropdown-toggle` class, and — on the icon-only toggle — a bare `btn-icon` marker, which is inert for styling but is the other half of `.disabled-view`'s `.dropdown-toggle.btn-icon { display: none }` rule.
-- **Panel still on Bootstrap**: the menu panel (`.dropdown-menu` / `.dropdown-item`) is unchanged; only the trigger moved to `waldur-ui` tokens.
+- **`ActionsMenu`**: a trigger plus an actions-look panel. `toggle` is `"kebab"` (the default), `"labeled"` (with `label`), `"add"` or an element of your own (which must forward its ref). The panel opens to the left of the toggle, aligned to its start, as row actions always have; "Add" and toolbar menus pass `side="bottom"`. For panels with search inputs, use `MenuPopover` with `TableDropdownToggle` directly. `ActionsDropdown` is a wrapper over it. For standalone dropdown buttons, use `Menu.TriggerButton`.
+- **`Menu.Content look="actions"`**: the panel on its own, for menus whose trigger sits elsewhere in the markup (`WaldurSidebarBrand`, `ResourceUsageForm`).
+- **Rows**: `Menu.Item`, `Menu.Group` with `Menu.Label`, and `Menu.Separator` from `waldur-ui` are used directly with `look="actions"` (or inheriting it from the parent panel). `Menu.Item` automatically receives `data-testid="action-item"` in the actions look.
+- **`ActionItem`**: a `Menu.Item` with an icon, tooltip and staff indicator, or a `BaseButton` with `as`. It hides itself when `isActionVisible` says so: an action switched off for the resource's offering (`actionId` + `resource`), or one that fails the enclosing `ActionList`'s filter (`query`, `hideDisabled`, `hideNonImportant`; `hideGroupName` hides `ActionGroup` captions). `ActionList` is in `src/marketplace/resources/actions/ActionList.tsx`.
+- **Highlighted rows**: hover, focus, Radix `[data-highlighted]` and `.active` share one style; disabled rows (`data-disabled`, `:disabled` or `.disabled`) are skipped.
+- **Isolated Row Testing**: `inActionsMenu(children)` (`src/test/harness.tsx`) wraps action rows in an open `Menu` with `<Menu.Content look="actions">`, so they render as real menu items in Vitest without a table harness.
+- **Toggle buttons use `buttonVariants()`, not `BaseButton`**: `TableDropdownToggle` / `AddDropdownToggle` in this file render a raw `<button>` carrying `buttonVariants()` classes. The toggle is a `group/toggle`, and `ButtonCaret` flips while it is `data-state="open"`. Their icons are sized with the Phosphor `size` prop (16.25px `sm`, 19.5px otherwise) rather than a `.svg-icon` wrapper. Standalone dropdown buttons use `Menu.TriggerButton` which wraps `BaseButton`.
+- **Unavailable offerings**: the page wraps itself in `ActionsUnavailable`, and every action menu inside shows its toggle disabled with the reason in a tooltip. This replaced a `data-actions-toggle` attribute and a `.disabled-view` rule that hid the toggles.
 
 ---
 
-### `NavMenu`
+### Nav menus
 
-`src/navigation/NavMenu.tsx`.
+The header user menu, the language submenu, page-tab submenus, the footer menus and the filter popovers.
 
-- **Theme Bridges**: Bridges `menu-state-bg-gray`, `menu-state-bg-light`, and `menu-state-title-primary` onto Radix `[data-highlighted]`.
-- **Top-Level Hover Menus**: `useHoverMenu()` replicates responsive hover behavior with a 200ms close delay.
-- **Separation of `.menu-item` and `.menu-link`**: Radix props attach to the inner `.menu-link` element; the outer `.menu-item` remains a layout container.
-
----
-
-## Legacy Button CSS Retirement
-
-Once no element rendered a literal `.btn` class, the Bootstrap/Metronic button CSS was deleted.
-
-### Removed
-
-- `@import 'bootstrap/scss/buttons'` and Metronic's `core/components/buttons/_theme.scss`.
-- The `.btn` portion of `core/components/buttons/_base.scss`, the button-variant mixins (`mixins/_buttons.scss`), the `$button-variants` map and `$btn-extended-variants`.
-- The `.btn` block of `custom/_buttons.scss`, plus every compound `.btn …` rule in `custom/_base`, `_content`, `_modal`, `_table`, core `_nav` and `_print-mode`, `PageBarTabs.scss`, `PublicOfferingPricing.scss` and the glass/neumorphism layout sheets.
-- Earlier: `.btn-group` (with `@import 'bootstrap/scss/button-group'`), replaced by `SegmentedControl`, and `ToolbarButton`.
-
-**How it was verified**: the compiled stylesheet (light and dark) was diffed before and after. About 9,000 rules disappeared, every one with `.btn` in its selector; nothing else changed, and nothing new appeared. Deleting CSS this way is safe only because the rules were _compound_ with `.btn` — a selector such as `.btn.btn-icon.btn-sm` cannot match an element without the literal class. Repeat the diff (fetch the compiled sheet from the dev server with `?direct`, then compare rules with `postcss`) before deleting more.
-
-### Kept
-
-These do not depend on `.btn`:
-
-| Class                                             | Why it stays                                                                                                                                                                                                     |
-| :------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.btn-no-focus`                                   | Standalone helper in `core/components/buttons/_base.scss` that callers pass as a plain `className` to a `BaseButton`. Removes the box-shadow glow only; `BaseButton`'s focus ring is an outline, so it survives. |
-| `.btn-nav-item`                                   | Header icon buttons (`custom/_nav.scss`)                                                                                                                                                                         |
-| `.btn-close`                                      | Bootstrap's modal close control (`bootstrap/scss/close`)                                                                                                                                                         |
-| `.btn-text-align`                                 | Text alignment helper used on a `div`                                                                                                                                                                            |
-| `.dropdown-toggle.btn-icon`                       | `.disabled-view` rule that hides row-action toggles (see [`ActionsDropdown`](#actionsdropdown-actionitem))                                                                                                       |
-| `$btn-*` SCSS variables and `_tokens.scss` values | Still read by AI-assistant and other component styles                                                                                                                                                            |
-
-**Guardrail**: `no-bootstrap-button-markup` is an error with no allowlist, so hand-written `btn` markup cannot come back unnoticed (see [Custom ESLint Rules Matrix](#custom-eslint-rules-matrix)).
-
-**Known consequence**: the deleted rules also carried some sizes that had already stopped applying to `BaseButton`s (44px modal-footer and toolbar buttons, a 150px footer minimum width). Deleting them changed nothing on screen, but it means a button that should be large must say so with `size="lg"`.
+- **Nav look**: Metronic's `.menu-sub-dropdown` panel and `.menu-link` row, measured against the live app. Colours come from the `--menu-*` tokens in `surfaceColors.css`; the shadow is `--dropdown-shadow`.
+- **Row options instead of theme classes**: `density` (`default` 10×16px, `compact` 8×9.75px, `base` 8×12px) and `tone` (gray-600 or gray-700). Every highlighted row is gray-700 on gray-50. A panel sets them for its rows with `density` / `tone` props, as `data-*` attributes the rows' group variants read (the footer uses `compact`; `MenuPopover.Content` defaults to `base`/gray-700 for the filter rows).
+- **Highlighted rows**: hover, Radix `[data-highlighted]`, an open submenu (`data-[state=open]`), a checked radio row (`data-[state=checked]`, e.g. the current language) and `.active` (what `UISrefActive` adds) share one style (the `menu-row-active:` variant); disabled rows (`data-disabled`) are skipped.
+- **`NavMenuLink`**: a row that is a ui-router `Link`. It wraps its label in a span so `Link` doesn't add `text-anchor`.
+- **Page tabs and footer bar** (`TabsList.tsx`, `footer/MenuItem.tsx`) are plain `<nav><ul>` link lists with their own Tailwind classes and `--page-tab-*` / `--footer-link-text` tokens. The current tab is marked with `aria-current`.
 
 ---
 
@@ -75001,8 +75465,16 @@ Configured in `eslint.config.js` via `no-restricted-imports` (`RESTRICTED_IMPORT
 | `Button`                                              | `BaseButton` from `waldur-ui` (or `SubmitButton` / `CloseDialogButton` where they fit) |
 | `DropdownButton`                                      | `ActionsDropdown`                                                                      |
 | `Accordion`, `AccordionContext`, `useAccordionButton` | `Accordion` or `Collapsible` from `waldur-ui`                                          |
+| `Pagination`, `PageItem`                              | `TablePagination` (or `Pagination` for page numbers alone) from `waldur-ui`            |
 
-Each is blocked both as a named import from `react-bootstrap` and as a deep import (`react-bootstrap/Badge`, …). A genuinely new exception belongs on the offending line as `// eslint-disable-next-line no-restricted-imports -- <reason>`.
+Two Radix packages are restricted too, everywhere except `packages/ui` (where `Menu` / `MenuPopover` wrap them):
+
+| Import                          | Use instead                                                                    |
+| :------------------------------ | :----------------------------------------------------------------------------- |
+| `@radix-ui/react-dropdown-menu` | `Menu` from `waldur-ui`, or `ActionsMenu` / `ActionsDropdown` for action menus |
+| `@radix-ui/react-popover`       | `MenuPopover` (or `Popover`) from `waldur-ui`                                  |
+
+Each `react-bootstrap` entry is blocked both as a named import from `react-bootstrap` and as a deep import (`react-bootstrap/Badge`, …). A genuinely new exception belongs on the offending line as `// eslint-disable-next-line no-restricted-imports -- <reason>`.
 
 Import restrictions only see imports. A button hand-written as `<button className="btn btn-danger">` imports nothing, so it is caught by the custom rule `no-bootstrap-button-markup` below.
 
@@ -75070,7 +75542,7 @@ The former `enforce-button-variants` rule was deleted: the variant list lives in
   CHOKIDAR_USEPOLLING=1 yarn vitest run --project=storybook
   ```
 
-- **Stories to look at**: `Actions/BaseButton` (`packages/ui/src/BaseButton.stories.tsx`: playground, every state, sizes, icon-only, realistic usage), `Actions/SegmentedControl` (variants, sizes, `BesideTallerSibling`, `AsTabsWithPanels`), and `src/table/ActionsDropdown.stories.tsx`.
+- **Stories to look at**: `Actions/BaseButton` (`packages/ui/src/BaseButton.stories.tsx`: playground, every state, sizes, icon-only, realistic usage), `Actions/SegmentedControl` (variants, sizes, `BesideTallerSibling`, `AsTabsWithPanels`), and `src/table/ActionsMenu.stories.tsx`.
 - **Storybook is not the app**: it applies the theme through `storybook-addon-pseudo-states`, which rewrites `:focus-visible` / `:hover` selectors. See the pitfall below before trusting a `:not(:focus-visible)` result there.
 
 ---
@@ -75079,18 +75551,10 @@ The former `enforce-button-variants` rule was deleted: the variant list lives in
 
 `yarn test:e2e:visual` runs `e2e-visual/*.spec.ts` through Playwright (project `visual`, against the app on :8001 and Storybook on :6006).
 
-- **`focus-ring.spec.ts`**: asserts that keyboard focus produces a _visible_ indicator with at least 3:1 contrast (WCAG 2.4.7 and 1.4.11), in light and dark. Its fixtures are built from `buttonVariants()` on the `actions-basebutton--playground` story's stylesheet and cover the places a ring was once suppressed: elevation utilities (`shadow-sm`), an unlayered page stylesheet setting a `box-shadow`, `.menu-link` and `nav-line-tabs`. The `primary` case is a recorded contrast gap (`test.fail()`): a brand ring on a brand-filled button is about 1.6:1. `.btn-no-focus` is deliberately not a fixture — see the pseudo-states pitfall.
+- **`focus-ring.spec.ts`**: asserts that keyboard focus produces a _visible_ indicator with at least 3:1 contrast (WCAG 2.4.7 and 1.4.11), in light and dark. Its fixtures are built from `buttonVariants()` on the `actions-basebutton--playground` story's stylesheet and cover the places a ring was once suppressed: elevation utilities (`shadow-sm`), an unlayered page stylesheet setting a `box-shadow`, a menu row (`navMenuRowClassName()`) and `nav-line-tabs`. The `primary` case is a recorded contrast gap (`test.fail()`): a brand ring on a brand-filled button is about 1.6:1. `.btn-no-focus` is deliberately not a fixture — see the pseudo-states pitfall.
 - **`stat-card-parity.spec.ts`**, **`charts.spec.ts`**, **`wizards.spec.ts`**: parity and screenshot checks for other components; `visualParityHarness.ts` holds the shared pixel-diff and chromaticity helpers.
 
 Run one spec with `yarn playwright test focus-ring --project=visual --workers=1` (a filter, not a path; passing a path is read as a project name). Playwright executes specs in Node, so a spec may import `packages/ui/src/BaseButton` directly but not the `waldur-ui` barrel, whose modules touch `document` at import time.
-
----
-
-### Retired Visual Parity Suite
-
-`e2e-visual/base-button-parity.spec.ts` compared the legacy Bootstrap `BaseButton` against the new Tailwind/shadcn one side-by-side via Playwright screenshots, pixel-diffing 288 variant/size/theme/state combinations, so the new component could be proven a drop-in replacement before any call site used it. Every call site has migrated and the legacy component is deleted, so the spec, its dedicated CI job and its Storybook story (`BaseButtonParity.stories.tsx`) were removed together.
-
-The techniques it validated remain a useful reference for the next component swap: dimension parity via `boundingBox()`, a pixelmatch ratio, and dominant-colour chromaticity for low-pixel-ratio text-only buttons (implemented in `visualParityHarness.ts`, still used by `stat-card-parity.spec.ts`).
 
 ---
 
@@ -76262,20 +76726,24 @@ if (error) {
 ### 4.3 Pagination Rules
 
 ```tsx
+import { TablePagination } from 'waldur-ui';
+
 import { PAGE_SIZE_COMPACT, PAGE_SIZE_FULL } from '@/table/constants';
 
 // PAGE_SIZE_COMPACT = 5 (for embedded/secondary tables)
 // PAGE_SIZE_FULL = 10 (for primary tables)
 
-// Hide pagination when items ≤ PAGE_SIZE_COMPACT
-{
-  pagination.resultCount > PAGE_SIZE_COMPACT && (
-    <TablePagination {...pagination} />
-  );
-}
-
-// Show item count
-// Format: "Showing 1-10 of 100"
+// TablePagination hides itself when items ≤ PAGE_SIZE_COMPACT, and shows
+// the item count ("11-20 of 42 items"). <Table> renders it for you; render
+// it yourself only for a paged list that is not a <Table>, such as a list
+// of form fields — there, drop the table's top border:
+<TablePagination
+  {...pagination}
+  hasRows={rows.length > 0}
+  gotoPage={setPage}
+  updatePageSize={setPageSize}
+  bordered={false}
+/>;
 ```
 
 ---
@@ -104165,6 +104633,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
 | [`DerivedLimitsOrderMixin`](#derivedlimitsordermixin) | `waldur_mastermind.marketplace.tests.test_derived_limits` | No description available |
 | [`LimitActionPermissionMixin`](#limitactionpermissionmixin) | `waldur_mastermind.marketplace.tests.test_order_creation_permission` | No description available |
+| [`ScopeHelperAgreementMixin`](#scopehelperagreementmixin) | `waldur_mastermind.marketplace.tests.test_scope_helpers_by_permission` | Each helper must list exactly the scopes has_permission allows |
 | [`ConnectedOfferingDetailsMixin`](#connectedofferingdetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide offering details action for connected resources |
 | [`ConnectedResourceDetailsMixin`](#connectedresourcedetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide resource details action for connected resources |
 | [`OfferingUsageMixin`](#offeringusagemixin) | `waldur_mastermind.marketplace.views` | Shared logic for customer/project per-offering usage ViewSets |
@@ -105488,6 +105957,14 @@ which is distinct from any real state.
 **Module:** `waldur_mastermind.marketplace.tests.test_order_creation_permission`
 
 **Description:** No description available.
+
+### ScopeHelperAgreementMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_scope_helpers_by_permission`
+
+**Description:**
+
+Each helper must list exactly the scopes has_permission allows.
 
 ### ConnectedOfferingDetailsMixin
 
