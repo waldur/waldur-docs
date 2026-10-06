@@ -19591,7 +19591,10 @@ introducing <code>SUBSCRIBE_*</code> permissions that would have to be kept in s
 <li>the manual <code>close_round</code> endpoint cancels only the drafts, in one bulk
     update announced as a single batch.
   A busy round therefore reaches consumers as a burst of cancellations at
-  cutoff.</li>
+  cutoff. On both paths a call with <code>carry_over_drafts</code> first moves its drafts
+  to its next round; a move changes no state, so it publishes nothing (it is
+  logged as a <code>proposal_draft_carried_over</code> event instead), and only drafts
+  without a next round are cancelled.</li>
 <li><strong><code>AgentIdentity</code> retirement</strong> — the site-agent model still exists alongside
   its consumer; collapsing it is only worthwhile once the legacy path is gone.</li>
 </ul>

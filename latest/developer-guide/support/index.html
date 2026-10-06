@@ -11218,6 +11218,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#staff-initiated-request-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Staff-Initiated Request Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#synchronization-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20115,6 +20126,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#staff-initiated-request-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Staff-Initiated Request Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#synchronization-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -21309,6 +21331,49 @@ token (sent as Basic auth) against the same gateway URL works as well.</p>
     Backend--&gt;&gt;Models: Update backend_id
     Models--&gt;&gt;API: Issue created
     API--&gt;&gt;User: 201 Created</code></pre>
+<h3 id="staff-initiated-request-flow">Staff-Initiated Request Flow</h3>
+<p>Staff and support users can open a request addressed to another user, to start
+a conversation rather than answer one. It is one call to the same endpoint:
+omit <code>is_reported_manually</code>, name the recipient as <code>caller</code>, and put the
+opening message in the write-only <code>first_comment</code> field.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST</span><span class="w"> </span><span class="err">/api/suppor</span><span class="kc">t</span><span class="mi">-</span><span class="err">issues/</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Informational"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"summary"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Your SSH key expires on Friday"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"caller"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://waldur.example.com/api/users/&lt;uuid&gt;/"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"first_comment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Please rotate your key before Friday."</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<ul>
+<li>The issue and its opening message are created in one transaction. The
+  message becomes the first <strong>public</strong> comment, authored by the sender, and is
+  pushed to the active backend like any other comment. On a remote desk a
+  failed push rolls back the Waldur issue, but the ticket already created in
+  the remote desk stays there.</li>
+<li>Send no <code>customer</code>, <code>project</code> or <code>resource</code>: the caller can only see an
+  unscoped issue they did not create.</li>
+<li>The recipient is notified through <code>support.notification_comment_added</code>, the
+  same notification as any other comment on their ticket. Notifications ship
+  disabled, so the key must be enabled for the message to reach them.</li>
+<li>On the built-in desk the sender is recorded as <code>reporter</code> and, unless an
+  <code>assignee</code> is given, as <code>assignee</code>, so the recipient's reply is mailed to
+  them. Such an issue does not trigger the new-request notification to
+  helpdesk staff, gets no SLA deadlines at creation, and does not count as
+  answered until the recipient has replied. Their first reply starts the
+  first-response and resolution deadlines when SLA tracking is enabled, so a
+  message the recipient never answers is never an SLA breach. The average
+  first-response time in the helpdesk statistics counts from that reply too.</li>
+<li>On Atlassian, Zammad and SMAX neither field is set: there the reporter is
+  who the remote ticket is filed as, and it must stay the caller.</li>
+<li>Without <code>first_comment</code>, an on-behalf request is the user's own request
+  logged by staff, and is handled exactly as before.</li>
+</ul>
 <h3 id="synchronization-flow">Synchronization Flow</h3>
 <pre class="mermaid"><code>sequenceDiagram
     participant Scheduler
