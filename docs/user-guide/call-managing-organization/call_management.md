@@ -53,6 +53,16 @@ A round only schedules submission, review and allocation. How many reviewers a
 proposal needs, the minimum score, who decides and when resources are allocated
 are set on the call's [workflow steps](workflow-configuration.md#per-step-settings).
 
+A round can only be deleted while it has **no proposals at all**, in any state —
+drafts, and rejected or cancelled proposals, included. Deleting a round would
+delete its proposals with it, and a rejection or a cancelled draft is an outcome
+of the round that stays on record. The **Delete** action is disabled with that
+reason on such a round.
+
+After the cut-off a round moves through its own lifecycle — evaluating,
+deciding, results published, closed — described under
+[Round lifecycle after the cut-off](#round-lifecycle-after-the-cut-off).
+
 ### When evaluation starts
 
 Each call decides when a submitted proposal's evaluation starts:
@@ -83,18 +93,22 @@ Under **Configuration → General configuration**, set the basic call parameters
 
 - **Fixed duration for granted projects (in days)**: how long every granted project runs. When it is set, it decides the project's end date, and applicants can only choose subscription lengths that fit inside it. Applicants see the resulting length in the submission form; they are not asked for a duration. See [How long a granted project runs](#how-long-a-granted-project-runs).
 - **Evaluation starts**: **On submission** or **At the round cut-off** — when a submitted proposal's evaluation starts. It cannot be changed while the call has submitted or in-review proposals. See [When evaluation starts](#when-evaluation-starts).
+- **Applicants learn the decision**: **As each decision is made** (the default) or **Together for the whole round** — whether each allocation decision is announced as soon as it is made, or held until a call manager publishes the round's results. It cannot be changed while the call holds decisions that have not been published. See [Publishing a round's results](#publishing-a-rounds-results).
+- **Undecided proposals when a round is completed**: **Block completion until every proposal is decided** (the default) or **Reject them automatically** — what completing a round does with proposals that still have no decision. A round can override it. See [Completing a round](#completing-a-round).
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
 
 ![Call general configuration](../img/call_configuration_general.png)
 
+![Results publication and undecided-proposal settings](../img/call-results-publication-settings.png)
+
 #### How long a granted project runs
 
 When a proposal is granted, the project's end date is decided in this order:
 
 1. **The call's fixed duration**, when it is set. The project ends that many days after it starts. Subscription lengths requested under the call are limited to fit inside it, and a resource never outlasts its project.
-2. **The longest requested subscription**, when the call sets no fixed duration. The project lasts as long as the longest subscription chosen on its resource requests.
+2. **The longest awarded subscription**, when the call sets no fixed duration. The project lasts as long as the longest subscription in its [awarded resources](call-manager-workflow.md#awarded-resources), which start as a copy of the resource requests.
 3. **No end date**, when the call sets no fixed duration and nothing requested is sold by the month. The project runs until someone sets an end date on it.
 
 !!! warning "Awards that must expire"
@@ -415,11 +429,115 @@ The reviews list shows every review with its reviewer, round and state:
 The final decision process determines which proposals receive resource allocations:
 
 1. The responsible user completes the **Allocation decision** step after weighing the reviews.
-2. Proposal is **accepted** or **rejected**.
+   While the step is in progress, the call manager can adjust what is granted in
+   the proposal's [awarded resources](call-manager-workflow.md#awarded-resources).
+2. Proposal is **accepted** or **rejected** — at once, or, on a call that
+   publishes results together for the whole round, when the round's results are
+   [published](#publishing-a-rounds-results).
 3. If accepted:
       - A **new project** is created under the proposing organization.
-      - Requested resources are provisioned.
+      - The awarded resources are provisioned.
       - Team members are added to the project.
+
+### Round lifecycle after the cut-off
+
+Before its cut-off a round is **Scheduled** or **Open**, derived from its dates.
+Once the cut-off has passed, the round enters a stored lifecycle that the call
+manager drives from the round's **⋮** menu on the call's **Rounds** tab:
+
+| Stage | Entered | What it means |
+|---|---|---|
+| **Evaluating** | automatically after the cut-off (an hourly job), when the round is closed early, or on the first lifecycle action | The round's proposals are being evaluated |
+| **Deciding** | **Start deciding** | The evaluated batch has gone to the decision body. Optional — results can be published straight from *Evaluating* |
+| **Results published** | **Publish results** | Every decision of the round has been announced |
+| **Closed** | **Complete round** | Nothing more happens in the round |
+
+The rounds list shows the stage next to the round's status, and, for call
+managers, a **held** count of decisions recorded but not yet announced. Expand a
+row to see when each stage started, who published the results, the rule for
+undecided proposals and the adoption record.
+
+![Rounds list with lifecycle stage and held decisions](../img/call-rounds-lifecycle.png)
+
+![Round lifecycle actions](../img/round-lifecycle-actions-menu.png)
+
+Each step is logged as an event of the call. The lifecycle actions require the
+same permission as closing a round, and are available only while the call is
+active.
+
+### Publishing a round's results
+
+**Applicants learn the decision** under **Configuration → General
+configuration** decides when an applicant hears the outcome:
+
+- **As each decision is made** — completing or rejecting the **Allocation
+  decision** step announces the outcome at once, as before.
+- **Together for the whole round** — the decision is recorded but **held**. The
+  proposal stays **In review** for the applicant, the notification is not sent,
+  and nothing is provisioned. The call team sees the tentative outcome
+  (*Awarded (tentative)*, *Not awarded (tentative)*) in the proposals list. When
+  the round is ready, a call manager publishes its results and every applicant
+  of the round is told at the same time.
+
+**Publish results** announces every held decision of the round and carries it
+out as if it had just been made: an approved proposal continues to the award
+response step, or is accepted and provisioned; a declined one is rejected. Each
+applicant receives the same notification an immediate decision would have sent.
+
+![Publish results dialog](../img/round-publish-results-dialog.png)
+
+Publishing is refused while some proposals of the round are still being
+evaluated without a decision. The dialog says how many; to publish anyway, use
+**Publish anyway** and give a **Reason for publishing early**. The reason is
+kept on the round, and the undecided proposals carry on — their decisions are
+announced as they are made.
+
+If a held decision cannot be carried out (for example, its allocation cannot be
+provisioned), it stays held and the dialog lists it; the rest are published.
+**Publish results** remains available on the round while anything is still held,
+and publishing again retries it.
+
+On a call that announces each decision as it is made, **Publish results** holds
+nothing back: it only records the round's stage.
+
+Until results are published, a call manager can take a held decision back with
+**Reopen decision** on the proposal — see
+[Held decisions](call-manager-workflow.md#held-decisions).
+
+!!! note "Who sees a held decision"
+    Only staff, support, and users who can update the call (its call managers and
+    the managing organisation's call organisers) see that a decision is held and
+    what it is. Applicants, reviewers, panel members and offering managers see
+    the allocation decision as still in progress until the results are published.
+    An applicant who also manages the call is treated as an applicant for their
+    own proposal.
+
+### Completing a round
+
+**Complete round** closes a round whose results have been published. What
+happens to proposals that still have no decision follows
+**Undecided proposals when a round is completed** — set on the call and
+overridable per round with **Undecided proposals rule**:
+
+- **Block completion until every proposal is decided** — completing is refused
+  and the dialog says how many proposals have no decision yet.
+- **Reject them automatically** — each undecided proposal is rejected at the
+  workflow step it stands in, with the reason *Not decided when the round was
+  completed.*, and its applicant is notified at once. The round is then closed.
+
+![Completing a round refused while proposals are undecided](../img/round-complete-refused.png)
+
+Completing is also refused while a decision of the round is still held because
+its release failed at publication; publish the results again first.
+
+### Recording adoption
+
+Where the results must be adopted by another body (a board, for example), record
+it with **Record adoption** on the round: the adoption date, a note and
+optionally the adopting document. It can be recorded at any time after the
+cut-off. While the round still holds its decisions, the adoption note, the
+document and the reason for publishing early are shown only to those who may see
+held decisions.
 
 ## Step 8: Monitoring and reporting  
 
@@ -464,6 +582,9 @@ Solutions for common issues encountered during the call management process:
 | Reviewer cannot access proposal | Incorrect assignment | Verify reviewer assignment in call settings |
 | Applicant cannot see active call | Call visibility settings | Check call publication status and visibility settings |
 | Resource allocation failed | Insufficient provider capacity | Contact service provider to resolve capacity issue |
+| Round cannot be deleted | The round has proposals, in any state | Rounds with proposals stay on record; only an empty round can be deleted |
+| **Applicants learn the decision** cannot be changed | The call holds decisions that have not been published | Publish the results of the rounds that hold them first |
+| **Complete round** is refused | Proposals of the round have no decision, or a held decision failed to publish | Decide them (or set the round's rule to reject them), or publish the results again |
 
 ## FAQ
 
@@ -483,7 +604,7 @@ A: By default, proposals cannot be edited after submission. However, if a review
 A: Resource transfer between projects requires administrative approval. Contact your Call manager to request a resource transfer.
 
 **Q: How are applicants notified about proposal decisions?**
-A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is made.
+A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is announced — when it is made, or, on a call that publishes results together for the whole round, when the round's results are published.
 
 **Q: Can a Call manager override reviewer scores?**  
 A: Decisions are always made by a person completing a workflow step; scores never decide on their own. A step can be declined regardless of scores, but approving is blocked while a **Minimum reviewers** or **Minimum score threshold** set on that step is not met. All reviewer feedback remains visible and documented.
