@@ -197,7 +197,8 @@ Conflict types, severities and handling rules are detailed in
 The **Proposals** tab (under either call management or the call's Manage view)
 lists every proposal for the call with its applicant, current **Step** and the
 step's responsible role, creation date, state and compliance status. Click a
-proposal to open it.
+proposal to open it. A decision held for the round's publication shows its
+tentative outcome in place of the state (see [Held decisions](#held-decisions)).
 
 ![Proposals list](../img/cm-proposals-list.png)
 
@@ -293,6 +294,83 @@ An accepted proposal shows the full workflow completed, each step stamped with
 its outcome and completion time.
 
 ![Accepted proposal with allocation decision](../img/cm-allocation-decision.png)
+
+### Awarded resources
+
+The allocation decision can grant something other than what was requested. When
+the **Allocation decision** step starts, the proposal gets an **Awarded
+resources** section — also listed in the page's section navigation — that starts
+as a copy of the resource requests. While the step is in progress, a call
+manager can:
+
+- change the amounts of an item,
+- move an item to another offering of the call that its provider has accepted,
+  or pick another plan of that offering,
+- add items and remove them.
+
+Each row is marked **As requested** or **Changed**, and a changed amount shows
+the requested one beneath it. The **Summary of the award** in the side panel
+totals the estimated cost of what is awarded.
+
+![Awarded resources while the allocation decision is in progress](../img/cm-awarded-resources-edit.png)
+
+An item on an offering sold by amount must name an amount; approving the
+decision is refused while an awarded item has none. Declining is never blocked.
+
+What is provisioned on acceptance is the award, not the request — the resource
+requests stay as the applicant submitted them. A purchase order attached to a
+request follows its item only while the item stays on the offering it was
+requested for.
+
+The section is editable only while the allocation decision is in progress, and
+only by the call's managers and staff. Once the decision is completed, rejected
+or held for the round's publication, the rows lose their actions and the award
+is read-only.
+
+Who sees the award:
+
+- staff, support, the call's managers and the managing organisation's call
+  organisers, and managers of the offerings requested or awarded — at any time;
+- the applicant team — once the decision is released: when the proposal is
+  accepted, when the applicant is asked to respond to the award, or when the
+  call shows the allocation step to applicants; never while the decision is held
+  for the round's publication;
+- reviewers and panel members — never.
+
+### Held decisions
+
+On a call whose applicants learn the decision **Together for the whole round**
+(see [Publishing a round's results](call_management.md#publishing-a-rounds-results)),
+completing or rejecting the **Allocation decision** step records the outcome
+but holds it. The proposal stays **In review**; the proposals list shows its
+tentative outcome — *Awarded (tentative)*, *Not awarded (tentative)* or
+*Decision lapsed (tentative)* — and its step as *Held until the round publishes
+results*.
+
+![Tentative outcomes in the call manager's proposals list](../img/cm-proposals-tentative-outcome.png)
+
+On the proposal, the stepper shows the held outcome on the allocation decision,
+the awarded resources are read-only, and the **Progress** panel offers
+**Reopen decision**.
+
+![A held decision on the call manager's proposal view](../img/cm-held-decision-proposal.png)
+
+**Reopen decision** takes a held decision back, for example when the board
+changed the outcome while adopting the list. The allocation decision becomes
+active again with its outcome cleared, and the proposal counts as undecided when
+the round's results are published. A **Reason** is required; a **New deadline**
+is optional — without one, a deadline that has passed is cleared and one still
+ahead is kept.
+
+![Reopen decision dialog](../img/cm-reopen-decision-dialog.png)
+
+Reopening is possible only before the round's results are published, and only
+for staff and users who can update the call — not support, and not the
+applicant even if they also manage the call. Nothing is sent to the applicant.
+The proposal's event feed records that the decision was reopened and by whom,
+without the outcome or the reason; the reason goes to the server log only. Until
+the round's results are published that event is hidden from everyone who may not
+see held decisions, the applicant team included.
 
 ## Related guides
 

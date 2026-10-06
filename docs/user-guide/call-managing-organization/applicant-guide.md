@@ -166,7 +166,7 @@ Proposal states an applicant sees:
 |---|---|
 | **Draft** | Not yet submitted — only you can see it |
 | **Submitted** | Submitted and awaiting evaluation — on calls that evaluate at the round cut-off, until the cut-off has passed |
-| **In review** | Moving through the evaluation workflow |
+| **In review** | Moving through the evaluation workflow — on calls that announce results together for the whole round, until the round's results are published |
 | **Accepted** | Approved — a project and resources have been (or are being) provisioned |
 | **Rejected** | Not funded |
 | **Canceled** | Withdrawn, or an award you declined |
@@ -188,6 +188,17 @@ depends on the call's configuration at the moment you submitted (see
 Steps that were not part of your proposal's sequence are omitted from the
 stepper, so two proposals in the same call can show different steps if the call
 was reconfigured between their submissions.
+
+### When you hear the decision
+
+Some calls announce every allocation decision of a round together. On such a
+call your proposal stays **In review**, with the allocation decision shown as in
+progress, until the call manager publishes the round's results — even if the
+decision has already been taken. Then every applicant of the round is notified
+at the same time, and the proposal moves on: to **Responding to an award**, to
+**Accepted**, or to **Rejected**.
+
+![A proposal in review while its round's results are not yet published](../img/applicant-held-decision-in-review.png)
 
 ## Technical-assessment feedback
 
@@ -214,7 +225,16 @@ award**.
 
 ![Accept and decline award controls](../img/applicant-award-response.png)
 
-**Accept award** asks you to confirm; once you do, the requested resources are
+The award may differ from what you requested: the call manager can change
+amounts, move an item to another offering of the call, or add and remove items.
+The **Awarded resources** section on the proposal shows what was granted, each
+item marked **As requested** or **Changed**, and the **Summary of the award**
+totals its estimated cost. You see this section once the decision is released
+to you; it is read-only.
+
+![Awarded resources as the applicant sees them](../img/applicant-awarded-resources.png)
+
+**Accept award** asks you to confirm; once you do, the awarded resources are
 provisioned, a project is created under your organisation and your team is
 granted access.
 

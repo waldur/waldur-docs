@@ -119,6 +119,13 @@ proposal is no longer available to you.
 
 ![Proposal review detail](../img/scenario_proposal_reviews_detail.png)
 
+!!! note
+    You do not see the proposal's **Awarded resources** — what the allocation
+    decision grants is for the call managers and the providers. On a call that
+    announces results together for the whole round, you also see the allocation
+    decision as still in progress until the round's results are published, like
+    the applicant does.
+
 ## Conflict of interest
 
 Before starting a review, you may be asked to confirm that you have no conflict of interest with the proposal. This is required when the call has **CoI confirmation** enabled for the review step.
