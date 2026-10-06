@@ -241,8 +241,8 @@ From the **Rooms** tab on the same page, click **Create** and pick a
 project from the list — only projects without an existing Matrix room are
 shown. Owners see their own projects; staff and support see every project.
 
-Once created, the room synchronises members based on each user's project
-or customer role:
+Once created, the room synchronises its members (see
+[Who is in a project room](#who-is-in-a-project-room)):
 
 ![Admin Rooms tab with the Demo Project room](img/matrix-chat/10-admin-rooms-tab.png)
 
@@ -250,6 +250,29 @@ The same screen offers per-room actions (Sync members, Disable, Reactivate,
 Export history, Retry) once you expand the row. State transitions go
 through the standard Matrix room lifecycle and are guarded server-side
 against concurrent calls.
+
+### Who is in a project room
+
+Member sync and role changes decide who is in a project's room and which
+Matrix power level each member gets. Power level 50 shows as **Admin** in
+the chat's member list; 100 is the Waldur bot.
+
+| Role | Rooms the user is in | Power level |
+|---|---|---|
+| Project admin | That project's room | 50 |
+| Project manager, project member | That project's room | 0, or 50 if the role has `MATRIX_ROOM.CREATE` |
+| Organization role with `MATRIX_ROOM.CREATE` (the owner, by default) | Every project room in the organization | 50 |
+| Organization support, organization reader | None | — |
+| Staff, global support | None automatically; they can join any room as a moderator | 50 |
+
+`MATRIX_ROOM.CREATE` is the permission to create a project's chat room, and
+whoever may create a room is also in it and runs it. Granting it on an
+organization adds the role's holders to every project room as admins;
+granting it on a project makes them admins of that project's room. Taking it
+away from organization owners takes them out of every project room.
+
+A user with several roles gets the highest power level. Roles on offerings,
+resources, service providers or calls do not put anyone in a project room.
 
 ---
 
