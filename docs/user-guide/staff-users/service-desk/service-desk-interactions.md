@@ -32,6 +32,40 @@ On this page, you can:
 * Add comments/replies to communicate with users.
 * Change the ticket's status, when Waldur runs the service desk itself.
 
+## Opening a request for a user
+
+Staff can start a conversation with a user instead of waiting for one, for example to tell them about an expiring SSH key, an allocation or an access problem. The exchange stays in Waldur, so the rest of the desk can see it later.
+
+Open **Support → User management → Users** and choose **Open support request** in the actions of the user's row, or on the user's details page. The action is shown to staff only, and is disabled for a deactivated user.
+
+![Open support request in a user's row actions](../../img/helpdesk-staff-request-action.png)
+
+In the dialog, fill in:
+
+* **Recipient** — prefilled with the user you opened it for. Only active users can be picked, and not yourself.
+* **Request type** — shown when the deployment offers more than one.
+* **Subject** — the request's title.
+* **Message** — posted as the request's first public comment, under your name.
+
+![The Open support request dialog](../../img/helpdesk-staff-request-dialog.png)
+
+Select **Send**. The request opens, and the recipient finds it under **Support** on their own profile, where they can read it and reply with **Add comment**. The request is not tied to an organization or project, because the recipient could not see it otherwise.
+
+![The recipient's view of the request](../../img/helpdesk-staff-request-recipient.png)
+
+Two notifications carry the conversation, and both are off until an administrator enables them; see [notifications](../../../admin-guide/mastermind-configuration/notifications.md):
+
+* `support.notification_comment_added` emails the recipient your message and a link to reply, as for any other comment on their ticket. Without it the request only appears in their list.
+* `support.notification_comment_added_staff` emails you when the recipient replies.
+
+When Waldur runs the service desk itself:
+
+* You become the request's assignee, so the recipient's reply is emailed to you rather than to the whole desk.
+* Staff are not sent the usual new-request notification for it.
+* It does not count as answered, and its SLA deadlines (first response and resolution) do not start, until the recipient has replied. A message the recipient never answers is therefore never an SLA breach.
+
+With the Atlassian, Zammad or Smax backends the request and its message are also created in the external service desk, filed under the recipient.
+
 ## Editing and deleting comments
 
 Staff can edit or delete any comment on a ticket, including internal ones, with **Change** and **Remove** next to the comment. Editing changes only the text: an internal comment stays internal, and only staff can change whether a comment is public.
