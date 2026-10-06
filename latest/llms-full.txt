@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-06T07:00:51.203291Z
+Generated: 2026-10-06T11:36:13.822776Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -15369,7 +15369,7 @@ Notification about a new comment in the issue. The recipient is issue caller.
 
 ```txt
 
-    The issue you have created has a new comment
+    Your support request has a new comment
 
 ```
 
@@ -15379,7 +15379,11 @@ Notification about a new comment in the issue. The recipient is issue caller.
 
     Hello!
 
-    The issue you have created has a new comment. Please go to {{issue_url}} to see it.
+    {% if is_system_comment %}A new comment was added{% else %}{{ comment.author.name }} commented{% endif %} on your support request "{{ issue.summary }}":
+
+    {{ description }}
+
+    To reply, go to {{ issue_url }}.
 
 ```
 
@@ -15390,7 +15394,7 @@ Notification about a new comment in the issue. The recipient is issue caller.
     <html>
     <head lang="en">
         <meta charset="UTF-8">
-        <title>The issue you have created ({{ issue.key }}) has a new comment</title>
+        <title>Your support request ({{ issue.key }}) has a new comment</title>
     </head>
     <body>
     <p>
@@ -16519,6 +16523,67 @@ A notification to the reviewer about the proposal decision (approved/rejected) w
 
 ```
 
+### proposal.proposal_draft_carried_over
+
+Tells a proposal creator that their draft, still open when its round's cut-off passed, has moved on to the call's next round.
+
+#### Templates
+
+=== "proposal/proposal_draft_carried_over_subject.txt"
+
+```txt
+
+    Your draft proposal {{ proposal_name }} now targets the next cut-off of {{ call_name }}
+
+```
+
+=== "proposal/proposal_draft_carried_over_message.txt"
+
+```txt
+
+    Dear {{ proposal_creator_name }},
+
+    Your draft proposal "{{ proposal_name }}" in call "{{ call_name }}" was not submitted before the cut-off of {{ previous_round_name }}.
+
+    It has not been cancelled. It has moved on to the call's next round, with its content, team, documents and requested resources unchanged:
+    - Round: {{ round_name }}
+    - Opens for submissions: {{ round_start_date }}
+    - Submission deadline: {{ deadline_date }}
+
+    Your proposal is still in DRAFT state. Submit it before the new deadline to have it considered: {{ proposal_url }}
+
+    This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
+=== "proposal/proposal_draft_carried_over_message.html"
+
+```txt
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Draft proposal moved to the next round</title>
+    </head>
+    <body>
+        <p>Dear {{ proposal_creator_name }},</p>
+
+        <p>Your draft proposal "{{ proposal_name }}" in call "{{ call_name }}" was not submitted before the cut-off of {{ previous_round_name }}.</p>
+
+        <p>It has not been cancelled. It has moved on to the call's next round, with its content, team, documents and requested resources unchanged:<br>
+            - Round: {{ round_name }}<br>
+            - Opens for submissions: {{ round_start_date }}<br>
+            - Submission deadline: {{ deadline_date }}
+        </p>
+
+        <p>Your proposal is still in <strong>DRAFT</strong> state. Submit it before the new deadline to have it considered: <a href="{{ proposal_url }}">{{ proposal_url }}</a></p>
+
+        <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
+    </body>
+    </html>
+
+```
+
 ### proposal.proposal_state_changed
 
 A notification about the proposal state changes (submitted → in review → accepted/rejected). Deployments that hide calls from applicants (SERVICE_ACCESS_MODE = 'marketplace') send the access_request_* templates below instead, which say the same thing without naming a call or a round. One event, one switch, two sets of words — a deployment only ever sends one of them.
@@ -16894,7 +16959,7 @@ Reminds proposal creators to submit draft proposals during the last 3 days befor
 
     Complete and submit proposal: {{ proposal_url }}
 
-    Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.
+    {% if draft_carries_over %}A proposal left in draft state after the deadline moves on to the call's next round and is considered only once it has been submitted there.{% else %}Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.{% endif %}
 
     This is an automated message from the {{ site_name }}. Please do not reply to this email.
 
@@ -16926,7 +16991,7 @@ Reminds proposal creators to submit draft proposals during the last 3 days befor
 
         <p>Complete and submit proposal: <a href="{{ proposal_url }}">{{ proposal_url }}</a></p>
 
-        <p>Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.</p>
+        <p>{% if draft_carries_over %}A proposal left in draft state after the deadline moves on to the call's next round and is considered only once it has been submitted there.{% else %}Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.{% endif %}</p>
 
         <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
     </body>
@@ -18009,7 +18074,7 @@ td:nth-child(4) {
 | `process_maintenance_announcement_transitions` | `waldur_mastermind.marketplace.process_maintenance_announcement_transitions` | Cron: `*/5 * * * * (m/h/dM/MY/d)` | Advance scheduled maintenance announcements based on their time window.<br><br>Auto-starts scheduled announcements once their start time has passed and<br>auto-completes in-progress announcements once their end time has passed.<br>Mirrors the manual start/complete actions so the AdminAnnouncement banner is<br>refreshed by the existing post_save handler. |
 | `process_pending_project_orders` | `waldur_mastermind.marketplace.process_pending_project_orders` | 2 hours | Process orders for projects that have become active. |
 | `process_pending_start_date_orders` | `waldur_mastermind.marketplace.process_pending_start_date_orders` | 2 hours | Finds orders that are pending activation due to a future start date<br>and moves them to the EXECUTING state if the start date has been reached. |
-| `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Cancel draft proposals for rounds that have ended. |
+| `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Move drafts of ended rounds on to their call's next round, or cancel them. |
 | `pull-priorities` | `waldur_mastermind.support.pull_priorities` | 1 day | Pull priority levels from the active support backend. |
 | `pull-service-properties` | `waldur_mastermind.marketplace.ServicePropertiesListPullTask` | 1 day | Pull service properties from settings tied to live marketplace offerings. |
 | `pull-service-resources` | `waldur_mastermind.marketplace.ServiceResourcesListPullTask` | Hourly (at minute 0) | Pull resources from settings tied to live marketplace offerings. |
@@ -22665,6 +22730,25 @@ You have {{ items_count }} proposal{{ items_count|pluralize }} to review for "{{
 
 ```
 
+### proposal_draft_carried_over_message.txt (waldur_mastermind.proposal)
+
+```txt
+
+Dear {{ proposal_creator_name }},
+
+Your draft proposal "{{ proposal_name }}" in call "{{ call_name }}" was not submitted before the cut-off of {{ previous_round_name }}.
+
+It has not been cancelled. It has moved on to the call's next round, with its content, team, documents and requested resources unchanged:
+- Round: {{ round_name }}
+- Opens for submissions: {{ round_start_date }}
+- Submission deadline: {{ deadline_date }}
+
+Your proposal is still in DRAFT state. Submit it before the new deadline to have it considered: {{ proposal_url }}
+
+This is an automated message from the {{ site_name }}. Please do not reply to this email.
+
+```
+
 ### proposal_submission_deadline_approaching_message.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -22684,7 +22768,7 @@ Please ensure you have completed all required sections and finalized your resour
 
 Complete and submit proposal: {{ proposal_url }}
 
-Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.
+{% if draft_carries_over %}A proposal left in draft state after the deadline moves on to the call's next round and is considered only once it has been submitted there.{% else %}Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.{% endif %}
 
 This is an automated message from the {{ site_name }}. Please do not reply to this email.
 
@@ -23254,7 +23338,7 @@ New review round opening: {{ call_name }}
 
     <p>Complete and submit proposal: <a href="{{ proposal_url }}">{{ proposal_url }}</a></p>
 
-    <p>Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.</p>
+    <p>{% if draft_carries_over %}A proposal left in draft state after the deadline moves on to the call's next round and is considered only once it has been submitted there.{% else %}Any proposals left in draft state after the deadline will be automatically canceled and will not be considered for resource allocation.{% endif %}</p>
 
     <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
 </body>
@@ -23473,6 +23557,14 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 ```txt
 
 Reminder: Review due in {{ time_remaining_days }} days for {{ proposal_name }}
+
+```
+
+### proposal_draft_carried_over_subject.txt (waldur_mastermind.proposal)
+
+```txt
+
+Your draft proposal {{ proposal_name }} now targets the next cut-off of {{ call_name }}
 
 ```
 
@@ -24014,6 +24106,34 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 
 ```
 
+### proposal_draft_carried_over_message.html (waldur_mastermind.proposal)
+
+```html
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Draft proposal moved to the next round</title>
+</head>
+<body>
+    <p>Dear {{ proposal_creator_name }},</p>
+
+    <p>Your draft proposal "{{ proposal_name }}" in call "{{ call_name }}" was not submitted before the cut-off of {{ previous_round_name }}.</p>
+
+    <p>It has not been cancelled. It has moved on to the call's next round, with its content, team, documents and requested resources unchanged:<br>
+        - Round: {{ round_name }}<br>
+        - Opens for submissions: {{ round_start_date }}<br>
+        - Submission deadline: {{ deadline_date }}
+    </p>
+
+    <p>Your proposal is still in <strong>DRAFT</strong> state. Submit it before the new deadline to have it considered: <a href="{{ proposal_url }}">{{ proposal_url }}</a></p>
+
+    <p>This is an automated message from the {{ site_name }}. Please do not reply to this email.</p>
+</body>
+</html>
+
+```
+
 ### proposal_state_changed_subject.txt (waldur_mastermind.proposal)
 
 ```txt
@@ -24398,7 +24518,11 @@ Comment:
 
 Hello!
 
-The issue you have created has a new comment. Please go to {{issue_url}} to see it.
+{% if is_system_comment %}A new comment was added{% else %}{{ comment.author.name }} commented{% endif %} on your support request "{{ issue.summary }}":
+
+{{ description }}
+
+To reply, go to {{ issue_url }}.
 
 ```
 
@@ -24447,7 +24571,7 @@ Open the request: {{ issue_url }}
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>The issue you have created ({{ issue.key }}) has a new comment</title>
+    <title>Your support request ({{ issue.key }}) has a new comment</title>
 </head>
 <body>
 <p>
@@ -24601,7 +24725,7 @@ Please take action to avoid an SLA breach.
 
 ```txt
 
-The issue you have created has a new comment
+Your support request has a new comment
 
 ```
 
@@ -85568,6 +85692,7 @@ gidNumber: 20001
 memberUid: demo-member
 memberUid: demo-user1
 description: waldur-managed
+description: organization=big-science
 
 dn: cn=hpc-cluster,ou=clusters,dc=example,dc=org
 objectClass: groupOfNames
@@ -85596,6 +85721,7 @@ backend_settings:
       member_attribute: "memberUid"   # or "member" for rfc2307bis directories
       membership: "sync"              # or "add_only"
       on_gid_mismatch: "report"       # or "adopt"
+      organization_description: "organization={slug}"   # optional
       parents:
         - dn: "cn=hpc-cluster,ou=clusters,dc=example,dc=org"
           attribute: "member"
@@ -85612,6 +85738,7 @@ backend_settings:
 | `project_groups.membership` | `sync` | `sync` adds and removes members to match Waldur; `add_only` never removes one |
 | `project_groups.on_gid_mismatch` | `report` | A same-named entry with another GID: `report` keeps the directory's GID and logs it every cycle; `adopt` rewrites it to Waldur's |
 | `project_groups.managed_marker` | `waldur-managed` | Extra `description` value on every group the agent creates or adopts |
+| `project_groups.organization_description` | unset | Template of a `description` value naming the project's organization; it must contain `{slug}` once, e.g. `organization={slug}`. Unset, nothing is written (see [The organization in the description](#the-organization-in-the-description)) |
 | `project_groups.parents` | `[]` | Entries that list the DN of each group whose project has a resource on the offering |
 | `parents[].dn` | — | Full DN of the entry |
 | `parents[].attribute` | `member` | Attribute that holds the group DNs |
@@ -85683,6 +85810,24 @@ cycle when Waldur cannot be read or returns no groups at all.
     both; otherwise each removes the groups the other adds. The agent warns at
     start-up when two offerings in its configuration point at one entry without
     `offering_uuids`.
+
+### The organization in the description
+
+With `organization_description` set, every group also gets a `description`
+value naming the organization its project belongs to: the template with
+`{slug}` replaced by the organization's slug. `organization={slug}` gives
+`organization=big-science` in the example above. The value is written on new
+groups, added to adopted ones next to the marker and your own values, and
+checked on every pass:
+
+- **Text around `{slug}`** — when an organization's slug changes, the agent
+  replaces its previous value, recognised by that text, with the new one. Your
+  own description values stay as long as they do not have the same shape.
+- **A bare `{slug}`** — the agent cannot tell its own values from yours, so it
+  only ever adds the current one and never removes an old one. It warns about
+  this at start-up; prefer a template with a prefix.
+
+A group whose project has been deleted keeps the value it has.
 
 ### Members and renames
 
@@ -101545,6 +101690,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - proposal_canceled
 - proposal_document_added
 - proposal_document_removed
+- proposal_draft_carried_over
 - proposal_workflow_advanced
 
 ## Providers
@@ -104694,6 +104840,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
 | [`CallNotArchivedCreateMixin`](#callnotarchivedcreatemixin) | `waldur_mastermind.proposal.serializers` | Provide the ``validate_call_not_archived`` hook used by ``ActionMethodMixin |
+| [`ApplicantIdentityTestMixin`](#applicantidentitytestmixin) | `waldur_mastermind.proposal.tests.test_applicant_identity_paths` | No description available |
 | [`AssignmentBatchTestMixin`](#assignmentbatchtestmixin) | `waldur_mastermind.proposal.tests.test_assignment_batch_notifications` | No description available |
 | [`ApplicantRolesMixin`](#applicantrolesmixin) | `waldur_mastermind.proposal.tests.test_notification_roles` | No description available |
 | [`ManagerSetupMixin`](#managersetupmixin) | `waldur_mastermind.proposal.tests.test_pool_invitation_expiry` | No description available |
@@ -106217,6 +106364,12 @@ Provide the ``validate_call_not_archived`` hook used by
 The hook is looked up by name on the serializer and called with the parent
 Call. It keeps archived calls read-only across their nested-create surface
 (offerings / resource templates / workflow steps).
+
+### ApplicantIdentityTestMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_applicant_identity_paths`
+
+**Description:** No description available.
 
 ### AssignmentBatchTestMixin
 
@@ -116994,8 +117147,10 @@ POST /api/support-issues/
 - Send no `customer`, `project` or `resource`: the caller can only see an
   unscoped issue they did not create.
 - The recipient is notified through `support.notification_comment_added`, the
-  same notification as any other comment on their ticket. Notifications ship
-  disabled, so the key must be enabled for the message to reach them.
+  same notification as any other comment on their ticket; the mail carries the
+  message and a link to reply. Their reply reaches the desk through
+  `support.notification_comment_added_staff`. Notifications ship disabled, so
+  both keys must be enabled for the conversation to go by mail.
 - On the built-in desk the sender is recorded as `reporter` and, unless an
   `assignee` is given, as `assignee`, so the recipient's reply is mailed to
   them. Such an issue does not trigger the new-request notification to
@@ -117004,6 +117159,9 @@ POST /api/support-issues/
   first-response and resolution deadlines when SLA tracking is enabled, so a
   message the recipient never answers is never an SLA breach. The average
   first-response time in the helpdesk statistics counts from that reply too.
+  The issue's description is only what the sender wrote: the "Reported by"
+  mark and the `description.txt` template are for a desk's agents, and the
+  opening message already names its author.
 - On Atlassian, Zammad and SMAX neither field is set: there the reporter is
   who the remote ticket is filed as, and it must stay the caller.
 - Without `first_comment`, an on-behalf request is the user's own request
