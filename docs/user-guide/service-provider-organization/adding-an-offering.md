@@ -318,6 +318,7 @@ Pause and downscale are mutually exclusive — an offering uses at most one of t
 - The restriction is **lifted automatically** when usage drops back below the limit — for example, when a new billing period resets the period's usage, or when the component's limit is raised.
 - For the **Total** accounting period, usage accumulates over the whole life of the resource and never resets, so the restriction is lifted only if the limit is increased.
 - The feature toggles the same **Paused** / **Downscaled** state shown on the resource page. Only restrictions applied by this feature are lifted automatically — a resource paused manually, by a grace period, or by a cost and usage policy is left untouched.
+- While the resource's project is in its [grace period](../customer-organization/project-management.md#grace-period), a pause is not lifted even when usage drops below the limit; it is lifted once the grace period no longer applies.
 
 !!! note
     For provider backends that enforce these states (such as SLURM via the site agent), pausing blocks further usage and downscaling reduces the resource's share. For other backends the state is recorded and visible, but enforcement depends on the backend.
