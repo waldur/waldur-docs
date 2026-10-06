@@ -7810,6 +7810,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#round-lifecycle-and-results-publication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Round Lifecycle and Results Publication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Round Lifecycle and Results Publication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#round-lifecycle-after-the-cut-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Round lifecycle after the cut-off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publishing-results-and-held-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publishing results and held decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#completing-a-round" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Completing a round
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption record
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#resource-template-system" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7998,6 +8059,17 @@
     <span class="md-ellipsis">
       
         Resource Provisioning Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#awarded-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Awarded resources
       
     </span>
   </a>
@@ -19953,6 +20025,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#round-lifecycle-and-results-publication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Round Lifecycle and Results Publication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Round Lifecycle and Results Publication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#round-lifecycle-after-the-cut-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Round lifecycle after the cut-off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publishing-results-and-held-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publishing results and held decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#completing-a-round" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Completing a round
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption record
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#resource-template-system" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20141,6 +20274,17 @@
     <span class="md-ellipsis">
       
         Resource Provisioning Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#awarded-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Awarded resources
       
     </span>
   </a>
@@ -20688,6 +20832,8 @@
         C --&gt; R[Round]
         R --&gt; P[Proposal]
         P --&gt; RR[RequestedResource]
+        P --&gt; AR[AwardedResource]
+        RR --&gt; AR
         P --&gt; PD[ProposalDocumentation]
         P --&gt; MP[Waldur Project]
     end
@@ -20700,7 +20846,7 @@
 
     subgraph "Resource Allocation"
         P --&gt; RA[ResourceAllocator]
-        RR --&gt; MR[Marketplace Resource]
+        AR --&gt; MR[Marketplace Resource]
         RA --&gt; MR
         PPRM[ProposalProjectRoleMapping] --&gt; MP
     end</code></pre>
@@ -20708,10 +20854,11 @@
 <ul>
 <li><strong><code>CallManagingOrganisation</code></strong>: Organizations that create and manage calls for proposals</li>
 <li><strong><code>Call</code></strong>: Main entity representing calls with configuration for review settings and duration</li>
-<li><strong><code>Round</code></strong>: Time-bounded submission periods; a round holds scheduling only</li>
+<li><strong><code>Round</code></strong>: Time-bounded submission periods, with a lifecycle after the cut-off (evaluating → deciding → results published → closed)</li>
 <li><strong><code>CallWorkflowStep</code></strong>: Per-call evaluation policy — which steps run and how each is gated</li>
 <li><strong><code>Proposal</code></strong>: Individual proposals with project details and resource requests</li>
 <li><strong><code>RequestedResource</code></strong>: Specific resource requests within proposals linked to marketplace</li>
+<li><strong><code>AwardedResource</code></strong>: What the allocation decision grants; starts as a copy of the requests and is what allocation provisions</li>
 <li><strong><code>Review</code></strong>: Peer review system with scoring, comments, and field-specific feedback</li>
 </ul>
 <h2 id="call-lifecycle-and-state-management">Call Lifecycle and State Management</h2>
@@ -20771,6 +20918,10 @@
     ACCEPTED --&gt; [*] : Resources allocated
     REJECTED --&gt; [*] : Process complete
     CANCELED --&gt; [*] : Process terminated</code></pre>
+<p>A decision held for its round's publication (see
+<a href="#publishing-results-and-held-decisions">Held decisions</a>) does not change the
+state: the proposal stays <code>IN_REVIEW</code> with <code>decision_held=True</code> until the round's
+results are published, and only then moves on as the decision says.</p>
 <h4 id="proposal-state-descriptions">Proposal State Descriptions</h4>
 <table>
 <thead>
@@ -20832,7 +20983,7 @@
     REJECTED --&gt; [*] : Assignment ended</code></pre>
 <h2 id="rounds-and-evaluation-policy">Rounds and Evaluation Policy</h2>
 <h3 id="what-a-round-holds">What a round holds</h3>
-<p>A round is a submission window and nothing more. Its fields are scheduling only:</p>
+<p>A round is a submission window. Its scheduling fields are:</p>
 <table>
 <thead>
 <tr>
@@ -20861,10 +21012,22 @@
 </table>
 <p>A round's status (<code>scheduled</code>, <code>open</code>, <code>ended</code>) is derived from <code>start_time</code> and
 <code>cutoff_time</code>; it is not stored. Proposals can be created and submitted only while
-their round is open.</p>
-<p>Evaluation starts <strong>per proposal, at submission</strong>: submitting creates the
-proposal's workflow step instances and activates the first enabled step. There is
-no batch evaluation of a round after its cut-off.</p>
+their round is open. After the cut-off the round has a stored lifecycle, described
+in <a href="#round-lifecycle-after-the-cut-off">Round lifecycle after the cut-off</a>.</p>
+<p>When evaluation starts is the call's <code>evaluation_start</code>:</p>
+<ul>
+<li><code>on_submission</code> (default) — submitting creates the proposal's workflow step
+  instances and activates the first enabled step at once.</li>
+<li><code>at_cutoff</code> — every proposal stays <code>submitted</code> until its round's cut-off; an
+  hourly task (<code>start_evaluation_for_closed_rounds</code>) then starts them together,
+  so a round is evaluated as one batch. It cannot be changed while the call has
+  proposals that are submitted or in review.</li>
+</ul>
+<p>A round can be deleted only while it has <strong>no proposals at all</strong>, in any state.
+Rejected and cancelled proposals are outcomes of the round and keep it; deleting
+the round would delete them with it. <code>ProtectedRoundSerializer.has_proposals</code>
+tells clients whether deletion is possible; it counts every proposal, including
+those the viewer cannot see.</p>
 <h3 id="where-evaluation-policy-lives">Where evaluation policy lives</h3>
 <p>Review and allocation policy is configured per call, on its workflow steps
 (<code>CallWorkflowStep</code>, one row per catalogue step, seeded when the call is created):</p>
@@ -20942,10 +21105,157 @@ with every recipient in To; other audiences get a private copy each.</p>
 <li><strong>The call's fixed duration</strong> (<code>Call.fixed_duration_in_days</code>), whenever it is set.
    Prepaid subscription lengths requested under the call are capped to fit inside
    it, and resource end dates are clamped to the project's.</li>
-<li><strong>The longest requested prepaid subscription</strong>, when the call sets no fixed
-   duration.</li>
+<li><strong>The longest awarded prepaid subscription</strong>, when the call sets no fixed
+   duration — measured over the proposal's <code>AwardedResource</code> rows once the award
+   exists (see <a href="#awarded-resources">Awarded resources</a>), and over its requests
+   before that.</li>
 <li><strong>No end date</strong>, when neither applies: the project runs until someone sets one.</li>
 </ol>
+<h2 id="round-lifecycle-and-results-publication">Round Lifecycle and Results Publication</h2>
+<h3 id="round-lifecycle-after-the-cut-off">Round lifecycle after the cut-off</h3>
+<p>Before its cut-off a round has no stored state. Once the cut-off has passed,
+<code>Round.lifecycle_state</code> (<code>RoundLifecycleStates</code>) records where the round stands:</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; evaluating : cutoff passed
+    evaluating --&gt; deciding : start_deciding
+    evaluating --&gt; results_published : publish_results
+    deciding --&gt; results_published : publish_results
+    results_published --&gt; results_published : publish_results again
+    results_published --&gt; closed : complete
+    closed --&gt; [*]</code></pre>
+<p><code>evaluating</code> is entered by <code>utils.start_round_evaluation</code>, a conditional update
+that exactly one caller wins: the hourly tasks
+<code>proposals_for_ended_rounds_should_be_cancelled</code> and
+<code>start_evaluation_for_closed_rounds</code>, closing a round early (<code>close_round</code>), and
+the first lifecycle action on an ended round that the sweep has not reached yet.
+The other transitions are call-manager actions in <code>round_lifecycle.py</code>, exposed
+on <code>ProtectedCallViewSet</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Endpoint (POST)</th>
+<th>Transition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start deciding</td>
+<td><code>/api/proposal-protected-calls/{uuid}/rounds/{round_uuid}/start_deciding/</code></td>
+<td><code>evaluating</code> → <code>deciding</code></td>
+</tr>
+<tr>
+<td>Publish results</td>
+<td><code>/api/proposal-protected-calls/{uuid}/rounds/{round_uuid}/publish_results/</code></td>
+<td><code>evaluating</code>/<code>deciding</code> → <code>results_published</code>; retries held decisions in <code>results_published</code></td>
+</tr>
+<tr>
+<td>Complete</td>
+<td><code>/api/proposal-protected-calls/{uuid}/rounds/{round_uuid}/complete/</code></td>
+<td><code>results_published</code> → <code>closed</code></td>
+</tr>
+<tr>
+<td>Record adoption</td>
+<td><code>/api/proposal-protected-calls/{uuid}/rounds/{round_uuid}/record_adoption/</code></td>
+<td>No transition; any time after the cut-off</td>
+</tr>
+</tbody>
+</table>
+<p>All four take the permissions of <code>close_round</code> (<code>CLOSE_ROUNDS</code> on the call or
+its managing organisation) and require an active call. Each transition records
+its timestamp (<code>evaluation_started_at</code>, <code>deciding_started_at</code>,
+<code>results_published_at</code> with <code>results_published_by</code>, <code>closed_at</code>) and emits an
+event (<code>round_evaluation_started</code>, <code>round_decision_started</code>,
+<code>round_results_published</code>, <code>round_closed</code>) against the managing organisation.
+These fields are the round's own history: duplicating, exporting or importing a
+call starts its rounds without them (<code>Round.LIFECYCLE_FIELDS</code>).</p>
+<h3 id="publishing-results-and-held-decisions">Publishing results and held decisions</h3>
+<p><code>Call.publish_results</code> (<code>ResultsPublication</code>) decides when an applicant learns
+the allocation decision:</p>
+<ul>
+<li><code>immediately</code> (default) — each decision is announced and carried out as it is
+  made.</li>
+<li><code>with_round</code> — a decision on <code>allocation_decision</code> (completion, rejection or
+  expiry) is recorded on its step instance, but <code>Proposal.decision_held</code> is set
+  and nothing else happens: no step notification, no state change, no award
+  response step, no allocation. <code>Round.withholds_results</code> is true while the call
+  is <code>with_round</code> and the round is neither <code>results_published</code> nor <code>closed</code>.
+  The decision locks the round row, so a decision and the round's publication
+  serialise.</li>
+</ul>
+<p><code>publish_results</code> releases every held decision of the round through
+<code>workflow_service.release_held_decision</code>, as if it had just been made:
+negative outcomes reject the proposal, a lapse goes where an unheld lapse goes,
+an approval continues to <code>award_response</code> or, at the end of the workflow,
+accepts and provisions. The applicant gets the notification an immediate
+decision would have sent. A manual <code>transition_mode</code> does not park a released
+decision again: publication is the call manager's confirmation.</p>
+<ul>
+<li><strong>Undecided proposals.</strong> On a <code>with_round</code> call, publishing is refused with
+  <code>400</code> and <code>undecided_count</code> while a proposal of the round is under evaluation
+  with neither a held nor a taken decision. Sending <code>force: true</code> with a
+  non-empty <code>reason</code> publishes anyway; the reason is stored as
+  <code>Round.results_forced_reason</code>, and the undecided proposals are announced as
+  they are decided.</li>
+<li><strong>Partial failure.</strong> Each decision is released in its own savepoint. One that
+  fails (an allocation that cannot be provisioned, say) is rolled back, stays
+  held and is listed in <code>failed_proposals</code>; publishing again retries it.</li>
+<li>On an <code>immediately</code> call nothing is held, so publishing only records the
+  lifecycle.</li>
+</ul>
+<p><code>publish_results</code> cannot change while the call holds decisions
+(<code>Call.has_held_decisions()</code>); switching would not release them.</p>
+<p><strong>Reopening.</strong> <code>POST /api/proposal-proposals/{uuid}/reopen_decision/</code> with a
+required <code>reason</code> and an optional future <code>deadline</code> takes a held decision back
+(<code>workflow_service.reopen_held_decision</code>). The decision step becomes active
+again with its outcome cleared, <code>decision_held</code> is unset, and the proposal
+counts as undecided when the round publishes. Without a <code>deadline</code>, one that
+has passed is cleared and one still ahead is kept. It is refused with <code>409</code> once
+the round's results are published or when there is no held decision. Allowed
+for staff and holders of <code>UPDATE_CALL</code> on the call or its managing organisation,
+but never for the proposal's own applicant (<code>user_can_manage_held_decision</code>).
+Nothing is sent. A <code>proposal_decision_reopened</code> event is filed on the
+proposal's feed only, carrying the actor and the deadline but neither the
+reason nor the outcome taken back; those go to the server log.</p>
+<p><strong>Who sees a held decision.</strong> <code>user_can_view_held_decision</code>: staff, support,
+and holders of <code>UPDATE_CALL</code> on the call or its managing organisation who are
+not the proposal's applicant. For everyone else:</p>
+<ul>
+<li><code>ProposalSerializer.decision_held</code> and <code>ProtectedRoundSerializer.held_decisions_count</code> are <code>null</code>;</li>
+<li>the decision step instance is serialised as still <code>active</code>, without outcome,
+  reason or completer;</li>
+<li>the <code>proposal_decision_reopened</code> event is hidden, through an event-type guard
+  (<code>logging.utils.register_event_type_guard</code>) that applies to event listings and
+  hook delivery alike, until the round's results are published. Evaluators never
+  read the proposal feed at all.</li>
+</ul>
+<p><code>held_decisions_count</code> counts the round's held decisions; after publication it
+counts only those whose release failed.</p>
+<h3 id="completing-a-round">Completing a round</h3>
+<p><code>complete</code> closes a <code>results_published</code> round. It is refused with <code>400</code> and
+<code>held_decisions_count</code> while a decision of the round is still held (its release
+failed; publish again). Proposals still without a decision follow
+<code>Round.undecided_at_completion_rule</code> — the round's own
+<code>undecided_at_round_completion</code>, or else the call's (<code>UndecidedAtRoundCompletion</code>):</p>
+<ul>
+<li><code>refuse</code> (default) — completing is refused with <code>400</code> and <code>undecided_count</code>.</li>
+<li><code>reject</code> — <code>workflow_service.reject_undecided</code> rejects each at the step it
+  stands in, with the reason "Not decided when the round was completed." and the
+  step's rejection notifications. A proposal parked on a completed step waiting
+  for a manual advance is rejected on the step it was waiting to enter; one whose
+  workflow has not started is rejected outright. Each rejection emits
+  <code>proposal_rejected_at_round_completion</code>, and the batch emits
+  <code>round_undecided_proposals_rejected</code>. The response lists <code>rejected_proposals</code>;
+  a rejection that fails is listed in <code>failed_proposals</code>, and the round stays
+  open until completing again rejects what is left.</li>
+</ul>
+<h3 id="adoption-record">Adoption record</h3>
+<p><code>record_adoption</code> (multipart) stores <code>adopted_at</code> (required), <code>adoption_note</code>
+and an optional <code>adoption_document</code> — for results that a board or another body
+must adopt. While the round withholds its results, <code>adoption_note</code>,
+<code>adoption_document</code> and <code>results_forced_reason</code> serialise as <code>null</code> for anyone
+who may not see held decisions (<code>user_can_view_round_adoption</code>), and the media
+endpoint applies the same rule to the document.</p>
 <h2 id="resource-template-system">Resource Template System</h2>
 <h3 id="template-architecture">Template Architecture</h3>
 <p>Call resource templates standardize resource requests across proposals:</p>
@@ -21236,7 +21546,8 @@ the sake of one document, and the attachment files themselves stay behind the
 media endpoint, which applies its own access rules.</p>
 <h2 id="integration-with-waldur-marketplace">Integration with Waldur Marketplace</h2>
 <h3 id="resource-provisioning-flow">Resource Provisioning Flow</h3>
-<p>Accepted proposals automatically trigger marketplace resource creation:</p>
+<p>Accepted proposals automatically trigger marketplace resource creation. What is
+provisioned is the proposal's award (<code>AwardedResource</code>), not its requests:</p>
 <pre class="mermaid"><code>sequenceDiagram
     participant P as Proposal
     participant RA as ResourceAllocator
@@ -21252,6 +21563,83 @@ media endpoint, which applies its own access rules.</p>
 
     Note over Proj: Automatic role mapping
     RA-&gt;&gt;Proj: Apply ProposalProjectRoleMapping</code></pre>
+<h3 id="awarded-resources">Awarded resources</h3>
+<p><code>AwardedResource</code> is what the allocation decision grants, which may differ from
+the request. <code>utils.prefill_awarded_resources</code> copies each <code>RequestedResource</code>
+(offering, limits, attributes, description; not the plan) when the
+<code>allocation_decision</code> step is activated, once per proposal:
+<code>Proposal.awarded_resources_prefilled_at</code> records it, so an award the call
+manager emptied is not refilled. Allocation prefills it too if the proposal
+reached allocation without one, which provisions exactly what was requested.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>requested_resource</code></td>
+<td>The request the item was copied from; empty for an item the call manager added</td>
+</tr>
+<tr>
+<td><code>requested_offering</code></td>
+<td>The call offering the item is awarded on</td>
+</tr>
+<tr>
+<td><code>plan</code></td>
+<td>A plan the call manager chose; empty follows the call offering's plan at allocation (<code>effective_plan</code>)</td>
+</tr>
+<tr>
+<td><code>limits</code>, <code>attributes</code>, <code>description</code></td>
+<td>What is ordered</td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td>Who added the item</td>
+</tr>
+<tr>
+<td><code>resource</code></td>
+<td>The marketplace resource allocation provisioned</td>
+</tr>
+</tbody>
+</table>
+<p>Endpoints: <code>GET</code>/<code>POST /api/proposal-proposals/{uuid}/awarded_resources/</code> and
+<code>GET</code>/<code>PATCH</code>/<code>PUT</code>/<code>DELETE /api/proposal-proposals/{uuid}/awarded_resources/{obj_uuid}/</code>.</p>
+<ul>
+<li><strong>Editing</strong> is for staff and users with the <code>CALL.MANAGER</code> role on the call,
+  and only while the <code>allocation_decision</code> step is active. Otherwise the view
+  answers <code>409</code>; a decision held for publication is not active, so it must be
+  reopened first.</li>
+<li><strong>Validation.</strong> <code>requested_offering_uuid</code> must be an offering of the call that
+  its provider has accepted (required when adding). The plan must belong to that
+  offering and not be archived; moving an item to another offering without
+  naming a plan resets it to the call offering's plan. Limits must name an
+  amount for an offering sold by amount (<code>names_an_amount</code>) and pass the
+  component bounds and precision checks an order would. Prepaid duration
+  attributes are validated as for a request.</li>
+<li><strong>Approval gate.</strong> Completing <code>allocation_decision</code> with a positive outcome is
+  refused while an awarded item on an accepted offering names no amount.
+  Declining is never blocked.</li>
+<li><strong>Allocation</strong> orders each awarded item on an accepted offering, in creation
+  order, on its <code>effective_plan</code>, and links the resource to the item and to its
+  request. A purchase order on the request is carried only while the item stays
+  on the requested offering. The managers of an offering that was only awarded,
+  never requested, see the proposal like those of a requested one.</li>
+</ul>
+<p><strong>Who reads the award</strong> (<code>user_can_view_awarded_resources</code>):</p>
+<ul>
+<li>staff and support, the call's managers and the managing organisation's call
+  organisers, and managers of the offerings requested or awarded — at any time
+  (an offering manager who is the applicant waits like an applicant);</li>
+<li>the applicant team (creator, proposal members, members of the granted project)
+  once the award is released (<code>awarded_resources_released</code>): the proposal is
+  accepted, or the decision is an approval and the award response step has
+  started or the allocation step is <code>applicant_visible</code> — never while the
+  decision is held for the round's publication;</li>
+<li>nobody else; reviewers and panel members judge the proposal, not the award.</li>
+</ul>
 <h3 id="role-mapping-system">Role Mapping System</h3>
 <p>The <code>ProposalProjectRoleMapping</code> enables automatic role assignment. A new
 call starts with these mappings, which its call manager can change:</p>
@@ -21445,7 +21833,7 @@ on it need hold no role on the project.</p>
     <span class="n">fixed_duration_in_days</span><span class="o">=</span><span class="mi">365</span>  <span class="c1"># 1-year allocations</span>
 <span class="p">)</span>
 
-<span class="c1"># Round: scheduling only</span>
+<span class="c1"># Round: scheduling fields; the lifecycle after the cut-off is not set here</span>
 <span class="nb">round</span> <span class="o">=</span> <span class="n">Round</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">call</span><span class="o">=</span><span class="n">call</span><span class="p">,</span>
     <span class="n">start_time</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
