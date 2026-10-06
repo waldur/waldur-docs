@@ -78,7 +78,11 @@ clean `25 instances` boxes — not 100 separate instance nodes.
 - **Debugging connectivity** — confirm at a glance that a subnet is attached
   to a router and that the router has an external gateway.
 - **Reviewing inbound shares** — RBAC shares from other tenants appear
-  explicitly as their own node and are linked into your tenant.
+  explicitly as their own node and are linked into your tenant. This
+  includes networks your provider shares from its own OpenStack projects;
+  those can be used for VMs, ports and your router, but only the provider
+  can change or revoke them, and setting allowed address pairs on ports
+  in them is usually refused by OpenStack.
 - **Documenting your VPC** — the diagram is a deterministic snapshot you
   can screenshot for handovers or change reviews.
 

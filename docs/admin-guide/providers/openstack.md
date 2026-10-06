@@ -142,3 +142,51 @@ network to connect to in the following order:
 
 The tenant's default router is then connected to the resolved external network, and the
 tenant's external network reference is recorded for floating IP allocation.
+
+## Networks shared by projects Waldur does not manage
+
+Providers often keep shared networks — a provider LAN, a storage network — in the cloud's
+`admin` project or a service project, and hand them to customer tenants with a Neutron RBAC
+policy:
+
+```bash
+openstack network rbac create --type network --action access_as_shared \
+  --target-project <tenant project id> <network>
+```
+
+Waldur picks such a share up on the tenant's next pull, even though the owning project is not
+a Waldur tenant. The share is discovered from the RBAC policy itself — Neutron does not return
+networks shared with a project when an admin lists that project's networks.
+
+**How it appears.** Waldur records the owning project as an *unmanaged* tenant
+(`is_managed: false`) in a project named `<provider> provider networks`, under the provider's
+organization. Waldur only reads it: it holds no credentials for it, never provisions, bills,
+pulls with tenant credentials or deletes it, and refuses every change to it, its networks and
+their subnets through the API. Only the networks it shares with Waldur tenants are imported,
+together with their subnets.
+
+**What the tenant can do.** The shared network and its subnets are listed in the tenant's
+Networks and Subnets tabs and can be used like the tenant's own:
+
+- VMs can be ordered on the shared subnet, and ports created on the shared network; both belong
+  to the tenant.
+- The shared subnet can be attached to the tenant's router, which also lets a VM on it get a
+  floating IP through that router.
+- Security groups can be set on the tenant's ports on the network.
+
+Two things stay with the network's owner:
+
+- **Sharing.** The share can be created, changed or revoked only in OpenStack, not from Waldur.
+- **Allowed address pairs.** Neutron's default policy lets only the network's owner or an
+  administrator set allowed address pairs on a network, so a tenant's request for a port on a
+  shared network is refused, and Waldur reports that refusal.
+
+**When the share ends.** Revoking the policy (Neutron refuses while the tenant still has ports on
+the network) removes the network from Waldur on the tenant's next pull; deleting the tenant does
+the same at once. Once a project shares nothing with any Waldur tenant, its unmanaged tenant is
+removed as well. Only Waldur's records are removed — the network stays in the cloud.
+
+!!! note
+    Wildcard shares (`--target-project '*'`, i.e. networks created with `--share`) and
+    `access_as_external` policies targeted at single projects are not imported this way. External
+    networks are configured on the offering instead (see above).
