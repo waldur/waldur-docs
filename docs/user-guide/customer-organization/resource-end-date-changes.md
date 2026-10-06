@@ -35,6 +35,18 @@ pending one and lets you withdraw it if the date is no longer what you need.
 
 ![An already pending request](../img/resource-end-date-request-pending.png)
 
+### OpenStack
+
+On OpenStack, the request is made on the **tenant**. Open the tenant's
+**Actions** menu and choose **Show all**: **Request end date change** is listed
+under **Billing actions**.
+
+![Requesting an end date change on an OpenStack tenant](../img/resource-end-date-request-openstack-tenant.png)
+
+Virtual machines and volumes do not offer the request. They belong to the
+tenant they were created in and end with it, so ask for the tenant to be
+extended instead.
+
 ## Following your request
 
 Requests appear on the resource under **Change requests → End date** when limit
