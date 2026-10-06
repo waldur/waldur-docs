@@ -130,7 +130,9 @@ Key settings:
   block them from opening or drafting it (see
   [Conflict of interest](#conflict-of-interest)).
 - **Applicant visible** — applicants see this step by name on their progress tracker.
-  Off by default; an invisible step shows to them only as "In review" while it runs.
+  Off by default; while an invisible step runs, it shows to them only under the name
+  of its stage — *Decision* for the allocation decision, *Awaiting your response*
+  for the award response, *Evaluation* for any other step.
 
 ### Required vs advisory checklists
 
@@ -349,9 +351,10 @@ results*.
 
 ![Tentative outcomes in the call manager's proposals list](../img/cm-proposals-tentative-outcome.png)
 
-On the proposal, the stepper shows the held outcome on the allocation decision,
-the awarded resources are read-only, and the **Progress** panel offers
-**Reopen decision**.
+On the proposal's **Call manager** tab, the stepper shows the held outcome on
+the allocation decision, the awarded resources are read-only, and the
+**Progress** panel offers **Reopen decision**. The **Applicant** tab shows the
+proposal as the applicant sees it, with the decision still the current step.
 
 ![A held decision on the call manager's proposal view](../img/cm-held-decision-proposal.png)
 
