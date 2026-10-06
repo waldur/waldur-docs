@@ -282,6 +282,7 @@ gidNumber: 20001
 memberUid: demo-member
 memberUid: demo-user1
 description: waldur-managed
+description: organization=big-science
 
 dn: cn=hpc-cluster,ou=clusters,dc=example,dc=org
 objectClass: groupOfNames
@@ -310,6 +311,7 @@ backend_settings:
       member_attribute: "memberUid"   # or "member" for rfc2307bis directories
       membership: "sync"              # or "add_only"
       on_gid_mismatch: "report"       # or "adopt"
+      organization_description: "organization={slug}"   # optional
       parents:
         - dn: "cn=hpc-cluster,ou=clusters,dc=example,dc=org"
           attribute: "member"
@@ -326,6 +328,7 @@ backend_settings:
 | `project_groups.membership` | `sync` | `sync` adds and removes members to match Waldur; `add_only` never removes one |
 | `project_groups.on_gid_mismatch` | `report` | A same-named entry with another GID: `report` keeps the directory's GID and logs it every cycle; `adopt` rewrites it to Waldur's |
 | `project_groups.managed_marker` | `waldur-managed` | Extra `description` value on every group the agent creates or adopts |
+| `project_groups.organization_description` | unset | Template of a `description` value naming the project's organization; it must contain `{slug}` once, e.g. `organization={slug}`. Unset, nothing is written (see [The organization in the description](#the-organization-in-the-description)) |
 | `project_groups.parents` | `[]` | Entries that list the DN of each group whose project has a resource on the offering |
 | `parents[].dn` | — | Full DN of the entry |
 | `parents[].attribute` | `member` | Attribute that holds the group DNs |
@@ -397,6 +400,24 @@ cycle when Waldur cannot be read or returns no groups at all.
     both; otherwise each removes the groups the other adds. The agent warns at
     start-up when two offerings in its configuration point at one entry without
     `offering_uuids`.
+
+### The organization in the description
+
+With `organization_description` set, every group also gets a `description`
+value naming the organization its project belongs to: the template with
+`{slug}` replaced by the organization's slug. `organization={slug}` gives
+`organization=big-science` in the example above. The value is written on new
+groups, added to adopted ones next to the marker and your own values, and
+checked on every pass:
+
+- **Text around `{slug}`** — when an organization's slug changes, the agent
+  replaces its previous value, recognised by that text, with the new one. Your
+  own description values stay as long as they do not have the same shape.
+- **A bare `{slug}`** — the agent cannot tell its own values from yours, so it
+  only ever adds the current one and never removes an old one. It warns about
+  this at start-up; prefer a template with a prefix.
+
+A group whose project has been deleted keeps the value it has.
 
 ### Members and renames
 
