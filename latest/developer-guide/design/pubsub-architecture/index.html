@@ -19580,9 +19580,10 @@ introducing <code>SUBSCRIBE_*</code> permissions that would have to be kept in s
 <li><strong>Envelope</strong> — marketplace events do not carry <code>event_type</code> (only the core
   dispatcher stamps it); they do carry <code>object_type</code>, <code>offering_uuid</code> and
   <code>schema_version</code>.</li>
-<li><strong>Round open/close</strong> — rounds have no state of their own (open/closed is
-  derived from <code>start_time</code>/<code>cutoff_time</code>), so no <code>round</code> event is emitted when
-  a round opens or ends. The proposal cancellations a round's end causes <em>are</em>
+<li><strong>Round open/close</strong> — open/closed is derived from <code>start_time</code>/<code>cutoff_time</code>,
+  so no <code>round</code> event is emitted when a round opens or ends. The stored
+  lifecycle after the cut-off (<code>evaluating</code>, <code>deciding</code>, <code>results_published</code>,
+  <code>closed</code>) is logged as <code>round_*</code> events but not yet published either. The proposal cancellations a round's end causes <em>are</em>
   published, as <code>proposal</code> events, on two paths:</li>
 <li>at cutoff, the periodic <code>proposals_for_ended_rounds_should_be_cancelled</code>
     task cancels the round's <code>draft</code> proposals — <code>submitted</code> and <code>in_review</code>

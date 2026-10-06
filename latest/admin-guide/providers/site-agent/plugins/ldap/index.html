@@ -20969,7 +20969,8 @@ allows <code>memberUid</code> only:</p>
 <span class="normal">16</span>
 <span class="normal">17</span>
 <span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
+<span class="normal">19</span>
+<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">backend_settings</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">ldap</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">"ldaps://ldap.example.org"</span>
 <span class="w">    </span><span class="nt">bind_dn</span><span class="p">:</span><span class="w"> </span><span class="s">"cn=waldur-agent,ou=bind_users,dc=example,dc=org"</span>
@@ -20985,6 +20986,7 @@ allows <code>memberUid</code> only:</p>
 <span class="w">      </span><span class="nt">member_attribute</span><span class="p">:</span><span class="w"> </span><span class="s">"memberUid"</span><span class="w">   </span><span class="c1"># or "member": user DNs, for rfc2307bis directories</span>
 <span class="w">      </span><span class="nt">membership</span><span class="p">:</span><span class="w"> </span><span class="s">"sync"</span><span class="w">              </span><span class="c1"># or "add_only"</span>
 <span class="w">      </span><span class="nt">on_gid_mismatch</span><span class="p">:</span><span class="w"> </span><span class="s">"report"</span><span class="w">       </span><span class="c1"># or "adopt"</span>
+<span class="w">      </span><span class="nt">organization_description</span><span class="p">:</span><span class="w"> </span><span class="s">"organization={slug}"</span><span class="w">   </span><span class="c1"># optional</span>
 <span class="w">      </span><span class="nt">parents</span><span class="p">:</span>
 <span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">dn</span><span class="p">:</span><span class="w"> </span><span class="s">"cn=alps,ou=clusters,dc=example,dc=org"</span>
 <span class="w">          </span><span class="nt">attribute</span><span class="p">:</span><span class="w"> </span><span class="s">"member"</span>
@@ -21032,6 +21034,11 @@ allows <code>memberUid</code> only:</p>
 <td><code>managed_marker</code></td>
 <td><code>waldur-managed</code></td>
 <td>Extra <code>description</code> value on every group the agent creates or adopts</td>
+</tr>
+<tr>
+<td><code>organization_description</code></td>
+<td>unset</td>
+<td>Organization <code>description</code> value, e.g. <code>organization={slug}</code></td>
 </tr>
 <tr>
 <td><code>parents</code></td>
@@ -21127,6 +21134,15 @@ why <code>report</code> is the default.</p>
 <p>Every group the agent creates or adopts gets one extra <code>description</code> value,
 <code>managed_marker</code> (<code>waldur-managed</code> by default). The operator's own description
 values stay; <code>description</code> is multi-valued and allowed on <code>posixGroup</code>.</p>
+<p>With <code>organization_description</code> set, each group also carries one value naming
+its project's organization, rendered from the template with the organization
+slug (<code>organization={slug}</code> writes <code>organization=cscs</code>). It is kept in sync on
+every pass: added to existing and adopted groups, and replaced when the slug
+changes or the project moves to another organization. The agent finds its own
+value by the template's text around <code>{slug}</code>, so it never touches another
+description value or the marker. A bare <code>{slug}</code> has no such text: the agent
+then adds the current slug but never removes an old one, and warns once. A group
+whose project is gone keeps the value it has.</p>
 <p>Each parent is made to list the DNs of the groups whose project has a resource
 on the parent's offerings. A DN is only ever removed when it lies under the
 project OU, and then:</p>
