@@ -1,5 +1,59 @@
 # Changelog
 
+## 8.1.3-rc.22 - 2026-10-06
+
+### Highlights
+
+This release completes much of the call management workflow. Rounds now have a lifecycle after the cut-off, results can be published all at once, and the allocation decision can award amounts or offerings that differ from what was requested. Projects and offerings can now track custom metrics with goals and per-resource breakdowns. Matrix chat now uses short-lived sessions, and Waldur ends sessions and room access when a user's access ends. Service provider managers can now see orders and usage for their offerings and report usage. Invoice emails now include a PDF copy of the invoice.
+
+### What's New
+
+- **Round lifecycle and published results**: After the cut-off, a round moves through its own lifecycle and its results can be published in one step. Call managers can see the round's status, complete it, record adoption and reopen held decisions from the UI.
+- **Awards that differ from the request**: The allocation decision can award different amounts or offerings than the proposal requested. Call managers can edit the award, and the award is shown next to the original request.
+- **Carry drafts over to the next round**: A new call setting moves unsubmitted drafts into the call's next round at the cut-off. Applicants receive a notification when their draft is moved.
+- **Proposal administrator role and team rules**: Adds a proposal administrator role and requires each proposal to have a proposal manager. The proposal team is frozen after submission, and call managers can choose which roles are notified at each step. Each team change after submission is logged as its own event.
+- **Custom metrics**: Adds a metric catalogue, data ingestion, roll-ups, retention policies and goals. Offerings and projects can show and manage these metrics, which can be broken down by resource. Metric cards can split their charts and set goals directly, and a period-to-date figure is compared with the same days of the previous period.
+- **Per-key resource API key management**: Resource API keys can be requested, assigned, capped, paused, resumed and deleted one at a time. The UI shows each key's assignee, limits, usage and models.
+- **Invoice PDF attachments**: Invoice notification emails now include the invoice as a PDF attachment.
+- **Staff-initiated support requests**: Staff can open a support request addressed to a specific user, with an opening message.
+- **Provider project groups**: Providers can manage provider project groups, and project members can see them. The API now returns the organization slug of each group, and Waldur publishes a STOMP event when a group changes.
+- **Unique offering options**: Providers can mark an offering option as unique across all resources.
+- **Role name wizard**: An "Adjust names" wizard helps administrators rename roles.
+
+### Improvements
+
+- **Matrix chat security**: The chat drawer now uses short-lived web sessions, and Waldur no longer hands out Matrix tokens. Matrix device and token lifetimes are now limited by Waldur. Sessions and room memberships end when a user's access ends or the user is deactivated. History exports are limited to people who manage the room, and they expire. Matrix secrets are kept out of Sentry and the logs, and chat attachments can no longer run scripts in Waldur. Operators should note that the external Matrix login setting has been renamed.
+- **Matrix room membership**: New customer role holders are invited to the customer's project rooms. Users who may create a project's room become admins in it, and Waldur only queues appservice events for rooms it manages. The UI offers an external Matrix client only when users can sign in to one.
+- **Service provider manager access**: Service provider managers can list and review their provider's orders, view and report usage for their offerings, read component stats and state counters, and open the offering manage and edit views. Create controls are hidden for roles the API would refuse.
+- **Proposal review privacy**: Applicant identity is hidden from evaluators on every proposal path. Panel members are treated as evaluators, and reviewers can see compliance answers on the review page.
+- **Grace period pausing**: Resources in a project's grace period are paused on the first day and stay paused.
+- **Credit-funded cost policies**: Cost policies funded by credits are now checked against the current credit balance.
+- **OpenStack shared networks**: Networks and subnets shared through OpenStack RBAC by projects that Waldur does not manage are now visible. Owner-side actions on them are disabled, with the reason shown. Ports accept security groups by URL, and end date change requests can be made on OpenStack tenants.
+- **Provider accounts**: Offering accounts are linked to the provider accounts behind them, and the provider accounts UI is complete.
+- **Resource actions menu**: Every resource now has a short actions menu with a "Show all" option. Edit, View details and Terminate always stay in the menu.
+- **Interface**: Pagination and dropdown menus have been moved to the new component library. The proposal form warns before you leave with unsaved changes. Provider messaging banners stay visible on resource and order pages. Other fixes cover search results, the breadcrumb switcher, the mobile layout and the impersonation bar.
+
+### Bug Fixes
+
+- Expired resources are now terminated even if the person who requested the end date has lost access.
+- With the marketplace hidden, order details stay reachable and the add-resource controls are hidden.
+- Volumes without a type are now labelled "Storage".
+- Fixed import of the EESSI catalogue override through the management command.
+- OpenStack discovery choices are now saved where the plugin reads them.
+- History requests with out-of-range timestamps now return a 400 error.
+- The common storage quota stays visible for offerings with fixed storage.
+- Empty action menus are hidden, and order timeline entries are corrected.
+- Chat reaction chips now update when a reaction is removed.
+- Updated vulnerable dependencies in both the backend and the frontend.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [59 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.21...8.1.3-rc.22) - Call round lifecycle and awards, custom metrics, Matrix session hardening, per-key API key management, invoice PDFs, service provider manager permissions
+- **Waldur Homeport**: [69 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.21...8.1.3-rc.22) - Round lifecycle and award UI, custom metrics pages, short-lived Matrix chat sessions, provider project groups and accounts, menu and pagination migration
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.21...8.1.3-rc.22) - Fixed CORS headers so cross-origin Matrix clients can start calls
+
+---
+
 ## 8.1.3-rc.21 - 2026-10-02
 
 ### Highlights
