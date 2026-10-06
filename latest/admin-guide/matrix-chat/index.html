@@ -1658,6 +1658,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Creating a project room">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#who-is-in-a-project-room" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who is in a project room
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19206,6 +19223,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Creating a project room">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#who-is-in-a-project-room" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who is in a project room
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19569,13 +19603,60 @@ green the integration is ready for use.</p>
 <p>From the <strong>Rooms</strong> tab on the same page, click <strong>Create</strong> and pick a
 project from the list — only projects without an existing Matrix room are
 shown. Owners see their own projects; staff and support see every project.</p>
-<p>Once created, the room synchronises members based on each user's project
-or customer role:</p>
+<p>Once created, the room synchronises its members (see
+<a href="#who-is-in-a-project-room">Who is in a project room</a>):</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/10-admin-rooms-tab.png" data-desc-position="bottom"><img alt="Admin Rooms tab with the Demo Project room" src="../img/matrix-chat/10-admin-rooms-tab.png"></a></p>
 <p>The same screen offers per-room actions (Sync members, Disable, Reactivate,
 Export history, Retry) once you expand the row. State transitions go
 through the standard Matrix room lifecycle and are guarded server-side
 against concurrent calls.</p>
+<h3 id="who-is-in-a-project-room">Who is in a project room</h3>
+<p>Member sync and role changes decide who is in a project's room and which
+Matrix power level each member gets. Power level 50 shows as <strong>Admin</strong> in
+the chat's member list; 100 is the Waldur bot.</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Rooms the user is in</th>
+<th>Power level</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Project admin</td>
+<td>That project's room</td>
+<td>50</td>
+</tr>
+<tr>
+<td>Project manager, project member</td>
+<td>That project's room</td>
+<td>0, or 50 if the role has <code>MATRIX_ROOM.CREATE</code></td>
+</tr>
+<tr>
+<td>Organization role with <code>MATRIX_ROOM.CREATE</code> (the owner, by default)</td>
+<td>Every project room in the organization</td>
+<td>50</td>
+</tr>
+<tr>
+<td>Organization support, organization reader</td>
+<td>None</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Staff, global support</td>
+<td>None automatically; they can join any room as a moderator</td>
+<td>50</td>
+</tr>
+</tbody>
+</table>
+<p><code>MATRIX_ROOM.CREATE</code> is the permission to create a project's chat room, and
+whoever may create a room is also in it and runs it. Granting it on an
+organization adds the role's holders to every project room as admins;
+granting it on a project makes them admins of that project's room. Taking it
+away from organization owners takes them out of every project room.</p>
+<p>A user with several roles gets the highest power level. Roles on offerings,
+resources, service providers or calls do not put anyone in a project room.</p>
 <hr>
 <h2 id="using-the-chat-in-homeport">Using the chat in homeport</h2>
 <p>When <code>project.show_matrix_chat</code> is enabled and a project has an active room,

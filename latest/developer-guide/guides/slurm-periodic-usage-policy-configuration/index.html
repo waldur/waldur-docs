@@ -8528,6 +8528,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#interaction-with-the-project-grace-period" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction with the Project Grace Period
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19756,6 +19767,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#interaction-with-the-project-grace-period" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction with the Project Grace Period
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -20482,6 +20504,23 @@ fully in parallel.</p>
 re-running an evaluation is safe and idempotent. If usage has not changed,
 the re-run is a no-op and emits no STOMP message.</p>
 </div>
+<h3 id="interaction-with-the-project-grace-period">Interaction with the Project Grace Period</h3>
+<p>A project past its end date but still inside its grace period has the resources
+of offerings with <code>supports_pausing</code> paused by the daily end-date task (unless
+the offering sets <code>disable_grace_period</code>). The policy never lifts such a pause:
+while the project is in its grace period, a resource stays paused even when its
+usage is below the grace limit, whether the pause came from the grace period or
+from the policy itself.</p>
+<p>Once the project leaves the grace period because its end date was extended or
+cleared, the pause set for the grace period is lifted unless usage is still over
+the grace limit, and a pause the policy set itself is lifted by the next
+evaluation as usual. When the grace period runs out instead, the resources stay
+paused until they are terminated.</p>
+<p>Outside the grace period the policy lifts a pause once usage is below the grace
+limit, except while a usage-limit restriction or a firing cost policy with
+<code>request_pausing</code> still holds the resource. A pause set manually by staff is not
+recorded as such, so on a SLURM offering the next evaluation (at the latest the
+daily period-boundary run) lifts it when usage is below the limit.</p>
 <h2 id="configuration-examples">Configuration Examples</h2>
 <h3 id="1-basic-notification-policy">1. Basic Notification Policy</h3>
 <p>Send notifications when usage reaches 80%:</p>

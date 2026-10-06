@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-06T21:02:03.096764Z
+Generated: 2026-10-06T22:14:37.315583Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -64508,6 +64508,13 @@ result to the same filter the ViewSet uses — usually
 `filter_queryset_for_user` or a manager's `filter_for_user` — so a download
 cannot outlive the permission the API itself enforces.
 
+A rule that has to see how the user signed in — a personal access token's
+scopes and bindings are on `request.auth`, not on the user — is registered with
+`with_request=True`. `MediaView` then passes it the request in place of the
+user, and `queryset_rule` hands that on to the filter, so the filter must accept
+a request or a user (`getattr(request, "user", request)`).
+Matrix history exports use it.
+
 Use `register_public` **only** for files already reachable through an anonymous
 API endpoint, and say which one in a comment. Everything on the unauthenticated
 marketplace catalogue and the public call-for-proposals page falls in this
@@ -65950,6 +65957,27 @@ fully in parallel.
     Because the decision is always recomputed from live usage under the lock,
     re-running an evaluation is safe and idempotent. If usage has not changed,
     the re-run is a no-op and emits no STOMP message.
+
+### Interaction with the Project Grace Period
+
+A project past its end date but still inside its grace period has the resources
+of offerings with `supports_pausing` paused by the daily end-date task (unless
+the offering sets `disable_grace_period`). The policy never lifts such a pause:
+while the project is in its grace period, a resource stays paused even when its
+usage is below the grace limit, whether the pause came from the grace period or
+from the policy itself.
+
+Once the project leaves the grace period because its end date was extended or
+cleared, the pause set for the grace period is lifted unless usage is still over
+the grace limit, and a pause the policy set itself is lifted by the next
+evaluation as usual. When the grace period runs out instead, the resources stay
+paused until they are terminated.
+
+Outside the grace period the policy lifts a pause once usage is below the grace
+limit, except while a usage-limit restriction or a firing cost policy with
+`request_pausing` still holds the resource. A pause set manually by staff is not
+recorded as such, so on a SLURM offering the next evaluation (at the latest the
+daily period-boundary run) lifts it when usage is below the limit.
 
 ## Configuration Examples
 
@@ -95450,8 +95478,8 @@ From the **Rooms** tab on the same page, click **Create** and pick a
 project from the list — only projects without an existing Matrix room are
 shown. Owners see their own projects; staff and support see every project.
 
-Once created, the room synchronises members based on each user's project
-or customer role:
+Once created, the room synchronises its members (see
+[Who is in a project room](#who-is-in-a-project-room)):
 
 [Image: Admin Rooms tab with the Demo Project room]
 
@@ -95459,6 +95487,29 @@ The same screen offers per-room actions (Sync members, Disable, Reactivate,
 Export history, Retry) once you expand the row. State transitions go
 through the standard Matrix room lifecycle and are guarded server-side
 against concurrent calls.
+
+### Who is in a project room
+
+Member sync and role changes decide who is in a project's room and which
+Matrix power level each member gets. Power level 50 shows as **Admin** in
+the chat's member list; 100 is the Waldur bot.
+
+| Role | Rooms the user is in | Power level |
+|---|---|---|
+| Project admin | That project's room | 50 |
+| Project manager, project member | That project's room | 0, or 50 if the role has `MATRIX_ROOM.CREATE` |
+| Organization role with `MATRIX_ROOM.CREATE` (the owner, by default) | Every project room in the organization | 50 |
+| Organization support, organization reader | None | — |
+| Staff, global support | None automatically; they can join any room as a moderator | 50 |
+
+`MATRIX_ROOM.CREATE` is the permission to create a project's chat room, and
+whoever may create a room is also in it and runs it. Granting it on an
+organization adds the role's holders to every project room as admins;
+granting it on a project makes them admins of that project's room. Taking it
+away from organization owners takes them out of every project room.
+
+A user with several roles gets the highest power level. Roles on offerings,
+resources, service providers or calls do not put anyone in a project room.
 
 ---
 
@@ -97399,7 +97450,7 @@ organization can create the project's room from its Chat tab. Organization
 owners hold it by default. Staff can create any room from the Chat tab;
 support can create one from the Matrix admin rooms page or through
 `POST /api/matrix/rooms/`.
-Disabling and deleting a room stay with staff and support.
+Disabling and deleting a room stay with staff.
 
 To let project managers create rooms too, grant them the permission in
 `permissions-override.yaml`:
@@ -97410,8 +97461,21 @@ To let project managers create rooms too, grant them the permission in
     - MATRIX_ROOM.CREATE
 ```
 
+The grant also lets them manage the room and download its history exports, see
+[Room actions](#room-actions).
+
 If you replaced `CUSTOMER.OWNER` wholesale in `custom-roles.yaml`, add
 `MATRIX_ROOM.CREATE` to that list yourself, or owners lose room creation.
+
+The same permission on an organization also puts its holders in every room of
+the organization's projects (see [Member Sync](#member-sync)). Taking it away
+from organization owners therefore takes them out of those rooms as well, and
+giving it to another organization role brings that role's holders in. Neither
+happens when the role changes: each room catches up at its next member sync,
+so sync every room of the affected organizations
+(`POST /api/matrix/rooms/{uuid}/sync_members/`). The room list follows the new
+permissions at once. A grant on a single project does not: project roles
+already put their holders in that project's room.
 
 To give every project a room without anyone asking for one:
 
@@ -97474,6 +97538,8 @@ Staff and support users create a chat room for a project. Each project can have 
 
 The room name is automatically set to the project name. Room creation is asynchronous — a Celery task creates the room on the homeserver and sets the state to `ACTIVE`. If creation fails, the state is set to `ERROR` with a message.
 
+Rooms are created unfederated (`m.federate: false`): only accounts on this homeserver can join them, whatever its federation settings. The packaged homeservers keep federation on for LiveKit's OpenID check, which does not open these rooms.
+
 The room alias is automatically generated as `#waldur-{project_uuid_prefix}:{homeserver_domain}`.
 
 ### Room states
@@ -97512,12 +97578,16 @@ Returns rooms accessible to the authenticated user based on their project and cu
 
 ### Room actions
 
-Permissions vary per action (demo policy: owners manage day-to-day membership and exports; room lifecycle is staff-only):
+Permissions vary per action. Whoever may create a room keeps its members in sync and exports its
+history; organization owners can by default, and support can for every room. That is as far as
+either goes: retrying and re-enabling a room are staff's alone.
 
 | Action | Required permission |
 | --- | --- |
-| `sync_members`, `export_history`, `retry`, `reactivate` | Customer owner (`is_owner`) |
-| `disable`, `DELETE`, `join`, `leave` | Staff or support (`is_staff_or_support`) |
+| `sync_members`, `export_history` | `MATRIX_ROOM.CREATE` on the project or its organization, or staff or support |
+| `retry`, `reactivate` | Staff (`is_staff`) |
+| `disable`, `DELETE` | Staff (`is_staff`) |
+| `join`, `leave` | Staff or support (`is_staff_or_support`) |
 | `open` | A current member of the room (`invited` or `joined`) |
 
 **POST /api/matrix/rooms/{uuid}/sync_members/**
@@ -97566,7 +97636,7 @@ Lists room members with their user UUID, full name, Matrix user ID, power level,
 
 When a room is created or a manual sync is triggered:
 
-1. All active project members (direct and via customer) are enumerated
+1. Everyone with an active project role is enumerated, plus everyone whose customer role may create the customer's chat rooms (`MATRIX_ROOM.CREATE`, held by customer owners by default). Other customer roles, such as organization support and reader, are left out
 2. Each user is provisioned on the homeserver if needed (via `MatrixUserProfile`)
 3. Display names are set to the user's full name
 4. Users are invited to the room, and the invite is accepted on their behalf
@@ -97577,17 +97647,23 @@ When a room is created or a manual sync is triggered:
 
 Member records are stored in `MatrixRoomMember` with membership states: `invited`, `joined`, `left`, `banned`.
 
+The same rule decides who else sees a room. A user sees a project's room in the room list, and reaches its members, media and history exports or answers to bot commands, only if a role would put them in it in step 1; each action may ask for more on top. Organization support and readers therefore do not see the rooms of the organization's projects. Staff and support users list every room.
+
 Joins and leaves act as the user through the appservice token with `?user_id=`. They never log in as the user, so they create no Matrix device or access token.
 
 ### Automatic member management
 
 The integration automatically responds to role changes:
 
-- **Role granted** — user is invited to the room and a notification is posted
-- **Role revoked** — if the user has no remaining roles in the project or its customer, they are kicked from the room; a notification is posted regardless
+- **Role granted** — a project role invites the user to the project's room and posts a notification; a customer role that passes the member sync rule above invites the user to every active room of the customer's projects, without a notification
+- **Project role revoked** — a notification is posted, and the user is kicked from the room unless a remaining role still puts them in it (see [Member Sync](#member-sync))
+- **Customer role revoked** — the user is kicked, without a notification, from each active room of the customer's projects that they are in and no remaining role puts them in
+- **Staff or support status lost** — staff and support keep a room they joined with the Join action only while they are active staff or support; afterwards they are kicked from it, unless a role puts them in it
 - **Project deleted** — the room is disabled (members kicked, history exported, room archived)
 - **Order state changed** — notifications are posted when orders are approved, completed, rejected, canceled, or errored
-- **User deactivated or deleted** — every `WALDUR_WEB_` device of the user is signed out by a background task, which revokes those devices' access and refresh tokens. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. Devices are signed out even while chat is switched off (`MATRIX_ENABLED`): switching chat off does not end drawers that are already open, because they renew their tokens with the homeserver directly. A user reactivated before the task runs keeps their new sessions. Other Matrix devices, such as Element, are left alone; in `password` mode the derived password keeps working, so deactivate the account on the homeserver to cut external access
+- **User deactivated or deleted** — a background task signs out every Matrix device of the user, Element included, and removes them from all their rooms. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. This runs even while chat is switched off (`MATRIX_ENABLED`), because open drawers renew their tokens with the homeserver directly. A user reactivated before the task runs keeps access, and reactivation invites them back to every room a role puts them in. The Matrix account itself stays active, so the user can still sign in to an external client but finds no rooms there; with `oidc`, disable the user at the IdP as well
+
+Kicks that fail are retried for several minutes, and each retry checks again whether the user still has access. A member whose kick never succeeds stays recorded as a member.
 
 ## History Exports
 
@@ -97595,7 +97671,7 @@ The integration automatically responds to role changes:
 
 | Type | Trigger |
 | --- | --- |
-| `manual` | Owner clicks "Export history" on a room |
+| `manual` | Someone who manages the room clicks "Export history" on it |
 | `periodic` | Celery beat task runs for all active rooms (when `MATRIX_HISTORY_EXPORT_ENABLED` is on) |
 | `on_deletion` | Automatic export before archiving a room |
 
@@ -97614,11 +97690,45 @@ The integration automatically responds to role changes:
 | `completed` | Export finished successfully |
 | `failed` | Export failed — see `error_message` |
 
+### Who can download exports
+
+An export is the room's whole history, media included, so it goes to whoever manages the room and
+no further. Listing exports and downloading their files is open to the same people who can trigger
+an export:
+
+- those holding `MATRIX_ROOM.CREATE` on the project or its organization, by default organization
+  owners;
+- staff and support.
+
+Everyone else gets `404`, room members included: they read the room itself. Access follows the
+role, so it ends when the role does, and it stays with the same people after the room is archived.
+
+A personal access token reaches only the exports within its bindings. It also has to carry
+`MATRIX_ROOM.CREATE`, or for staff and support the staff or support scope, as it does to trigger
+an export.
+
+### Retention
+
+A daily task deletes exports older than `MATRIX_HISTORY_EXPORT_RETENTION_DAYS` (default 90), files
+included. The newest completed export of each room is kept whatever its age, so the final export of
+an archived room survives. An export still pending or running after that long has stalled, and is
+deleted with the rest.
+
+Exports keep messages that were later redacted in the room; retention is what removes them from older
+exports. Set it to `0` or less to keep exports forever. Deleting an export, by retention, `disable`
+with `delete_history`, or with its room, also deletes its files.
+
+When upgrading, the first nightly run deletes every export older than 90 days except each room's
+newest completed one. To keep them, set `MATRIX_HISTORY_EXPORT_RETENTION_DAYS` before upgrading.
+
+There is no action to delete a single export. Besides retention, exports are deleted only when
+staff disable a room with `delete_history` or delete the room.
+
 ### Listing exports
 
 **GET /api/matrix/exports/**
 
-Returns exports accessible to the user based on room access. Staff and support see all exports.
+Returns the exports the user can download (see above).
 
 **Query parameters:**
 
@@ -97714,6 +97824,7 @@ These Constance settings control the integration:
 | `MATRIX_APPSERVICE_SENDER_LOCALPART` | `waldur-bot` | Bot user localpart |
 | `MATRIX_HISTORY_EXPORT_ENABLED` | `False` | Enable periodic and on-deletion exports |
 | `MATRIX_EXPORT_MEDIA` | `False` | Download media files during export |
+| `MATRIX_HISTORY_EXPORT_RETENTION_DAYS` | `90` | Days to keep history exports, files included; each room's newest completed export is kept; `0` or less keeps them forever |
 | `MATRIX_USER_REGISTRATION_SECRET` | `""` | Shared secret for registering users on the homeserver |
 | `MATRIX_USER_ID_FORMAT` | `username` | Format for generating Matrix user IDs: `username`, `uuid`, or `email_local` |
 | `MATRIX_EXTERNAL_LOGIN_METHOD` | `none` | How users sign in to an external Matrix client: `none`, `password`, or `oidc`. See [External clients](#external-clients) |
@@ -97728,7 +97839,7 @@ The Matrix chat UI is gated on the project feature flag `project.show_matrix_cha
 | --- | --- |
 | `MatrixUserProfile` | Links a Waldur user to their Matrix user ID and tracks provisioning state. It stores no Matrix token. |
 | `MatrixRoom` | A Matrix room linked to a project via generic FK. One room per project. Manages state via FSM transitions. |
-| `MatrixRoomMember` | Tracks room membership, power levels, and membership state per user. |
+| `MatrixRoomMember` | Tracks room membership, power levels, and membership state per user. `manually_joined` marks staff and support who joined with the Join action. |
 | `MatrixHistoryExport` | A chat history export with state, message/media counts, and file references. |
 | `MatrixAppserviceTransaction` | Idempotency record for processed webhook transactions. |
 

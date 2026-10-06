@@ -11277,6 +11277,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#who-can-download-exports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who can download exports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#listing-exports" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19601,6 +19623,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#who-can-download-exports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who can download exports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#listing-exports" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19918,7 +19962,7 @@ organization can create the project's room from its Chat tab. Organization
 owners hold it by default. Staff can create any room from the Chat tab;
 support can create one from the Matrix admin rooms page or through
 <code>POST /api/matrix/rooms/</code>.
-Disabling and deleting a room stay with staff and support.</p>
+Disabling and deleting a room stay with staff.</p>
 <p>To let project managers create rooms too, grant them the permission in
 <code>permissions-override.yaml</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -19927,8 +19971,19 @@ Disabling and deleting a room stay with staff and support.</p>
 <span class="w">  </span><span class="nt">add_permissions</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MATRIX_ROOM.CREATE</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>The grant also lets them manage the room and download its history exports, see
+<a href="#room-actions">Room actions</a>.</p>
 <p>If you replaced <code>CUSTOMER.OWNER</code> wholesale in <code>custom-roles.yaml</code>, add
 <code>MATRIX_ROOM.CREATE</code> to that list yourself, or owners lose room creation.</p>
+<p>The same permission on an organization also puts its holders in every room of
+the organization's projects (see <a href="#member-sync">Member Sync</a>). Taking it away
+from organization owners therefore takes them out of those rooms as well, and
+giving it to another organization role brings that role's holders in. Neither
+happens when the role changes: each room catches up at its next member sync,
+so sync every room of the affected organizations
+(<code>POST /api/matrix/rooms/{uuid}/sync_members/</code>). The room list follows the new
+permissions at once. A grant on a single project does not: project roles
+already put their holders in that project's room.</p>
 <p>To give every project a room without anyone asking for one:</p>
 <ul>
 <li><strong>New projects:</strong> turn on <code>MATRIX_AUTO_CREATE_PROJECT_ROOMS</code> (off by default).
@@ -19991,6 +20046,7 @@ corresponding Constance value is still empty.</p>
 </tbody>
 </table>
 <p>The room name is automatically set to the project name. Room creation is asynchronous — a Celery task creates the room on the homeserver and sets the state to <code>ACTIVE</code>. If creation fails, the state is set to <code>ERROR</code> with a message.</p>
+<p>Rooms are created unfederated (<code>m.federate: false</code>): only accounts on this homeserver can join them, whatever its federation settings. The packaged homeservers keep federation on for LiveKit's OpenID check, which does not open these rooms.</p>
 <p>The room alias is automatically generated as <code>#waldur-{project_uuid_prefix}:{homeserver_domain}</code>.</p>
 <h3 id="room-states">Room states</h3>
 <table>
@@ -20064,7 +20120,9 @@ corresponding Constance value is still empty.</p>
 </tbody>
 </table>
 <h3 id="room-actions">Room actions</h3>
-<p>Permissions vary per action (demo policy: owners manage day-to-day membership and exports; room lifecycle is staff-only):</p>
+<p>Permissions vary per action. Whoever may create a room keeps its members in sync and exports its
+history; organization owners can by default, and support can for every room. That is as far as
+either goes: retrying and re-enabling a room are staff's alone.</p>
 <table>
 <thead>
 <tr>
@@ -20074,11 +20132,19 @@ corresponding Constance value is still empty.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>sync_members</code>, <code>export_history</code>, <code>retry</code>, <code>reactivate</code></td>
-<td>Customer owner (<code>is_owner</code>)</td>
+<td><code>sync_members</code>, <code>export_history</code></td>
+<td><code>MATRIX_ROOM.CREATE</code> on the project or its organization, or staff or support</td>
 </tr>
 <tr>
-<td><code>disable</code>, <code>DELETE</code>, <code>join</code>, <code>leave</code></td>
+<td><code>retry</code>, <code>reactivate</code></td>
+<td>Staff (<code>is_staff</code>)</td>
+</tr>
+<tr>
+<td><code>disable</code>, <code>DELETE</code></td>
+<td>Staff (<code>is_staff</code>)</td>
+</tr>
+<tr>
+<td><code>join</code>, <code>leave</code></td>
 <td>Staff or support (<code>is_staff_or_support</code>)</td>
 </tr>
 <tr>
@@ -20127,7 +20193,7 @@ corresponding Constance value is still empty.</p>
 <h2 id="member-sync">Member Sync</h2>
 <p>When a room is created or a manual sync is triggered:</p>
 <ol>
-<li>All active project members (direct and via customer) are enumerated</li>
+<li>Everyone with an active project role is enumerated, plus everyone whose customer role may create the customer's chat rooms (<code>MATRIX_ROOM.CREATE</code>, held by customer owners by default). Other customer roles, such as organization support and reader, are left out</li>
 <li>Each user is provisioned on the homeserver if needed (via <code>MatrixUserProfile</code>)</li>
 <li>Display names are set to the user's full name</li>
 <li>Users are invited to the room, and the invite is accepted on their behalf</li>
@@ -20137,16 +20203,20 @@ corresponding Constance value is still empty.</p>
 <li>The bot account: power level 100</li>
 </ol>
 <p>Member records are stored in <code>MatrixRoomMember</code> with membership states: <code>invited</code>, <code>joined</code>, <code>left</code>, <code>banned</code>.</p>
+<p>The same rule decides who else sees a room. A user sees a project's room in the room list, and reaches its members, media and history exports or answers to bot commands, only if a role would put them in it in step 1; each action may ask for more on top. Organization support and readers therefore do not see the rooms of the organization's projects. Staff and support users list every room.</p>
 <p>Joins and leaves act as the user through the appservice token with <code>?user_id=</code>. They never log in as the user, so they create no Matrix device or access token.</p>
 <h3 id="automatic-member-management">Automatic member management</h3>
 <p>The integration automatically responds to role changes:</p>
 <ul>
-<li><strong>Role granted</strong> — user is invited to the room and a notification is posted</li>
-<li><strong>Role revoked</strong> — if the user has no remaining roles in the project or its customer, they are kicked from the room; a notification is posted regardless</li>
+<li><strong>Role granted</strong> — a project role invites the user to the project's room and posts a notification; a customer role that passes the member sync rule above invites the user to every active room of the customer's projects, without a notification</li>
+<li><strong>Project role revoked</strong> — a notification is posted, and the user is kicked from the room unless a remaining role still puts them in it (see <a href="#member-sync">Member Sync</a>)</li>
+<li><strong>Customer role revoked</strong> — the user is kicked, without a notification, from each active room of the customer's projects that they are in and no remaining role puts them in</li>
+<li><strong>Staff or support status lost</strong> — staff and support keep a room they joined with the Join action only while they are active staff or support; afterwards they are kicked from it, unless a role puts them in it</li>
 <li><strong>Project deleted</strong> — the room is disabled (members kicked, history exported, room archived)</li>
 <li><strong>Order state changed</strong> — notifications are posted when orders are approved, completed, rejected, canceled, or errored</li>
-<li><strong>User deactivated or deleted</strong> — every <code>WALDUR_WEB_</code> device of the user is signed out by a background task, which revokes those devices' access and refresh tokens. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. Devices are signed out even while chat is switched off (<code>MATRIX_ENABLED</code>): switching chat off does not end drawers that are already open, because they renew their tokens with the homeserver directly. A user reactivated before the task runs keeps their new sessions. Other Matrix devices, such as Element, are left alone; in <code>password</code> mode the derived password keeps working, so deactivate the account on the homeserver to cut external access</li>
+<li><strong>User deactivated or deleted</strong> — a background task signs out every Matrix device of the user, Element included, and removes them from all their rooms. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. This runs even while chat is switched off (<code>MATRIX_ENABLED</code>), because open drawers renew their tokens with the homeserver directly. A user reactivated before the task runs keeps access, and reactivation invites them back to every room a role puts them in. The Matrix account itself stays active, so the user can still sign in to an external client but finds no rooms there; with <code>oidc</code>, disable the user at the IdP as well</li>
 </ul>
+<p>Kicks that fail are retried for several minutes, and each retry checks again whether the user still has access. A member whose kick never succeeds stays recorded as a member.</p>
 <h2 id="history-exports">History Exports</h2>
 <h3 id="export-triggers">Export triggers</h3>
 <table>
@@ -20159,7 +20229,7 @@ corresponding Constance value is still empty.</p>
 <tbody>
 <tr>
 <td><code>manual</code></td>
-<td>Owner clicks "Export history" on a room</td>
+<td>Someone who manages the room clicks "Export history" on it</td>
 </tr>
 <tr>
 <td><code>periodic</code></td>
@@ -20204,9 +20274,35 @@ corresponding Constance value is still empty.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="who-can-download-exports">Who can download exports</h3>
+<p>An export is the room's whole history, media included, so it goes to whoever manages the room and
+no further. Listing exports and downloading their files is open to the same people who can trigger
+an export:</p>
+<ul>
+<li>those holding <code>MATRIX_ROOM.CREATE</code> on the project or its organization, by default organization
+  owners;</li>
+<li>staff and support.</li>
+</ul>
+<p>Everyone else gets <code>404</code>, room members included: they read the room itself. Access follows the
+role, so it ends when the role does, and it stays with the same people after the room is archived.</p>
+<p>A personal access token reaches only the exports within its bindings. It also has to carry
+<code>MATRIX_ROOM.CREATE</code>, or for staff and support the staff or support scope, as it does to trigger
+an export.</p>
+<h3 id="retention">Retention</h3>
+<p>A daily task deletes exports older than <code>MATRIX_HISTORY_EXPORT_RETENTION_DAYS</code> (default 90), files
+included. The newest completed export of each room is kept whatever its age, so the final export of
+an archived room survives. An export still pending or running after that long has stalled, and is
+deleted with the rest.</p>
+<p>Exports keep messages that were later redacted in the room; retention is what removes them from older
+exports. Set it to <code>0</code> or less to keep exports forever. Deleting an export, by retention, <code>disable</code>
+with <code>delete_history</code>, or with its room, also deletes its files.</p>
+<p>When upgrading, the first nightly run deletes every export older than 90 days except each room's
+newest completed one. To keep them, set <code>MATRIX_HISTORY_EXPORT_RETENTION_DAYS</code> before upgrading.</p>
+<p>There is no action to delete a single export. Besides retention, exports are deleted only when
+staff disable a room with <code>delete_history</code> or delete the room.</p>
 <h3 id="listing-exports">Listing exports</h3>
 <p><strong>GET /api/matrix/exports/</strong></p>
-<p>Returns exports accessible to the user based on room access. Staff and support see all exports.</p>
+<p>Returns the exports the user can download (see above).</p>
 <p><strong>Query parameters:</strong></p>
 <table>
 <thead>
@@ -20438,6 +20534,11 @@ corresponding Constance value is still empty.</p>
 <td>Download media files during export</td>
 </tr>
 <tr>
+<td><code>MATRIX_HISTORY_EXPORT_RETENTION_DAYS</code></td>
+<td><code>90</code></td>
+<td>Days to keep history exports, files included; each room's newest completed export is kept; <code>0</code> or less keeps them forever</td>
+</tr>
+<tr>
 <td><code>MATRIX_USER_REGISTRATION_SECRET</code></td>
 <td><code>""</code></td>
 <td>Shared secret for registering users on the homeserver</td>
@@ -20475,7 +20576,7 @@ corresponding Constance value is still empty.</p>
 </tr>
 <tr>
 <td><code>MatrixRoomMember</code></td>
-<td>Tracks room membership, power levels, and membership state per user.</td>
+<td>Tracks room membership, power levels, and membership state per user. <code>manually_joined</code> marks staff and support who joined with the Join action.</td>
 </tr>
 <tr>
 <td><code>MatrixHistoryExport</code></td>
