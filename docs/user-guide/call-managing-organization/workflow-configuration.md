@@ -146,7 +146,7 @@ Deadlines are enforced automatically. An hourly job checks active steps against 
 
 Applicants see a timeline on the proposal page showing its progress, starting from submission. Only steps marked **Applicant visible** are named there — the setting is off by default, so a call that has not turned it on for any step shows the applicant the coarse Submission → Review → Decision tracker instead of the evaluation steps.
 
-While an invisible step is the current one, it appears as an unnamed **In review** marker so the tracker still shows where the proposal has got to; once it has passed, it leaves no trace. Steps that were not reached because of an earlier rejection are struck through and marked **Not reached**. The timeline appears once the proposal leaves draft state; calls without a configured workflow fall back to the coarse tracker as well.
+While an invisible step is the current one, it appears under the name of its stage rather than its own — **Decision** for the allocation decision, **Awaiting your response** for the award response, **Evaluation** for any other step — so the tracker still shows where the proposal has got to; once it has passed, it leaves no trace. Steps that were not reached because of an earlier rejection are struck through and marked **Not reached**. The timeline appears once the proposal leaves draft state; calls without a configured workflow fall back to the coarse tracker as well.
 
 A short line under the tracker says what is happening — the expected decision date where the step has a deadline, or that the applicant's own confirmation is needed on an award response.
 

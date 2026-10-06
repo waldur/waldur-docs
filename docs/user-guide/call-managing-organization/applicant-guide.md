@@ -192,10 +192,11 @@ was reconfigured between their submissions.
 ### When you hear the decision
 
 Some calls announce every allocation decision of a round together. On such a
-call your proposal stays **In review**, with the allocation decision shown as in
-progress, until the call manager publishes the round's results — even if the
-decision has already been taken. Then every applicant of the round is notified
-at the same time, and the proposal moves on: to **Responding to an award**, to
+call your proposal stays **In review** until the call manager publishes the
+round's results, even if the decision has already been taken. The tracker shows
+the decision as the current step — named *Decision* when the call keeps the step
+internal — with *Your proposal is being reviewed.* beneath it. Then every
+applicant of the round is notified at the same time, and the proposal moves on: to **Responding to an award**, to
 **Accepted**, or to **Rejected**.
 
 ![A proposal in review while its round's results are not yet published](../img/applicant-held-decision-in-review.png)
