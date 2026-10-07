@@ -1,5 +1,34 @@
 # Changelog
 
+## 8.1.3-rc.23 - 2026-10-07
+
+### Highlights
+
+This release makes calls for proposals easier to work with. Applicants who can't apply to a call now see the reason, and reviewers handle their invitations from a standard actions menu. Invoice PDFs now print each volume discount directly under the item it reduces. This release also closes a permission gap that let users change the state of their offering users.
+
+### What's New
+
+- When an applicant can't apply to a public call, the call page now explains why the Apply action is unavailable.
+- Operators can use the new `show_organisation_reporting` feature flag to control organisation reporting in the portal.
+
+### Improvements
+
+- Invoice PDFs now print each volume discount directly under the line item it reduces.
+- On the reviewer invitations page, the accept and decline actions are now in the row's actions dropdown, and the actions read each invitation's status.
+- Status columns in proposal requests, reviewer calls, reviewer invitations and the reviewer pool now show colour-coded badges instead of plain text.
+- The SAML2 and invoice configuration examples no longer contain real company data or a dead Confluence link.
+
+### Bug Fixes
+
+- Fixed an issue where users could change the state of their offering users without permission to do so.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [4 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.22...8.1.3-rc.23) - Volume discounts in invoice PDFs, a permission fix for offering user state changes, a new organisation reporting feature flag and cleaned-up configuration examples.
+- **Waldur Homeport**: [6 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.22...8.1.3-rc.23) - An explanation when Apply is unavailable, reviewer invitation actions in a dropdown and status badges across the proposal views.
+
+---
+
 ## 8.1.3-rc.22 - 2026-10-06
 
 ### Highlights
