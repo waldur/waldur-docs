@@ -19334,7 +19334,7 @@ td:nth-child(4) {
 <td><code>proposals-for-ended-rounds-should-be-cancelled</code></td>
 <td><code>waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled</code></td>
 <td>1 hour</td>
-<td>Move drafts of ended rounds on to their call's next round, or cancel them.</td>
+<td>Move drafts of ended rounds on to their call's next round, or cancel them.<br><br>Also starts the post-cut-off lifecycle (<code>evaluating</code>) of every ended round.</td>
 </tr>
 <tr>
 <td><code>pull-priorities</code></td>
@@ -19466,7 +19466,7 @@ td:nth-child(4) {
 <td><code>start-evaluation-for-closed-rounds</code></td>
 <td><code>waldur_mastermind.proposal.start_evaluation_for_closed_rounds</code></td>
 <td>1 hour</td>
-<td>Start the evaluation of proposals held for their round's cut-off.<br><br>A call that evaluates at the cut-off leaves each proposal <code>submitted</code><br>with its steps pending. Once the round's cut-off has passed, this activates<br>the first pending step of every such proposal, one transaction per<br>proposal so a single failure does not hold back the rest of the batch.<br><br>The candidates are not filtered on the call's current setting: only a<br>held submission leaves a proposal <code>submitted</code> with a pending step, so a<br>proposal held just before a manager switched the call back is still<br>started rather than stranded. Idempotent: a started proposal is<br><code>in_review</code> and is not picked up again.</td>
+<td>Start the evaluation of proposals held for their round's cut-off.<br><br>A call that evaluates at the cut-off leaves each proposal <code>submitted</code><br>with its steps pending. Once the round's cut-off has passed, this activates<br>the first pending step of every such proposal, one transaction per<br>proposal so a single failure does not hold back the rest of the batch.<br><br>The candidates are not filtered on the call's current setting: only a<br>held submission leaves a proposal <code>submitted</code> with a pending step, so a<br>proposal held just before a manager switched the call back is still<br>started rather than stranded. Idempotent: a started proposal is<br><code>in_review</code> and is not picked up again.<br><br>The rounds whose cut-off has passed enter <code>evaluating</code> first, so the<br>batch starts under a round that says it is being evaluated.</td>
 </tr>
 <tr>
 <td><code>structure-set-erred-stuck-resources</code></td>
@@ -19520,7 +19520,7 @@ td:nth-child(4) {
 <td><code>terminate_resources_if_project_end_date_has_been_reached</code></td>
 <td><code>waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached</code></td>
 <td>Cron: <code>40 1 * * * (m/h/dM/MY/d)</code></td>
-<td>Terminate resources when their project has reached its end date (including grace period).<br><br>Also pauses resources for projects currently in the grace period,<br>if the offering has supports_pausing=True in plugin_options.</td>
+<td>Terminate resources when their project has reached its end date (including grace period).<br><br>Also pauses resources for projects currently in the grace period,<br>if the offering has supports_pausing=True in plugin_options, and lifts that<br>pause from resources whose project has left the grace period without<br>expiring (its end date was extended or cleared).</td>
 </tr>
 <tr>
 <td><code>terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order</code></td>
@@ -19709,10 +19709,22 @@ td:nth-child(4) {
 <td>Prune MatrixAppserviceTransaction rows older than the retention window.</td>
 </tr>
 <tr>
+<td><code>waldur-matrix-chat-cleanup-old-history-exports</code></td>
+<td><code>waldur_mastermind.matrix_chat.cleanup_old_history_exports</code></td>
+<td>Cron: <code>30 3 * * * (m/h/dM/MY/d)</code></td>
+<td>Delete history exports, files included, past the retention period.<br><br>Exports are full copies of the history, made daily, and keep messages<br>that were redacted in the room afterwards.</td>
+</tr>
+<tr>
 <td><code>waldur-matrix-chat-periodic-history-export</code></td>
 <td><code>waldur_mastermind.matrix_chat.periodic_history_export</code></td>
 <td>Cron: <code>0 2 * * * (m/h/dM/MY/d)</code></td>
 <td>Periodically export history for all active rooms.</td>
+</tr>
+<tr>
+<td><code>waldur-matrix-chat-prune-web-devices</code></td>
+<td><code>waldur_mastermind.matrix_chat.prune_all_web_devices</code></td>
+<td>Cron: <code>45 3 * * * (m/h/dM/MY/d)</code></td>
+<td>Prune the idle web devices of every user who may still have one, daily.<br><br>Pruning on session start never reaches users who do not come back, and a<br>homeserver without access_token_ttl leaves their tokens valid for a week.<br>Users with no web device left are not asked about.</td>
 </tr>
 <tr>
 <td><code>waldur-openportal-mark-stale-remote-projects</code></td>

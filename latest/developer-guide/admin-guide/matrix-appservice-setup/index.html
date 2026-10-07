@@ -19897,12 +19897,12 @@
 <ol>
 <li>Homeserver URL configured (<code>homeserver_configured</code>)</li>
 <li>Homeserver domain configured (<code>homeserver_domain_configured</code>)</li>
-<li>Homeserver reachable (<code>homeserver_reachable</code>, via <code>/_matrix/client/versions</code>)</li>
+<li>Homeserver reachable (<code>homeserver_reachable</code>, via <code>/_matrix/client/versions</code>; also names the homeserver software and version, from <code>/_matrix/federation/v1/version</code> or, with federation off, Tuwunel's <code>/_tuwunel/server_version</code>)</li>
 <li>AS token configured (<code>as_token_configured</code>)</li>
 <li>HS token configured (<code>hs_token_configured</code>)</li>
 <li>Registration secret configured (<code>registration_secret_configured</code>)</li>
-<li>Bot authentication (<code>bot_whoami</code>, via <code>/account/whoami</code>)</li>
-<li>Bot can operate (<code>bot_functional</code>, list joined rooms)</li>
+<li>Bot authentication (<code>bot_whoami</code>, via <code>/account/whoami</code>; also how many rooms the bot is in)</li>
+<li>Appservice can act for users (<code>appservice_user_namespace</code>: <code>/account/whoami</code> as the staff user's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)</li>
 <li>Room statistics (<code>room_stats</code>: active, creating, errored counts)</li>
 <li>User profile statistics (<code>user_stats</code>: provisioned count)</li>
 </ol>
@@ -19918,8 +19918,8 @@
 <span class="w">  </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"checks"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"homeserver_domain_configured"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Homeserver domain configured"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"matrix.example.com"</span><span class="p">},</span>
-<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"homeserver_reachable"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Homeserver reachable"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK — versions: v1.11, v1.12"</span><span class="p">},</span>
-<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bot_whoami"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Bot authentication (whoami)"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK — authenticated as @waldur-bot:matrix.example.com"</span><span class="p">}</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"homeserver_reachable"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Homeserver reachable"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK — Tuwunel 1.9.0, Matrix up to v1.19"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bot_whoami"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Bot authentication (whoami)"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK — authenticated as @waldur-bot:matrix.example.com, in 3 room(s)"</span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
@@ -19972,7 +19972,8 @@ Disabling and deleting a room stay with staff.</p>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MATRIX_ROOM.CREATE</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>The grant also lets them manage the room and download its history exports, see
-<a href="#room-actions">Room actions</a>.</p>
+<a href="#room-actions">Room actions</a>. Whoever may create a project's room is also an
+admin in it (power level 50), so it makes project managers room admins as well.</p>
 <p>If you replaced <code>CUSTOMER.OWNER</code> wholesale in <code>custom-roles.yaml</code>, add
 <code>MATRIX_ROOM.CREATE</code> to that list yourself, or owners lose room creation.</p>
 <p>The same permission on an organization also puts its holders in every room of
@@ -20198,7 +20199,7 @@ either goes: retrying and re-enabling a room are staff's alone.</p>
 <li>Display names are set to the user's full name</li>
 <li>Users are invited to the room, and the invite is accepted on their behalf</li>
 <li>Power levels are set based on roles:</li>
-<li>Project admin or customer owner: power level 50</li>
+<li>Project admin, or anyone who may create the project's room (<code>MATRIX_ROOM.CREATE</code> on the project or its organization, held by organization owners by default): power level 50, shown as Admin in the chat</li>
 <li>Regular member: power level 0</li>
 <li>The bot account: power level 100</li>
 </ol>

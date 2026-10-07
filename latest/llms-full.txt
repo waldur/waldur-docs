@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-06T22:19:31.583654Z
+Generated: 2026-10-07T02:03:55.556220Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -11611,6 +11611,14 @@ Enable periodic history export of Matrix rooms.
 
 Include media files when exporting Matrix room history.
 
+#### MATRIX_HISTORY_EXPORT_RETENTION_DAYS
+
+**Type:** int
+
+**Default value:** 90
+
+Days to keep Matrix room history exports, files included, before they are deleted. Each room's newest completed export is kept regardless of age. Set to 0 or less to keep them forever.
+
 #### MATRIX_USER_REGISTRATION_SECRET
 
 **Type:** secret_field
@@ -13431,7 +13439,7 @@ Sent to users to notify them about their upcoming bookings.
 
 ### invoices.notification
 
-Sent to organization owners with a new invoice. Includes the invoice as an HTML attachment.
+Sent to organization owners with a new invoice. Includes the invoice as a PDF attachment.
 
 #### Templates
 
@@ -13439,7 +13447,7 @@ Sent to organization owners with a new invoice. Includes the invoice as an HTML 
 
 ```txt
 
-    {{ customer }}'s invoice for {{ month }}/{{ year }}
+    Invoice for {{ customer }}, {{ month }}/{{ year }}
 
 ```
 
@@ -13447,9 +13455,9 @@ Sent to organization owners with a new invoice. Includes the invoice as an HTML 
 
 ```txt
 
-    Hello,
+    Hi,
 
-    Please follow the link below to see {{ customer }}'s accounting information for {{ month }}/{{ year }}:
+    Here is the {{ month }}/{{ year }} invoice for {{ customer }}.{% if attached %} It is attached as a PDF, and you can also view it online:{% else %} You can view it online:{% endif %}
     {{ link }}
 
 ```
@@ -13461,14 +13469,15 @@ Sent to organization owners with a new invoice. Includes the invoice as an HTML 
     <html xmlns="http://www.w3.org/1999/html">
     <head lang="en">
         <meta charset="UTF-8">
-        <title>{{ customer }}'s invoice for {{ month }}/{{ year }}</title>
+        <title>Invoice for {{ customer }}, {{ month }}/{{ year }}</title>
     </head>
     <body>
     <p>
-        Dear Sir or Madam,
+        Hi,
     </p>
     <p>
-        Attached is invoice for services consumed by {{ customer }}'s during {{ month }}/{{ year }}.
+        Here is the {{ month }}/{{ year }} invoice for {{ customer }}.
+        {% if attached %}It is attached as a PDF, and you can also <a href="{{ link }}">view it online</a>.{% else %}You can <a href="{{ link }}">view it online</a>.{% endif %}
     </p>
     </body>
     </html>
@@ -18074,7 +18083,7 @@ td:nth-child(4) {
 | `process_maintenance_announcement_transitions` | `waldur_mastermind.marketplace.process_maintenance_announcement_transitions` | Cron: `*/5 * * * * (m/h/dM/MY/d)` | Advance scheduled maintenance announcements based on their time window.<br><br>Auto-starts scheduled announcements once their start time has passed and<br>auto-completes in-progress announcements once their end time has passed.<br>Mirrors the manual start/complete actions so the AdminAnnouncement banner is<br>refreshed by the existing post_save handler. |
 | `process_pending_project_orders` | `waldur_mastermind.marketplace.process_pending_project_orders` | 2 hours | Process orders for projects that have become active. |
 | `process_pending_start_date_orders` | `waldur_mastermind.marketplace.process_pending_start_date_orders` | 2 hours | Finds orders that are pending activation due to a future start date<br>and moves them to the EXECUTING state if the start date has been reached. |
-| `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Move drafts of ended rounds on to their call's next round, or cancel them. |
+| `proposals-for-ended-rounds-should-be-cancelled` | `waldur_mastermind.proposal.proposals_for_ended_rounds_should_be_cancelled` | 1 hour | Move drafts of ended rounds on to their call's next round, or cancel them.<br><br>Also starts the post-cut-off lifecycle (``evaluating``) of every ended round. |
 | `pull-priorities` | `waldur_mastermind.support.pull_priorities` | 1 day | Pull priority levels from the active support backend. |
 | `pull-service-properties` | `waldur_mastermind.marketplace.ServicePropertiesListPullTask` | 1 day | Pull service properties from settings tied to live marketplace offerings. |
 | `pull-service-resources` | `waldur_mastermind.marketplace.ServiceResourcesListPullTask` | Hourly (at minute 0) | Pull resources from settings tied to live marketplace offerings. |
@@ -18096,7 +18105,7 @@ td:nth-child(4) {
 | `send-scheduled-broadcast-notifications` | `waldur_mastermind.notifications.send_scheduled_broadcast_messages` | 12 hours | Send broadcast messages that have been scheduled for delivery. |
 | `send-workflow-step-deadline-reminders` | `waldur_mastermind.proposal.send_workflow_step_deadline_reminders` | 1 day | Fire ``deadline_approaching`` rules for active steps whose lead time is today.<br><br>A reminder is sent when the deadline falls ``days_before`` calendar days<br>after today (``deadline.date() - now.date()``) and is recorded in the<br>instance ledger so the daily beat cannot repeat it. Steps<br>already past their deadline are left to ``mark_expired_workflow_steps``. |
 | `send_telemetry` | `waldur_mastermind.marketplace.send_metrics` | 1 day | Send anonymous usage metrics and telemetry data to the Waldur team. |
-| `start-evaluation-for-closed-rounds` | `waldur_mastermind.proposal.start_evaluation_for_closed_rounds` | 1 hour | Start the evaluation of proposals held for their round's cut-off.<br><br>A call that evaluates at the cut-off leaves each proposal ``submitted``<br>with its steps pending. Once the round's cut-off has passed, this activates<br>the first pending step of every such proposal, one transaction per<br>proposal so a single failure does not hold back the rest of the batch.<br><br>The candidates are not filtered on the call's current setting: only a<br>held submission leaves a proposal ``submitted`` with a pending step, so a<br>proposal held just before a manager switched the call back is still<br>started rather than stranded. Idempotent: a started proposal is<br>``in_review`` and is not picked up again. |
+| `start-evaluation-for-closed-rounds` | `waldur_mastermind.proposal.start_evaluation_for_closed_rounds` | 1 hour | Start the evaluation of proposals held for their round's cut-off.<br><br>A call that evaluates at the cut-off leaves each proposal ``submitted``<br>with its steps pending. Once the round's cut-off has passed, this activates<br>the first pending step of every such proposal, one transaction per<br>proposal so a single failure does not hold back the rest of the batch.<br><br>The candidates are not filtered on the call's current setting: only a<br>held submission leaves a proposal ``submitted`` with a pending step, so a<br>proposal held just before a manager switched the call back is still<br>started rather than stranded. Idempotent: a started proposal is<br>``in_review`` and is not picked up again.<br><br>The rounds whose cut-off has passed enter ``evaluating`` first, so the<br>batch starts under a round that says it is being evaluated. |
 | `structure-set-erred-stuck-resources` | `waldur_core.structure.SetErredStuckResources` | 1 hour | This task marks all resources which have been provisioning for more than 3 hours as erred. |
 | `sync-arrow-billing` | `waldur_mastermind.waldur_arrow.sync_arrow_billing_scheduled` | 6 hours | Scheduled task to sync Arrow billing for the current month.<br><br>Runs every ARROW_SYNC_INTERVAL_HOURS hours. |
 | `sync-arrow-consumption` | `waldur_mastermind.waldur_arrow.sync_arrow_consumption_scheduled` | 1 hour | Scheduled task to sync real-time consumption data from Arrow.<br><br>Runs every ARROW_CONSUMPTION_SYNC_INTERVAL_HOURS (default: hourly).<br>Updates ArrowConsumptionRecord and ComponentUsage for each resource with<br>an arrow_license_reference attribute. |
@@ -18105,7 +18114,7 @@ td:nth-child(4) {
 | `sync-user-deactivation-status` | `waldur_core.permissions.sync_user_deactivation_status` | 3 hours | Sync user activation status based on DEACTIVATE_USER_IF_NO_ROLES setting.<br><br>This task ensures all users in the system match the current policy:<br>- If DEACTIVATE_USER_IF_NO_ROLES is True: deactivate users with no active roles<br>- If DEACTIVATE_USER_IF_NO_ROLES is False: reactivate users who were previously auto-deactivated |
 | `sync_request_types` | `waldur_mastermind.support.sync_request_types` | 1 day | Synchronize request types from the active support backend. |
 | `terminate_expired_resources` | `waldur_mastermind.marketplace.terminate_expired_resources` | Cron: `20 1 * * * (m/h/dM/MY/d)` | Terminate marketplace resources that have reached their end date. |
-| `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their project has reached its end date (including grace period).<br><br>Also pauses resources for projects currently in the grace period,<br>if the offering has supports_pausing=True in plugin_options. |
+| `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their project has reached its end date (including grace period).<br><br>Also pauses resources for projects currently in the grace period,<br>if the offering has supports_pausing=True in plugin_options, and lifts that<br>pause from resources whose project has left the grace period without<br>expiring (its end date was extended or cleared). |
 | `terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | `waldur_mastermind.marketplace.terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | 1 day | Clean up erred Slurm resources that failed both creation and termination. |
 | `update-custom-quotas` | `waldur_core.quotas.update_custom_quotas` | 1 hour | No description available |
 | `update-invoices-total-cost` | `invoices.update_invoices_total_cost` | 1 day | Update cached total cost for current month invoices. |
@@ -18137,7 +18146,9 @@ td:nth-child(4) {
 | `waldur-mastermind-reject-past-bookings` | `waldur_mastermind.booking.reject_past_bookings` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Reject booking resources that have start times in the past. |
 | `waldur-mastermind-send-notifications-about-upcoming-bookings` | `waldur_mastermind.booking.send_notifications_about_upcoming_bookings` | Cron: `0 9 * * * (m/h/dM/MY/d)` | Send email notifications to users about their upcoming bookings. |
 | `waldur-matrix-chat-cleanup-appservice-transactions` | `waldur_mastermind.matrix_chat.cleanup_old_appservice_transactions` | Cron: `15 3 * * * (m/h/dM/MY/d)` | Prune MatrixAppserviceTransaction rows older than the retention window. |
+| `waldur-matrix-chat-cleanup-old-history-exports` | `waldur_mastermind.matrix_chat.cleanup_old_history_exports` | Cron: `30 3 * * * (m/h/dM/MY/d)` | Delete history exports, files included, past the retention period.<br><br>Exports are full copies of the history, made daily, and keep messages<br>that were redacted in the room afterwards. |
 | `waldur-matrix-chat-periodic-history-export` | `waldur_mastermind.matrix_chat.periodic_history_export` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Periodically export history for all active rooms. |
+| `waldur-matrix-chat-prune-web-devices` | `waldur_mastermind.matrix_chat.prune_all_web_devices` | Cron: `45 3 * * * (m/h/dM/MY/d)` | Prune the idle web devices of every user who may still have one, daily.<br><br>Pruning on session start never reaches users who do not come back, and a<br>homeserver without access_token_ttl leaves their tokens valid for a week.<br>Users with no web device left are not asked about. |
 | `waldur-openportal-mark-stale-remote-projects` | `waldur_openportal.mark_stale_remote_projects` | 1 hour | Mark RemoteProjects as STALE when we have not received any contact<br>from the remote portal for more than STALE_THRESHOLD_HOURS hours.<br><br>This covers two cases:<br> - last_contact_time is set but is older than the threshold<br> - last_contact_time is null and the project was created more than<br> the threshold ago (i.e. we never heard back after creation)<br><br>A STALE project transitions back to ACTIVE automatically when<br>touch_last_contact() is called (e.g. on a successful usage or<br>storage report fetch). |
 | `waldur-openportal-refresh-remote-projects` | `waldur_openportal.refresh_remote_projects` | 6 hours | Refresh the details of all RemoteProjects from the remote portal.<br>This is called periodically in case we miss the updates that<br>come from push notifications |
 | `waldur-openportal-send-notifications` | `waldur_openportal.send_notifications` | 47 minutes | This task is called to send notifications to all users associated<br>with any OpenPortal allocations. |
@@ -20621,128 +20632,10 @@ Waldur accounting report for {{ month }}/{{ year }}
 
 ```txt
 
-Hello,
+Hi,
 
-Please follow the link below to see {{ customer }}'s accounting information for {{ month }}/{{ year }}:
+Here is the {{ month }}/{{ year }} invoice for {{ customer }}.{% if attached %} It is attached as a PDF, and you can also view it online:{% else %} You can view it online:{% endif %}
 {{ link }}
-
-```
-
-### invoice.html (waldur_mastermind.invoices)
-
-```html
-
-{% load i18n %}
-{% load humanize %}
-
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>Invoice</title>
-    <style type="text/css">
-      {% include "waldur_core/font.css" %}
-      {% include "./style.css" %}
-    </style>
-  </head>
-  <body>
-      <h1>{% trans "Invoice No." %} {{ invoice.number|upper }}</h1>
-      <br>
-      <div class="text-right">
-          <strong>{% trans "Invoice date" %}:</strong> {% if invoice.invoice_date %}
-        {{ invoice.invoice_date|date:"Y-m-d" }} {% else %} {% trans "Pending" %} {% endif %}<br/>
-          {% if invoice.due_date %}<strong>{% trans "Due date" %}:</strong> {{ invoice.due_date|date:"Y-m-d" }}<br/>{% endif %}
-          <strong>{% trans "Invoice period" %}:</strong> {{ invoice.year }}-{{ invoice.month }}<br/>
-      </div>
-
-      <div>
-        <h3 class="name">From</h3>
-        <div><strong>{{ issuer_details.company }}</strong></div>
-        <div>{{ issuer_details.address }}</div>
-        <div>{{ issuer_details.country }}, {{ issuer_details.postal }}</div>
-        <div><abbr>P:</abbr> ({{ issuer_details.phone.country_code }}) {{ issuer_details.phone.national_number }}</div>
-        <div>{{ issuer_details.bank }}, {{ issuer_details.account }}</div>
-        <div><abbr>{% trans "VAT" %}:</abbr>{{ issuer_details.vat_code }}</div>
-        <div>{{ issuer_details.email }}</div>
-      </div>
-      <div>
-        <h3 class="name">To</h3>
-        <div><strong>{{ invoice.customer.name }}</strong></div>
-
-        {% if invoice.customer.address %}
-          <div>{{ invoice.customer.address }}</div>
-        {% endif %}
-
-        {% if invoice.customer.country and invoice.customer.postal %}
-          <div>{{ invoice.customer.country }}, {{ invoice.customer.postal }}</div>
-        {% endif %}
-
-        {% if invoice.customer.phone_number %}
-          <div><abbr>P:</abbr> {{ invoice.customer.phone_number }}</div>
-        {% endif %}
-
-        {% if invoice.customer.bank_name and invoice.customer.bank_account %}
-          <div>{{ invoice.customer.bank_name }}, {{ invoice.customer.bank_account }}</div>
-        {% endif %}
-
-        {% if customer.vat_code %}
-          <div><abbr>{% trans "VAT" %}:</abbr> {{ customer.vat_code }}</div>
-        {% endif %}
-
-        <div>{{ invoice.customer.email }}</div>
-
-      </div>
-      <div class="m-t">
-        <table class="invoice-table">
-          <tr>
-            <th>Item</th>
-            <th>Quantity</th>
-            <th>Unit price</th>
-            <th>Total price</th>
-          </tr>
-
-          {% regroup items|dictsort:"project_name" by project_name as project_list %}
-          {% for project in project_list %}
-          <tr>
-              <td colspan="4"><h3>{{ project.grouper }}</h3></td>
-          </tr>
-            {% for item in project.list %}
-              <tr>
-                <td>
-                  <strong>{{ item.name }}</strong>
-                  <div>
-                    <small>
-                      {% trans "Start time" %}: {{ item.start | date:"Y-m-d H:i" }}.
-                      {% trans "End time" %}: {{ item.end | date:"Y-m-d H:i" }}.
-                    </small>
-                  </div>
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ currency }} {{ item.unit_price | floatformat:2 | intcomma }}</td>
-                <td>{{ currency }} {{ item.total | floatformat:2 | intcomma }}</td>
-              </tr>
-            {% endfor %}
-          {% endfor %}
-        </table>
-      </div>
-      <table class="m-t invoice-total">
-        <tr>
-          <td><strong>{% trans "Subtotal" %}</strong></td>
-          <td>{{ currency }} {{ invoice.price | floatformat:2 | intcomma}}</td>
-        </tr>
-        {% if invoice.tax %}
-          <tr>
-            <td><strong>{% trans "VAT" %}</strong></td>
-            <td>{{ currency }} {{ invoice.tax | floatformat:2 | intcomma}}</td>
-          </tr>
-        {% endif %}
-        <tr>
-          <td><strong>{% trans "TOTAL" %}</strong></td>
-          <td>{{ currency }} {{ invoice.total | floatformat:2 | intcomma}}</td>
-      </tr>
-      </table>
-  </body>
-</html>
 
 ```
 
@@ -20750,7 +20643,7 @@ Please follow the link below to see {{ customer }}'s accounting information for 
 
 ```txt
 
-{{ customer }}'s invoice for {{ month }}/{{ year }}
+Invoice for {{ customer }}, {{ month }}/{{ year }}
 
 ```
 
@@ -20851,14 +20744,15 @@ Please follow the link below to see {{ customer }}'s accounting information for 
 <html xmlns="http://www.w3.org/1999/html">
 <head lang="en">
     <meta charset="UTF-8">
-    <title>{{ customer }}'s invoice for {{ month }}/{{ year }}</title>
+    <title>Invoice for {{ customer }}, {{ month }}/{{ year }}</title>
 </head>
 <body>
 <p>
-    Dear Sir or Madam,
+    Hi,
 </p>
 <p>
-    Attached is invoice for services consumed by {{ customer }}'s during {{ month }}/{{ year }}.
+    Here is the {{ month }}/{{ year }} invoice for {{ customer }}.
+    {% if attached %}It is attached as a PDF, and you can also <a href="{{ link }}">view it online</a>.{% else %}You can <a href="{{ link }}">view it online</a>.{% endif %}
 </p>
 </body>
 </html>
@@ -97381,12 +97275,12 @@ Checks performed (the `checks` array in the response):
 
 1. Homeserver URL configured (`homeserver_configured`)
 2. Homeserver domain configured (`homeserver_domain_configured`)
-3. Homeserver reachable (`homeserver_reachable`, via `/_matrix/client/versions`)
+3. Homeserver reachable (`homeserver_reachable`, via `/_matrix/client/versions`; also names the homeserver software and version, from `/_matrix/federation/v1/version` or, with federation off, Tuwunel's `/_tuwunel/server_version`)
 4. AS token configured (`as_token_configured`)
 5. HS token configured (`hs_token_configured`)
 6. Registration secret configured (`registration_secret_configured`)
-7. Bot authentication (`bot_whoami`, via `/account/whoami`)
-8. Bot can operate (`bot_functional`, list joined rooms)
+7. Bot authentication (`bot_whoami`, via `/account/whoami`; also how many rooms the bot is in)
+8. Appservice can act for users (`appservice_user_namespace`: `/account/whoami` as the staff user's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)
 9. Room statistics (`room_stats`: active, creating, errored counts)
 10. User profile statistics (`user_stats`: provisioned count)
 
@@ -97397,8 +97291,8 @@ Checks performed (the `checks` array in the response):
   "ok": true,
   "checks": [
     {"name": "homeserver_domain_configured", "label": "Homeserver domain configured", "ok": true, "detail": "matrix.example.com"},
-    {"name": "homeserver_reachable", "label": "Homeserver reachable", "ok": true, "detail": "OK — versions: v1.11, v1.12"},
-    {"name": "bot_whoami", "label": "Bot authentication (whoami)", "ok": true, "detail": "OK — authenticated as @waldur-bot:matrix.example.com"}
+    {"name": "homeserver_reachable", "label": "Homeserver reachable", "ok": true, "detail": "OK — Tuwunel 1.9.0, Matrix up to v1.19"},
+    {"name": "bot_whoami", "label": "Bot authentication (whoami)", "ok": true, "detail": "OK — authenticated as @waldur-bot:matrix.example.com, in 3 room(s)"}
   ]
 }
 ```
@@ -97462,7 +97356,8 @@ To let project managers create rooms too, grant them the permission in
 ```
 
 The grant also lets them manage the room and download its history exports, see
-[Room actions](#room-actions).
+[Room actions](#room-actions). Whoever may create a project's room is also an
+admin in it (power level 50), so it makes project managers room admins as well.
 
 If you replaced `CUSTOMER.OWNER` wholesale in `custom-roles.yaml`, add
 `MATRIX_ROOM.CREATE` to that list yourself, or owners lose room creation.
@@ -97641,7 +97536,7 @@ When a room is created or a manual sync is triggered:
 3. Display names are set to the user's full name
 4. Users are invited to the room, and the invite is accepted on their behalf
 5. Power levels are set based on roles:
-   - Project admin or customer owner: power level 50
+   - Project admin, or anyone who may create the project's room (`MATRIX_ROOM.CREATE` on the project or its organization, held by organization owners by default): power level 50, shown as Admin in the chat
    - Regular member: power level 0
    - The bot account: power level 100
 
@@ -102525,10 +102420,17 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 ## Proposal
 
 - proposal_canceled
+- proposal_decision_reopened
 - proposal_document_added
 - proposal_document_removed
 - proposal_draft_carried_over
+- proposal_rejected_at_round_completion
 - proposal_workflow_advanced
+- round_closed
+- round_decision_started
+- round_evaluation_started
+- round_results_published
+- round_undecided_proposals_rejected
 
 ## Providers
 
@@ -103540,11 +103442,14 @@ td:nth-child(4) {
 | `offering_component_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.OfferingComponent` | Log offering component creation and updates. |
 | `offering_component_has_been_deleted` | `Django Signal (post_delete)` | `marketplace.OfferingComponent` | Log offering component deletion. |
 | `offering_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Offering` | Log offering creation and updates. |
+| `on_history_export_deleted` | `Django Signal (post_delete)` | `matrix_chat.MatrixHistoryExport` | No description |
 | `on_order_state_changed` | `Django Signal (post_save)` | `marketplace.Order` | Notify the project's Matrix room when an order is approved, completed, or rejected. |
 | `on_project_created` | `Django Signal (post_save)` | `structure.Project` | Provision a Matrix room for a newly created project, when opted in. |
 | `on_project_pre_delete` | `Django Signal (pre_delete)` | `structure.Project` | When a project is about to be deleted, disable room (kick members, export, archive). |
-| `on_user_deactivated` | `Django Signal (post_save)` | `core.User` | End the user's web chat sessions so an open drawer loses access. |
-| `on_user_pre_delete` | `Django Signal (pre_delete)` | `core.User` | End a deleted user's web chat sessions. |
+| `on_user_deactivated` | `Django Signal (post_save)` | `core.User` | Sign out every Matrix device of a deactivated user and remove them from their rooms. |
+| `on_user_demoted` | `Django Signal (post_save)` | `core.User` | Take former staff and support out of the rooms they joined with the |
+| `on_user_pre_delete` | `Django Signal (pre_delete)` | `core.User` | End a deleted user's Matrix sessions and room memberships. |
+| `on_user_reactivated` | `Django Signal (post_save)` | `core.User` | Bring a reactivated user back into the rooms deactivation removed them from. |
 | `plan_component_has_been_updated` | `Django Signal (post_save)` | `marketplace.PlanComponent` | Log plan component updates. |
 | `plan_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Plan` | Log plan creation, update, and archiving events. |
 | `populate_volume_metadata_on_resource_creation` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
@@ -103563,6 +103468,7 @@ td:nth-child(4) {
 | `record_credit_transaction` | `Django Signal (post_save)` | `invoices.CustomerCredit` | Write ledger rows for every credit value change, organization or project. |
 | `record_credit_transaction` | `Django Signal (post_save)` | `invoices.ProjectCredit` | Write ledger rows for every credit value change, organization or project. |
 | `refund_project_credit_on_project_removal` | `Django Signal (pre_delete)` | `structure.Project` | No description |
+| `release_grace_pauses_when_project_end_date_changes` | `Django Signal (post_save)` | `structure.Project` | Lift grace-period pauses once a project's end date moves it out of the grace period. |
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.OfferingUser` | Mark the deleted POSIX id consumer's identity as released. |
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.ServiceProviderAccount` | Mark the deleted POSIX id consumer's identity as released. |
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.RobotAccount` | Mark the deleted POSIX id consumer's identity as released. |
@@ -103712,6 +103618,7 @@ td:nth-child(4) {
 |--------------|-------------|--------|-------------|
 | `add_instance_fields` | `Custom Signal (pre_serializer_fields)` | `OpenStackFloatingIPSerializer` | Add instance-related fields to the serializer. |
 | `delete_state_service_properties` | `Django Signal (post_delete)` | `openstack.Tenant` | Delete state service properties. |
+| `drop_networks_of_unmanaged_owner_when_unshared` | `Django Signal (post_delete)` | `openstack.NetworkRBACPolicy` | Sweep an unmanaged owner's networks once a share of theirs is gone. |
 | `log_action` | `Django Signal (post_save)` | `openstack.Instance` | Log any resource action. |
 | `log_action` | `Django Signal (post_save)` | `openstack.Volume` | Log any resource action. |
 | `log_action` | `Django Signal (post_save)` | `openstack.Snapshot` | Log any resource action. |
@@ -103767,16 +103674,16 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 748
+Total unique handlers found: 753
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 345 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 343 handlers
+- **waldur_mastermind**: 347 handlers
 - **waldur_openportal**: 10 handlers
-- **waldur_openstack**: 13 handlers
+- **waldur_openstack**: 14 handlers
 - **waldur_openstack_replication**: 1 handlers
 - **waldur_rancher**: 12 handlers
 - **waldur_sram**: 6 handlers
@@ -105696,7 +105603,10 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`TenantQuotaMixin`](#tenantquotamixin) | `waldur_openstack.models` | It allows to update both service settings and shared tenant quotas |
 | [`LimitedPerTypeThrottleMixin`](#limitedpertypethrottlemixin) | `waldur_openstack.tasks` | No description available |
 | [`TenantMixin`](#tenantmixin) | `waldur_openstack.tests.factories` | No description available |
+| [`SharedSubnetMixin`](#sharedsubnetmixin) | `waldur_openstack.tests.test_rbac_shared_subnet_actions` | No description available |
+| [`UnmanagedOwnerShareMixin`](#unmanagedownersharemixin) | `waldur_openstack.tests.test_unmanaged_owner_share` | No description available |
 | [`LBaaSAuditMixin`](#lbaasauditmixin) | `waldur_openstack.views` | Emit lifecycle audit events for LBaaS resources on create/update/delete |
+| [`UnmanagedOwnerReadOnlyMixin`](#unmanagedownerreadonlymixin) | `waldur_openstack.views` | Refuse write actions on a tenant Waldur does not manage, and on its networks |
 | [`DataciteMixin`](#datacitemixin) | `waldur_pid.mixins` | A marker model for models that can be registered with PIDs and referred to in... |
 | [`RoleMixin`](#rolemixin) | `waldur_rancher.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`SettingsMixin`](#settingsmixin) | `waldur_rancher.models` | Make subclasses preserve the alters_data attribute on overridden methods |
@@ -107353,6 +107263,18 @@ It allows to update both service settings and shared tenant quotas.
 
 **Description:** No description available.
 
+### SharedSubnetMixin
+
+**Module:** `waldur_openstack.tests.test_rbac_shared_subnet_actions`
+
+**Description:** No description available.
+
+### UnmanagedOwnerShareMixin
+
+**Module:** `waldur_openstack.tests.test_unmanaged_owner_share`
+
+**Description:** No description available.
+
 ### LBaaSAuditMixin
 
 **Module:** `waldur_openstack.views`
@@ -107364,6 +107286,18 @@ Emit lifecycle audit events for LBaaS resources on create/update/delete.
 Designed to be mixed into ViewSets that also use ExecutorMixin. The events
 fire from the API request thread, so they carry actor context (user, IP,
 request id) auto-attached by CaptureEventContextMiddleware.
+
+### UnmanagedOwnerReadOnlyMixin
+
+**Module:** `waldur_openstack.views`
+
+**Description:**
+
+Refuse write actions on a tenant Waldur does not manage, and on its networks.
+
+Such a tenant is an OpenStack project that only shares networks with
+managed tenants. Waldur holds no credentials for it, and the project and its
+networks are not Waldur's to change, so it is only ever read.
 
 ### DataciteMixin
 
