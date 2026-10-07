@@ -73,16 +73,22 @@ A single policy can attach multiple actions.
 
 ```mermaid
 graph TD
-    A[New invoice item / credit change] --> B{Gate 1:<br>cost this window<br>net of compensation<br>>= limit_cost?}
+    A[New invoice item / credit change] --> B{Gate 1:<br>cost this window<br>net of compensation<br>> limit_cost?}
     B -->|No| Z[Policy stays clear]
     B -->|Yes| C{use_credit configured?}
     C -->|No| F[Policy fires]
-    C -->|Yes| D{Gate 2:<br>credit balance<br><= limit_cost?}
+    C -->|Yes| D{Gate 2:<br>live credit balance<br><= limit_cost?}
     D -->|No, balance healthy| Z
     D -->|Yes, balance depleted| F
 ```
 
-Gate 1 sums the project's or customer's real, persisted invoice items — cost and compensation together — over the policy's rolling window; for an already-finalized month, that's real data, not an estimate. Gate 2 separately re-checks the real, persisted credit balance directly, and is only consulted once gate 1 is already open — a `use_credit=False` policy skips it and fires on gross cost alone. The two can disagree because they read different facts: gate 1 is a net invoiced position over a window, gate 2 is the current remaining reserve — a window can look expensive net of whatever compensation actually landed on it while the account's real balance still has plenty of headroom, or vice versa.
+Gate 1 sums the project's or customer's real, persisted invoice items — cost and compensation together — over the policy's rolling window, less the credit the current month will still draw; for an already-finalized month, that's real data, not an estimate.
+
+Gate 2 checks the **live** credit balance: the credit the month started with, minus what this month's usage has drawn so far. The stored balance is only reduced when the month's compensations are written at the month-end billing run, so it cannot be used mid-month — it would still show credit that usage has already spent, and hold the policy back until the 1st. A required minimal monthly consumption is not counted as usage: it is taken at month end regardless, so it does not make the credit look spent early. For a project with its own credit allocation, the allocation counts only while the organization credit funding it lasts.
+
+Gate 2 is only consulted once gate 1 is already open — a `use_credit=False` policy skips it and fires on gross cost alone. The two can disagree because they read different facts: gate 1 is a net invoiced position over a window, gate 2 is the remaining reserve — a window can look expensive net of whatever compensation actually landed on it while the account's real balance still has plenty of headroom, or vice versa.
+
+In practice, a credit-funded policy fires as soon as the month's usage has spent the credit down to the limit, rather than at the month-end billing run. With period **Total** and earlier uncovered cost already above the limit, gate 1 stays open permanently and gate 2 alone decides, so `limit_cost` effectively means "act when less than this much credit remains".
 
 For the full mechanics — how compensation actually gets computed and persisted, and a verified worked example of the two gates disagreeing — see [Cost Policies and Compensation](../../developer-guide/guides/billing-and-invoicing.md#cost-policies-and-compensation).
 
