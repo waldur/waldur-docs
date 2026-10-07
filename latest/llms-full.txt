@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-07T09:40:17.401208Z
+Generated: 2026-10-07T19:00:02.166443Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -12116,6 +12116,10 @@ Allows to hide domain field in organization detail.
 ## customer.show_onboarding
 
 Enable onboarding functionality.
+
+## customer.show_organisation_reporting
+
+Show the Reporting menu with organisation-scoped reports to organisation owners.
 
 ## customer.show_permission_reviews
 
@@ -86338,7 +86342,6 @@ cn: genomics
 gidNumber: 20001
 memberUid: demo-member
 memberUid: demo-user1
-description: waldur-managed
 description: organization=big-science
 
 dn: cn=hpc-cluster,ou=clusters,dc=example,dc=org
@@ -86384,7 +86387,6 @@ backend_settings:
 | `project_groups.member_attribute` | `memberUid` | `memberUid` writes usernames; `member` writes user DNs (`uid=<name>,<people_ou>,<base_dn>`) |
 | `project_groups.membership` | `sync` | `sync` adds and removes members to match Waldur; `add_only` never removes one |
 | `project_groups.on_gid_mismatch` | `report` | A same-named entry with another GID: `report` keeps the directory's GID and logs it every cycle; `adopt` rewrites it to Waldur's |
-| `project_groups.managed_marker` | `waldur-managed` | Extra `description` value on every group the agent creates or adopts |
 | `project_groups.organization_description` | unset | Template of a `description` value naming the project's organization; it must contain `{slug}` once, e.g. `organization={slug}`. Unset, nothing is written (see [The organization in the description](#the-organization-in-the-description)) |
 | `project_groups.parents` | `[]` | Entries that list the DN of each group whose project has a resource on the offering |
 | `parents[].dn` | — | Full DN of the entry |
@@ -86410,14 +86412,14 @@ acting on events.
 
 For each group Waldur lists:
 
-- **No entry yet** — the agent creates it with Waldur's name, GID, members and
-  the marker, unless the GID is already used anywhere under `base_dn` (users'
+- **No entry yet** — the agent creates it with Waldur's name, GID and
+  members, unless the GID is already used anywhere under `base_dn` (users'
   primary GIDs included) or a `posixGroup` of the same name exists outside the
   project OU. Such a group is reported every cycle and not written; fix it in
   Waldur with [Change GID](project-groups.md#changing-a-gid) or by adopting the
   directory's GID.
-- **An entry with the same name and GID** — the agent adopts it: it adds the
-  marker and reconciles the members and cluster entries.
+- **An entry with the same name and GID** — the agent adopts it and reconciles
+  the members and cluster entries.
 - **An entry with the same name and another GID** — under `report` the GID is
   left alone and logged every cycle, while members and cluster entries are
   still reconciled. Under `adopt` the agent rewrites `gidNumber` to Waldur's.
@@ -86431,24 +86433,20 @@ For each group Waldur lists:
 Group entries are never deleted: their GIDs stay reserved in Waldur. A user is
 named in a group only once their account entry exists under `people_ou`.
 
-### The waldur-managed marker and cluster entries
-
-Every group the agent creates or adopts gets one extra `description` value,
-`waldur-managed` (the `managed_marker` setting). Your own description values
-stay.
+### Cluster entries
 
 The agent makes each cluster entry in `parents` list the DNs of the groups
 whose project has a resource on the entry's offerings. It only ever removes a DN
-that lies **under the project OU**, and then only:
+that lies **under the project OU** and belongs to a group Waldur lists, and then
+only when its project no longer has a resource on those offerings, or the group
+could not be written.
 
-- for a group Waldur lists, when its project no longer has a resource on those
-  offerings, or the group could not be written;
-- for a group Waldur no longer lists (an offering moved to another provider,
-  say), when its entry carries the marker.
-
-A hand-made group under the project OU without the marker, and any DN outside
-the project OU, is never removed. The directory is left untouched for the
-cycle when Waldur cannot be read or returns no groups at all.
+A group under the project OU that Waldur does not list is never removed, nor is
+any DN outside the project OU. That covers a hand-made group, and also a group
+Waldur stops listing because its offering moved to another provider or the
+provider was deleted — take such a DN out of the cluster entry by hand. Waldur
+never renames or deletes a project group otherwise. The directory is left
+untouched for the cycle when Waldur cannot be read or returns no groups at all.
 
 !!! tip "One cluster entry, several offerings"
     Two offerings of one provider on one directory see the same groups with the
@@ -86458,13 +86456,18 @@ cycle when Waldur cannot be read or returns no groups at all.
     start-up when two offerings in its configuration point at one entry without
     `offering_uuids`.
 
+!!! note "Groups written by earlier agents"
+    Earlier agents added a `waldur-managed` value to the `description` of
+    every group they created or adopted. Current agents neither read nor write
+    it, and leave existing values in place; remove them by hand if you like.
+
 ### The organization in the description
 
 With `organization_description` set, every group also gets a `description`
 value naming the organization its project belongs to: the template with
 `{slug}` replaced by the organization's slug. `organization={slug}` gives
 `organization=big-science` in the example above. The value is written on new
-groups, added to adopted ones next to the marker and your own values, and
+groups, added to adopted ones next to your own values, and
 checked on every pass:
 
 - **Text around `{slug}`** — when an organization's slug changes, the agent

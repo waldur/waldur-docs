@@ -17907,10 +17907,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-waldur-managed-marker-and-cluster-entries" class="md-nav__link">
+  <a href="#cluster-entries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The waldur-managed marker and cluster entries
+        Cluster entries
       
     </span>
   </a>
@@ -19279,10 +19279,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-waldur-managed-marker-and-cluster-entries" class="md-nav__link">
+  <a href="#cluster-entries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The waldur-managed marker and cluster entries
+        Cluster entries
       
     </span>
   </a>
@@ -19748,15 +19748,13 @@ and allows <code>memberUid</code> only:</p>
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">dn</span><span class="p">:</span><span class="w"> </span><span class="na">cn</span><span class="o">=</span><span class="s">genomics</span><span class="p">,</span><span class="na">ou</span><span class="o">=</span><span class="s">projects</span><span class="p">,</span><span class="na">dc</span><span class="o">=</span><span class="s">example</span><span class="p">,</span><span class="na">dc</span><span class="o">=</span><span class="s">org</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">dn</span><span class="p">:</span><span class="w"> </span><span class="na">cn</span><span class="o">=</span><span class="s">genomics</span><span class="p">,</span><span class="na">ou</span><span class="o">=</span><span class="s">projects</span><span class="p">,</span><span class="na">dc</span><span class="o">=</span><span class="s">example</span><span class="p">,</span><span class="na">dc</span><span class="o">=</span><span class="s">org</span>
 <span class="na">objectClass</span><span class="p">:</span><span class="w"> </span><span class="s">top</span>
 <span class="na">objectClass</span><span class="p">:</span><span class="w"> </span><span class="s">posixGroup</span>
 <span class="na">cn</span><span class="p">:</span><span class="w"> </span><span class="s">genomics</span>
 <span class="na">gidNumber</span><span class="p">:</span><span class="w"> </span><span class="s">20001</span>
 <span class="na">memberUid</span><span class="p">:</span><span class="w"> </span><span class="s">demo-member</span>
 <span class="na">memberUid</span><span class="p">:</span><span class="w"> </span><span class="s">demo-user1</span>
-<span class="na">description</span><span class="p">:</span><span class="w"> </span><span class="s">waldur-managed</span>
 <span class="na">description</span><span class="p">:</span><span class="w"> </span><span class="s">organization=big-science</span>
 
 <span class="k">dn</span><span class="p">:</span><span class="w"> </span><span class="na">cn</span><span class="o">=</span><span class="s">hpc-cluster</span><span class="p">,</span><span class="na">ou</span><span class="o">=</span><span class="s">clusters</span><span class="p">,</span><span class="na">dc</span><span class="o">=</span><span class="s">example</span><span class="p">,</span><span class="na">dc</span><span class="o">=</span><span class="s">org</span>
@@ -19857,11 +19855,6 @@ and allows <code>memberUid</code> only:</p>
 <td>A same-named entry with another GID: <code>report</code> keeps the directory's GID and logs it every cycle; <code>adopt</code> rewrites it to Waldur's</td>
 </tr>
 <tr>
-<td><code>project_groups.managed_marker</code></td>
-<td><code>waldur-managed</code></td>
-<td>Extra <code>description</code> value on every group the agent creates or adopts</td>
-</tr>
-<tr>
 <td><code>project_groups.organization_description</code></td>
 <td>unset</td>
 <td>Template of a <code>description</code> value naming the project's organization; it must contain <code>{slug}</code> once, e.g. <code>organization={slug}</code>. Unset, nothing is written (see <a href="#the-organization-in-the-description">The organization in the description</a>)</td>
@@ -19904,14 +19897,14 @@ acting on events.</p>
 <h3 id="what-the-agent-writes">What the agent writes</h3>
 <p>For each group Waldur lists:</p>
 <ul>
-<li><strong>No entry yet</strong> — the agent creates it with Waldur's name, GID, members and
-  the marker, unless the GID is already used anywhere under <code>base_dn</code> (users'
+<li><strong>No entry yet</strong> — the agent creates it with Waldur's name, GID and
+  members, unless the GID is already used anywhere under <code>base_dn</code> (users'
   primary GIDs included) or a <code>posixGroup</code> of the same name exists outside the
   project OU. Such a group is reported every cycle and not written; fix it in
   Waldur with <a href="../project-groups/#changing-a-gid">Change GID</a> or by adopting the
   directory's GID.</li>
-<li><strong>An entry with the same name and GID</strong> — the agent adopts it: it adds the
-  marker and reconciles the members and cluster entries.</li>
+<li><strong>An entry with the same name and GID</strong> — the agent adopts it and reconciles
+  the members and cluster entries.</li>
 <li><strong>An entry with the same name and another GID</strong> — under <code>report</code> the GID is
   left alone and logged every cycle, while members and cluster entries are
   still reconciled. Under <code>adopt</code> the agent rewrites <code>gidNumber</code> to Waldur's.</li>
@@ -19925,22 +19918,18 @@ why <code>report</code> is the default.</p>
 </div>
 <p>Group entries are never deleted: their GIDs stay reserved in Waldur. A user is
 named in a group only once their account entry exists under <code>people_ou</code>.</p>
-<h3 id="the-waldur-managed-marker-and-cluster-entries">The waldur-managed marker and cluster entries</h3>
-<p>Every group the agent creates or adopts gets one extra <code>description</code> value,
-<code>waldur-managed</code> (the <code>managed_marker</code> setting). Your own description values
-stay.</p>
+<h3 id="cluster-entries">Cluster entries</h3>
 <p>The agent makes each cluster entry in <code>parents</code> list the DNs of the groups
 whose project has a resource on the entry's offerings. It only ever removes a DN
-that lies <strong>under the project OU</strong>, and then only:</p>
-<ul>
-<li>for a group Waldur lists, when its project no longer has a resource on those
-  offerings, or the group could not be written;</li>
-<li>for a group Waldur no longer lists (an offering moved to another provider,
-  say), when its entry carries the marker.</li>
-</ul>
-<p>A hand-made group under the project OU without the marker, and any DN outside
-the project OU, is never removed. The directory is left untouched for the
-cycle when Waldur cannot be read or returns no groups at all.</p>
+that lies <strong>under the project OU</strong> and belongs to a group Waldur lists, and then
+only when its project no longer has a resource on those offerings, or the group
+could not be written.</p>
+<p>A group under the project OU that Waldur does not list is never removed, nor is
+any DN outside the project OU. That covers a hand-made group, and also a group
+Waldur stops listing because its offering moved to another provider or the
+provider was deleted — take such a DN out of the cluster entry by hand. Waldur
+never renames or deletes a project group otherwise. The directory is left
+untouched for the cycle when Waldur cannot be read or returns no groups at all.</p>
 <div class="admonition tip">
 <p class="admonition-title">One cluster entry, several offerings</p>
 <p>Two offerings of one provider on one directory see the same groups with the
@@ -19950,12 +19939,18 @@ both; otherwise each removes the groups the other adds. The agent warns at
 start-up when two offerings in its configuration point at one entry without
 <code>offering_uuids</code>.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Groups written by earlier agents</p>
+<p>Earlier agents added a <code>waldur-managed</code> value to the <code>description</code> of
+every group they created or adopted. Current agents neither read nor write
+it, and leave existing values in place; remove them by hand if you like.</p>
+</div>
 <h3 id="the-organization-in-the-description">The organization in the description</h3>
 <p>With <code>organization_description</code> set, every group also gets a <code>description</code>
 value naming the organization its project belongs to: the template with
 <code>{slug}</code> replaced by the organization's slug. <code>organization={slug}</code> gives
 <code>organization=big-science</code> in the example above. The value is written on new
-groups, added to adopted ones next to the marker and your own values, and
+groups, added to adopted ones next to your own values, and
 checked on every pass:</p>
 <ul>
 <li><strong>Text around <code>{slug}</code></strong> — when an organization's slug changes, the agent
