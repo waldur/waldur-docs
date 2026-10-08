@@ -1767,6 +1767,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#web-chat-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web chat sessions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web chat sessions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#external-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External clients
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#operational-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8917,6 +8945,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../developer-guide/ui/a11y-decision-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A11y decision matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../developer-guide/ui/api-integration/" class="md-nav__link">
         
   
@@ -9684,10 +9740,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_29">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_30">
         
           
-          <label class="md-nav__link" for="__nav_3_4_29" id="__nav_3_4_29_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4_30" id="__nav_3_4_30_label" tabindex="0">
             
   
   
@@ -9705,8 +9761,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_29_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_4_29">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_30_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4_30">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -19332,6 +19388,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#web-chat-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web chat sessions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web chat sessions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#external-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External clients
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#operational-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19409,8 +19493,10 @@ which is what the bundled <code>docker/matrix-dev/docker-compose.yml</code> brin
     ROOM -.-&gt;|room_id| ROOMHS</code></pre>
 <p>When a Waldur project is provisioned for chat, a <code>MatrixRoom</code> row is
 created and a celery task syncs every project member into the room via a
-per-user <code>MatrixUserProfile</code>. Outbound events flow Waldur → homeserver
-through the matrix-js-sdk login-token flow. Inbound events arrive over the
+per-user <code>MatrixUserProfile</code>. Waldur joins and leaves rooms as the user
+through the appservice, without logging in as them. The chat drawer talks
+to the homeserver directly with a short-lived web session (see
+<a href="#web-chat-sessions">Web chat sessions</a>). Inbound events arrive over the
 appservice webhook (<code>PUT /_matrix/app/v1/transactions/{txnId}</code>), are
 deduplicated by <code>txn_id</code>, and dispatched to the bot-command handlers if
 the sender holds an active project role. Project deletion runs the same
@@ -19500,7 +19586,7 @@ Django shell:</p>
 <span class="n">config</span><span class="o">.</span><span class="n">MATRIX_HOMESERVER_URL</span> <span class="o">=</span> <span class="s2">"http://localhost:6167"</span>
 <span class="n">config</span><span class="o">.</span><span class="n">MATRIX_HOMESERVER_DOMAIN</span> <span class="o">=</span> <span class="s2">"localhost"</span>
 <span class="n">config</span><span class="o">.</span><span class="n">MATRIX_USER_REGISTRATION_SECRET</span> <span class="o">=</span> <span class="s2">"devregistrationsecret"</span>  <span class="c1"># match tuwunel.toml</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_LOGIN_METHOD</span> <span class="o">=</span> <span class="s2">"token"</span>
+<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_EXTERNAL_LOGIN_METHOD</span> <span class="o">=</span> <span class="s2">"none"</span>  <span class="c1"># "password" or "oidc" to allow Element</span>
 <span class="n">config</span><span class="o">.</span><span class="n">MATRIX_APPSERVICE_SENDER_LOCALPART</span> <span class="o">=</span> <span class="s2">"waldur-bot"</span>
 <span class="n">config</span><span class="o">.</span><span class="n">MATRIX_HISTORY_EXPORT_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div></td></tr></tbody></table></div>
@@ -19514,7 +19600,7 @@ access on <code>MATRIX_ENABLED</code> regardless — the feature flag only toggl
 page load (the <code>/api/configuration/</code> response is cached in the SPA bootstrap).</p>
 <hr>
 <h2 id="running-the-setup-wizard">Running the Setup wizard</h2>
-<p>In the homeport, open <strong>Administration → Matrix chat</strong> and click
+<p>In the homeport, open <strong>Administration → Configuration → Matrix chat</strong> and click
 <strong>Setup appservice</strong>. The wizard generates fresh AS/HS tokens, persists
 them via Constance, and returns the registration YAML to copy into the
 homeserver. Re-running Setup rotates both tokens — you will need to update
@@ -19594,10 +19680,13 @@ tokens once you change them in Waldur.</p>
 <h2 id="verifying-the-integration">Verifying the integration</h2>
 <p>Open the <strong>Check connectivity</strong> dialog from the same page:</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/11-admin-diagnostics.png" data-desc-position="bottom"><img alt="Connectivity diagnostics — all checks green" src="../img/matrix-chat/11-admin-diagnostics.png"></a></p>
-<p>The dialog runs ten live checks against the homeserver and reports the
-result. AS/HS tokens are shown as SHA-256 fingerprints (<code>sha256:&lt;first-12-hex&gt;</code>)
-so the diagnostic does not leak token material. When all ten checks are
-green the integration is ready for use.</p>
+<p>The dialog runs live checks against the homeserver and reports the result.
+AS/HS tokens are shown as SHA-256 fingerprints (<code>sha256:&lt;first-12-hex&gt;</code>)
+so the diagnostic does not leak token material. The integration is ready for
+use when every check is green, except the LiveKit check, which matters only
+for voice and video calls. The
+<a href="../../developer-guide/admin-guide/matrix-appservice-setup/#get-apiadminmatrixdiagnostics">setup guide</a>
+lists the checks.</p>
 <hr>
 <h2 id="creating-a-project-room">Creating a project room</h2>
 <p>From the <strong>Rooms</strong> tab on the same page, click <strong>Create</strong> and pick a
@@ -19743,7 +19832,8 @@ LiveKit transport is reachable.</p>
    at the local <code>lk-jwt-service</code>.</li>
 <li>The well-known fetch from the browser succeeded. If the homeserver
    is unreachable or the response doesn't include a <code>livekit</code> transport,
-   the menu shows only <strong>Mute</strong> and <strong>Open in external Matrix client</strong>.</li>
+   the menu shows only <strong>Mute</strong>, plus <strong>Open in external Matrix client</strong>
+   when <code>MATRIX_EXTERNAL_LOGIN_METHOD</code> is <code>password</code> or <code>oidc</code>.</li>
 </ol>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/12-chat-kebab-call.png" data-desc-position="bottom"><img alt="Chat kebab with Start call available" src="../img/matrix-chat/12-chat-kebab-call.png"></a></p>
 <p>When <strong>Start call</strong> runs, the browser exchanges the user's Matrix
@@ -19800,31 +19890,108 @@ federated participant or a guest who happens to be invited to the room gets
 a single-line denial, not project data.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/07-bot-replies.png" data-desc-position="bottom"><img alt="!status and !members replies from the bot" src="../img/matrix-chat/07-bot-replies.png"></a></p>
 <hr>
+<h2 id="web-chat-sessions">Web chat sessions</h2>
+<p>With refresh tokens configured on the homeserver (the Helm chart and
+docker-compose do this for Tuwunel), the chat drawer never holds a long-lived
+token. It calls <code>POST /api/matrix/session/</code>, which signs the user in through
+the appservice on a new device (<code>WALDUR_WEB_&lt;id&gt;</code>) and returns an access token
+and a refresh token. The drawer keeps both in memory and renews the access
+token through Matrix <code>/refresh</code>. It asks Waldur for a new session when a
+refresh is rejected or when the homeserver signs its device out, for example
+from Element's session list or because Waldur's limit of web devices was
+reached. Whether the user may still chat is decided there: a deactivated,
+deleted or signed-out user gets no new session and is returned to the login
+page. When chat was switched off, or the new session is signed out again
+within a minute, the drawer shows <strong>Your chat session has ended.</strong></p>
+<p>Waldur is consulted only when the drawer connects, when a refresh is rejected
+and when the device is signed out. Switching chat off or signing out of
+Waldur in another tab therefore does not cut an open drawer: it keeps working
+until it next needs a new session.</p>
+<p>The homeserver sets the lifetimes:</p>
+<table>
+<thead>
+<tr>
+<th>Tuwunel key</th>
+<th>Helm value</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>access_token_ttl</code></td>
+<td><code>matrixChat.homeserver.accessTokenTtl</code></td>
+<td><code>300</code></td>
+<td>Access token lifetime in seconds</td>
+</tr>
+<tr>
+<td><code>refresh_token_ttl</code></td>
+<td><code>matrixChat.homeserver.refreshTokenTtl</code></td>
+<td><code>86400</code></td>
+<td>Idle lifetime of the refresh token in seconds</td>
+</tr>
+</tbody>
+</table>
+<p>docker-compose sets the same values in <code>config/matrix/tuwunel.toml.template</code>;
+edit the template to change them. Each refresh moves the idle deadline
+forward, so an open drawer never expires. Logins without a refresh token, such
+as Element with a password, keep non-expiring tokens.</p>
+<p>Every session has its own device. Tuwunel keeps one refresh token per
+device, so a device shared by two browser tabs would revoke itself. After
+each new session Waldur signs out the user's web devices not seen for 24
+hours, a window fixed in Waldur, and beyond the 10 most recently seen it
+signs out the rest, except devices seen in the last ten minutes: those belong
+to open tabs.</p>
+<h3 id="external-clients">External clients</h3>
+<p><code>MATRIX_EXTERNAL_LOGIN_METHOD</code> decides whether users can also open rooms in
+an external client: <code>none</code> (default) hides the option, <code>password</code> shows the
+homeserver, the user's Matrix ID and a derived password (it needs
+<code>MATRIX_USER_REGISTRATION_SECRET</code>), and <code>oidc</code> tells the user to sign in with
+single sign-on configured on the homeserver. Use <code>oidc</code> in production: users
+then sign in to their client with the same identity provider as Waldur, and
+there is no Matrix password to leak. <code>password</code> is meant for testing and for
+installations without an identity provider. <code>none</code> and <code>oidc</code> only hide the
+password: password login still works on the homeserver, so switching away from
+<code>password</code> does not cut off users who have seen theirs.</p>
+<hr>
 <h2 id="operational-notes">Operational notes</h2>
 <ul>
 <li><strong>Tear-down on logout.</strong> The embedded Matrix client disconnects whenever
-  Waldur loses the authenticated user — re-logins start a fresh client
-  instance, so a shared workstation never leaks one user's session to the
-  next. The same teardown removes the matrix-js-sdk <code>Sync</code> listener and any
-  per-call sub-module handlers.</li>
+  Waldur loses the authenticated user and, as a best effort, signs its session
+  device out, which revokes its tokens; otherwise its access token expires
+  within <code>access_token_ttl</code> and its refresh token after <code>refresh_token_ttl</code> of
+  disuse. Re-logins start a fresh client instance, so a shared
+  workstation never leaks one user's session to the next. The same teardown
+  removes the matrix-js-sdk <code>Sync</code> listener and any per-call sub-module
+  handlers.</li>
 <li><strong>Webhook rate limit.</strong> The <code>/_matrix/app/v1/transactions/{txnId}</code> endpoint
   is rate-limited via the <code>matrix_webhook</code> DRF throttle scope (default
   10000/hour). When Matrix is disabled the endpoint returns <code>200</code> and
   discards the payload, so the homeserver does not retry.</li>
-<li><strong>Per-user credential limit.</strong> <code>/api/matrix/credentials/</code> is rate-limited
-  via the <code>matrix_credentials</code> scope (default 30/hour per user) and returns
-  <code>404</code> when the integration is disabled.</li>
+<li><strong>Per-user limits.</strong> <code>/api/matrix/session/</code> is rate-limited via the
+  <code>matrix_session</code> scope (default 120/hour per user). The drawer calls it on
+  connect, which includes the background connect on every page load for a
+  room member, and when a token refresh is rejected, so each page load counts
+  against the limit. <code>/api/matrix/credentials/</code>,
+  which only the external-client dialog calls, uses the <code>matrix_credentials</code>
+  scope (default 1000/hour per user). Both return <code>404</code> when the integration
+  is disabled.</li>
 <li><strong>Cleanup task.</strong> <code>cleanup_old_appservice_transactions</code> runs daily at
   03:15 UTC and prunes webhook idempotency rows older than 30 days.</li>
 <li><strong>History export.</strong> Disabling a room can optionally export its full
   message history; exports are served through a permission-checked view
   rather than the raw storage URL, so download links honour the same
   room-access policy as the API.</li>
-<li><strong>At-rest token storage.</strong> <code>MatrixUserProfile.access_token</code> is currently
-  stored in plaintext. The umbrella ticket <a href="https://opennode.atlassian.net/browse/WAL-9740">WAL-9740</a>
-  introduces field-level encryption for sensitive Constance + model
-  values; the Matrix token will be migrated to the same <code>EncryptedCharField</code>
-  once that lands.</li>
+<li><strong>No stored Matrix tokens.</strong> Waldur stores no Matrix access token for any
+  user. The drawer's tokens live only in the browser's memory, and registering
+  a user creates no device.</li>
+<li><strong>Deactivated and deleted users.</strong> Deactivating or deleting a Waldur user
+  signs out every one of their Matrix devices, Element included, and removes
+  them from their rooms, through background tasks that retry failures, even
+  while chat is switched off. An open drawer loses access within moments.
+  Reactivating the user while chat is on brings them back into the rooms their
+  roles give them. See
+  <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#automatic-member-management">Automatic member management</a>.</li>
 </ul>
 <hr>
 <h2 id="troubleshooting">Troubleshooting</h2>
@@ -19837,6 +20004,11 @@ a single-line denial, not project data.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>The chat drawer shows <strong>Your chat session has ended.</strong></td>
+<td>Matrix chat was switched off (<code>MATRIX_ENABLED</code>) while the drawer was open, or the homeserver signed the drawer's device out again within a minute of reconnecting</td>
+<td>Re-enable chat. If sessions keep being signed out, look for what removes <code>WALDUR_WEB_*</code> devices on the homeserver. <strong>Reload</strong> in the drawer starts a new session. A deactivated, deleted or signed-out user is returned to the login page instead. A rate-limited connect shows <strong>Too many chat requests. Please try again in …</strong></td>
+</tr>
 <tr>
 <td><code>bot_provision_status: "failed: M_UNKNOWN_TOKEN"</code> after Setup</td>
 <td>Homeserver does not yet have the appservice registered with the current AS token</td>

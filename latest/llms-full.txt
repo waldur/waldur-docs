@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-08T02:03:59.674445Z
+Generated: 2026-10-08T09:18:10.064670Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -67601,6 +67601,7 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | Guide                                                                    | Covers                                                                                                                     |
 | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | [component-library.md](component-library.md)                             | Reusable UI components: buttons, modals, tables, filters — with prop references                                            |
+| [a11y-decision-matrix.md](a11y-decision-matrix.md)                       | Accessibility decision matrix: SegmentedControl vs Tabs vs Action Buttons vs Nav                                           |
 | [button-ui-guide.md](button-ui-guide.md)                                 | Comprehensive button UI guide: BaseButton, tokens, tooltips, toggles, segmented controls                                   |
 | [ui-consistency-guidelines.md](ui-consistency-guidelines.md)             | Empty states, buttons, loading indicators, tooltips, null-value display                                                    |
 | [tables.md](tables.md)                                                   | `useTable`, columns, filters, row actions, export                                                                          |
@@ -67646,6 +67647,227 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | [update-local-sdk.sh](update-local-sdk.sh)             | Regenerate and link the local TypeScript SDK (see [sdk.md](sdk.md)) |
 | [generate-sdk-catalog.py](generate-sdk-catalog.py)     | Generate a catalog of SDK functions from the OpenAPI schema         |
 | [generate-sdk-claude-md.py](generate-sdk-claude-md.py) | Generate SDK usage notes for LLM context                            |
+
+---
+
+### Accessibility (A11y) Decision Matrix: When to Use What
+<!-- Source: docs/developer-guide/ui/a11y-decision-matrix.md -->
+
+# Accessibility (A11y) Decision Matrix: When to Use What
+
+This guide establishes the architectural and accessibility standards for mutually exclusive switchers, tabs, action groups, and navigation controls across Waldur HomePort. It provides explicit decision trees and code recipes for developers and AI coding agents (LLMs).
+
+---
+
+## 1. Quick Decision Rules
+
+Follow this decision order to determine the correct component:
+
+1. **Does it change the URL or navigate to another page/state?**<br>➔ **Navigation Link** (`@/core/Link` or `<nav>` + `<a>`).
+2. **Does it trigger an immediate action, preset, or calculation?**<br>➔ **Action Button Group** (`BaseButton` with `role="group"` and optional `aria-pressed`).
+3. **Can multiple options be active simultaneously?**<br>➔ **Multi-select Buttons / Checkboxes** (`role="group"` with `aria-pressed` or `Checkbox`).
+4. **Does each option own a distinct, large content panel?**<br>➔ **Tabs Pattern** (Radix `Tabs` styled via `segmentedListClassName` / `segmentedItemClassName`).
+5. **Is it a question in a submission form with validation errors?**<br>➔ **Form RadioGroup** (`RadioGroup` inside `<fieldset>` + `<legend>`).
+6. **Does it switch a display lens, interval, or in-memory list filter?**<br>➔ **View Lens / Filter** (`SegmentedControl` with `role="radiogroup"`).
+
+---
+
+## 2. Comparative Matrix
+
+| UI Pattern                   | Standard Component                  | Underlying Semantics                                                     | Keyboard Model                                                                                                          | Valid Contexts                                                                               | Prohibited Anti-Patterns                                                       |
+| :--------------------------- | :---------------------------------- | :----------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
+| **View Lens / Filter**       | `SegmentedControl` (`waldur-ui`)    | `role="radiogroup"`<br>`role="radio"`<br>`aria-checked`                  | Single <kbd>Tab</kbd> stop;<br><kbd>←</kbd> / <kbd>→</kbd> select option                                                | Filtering a list in place (All/Unread), chart intervals (Day/Month), diff modes (Table/JSON) | **Never** use for actions (+1h extend), routing tabs, or tab panels            |
+| **Action Preset / Shortcut** | Group of `BaseButton` (`waldur-ui`) | `role="group"`<br>`<button>`<br>`aria-pressed`                           | Normal <kbd>Tab</kbd> stop per button;<br><kbd>Enter</kbd> / <kbd>Space</kbd> activates                                 | Offset buttons (+30m, +1h), preset calculators, filter clearers                              | **Never** use `SegmentedControl` (radios imply persistent state, not actions)  |
+| **Tabbed Panels**            | Radix `Tabs` (or `Tab.Container`)   | `role="tablist"`<br>`role="tab"`<br>`role="tabpanel"`<br>`aria-controls` | Single <kbd>Tab</kbd> stop;<br><kbd>←</kbd> / <kbd>→</kbd> moves tabs;<br><kbd>Space</kbd> / <kbd>Enter</kbd> activates | Swapping major DOM sections (e.g. Overview vs Settings vs Audit Log)                         | **Never** use `SegmentedControl` without `role="tabpanel"` and `aria-controls` |
+| **Page Navigation**          | `@/core/Link` or `<nav>` + `<a>`    | `<nav aria-label="...">`<br>`<a href="...">`                             | Normal <kbd>Tab</kbd> per link;<br><kbd>Enter</kbd> navigates;<br>Right-click "Open in new tab"                         | UI-Router state tabs (`TableTabs`), page headers, sidebar links                              | **Never** use `SegmentedControl` or `<button>` for URL transitions             |
+| **Form Question**            | `RadioGroup` (`waldur-ui`)          | `<fieldset>`<br>`<legend>`<br>native `<input type="radio">`              | Single <kbd>Tab</kbd> stop;<br>Arrow keys select                                                                        | Standard form questions with error messages and form serialization                           | Don't use `SegmentedControl` when validation errors or descriptions are needed |
+| **Multi-Select Filter**      | Button group with `aria-pressed`    | `role="group"`<br>`<button aria-pressed="...">`                          | <kbd>Tab</kbd> between buttons;<br><kbd>Space</kbd> toggles                                                             | Filter tags, multi-select chips, facet bars                                                  | `SegmentedControl` strictly supports one active value                          |
+
+---
+
+## 3. Pattern Implementation Guides
+
+### Pattern 1: View Lens / Display Filter (`SegmentedControl`)
+
+Use when changing **how** current data is viewed without navigating away or unmounting surrounding layout.
+
+```tsx
+// ✅ CORRECT: View lens in a table or list header
+import { useMemo, useState } from 'react';
+import { SegmentedControl, SegmentedControlOption } from 'waldur-ui';
+import { translate } from '@/i18n';
+
+type ViewMode = 'table' | 'json';
+
+export const MyDiffViewer = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+
+  const options: SegmentedControlOption<ViewMode>[] = useMemo(
+    () => [
+      { value: 'table', label: translate('Table') },
+      { value: 'json', label: translate('JSON') },
+    ],
+    [],
+  );
+
+  return (
+    <SegmentedControl<ViewMode>
+      aria-label={translate('Diff view')}
+      size="sm"
+      options={options}
+      value={viewMode}
+      onValueChange={setViewMode}
+    />
+  );
+};
+```
+
+**A11y Rules for `SegmentedControl`:**
+
+1. **Mandatory accessible name**: Must supply `aria-label` or `aria-labelledby`. Screen readers announce: `"{aria-label}, radio group. Table, radio button, checked, 1 of 2"`.
+2. **Value must never be empty**: If state can be cleared, use toggle buttons, not a radio group.
+3. **No action side-effects**: Selecting an option should only update the view lens/filter parameter.
+
+---
+
+### Pattern 2: Action Presets & Shortcuts (`BaseButton` Group)
+
+Use when buttons trigger an immediate operation or calculation (e.g. calculating dates, triggering presets).
+
+```tsx
+// ✅ CORRECT: Quick extend action buttons
+import { BaseButton } from 'waldur-ui';
+import { translate } from '@/i18n';
+
+const PRESETS = [
+  { key: '30m', label: '+30 min', minutes: 30 },
+  { key: '1h', label: '+1 h', minutes: 60 },
+  { key: '2h', label: '+2 h', minutes: 120 },
+];
+
+export const QuickExtendSection = ({ onApply, activeKey, submitting }) => (
+  <div
+    role="group"
+    aria-label={translate('Quick extend options')}
+    className="d-flex flex-wrap gap-2"
+  >
+    {PRESETS.map((preset) => {
+      const isSelected = activeKey === preset.key;
+      return (
+        <BaseButton
+          key={preset.key}
+          size="sm"
+          variant={isSelected ? 'secondary' : 'tertiary'}
+          disabled={submitting}
+          disabledReason={
+            submitting ? translate('Submission in progress') : undefined
+          }
+          onClick={() => onApply(preset.key, preset.minutes)}
+          label={preset.label}
+          aria-pressed={isSelected}
+        />
+      );
+    })}
+  </div>
+);
+```
+
+**Why `SegmentedControl` is an Anti-Pattern here:**
+
+- In Radix `RadioGroup`, `onValueChange` only triggers when changing to a _different_ value. If a user clicks `+30 min`, manually adjusts the input, and clicks `+30 min` again, `RadioGroup` drops the interaction.
+- Screen readers announce `"Radio button, checked"`, misleading users to believe they are selecting a form field setting rather than executing an action.
+
+---
+
+### Pattern 3: Segmented Tab Panels (Radix `Tabs` with Segmented Styling)
+
+When you want the sleek segmented look (inset shadows, connected borders) for full tab panels:
+
+```tsx
+// ✅ CORRECT: Real tabs with segmented styling
+import * as Tabs from '@radix-ui/react-tabs';
+import { segmentedListClassName, segmentedItemClassName } from 'waldur-ui';
+import { translate } from '@/i18n';
+
+export const SettingsTabs = () => (
+  <Tabs.Root defaultValue="account">
+    <Tabs.List className={segmentedListClassName({ fullWidth: true })}>
+      <Tabs.Trigger
+        value="account"
+        className={segmentedItemClassName({ size: 'md', fullWidth: true })}
+      >
+        {translate('Account')}
+      </Tabs.Trigger>
+      <Tabs.Trigger
+        value="security"
+        className={segmentedItemClassName({ size: 'md', fullWidth: true })}
+      >
+        {translate('Security')}
+      </Tabs.Trigger>
+    </Tabs.List>
+
+    <Tabs.Content value="account">{/* Account panel */}</Tabs.Content>
+    <Tabs.Content value="security">{/* Security panel */}</Tabs.Content>
+  </Tabs.Root>
+);
+```
+
+**Why this is superior to `SegmentedControl`:**
+
+- Emits WAI-ARIA `role="tablist"`, `role="tab"`, and `role="tabpanel"`.
+- Establishes `aria-controls` links from triggers to content containers.
+- Assistive technologies announce `"Tab 1 of 2"` and support shortcuts to navigate into the active panel.
+
+---
+
+### Pattern 4: Page & Route Navigation (`TableTabs` / `@/core/Link`)
+
+When selecting a tab changes the URL or router state (`router.stateService.go`):
+
+```tsx
+// ✅ CORRECT: URL navigation bar
+import { Nav } from 'react-bootstrap';
+import { Link } from '@/core/Link';
+
+export const NavigationBar = ({ tabs, activeState }) => (
+  <nav aria-label={translate('Secondary navigation')}>
+    <Nav variant="tabs" className="nav-line-tabs">
+      {tabs.map((tab) => (
+        <Nav.Item key={tab.key}>
+          <Link
+            state={tab.state}
+            className={`nav-link ${tab.state === activeState ? 'active' : ''}`}
+          >
+            {tab.title}
+          </Link>
+        </Nav.Item>
+      ))}
+    </Nav>
+  </nav>
+);
+```
+
+**Prohibited Anti-Pattern:**
+
+- Never replace routing links with `SegmentedControl` or plain `<button>` elements. Doing so breaks middle-click, "Copy link address", search-engine indexing, and screen reader link announcements.
+
+---
+
+## 4. Checklist for Developers & LLMs
+
+Before choosing or migrating a switcher component, run this checklist:
+
+- [ ] **What happens on click?**
+  - Updates URL/route? ➔ **Use `Link` / `<nav>`**.
+  - Triggers calculation or modal action? ➔ **Use `BaseButton` (`role="group"` + `aria-pressed`)**.
+  - Swaps a large tab panel? ➔ **Use Radix `Tabs` with `segmentedItemClassName`**.
+  - Filters or changes view parameters in place? ➔ **Use `SegmentedControl`**.
+- [ ] **Does `SegmentedControl` have an accessible label?**
+  - Every `<SegmentedControl>` must have `aria-label={translate('...')}` or `aria-labelledby`.
+- [ ] **Are disabled buttons compliant?**
+  - Any disabled `BaseButton` must supply `disabledReason` or `tooltip` per the `waldur-custom/enforce-disabled-button-tooltip` lint rule.
+- [ ] **Is single-selection strictly guaranteed?**
+  - If the user can deselect the option, do not use `SegmentedControl`.
 
 ---
 
@@ -68817,6 +69039,9 @@ Toggle buttons and standalone icons use the centralized sizing helper `getButton
 
 When an interface presents mutually exclusive options that change what a view **shows** (filtering a table, toggling between card/list mode, switching chart date ranges) rather than navigating to a different page, use SegmentedControl (`packages/ui/src/SegmentedControl.tsx`).
 
+> [!TIP]
+> For the comprehensive component selection guide across view lenses, action shortcuts, tabbed panels, and navigation, see the [Accessibility Decision Matrix](a11y-decision-matrix.md).
+
 ### SegmentedControl vs. BaseButton
 
 ```tsx
@@ -68965,13 +69190,13 @@ Used in forms that track dirty/unsaved state.
 
 ### ESLint Rules Matrix
 
-| ESLint Rule                                     | Severity | What It Enforces                                                                                                                                                          |
-| :---------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ESLint Rule                                     | Severity | What It Enforces                                                                                                                                                        |
+| :---------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `no-restricted-imports`                         | `error`  | Blocks importing `Button` or `DropdownButton` from `react-bootstrap`. Directs developers to `BaseButton`, `SubmitButton`, `CloseDialogButton`, or `Menu.TriggerButton`. |
-| `waldur-custom/no-bootstrap-button-markup`      | `error`  | Blocks `<button className="btn ...">`, `<a className="btn ...">`, and any hand-rolled Bootstrap button markup.                                                            |
-| `waldur-custom/enforce-disabled-button-tooltip` | `error`  | Enforces that every disabled `<BaseButton>` has a `tooltip` or `disabledReason` explaining why the action is unavailable.                                                 |
-| `waldur-custom/enforce-dialog-button-order`     | `error`  | Enforces standard dialog button order: dismissive buttons (`CloseDialogButton`) on the left, affirmative/submission buttons (`SubmitButton`) on the right.                |
-| `waldur-custom/no-edit-button-size-override`    | `error`  | Blocks overriding `size="sm"` on `EditButton`; requires using `CompactEditButton` instead.                                                                                |
+| `waldur-custom/no-bootstrap-button-markup`      | `error`  | Blocks `<button className="btn ...">`, `<a className="btn ...">`, and any hand-rolled Bootstrap button markup.                                                          |
+| `waldur-custom/enforce-disabled-button-tooltip` | `error`  | Enforces that every disabled `<BaseButton>` has a `tooltip` or `disabledReason` explaining why the action is unavailable.                                               |
+| `waldur-custom/enforce-dialog-button-order`     | `error`  | Enforces standard dialog button order: dismissive buttons (`CloseDialogButton`) on the left, affirmative/submission buttons (`SubmitButton`) on the right.              |
+| `waldur-custom/no-edit-button-size-override`    | `error`  | Blocks overriding `size="sm"` on `EditButton`; requires using `CompactEditButton` instead.                                                                              |
 
 ### Converting Legacy Call Sites
 
@@ -77551,6 +77776,27 @@ import { StateIndicator } from '@/core/StateIndicator';
 > prefer `BaseButton`'s own `disabledReason` prop (see 2.2) over wrapping it
 > in a separate `Tooltip` — it already handles the disabled-only visibility
 > and keeps the DOM structure stable across enabled/disabled toggles.
+
+### 8.0 Icons that carry a tooltip
+
+Never wrap a bare icon in `Tooltip`: an icon is an `<svg>`, so the tooltip is
+hover-only and screen readers get nothing. Use `HelpIcon` (a "?" button) or
+`WarningTip` (warning colour) from `waldur-ui`. Both render a focusable button,
+show the tooltip on focus, and default to a translated "Help" / "Warning"
+`aria-label`:
+
+```tsx
+import { HelpIcon, WarningTip } from 'waldur-ui';
+
+<HelpIcon label={translate('Explains the field')} />
+<WarningTip label={translate('Exceeds the limit')} className="ms-1" />
+// Extra Tooltip props go in tooltipProps; pass `icon` / `weight` / `size` to vary the glyph.
+<HelpIcon label={content} tooltipProps={{ autoWidth: true }} />
+```
+
+Don't place them inside another interactive element (a button, a `<label>` of a
+check control, a select option). The lint rule
+`waldur-custom/no-tooltip-on-bare-icon` reports the bare form.
 
 ### 8.1 Usage Guidelines
 
@@ -95231,8 +95477,10 @@ graph TB
 
 When a Waldur project is provisioned for chat, a `MatrixRoom` row is
 created and a celery task syncs every project member into the room via a
-per-user `MatrixUserProfile`. Outbound events flow Waldur → homeserver
-through the matrix-js-sdk login-token flow. Inbound events arrive over the
+per-user `MatrixUserProfile`. Waldur joins and leaves rooms as the user
+through the appservice, without logging in as them. The chat drawer talks
+to the homeserver directly with a short-lived web session (see
+[Web chat sessions](#web-chat-sessions)). Inbound events arrive over the
 appservice webhook (`PUT /_matrix/app/v1/transactions/{txnId}`), are
 deduplicated by `txn_id`, and dispatched to the bot-command handlers if
 the sender holds an active project role. Project deletion runs the same
@@ -95306,7 +95554,7 @@ config.MATRIX_ENABLED = True
 config.MATRIX_HOMESERVER_URL = "http://localhost:6167"
 config.MATRIX_HOMESERVER_DOMAIN = "localhost"
 config.MATRIX_USER_REGISTRATION_SECRET = "devregistrationsecret"  # match tuwunel.toml
-config.MATRIX_LOGIN_METHOD = "token"
+config.MATRIX_EXTERNAL_LOGIN_METHOD = "none"  # "password" or "oidc" to allow Element
 config.MATRIX_APPSERVICE_SENDER_LOCALPART = "waldur-bot"
 config.MATRIX_HISTORY_EXPORT_ENABLED = True
 ```
@@ -95326,7 +95574,7 @@ page load (the `/api/configuration/` response is cached in the SPA bootstrap).
 
 ## Running the Setup wizard
 
-In the homeport, open **Administration → Matrix chat** and click
+In the homeport, open **Administration → Configuration → Matrix chat** and click
 **Setup appservice**. The wizard generates fresh AS/HS tokens, persists
 them via Constance, and returns the registration YAML to copy into the
 homeserver. Re-running Setup rotates both tokens — you will need to update
@@ -95413,10 +95661,13 @@ Open the **Check connectivity** dialog from the same page:
 
 [Image: Connectivity diagnostics — all checks green]
 
-The dialog runs ten live checks against the homeserver and reports the
-result. AS/HS tokens are shown as SHA-256 fingerprints (`sha256:<first-12-hex>`)
-so the diagnostic does not leak token material. When all ten checks are
-green the integration is ready for use.
+The dialog runs live checks against the homeserver and reports the result.
+AS/HS tokens are shown as SHA-256 fingerprints (`sha256:<first-12-hex>`)
+so the diagnostic does not leak token material. The integration is ready for
+use when every check is green, except the LiveKit check, which matters only
+for voice and video calls. The
+[setup guide](../developer-guide/admin-guide/matrix-appservice-setup.md#get-apiadminmatrixdiagnostics)
+lists the checks.
 
 ---
 
@@ -95558,7 +95809,8 @@ The conditions are:
    at the local `lk-jwt-service`.
 3. The well-known fetch from the browser succeeded. If the homeserver
    is unreachable or the response doesn't include a `livekit` transport,
-   the menu shows only **Mute** and **Open in external Matrix client**.
+   the menu shows only **Mute**, plus **Open in external Matrix client**
+   when `MATRIX_EXTERNAL_LOGIN_METHOD` is `password` or `oidc`.
 
 [Image: Chat kebab with Start call available]
 
@@ -95628,31 +95880,98 @@ a single-line denial, not project data.
 
 ---
 
+## Web chat sessions
+
+With refresh tokens configured on the homeserver (the Helm chart and
+docker-compose do this for Tuwunel), the chat drawer never holds a long-lived
+token. It calls `POST /api/matrix/session/`, which signs the user in through
+the appservice on a new device (`WALDUR_WEB_<id>`) and returns an access token
+and a refresh token. The drawer keeps both in memory and renews the access
+token through Matrix `/refresh`. It asks Waldur for a new session when a
+refresh is rejected or when the homeserver signs its device out, for example
+from Element's session list or because Waldur's limit of web devices was
+reached. Whether the user may still chat is decided there: a deactivated,
+deleted or signed-out user gets no new session and is returned to the login
+page. When chat was switched off, or the new session is signed out again
+within a minute, the drawer shows **Your chat session has ended.**
+
+Waldur is consulted only when the drawer connects, when a refresh is rejected
+and when the device is signed out. Switching chat off or signing out of
+Waldur in another tab therefore does not cut an open drawer: it keeps working
+until it next needs a new session.
+
+The homeserver sets the lifetimes:
+
+| Tuwunel key | Helm value | Default | Meaning |
+| --- | --- | --- | --- |
+| `access_token_ttl` | `matrixChat.homeserver.accessTokenTtl` | `300` | Access token lifetime in seconds |
+| `refresh_token_ttl` | `matrixChat.homeserver.refreshTokenTtl` | `86400` | Idle lifetime of the refresh token in seconds |
+
+docker-compose sets the same values in `config/matrix/tuwunel.toml.template`;
+edit the template to change them. Each refresh moves the idle deadline
+forward, so an open drawer never expires. Logins without a refresh token, such
+as Element with a password, keep non-expiring tokens.
+
+Every session has its own device. Tuwunel keeps one refresh token per
+device, so a device shared by two browser tabs would revoke itself. After
+each new session Waldur signs out the user's web devices not seen for 24
+hours, a window fixed in Waldur, and beyond the 10 most recently seen it
+signs out the rest, except devices seen in the last ten minutes: those belong
+to open tabs.
+
+### External clients
+
+`MATRIX_EXTERNAL_LOGIN_METHOD` decides whether users can also open rooms in
+an external client: `none` (default) hides the option, `password` shows the
+homeserver, the user's Matrix ID and a derived password (it needs
+`MATRIX_USER_REGISTRATION_SECRET`), and `oidc` tells the user to sign in with
+single sign-on configured on the homeserver. Use `oidc` in production: users
+then sign in to their client with the same identity provider as Waldur, and
+there is no Matrix password to leak. `password` is meant for testing and for
+installations without an identity provider. `none` and `oidc` only hide the
+password: password login still works on the homeserver, so switching away from
+`password` does not cut off users who have seen theirs.
+
+---
+
 ## Operational notes
 
 - **Tear-down on logout.** The embedded Matrix client disconnects whenever
-  Waldur loses the authenticated user — re-logins start a fresh client
-  instance, so a shared workstation never leaks one user's session to the
-  next. The same teardown removes the matrix-js-sdk `Sync` listener and any
-  per-call sub-module handlers.
+  Waldur loses the authenticated user and, as a best effort, signs its session
+  device out, which revokes its tokens; otherwise its access token expires
+  within `access_token_ttl` and its refresh token after `refresh_token_ttl` of
+  disuse. Re-logins start a fresh client instance, so a shared
+  workstation never leaks one user's session to the next. The same teardown
+  removes the matrix-js-sdk `Sync` listener and any per-call sub-module
+  handlers.
 - **Webhook rate limit.** The `/_matrix/app/v1/transactions/{txnId}` endpoint
   is rate-limited via the `matrix_webhook` DRF throttle scope (default
   10000/hour). When Matrix is disabled the endpoint returns `200` and
   discards the payload, so the homeserver does not retry.
-- **Per-user credential limit.** `/api/matrix/credentials/` is rate-limited
-  via the `matrix_credentials` scope (default 30/hour per user) and returns
-  `404` when the integration is disabled.
+- **Per-user limits.** `/api/matrix/session/` is rate-limited via the
+  `matrix_session` scope (default 120/hour per user). The drawer calls it on
+  connect, which includes the background connect on every page load for a
+  room member, and when a token refresh is rejected, so each page load counts
+  against the limit. `/api/matrix/credentials/`,
+  which only the external-client dialog calls, uses the `matrix_credentials`
+  scope (default 1000/hour per user). Both return `404` when the integration
+  is disabled.
 - **Cleanup task.** `cleanup_old_appservice_transactions` runs daily at
   03:15 UTC and prunes webhook idempotency rows older than 30 days.
 - **History export.** Disabling a room can optionally export its full
   message history; exports are served through a permission-checked view
   rather than the raw storage URL, so download links honour the same
   room-access policy as the API.
-- **At-rest token storage.** `MatrixUserProfile.access_token` is currently
-  stored in plaintext. The umbrella ticket [WAL-9740](https://opennode.atlassian.net/browse/WAL-9740)
-  introduces field-level encryption for sensitive Constance + model
-  values; the Matrix token will be migrated to the same `EncryptedCharField`
-  once that lands.
+- **No stored Matrix tokens.** Waldur stores no Matrix access token for any
+  user. The drawer's tokens live only in the browser's memory, and registering
+  a user creates no device.
+- **Deactivated and deleted users.** Deactivating or deleting a Waldur user
+  signs out every one of their Matrix devices, Element included, and removes
+  them from their rooms, through background tasks that retry failures, even
+  while chat is switched off. An open drawer loses access within moments.
+  Reactivating the user while chat is on brings them back into the rooms their
+  roles give them. See
+  [Automatic member management](../developer-guide/admin-guide/matrix-appservice-setup.md#automatic-member-management).
 
 ---
 
@@ -95660,6 +95979,7 @@ a single-line denial, not project data.
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
+| The chat drawer shows **Your chat session has ended.** | Matrix chat was switched off (`MATRIX_ENABLED`) while the drawer was open, or the homeserver signed the drawer's device out again within a minute of reconnecting | Re-enable chat. If sessions keep being signed out, look for what removes `WALDUR_WEB_*` devices on the homeserver. **Reload** in the drawer starts a new session. A deactivated, deleted or signed-out user is returned to the login page instead. A rate-limited connect shows **Too many chat requests. Please try again in …** |
 | `bot_provision_status: "failed: M_UNKNOWN_TOKEN"` after Setup | Homeserver does not yet have the appservice registered with the current AS token | Register the YAML via the admin-room command (see above), then re-run Setup. |
 | Webhook reaches Waldur but returns `400 DisallowedHost` | The hostname the homeserver uses to reach Waldur is not in Django's `ALLOWED_HOSTS` | Add the hostname (e.g. `host.docker.internal`) to `ALLOWED_HOSTS` and restart. |
 | Diagnostics shows `Bot authentication: 403 Forbidden` | AS token mismatch between Waldur and the homeserver | Re-run Setup, then re-register the appservice on the homeserver with the new YAML. |
