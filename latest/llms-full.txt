@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-07T19:04:25.386458Z
+Generated: 2026-10-08T02:03:59.674445Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -38549,7 +38549,6 @@ backend_settings:
 | `member_attribute` | `memberUid` | `memberUid` writes usernames; `member` writes `uid=<name>,<people_ou>,<base_dn>` |
 | `membership` | `sync` | `sync` adds and removes members to match Waldur; `add_only` never removes one |
 | `on_gid_mismatch` | `report` | Same-named entry with another GID: `report` keeps the GID, `adopt` renumbers |
-| `managed_marker` | `waldur-managed` | Extra `description` value on every group the agent creates or adopts |
 | `organization_description` | unset | Organization `description` value, e.g. `organization={slug}` |
 | `parents` | `[]` | Entries that list the DN of each group whose project has a resource on the offering |
 | `parents[].dn` | -- | Full DN of the entry |
@@ -38587,9 +38586,9 @@ Then, for each group:
 
 | Directory state | Action |
 |-----------------|--------|
-| No entry, GID and name free | Create it with Waldur's name, GID, members and the marker |
+| No entry, GID and name free | Create it with Waldur's name, GID and members |
 | No entry, GID or name held (see below) | Report every cycle; nothing written, not added to parents |
-| Entry with the same name and GID | Adopt it: add the marker, reconcile members and parents |
+| Entry with the same name and GID | Adopt it: reconcile members and parents |
 | Same name, another GID, `report` | Report every cycle; the GID stays, members and parents are reconciled |
 | Same name, another GID, `adopt` | Rewrite `gidNumber` to Waldur's, unless it is held (then as `report`) |
 | Waldur has no GID for the group | Skip it and log; its DN in a parent is left as it is |
@@ -38606,9 +38605,10 @@ agent matches on.
 `chgrp`-ed to Waldur's. Renumbering a group any earlier orphans them, which is
 why `report` is the default.
 
-Every group the agent creates or adopts gets one extra `description` value,
-`managed_marker` (`waldur-managed` by default). The operator's own description
-values stay; `description` is multi-valued and allowed on `posixGroup`.
+The agent writes nothing to `description` except the optional organization
+value below; the operator's own description values stay. Earlier versions added
+a `waldur-managed` value to every group they created or adopted; the agent no
+longer reads or writes it, and leaves existing ones for the operator to remove.
 
 With `organization_description` set, each group also carries one value naming
 its project's organization, rendered from the template with the organization
@@ -38616,24 +38616,21 @@ slug (`organization={slug}` writes `organization=cscs`). It is kept in sync on
 every pass: added to existing and adopted groups, and replaced when the slug
 changes or the project moves to another organization. The agent finds its own
 value by the template's text around `{slug}`, so it never touches another
-description value or the marker. A bare `{slug}` has no such text: the agent
+description value. A bare `{slug}` has no such text: the agent
 then adds the current slug but never removes an old one, and warns once. A group
 whose project is gone keeps the value it has.
 
 Each parent is made to list the DNs of the groups whose project has a resource
 on the parent's offerings. A DN is only ever removed when it lies under the
-project OU, and then:
+project OU and belongs to a group Waldur lists, and then only when its project has no resource on the parent's
+offerings, or the group could not be written because its GID or name is held (a
+write that fails for any other reason this cycle leaves the DN as it is).
 
-- for a group Waldur lists, when its project has no resource on the parent's
-  offerings, or the group could not be written because its GID or name is held
-  (a write that fails for any other reason this cycle leaves the DN as it is);
-- for a group Waldur no longer lists (an offering moved to another provider,
-  say), only when its entry carries the marker.
-
-An unmarked group under the project OU that Waldur does not list (a hand-made
-`benchmarking` group, say) is never removed, nor is any DN from outside the
-project OU. A `groupOfNames` that would lose its
-last member gets `empty_group_member_dn` in the same modify.
+A group under the project OU that Waldur does not list is never removed, nor is
+any DN from outside the project OU. That covers a hand-made `benchmarking`
+group, and also a group Waldur stops listing because its offering moved to
+another provider or the provider was deleted: take such a DN out of the parent
+by hand. A `groupOfNames` that would lose its last member gets `empty_group_member_dn` in the same modify.
 
 Group entries are never deleted: their GIDs stay reserved in Waldur.
 
@@ -54553,22 +54550,18 @@ class PaymentProfileViewSet(core_views.ActionsViewSet):
 Although this approach works fine for trivial use cases, often enough permission filtering logic is more involved and we implement `get_queryset` method instead.
 
 ```python
-class OfferingUserGroupViewSet(core_views.ActionsViewSet):
+class PosixIdentityViewSet(core_views.ReadOnlyActionsViewSet):
   def get_queryset(self):
       queryset = super().get_queryset()
       current_user = self.request.user
       if current_user.is_staff or current_user.is_support:
         return queryset
 
-      projects = get_connected_projects(current_user)
       customers = get_connected_customers(current_user)
-
-      subquery = (
-        Q(projects__customer__in=customers)
-        | Q(offering__customer__in=customers)
-        | Q(projects__in=projects)
+      return queryset.filter(
+        Q(pool__service_provider__customer__in=customers)
+        | Q(pool__offering__customer__in=customers)
       )
-      return queryset.filter(subquery)
 ```
 
 ## Permissions for object creation and update
@@ -60422,26 +60415,37 @@ When a grace period is used, the effective date for zeroing credits is always th
 
 ```mermaid
 graph TD
-    A[New invoice item / credit change] --> B{Gate 1:<br>cost this window<br>net of compensation<br>>= limit_cost?}
+    A[New invoice item / credit change] --> B{Gate 1:<br>cost this window<br>net of compensation<br>> limit_cost?}
     B -->|No| Z[Policy stays clear]
     B -->|Yes| C{use_credit configured?}
     C -->|No| F[Policy fires]
-    C -->|Yes| D{Gate 2:<br>credit.value<br><= limit_cost?}
+    C -->|Yes| D{Gate 2:<br>live credit balance<br><= limit_cost?}
     D -->|No, balance healthy| Z
     D -->|Yes, balance depleted| F
 ```
 
-**Gate 1** sums every `InvoiceItem` for the project/customer across the policy's rolling window (1/3/12 months) via `EstimatedCostPolicyMixin._is_triggered` -- cost items and compensation items together, unfiltered by type, since a compensation item is just a negative-priced row on the same invoice. For a month whose invoice has already been finalized -- including one `rebill_historical_usage` has just corrected -- this sum is entirely real, persisted data. There's no simulation involved in reading it.
+**Gate 1** sums every `InvoiceItem` for the project/customer across the policy's rolling window (1/3/12 months, or all months for Total) via `EstimatedCostPolicyMixin._is_triggered` -- cost items and compensation items together, unfiltered by type, since a compensation item is just a negative-priced row on the same invoice. For a month whose invoice has already been finalized -- including one `rebill_historical_usage` has just corrected -- this sum is entirely real, persisted data. There's no simulation involved in reading it. It opens when that net cost is strictly greater than `limit_cost`.
 
-On top of that sum, `is_triggered()` additionally subtracts a live `MonthlyCompensation.get_resource_compensation()` / `get_project_compensation()` / `total_compensation` call -- but this only ever represents the customer's *current, still-mutable* invoice (`MonthlyCompensation(customer)`, called with no explicit `invoice=` argument, auto-selects it), re-run fresh in memory on every evaluation without ever calling `.save()`. It has no bearing on any past month already reflected in the sum above.
+On top of that sum, `is_triggered()` additionally subtracts the credit the customer's *current, still-mutable* invoice will still draw (`_pending_compensation`). That comes from a `MonthlyCompensation(customer, restore_written=True)` simulation, re-run in memory on every evaluation and never saved (it refuses to `save()`). It has no bearing on any past month already reflected in the sum above.
 
-**Gate 2** re-queries `CustomerCredit`/`ProjectCredit` directly, and is only consulted once gate 1 is already open (`use_credit=False` policies skip it and compare gross cost instead).
+**Gate 2** compares the **live** credit balance, not the stored `CustomerCredit.value` / `ProjectCredit.value`. The stored value only falls when the month's compensations are written at the month-end run, so mid-month it still contains everything this month's usage has already consumed; comparing it held every credit-funded policy back until the 1st. The live balance comes from the same simulation (`_live_credit_balance()`):
 
-The two gates read genuinely different facts -- gate 1 is a net invoiced position over a window, gate 2 is the current remaining reserve -- so they can disagree for ordinary reasons. This window's net cost can be high because credit only partially covered it, correctly, if the pool was scarce at finalization time; or because a later correction's compensation update didn't fully rebalance against a sibling sharing the same credit, since `rebill_historical_usage`'s own correction is a simplified 1:1 update to the one resource being fixed, not a full cheapest-first re-run across every resource sharing that credit (see its `sibling_compensations` warning). Either way, the real balance behind it can still have plenty of untouched headroom for other resources or future spend. Gate 2 doesn't re-derive gate 1's number; it checks the one fact that's never in question -- the balance, right now. The policy fires only when both independently say the account is over budget.
+```text
+live balance = stored value + restored − usage draw
+```
 
-Verified example, from `scripts/simulate_rebill_historical_usage.py`'s scenario B: a resource billed 500 node-hours (1,425), fully compensated at finalization time from a 3,000 project credit (1,575 left over). A correction raises the reported usage to 3,000 node-hours (8,550) -- the credit correction aborts (7,125 needed, only 1,575 available), so the compensation item stays at its old value. Gate 1 for that project: 8,550 − 1,425 = 7,125, against a `limit_cost` of 3,000 -- opens. Gate 2: the real project credit balance, 1,575, is also below 3,000 -- opens too. Both gates reflect real, persisted numbers throughout; no simulation was involved in either.
+- `restored` is what this month's applies already took (staff can apply compensations mid-month), read from the credit ledger: this billing period's `compensation`, `minimal_draw` and `rollback` rows, per organization credit and project allocation. `restore_written=True` adds it back to the simulation's in-memory credits first, so the month is simulated from its opening balance; re-simulating from a stored value an apply had already lowered would cap the draw there. The ledger is used, not the invoice items, because the minimal-consumption floor writes no item and is only partly taken when the credit left is smaller than it.
+- `usage draw` is what the simulation records usage taking off the balance this month (`customer_usage_draw`, `get_project_usage_draw(project)`). Usage only: the minimal-consumption floor is forfeited at month end whatever the usage, so counting it would make a credit with an expected consumption read as spent on day 1.
 
-See `EstimatedCostPolicyMixin._is_triggered` and `ProjectEstimatedCostPolicy.is_triggered` / `CustomerEstimatedCostPolicy.is_triggered` in `src/waldur_mastermind/policy/models.py` for the exact implementation.
+A project with a `ProjectCredit` is judged on the lower of its live allocation and the organization's live balance, since the allocation can only be drawn while the organization credit funding it lasts (`ProjectCredit.spendable_value`); without one, on the organization's live balance. Gate 2 is only consulted once gate 1 is already open (`use_credit=False` policies skip it and compare gross cost instead). `get_eta_days()` projects from the same live balance, so the ETA agrees with `is_triggered()`.
+
+The two gates read genuinely different facts -- gate 1 is a net invoiced position over a window, gate 2 is the remaining reserve -- so they can disagree for ordinary reasons. This window's net cost can be high because credit only partially covered it, correctly, if the pool was scarce at finalization time; or because a later correction's compensation update didn't fully rebalance against a sibling sharing the same credit, since `rebill_historical_usage`'s own correction is a simplified 1:1 update to the one resource being fixed, not a full cheapest-first re-run across every resource sharing that credit (see its `sibling_compensations` warning). Either way, the real balance behind it can still have plenty of untouched headroom for other resources or future spend. The policy fires only when both independently say the account is over budget.
+
+With period Total and earlier uncovered cost already above `limit_cost`, gate 1 stays open permanently and gate 2 alone decides: `limit_cost` then works as a minimum remaining credit.
+
+Verified example, from `scripts/simulate_rebill_historical_usage.py`'s scenario B: a resource billed 500 node-hours (1,425), fully compensated at finalization time from a 3,000 project credit (1,575 left over). A correction raises the reported usage to 3,000 node-hours (8,550) -- the credit correction aborts (7,125 needed, only 1,575 available), so the compensation item stays at its old value. Gate 1 for that project: 8,550 − 1,425 = 7,125, against a `limit_cost` of 3,000 -- opens. Gate 2: the live project credit balance -- with no usage in the current month, the stored 1,575 -- is also below 3,000 -- opens too.
+
+See `EstimatedCostPolicyMixin._is_triggered` / `_live_balance` and `ProjectEstimatedCostPolicy.is_triggered` / `CustomerEstimatedCostPolicy.is_triggered` / `_live_credit_balance` in `src/waldur_mastermind/policy/models.py`, and `MonthlyCompensation._restore_written_draw` in `src/waldur_mastermind/invoices/compensations.py`, for the exact implementation.
 
 ### Configuration
 
@@ -69236,18 +69240,19 @@ See the [menus guide](menus.md) for when to use which, recipes and how the looks
 
 ### Forms and Input Components
 
-| Component                | Location                          | Description            | Key Features                                    |
-| ------------------------ | --------------------------------- | ---------------------- | ----------------------------------------------- |
-| **WizardForm**           | `src/wizard/WizardForm.tsx`       | Multi-step form wizard | Step navigation, validation, progress indicator |
-| **VStepperFormStepCard** | `src/wizard/VStepperFormStep.tsx` | Card-based form step   | Loading state, disabled state with tooltip      |
-| **AwesomeCheckbox**      | `src/core/AwesomeCheckbox.tsx`    | Enhanced checkbox      | Switch-style, tooltip support                   |
-| **SelectField**          | `src/form/SelectField.tsx`        | Dropdown selection     | Options, search, validation                     |
-| **StringField**          | `src/form/StringField.tsx`        | Text input field       | Validation, placeholder, help text              |
-| **NumberField**          | `src/form/NumberField.tsx`        | Numeric input          | Min/max validation, step control                |
-| **DateField**            | `src/form/DateField.tsx`          | Date picker            | Date selection, validation                      |
-| **FileUploadField**      | `src/form/FileUploadField.tsx`    | File upload            | Drag & drop, validation                         |
-| **MarkdownEditor**       | `src/form/MarkdownEditor.tsx`     | Markdown editor        | Preview, syntax highlighting                    |
-| **SecretField**          | `src/form/SecretField.tsx`        | Password/secret input  | Show/hide toggle, validation                    |
+| Component                     | Location                          | Description            | Key Features                                                                    |
+| ----------------------------- | --------------------------------- | ---------------------- | ------------------------------------------------------------------------------- |
+| **WizardForm**                | `src/wizard/WizardForm.tsx`       | Multi-step form wizard | Step navigation, validation, progress indicator                                 |
+| **VStepperFormStepCard**      | `src/wizard/VStepperFormStep.tsx` | Card-based form step   | Loading state, disabled state with tooltip                                      |
+| **Checkbox / Radio / Switch** | `waldur-ui`                       | Check controls         | `label`/`description`/`tooltip` props, `md`/`sm`, `checked` + `onCheckedChange` |
+| **RadioGroup**                | `waldur-ui`                       | Set of radio options   | Options in, value out; fieldset + legend, `orientation`                         |
+| **SelectField**               | `src/form/SelectField.tsx`        | Dropdown selection     | Options, search, validation                                                     |
+| **StringField**               | `src/form/StringField.tsx`        | Text input field       | Validation, placeholder, help text                                              |
+| **NumberField**               | `src/form/NumberField.tsx`        | Numeric input          | Min/max validation, step control                                                |
+| **DateField**                 | `src/form/DateField.tsx`          | Date picker            | Date selection, validation                                                      |
+| **FileUploadField**           | `src/form/FileUploadField.tsx`    | File upload            | Drag & drop, validation                                                         |
+| **MarkdownEditor**            | `src/form/MarkdownEditor.tsx`     | Markdown editor        | Preview, syntax highlighting                                                    |
+| **SecretField**               | `src/form/SecretField.tsx`        | Password/secret input  | Show/hide toggle, validation                                                    |
 
 ### Button Components
 
@@ -69639,7 +69644,7 @@ const FieldRow = ({ field, ...rest }) =>
   field.type === 'string' ? (
     <StringField {...rest} />
   ) : field.type === 'boolean' ? (
-    <AwesomeCheckboxField
+    <SwitchField
       label={getKeyTitle(field.key)}
       hideLabel
       className="mt-3"
@@ -69663,7 +69668,7 @@ const FieldRow = ({ field, ...rest }) =>
 The application supports these field types:
 
 - **`string`** - Basic text input using `StringField`
-- **`boolean`** - Checkbox using `AwesomeCheckboxField`
+- **`boolean`** - Switch using `SwitchField`
 - **`email_field`** - Email input with validation using `EmailField`
 - **`text_field`** - Multi-line text using `TextField`
 - **`integer`** - Numeric input using `NumberField`
@@ -70065,7 +70070,7 @@ This guards against three real failure modes that otherwise produce a "ghost" ac
 import { BooleanFilter } from '@/table';
 ```
 
-Combines `TableFilterItem` and `AwesomeCheckboxField`. Usually used with `parse={(v) => v || undefined}` to remove filter when unchecked.
+Combines `TableFilterItem` and `SwitchField`. Usually used with `parse={(v) => v || undefined}` to remove filter when unchecked.
 
 ---
 
@@ -70998,12 +71003,16 @@ import { SubmitButton, StringGroup } from '@/form';
   onSubmit={onSubmit}
   render={({ handleSubmit, submitting, invalid }) => (
     <form onSubmit={handleSubmit}>
-      <StringGroup name="organization" label={translate('Organization')} required />
+      <StringGroup
+        name="organization"
+        label={translate('Organization')}
+        required
+      />
       <StringGroup name="name" label={translate('Name')} required />
       <SubmitButton submitting={submitting} disabled={invalid} />
     </form>
   )}
-/>
+/>;
 ```
 
 ## Autonomous Field Group Architecture (*Group Pattern)
@@ -71035,7 +71044,7 @@ import { translate } from '@/i18n';
     validate={validateProjectName}
     maxLength={150}
   />
-</FormGroup>
+</FormGroup>;
 ```
 
 ### ✅ Good Example: Autonomous Group (Modern)
@@ -71052,7 +71061,7 @@ import { translate } from '@/i18n';
   required
   validate={validateProjectName}
   maxLength={150}
-/>
+/>;
 ```
 
 ### Rationale & Benefits
@@ -71117,16 +71126,17 @@ For details / settings panels that show a value with an inline edit affordance, 
 
 Each base field control has three siblings:
 
-| Base Control           | Form Group (`withFormGroup`) | Edit Field (`withEditField`) | Table Filter (`withTableFilter`) |
-| ---------------------- | ---------------------------- | ---------------------------- | --------------------------------- |
-| `StringField`          | `StringGroup`                | `StringEditField`            | `StringFilter`                    |
-| `SelectField`          | `SelectGroup`                | `SelectEditField`            | `SelectFilter`                    |
-| `NumberField`          | `NumberGroup`                | `NumberEditField`            | `NumberFilter`                    |
-| `SecretField`          | `SecretGroup`                | `SecretEditField`            | —                                 |
-| `EmailField`           | `EmailGroup`                 | `EmailEditField`             | —                                 |
-| `AwesomeCheckboxField` | `BooleanGroup`               | `BooleanEditField`           | `BooleanFilter`                   |
-| `DateField`            | `DateGroup`                  | `DateEditField`              | —                                 |
-| `MarkdownEditor`       | `MarkdownGroup`              | `MarkdownEditField`          | —                                 |
+| Base Control      | Form Group (`withFormGroup`) | Edit Field (`withEditField`) | Table Filter (`withTableFilter`) |
+| ----------------- | ---------------------------- | ---------------------------- | -------------------------------- |
+| `StringField`     | `StringGroup`                | `StringEditField`            | `StringFilter`                   |
+| `SelectField`     | `SelectGroup`                | `SelectEditField`            | `SelectFilter`                   |
+| `NumberField`     | `NumberGroup`                | `NumberEditField`            | `NumberFilter`                   |
+| `SecretField`     | `SecretGroup`                | `SecretEditField`            | —                                |
+| `EmailField`      | `EmailGroup`                 | `EmailEditField`             | —                                |
+| `SwitchField`     | `BooleanGroup`               | `BooleanEditField`           | `BooleanFilter`                  |
+| `RadioGroupField` | `RadioGroup`                 | —                            | —                                |
+| `DateField`       | `DateGroup`                  | `DateEditField`              | —                                |
+| `MarkdownEditor`  | `MarkdownGroup`              | `MarkdownEditField`          | —                                |
 
 Exports live in `@/form/editFields`. To make a custom field editable, run the base component through the HOC:
 
@@ -71170,7 +71180,7 @@ import FormTable from '@/form/FormTable';
       hideLabel
     />
   </FormTable>
-</EditFieldProvider>
+</EditFieldProvider>;
 ```
 
 ### Callback contract
@@ -71209,8 +71219,16 @@ import { StringEditField, SecretEditField } from '@/form/editFields';
 
 export const MyPluginCredentialsSection = (props) => (
   <BaseCredentialsSection {...props}>
-    <StringEditField name="service_attributes.api_url" label={translate('API URL')} required />
-    <SecretEditField name="secret_options.api_token" label={translate('API token')} required />
+    <StringEditField
+      name="service_attributes.api_url"
+      label={translate('API URL')}
+      required
+    />
+    <SecretEditField
+      name="secret_options.api_token"
+      label={translate('API token')}
+      required
+    />
   </BaseCredentialsSection>
 );
 ```
@@ -71433,15 +71451,13 @@ import { ModalDialog } from '@/modal/ModalDialog';
     <form onSubmit={handleSubmit}>
       <ModalDialog
         title={translate('New Project')}
-        footer={
-          <SubmitButton submitting={submitting} disabled={invalid} />
-        }
+        footer={<SubmitButton submitting={submitting} disabled={invalid} />}
       >
         <ResourceForm />
       </ModalDialog>
     </form>
   )}
-/>
+/>;
 ```
 
 ## Advanced Tooling
@@ -71461,7 +71477,7 @@ import { DirtyStateReporter } from '@/core/DirtyFormContext';
       <StringGroup name="name" label={translate('Name')} />
     </form>
   )}
-/>
+/>;
 ```
 
 ## Tabbed Sections (`TabbedSection`)
@@ -71471,13 +71487,21 @@ When building complex forms with many fields, use the `TabbedSection` component 
 ### Example Usage
 
 ```tsx
-import { EditFieldProvider, StringEditField, BooleanEditField } from '@/form/editFields';
+import {
+  EditFieldProvider,
+  StringEditField,
+  BooleanEditField,
+} from '@/form/editFields';
 import { TabbedSection } from '@/form/TabbedSection';
 import { translate } from '@/i18n';
 
 export const MySettingsPanel = ({ settings, update, canUpdate }) => (
   <EditFieldProvider scope={settings} callback={update}>
-    <TabbedSection title={translate('Settings')} enableSearch hideActions={!canUpdate}>
+    <TabbedSection
+      title={translate('Settings')}
+      enableSearch
+      hideActions={!canUpdate}
+    >
       <TabbedSection.Tab id="general" title={translate('General')}>
         <StringEditField name="name" label={translate('Name')} />
         <BooleanEditField name="is_active" label={translate('Active')} />
@@ -75544,7 +75568,7 @@ export const ReviewerPoolSection = ({ call }) => {
 Current architecture and implementation guidance for Tailwind CSS v4, shadcn UI, and Radix UI in Waldur Homeport. Covers framework coexistence, design tokens, component standards, styling conventions, linting guardrails, and testing.
 
 > [!NOTE]
-> **Status**: every button in the app is rendered by `BaseButton` (or by `buttonVariants()` on an element that cannot be a `BaseButton`), and the legacy Bootstrap/Metronic `.btn` CSS has been deleted. Every menu and menu-like popover is built from `waldur-ui`'s `Menu` / `MenuPopover`. The remaining Bootstrap-backed UI is layout, forms, tables, modals and the shells listed under [Component Systems Overview](#component-systems-overview). New UI is built on `waldur-ui`.
+> **Status**: every button in the app is rendered by `BaseButton` (or by `buttonVariants()` on an element that cannot be a `BaseButton`), and the legacy Bootstrap/Metronic `.btn` CSS has been deleted. Every menu and menu-like popover is built from `waldur-ui`'s `Menu` / `MenuPopover`. Every checkbox, radio and switch is a `waldur-ui` `Checkbox` / `Radio` / `Switch`, and the Bootstrap/Metronic `.form-check` CSS has been deleted. The remaining Bootstrap-backed UI is layout, forms, tables, modals and the shells listed under [Component Systems Overview](#component-systems-overview). New UI is built on `waldur-ui`.
 
 ---
 
@@ -75566,6 +75590,7 @@ Current architecture and implementation guidance for Tailwind CSS v4, shadcn UI,
    - [Badge](#badge)
    - [Tooltip](#tooltip)
    - [Popover](#popover)
+   - [Checkbox, Radio & Switch](#checkbox-radio-switch)
    - [Buttons](#buttons)
    - [Sidebar & Mobile Sheet](#sidebar-mobile-sheet)
    - [Content Drawer (`#kt_drawer`)](#content-drawer-kt-drawer)
@@ -75591,7 +75616,7 @@ Waldur Homeport operates on two active UI component patterns:
 1. **Modern Tailwind / Radix Primitives (`packages/ui`, exported as `waldur-ui`)**
    - Built with pure Tailwind v4 utilities and CSS design tokens from `packages/design-tokens`.
    - Free of all Bootstrap and Metronic classes, SCSS variables, and runtime mixins.
-   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `Menu`, `MenuPopover`, `Switch`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, `Collapsible`, and `TablePagination` (with `Pagination` and `PageSizeSelect`).
+   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `Menu`, `MenuPopover`, `Checkbox`, `Radio`, `Switch`, `RadioGroup`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, `Collapsible`, and `TablePagination` (with `Pagination` and `PageSizeSelect`).
    - Exports `buttonVariants()`, `ButtonVariant` and `ButtonSize` so elements that cannot be a `BaseButton` (links, Radix triggers that need a specific child shape) still get the exact same classes.
 
 2. **Transitional Shells (Radix Engine with Themed Skins)**
@@ -75604,22 +75629,24 @@ Waldur Homeport operates on two active UI component patterns:
 
 ### Component Standards & Usage Guide
 
-| UI Element                    | Standard Component          | Package       | Usage & Styling Notes                                                                              | Prohibited                                                  |
-| :---------------------------- | :-------------------------- | :------------ | :------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
-| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`   | Pure Tailwind, `--surface-card-border`, 5 variants                                                 | `react-bootstrap` `Alert`                                   |
-| **Badge / Pill**              | `Badge`                     | `waldur-ui`   | 15 variants × 3 tones, structural `border-[1px]`                                                   | `react-bootstrap` `Badge`                                   |
-| **Tooltip**                   | `Tooltip`                   | `waldur-ui`   | Radix Tooltip (hover/focus) + Popover (click fallback)                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`               |
-| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`   | Radix Popover with `--surface-card-*` tokens                                                       | `react-bootstrap` `Popover`                                 |
-| **Button**                    | `BaseButton`                | `waldur-ui`   | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens       | `react-bootstrap` `Button`, hand-written `btn` class markup |
-| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link` | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing            | `<a className="btn …">`                                     |
-| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`   | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup   |
-| **Expandable panel group**    | `Accordion`                 | `waldur-ui`   | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount | `react-bootstrap` `Accordion`                               |
-| **Single expandable panel**   | `Collapsible`               | `waldur-ui`   | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                  | `react-bootstrap` `Collapse`, `useAccordionButton`          |
-| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`   | Collapsible desktop rail + mobile Radix Sheet                                                      | Metronic sidebar JS                                         |
-| **Table pagination**          | `TablePagination`           | `waldur-ui`   | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts         | `react-bootstrap` `Pagination`, `page-link` markup          |
-| **Table Actions**             | `ActionsMenu`               | `@/table`     | `Menu` in the actions look, with the kebab / labeled / Add toggles                                 | `react-bootstrap` `DropdownButton`                          |
-| **Header Chrome Menu**        | `Menu`                      | `waldur-ui`   | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                 | N/A                                                         |
-| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`    | Radix Dialog with CSS keyframe transitions                                                         | N/A                                                         |
+| UI Element                    | Standard Component          | Package       | Usage & Styling Notes                                                                                                              | Prohibited                                                          |
+| :---------------------------- | :-------------------------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------ |
+| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`   | Pure Tailwind, `--surface-card-border`, 5 variants                                                                                 | `react-bootstrap` `Alert`                                           |
+| **Badge / Pill**              | `Badge`                     | `waldur-ui`   | 15 variants × 3 tones, structural `border-[1px]`                                                                                   | `react-bootstrap` `Badge`                                           |
+| **Tooltip**                   | `Tooltip`                   | `waldur-ui`   | Radix Tooltip (hover/focus) + Popover (click fallback)                                                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`                       |
+| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`   | Radix Popover with `--surface-card-*` tokens                                                                                       | `react-bootstrap` `Popover`                                         |
+| **Button**                    | `BaseButton`                | `waldur-ui`   | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens                                       | `react-bootstrap` `Button`, hand-written `btn` class markup         |
+| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link` | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing                                            | `<a className="btn …">`                                             |
+| **Checkbox / radio**          | `Checkbox`, `Radio`         | `waldur-ui`   | Hidden native input + drawn box and SVG mark, `md` 20px / `sm` 16px, `--check-*` tokens; `label` / `description` / `tooltip` props | `react-bootstrap` `FormCheck` / `Form.Check`, `form-check*` classes |
+| **On/off toggle**             | `Switch`                    | `waldur-ui`   | Hidden native checkbox + drawn track and knob, `md` 44×24 / `sm` 36×20, `--switch-*` tokens                                        | `type="switch"` `FormCheck`, `form-switch*` classes                 |
+| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`   | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup           |
+| **Expandable panel group**    | `Accordion`                 | `waldur-ui`   | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount                                 | `react-bootstrap` `Accordion`                                       |
+| **Single expandable panel**   | `Collapsible`               | `waldur-ui`   | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                                                  | `react-bootstrap` `Collapse`, `useAccordionButton`                  |
+| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`   | Collapsible desktop rail + mobile Radix Sheet                                                                                      | Metronic sidebar JS                                                 |
+| **Table pagination**          | `TablePagination`           | `waldur-ui`   | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts                                         | `react-bootstrap` `Pagination`, `page-link` markup                  |
+| **Table Actions**             | `ActionsMenu`               | `@/table`     | `Menu` in the actions look, with the kebab / labeled / Add toggles                                                                 | `react-bootstrap` `DropdownButton`                                  |
+| **Header Chrome Menu**        | `Menu`                      | `waldur-ui`   | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                                                 | N/A                                                                 |
+| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`    | Radix Dialog with CSS keyframe transitions                                                                                         | N/A                                                                 |
 
 The _Prohibited_ column is convention; the subset that lint enforces is listed under [Linting & Guardrails](#linting-guardrails) (`ToggleButtonGroup` and `btn-group` markup are not).
 
@@ -75878,6 +75905,22 @@ Waldur does **not** toggle dark mode via a `.dark` HTML class. Instead:
 
 ---
 
+### Checkbox, Radio & Switch
+
+`packages/ui/src/Check/`: `Checkbox.tsx`, `Radio.tsx`, `RadioGroup.tsx` and `Switch.tsx` (exported from `waldur-ui` through `Check/index.ts`), plus the internal `CheckLabel.tsx` (label row), `CheckMark.tsx` (the check path, also drawn by the select) and `checkStyles.ts` (class recipes); colours in `waldur-design-tokens/checkColors.css`.
+
+- **Hidden input + `peer`**: each control is a box holding a native `<input>` that is invisible (`opacity-0`, not `sr-only`) and on top, so it still takes clicks, focus, keyboard and form state, followed by elements that draw the control and read the input's state with `peer-*`: the box and the check/dash SVGs (`Checkbox`), the circle and dot (`Radio`), the track and knob (`Switch`). No background images or data URIs; marks are `currentColor` (`--check-mark` / `--check-mark-disabled`). Compound states use arbitrary peer variants (`peer-[:checked:disabled]:`, `peer-[:hover:enabled:not(:checked)]:`). `className` and `hidden` go on the box (layout); every other prop, and the `ref`, reach the input. Indeterminate styling is checkbox-only: `:indeterminate` also matches every radio in a group with nothing selected.
+- **Motion** matches the legacy `$form-check-transition`: colours and border fade and the switch knob slides over 0.15s `ease-in-out` (written `ease-[ease-in-out]`; Tailwind's `ease-in-out` is a different curve), and `motion-reduce:transition-none` turns it off, as Bootstrap's `transition` mixin did. The marks appear instantly, as the background images did.
+- **`SwitchVisual`** is the switch's look as a `<span>` with no input, for `Menu.CheckboxItem`, which already has `role="menuitemcheckbox"`.
+- **Sizes** are the legacy ones at the 13px root, in px: checkbox/radio `md` 20px (radius 6px) and `sm` 16px (radius 4px); switch `md` 44×24 and `sm` 36×20. The legacy controls were rem-sized, so they shrank about 8% at the 12px mobile root; these do not.
+- **Tokens** (`--check-*`, `--switch-*`) map one-to-one onto the SCSS tokens the old stylesheet used (`$border-primary`, `$bg-brand-solid`, `$bg-disabled_subtle`, `$fg-senary`, …); the file's header lists every mapping. Only colours live there: the marks are elements (below).
+- **Labels are props**: `Checkbox`, `Radio` and `Switch` take `label`, `description`, `tooltip`, `align` and `inline`. With any of them the control renders its whole row (the internal `CheckLabel`): control, then a 14px/20px `<label htmlFor>` naming it and a muted description linked with `aria-describedby`, 8px apart. Without them it renders bare, for tables (give it an `aria-label`). `align` defaults to `start` (the control stays on the first line when the label wraps), except a `Switch` without a description, which centres; a 16px control in `start` drops 2px on its own; `Switch` rows are `inline` by default, as the legacy switches were. All three report `onCheckedChange(boolean)` (`Checkbox` also keeps native `onChange`); `className` goes on the outermost element.
+- **`RadioGroup`**: options in, one value out (`value` / `onValueChange`), like `SegmentedControl`, but as native radios in a `<fieldset>` whose `<legend>` is `label`, with `description`, per-option `description` / `tooltip` / `disabled`, `orientation` and a generated `name`. Disabling the group disables every option through the fieldset. Use `SegmentedControl` to switch a view, `RadioGroup` for a form question.
+- **react-final-form**: `SwitchField` and `RadioGroupField` (`src/form`) only map `input` onto the control. `BooleanGroup` / `BooleanEditField` / `BooleanFilter` and the form-level `RadioGroup` keep their names; with `passLabelToControl` the control draws the field's `label`, `tooltip` and `description`, and `FormGroup` adds only spacing, required mark and errors. The old `AwesomeCheckbox`, `AwesomeCheckboxField` and `AwesomeRadioButton` are gone, along with their `help_text` (now `description`), `alignMiddle` (now `align="center"`), `tooltipEnd`, `direction` (now `orientation`), `justify` and `gap` props.
+- **Enforcement**: the custom rule `no-bootstrap-form-check` reports `FormCheck`, `Form.Check` (under any local name for `Form`) and any `form-check*` / `form-switch*` class token.
+
+---
+
 ### Buttons
 
 Three primitives in `waldur-ui` (`packages/ui/src`) and `Link` in `@/core/Link` make up the application's unified button architecture:
@@ -76031,18 +76074,18 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 
 #### Visual patterns
 
-| Rule Name                          | Severity | Enforced Pattern                                                           |
-| :--------------------------------- | :------- | :------------------------------------------------------------------------- |
-| `enforce-badge-icon-patterns`      | `error`  | Enforces 12px icon sizing inside `Badge` components.                       |
-| `enforce-badge-props-consistency`  | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.      |
-| `no-manual-icon-colors-in-badges`  | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.           |
-| `enforce-badge-right-icon-pattern` | `error`  | Standardizes right-side action icon styling in badges.                     |
-| `enforce-featured-icon`            | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems. |
-| `enforce-phosphor-icon-weight`     | `error`  | Consistent `weight` prop on Phosphor icons.                                |
-| `enforce-border-radius-tokens`     | `error`  | Design-token radius classes instead of hard-coded values.                  |
-| `enforce-nav-tabs-pattern`         | `error`  | Navigation tabs use the `nav-line-tabs` class.                             |
-| `enforce-breadcrumb-colors`        | `error`  | Breadcrumb links use the `$text-brand-secondary` token.                    |
-| `enforce-formcheck-components`     | `error`  | React Bootstrap `FormCheck` instead of custom form-control markup.         |
+| Rule Name                          | Severity | Enforced Pattern                                                                                                          |
+| :--------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `enforce-badge-icon-patterns`      | `error`  | Enforces 12px icon sizing inside `Badge` components.                                                                      |
+| `enforce-badge-props-consistency`  | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.                                                     |
+| `no-manual-icon-colors-in-badges`  | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.                                                          |
+| `enforce-badge-right-icon-pattern` | `error`  | Standardizes right-side action icon styling in badges.                                                                    |
+| `enforce-featured-icon`            | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                |
+| `enforce-phosphor-icon-weight`     | `error`  | Consistent `weight` prop on Phosphor icons.                                                                               |
+| `enforce-border-radius-tokens`     | `error`  | Design-token radius classes instead of hard-coded values.                                                                 |
+| `enforce-nav-tabs-pattern`         | `error`  | Navigation tabs use the `nav-line-tabs` class.                                                                            |
+| `enforce-breadcrumb-colors`        | `error`  | Breadcrumb links use the `$text-brand-secondary` token.                                                                   |
+| `no-bootstrap-form-check`          | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes. |
 
 #### Code hygiene
 

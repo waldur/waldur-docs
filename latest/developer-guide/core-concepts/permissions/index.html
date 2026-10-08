@@ -20681,26 +20681,18 @@ Consider these models as authorization aggregates. Other models, such as resourc
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">OfferingUserGroupViewSet</span><span class="p">(</span><span class="n">core_views</span><span class="o">.</span><span class="n">ActionsViewSet</span><span class="p">):</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PosixIdentityViewSet</span><span class="p">(</span><span class="n">core_views</span><span class="o">.</span><span class="n">ReadOnlyActionsViewSet</span><span class="p">):</span>
   <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
       <span class="n">queryset</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
       <span class="n">current_user</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span>
       <span class="k">if</span> <span class="n">current_user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="n">current_user</span><span class="o">.</span><span class="n">is_support</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">queryset</span>
 
-      <span class="n">projects</span> <span class="o">=</span> <span class="n">get_connected_projects</span><span class="p">(</span><span class="n">current_user</span><span class="p">)</span>
       <span class="n">customers</span> <span class="o">=</span> <span class="n">get_connected_customers</span><span class="p">(</span><span class="n">current_user</span><span class="p">)</span>
-
-      <span class="n">subquery</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">Q</span><span class="p">(</span><span class="n">projects__customer__in</span><span class="o">=</span><span class="n">customers</span><span class="p">)</span>
-        <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">offering__customer__in</span><span class="o">=</span><span class="n">customers</span><span class="p">)</span>
-        <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">projects__in</span><span class="o">=</span><span class="n">projects</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="n">Q</span><span class="p">(</span><span class="n">pool__service_provider__customer__in</span><span class="o">=</span><span class="n">customers</span><span class="p">)</span>
+        <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">pool__offering__customer__in</span><span class="o">=</span><span class="n">customers</span><span class="p">)</span>
       <span class="p">)</span>
-      <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">subquery</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="permissions-for-object-creation-and-update">Permissions for object creation and update</h2>
 <p>Usually it is done in serializer's validate method.</p>
